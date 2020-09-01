@@ -1,0 +1,14 @@
+Prerequisites:
+  Linux:
+  - gcc
+  - ld
+  - make
+  - qemu
+
+  MacOS:
+  - Docker
+  - make
+  - qemu
+
+To run:
+  make build run
