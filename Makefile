@@ -5,7 +5,9 @@ DOCKER_IMAGE = menios:latest
 
 GCC_FOLDER = /usr/bin
 LIB_FOLDER = lib
-LIB_SRC = $(LIB_FOLDER)/stdio.c $(LIB_FOLDER)/stdlib.c $(LIB_FOLDER)/string.c
+LIB_SRC = $(LIB_FOLDER)/stdio.c \
+					$(LIB_FOLDER)/stdlib.c \
+					$(LIB_FOLDER)/string.c
 INCLUDE_FOLDER = include
 OUTPUT_FOLDER = bin
 
@@ -18,7 +20,7 @@ SRC = $(BOOT_SRC) $(LIB_SRC)
 GCC = $(GCC_FOLDER)/gcc
 GCC_OPTS = -Os -m32 $(SRC) -o $(BOOTLOADER) -nostdlib -ffreestanding -mno-red-zone -fno-exceptions -nostdlib -Wall -Wextra -Werror -T boot/kernel.ld -I $(INCLUDE_FOLDER)
 
-QEMU = qemu-system-x86_64
+QEMU_X86 = qemu-system-x86_64
 QEMU_OPTS = -drive file=$(BOOTLOADER),format=raw,index=1,media=disk
 
 NASM = nasm
@@ -48,4 +50,4 @@ endif
 
 .PHONY: run
 run:
-	$(QEMU) $(QEMU_OPTS)
+	$(QEMU_X86) $(QEMU_OPTS)

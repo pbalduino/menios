@@ -1,4 +1,6 @@
+#include <stdarg.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <x86.h>
 
 #define VGA_MEMORY 0xb8000
@@ -42,4 +44,47 @@ int puts(const char *s) {
     putchar(s[i++]);
   }
   return 1;
+}
+
+int	vprintf(const char* format, va_list args) {
+  for(int pos = 0; format[pos]; pos++) {
+    if(format[pos] == '%') {
+      switch(format[++pos]) {
+        case 'c': {
+          const int val = va_arg(args, int);
+          putchar(val);
+          break;
+        }
+        case 'i':
+        case 'd': {
+          int val = va_arg(args, int);
+          char* str = "";
+          itoa(val, str, 10);
+          puts(str);
+          break;
+        }
+        case 's': {
+          const char* val = (const char*)va_arg(args, char*);
+          puts(val);
+          break;
+        }
+        default: {
+          putchar('?');
+          putchar(format[pos]);
+          putchar('?');
+        }
+      }
+    } else {
+      putchar(format[pos]);
+    }
+  }
+  return 0;
+}
+
+__attribute__ ((format (printf, 1, 2))) int printf (const char* format, ...) {
+  va_list list;
+  va_start (list, format);
+  int i = vprintf(format, list);
+  va_end(list);
+  return i;
 }

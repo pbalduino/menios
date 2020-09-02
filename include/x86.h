@@ -15,21 +15,21 @@ outb(int port, uint8_t data) {
 	asm volatile("outb %0,%w1" : : "a" (data), "d" (port));
 }
 
-// struct RSDPDescriptor {
-//   char Signature[8];
-//   uint8_t Checksum;
-//   char OEMID[6];
-//   uint8_t Revision;
-//   uint32_t RsdtAddress;
-// } __attribute__ ((packed));
-//
-// struct RSDPDescriptor20 {
-//   RSDPDescriptor firstPart;
-//
-//   uint32_t Length;
-//   uint64_t XsdtAddress;
-//   uint8_t ExtendedChecksum;
-//   uint8_t reserved[3];
-// } __attribute__ ((packed));
+static inline void
+cpuid(uint32_t info, uint32_t *eaxp, uint32_t *ebxp, uint32_t *ecxp, uint32_t *edxp)
+{
+	uint32_t eax, ebx, ecx, edx;
+	asm volatile("cpuid"
+		     : "=a" (eax), "=b" (ebx), "=c" (ecx), "=d" (edx)
+		     : "a" (info));
+	if (eaxp)
+		*eaxp = eax;
+	if (ebxp)
+		*ebxp = ebx;
+	if (ecxp)
+		*ecxp = ecx;
+	if (edxp)
+		*edxp = edx;
+}
 
 #endif

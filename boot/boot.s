@@ -5,9 +5,6 @@ boot:
 	mov ax, 0x2401
 	int 0x15
 
-	; mov ax, 0x3
-	; int 0x10
-
 	mov [disk],dl
 
 	mov ah, 0x2    ;read sectors
