@@ -4,10 +4,12 @@
 #include <x86.h>
 
 #define VGA_MEMORY 0xb8000
+// FIXME: read from bios the current width
+#define TEXT_SCREEN_WIDTH 80
 
 uint16_t get_cursor_position(void) {
   uint16_t pos = 0;
-  outb(0x3d4, 0x0F);
+  outb(0x3d4, 0x0f);
   pos |= inb(0x3d5);
   outb(0x3d4, 0x0e);
   pos |= ((uint16_t)inb(0x3d5)) << 8;
@@ -15,10 +17,10 @@ uint16_t get_cursor_position(void) {
 }
 
 void set_cursor_position(uint16_t pos) {
-  outb(0x3D4, 0x0F);
-	outb(0x3D5, (uint8_t) (pos & 0xFF));
-	outb(0x3D4, 0x0E);
-	outb(0x3D5, (uint8_t) ((pos >> 8) & 0xFF));
+  outb(0x3d4, 0x0f);
+	outb(0x3d5, (uint8_t) (pos & 0xff));
+	outb(0x3d4, 0x0e);
+	outb(0x3d5, (uint8_t) ((pos >> 8) & 0xff));
 }
 
 int putchar(int ch) {
@@ -27,7 +29,7 @@ int putchar(int ch) {
   uint16_t pos = get_cursor_position();
 
   if(ch == '\n') {
-    pos = ((pos / 80) + 1) * 80;
+    pos = ((pos / TEXT_SCREEN_WIDTH) + 1) * TEXT_SCREEN_WIDTH;
   } else {
     vga[pos++] = color | ch;
   }
@@ -38,15 +40,11 @@ int putchar(int ch) {
 }
 
 int puts(const char *s) {
-  int i = 0;
-
-  while(s[i]) {
-    putchar(s[i++]);
-  }
+  while(*s) putchar(*s++);
   return 1;
 }
 
-int	vprintf(const char* format, va_list args) {
+int vprintf(const char* format, va_list args) {
   for(int pos = 0; format[pos]; pos++) {
     if(format[pos] == '%') {
       switch(format[++pos]) {
@@ -58,6 +56,13 @@ int	vprintf(const char* format, va_list args) {
         case 'i':
         case 'd': {
           int val = va_arg(args, int);
+          char* str = "";
+          itoa(val, str, 10);
+          puts(str);
+          break;
+        }
+        case 'u': {
+          int val = va_arg(args, unsigned);
           char* str = "";
           itoa(val, str, 10);
           puts(str);
