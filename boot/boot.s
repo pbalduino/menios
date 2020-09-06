@@ -18,8 +18,8 @@ boot:
 	cli                           ; disable interruptions before we define GTD
 	lgdt [gdt_pointer]            ; load global descriptor table
 	mov eax, cr0
-	or eax,0x800000001            ; enable bit 1 of cr0 - protected mode
-	mov cr0, eax                  ; enable bit 31 of cr0 - memory paging
+	or eax,0x1                    ; enable bit 0 of cr0 - protected mode
+	mov cr0, eax
 	mov ax, DATA_SEG              ; point to the new code selector
 	mov ds, ax
 	mov es, ax
