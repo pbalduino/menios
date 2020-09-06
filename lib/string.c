@@ -23,3 +23,22 @@ void strrev(char str[], int length) {
     end--;
   }
 }
+
+void* memset(void *v, int c, size_t n) {
+	if (n == 0)
+		return v;
+
+	if ((int)v%4 == 0 && n%4 == 0) {
+		c &= 0xFF;
+		c = (c<<24)|(c<<16)|(c<<8)|c;
+		asm volatile("cld; rep stosl\n"
+			:: "D" (v), "a" (c), "c" (n/4)
+			: "cc", "memory");
+	} else {
+		asm volatile("cld; rep stosb\n"
+			:: "D" (v), "a" (c), "c" (n)
+			: "cc", "memory");
+  }
+
+	return v;
+}

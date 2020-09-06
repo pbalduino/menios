@@ -9,7 +9,7 @@ INCLUDE_FOLDER = include
 OUTPUT_FOLDER = bin
 KERNEL_FOLDER = kernel
 
-KERNEL_SRC = $(KERNEL_FOLDER)/rtclock.c $(KERNEL_FOLDER)/pmap.c
+KERNEL_SRC = $(KERNEL_FOLDER)/panic.c $(KERNEL_FOLDER)/pmap.c $(KERNEL_FOLDER)/rtclock.c
 
 LIB_SRC = $(LIB_FOLDER)/stdio.c $(LIB_FOLDER)/stdlib.c $(LIB_FOLDER)/string.c
 

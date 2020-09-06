@@ -1,5 +1,7 @@
+#include <assert.h>
 #include <mmu.h>
 #include <stdio.h>
+#include <string.h>
 
 #include <kernel/rtclock.h>
 #include <kernel/pmap.h>
@@ -23,12 +25,13 @@ static void i386_detect_memory() {
 
 	// Calculate the number of physical pages available in both base
 	// and extended memory.
-	if (ext16mem)
+	if (ext16mem) {
 		totalmem = 16 * 1024 + ext16mem;
-	else if (extmem)
+	} else if (extmem) {
 		totalmem = 1 * 1024 + extmem;
-	else
+	} else {
 		totalmem = basemem;
+  }
 
 	npages = totalmem / (PGSIZE / 1024);
 	npages_basemem = basemem / (PGSIZE / 1024);
@@ -38,9 +41,7 @@ static void i386_detect_memory() {
 }
 
 void init_memory() {
-	// uint32_t cr0;
-	// size_t n;
+  printf("Initalizing memory\n");
 
-	// Find out how much memory the machine has (npages & npages_basemem).
 	i386_detect_memory();
 }
