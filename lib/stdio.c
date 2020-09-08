@@ -73,6 +73,13 @@ int vprintf(const char* format, va_list args) {
           puts(val);
           break;
         }
+        case 'x': {
+          int val = va_arg(args, unsigned);
+          char* str = "";
+          itoa(val, str, 16);
+          puts(str);
+          break;
+        }
         default: {
           putchar('?');
           putchar(format[pos]);
