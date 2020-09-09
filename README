@@ -12,3 +12,31 @@ Prerequisites:
 
 To run:
   make build run
+
+To do:
+[ ] Add support to gdb
+[x] Create a todo list
+[x] Dev environment
+[x] ASM 512b bootloader
+[x] Load bootloader beyond 512b
+[x] Enable A20 bit
+[x] Set GDT
+[ ] Set IDT
+[x] Set 32bits
+[x] Set Protected Mode
+[x] Enable memory paging
+[ ] Enable virtual memory
+[ ] Add a memory manager
+[ ] Add a process manager
+[ ] Add a file system
+[ ] Load dummy code from disk and run
+[ ] Segregate code for kernel and userland
+[ ] Call kernel task from userland dummy code
+[ ] Simple shell
+[ ] Read PCI bus and detect hardware
+[ ] Connect to network using E1000
+[ ] Add support to soundcard
+[ ] Set 64bits
+[ ] UEFI support
+[ ] Test on real machines
+[ ] Run gcc inside meniOS (muahahahaha)
