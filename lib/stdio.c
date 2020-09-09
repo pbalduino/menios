@@ -1,13 +1,16 @@
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <x86.h>
 
 #define VGA_MEMORY 0xb8000
 // FIXME: read from bios the current width
-#define TEXT_SCREEN_WIDTH 80
+#define CRT_COLS 80
+#define CRT_ROWS 25
+#define CRT_SIZE (CRT_COLS * CRT_ROWS)
 
-uint16_t get_cursor_position(void) {
+static uint16_t get_cursor_position(void) {
   uint16_t pos = 0;
   outb(0x3d4, 0x0f);
   pos |= inb(0x3d5);
@@ -16,7 +19,7 @@ uint16_t get_cursor_position(void) {
   return pos;
 }
 
-void set_cursor_position(uint16_t pos) {
+static void set_cursor_position(uint16_t pos) {
   outb(0x3d4, 0x0f);
 	outb(0x3d5, (uint8_t) (pos & 0xff));
 	outb(0x3d4, 0x0e);
@@ -29,9 +32,20 @@ int putchar(int ch) {
   uint16_t pos = get_cursor_position();
 
   if(ch == '\n') {
-    pos = ((pos / TEXT_SCREEN_WIDTH) + 1) * TEXT_SCREEN_WIDTH;
+    pos -= (pos % CRT_COLS);
+    pos += CRT_COLS;
   } else {
     vga[pos++] = color | ch;
+  }
+
+  if(pos >= CRT_SIZE) {
+    int i;
+
+    memmove(vga, vga + CRT_COLS, (CRT_SIZE - CRT_COLS) * sizeof(uint16_t));
+    for (i = CRT_SIZE - CRT_COLS; i < CRT_SIZE; i++) {
+      vga[i] = 0x0700 | ' ';
+    }
+    pos -= CRT_COLS;
   }
 
   set_cursor_position(pos);
@@ -48,6 +62,10 @@ int vprintf(const char* format, va_list args) {
   for(int pos = 0; format[pos]; pos++) {
     if(format[pos] == '%') {
       switch(format[++pos]) {
+        case '%': {
+          putchar('%');
+          break;
+        }
         case 'c': {
           const int val = va_arg(args, int);
           putchar(val);
@@ -61,10 +79,10 @@ int vprintf(const char* format, va_list args) {
           puts(str);
           break;
         }
-        case 'u': {
+        case 'o': {
           int val = va_arg(args, unsigned);
           char* str = "";
-          itoa(val, str, 10);
+          itoa(val, str, 8);
           puts(str);
           break;
         }
@@ -73,6 +91,14 @@ int vprintf(const char* format, va_list args) {
           puts(val);
           break;
         }
+        case 'u': {
+          int val = va_arg(args, unsigned);
+          char* str = "";
+          itoa(val, str, 10);
+          puts(str);
+          break;
+        }
+        case 'X':
         case 'x': {
           int val = va_arg(args, unsigned);
           char* str = "";
