@@ -1,6 +1,8 @@
 section .boot
 bits 16
 global boot
+; extern idt_pointer
+
 boot:
 	mov ax, 0x2401
 	int 0x15                      ; enable A20 bit
@@ -17,6 +19,7 @@ boot:
 	int 0x13
 	cli                           ; disable interruptions before we define GTD
 	lgdt [gdt_pointer]            ; load global descriptor table
+	; lidt [idt_pointer]            ; load interrupt descriptor table
 	mov eax, cr0
 	or eax,0x1                    ; enable bit 0 of cr0 - protected mode
 	mov cr0, eax

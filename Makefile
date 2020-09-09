@@ -9,7 +9,10 @@ INCLUDE_DIR = include
 OUTPUT_DIR = bin
 KERNEL_DIR = kernel
 
-KERNEL_SRC = $(KERNEL_DIR)/panic.c $(KERNEL_DIR)/pmap.c $(KERNEL_DIR)/rtclock.c $(OUTPUT_DIR)/mem_page.o
+KERNEL_SRC = $(KERNEL_DIR)/panic.c \
+	$(KERNEL_DIR)/pci.c $(KERNEL_DIR)/pmap.c \
+	$(KERNEL_DIR)/rtclock.c \
+	$(OUTPUT_DIR)/mem_page.o
 
 LIB_SRC = $(LIB_DIR)/stdio.c $(LIB_DIR)/stdlib.c $(LIB_DIR)/string.c
 
@@ -22,9 +25,9 @@ SRC = $(BOOT_SRC) $(LIB_SRC) $(KERNEL_SRC)
 GCC = $(GCC_DIR)/gcc
 GCC_OPTS = -Os -m32 $(SRC) -o $(BOOTLOADER) -nostdlib -ffreestanding -mno-red-zone -fno-exceptions -nostdlib -Wall -Wextra -Werror -T boot/kernel.ld -I $(INCLUDE_DIR)
 
-QEMU_MEMORY = 8096
+QEMU_MEMORY = 8
 QEMU_X86 = qemu-system-i386
-QEMU_OPTS = -drive file=$(BOOTLOADER),format=raw,index=1,media=disk -m $(QEMU_MEMORY)
+QEMU_OPTS = -drive id=disk,file=$(BOOTLOADER),format=raw,index=1,media=disk -m $(QEMU_MEMORY) -no-reboot -no-shutdown -usb -device e1000 -smp 2
 
 NASM = nasm
 NASM_OPTS = -f elf32 $(BOOT_DIR)/boot.s -o $(BOOT_BIN)

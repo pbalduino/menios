@@ -1,28 +1,26 @@
 #include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
+#include <kernel/pci.h>
 #include <kernel/pmap.h>
+// #include <kernel/idt.h>
 
 void kernel_start() {
   const char* hello = "\nWelcome to MeniOS 0.0.1\n\n";
   puts(hello);
 
+  init_pci();
+
   // page memory
-  init_memory();
+  // init_memory();
 
-  // init_ports();
-
-  // init_storage();
-
-  printf("\n");
-
-  // enumerate drives
+  // printf("\n");
 
   // start extra cores
+  // warn("A warning won't do harm");
 
-  warn("A warning won't do harm");
+  // printf("\n");
 
-  printf("\n");
-
-  panic("Calling panic for testing purposes");
+  // panic("Calling panic for testing purposes");
 }
