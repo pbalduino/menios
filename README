@@ -28,12 +28,16 @@ To do:
 [ ] Enable virtual memory
 [ ] Add a memory manager
 [ ] Add a process manager
+[X] Read PCI bus and detect hardware
+[X] Identify one drive
+[ ] Identify more drives
+[X] Read data from drive
+[ ] Write data to drive
 [ ] Add a file system
 [ ] Load dummy code from disk and run
 [ ] Segregate code for kernel and userland
 [ ] Call kernel task from userland dummy code
 [ ] Simple shell
-[ ] Read PCI bus and detect hardware
 [ ] Connect to network using E1000
 [ ] Add support to soundcard
 [ ] Set 64bits

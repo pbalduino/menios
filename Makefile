@@ -9,9 +9,12 @@ INCLUDE_DIR = include
 OUTPUT_DIR = bin
 KERNEL_DIR = kernel
 
-KERNEL_SRC = $(KERNEL_DIR)/panic.c \
-	$(KERNEL_DIR)/pci.c $(KERNEL_DIR)/pmap.c \
+KERNEL_SRC = \
+	$(KERNEL_DIR)/panic.c \
+	$(KERNEL_DIR)/pci.c \
+	$(KERNEL_DIR)/pmap.c \
 	$(KERNEL_DIR)/rtclock.c \
+	$(KERNEL_DIR)/storage.c \
 	$(OUTPUT_DIR)/mem_page.o
 
 LIB_SRC = $(LIB_DIR)/stdio.c $(LIB_DIR)/stdlib.c $(LIB_DIR)/string.c
@@ -27,7 +30,7 @@ GCC_OPTS = -Os -m32 $(SRC) -o $(BOOTLOADER) -nostdlib -ffreestanding -mno-red-zo
 
 QEMU_MEMORY = 8
 QEMU_X86 = qemu-system-i386
-QEMU_OPTS = -drive id=disk,file=$(BOOTLOADER),format=raw,index=1,media=disk -m $(QEMU_MEMORY) -no-reboot -no-shutdown -usb -device e1000 -smp 2
+QEMU_OPTS = -hda $(BOOTLOADER) -m $(QEMU_MEMORY) -no-reboot -no-shutdown # -hdb $(OUTPUT_DIR)/hdd2.img -cdrom $(OUTPUT_DIR)/cdd.img -usb -device usb-mouse
 
 NASM = nasm
 NASM_OPTS = -f elf32 $(BOOT_DIR)/boot.s -o $(BOOT_BIN)

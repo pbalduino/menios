@@ -4,7 +4,7 @@
 #include <string.h>
 #include <kernel/pci.h>
 #include <kernel/pmap.h>
-// #include <kernel/idt.h>
+#include <kernel/storage.h>
 
 void kernel_start() {
   const char* hello = "\nWelcome to MeniOS 0.0.1\n\n";
@@ -12,8 +12,9 @@ void kernel_start() {
 
   init_pci();
 
-  // page memory
-  // init_memory();
+  init_storage();
+
+  init_memory();
 
   // printf("\n");
 

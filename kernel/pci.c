@@ -42,7 +42,6 @@ void init_pci() {
 
         if(data != 0xffffffff) {
           uint32_t tmp = pci_read_word(bus, slot, func, 8);
-          uint32_t addr = pci_read_word(bus, slot, func, 0x10);
 
           pci_devices[count].bus = bus;
           pci_devices[count].slot = slot;
@@ -53,7 +52,8 @@ void init_pci() {
           pci_devices[count].subclass = (tmp >> 16) & 0xff;
           pci_devices[count].progif = (tmp >> 8) & 0xff;
           pci_devices[count].revision_id = tmp & 0xff;
-          pci_devices[count].bar0 = addr >> 4;
+          pci_devices[count].bar0 = pci_read_word(bus, slot, func, 0x10);
+          pci_devices[count].bar2 = pci_read_word(bus, slot, func, 0x18);
           count++;
         }
       }
