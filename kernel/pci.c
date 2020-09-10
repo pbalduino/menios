@@ -1,40 +1,12 @@
+#include <assert.h>
 #include <types.h>
 #include <stdio.h>
 #include <x86.h>
 #include <kernel/pci.h>
 
-const uint32_t PCI_ENABLE_BIT     = 0x80000000;
-const uint32_t PCI_CONFIG_ADDRESS = 0xcf8;
-const uint32_t PCI_CONFIG_DATA    = 0xcfc;
-
-/*
-const char[] PCI_CLASS = {
-    "Unclassified",
-    "Mass Storage Controller",
-    "Network Controller",
-    "Display Controller",
-    "Multimedia Controller",
-    "Memory Controller",
-    "Bridge Device",
-    "Simple Communication Controller",
-    "Base System Peripheral",
-    "Input Device Controller",
-    "Docking Station",
-    "Processor",
-    "Serial Bus Controller",
-    "Wireless Controller",
-    "Intelligent Controller",
-    "Satellite Communication Controller",
-    "Encryption Controller",
-    "Signal Processing Controller",
-
-}
-*/
-
-typedef struct {
-  uint16_t vendor_id;
-  uint16_t device_id;
-} pci_device_t;
+#define PCI_ENABLE_BIT     0x80000000
+#define PCI_CONFIG_ADDRESS 0xcf8
+#define PCI_CONFIG_DATA    0xcfc
 
 uint16_t vendor_id(uint32_t data) {
   return (uint16_t)(data & 0xffff);
@@ -45,8 +17,6 @@ uint16_t device_id(uint32_t data) {
 }
 
 uint32_t pci_read_word(uint8_t bus, uint8_t slot, uint8_t func, uint8_t offset) {
-  // unsigned long flags;
-  // local_irq_save(flags)
   uint32_t lbus  = (uint32_t)bus;
   uint32_t lslot = (uint32_t)slot;
   uint32_t lfunc = (uint32_t)func;
@@ -55,35 +25,40 @@ uint32_t pci_read_word(uint8_t bus, uint8_t slot, uint8_t func, uint8_t offset) 
 
   outl(PCI_CONFIG_ADDRESS, address);
 
-  // local_irq_restore(flags);
   return inl(PCI_CONFIG_DATA);
 }
 
-int init_pci(void) {
-  printf("Listing PCI devices:\n");
+void init_pci() {
+  assert(!is_pci_ready);
 
-  for(int bus = 0; bus < 0xff; bus++) {
-    for(int device = 0; device < 0xff; device++) {
+  printf("Detecting PCI devices... ");
+
+  int count = 0;
+
+  for(int bus = 0; bus < 0x100; bus++) {
+    for(int slot = 0; slot < 0x20; slot++) {
       for(int func = 0; func < 8; func++) {
-        uint32_t data = pci_read_word(bus, device, func, 0);
+        uint32_t data = pci_read_word(bus, slot, func, 0);
 
         if(data != 0xffffffff) {
-          printf("  Bus %d, device %d, func %d: vendor=0x%x dev_id=0x%x\n", bus, device, func, vendor_id(data), device_id(data));
+          uint32_t tmp = pci_read_word(bus, slot, func, 8);
+          uint32_t addr = pci_read_word(bus, slot, func, 0x10);
 
-          uint32_t tmp = pci_read_word(bus, device, func, 8);
-          uint32_t addr = pci_read_word(bus, device, func, 0x10);
-          printf("  Class 0x%x, Subclass 0x%x, ProgIF 0x%x, RevID 0x%x, Addr 0x%x\n",
-            (tmp >> 24) & 0xff,
-            (tmp >> 16) & 0xff,
-            (tmp >> 8) & 0xff,
-            tmp & 0xff,
-            addr >> 4);
-
-
+          pci_devices[count].bus = bus;
+          pci_devices[count].slot = slot;
+          pci_devices[count].func = func;
+          pci_devices[count].vendor_id = vendor_id(data);
+          pci_devices[count].device_id = device_id(data);
+          pci_devices[count].class = (tmp >> 24) & 0xff;
+          pci_devices[count].subclass = (tmp >> 16) & 0xff;
+          pci_devices[count].progif = (tmp >> 8) & 0xff;
+          pci_devices[count].revision_id = tmp & 0xff;
+          pci_devices[count].bar0 = addr >> 4;
+          count++;
         }
       }
     }
   }
-  printf("\n");
-  return 0;
+  printf("%d devices detected\n\n", count);
+  is_pci_ready = true;
 }
