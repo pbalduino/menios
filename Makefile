@@ -1,5 +1,3 @@
-BOOT_DIR = boot
-
 DOCKER = /usr/local/bin/docker
 DOCKER_IMAGE = menios:latest
 
@@ -10,6 +8,7 @@ OUTPUT_DIR = bin
 KERNEL_DIR = kernel
 
 KERNEL_SRC = \
+	$(KERNEL_DIR)/ata.c \
 	$(KERNEL_DIR)/panic.c \
 	$(KERNEL_DIR)/pci.c \
 	$(KERNEL_DIR)/pmap.c \
@@ -19,8 +18,10 @@ KERNEL_SRC = \
 
 LIB_SRC = $(LIB_DIR)/stdio.c $(LIB_DIR)/stdlib.c $(LIB_DIR)/string.c
 
+BOOT_DIR = boot
 BOOT_BIN = $(OUTPUT_DIR)/boot.o
 BOOT_SRC = $(BOOT_DIR)/kernel.c $(BOOT_BIN)
+BOOT_IMG = $(OUTPUT_DIR)/hda.img
 BOOTLOADER= $(OUTPUT_DIR)/boot.bin
 
 SRC = $(BOOT_SRC) $(LIB_SRC) $(KERNEL_SRC)
@@ -30,7 +31,8 @@ GCC_OPTS = -Os -m32 $(SRC) -o $(BOOTLOADER) -nostdlib -ffreestanding -mno-red-zo
 
 QEMU_MEMORY = 8
 QEMU_X86 = qemu-system-i386
-QEMU_OPTS = -hda $(BOOTLOADER) -m $(QEMU_MEMORY) -no-reboot -no-shutdown # -hdb $(OUTPUT_DIR)/hdd2.img -cdrom $(OUTPUT_DIR)/cdd.img -usb -device usb-mouse
+QEMU_OPTS = -hda $(BOOTLOADER) -m $(QEMU_MEMORY) -no-reboot -no-shutdown
+# -hdb $(OUTPUT_DIR)/hdd2.img -cdrom $(OUTPUT_DIR)/cdd.img -usb -device usb-mouse
 
 NASM = nasm
 NASM_OPTS = -f elf32 $(BOOT_DIR)/boot.s -o $(BOOT_BIN)
@@ -56,6 +58,7 @@ else
 	@make docker
 	@echo "Building inside Docker"
 	$(DOCKER) run -it --mount type=bind,source=$$(pwd),target=/mnt $(DOCKER_IMAGE) /bin/sh -c "cd /mnt && make build"
+	qemu-img resize $(BOOTLOADER) 8g
 endif
 
 .PHONY: run
