@@ -33,6 +33,7 @@ To do:
 [ ] Identify more drives
 [X] Read data from drive
 [ ] Write data to drive
+[X] Fix MBR
 [ ] Add a file system
 [ ] Load dummy code from disk and run
 [ ] Segregate code for kernel and userland

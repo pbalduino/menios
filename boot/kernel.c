@@ -16,12 +16,12 @@ void kernel_start() {
 
   init_memory();
 
-  // printf("\n");
+  printf("\n");
 
   // start extra cores
-  // warn("A warning won't do harm");
+  warn("A warning won't do harm");
 
-  // printf("\n");
+  printf("\n");
 
-  // panic("Calling panic for testing purposes");
+  panic("Calling panic for testing purposes");
 }

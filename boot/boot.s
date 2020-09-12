@@ -7,7 +7,7 @@ boot:
 	mov ax, 0x2401
 	int 0x15                      ; enable A20 bit
 
-	mov [disk],dl                 ; disk is given by BIOS
+	mov [disk], dl                ; disk is given by BIOS
 
 	mov ah, 0x2                   ; read sectors
 	mov al, 6                     ; sectors to read
@@ -55,14 +55,33 @@ disk:
 CODE_SEG equ gdt_code - gdt_start
 DATA_SEG equ gdt_data - gdt_start
 
-times 510 - ($-$$) db 0        ; pad binary with zeroes
-dw 0xaa55                      ; magic number says BIOS the sector is bootloader
+times 400 - ($-$$) db 0        ;   ?b - pad binary with zeroes
+db "MNOS"                      ;   4b - Unique Disk ID / Signature - MENI
+dw 0x0                         ;   2b - Reserved 0x0000
+
+; 16b - first partition - OS, user data, apps, etc
+; 1MB reserved for boot, so let's start @ byte 1048576
+; at 512b/sector we have sector 2048
+; at 63sec/track we have track 32
+db 0x80                        ;   1b - bootable or active
+db 0x0                         ;   3b - starting head
+db 0x00                        ;   6bits - starting sector
+db 0x20                        ;  10bits - starting cylinder
+db 0x06                        ;   1b - FAT16 (TODO: improve it later)
+db 0xff                        ;   1b - ending head
+dw 0xffff                      ;   2b - ending sector and cylinder
+dd 0x00000800                  ;   4b - relative sector - 2048
+dd 0xffffffff                  ;   4b - total sectors in partition
+
+times 510 - ($-$$) db 0        ;  32b - pad binary with zeroes
+
+dw 0xaa55                      ;   2b - valid bootsector
 
 copy_target:
 bits 32
 
 boot2:
-	mov esp,kernel_stack_top
+	mov esp, kernel_stack_top
 	extern kernel_start
 	call kernel_start
 	cli
