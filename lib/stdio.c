@@ -5,6 +5,11 @@
 #include <x86.h>
 
 #define VGA_MEMORY 0xb8000
+#define VGA_CTRL 0x3d4
+#define VGA_DATA 0x3d5
+
+#define VGA_HIGH_CURSOR 0x0f
+#define VGA_LOW_CURSOR 0x0e
 // FIXME: read from bios the current width
 #define CRT_COLS 80
 #define CRT_ROWS 25
@@ -12,18 +17,18 @@
 
 static uint16_t get_cursor_position(void) {
   uint16_t pos = 0;
-  outb(0x3d4, 0x0f);
-  pos |= inb(0x3d5);
-  outb(0x3d4, 0x0e);
-  pos |= ((uint16_t)inb(0x3d5)) << 8;
+  outb(VGA_CTRL, VGA_HIGH_CURSOR);
+  pos |= inb(VGA_DATA);
+  outb(VGA_CTRL, VGA_LOW_CURSOR);
+  pos |= ((uint16_t)inb(VGA_DATA)) << 8;
   return pos;
 }
 
 static void set_cursor_position(uint16_t pos) {
-  outb(0x3d4, 0x0f);
-	outb(0x3d5, (uint8_t) (pos & 0xff));
-	outb(0x3d4, 0x0e);
-	outb(0x3d5, (uint8_t) ((pos >> 8) & 0xff));
+  outb(VGA_CTRL, VGA_HIGH_CURSOR);
+	outb(VGA_DATA, (uint8_t) (pos & 0xff));
+	outb(VGA_CTRL, VGA_LOW_CURSOR);
+	outb(VGA_DATA, (uint8_t) ((pos >> 8) & 0xff));
 }
 
 int putchar(int ch) {
@@ -64,6 +69,13 @@ int vprintf(const char* format, va_list args) {
       switch(format[++pos]) {
         case '%': {
           putchar('%');
+          break;
+        }
+        case 'b': {
+          int val = va_arg(args, unsigned);
+          char* str = "";
+          itoa(val, str, 2);
+          puts(str);
           break;
         }
         case 'c': {
