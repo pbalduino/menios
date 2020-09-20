@@ -26,9 +26,9 @@ static uint16_t get_cursor_position(void) {
 
 static void set_cursor_position(uint16_t pos) {
   outb(VGA_CTRL, VGA_HIGH_CURSOR);
-	outb(VGA_DATA, (uint8_t) (pos & 0xff));
-	outb(VGA_CTRL, VGA_LOW_CURSOR);
-	outb(VGA_DATA, (uint8_t) ((pos >> 8) & 0xff));
+  outb(VGA_DATA, (uint8_t) (pos & 0xff));
+  outb(VGA_CTRL, VGA_LOW_CURSOR);
+  outb(VGA_DATA, (uint8_t) ((pos >> 8) & 0xff));
 }
 
 int putchar(int ch) {

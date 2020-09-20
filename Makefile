@@ -56,11 +56,12 @@ ifeq ($(OS_NAME),linux)
 	$(NASM) -f elf32 $(KERNEL_DIR)/mem_page.s -o $(OUTPUT_DIR)/mem_page.o
 	$(NASM) $(NASM_OPTS)
 	$(GCC) $(GCC_OPTS)
+	$(GCC) -ggdb -Os -m32 $(SRC) -o bin/kernel.debug -nostdlib -ffreestanding -mno-red-zone -fno-exceptions -nostdlib -Wall -Wextra -Werror -T boot/elf.ld -I $(INCLUDE_DIR)
 else
 	@make docker
 	@echo "Building inside Docker"
 	$(DOCKER) run -it --mount type=bind,source=$$(pwd),target=/mnt $(DOCKER_IMAGE) /bin/sh -c "cd /mnt && make build"
-	qemu-img resize $(BOOTLOADER) 8g
+	# qemu-img resize $(BOOTLOADER) 8g
 endif
 
 .PHONY: run
@@ -74,3 +75,8 @@ fdisk:
 .PHONY: ftell
 ftell:
 	$(GCC) -Wall -Wextra -Werror tools/mbr.c -o bin/mbr && bin/mbr $(BOOTLOADER) ftell
+
+.PHONY: debug
+debug:
+	$(QEMU_X86) $(QEMU_OPTS) -s -S &
+	gdb bin/kernel.debug -x gdb.txt

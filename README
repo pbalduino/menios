@@ -14,7 +14,7 @@ To run:
   make build run
 
 To do:
-[ ] Add support to gdb
+[x] Add support to gdb
 [x] Create a todo list
 [x] Dev environment
 [x] ASM 512b bootloader
