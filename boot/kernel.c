@@ -18,10 +18,5 @@ void kernel_start() {
 
   printf("\n");
 
-  // start extra cores
-  warn("A warning won't do harm");
-
-  printf("\n");
-
-  panic("Calling panic for testing purposes");
+  printf("MeniOS is good to go\n");
 }
