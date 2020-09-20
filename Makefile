@@ -9,6 +9,8 @@ KERNEL_DIR = kernel
 
 KERNEL_SRC = \
 	$(KERNEL_DIR)/ata.c \
+	$(KERNEL_DIR)/fs.c \
+	$(KERNEL_DIR)/fs/fat32.c \
 	$(KERNEL_DIR)/panic.c \
 	$(KERNEL_DIR)/pci.c \
 	$(KERNEL_DIR)/pmap.c \
@@ -31,8 +33,8 @@ GCC_OPTS = -Os -m32 $(SRC) -o $(BOOTLOADER) -nostdlib -ffreestanding -mno-red-zo
 
 QEMU_MEMORY = 8
 QEMU_X86 = qemu-system-i386
-QEMU_OPTS = -hda $(BOOTLOADER) -m $(QEMU_MEMORY) -no-reboot -no-shutdown
-# -hdb $(OUTPUT_DIR)/hdd2.img -cdrom $(OUTPUT_DIR)/cdd.img -usb -device usb-mouse
+QEMU_OPTS = -hda $(BOOTLOADER) -m $(QEMU_MEMORY) -no-reboot -no-shutdown -hdb $(OUTPUT_DIR)/hdb.img -hdd $(OUTPUT_DIR)/cdd.img
+#  -cdrom $(OUTPUT_DIR)/cdd.img -usb -device usb-mouse
 
 NASM = nasm
 NASM_OPTS = -f elf32 $(BOOT_DIR)/boot.s -o $(BOOT_BIN)
@@ -64,3 +66,11 @@ endif
 .PHONY: run
 run:
 	$(QEMU_X86) $(QEMU_OPTS)
+
+.PHONY: ftell
+fdisk:
+	$(GCC) -Wall -Wextra -Werror tools/mbr.c -o bin/mbr && bin/mbr $(BOOTLOADER) fdisk
+
+.PHONY: ftell
+ftell:
+	$(GCC) -Wall -Wextra -Werror tools/mbr.c -o bin/mbr && bin/mbr $(BOOTLOADER) ftell

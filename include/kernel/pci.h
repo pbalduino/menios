@@ -18,7 +18,11 @@ typedef struct {
   uint16_t status;
   uint16_t command;
   uint16_t bar0;
+  uint16_t bar1;
   uint16_t bar2;
+  uint16_t bar3;
+  uint16_t bar4;
+  uint16_t bar5;
 } pci_device_t;
 
 pci_device_t pci_devices[PCI_MAX_DEVICES];

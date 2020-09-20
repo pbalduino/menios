@@ -53,12 +53,16 @@ void init_pci() {
           pci_devices[count].progif = (tmp >> 8) & 0xff;
           pci_devices[count].revision_id = tmp & 0xff;
           pci_devices[count].bar0 = pci_read_word(bus, slot, func, 0x10);
+          pci_devices[count].bar1 = pci_read_word(bus, slot, func, 0x14);
           pci_devices[count].bar2 = pci_read_word(bus, slot, func, 0x18);
+          pci_devices[count].bar3 = pci_read_word(bus, slot, func, 0x1c);
+          pci_devices[count].bar4 = pci_read_word(bus, slot, func, 0x20);
+          pci_devices[count].bar5 = pci_read_word(bus, slot, func, 0x24);
           count++;
         }
       }
     }
   }
-  printf("%d devices detected\n\n", count);
+  printf("%d devices detected\n", count);
   is_pci_ready = true;
 }
