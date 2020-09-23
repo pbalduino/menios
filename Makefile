@@ -11,8 +11,13 @@ KERNEL_SRC = \
 	$(KERNEL_DIR)/ata.c \
 	$(KERNEL_DIR)/fs.c \
 	$(KERNEL_DIR)/fs/fat32.c \
+	$(KERNEL_DIR)/idt.c \
+	$(KERNEL_DIR)/irq.c \
+	$(KERNEL_DIR)/isr.c \
+	$(KERNEL_DIR)/keyboard.c \
 	$(KERNEL_DIR)/panic.c \
 	$(KERNEL_DIR)/pci.c \
+	$(KERNEL_DIR)/pic.c \
 	$(KERNEL_DIR)/pmap.c \
 	$(KERNEL_DIR)/rtclock.c \
 	$(KERNEL_DIR)/storage.c \
@@ -29,11 +34,11 @@ BOOTLOADER= $(OUTPUT_DIR)/boot.bin
 SRC = $(BOOT_SRC) $(LIB_SRC) $(KERNEL_SRC)
 
 GCC = $(GCC_DIR)/gcc
-GCC_OPTS = -Os -m32 $(SRC) -o $(BOOTLOADER) -nostdlib -ffreestanding -mno-red-zone -fno-exceptions -nostdlib -Wall -Wextra -Werror -T boot/kernel.ld -I $(INCLUDE_DIR)
+GCC_OPTS = -Os -m32 $(SRC) -o $(BOOTLOADER) -nostdlib -ffreestanding -mno-red-zone -fno-exceptions -Wall -Wextra -Werror -T boot/kernel.ld -I $(INCLUDE_DIR)
 
 QEMU_MEMORY = 8
 QEMU_X86 = qemu-system-i386
-QEMU_OPTS = -hda $(BOOTLOADER) -m $(QEMU_MEMORY) -no-reboot -no-shutdown -hdb $(OUTPUT_DIR)/hdb.img -hdd $(OUTPUT_DIR)/cdd.img
+QEMU_OPTS = -hda $(BOOTLOADER) -m $(QEMU_MEMORY) -hdb $(OUTPUT_DIR)/hdb.img -hdd $(OUTPUT_DIR)/cdd.img -no-reboot -no-shutdown
 #  -cdrom $(OUTPUT_DIR)/cdd.img -usb -device usb-mouse
 
 NASM = nasm
@@ -56,12 +61,12 @@ ifeq ($(OS_NAME),linux)
 	$(NASM) -f elf32 $(KERNEL_DIR)/mem_page.s -o $(OUTPUT_DIR)/mem_page.o
 	$(NASM) $(NASM_OPTS)
 	$(GCC) $(GCC_OPTS)
-	$(GCC) -ggdb -Os -m32 $(SRC) -o bin/kernel.debug -nostdlib -ffreestanding -mno-red-zone -fno-exceptions -nostdlib -Wall -Wextra -Werror -T boot/elf.ld -I $(INCLUDE_DIR)
+	$(GCC) -ggdb -Os -m32 $(SRC) -o bin/kernel.debug -ffreestanding -mno-red-zone -fno-exceptions -nostdlib -Wall -Wextra -Werror -T boot/elf.ld -I $(INCLUDE_DIR)
 else
 	@make docker
 	@echo "Building inside Docker"
 	$(DOCKER) run -it --mount type=bind,source=$$(pwd),target=/mnt $(DOCKER_IMAGE) /bin/sh -c "cd /mnt && make build"
-	# qemu-img resize $(BOOTLOADER) 8g
+	qemu-img resize $(BOOTLOADER) 8g
 endif
 
 .PHONY: run

@@ -1,10 +1,11 @@
+#include <kernel/rtclock.h>
+#include <kernel/pmap.h>
+
 #include <assert.h>
 #include <mmu.h>
 #include <stdio.h>
 #include <string.h>
-
-#include <kernel/rtclock.h>
-#include <kernel/pmap.h>
+#include <x86.h>
 
 // These variables are set by i386_detect_memory()
 size_t npages;			// Amount of physical memory (in pages)
@@ -40,6 +41,7 @@ static void i386_detect_memory() {
 
 	printf("\nPhysical memory:   %uMB available\n  Base memory:     %uKB\n  Extended memory: %uMB\n\0",
 		totalmem / 1024, basemem, (totalmem - basemem) / 1024);
+	io_wait();
 }
 
 static void init_paging() {
@@ -58,6 +60,7 @@ static void init_paging() {
 
 void init_memory() {
   printf("Initalizing memory\n");
+	io_wait();
 
 	i386_detect_memory();
 

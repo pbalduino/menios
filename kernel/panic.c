@@ -13,17 +13,18 @@ void _panic(const char *file, int line, const char *fmt, ...) {
 
 	if (panicstr)
 		goto dead;
+
 	panicstr = fmt;
 
 	// Be extra sure that the machine is in as reasonable state
 	asm volatile("cli; cld");
 
 	va_start(ap, fmt);
-	printf("!!!!!\n\0");
-	printf("!!!!! kernel panic on CPU %d at %s:%d: \n\0", cpunum(), file, line);
-	printf("!!!!! \0");
+	printf("!!!!!!\n\0");
+	printf("! =( ! kernel panic on CPU %d at %s:%d: \n\0", cpunum(), file, line);
+	printf("!!!!!! \0");
 	vprintf(fmt, ap);
-	printf("\n!!!!!\n\0");
+	printf("\n!!!!!!\n\0");
 	va_end(ap);
 
 	dead:

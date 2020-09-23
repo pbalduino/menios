@@ -45,4 +45,10 @@ static inline void cpuid(uint32_t info, uint32_t *eaxp, uint32_t *ebxp, uint32_t
 		*edxp = edx;
 }
 
+static inline void io_wait() {
+	asm volatile ( "jmp 1f\n\t"
+								 "1:jmp 2f\n\t"
+								 "2:" );
+}
+
 #endif

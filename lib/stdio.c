@@ -18,17 +18,23 @@
 static uint16_t get_cursor_position(void) {
   uint16_t pos = 0;
   outb(VGA_CTRL, VGA_HIGH_CURSOR);
+  io_wait();
   pos |= inb(VGA_DATA);
   outb(VGA_CTRL, VGA_LOW_CURSOR);
+  io_wait();
   pos |= ((uint16_t)inb(VGA_DATA)) << 8;
   return pos;
 }
 
 static void set_cursor_position(uint16_t pos) {
   outb(VGA_CTRL, VGA_HIGH_CURSOR);
+  io_wait();
   outb(VGA_DATA, (uint8_t) (pos & 0xff));
+  io_wait();
   outb(VGA_CTRL, VGA_LOW_CURSOR);
+  io_wait();
   outb(VGA_DATA, (uint8_t) ((pos >> 8) & 0xff));
+  io_wait();
 }
 
 int putchar(int ch) {
@@ -49,6 +55,7 @@ int putchar(int ch) {
     memmove(vga, vga + CRT_COLS, (CRT_SIZE - CRT_COLS) * sizeof(uint16_t));
     for (i = CRT_SIZE - CRT_COLS; i < CRT_SIZE; i++) {
       vga[i] = 0x0700 | ' ';
+      io_wait();
     }
     pos -= CRT_COLS;
   }
