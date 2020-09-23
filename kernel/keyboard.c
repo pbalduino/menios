@@ -1,7 +1,6 @@
 #include <kernel/idt.h>
 #include <kernel/isr.h>
 #include <kernel/keyboard.h>
-#include <kernel/pic.h>
 
 #include <stdio.h>
 #include <x86.h>
@@ -46,8 +45,7 @@ uint8_t keyboard_map[128] = {
 };
 
 void keyboard_handler(registers_t regs) {
-  printf("k");
-  outb(0x20, 0x20);
+  printf("k\n");
   if(sizeof(regs)) { };
 
   uint8_t scancode;

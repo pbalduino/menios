@@ -17,7 +17,6 @@ KERNEL_SRC = \
 	$(KERNEL_DIR)/keyboard.c \
 	$(KERNEL_DIR)/panic.c \
 	$(KERNEL_DIR)/pci.c \
-	$(KERNEL_DIR)/pic.c \
 	$(KERNEL_DIR)/pmap.c \
 	$(KERNEL_DIR)/rtclock.c \
 	$(KERNEL_DIR)/storage.c \
@@ -42,7 +41,7 @@ QEMU_OPTS = -hda $(BOOTLOADER) -m $(QEMU_MEMORY) -hdb $(OUTPUT_DIR)/hdb.img -hdd
 #  -cdrom $(OUTPUT_DIR)/cdd.img -usb -device usb-mouse
 
 NASM = nasm
-NASM_OPTS = -f elf32 $(BOOT_DIR)/boot.s -o $(BOOT_BIN)
+NASM_OPTS = -f elf32 $(BOOT_DIR)/boot.s -w+label -o $(BOOT_BIN)
 
 OS_NAME = $(shell uname -s | tr A-Z a-z)
 

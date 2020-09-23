@@ -34,12 +34,13 @@ void kernel_start() {
   // int a = 0;
   // int b = 42;
   //
-  // b /= a;
+  // b = b / a;
   //
   // printf("hmmmm %d\n", b);
   // asm volatile("sti");
 
-  // while(1) {
+  // while(1) { }
+
   asm volatile("int $0x80"
                :
                : "a" (0x1234), "b" (0x5678), "c" (0x2468), "d" (0x1357));

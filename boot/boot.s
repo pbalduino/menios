@@ -36,9 +36,6 @@ irq%1:
 %endmacro
 
 boot:
-	mov ax, 0x2401
-	int 0x15                      ; enable A20 bit
-
 	mov [disk], dl                ; disk is given by BIOS
 
 	mov ah, 0x02                  ; read sectors
@@ -51,19 +48,21 @@ boot:
 	int 0x13
 
 	cli                           ; disable interruptions before we define GTD
-  xor ax, ax
-  mov ds, ax
-
+  lidt [idt_pointer]            ; load global descriptor table
 	lgdt [gdt_pointer]            ; load global descriptor table
+  call init_pic
+
 	mov eax, cr0
 	or eax, 0x01                  ; enable bit 0 of cr0 - protected mode
 	mov cr0, eax
-	mov ax, DATA_SEG              ; point to the new code selector
+
+  mov ax, DATA_SEG              ; point to the new code selector
 	mov ds, ax
 	mov es, ax
 	mov fs, ax
 	mov gs, ax
 	mov ss, ax
+
 	jmp CODE_SEG:boot2
 gdt_start:
 	dq 0x0                        ; first descriptor of GTD is null - 8 bytes
@@ -108,8 +107,61 @@ gdt_pointer:
 	dd gdt_start
 disk:
 	db 0x0
+
+idt_pointer:
+	dw 0
+	dd 00
+
 CODE_SEG equ gdt_code - gdt_start
 DATA_SEG equ gdt_data - gdt_start
+
+PIC1_COMM equ 0x20
+PIC1_DATA equ PIC1_COMM + 1
+PIC2_COMM equ 0xa0
+PIC2_DATA equ PIC2_COMM + 1
+ICW1 equ 0x11
+ICW2_MASTER equ 0x20	; put IRQs 0-7 at 0x20 (above Intel reserved ints)
+ICW2_SLAVE equ 0x28	; put IRQs 8-15 at 0x28
+ICW3_MASTER equ 0x04	; IR2 connected to slave
+ICW3_SLAVE equ 0x02	; slave has id 2
+ICW4 equ 0x01		; 8086 mode, no auto-EOI, non-buffered mode,
+			;   not special fully nested mode
+io_wait:
+	jmp	.done
+  .done:
+  ret
+
+init_pic:
+  ; Initialize master and slave PIC!
+	mov	al, ICW1
+	out	PIC1_COMM, al		; ICW1 to master
+	call	io_wait
+	out	PIC2_COMM, al		; ICW1 to slave
+	call	io_wait
+	mov	al, ICW2_MASTER
+	out	PIC1_DATA, al		; ICW2 to master
+	call	io_wait
+	mov	al, ICW2_SLAVE
+	out	PIC2_DATA, al		; ICW2 to slave
+	call	io_wait
+	mov	al, ICW3_MASTER
+	out	PIC1_DATA, al		; ICW3 to master
+	call	io_wait
+	mov	al, ICW3_SLAVE
+	out	PIC2_DATA, al		; ICW3 to slave
+	call	io_wait
+	mov	al, ICW4
+	out	PIC1_DATA, al		; ICW4 to master
+	call	io_wait
+	out	PIC2_DATA, al		; ICW4 to slave
+	call	io_wait
+	mov	al, 0xff		; mask all ints in slave
+	out	PIC2_DATA, al		; OCW1 to slave
+	call	io_wait
+	mov	al, 0xfb		; mask all ints but 2 in master
+	out	PIC1_DATA, al		; OCW1 to master
+	call	io_wait
+  ret
 
 times 400 - ($-$$) db 0        ;   ?b - pad binary with zeroes
 db "MNOS"                      ;   4b - Unique Disk ID / Signature - MENI

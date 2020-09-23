@@ -58,8 +58,6 @@ void init_idt() {
   // idt_set_gate(31, (uint32_t) isr31, IDT_KCS, 0x8E);
   idt_set_gate(0x80, (uint32_t) isr128, IDT_KCS, 0x8E);
 
-  init_pic();
-
   idt_set_gate(0x20, (uint32_t) irq0, IDT_KCS, 0x8E);
   idt_set_gate(0x21, (uint32_t) irq1, IDT_KCS, 0x8E);
   // idt_set_gate(34, (uint32_t) irq2, IDT_KCS, 0x8E);
