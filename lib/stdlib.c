@@ -22,14 +22,14 @@ char* itoa(int num, char* str, int base) {
 
   // Process individual digits
   while (num != 0) {
-     int rem = num % base;
-     str[i++] = (rem > 9)? (rem-10) + 'a' : rem + '0';
-     num = num / base;
+    int rem = num % base;
+    str[i++] = (rem > 9)? (rem-10) + 'a' : rem + '0';
+    num = num / base;
   }
 
   // If number is negative, append '-'
   if (isNegative) {
-     str[i++] = '-';
+    str[i++] = '-';
    }
 
   str[i] = '\0'; // Append string terminator

@@ -8,6 +8,8 @@
 #define PCI_CONFIG_ADDRESS 0xcf8
 #define PCI_CONFIG_DATA    0xcfc
 
+bool is_pci_ready = false;
+
 uint16_t vendor_id(uint32_t data) {
   return (uint16_t)(data & 0xffff);
 }
@@ -29,8 +31,6 @@ uint32_t pci_read_word(uint8_t bus, uint8_t slot, uint8_t func, uint8_t offset) 
 }
 
 void init_pci() {
-  assert(!is_pci_ready);
-
   printf("Detecting PCI devices... ");
 
   int count = 0;
