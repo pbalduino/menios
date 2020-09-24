@@ -45,6 +45,8 @@ int putchar(int ch) {
   if(ch == '\n') {
     pos -= (pos % CRT_COLS);
     pos += CRT_COLS;
+  // } if(ch == '\b') {
+  //   vga[--pos] = color | ' ';
   } else {
     vga[pos++] = color | ch;
   }
@@ -54,8 +56,7 @@ int putchar(int ch) {
 
     memmove(vga, vga + CRT_COLS, (CRT_SIZE - CRT_COLS) * sizeof(uint16_t));
     for (i = CRT_SIZE - CRT_COLS; i < CRT_SIZE; i++) {
-      vga[i] = 0x0700 | ' ';
-      io_wait();
+      vga[i] = color | ' ';
     }
     pos -= CRT_COLS;
   }

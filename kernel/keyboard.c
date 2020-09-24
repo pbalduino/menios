@@ -94,10 +94,10 @@ char* gets(char* str) {
 
   while((ch=getchar()) != '\n') {
     putchar(ch);
-    *str = ch;
+    *str = (char) ch;
     str++;
+    *str = '\0';
   }
-  str = '\0';
 
   return p;
 }
