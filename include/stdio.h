@@ -10,6 +10,10 @@
 #define FLAG_TYPE  0x08 // The '#' flag
 #define FLAG_ZERO  0x10 // The '0' flag
 
+int getchar();
+
+char* gets(char* str);
+
 int printf(const char *format, ...);
 
 int putchar(int ch);

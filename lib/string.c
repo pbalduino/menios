@@ -1,3 +1,4 @@
+#include <assert.h>
 #include <string.h>
 
 size_t strlen(const char *s) {
@@ -14,9 +15,14 @@ void swap(char* a, char* b) {
   *a = t;
 }
 
-void strrev(char str[], int length) {
-  int start = 0;
-  int end = length -1;
+int	strcmp(const char *s1, const char *s2) {
+  for(; *s1==*s2 && *s1; s1++, s2++){ };
+	return *(unsigned char *)s1 - *(unsigned char *)s2;
+}
+
+void strrev(char str[], int32_t length) {
+  int32_t start = 0;
+  int32_t end = length -1;
   while (start < end) {
     swap(&str[start], &str[end]);
     start++;
@@ -24,7 +30,24 @@ void strrev(char str[], int length) {
   }
 }
 
-void* memset(void *v, int c, size_t n) {
+char*	strncat(char *dst, const char *src, size_t size) {
+	if (size != 0) {
+		char *d = dst;
+		const char *s = src;
+		while (*d != 0) d++;
+		do {
+			if ((*d = *s++) == 0) break;
+			d++;
+		} while (--size != 0);
+		*d = 0;
+	}
+
+  assert(dst[strlen(dst) - 1] == 0);
+
+	return dst;
+}
+
+void* memset(void *v, int32_t c, size_t n) {
 	if (n == 0)
 		return v;
 
@@ -43,32 +66,43 @@ void* memset(void *v, int c, size_t n) {
 	return v;
 }
 
-void * memmove(void *dst, const void *src, size_t n) {
-	const char *s;
-	char *d;
+#ifdef __GNUC__
+typedef __attribute__((__may_alias__)) size_t WT;
+#define WS (sizeof(WT))
+#endif
 
-	s = src;
-	d = dst;
-	if (s < d && s + n > d) {
-		s += n;
-		d += n;
-		if ((int)s%4 == 0 && (int)d%4 == 0 && n%4 == 0)
-			asm volatile("std; rep movsl\n"
-				:: "D" (d-4), "S" (s-4), "c" (n/4) : "cc", "memory");
-		else
-			asm volatile("std; rep movsb\n"
-				:: "D" (d-1), "S" (s-1), "c" (n) : "cc", "memory");
-		// Some versions of GCC rely on DF being clear
-		asm volatile("cld" ::: "cc");
-	} else {
-		if ((int)s%4 == 0 && (int)d%4 == 0 && n%4 == 0)
-			asm volatile("cld; rep movsl\n"
-				:: "D" (d), "S" (s), "c" (n/4) : "cc", "memory");
-		else
-			asm volatile("cld; rep movsb\n"
-				:: "D" (d), "S" (s), "c" (n) : "cc", "memory");
+void *memmove(void *dest, const void *src, size_t n) {
+  char *d = dest;
+  const char *s = src;
+
+  if (d==s) return d;
+  if ((uintptr_t)s-(uintptr_t)d-n <= -2*n) return memcpy(d, s, n);
+
+  if (d<s) {
+#ifdef __GNUC__
+	if ((uintptr_t)s % WS == (uintptr_t)d % WS) {
+		while ((uintptr_t)d % WS) {
+  		if (!n--) return dest;
+  		*d++ = *s++;
+		}
+		for (; n>=WS; n-=WS, d+=WS, s+=WS) *(WT *)d = *(WT *)s;
 	}
-	return dst;
+#endif
+		for (; n; n--) *d++ = *s++;
+	} else {
+#ifdef __GNUC__
+	if ((uintptr_t)s % WS == (uintptr_t)d % WS) {
+		while ((uintptr_t)(d+n) % WS) {
+			if (!n--) return dest;
+			d[n] = s[n];
+		}
+		while (n>=WS) n-=WS, *(WT *)(d+n) = *(WT *)(s+n);
+	}
+#endif
+		while (n) n--, d[n] = s[n];
+	}
+
+	return dest;
 }
 
 void * memcpy(void *dst, const void *src, size_t n) {

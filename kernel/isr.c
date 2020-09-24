@@ -22,6 +22,7 @@ void isr_handler(registers_t regs) {
     regs.ebx,
     regs.ecx,
     regs.edx);
+
   asm volatile("cli\n"
                "hlt\n");
 }

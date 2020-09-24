@@ -1,8 +1,10 @@
 #include <kernel/idt.h>
 #include <kernel/isr.h>
 #include <kernel/keyboard.h>
+#include <kernel/pic.h>
 
 #include <stdio.h>
+#include <string.h>
 #include <x86.h>
 
 uint8_t keyboard_map[128] = {
@@ -75,11 +77,46 @@ void keyboard_handler(registers_t regs) {
      putchar(keyboard_map[scancode]);
   }
   /* Send End of Interrupt (EOI) to master PIC */
-  outb(0x20, 0x20);
+  outb(PIC1_COMM, 0x20);
 }
 
 void init_keyboard() {
   printf("Initing keyboard\n");
   idt_set_gate(0x21, (uint32_t) irq1, IDT_KCS, 0x8e);
   register_interrupt_handler(IRQ1, keyboard_handler);
+}
+
+// FIXME: it's not standard
+char* gets(char* str) {
+  char ch, *p;
+
+  p = str;
+
+  while((ch=getchar()) != '\n') {
+    putchar(ch);
+    *str = ch;
+    str++;
+  }
+  str = '\0';
+
+  return p;
+}
+
+// FIXME: it's not standard
+int getchar() {
+  // bool shift, ctrl, alt;
+  int scancode;
+
+  while(1) {
+    while(!(inb(0x64) & 0x01)) {};
+
+    scancode = inb(0x60);
+
+    outb(PIC1_COMM, 0x20);
+
+    if(scancode & 0x80) continue;
+    else if(keyboard_map[scancode]) break;
+  }
+
+  return keyboard_map[scancode];
 }

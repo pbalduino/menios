@@ -15,6 +15,7 @@ KERNEL_SRC = \
 	$(KERNEL_DIR)/irq.c \
 	$(KERNEL_DIR)/isr.c \
 	$(KERNEL_DIR)/keyboard.c \
+	$(KERNEL_DIR)/mosh.c \
 	$(KERNEL_DIR)/panic.c \
 	$(KERNEL_DIR)/pci.c \
 	$(KERNEL_DIR)/pmap.c \
