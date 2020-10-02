@@ -14,12 +14,12 @@ int getchar();
 
 char* gets(char* str);
 
-int printf(const char *format, ...);
-
 int putchar(int ch);
 
 int puts(const char *s);
 
 int	vprintf(const char*, va_list);
+
+__attribute__ ((format (printf, 1, 2))) int printf(const char* format, ...);
 
 #endif

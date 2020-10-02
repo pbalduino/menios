@@ -24,7 +24,11 @@ KERNEL_SRC = \
 	$(KERNEL_DIR)/storage.c \
 	$(OUTPUT_DIR)/mem_page.o
 
-LIB_SRC = $(LIB_DIR)/stdio.c $(LIB_DIR)/stdlib.c $(LIB_DIR)/string.c
+LIB_SRC = \
+	$(LIB_DIR)/printf.c \
+	$(LIB_DIR)/stdio.c \
+	$(LIB_DIR)/stdlib.c \
+	$(LIB_DIR)/string.c
 
 BOOT_DIR = boot
 BOOT_BIN = $(OUTPUT_DIR)/boot.o
