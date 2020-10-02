@@ -15,19 +15,18 @@ int main() {
 }
 
 void kernel_start() {
-  init_idt();
-
-  init_memory();
-
-  init_pci();
-
-  init_storage();
+  // init_idt();
 
   init_keyboard();
-
-  asm volatile("sti\n");
+  //
+  // init_memory();
+  //
+  // init_pci();
+  //
+  // init_storage();
 
   printf("\nMeniOS is good to go\n");
 
   mosh();
+  while(1){ }
 }

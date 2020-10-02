@@ -20,6 +20,7 @@ KERNEL_SRC = \
 	$(KERNEL_DIR)/pci.c \
 	$(KERNEL_DIR)/pmap.c \
 	$(KERNEL_DIR)/rtclock.c \
+	$(KERNEL_DIR)/start.c \
 	$(KERNEL_DIR)/storage.c \
 	$(OUTPUT_DIR)/mem_page.o
 
@@ -27,7 +28,7 @@ LIB_SRC = $(LIB_DIR)/stdio.c $(LIB_DIR)/stdlib.c $(LIB_DIR)/string.c
 
 BOOT_DIR = boot
 BOOT_BIN = $(OUTPUT_DIR)/boot.o
-BOOT_SRC = $(BOOT_DIR)/kernel.c $(BOOT_BIN)
+BOOT_SRC = $(BOOT_BIN)
 BOOT_IMG = $(OUTPUT_DIR)/hda.img
 BOOTLOADER= $(OUTPUT_DIR)/boot.bin
 
