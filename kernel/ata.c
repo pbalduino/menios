@@ -10,7 +10,7 @@ static int ata_wait_ready(bool check_error, uint16_t io_base, uint8_t devno) {
 
   printf("Reading DEVICE_%x - %x", (devno & 1), inb(io_base + ATA_REG_HDDEVSEL));
 
-  printf(" comm: %b ", 0xe0 | (devno & 1) << 4);
+  printf(" comm: %x ", 0xe0 | (devno & 1) << 4);
   outb(io_base + ATA_REG_HDDEVSEL, 0xe0 | (devno & 1) << 4);
 
   inb(io_base + ATA_REG_STATUS);

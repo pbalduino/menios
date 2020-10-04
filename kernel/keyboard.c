@@ -47,7 +47,6 @@ uint8_t keyboard_map[128] = {
 };
 
 void keyboard_handler(registers_t regs) {
-  printf("k\n");
   if(sizeof(regs)) { };
 
   uint8_t scancode;
@@ -80,10 +79,31 @@ void keyboard_handler(registers_t regs) {
   outb(PIC1_COMM, 0x20);
 }
 
+void handle_keyboard_event() {
+  putchar('.');
+}
+
+void drain_keyboard_and_mouse() {
+	uint8_t stat;
+	// struct cursor old_cursor = cursor;
+
+	while ((stat = inb(KBSTATP)) & KBS_DIB) {
+		if (stat & KBS_FROM_MOUSE) {
+			// handle_mouse_event();
+		// else
+			handle_keyboard_event();
+    }
+	}
+}
+
 void init_keyboard() {
   printf("Initing keyboard\n");
-  idt_set_gate(0x21, (uint32_t) irq1, IDT_KCS, 0x8e);
-  register_interrupt_handler(IRQ1, keyboard_handler);
+
+  drain_keyboard_and_mouse();
+
+  irq_set_mask(IRQ_KEYBOARD);
+  // idt_set_gate(0x21, (uint32_t) irq1, IDT_KCS, 0x8e);
+  // register_interrupt_handler(IRQ1, keyboard_handler);
 }
 
 // FIXME: it's not standard
@@ -113,6 +133,8 @@ int getchar() {
     scancode = inb(0x60);
 
     outb(PIC1_COMM, 0x20);
+
+    // outb(0x20, 0x20);
 
     if(scancode & 0x80) continue;
     else if(keyboard_map[scancode]) break;

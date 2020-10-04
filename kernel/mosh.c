@@ -1,3 +1,4 @@
+#include <kernel/dummy.h>
 #include <kernel/pmap.h>
 #include <stdio.h>
 #include <string.h>

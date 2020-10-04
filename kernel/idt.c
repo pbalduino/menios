@@ -1,4 +1,5 @@
 #include <kernel/idt.h>
+#include <kernel/isr.h>
 #include <kernel/pic.h>
 #include <stdio.h>
 
@@ -14,6 +15,12 @@ void idt_set_gate(uint8_t num, uint32_t base, uint16_t sel, uint8_t flags) {
   idt[num].flags = flags;
 }
 
+void handle_timer(registers_t regs) {
+  if(sizeof(regs)) {}
+
+  printf(".");
+}
+
 /* Installs the IDT */
 void init_idt() {
   /* Sets the special IDT pointer up */
@@ -24,20 +31,20 @@ void init_idt() {
   memset(&idt, 0, sizeof(struct idt_entry) * 256);
 
   /* Add any new ISRs to the IDT here using idt_set_gate */
-  idt_set_gate(0x00, (uint32_t) isr0, IDT_KCS, 0x8E);
+  // idt_set_gate(0x00, (uint32_t) isr0, IDT_KCS, 0x8E);
   // idt_set_gate(0x01, (uint32_t) isr1, IDT_KCS, 0x8E);
   // idt_set_gate(0x02, (uint32_t) isr2, IDT_KCS, 0x0E); // reserved, present
   // idt_set_gate(0x03, (uint32_t) isr3, IDT_KCS, 0x8E);
   // idt_set_gate(0x04, (uint32_t) isr4, IDT_KCS, 0x8E);
   // idt_set_gate(0x05, (uint32_t) isr5, IDT_KCS, 0x8E);
-  idt_set_gate(0x06, (uint32_t) isr6, IDT_KCS, 0x8E);
+  // idt_set_gate(0x06, (uint32_t) isr6, IDT_KCS, 0x8E);
   // idt_set_gate(0x07, (uint32_t) isr7, IDT_KCS, 0x8E);
-  idt_set_gate(0x08, (uint32_t) isr8, IDT_KCS, 0x8E);
+  // idt_set_gate(0x08, (uint32_t) isr8, IDT_KCS, 0x8E);
   // idt_set_gate(0x09, (uint32_t) isr9, IDT_KCS, 0x8E);
   // idt_set_gate(0x0a, (uint32_t) isr10, IDT_KCS, 0x8E);
   // idt_set_gate(0x0b, (uint32_t) isr11, IDT_KCS, 0x8E);
   // idt_set_gate(0x0c, (uint32_t) isr12, IDT_KCS, 0x8E);
-  idt_set_gate(0x0d, (uint32_t) isr13, IDT_KCS, 0x8E);
+  // idt_set_gate(0x0d, (uint32_t) isr13, IDT_KCS, 0x8E);
   // idt_set_gate(0x0e, (uint32_t) isr14, IDT_KCS, 0x8E);
   // idt_set_gate(0x0f, (uint32_t) isr15, IDT_KCS, 0x0E); // reserved, present
   // idt_set_gate(0x10, (uint32_t) isr16, IDT_KCS, 0x8E);
@@ -56,10 +63,10 @@ void init_idt() {
   // idt_set_gate(29, (uint32_t) isr29, IDT_KCS, 0x8E);
   // idt_set_gate(30, (uint32_t) isr30, IDT_KCS, 0x8E);
   // idt_set_gate(31, (uint32_t) isr31, IDT_KCS, 0x8E);
-  idt_set_gate(0x80, (uint32_t) isr128, IDT_KCS, 0x8E);
+  // idt_set_gate(0x80, (uint32_t) isr128, IDT_KCS, 0x8E);
 
-  idt_set_gate(0x20, (uint32_t) irq0, IDT_KCS, 0x8E);
-  idt_set_gate(0x21, (uint32_t) irq1, IDT_KCS, 0x8E);
+  // idt_set_gate(IRQ_TIMER, (uint32_t) irq0, IDT_KCS, 0x8E);
+  idt_set_gate(IRQ_KEYBOARD, (uint32_t) irq1, IDT_KCS, 0x8F);
   // idt_set_gate(34, (uint32_t) irq2, IDT_KCS, 0x8E);
   // idt_set_gate(35, (uint32_t) irq3, IDT_KCS, 0x8E);
   // idt_set_gate(36, (uint32_t) irq4, IDT_KCS, 0x8E);
@@ -75,7 +82,8 @@ void init_idt() {
   // idt_set_gate(46, (uint32_t) irq14, IDT_KCS, 0x8E);
   // idt_set_gate(47, (uint32_t) irq15, IDT_KCS, 0x8E);
 
+  // register_interrupt_handler(IRQ_TIMER, handle_timer);
   /* Points the processor's internal register to the new IDT */
   printf("Defining interruption table\n");
-  idt_load();
+  // idt_load();
 }

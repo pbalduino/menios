@@ -9,6 +9,7 @@ KERNEL_DIR = kernel
 
 KERNEL_SRC = \
 	$(KERNEL_DIR)/ata.c \
+	$(KERNEL_DIR)/apic.c \
 	$(KERNEL_DIR)/fs.c \
 	$(KERNEL_DIR)/fs/fat32.c \
 	$(KERNEL_DIR)/idt.c \
@@ -67,6 +68,7 @@ ifeq ($(OS_NAME),linux)
 	$(NASM) $(NASM_OPTS)
 	$(GCC) $(GCC_OPTS)
 	$(GCC) -ggdb -Os -m32 $(SRC) -o bin/kernel.debug -ffreestanding -mno-red-zone -fno-exceptions -nostdlib -Wall -Wextra -Werror -T boot/elf.ld -I $(INCLUDE_DIR)
+	$(GCC) -Wall -Wextra -Werror tools/dummy.c -o bin/dummy && bin/dummy
 else
 	@make docker
 	@echo "Building inside Docker"

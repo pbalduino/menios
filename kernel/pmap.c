@@ -41,7 +41,7 @@ static void i386_detect_memory() {
 	npages = mem.totalmem / (PGSIZE / 1024);
 	npages_basemem = mem.basemem / (PGSIZE / 1024);
 
-	printf("\nPhysical memory:   %uMB available\n  Base memory:     %uKB\n  Extended memory: %uMB\n\0",
+	printf("\nPhysical memory:   %uMB available\n  Base memory:     %uKB\n  Extended memory: %uMB\n",
 		mem.totalmem / 1024, mem.basemem, (mem.totalmem - mem.basemem) / 1024);
 	io_wait();
 }

@@ -30,7 +30,7 @@ isr%1:
 global irq%1
 irq%1:
   cli
-  push byte 0
+  push  0
   push %2 ; push byte %2
   jmp irq_common_stub
 %endmacro
@@ -155,10 +155,10 @@ init_pic:
 	call	io_wait
 	out	PIC2_DATA, al		; ICW4 to slave
 	call	io_wait
-	mov	al, 0xff		; mask all ints in slave
+	mov	al, 0xff		; mask all ints in slave - change to 0
 	out	PIC2_DATA, al		; OCW1 to slave
 	call	io_wait
-	mov	al, 0xfb		; mask all ints but 2 in master
+	mov	al, 0xff        ; mask all ints but 2 in master - change to 0
 	out	PIC1_DATA, al		; OCW1 to master
 	call	io_wait
   ret

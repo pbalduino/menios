@@ -20,11 +20,11 @@ void _panic(const char *file, int line, const char *fmt, ...) {
 	asm volatile("cli; cld");
 
 	va_start(ap, fmt);
-	printf("!!!!!!\n\0");
-	printf("! =( ! kernel panic on CPU %d at %s:%d: \n\0", cpunum(), file, line);
-	printf("!!!!!! \0");
+	printf("!!!!!!\n");
+	printf("! =( ! kernel panic on CPU %d at %s:%d: \n", cpunum(), file, line);
+	printf("!!!!!! ");
 	vprintf(fmt, ap);
-	printf("\n!!!!!!\n\0");
+	printf("\n!!!!!!\n");
 	va_end(ap);
 
 	dead:

@@ -5,6 +5,7 @@
 #include <types.h>
 
 #define IDT_KCS 0x08 // 0x08 is the kernel code segment in GDT since each GDT entry is 8 bits
+
 /* Defines an IDT entry */
 struct idt_entry {
     uint16_t base_lo;
