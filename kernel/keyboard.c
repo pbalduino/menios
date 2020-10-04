@@ -3,6 +3,7 @@
 #include <kernel/keyboard.h>
 #include <kernel/pic.h>
 
+#include <assert.h>
 #include <stdio.h>
 #include <string.h>
 #include <x86.h>
@@ -47,6 +48,7 @@ uint8_t keyboard_map[128] = {
 };
 
 void keyboard_handler(registers_t regs) {
+  debug();
   if(sizeof(regs)) { };
 
   uint8_t scancode;
@@ -80,12 +82,18 @@ void keyboard_handler(registers_t regs) {
 }
 
 void handle_keyboard_event() {
+  debug();
   putchar('.');
 }
 
-void drain_keyboard_and_mouse() {
+void clean_keyboard_buffer() {
+  debug();
 	uint8_t stat;
 	// struct cursor old_cursor = cursor;
+
+  irq_eoi();
+
+  printf("kbd: %x\n", inb(KBDATAP));
 
 	while ((stat = inb(KBSTATP)) & KBS_DIB) {
 		if (stat & KBS_FROM_MOUSE) {
@@ -97,22 +105,27 @@ void drain_keyboard_and_mouse() {
 }
 
 void init_keyboard() {
+  debug();
   printf("Initing keyboard\n");
 
-  drain_keyboard_and_mouse();
-
-  irq_set_mask(IRQ_KEYBOARD);
-  // idt_set_gate(0x21, (uint32_t) irq1, IDT_KCS, 0x8e);
+  // io_wait();
+  //
+  // // clean_keyboard_buffer();
+  //
+  // idt_set_gate(IRQ_OFFSET + IRQ_KEYBOARD, (uint32_t) irq1, IDT_KCS, 0x8e);
+  //
+  // irq_set_mask(IRQ_KEYBOARD);
   // register_interrupt_handler(IRQ1, keyboard_handler);
 }
 
 // FIXME: it's not standard
 char* gets(char* str) {
+  debug();
   char ch, *p;
 
   p = str;
 
-  while((ch=getchar()) != '\n') {
+  while((ch = getchar()) != '\n') {
     putchar(ch);
     *str = (char) ch;
     str++;
@@ -124,6 +137,7 @@ char* gets(char* str) {
 
 // FIXME: it's not standard
 int getchar() {
+  debug();
   // bool shift, ctrl, alt;
   int scancode;
 
@@ -132,9 +146,7 @@ int getchar() {
 
     scancode = inb(0x60);
 
-    outb(PIC1_COMM, 0x20);
-
-    // outb(0x20, 0x20);
+    irq_eoi();
 
     if(scancode & 0x80) continue;
     else if(keyboard_map[scancode]) break;

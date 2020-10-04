@@ -17,7 +17,7 @@ enable_paging:
   push ebp
   mov ebp, esp
   mov eax, cr0                 ; copy CR0 value
-  or eax, 0x800000001          ; enables bit 31 - memory paging
+  or eax, 0x80000001           ; enables bit 31 - memory paging
   mov cr0, eax                 ; update CR0 value
   mov esp, ebp
   pop ebp

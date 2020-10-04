@@ -7,28 +7,22 @@
 #define IDT_KCS 0x08 // 0x08 is the kernel code segment in GDT since each GDT entry is 8 bits
 
 /* Defines an IDT entry */
-struct idt_entry {
+typedef struct {
     uint16_t base_lo;
     uint16_t sel;        /* Our kernel segment goes here! */
     uint8_t  always0;     /* This will ALWAYS be set to 0! */
     uint8_t  flags;       /* Set using the above table! */
     uint16_t base_hi;
-} __attribute__((packed));
+} __attribute__((packed)) idt_entry_t;
 
-struct idt_ptr {
+typedef struct {
     uint16_t limit;
     uint32_t base;
-} __attribute__((packed));
+} __attribute__((packed)) idt_ptr_t;
 
-/* Declare an IDT of 256 entries. Although we will only use the
-*  first 32 entries in this tutorial, the rest exists as a bit
-*  of a trap. If any undefined IDT entry is hit, it normally
-*  will cause an "Unhandled Interrupt" exception. Any descriptor
-*  for which the 'presence' bit is cleared (0) will generate an
-*  "Unhandled Interrupt" exception */
-struct idt_entry idt[256];
+idt_entry_t idt[256];
 
-struct idt_ptr idtp;
+idt_ptr_t idtp;
 
 /* This exists in 'start.asm', and is used to load our IDT */
 extern void idt_load();

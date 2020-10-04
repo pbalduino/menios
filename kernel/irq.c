@@ -35,8 +35,8 @@ void irq_set_mask(uint8_t irq_line) {
     port = PIC2_DATA;
     irq_line -= 8;
   }
-  value = inb(port) | (1 << irq_line);
-  printf("Setting IRQ %d with %x\n", irq_line, value);
+  value = inb(port) & ~(1 << irq_line);
+  printf("Setting IRQ %d with %x @ %x\n", irq_line, value, port);
   outb(port, value);
 }
 

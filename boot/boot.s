@@ -2,7 +2,7 @@ section .boot
 bits 16
 
 global boot
-global idt_load
+; global idt_load
 
 %macro ISR_NO_ERRNO 1
 global isr%1
@@ -48,7 +48,6 @@ boot:
 	int 0x13
 
 	cli                           ; disable interruptions before we define GTD
-  lidt [idt_pointer]            ; load global descriptor table
 	lgdt [gdt_pointer]            ; load global descriptor table
   call init_pic
 
@@ -107,10 +106,6 @@ gdt_pointer:
 	dd gdt_start
 disk:
 	db 0x0
-
-idt_pointer:
-	dw 0
-	dd 00
 
 CODE_SEG equ gdt_code - gdt_start
 DATA_SEG equ gdt_data - gdt_start
@@ -192,11 +187,6 @@ bits 32
 extern idtp
 extern irq_handler
 extern isr_handler
-
-idt_load:
-  lidt [idtp] ; load interrupt descriptor table
-  sti
-  ret
 
 ISR_NO_ERRNO 0
 ISR_NO_ERRNO 1
@@ -308,6 +298,7 @@ boot2:
   ; mov ax, 08h
   ; mov ds, ax
   ; mov ss, ax
+  lidt [idtp]
 	mov esp, kernel_stack_top
 	extern kernel_start
 	call kernel_start
