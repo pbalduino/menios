@@ -1,4 +1,4 @@
-ENTRY(boot)
+ENTRY(init_kernel)
 OUTPUT_FORMAT("binary")
 SECTIONS {
   . = 0x7c00;
@@ -7,11 +7,11 @@ SECTIONS {
     *(.boot)
     *(.text)
   }
-  .rodata ALIGN (4K) :
+  .rodata:
   {
     *(.rodata)
   }
-  .data ALIGN (4K) :
+  .data:
   {
     *(.data)
   }

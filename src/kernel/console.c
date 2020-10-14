@@ -1,6 +1,6 @@
-#include <kernel/arch.h>
 #include <kernel/console.h>
 
+#include <arch.h>
 #include <stdarg.h>
 #include <stdlib.h>
 #include <string.h>
@@ -19,38 +19,30 @@
 
 static uint16_t get_cursor_position(void) {
   uint16_t pos = 0;
-  outb(VGA_CTRL, VGA_HIGH_CURSOR);
-  io_wait();
-  pos |= inb(VGA_DATA);
   outb(VGA_CTRL, VGA_LOW_CURSOR);
-  io_wait();
   pos |= ((uint16_t)inb(VGA_DATA)) << 8;
+  outb(VGA_CTRL, VGA_HIGH_CURSOR);
+  pos |= inb(VGA_DATA);
   return pos;
 }
 
 static void set_cursor_position(uint16_t pos) {
   outb(VGA_CTRL, VGA_HIGH_CURSOR);
-  io_wait();
   outb(VGA_DATA, (uint8_t) (pos & 0xff));
-  io_wait();
   outb(VGA_CTRL, VGA_LOW_CURSOR);
-  io_wait();
   outb(VGA_DATA, (uint8_t) ((pos >> 8) & 0xff));
-  io_wait();
 }
 
 int putchar(int ch) {
   const short color = 0x0700;
-  short* vga = (short*)VGA_MEMORY;
+  uint16_t* vga = (uint16_t*)VGA_MEMORY;
   uint16_t pos = get_cursor_position();
 
   if(ch == '\n') {
     pos -= (pos % CRT_COLS);
     pos += CRT_COLS;
-  // } if(ch == '\b') {
-  //   vga[--pos] = color | ' ';
   } else {
-    vga[pos++] = color | ch;
+    vga[pos++] = (uint16_t)(color | (uint8_t) (ch & 0xff));
   }
 
   if(pos >= CRT_SIZE) {
@@ -68,7 +60,7 @@ int putchar(int ch) {
   return ch;
 }
 
-int puts(const char *s) {
+int puts(const char* s) {
   while(*s) putchar(*s++);
   return 1;
 }

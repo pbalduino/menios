@@ -3,15 +3,16 @@ bits 16
 
 global boot
 global idtp
+global BOOTLOADER_SECTORS
 
 boot:
-  jmp 0:start
-
-start:
+  ; jmp 0:start
+;
+; start:
   mov [disk], dl                ; disk is given by BIOS
 
   mov ah, 0x02                  ; read sectors
-  mov al, 0x10                  ; sectors to read
+  mov al, BOOTLOADER_SECTORS    ; sectors to read
   mov ch, 0x00                  ; cylinder idx
   mov dh, 0x00                  ; head idx
   mov cl, 0x02                  ; sector idx
@@ -19,16 +20,16 @@ start:
   mov bx, copy_target           ; target pointer
   int 0x13
 
-  mov ax, 0x2401
-  int 0x15
-
   cli                           ; disable interruptions before we define GTD
 
-  lgdt [gdtp]                   ; load global descriptor table
+  mov ax, 0x2401
+  int 0x15
 
   mov eax, cr0
 	or eax, 0x01                  ; enable bit 0 of cr0 - protected mode
 	mov cr0, eax
+
+  lgdt [gdtp]                   ; load global descriptor table
 
   mov ax, DATA_SEG              ; point to the new code selector
 	mov ds, ax
@@ -84,23 +85,35 @@ disk:
 
 CODE_SEG equ gdt_code - gdt_start
 DATA_SEG equ gdt_data - gdt_start
+BOOTLOADER_SECTORS equ 0x08
 
 times 400 - ($-$$) db 0        ;   ?b - pad binary with zeroes
 db "MNOS"                      ;   4b - Unique Disk ID / Signature - MENI
 dw 0x0                         ;   2b - Reserved 0x0000
 
-; 16b - first partition - OS, user data, apps, etc
-; 1MB reserved for boot, so let's start @ byte 1048576
+; 16b - first partition - kernel and descriptor
+db 0x80                        ;   1b - bootable or active
+db 0x0                         ;   3b - starting head
+db 0x02                        ;   6bits - starting sector
+db 0x01                        ;  10bits - starting cylinder
+db 0x63                        ;   1b - BFS - Boot Filesystem
+db 0xff                        ;   1b - ending head
+dw 0xffff                      ;   2b - ending sector and cylinder
+dd 0x0002                      ;   4b - relative sector - 2048
+dd 0x4000                      ;   4b - total sectors in partition
+
+; 16b - second partition - drivers, user data, apps, etc
+; 8MB reserved for boot, so let's start @ byte 1048576
 ; at 512b/sector we have sector 2048
 ; at 63sec/track we have track 32
 db 0x80                        ;   1b - bootable or active
 db 0x0                         ;   3b - starting head
 db 0x00                        ;   6bits - starting sector
 db 0x20                        ;  10bits - starting cylinder
-db 0x06                        ;   1b - FAT16 (TODO: improve it later)
+db 0x0c                        ;   1b - FAT32 LBA (TODO: improve it later)
 db 0xff                        ;   1b - ending head
 dw 0xffff                      ;   2b - ending sector and cylinder
-dd 0x00000800                  ;   4b - relative sector - 2048
+dd 0x4002                      ;   4b - relative sector - 8193
 dd 0xffffffff                  ;   4b - total sectors in partition
 
 times 510 - ($-$$) db 0        ;  32b - pad binary with zeroes
@@ -113,8 +126,9 @@ bits 32
 
 boot2:
   extern init_kernel
+  mov esp, kernel_stack_top
   call init_kernel
-  ; cli
+  cli
   hlt
 
 section .bss

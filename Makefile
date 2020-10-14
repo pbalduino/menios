@@ -6,16 +6,21 @@ GCC_DIR = /usr/bin
 LIB_DIR = src/libc
 BOOT_DIR = src/boot
 INCLUDE_DIR = \
-	./include \
-	./include/libc
+	./include/libc \
+	./include
+
 OUTPUT_DIR = bin
 KERNEL_DIR = src/kernel
 
 KERNEL_SRC = \
 	$(KERNEL_DIR)/console.c \
 	$(KERNEL_DIR)/init.c \
+	$(KERNEL_DIR)/irq.c \
+	$(KERNEL_DIR)/keyboard.c \
 	$(KERNEL_DIR)/panic.c \
-	$(KERNEL_DIR)/printf.c
+	$(KERNEL_DIR)/printf.c \
+	$(KERNEL_DIR)/timer.c \
+	$(OUTPUT_DIR)/irq_handler.o \
 
 LIB_SRC = \
 	$(LIB_DIR)/stdlib.c \
@@ -24,20 +29,21 @@ LIB_SRC = \
 BOOT_DIR = src/boot
 BOOT_BIN = $(OUTPUT_DIR)/boot.o
 BOOT_IMG = $(OUTPUT_DIR)/hda.img
-BOOTLOADER= $(OUTPUT_DIR)/boot.bin
+BOOTLOADER = $(OUTPUT_DIR)/boot.bin
+KERNEL = $(OUTPUT_DIR)/kernel.bin
 
 BOOT_SRC = \
 	$(BOOT_BIN)
+	# $(BOOT_DIR)/loader.c
 
-SRC = $(BOOT_SRC) $(LIB_SRC) $(KERNEL_SRC)
+BOOTLOADER_SRC = $(BOOT_SRC) $(LIB_SRC) $(KERNEL_SRC)
 
 GCC = $(GCC_DIR)/gcc
-GCC_OPTS = -Os -m32 $(SRC) -o $(BOOTLOADER) -nostdlib -ffreestanding -mno-red-zone -fno-exceptions -Wall -Wextra -Werror -T $(BOOT_DIR)/kernel$(ARCH).ld $(foreach dir,$(INCLUDE_DIR),-I $(dir)) -D ARCH=$(ARCH)
+GCC_BOOT_OPTS = -m32 $(BOOTLOADER_SRC) -o $(BOOTLOADER) -nostdlib -nostdinc -ffreestanding -mno-red-zone -fno-exceptions -Wall -Wextra -Werror -T $(BOOT_DIR)/boot$(ARCH).ld $(foreach dir,$(INCLUDE_DIR),-I $(dir)) -D ARCH=$(ARCH)
 
 QEMU_MEMORY = 8
 QEMU_X86 = qemu-system-i386
 QEMU_OPTS = -hda $(BOOTLOADER) -m $(QEMU_MEMORY) -no-reboot -no-shutdown
-#  -cdrom $(OUTPUT_DIR)/cdd.img -usb -device usb-mouse
 
 NASM = nasm
 NASM_OPTS = -f elf32 $(BOOT_DIR)/boot$(ARCH).s -o $(BOOT_BIN)
@@ -58,9 +64,12 @@ docker:
 
 .PHONY: build
 build:
+	set +eux
+
 ifeq ($(OS_NAME),linux)
 	$(NASM) $(NASM_OPTS)
-	$(GCC) $(GCC_OPTS)
+	$(NASM) -f elf32 $(KERNEL_DIR)/irq_handler.s -o $(OUTPUT_DIR)/irq_handler.o
+	$(GCC) $(GCC_BOOT_OPTS)
 else
 	@make docker
 	@echo "Building inside Docker"

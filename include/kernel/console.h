@@ -1,5 +1,5 @@
-#ifndef MENIOS_INCLUDE_CONSOLE_H
-#define MENIOS_INCLUDE_CONSOLE_H
+#ifndef MENIOS_INCLUDE_KERNEL_CONSOLE_H
+#define MENIOS_INCLUDE_KERNEL_CONSOLE_H
 
 #include <stdarg.h>
 #include <types.h>
@@ -14,12 +14,13 @@ int getchar();
 
 char* gets(char* str);
 
-int putchar(int ch);
+int putchar(int character);
 
-int puts(const char *s);
+int puts(const char* str);
 
 int	vprintf(const char*, va_list);
 
-__attribute__ ((format (printf, 1, 2))) int printf(const char* format, ...);
+// __attribute__ ((format (printf, 1, 2)))
+int printf(const char* format, ...);
 
 #endif
