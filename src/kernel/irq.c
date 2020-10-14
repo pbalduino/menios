@@ -48,7 +48,7 @@ void irq_set_mask(uint8_t irq_line) {
     irq_line -= 8;
   }
   value = inb(port) & ~(1 << irq_line);
-  printf("Setting IRQ %d with %x @ %x\n", irq_line, value, port);
+  printf("  * Setting IRQ%d\n", irq_line);
   outb(port, value);
 }
 
@@ -63,10 +63,10 @@ void irq_eoi() {
 }
 
 void init_irq() {
-  printf("Setting interrupts\n");
+  printf("* Setting interrupts\n");
   init_idt();
 
   remap_irq();
 
-  printf("limit: %d, base: %x\n", idtp->limit, idtp->base);
+  asm volatile("sti");
 }

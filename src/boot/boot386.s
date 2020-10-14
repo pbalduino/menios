@@ -6,11 +6,13 @@ global idtp
 global BOOTLOADER_SECTORS
 
 boot:
-  ; jmp 0:start
-;
-; start:
-  mov [disk], dl                ; disk is given by BIOS
+  jmp 0:start
 
+start:
+  mov ax, 0x2401
+  int 0x15
+
+  mov [disk], dl                ; disk is given by BIOS
   mov ah, 0x02                  ; read sectors
   mov al, BOOTLOADER_SECTORS    ; sectors to read
   mov ch, 0x00                  ; cylinder idx
@@ -21,9 +23,7 @@ boot:
   int 0x13
 
   cli                           ; disable interruptions before we define GTD
-
-  mov ax, 0x2401
-  int 0x15
+  lgdt [gdtp]                   ; load global descriptor table
 
   mov eax, cr0
 	or eax, 0x01                  ; enable bit 0 of cr0 - protected mode
@@ -85,7 +85,7 @@ disk:
 
 CODE_SEG equ gdt_code - gdt_start
 DATA_SEG equ gdt_data - gdt_start
-BOOTLOADER_SECTORS equ 0x08
+BOOTLOADER_SECTORS equ 0x10
 
 times 400 - ($-$$) db 0        ;   ?b - pad binary with zeroes
 db "MNOS"                      ;   4b - Unique Disk ID / Signature - MENI
@@ -126,10 +126,11 @@ bits 32
 
 boot2:
   extern init_kernel
-  mov esp, kernel_stack_top
-  call init_kernel
-  cli
-  hlt
+
+  mov esp,kernel_stack_top
+	call init_kernel
+	cli
+	hlt
 
 section .bss
 align 4

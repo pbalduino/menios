@@ -3,6 +3,7 @@
 #include <kernel/irq.h>
 #include <kernel/keyboard.h>
 #include <arch.h>
+#include <assert.h>
 #include <types.h>
 
 extern void irq_keyboard();
@@ -132,7 +133,7 @@ static int get_data_from_keyboard() {
 		shift &= ~E0ESC;
 	}
 
-  printf("%x ", data);
+  // printf("%x ", data);
 
 	shift |= shiftcode[data];
 	shift ^= togglecode[data];
@@ -186,13 +187,14 @@ int getchar() {
 }
 
 void keyboard_handler(registers_t* regs) {
-  puts("Received keyboard\n");
 	if(regs){ };
+  // printf("  Received keyboard: %x\n", regs->int_no, regs->err_code);
+	clean_buffer();
 	irq_eoi();
 }
 
 void init_keyboard() {
-  printf("Initing keyboard\n");
+  printf("* Initing keyboard\n");
 
   clean_buffer();
 
@@ -200,5 +202,5 @@ void init_keyboard() {
 
   irq_set_mask(IRQ_KEYBOARD);
 
-  printf("keyb handler: %x:%x\n", idt[IRQ_OFFSET + IRQ_KEYBOARD].base_hi, idt[IRQ_OFFSET + IRQ_KEYBOARD].base_lo);
+  printf("  * Keyboard handler: %x%x\n", idt[IRQ_OFFSET + IRQ_KEYBOARD].base_hi, idt[IRQ_OFFSET + IRQ_KEYBOARD].base_lo);
 }
