@@ -188,7 +188,6 @@ int getchar() {
 
 void keyboard_handler(registers_t* regs) {
 	if(regs){ };
-  // printf("  Received keyboard: %x\n", regs->int_no, regs->err_code);
 	clean_buffer();
 	irq_eoi();
 }

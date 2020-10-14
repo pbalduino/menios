@@ -9,10 +9,9 @@ int init_kernel() {
   init_irq();
 
   init_keyboard();
-  // init_timer();
+  init_timer();
 
-  puts("* MeniOS is good to go.\n");
-  putchar('%');
+  puts("* MeniOS is good to go.\n\n# ");
 
   uint8_t c;
   while(true) {

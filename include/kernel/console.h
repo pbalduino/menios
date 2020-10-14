@@ -23,4 +23,8 @@ int	vprintf(const char*, va_list);
 // __attribute__ ((format (printf, 1, 2)))
 int printf(const char* format, ...);
 
+void set_cursor_position(uint16_t pos);
+
+uint16_t get_cursor_position();
+
 #endif

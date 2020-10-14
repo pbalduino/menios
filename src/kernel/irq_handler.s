@@ -43,17 +43,14 @@ irq_timer:
   popa
   iret
 
+; 11931820 = B610AC
 reset_timer:
   pusha
   mov al, 0x36
   out 0x43, al         ; tell the PIT which channel we're setting
-  mov ax, 1193182
+  mov ax, 0xffff0000
   out 0x40, al         ; send low byte
   mov al, ah
   out 0x40, al         ; send high byte")
   popa
   ret
-
-section .data
-timer_text: db "Timer! \o/", 13, 10, 0
-uhu_text: db "Keyboard! \o/", 13, 10, 0

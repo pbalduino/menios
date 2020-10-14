@@ -17,7 +17,7 @@
 #define CRT_ROWS 25
 #define CRT_SIZE (CRT_COLS * CRT_ROWS)
 
-static uint16_t get_cursor_position(void) {
+uint16_t get_cursor_position() {
   uint16_t pos = 0;
   outb(VGA_CTRL, VGA_LOW_CURSOR);
   pos |= ((uint16_t)inb(VGA_DATA)) << 8;
@@ -26,7 +26,7 @@ static uint16_t get_cursor_position(void) {
   return pos;
 }
 
-static void set_cursor_position(uint16_t pos) {
+void set_cursor_position(uint16_t pos) {
   outb(VGA_CTRL, VGA_HIGH_CURSOR);
   outb(VGA_DATA, (uint8_t) (pos & 0xff));
   outb(VGA_CTRL, VGA_LOW_CURSOR);
