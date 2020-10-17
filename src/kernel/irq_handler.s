@@ -48,7 +48,7 @@ reset_timer:
   pusha
   mov al, 0x36
   out 0x43, al         ; tell the PIT which channel we're setting
-  mov ax, 0xffff0000
+  mov ax, 11931
   out 0x40, al         ; send low byte
   mov al, ah
   out 0x40, al         ; send high byte")

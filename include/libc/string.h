@@ -1,7 +1,11 @@
-#ifndef MENIOS_INCLUDE_STRING_H
-#define MENIOS_INCLUDE_STRING_H
+#ifndef INCLUDE_STRING_H
+#define INCLUDE_STRING_H
 
 #include <types.h>
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 size_t strlen(const char *s);
 
@@ -27,5 +31,9 @@ int	memcmp(const void *s1, const void *s2, size_t len);
 void*	memfind(const void *s, int32_t c, size_t len);
 
 long strtol(const char *s, char **endptr, int32_t base);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

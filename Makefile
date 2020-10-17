@@ -14,13 +14,17 @@ KERNEL_DIR = src/kernel
 
 KERNEL_SRC = \
 	$(KERNEL_DIR)/console.c \
+	$(KERNEL_DIR)/idt.c \
 	$(KERNEL_DIR)/init.c \
 	$(KERNEL_DIR)/irq.c \
+	$(KERNEL_DIR)/isr.c \
 	$(KERNEL_DIR)/keyboard.c \
 	$(KERNEL_DIR)/panic.c \
+	$(KERNEL_DIR)/pmap.c \
 	$(KERNEL_DIR)/printf.c \
 	$(KERNEL_DIR)/timer.c \
 	$(OUTPUT_DIR)/irq_handler.o \
+	$(OUTPUT_DIR)/paging.o \
 
 LIB_SRC = \
 	$(LIB_DIR)/stdlib.c \
@@ -69,6 +73,7 @@ build:
 ifeq ($(OS_NAME),linux)
 	$(NASM) $(NASM_OPTS)
 	$(NASM) -f elf32 $(KERNEL_DIR)/irq_handler.s -o $(OUTPUT_DIR)/irq_handler.o
+	$(NASM) -f elf32 $(KERNEL_DIR)/paging.s -o $(OUTPUT_DIR)/paging.o
 	$(GCC) $(GCC_BOOT_OPTS)
 else
 	@make docker

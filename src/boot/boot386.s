@@ -127,7 +127,7 @@ bits 32
 boot2:
   extern init_kernel
 
-  mov esp,kernel_stack_top
+  mov esp, kernel_stack_top
 	call init_kernel
 	cli
 	hlt

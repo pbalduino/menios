@@ -5,6 +5,11 @@
 
 #define GD_KT     0x08 // Kernel text
 
+#define IDT_32BIT_INTERRUPT_GATE 0x0e
+#define IDT_STORAGE_SEGMENT      0x20
+#define IDT_DPL_3                0x60
+#define IDT_PRESENT              0x80
+
 typedef struct {
   uint16_t base_lo;
   uint16_t segment;
@@ -26,5 +31,7 @@ typedef struct {
 } registers_t;
 
 typedef void (*isr_t)(registers_t*);
+
+void set_int_handler(uint8_t int_no, isr_t handler, uint16_t segment, uint8_t flags);
 
 #endif

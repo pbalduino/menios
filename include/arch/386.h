@@ -3,6 +3,8 @@
 
 #include <types.h>
 
+uint32_t __force_order;
+
 static inline uint8_t inb(int port) {
 	uint8_t data;
 	asm volatile("inb %w1,%0" : "=a" (data) : "d" (port));
@@ -43,6 +45,12 @@ static inline void cpuid(uint32_t info, uint32_t *eaxp, uint32_t *ebxp, uint32_t
 		*ecxp = ecx;
 	if (edxp)
 		*edxp = edx;
+}
+
+static inline uint32_t read_cr2() {
+	unsigned long val;
+	asm volatile("mov %%cr2,%0\n\t" : "=r" (val), "=m" (__force_order));
+	return val;
 }
 
 static inline void io_wait() {

@@ -3,8 +3,8 @@
 #include <kernel/irq.h>
 #include <kernel/timer.h>
 
-#define PARTS 4
-#define DELAY 5
+#define PARTS 8
+#define DELAY 20
 
 extern void irq_timer();
 extern void reset_timer();
@@ -12,13 +12,20 @@ extern void reset_timer();
 static uint8_t spin_pos;
 
 void timer_handler(registers_t* regs) {
-  uint8_t spinner[4] = {'|','/','-','\\'};
+  if(regs) {};
+
+  char* spinner[PARTS] = {"[=   ]",
+                          "[==  ]",
+                          "[=== ]",
+                          "[====]",
+                          "[ ===]",
+                          "[  ==]",
+                          "[   =]",
+                          "[    ]"};
   uint16_t old_pos = get_cursor_position();
 
-  if(regs){ };
-
-  set_cursor_position(0x4f);
-  putchar(spinner[spin_pos / DELAY]);
+  set_cursor_position(0x4a);
+  puts(spinner[spin_pos / DELAY]);
   set_cursor_position(old_pos);
 
   ++spin_pos;
@@ -28,7 +35,7 @@ void timer_handler(registers_t* regs) {
 }
 
 void init_timer() {
-  printf("Initing timer\n");
+  printf("* Initing timer\n");
 
   reset_timer();
 

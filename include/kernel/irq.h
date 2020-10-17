@@ -3,11 +3,6 @@
 
 #include <kernel/interrupts.h>
 
-#define IDT_32BIT_INTERRUPT_GATE 0x0e
-#define IDT_STORAGE_SEGMENT      0x20
-#define IDT_DPL_3                0x60
-#define IDT_PRESENT              0x80
-
 #define PIC1_COMM                0x20
 #define PIC1_DATA                PIC1_COMM + 1
 
