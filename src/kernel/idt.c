@@ -22,4 +22,9 @@ void set_int_handler(uint8_t int_line, isr_t handler, uint16_t segment, uint8_t 
   idt[int_line].segment = segment;
   idt[int_line].zero = 0;
   idt[int_line].type_attr = flags;
+  printf("  Lo: 0x%x - Hi: 0x%x - Segment: 0x%x - Attr: 0x%x\n",
+    idt[int_line].base_lo,
+    idt[int_line].base_hi,
+    idt[int_line].segment,
+    idt[int_line].type_attr);
 }

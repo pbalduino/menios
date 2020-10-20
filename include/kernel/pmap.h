@@ -40,7 +40,7 @@ typedef struct {
   uint32_t phys_addr  : 20;
 } __attribute__((packed)) page_table_entry_t;
 
-extern void init_paging(uint32_t* page_dir);
+extern void init_paging(uint32_t page_dir);
 
 void init_memory();
 

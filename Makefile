@@ -24,6 +24,7 @@ KERNEL_SRC = \
 	$(KERNEL_DIR)/printf.c \
 	$(KERNEL_DIR)/timer.c \
 	$(OUTPUT_DIR)/irq_handler.o \
+	$(OUTPUT_DIR)/isr_handler.o \
 	$(OUTPUT_DIR)/paging.o \
 
 LIB_SRC = \
@@ -73,6 +74,7 @@ build:
 ifeq ($(OS_NAME),linux)
 	$(NASM) $(NASM_OPTS)
 	$(NASM) -f elf32 $(KERNEL_DIR)/irq_handler.s -o $(OUTPUT_DIR)/irq_handler.o
+	$(NASM) -f elf32 $(KERNEL_DIR)/isr_handler.s -o $(OUTPUT_DIR)/isr_handler.o
 	$(NASM) -f elf32 $(KERNEL_DIR)/paging.s -o $(OUTPUT_DIR)/paging.o
 	$(GCC) $(GCC_BOOT_OPTS)
 else

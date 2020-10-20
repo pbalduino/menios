@@ -4,6 +4,8 @@ bits 16
 global boot
 global idtp
 global BOOTLOADER_SECTORS
+global CODE_SEG
+global DATA_SEG
 
 boot:
   jmp 0:start
@@ -31,7 +33,7 @@ start:
 
   lgdt [gdtp]                   ; load global descriptor table
 
-  mov ax, DATA_SEG              ; point to the new code selector
+  mov ax, DATA_SEG              ; point stack to the new data selector
 	mov ds, ax
 	mov es, ax
 	mov fs, ax
@@ -135,5 +137,5 @@ boot2:
 section .bss
 align 4
 kernel_stack_bottom: equ $
-	resb 0x4000  ; 16 KB
+	resb 0x2000  ; 8 KB
 kernel_stack_top:

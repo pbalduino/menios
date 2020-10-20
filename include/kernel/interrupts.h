@@ -3,9 +3,12 @@
 
 #include <types.h>
 
-#define GD_KT     0x08 // Kernel text
+// extern uint32_t* DATA_SEG;
+
+#define GD_KT                    0x08 // Kernel text
 
 #define IDT_32BIT_INTERRUPT_GATE 0x0e
+#define IDT_32BIT_TRAP_GATE      0x0f
 #define IDT_STORAGE_SEGMENT      0x20
 #define IDT_DPL_3                0x60
 #define IDT_PRESENT              0x80

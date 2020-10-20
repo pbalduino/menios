@@ -59,4 +59,12 @@ static inline void io_wait() {
                 "2:" );
 }
 
+static inline void pause_interrupts() {
+	asm volatile("cli");
+}
+
+static inline void resume_interrupts() {
+	asm volatile("sti");
+}
+
 #endif
