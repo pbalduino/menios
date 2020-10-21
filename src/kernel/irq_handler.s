@@ -11,29 +11,9 @@ section .text
 
 irq_keyboard:
   cli
-  push 0x00
-  push 0x21
 	pusha
-	push ds
-	push es
-	push fs
-	push gs
-	mov ax, 0x10
-	mov ds, ax
-	mov es, ax
-	mov fs, ax
-	mov gs, ax
-	mov eax, esp
-	push eax
-	mov eax, keyboard_handler
-	call eax
-	pop eax
-	pop gs
-	pop fs
-	pop es
-	pop ds
+	call keyboard_handler
 	popa
-	add esp, 8
 	iret
 
 irq_timer:

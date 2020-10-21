@@ -26,7 +26,7 @@ To do:
 [X] Add support to keyboard
 [x] Set 32bits
 [x] Set Protected Mode
-[ ] Enable memory paging
+[X] Enable memory paging
 [ ] Enable virtual memory
 [ ] Add a memory manager
 [ ] Add a process manager

@@ -199,5 +199,5 @@ void init_keyboard() {
 
   irq_set_mask(IRQ_KEYBOARD);
 
-  printf("  * Keyboard handler: 0x%x%x\n", idt[IRQ_OFFSET + IRQ_KEYBOARD].base_hi, idt[IRQ_OFFSET + IRQ_KEYBOARD].base_lo);
+  printf("* Keyboard handler: 0x%x%x\n", idt[IRQ_OFFSET + IRQ_KEYBOARD].base_hi, idt[IRQ_OFFSET + IRQ_KEYBOARD].base_lo);
 }

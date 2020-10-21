@@ -46,16 +46,18 @@ void init_page_directory() {
   page_directory[0].page_table = ((uint32_t)&identity_table) / 0x1000;
 
   printf("* Enabling paging\n");
-  printf("  PD located at 0x%x - 0x%x\n", (uint32_t)&page_directory, page_directory[0].page_table);
-  printf("  IT located at 0x%x\n", (uint32_t)&identity_table);
+	#ifdef DEBUG
+  printf("  PD located at 0x%x\n", (uint32_t)&page_directory);
+  printf("  IT located at 0x%x - 0x%x\n", (uint32_t)&identity_table, page_directory[0].page_table);
+	#endif
 
   init_paging((uint32_t)&page_directory);
+	printf("* Paging is enabled\n");
 }
 
 void init_page_fault() {
   printf("* Initing page fault handler\n");
   set_int_handler(ISR_PAGE_FAULT, isr14, GD_KT, IDT_PRESENT | IDT_32BIT_TRAP_GATE);
-  printf("OK\n");
 }
 
 void init_memory() {
