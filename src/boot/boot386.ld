@@ -13,14 +13,17 @@ SECTIONS {
   }
   .data :
   {
+    . = ALIGN(0x1000);
+    __START_DATA__ = .;
     *(.data)
+    __END_DATA__ = .;
   }
-  .bss : ALIGN(0x1000)
+  .bss :
   {
-    . = 0xf000;
-    _BSS_START_ = .;
+    . = ALIGN(0x1000);
+    __START_BSS__ = .;
     *(.bss)
-    _BSS_END_ = .;
+    __END_BSS__ = .;
   }
   PROVIDE(_MEM_END_ = .);
 }

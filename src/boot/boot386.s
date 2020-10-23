@@ -137,5 +137,5 @@ boot2:
 section .bss
 align 4
 kernel_stack_bottom: equ $
-	resb 0x2000  ; 8 KB
+	resb 0x10000  ; 64 KB
 kernel_stack_top:
