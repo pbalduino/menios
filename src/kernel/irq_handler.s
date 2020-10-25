@@ -10,14 +10,12 @@ global reset_timer
 section .text
 
 irq_keyboard:
-  cli
 	pusha
 	call keyboard_handler
 	popa
 	iret
 
 irq_timer:
-  cli
   pusha
   call timer_handler
   popa
