@@ -3,11 +3,13 @@
 #include <kernel/isr.h>
 #include <kernel/keyboard.h>
 #include <kernel/pmap.h>
+#include <kernel/smp.h>
 #include <kernel/timer.h>
 #include <arch.h>
 #include <assert.h>
 
 int init_kernel() {
+  init_smp();
   init_idt();
   init_irq();
   init_isr();

@@ -23,6 +23,7 @@ KERNEL_SRC = \
 	$(KERNEL_DIR)/panic.c \
 	$(KERNEL_DIR)/pmap.c \
 	$(KERNEL_DIR)/printf.c \
+	$(KERNEL_DIR)/smp.c \
 	$(KERNEL_DIR)/timer.c \
 	$(OUTPUT_DIR)/irq_handler.o \
 	$(OUTPUT_DIR)/isr_handler.o \
