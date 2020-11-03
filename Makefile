@@ -46,11 +46,12 @@ BOOT_SRC = \
 BOOTLOADER_SRC = $(BOOT_SRC) $(LIB_SRC) $(KERNEL_SRC)
 
 GCC = $(GCC_DIR)/gcc
-GCC_BOOT_OPTS = -m32 $(BOOTLOADER_SRC) -o $(BOOTLOADER) -nostdlib -nostdinc -ffreestanding -mno-red-zone -fno-exceptions -Wall -Wextra -Werror -T $(BOOT_DIR)/boot$(ARCH).ld $(foreach dir,$(INCLUDE_DIR),-I $(dir)) -D ARCH=$(ARCH)
+GCC_BOOT_OPTS = -g -m32 $(BOOTLOADER_SRC) -o $(BOOTLOADER) -nostdlib -nostdinc -ffreestanding -mno-red-zone -fno-exceptions -Wall -Wextra -Werror -T $(BOOT_DIR)/boot$(ARCH).ld $(foreach dir,$(INCLUDE_DIR),-I $(dir)) -D ARCH=$(ARCH)
 
 QEMU_MEMORY = 8
 QEMU_X86 = qemu-system-i386
-QEMU_OPTS = -hda $(BOOTLOADER) -m $(QEMU_MEMORY) -no-reboot -no-shutdown
+# if AMD = -cpu Opteron_G5
+QEMU_OPTS = -smp cpus=4,cores=2,sockets=2 -hda $(BOOTLOADER) -m $(QEMU_MEMORY) -no-reboot -no-shutdown
 
 NASM = nasm
 NASM_OPTS = -f elf32 $(BOOT_DIR)/boot$(ARCH).s -o $(BOOT_BIN)
@@ -59,6 +60,10 @@ OS_NAME = $(shell uname -s | tr A-Z a-z)
 
 .PHONY: clean
 all: build
+
+.PHONY: check
+check:
+	cppcheck -q --enable=warning,performance,portability,information,missingInclude -I ./include/libc -I ./include --error-exitcode=3 src
 
 .PHONY: clean
 clean:
@@ -82,7 +87,7 @@ ifeq ($(OS_NAME),linux)
 else
 	@make docker
 	@echo "Building inside Docker"
-	$(DOCKER) run -it --mount type=bind,source=$$(pwd),target=/mnt $(DOCKER_IMAGE) /bin/sh -c "cd /mnt && make build"
+	$(DOCKER) run -it --mount type=bind,source=$$(pwd),target=/mnt $(DOCKER_IMAGE) /bin/sh -c "cd /mnt && make check build"
 	qemu-img resize $(BOOTLOADER) 8g
 endif
 

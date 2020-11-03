@@ -1,0 +1,5 @@
+[cppcheck]
+name=CppCheck - Tool for static C/C++ code analysis
+baseurl=http://mirror.centos.org/centos/8/PowerTools/x86_64/os
+enabled=1
+gpgcheck=0
