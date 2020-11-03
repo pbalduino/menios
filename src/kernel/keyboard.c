@@ -8,7 +8,6 @@
 #include <types.h>
 
 extern void irq_keyboard();
-extern idt_entry_t idt[256];
 
 #define NO		0
 
@@ -47,7 +46,7 @@ static uint8_t togglecode[256] = {
 	[0x46] = SCROLLLOCK
 };
 
-uint8_t charcode[4][128];
+uint8_t charcode[4][256];
 
 static int get_data_from_keyboard() {
 	int c;
@@ -359,6 +358,4 @@ void init_keyboard() {
   irq_set_mask(IRQ_KEYBOARD);
 
 	init_keyboard_layout();
-
-  printf("* Keyboard handler: 0x%x%x\n", idt[IRQ_OFFSET + IRQ_KEYBOARD].base_hi, idt[IRQ_OFFSET + IRQ_KEYBOARD].base_lo);
 }
