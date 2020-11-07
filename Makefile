@@ -63,7 +63,7 @@ all: build
 
 .PHONY: check
 check:
-	cppcheck -q --enable=warning,performance,portability,information,missingInclude -I ./include/libc -I ./include --error-exitcode=3 src
+	cppcheck -q --enable=performance,information,missingInclude -I ./include/libc -I ./include --error-exitcode=3 src
 
 .PHONY: clean
 clean:
