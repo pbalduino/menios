@@ -1,7 +1,6 @@
 bits 32
 
 extern page_fault_handler
-extern putchar
 
 global init_paging
 global isr_page_fault
@@ -20,10 +19,8 @@ init_paging:
   ret
 
 isr_page_fault:
-  push 0x41
-  call putchar
   pusha
   call page_fault_handler
   popa
-  mov eax, 0xbadc0de
+  ; mov eax, 0xbadc0de
   iret

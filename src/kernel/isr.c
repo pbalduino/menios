@@ -6,7 +6,7 @@
 extern void isr8();
 
 void isr_handler(registers_t* regs) {
-  printf("Handling int %d with error %d", regs->int_no, regs->err_code);
+  printf("Handling int 0x%x with error 0x%x\n", regs->int_no, regs->err_code);
 }
 
 void init_isr() {

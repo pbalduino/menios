@@ -61,6 +61,8 @@ int putchar(int ch) {
 }
 
 int puts(const char* s) {
-  while(*s) putchar(*s++);
+  while(*s) {
+    putchar(*s++);
+  }
   return 1;
 }

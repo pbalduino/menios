@@ -1,6 +1,10 @@
 #ifndef MENIOS_INCLUDE_TYPES_H
 #define MENIOS_INCLUDE_TYPES_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #ifndef NULL
 #define NULL ((void*) 0)
 #endif
@@ -31,5 +35,9 @@ typedef uint32_t physaddr_t;
 	uint32_t __n = (uint32_t) (n);				\
 	(typeof(a)) (ROUNDDOWN((uint32_t) (a) + __n - 1, __n));	\
 })
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

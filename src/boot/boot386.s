@@ -31,8 +31,6 @@ start:
 	or eax, 0x01                  ; enable bit 0 of cr0 - protected mode
 	mov cr0, eax
 
-  lgdt [gdtp]                   ; load global descriptor table
-
   mov ax, DATA_SEG              ; point stack to the new data selector
 	mov ds, ax
 	mov es, ax
