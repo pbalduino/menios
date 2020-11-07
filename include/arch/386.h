@@ -48,8 +48,20 @@ static inline void cpuid(uint32_t info, uint32_t *eaxp, uint32_t *ebxp, uint32_t
 }
 
 static inline uint32_t read_cr2() {
-	unsigned long val;
+	uint32_t val;
 	asm volatile("mov %%cr2,%0\n\t" : "=r" (val), "=m" (__force_order));
+	return val;
+}
+
+static inline uint32_t read_esp() {
+	uint32_t val;
+	asm volatile("mov %%esp,%0\n\t" : "=r" (val), "=m" (__force_order));
+	return val;
+}
+
+static inline uint32_t read_ebp() {
+	uint32_t val;
+	asm volatile("mov %%ebp,%0\n\t" : "=r" (val), "=m" (__force_order));
 	return val;
 }
 
