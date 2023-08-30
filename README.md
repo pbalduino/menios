@@ -1,3 +1,7 @@
+# MeniOS
+
+I'm trying again. Let's see how far I can go.
+
 Prerequisites:
   Linux:
   - gcc
@@ -19,27 +23,27 @@ To do:
 
   [x] Create a todo list
 
-  [x] Dev environment
+  [ ] Dev environment
 
-  [x] ASM 512b bootloader
+  [ ] ASM 512b bootloader
 
-  [x] Load bootloader beyond 512b
+  [ ] Load bootloader beyond 512b
 
-  [x] Enable A20 bit
+  [ ] Enable A20 bit
 
-  [x] Set GDT
+  [ ] Set GDT
 
-  [X] Set IDT
+  [ ] Set IDT
 
-  [X] Set PIC
+  [ ] Set PIC
 
-  [X] Add support to keyboard
-  
-  [x] Set 32bits
+  [ ] Add support to keyboard
 
-  [x] Set Protected Mode
+  [ ] Set 32bits
 
-  [X] Enable memory paging
+  [ ] Set Protected Mode
+
+  [ ] Enable memory paging
 
   [ ] Enable virtual memory
 
