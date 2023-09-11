@@ -5,3 +5,4 @@ bin/
 *.elf
 *.img
 bochsout.txt
+.vscode/
