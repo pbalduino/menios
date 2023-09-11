@@ -10,9 +10,10 @@ INCLUDE_DIR = \
 OUTPUT_DIR = bin
 KERNEL_DIR = src/kernel
 
-override CFILES := $(shell find -L . -type f -name '*.c')
+override CFILES   := $(shell find -L src -type f -name '*.c')
+override OBJFILES := $(shell find -L . -type f -name '*.o')
 
-KERNEL = $(OUTPUT_DIR)/kernel.bin
+KERNEL = $(OUTPUT_DIR)/kernel.elf
 
 override CFLAGS += \
     -Wall \
@@ -30,7 +31,9 @@ override CFLAGS += \
     -mno-sse \
     -mno-sse2 \
     -mno-red-zone \
-		-o out
+		-nostdlib \
+		-static \
+		-c
 
 override CPPFLAGS := \
     -I./limine \
@@ -38,14 +41,15 @@ override CPPFLAGS := \
     -MMD \
     -MP
 
+
 override LDFLAGS += \
-    -m elf_x86_64 \
     -nostdlib \
     -static \
     -pie \
-    --no-dynamic-linker \
     -z text \
     -z max-page-size=0x1000 \
+    -m elf_x86_64 \
+		--no-dynamic-linker \
     -T linker.ld
 
 override NASMFLAGS += \
@@ -54,9 +58,10 @@ override NASMFLAGS += \
 
 GCC_KERNEL_OPTS = \
 		$(CFLAGS) \
-		-I./limine
+		-I./include
 
 GCC = $(GCC_DIR)/gcc
+LD = $(GCC_DIR)/ld
 
 QEMU_MEMORY = 8
 QEMU_X86 = qemu-system-amd64
@@ -85,12 +90,14 @@ build:
 	set +eux
 
 ifeq ($(OS_NAME),linux)
-	$(GCC) $(GCC_KERNEL_OPTS) $(KERNEL_SRC)
+	@mkdir $(OUTPUT_DIR) || echo "$(OUTPUT_DIR) already exists"
+	@$(GCC) $(GCC_KERNEL_OPTS) $(CFILES)
+	@$(LD) $(OBJFILES) $(LDFLAGS) -o $(KERNEL)
 else
 	@make docker
 	@echo "Building inside Docker"
 	$(DOCKER) run -it --mount type=bind,source=$$(pwd),target=/mnt $(DOCKER_IMAGE) /bin/sh -c "make build"
-	qemu-img resize $(BOOTLOADER) 8g
+	qemu-img resize $(KERNEL) 8g
 endif
 
 .PHONY: run
