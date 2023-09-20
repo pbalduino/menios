@@ -4,8 +4,8 @@ megs: 8
 #
 mouse: enabled=0
 #
-# ata0-master: type=disk, path="bin/boot.bin", mode=flat, cylinders=609, heads=16, spt=64
-ata0-master: type=disk, path="bin/boot.bin", mode=flat, cylinders=16384, heads=16, spt=63
+# ata0-master: type=disk, path="menios.hdd", mode=flat, cylinders=609, heads=16, spt=64
+ata0-master: type=disk, path="menios.hdd", mode=flat, cylinders=16384, heads=16, spt=63
 #
 log: bochsout.txt
 #

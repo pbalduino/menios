@@ -1,6 +1,8 @@
 DOCKER = /usr/local/bin/docker
 DOCKER_IMAGE = menios:latest
 
+IMAGE_NAME = menios
+
 ARCH ?= x86-64
 GCC_DIR = /usr/bin
 LIB_DIR = src/libc
@@ -9,9 +11,6 @@ INCLUDE_DIR = \
 
 OUTPUT_DIR = bin
 KERNEL_DIR = src/kernel
-
-override CFILES   := $(shell find -L src -type f -name '*.c')
-override OBJFILES := $(shell find -L . -type f -name '*.o')
 
 KERNEL = $(OUTPUT_DIR)/kernel.elf
 
@@ -62,6 +61,7 @@ GCC_KERNEL_OPTS = \
 
 GCC = $(GCC_DIR)/gcc
 LD = $(GCC_DIR)/ld
+NASM = $(GCC_DIR)/nasm
 
 QEMU_MEMORY = 8
 QEMU_X86 = qemu-system-amd64
@@ -74,7 +74,7 @@ all: build
 
 .PHONY: check
 check:
-	cppcheck -q --enable=performance,information,missingInclude -I ./include/libc -I ./include --error-exitcode=3 src
+	cppcheck  --force -q --enable=performance,information,missingInclude -I./include -I/Library/Developer/CommandLineTools/usr/lib/clang/14.0.3/include --error-exitcode=3 ./src/kernel
 
 .PHONY: clean
 clean:
@@ -87,19 +87,30 @@ docker:
 
 .PHONY: build
 build:
-	set +eux
+	@set +eux
 
 ifeq ($(OS_NAME),linux)
-	@mkdir $(OUTPUT_DIR) || echo "$(OUTPUT_DIR) already exists"
-	@$(GCC) $(GCC_KERNEL_OPTS) $(CFILES)
-	@$(LD) $(OBJFILES) $(LDFLAGS) -o $(KERNEL)
+	$(GCC) $(GCC_KERNEL_OPTS) $(shell find -L . -type f -name '*.c') && \
+	$(NASM) -f elf64 $(shell find -L . -type f -name '*.s')
+	$(LD) $(shell find -L . -type f -name '*.o') $(LDFLAGS) -o $(KERNEL) #
+	# find . -name \*.o | xargs -I {} rm -v {}
+
+	@echo Building image
+	rm -f $(IMAGE_NAME).hdd
+	dd if=/dev/zero bs=1M count=0 seek=64 of=$(IMAGE_NAME).hdd
+	sgdisk $(IMAGE_NAME).hdd -n 1:2048 -t 1:ef00
+	/limine/bin/limine bios-install $(IMAGE_NAME).hdd
+	mformat -i $(IMAGE_NAME).hdd@@1M
+	mmd -i $(IMAGE_NAME).hdd@@1M ::/EFI ::/EFI/BOOT
+	mcopy -i $(IMAGE_NAME).hdd@@1M $(KERNEL) limine.cfg /limine/bin/limine-bios.sys ::/
+	mcopy -i $(IMAGE_NAME).hdd@@1M /limine/bin/BOOTX64.EFI ::/EFI/BOOT
+
 else
 	@make docker
 	@echo "Building inside Docker"
-	$(DOCKER) run -it --mount type=bind,source=$$(pwd),target=/mnt $(DOCKER_IMAGE) /bin/sh -c "make build"
-	qemu-img resize $(KERNEL) 8g
+	$(DOCKER) run -it --mount type=bind,source=$$(pwd),target=/mnt $(DOCKER_IMAGE) /bin/sh -c "cd /mnt && make build"
 endif
 
 .PHONY: run
 run:
-	$(QEMU_X86) $(QEMU_OPTS)
+	qemu-system-x86_64 -no-reboot -no-shutdown -M q35 -m 2G -hda menios.hdd

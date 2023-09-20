@@ -1,7 +1,9 @@
-.DS_Store
 *.bin
-*.o
 *.elf
+*.hdd
 *.img
-bochsout.txt
+*.o
+.DS_Store
 .vscode/
+bin/
+bochsout.txt
