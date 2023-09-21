@@ -10,12 +10,10 @@ gdt_t gdt = {
   {0, 0, 0, 0x9a, 0xa2, 0},         // 64bits code - 0x28
   {0, 0, 0, 0x92, 0xa0, 0},         // 64bits data - 0x30
   {0, 0, 0, 0xF2, 0, 0},            // 64bits user code - 0x38
-  {0, 0, 0, 0xFA, 0x20, 0},         // 64bits user data - 0x40
-  {0x68, 0, 0, 0x89, 0x20, 0, 0, 0} // tss
+  {0, 0, 0, 0xFA, 0x20, 0}         // 64bits user data - 0x40
 };
 
 gdt_pointer_t gdt_p;
-tss_t tss;
 
 void gdt_init() {
   fb_puts("- Setting GDT");

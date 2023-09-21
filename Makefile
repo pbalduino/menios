@@ -87,14 +87,16 @@ docker:
 
 .PHONY: build
 build:
-	@set +eux
+	# @set +eux
 
 ifeq ($(OS_NAME),linux)
-	$(GCC) $(GCC_KERNEL_OPTS) $(shell find -L . -type f -name '*.c') && \
-	$(NASM) -f elf64 $(shell find -L . -type f -name '*.s')
-	$(LD) $(shell find -L . -type f -name '*.o') $(LDFLAGS) -o $(KERNEL) #
-	# find . -name \*.o | xargs -I {} rm -v {}
+	$(GCC) $(GCC_KERNEL_OPTS) $(shell find -L . -type f -name '*.c')
 
+	for file in $(shell find -L . -type f -name '*.s'); do \
+		$(NASM) -f elf64 $$file ; \
+	done;
+
+	$(LD) $(LDFLAGS) -o $(KERNEL) $(shell find -L . -type f -name '*.o')
 	@echo Building image
 	rm -f $(IMAGE_NAME).hdd
 	dd if=/dev/zero bs=1M count=0 seek=64 of=$(IMAGE_NAME).hdd

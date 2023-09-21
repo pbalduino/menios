@@ -2,8 +2,9 @@
 #include <stddef.h>
 #include <boot/fonts.h>
 #include <boot/framebuffer.h>
-#include <kernel/kernel.h>
 #include <kernel/gdt.h>
+#include <kernel/idt.h>
+#include <kernel/kernel.h>
 
 void draw_background() {
   int lighter = FB_DARK_BLUE;
@@ -35,14 +36,14 @@ void boot_graphics_init() {
 }
 
 void _start() {
+  // FIXME: needs to finish the typefaces
   boot_graphics_init();
 
   // GDT
   gdt_init();
 
-  // TSS
-
   // IDT
+  idt_init();
   // CPUs
   // memory
   // filesystem
