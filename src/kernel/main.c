@@ -21,7 +21,7 @@ void boot_graphics_init() {
   fb_init();
   font_init();
 
-  draw_background();
+  // draw_background();
 
   puts("Welcome to meniOS 0.0.2 64bits\n\n- Typeset test:");
   for(int c = ' '; c < 128; c++) {
@@ -45,11 +45,13 @@ void _start() {
 
   // IDT
   idt_init();
-  // CPUs
+
+  // TODO: Paging
+  // TODO: CPUs
+  // TODO: APIC / LAPIC
+  // TODO: Show hardware
+  // TODO: Filesystem
   puts("- Bye\n");
-  // memory
-  // filesystem
-  // what else?
 
   hcf();
 }

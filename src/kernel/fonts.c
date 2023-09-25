@@ -776,6 +776,11 @@ const glypht_t GL_SMALL_C = {
   }
 };
 
+const glypht_t GL_SMALL_D = {
+  .value = 'd',
+  .points = {0x00, 0x00, 0x02, 0x02, 0x02, 0x3E, 0x42, 0x42, 0x42, 0x42, 0x42, 0x3E, 0x00, 0x00, 0x00, 0x00}
+};
+
 const glypht_t GL_SMALL_E = {
   .value = 'e',
   .points = {
@@ -1275,6 +1280,7 @@ void font_init() {
   font_list.glyphs['a'] = GL_SMALL_A;
   font_list.glyphs['b'] = GL_SMALL_B;
   font_list.glyphs['c'] = GL_SMALL_C;
+  font_list.glyphs['d'] = GL_SMALL_D;
   font_list.glyphs['e'] = GL_SMALL_E;
   font_list.glyphs['g'] = GL_SMALL_G;
   font_list.glyphs['h'] = GL_SMALL_H;

@@ -10,7 +10,7 @@ gdt_t gdt = {
   {0, 0, 0, 0x9a, 0xa2, 0},         // 64bits kernel code - 0x28
   {0, 0, 0, 0x92, 0xa0, 0},         // 64bits kernel data - 0x30
   {0, 0, 0, 0xF2, 0, 0},            // 64bits user code - 0x38
-  {0, 0, 0, 0xFA, 0x20, 0}         // 64bits user data - 0x40
+  {0, 0, 0, 0xFA, 0x20, 0}          // 64bits user data - 0x40
 };
 
 gdt_pointer_t gdt_p;
