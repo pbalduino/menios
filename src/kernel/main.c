@@ -1,7 +1,8 @@
 #include <stdint.h>
 #include <stddef.h>
-#include <boot/fonts.h>
-#include <boot/framebuffer.h>
+#include <kernel/console.h>
+#include <kernel/fonts.h>
+#include <kernel/framebuffer.h>
 #include <kernel/gdt.h>
 #include <kernel/idt.h>
 #include <kernel/kernel.h>
@@ -22,17 +23,17 @@ void boot_graphics_init() {
 
   draw_background();
 
-  fb_puts("Welcome to meniOS 0.0.2 64bits\n\n- Typeset test:");
-
+  puts("Welcome to meniOS 0.0.2 64bits\n\n- Typeset test:");
   for(int c = ' '; c < 128; c++) {
     if((c - ' ') % 16 == 0) {
-      fb_puts("\n ");
+      puts("\n ");
     }
 
-    fb_putchar(c);
-    fb_putchar(' ');
+    putchar(c);
+    putchar(' ');
   }
-  fb_puts("\n");
+  putchar('\n');
+  printf("- Screen mode: %lu x %lu\n", fb_width(), fb_height());
 }
 
 void _start() {
@@ -45,6 +46,7 @@ void _start() {
   // IDT
   idt_init();
   // CPUs
+  puts("- Bye\n");
   // memory
   // filesystem
   // what else?

@@ -1,7 +1,7 @@
-#ifndef _BOOT_FONTS_H
-#define _BOOT_FONTS_H 1
+#ifndef _KERNEL_FONTS_H
+#define _KERNEL_FONTS_H 1
 
-#include <kernel/types.h>
+#include <types.h>
 
 typedef struct {
   char value;

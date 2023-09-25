@@ -1,13 +1,14 @@
 #include <stddef.h>
-#include <boot/fonts.h>
-#include <boot/framebuffer.h>
 #include <boot/limine.h>
+#include <kernel/fonts.h>
+#include <kernel/framebuffer.h>
 #include <kernel/kernel.h>
-
+#include <types.h>
 static volatile struct limine_framebuffer_request framebuffer_request = {
     .id = LIMINE_FRAMEBUFFER_REQUEST,
     .revision = 0};
 
+static bool active;
 static int char_line_height;
 static int char_line_width;
 static int col;
@@ -19,6 +20,10 @@ static struct limine_framebuffer *framebuffer;
 #define ROWS 50
 #define COLS 140
 
+int fb_count() {
+  return framebuffer_request.response->framebuffer_count;
+}
+
 void fb_init() {
   // Ensure we got a framebuffer.
   if (framebuffer_request.response == NULL || framebuffer_request.response->framebuffer_count < 1) {
@@ -28,12 +33,18 @@ void fb_init() {
   // Fetch the first framebuffer.
   framebuffer = framebuffer_request.response->framebuffers[0];
 
+  active = true;
+
   viewpoint_x = framebuffer->width - 20;
   viewpoint_y = framebuffer->height - 20;
   row = 0;
   col = 0;
   char_line_width = viewpoint_x / COLS;
   char_line_height = viewpoint_y / ROWS;
+}
+
+inline bool fb_active() {
+  return active;
 }
 
 void fb_draw() {
@@ -97,10 +108,4 @@ inline uint64_t fb_width() {
 
 inline uint64_t fb_height() {
   return framebuffer->height;
-}
-
-void fb_puts(char* text) {
-  for(int pos = 0; text[pos] != '\0'; pos++) {
-    fb_putchar(text[pos]);
-  }
 }

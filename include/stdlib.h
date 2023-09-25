@@ -10,6 +10,10 @@ extern "C" {
 char* itoa(int32_t num, char* str, int32_t base);
 char* utoa(uint32_t num, char* str, int32_t base);
 
+char* ltoa(int64_t num, char* str, int32_t base);
+char* lutoa(uint64_t num, char* str, int32_t base);
+
+
 #ifdef __cplusplus
 }
 #endif

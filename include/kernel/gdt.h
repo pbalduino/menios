@@ -1,7 +1,7 @@
 #ifndef MENIOS_INCLUDE_KERNEL_GDT_H
 #define MENIOS_INCLUDE_KERNEL_GDT_H
 
-#include <kernel/types.h>
+#include <types.h>
 
 #define KERNEL_CODE_SEGMENT 0x28
 #define KERNEL_DATA_SEGMENT 0x30

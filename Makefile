@@ -87,7 +87,7 @@ docker:
 
 .PHONY: build
 build:
-	# @set +eux
+	@set +eux
 
 ifeq ($(OS_NAME),linux)
 	$(GCC) $(GCC_KERNEL_OPTS) $(shell find -L . -type f -name '*.c')
@@ -115,4 +115,4 @@ endif
 
 .PHONY: run
 run:
-	qemu-system-x86_64 -no-reboot -no-shutdown -M q35 -m 2G -hda menios.hdd
+	qemu-system-x86_64 -vga std -no-reboot -no-shutdown -M q35 -m 2G -hda menios.hdd

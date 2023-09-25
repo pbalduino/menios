@@ -1,6 +1,6 @@
 #include <stddef.h>
 #include <stdint.h>
-#include <boot/fonts.h>
+#include <kernel/fonts.h>
 
 static font_t font_list = {
   .glyphs = {}
@@ -50,6 +50,27 @@ const glypht_t GL_SPACE = {
   }
 };
 
+const glypht_t GL_PERCENT = {
+  .value = '*',
+  .points = {
+    0b00000000,
+    0b00000000,
+    0b00000000,
+    0b00000000,
+    0b11000001,
+    0b11000011,
+    0b00000110,
+    0b00001100,
+    0b00011000,
+    0b00110000,
+    0b01100000,
+    0b11000110,
+    0b10000110,
+    0b00000000,
+    0b00000000,
+    0b00000000
+  }
+};
 
 const glypht_t GL_ASTERISK = {
   .value = '*',
@@ -158,6 +179,28 @@ const glypht_t GL_PERIOD = {
     0b00000000,
     0b00000000,
     0b00000000,
+  }
+};
+
+const glypht_t GL_SLASH = {
+  .value = '*',
+  .points = {
+    0b00000000,
+    0b00000000,
+    0b00000000,
+    0b00000001,
+    0b00000011,
+    0b00000111,
+    0b00001110,
+    0b00011100,
+    0b00111000,
+    0b01110000,
+    0b11100000,
+    0b11000000,
+    0b10000000,
+    0b00000000,
+    0b00000000,
+    0b00000000
   }
 };
 
@@ -303,12 +346,12 @@ const glypht_t GL_COLON = {
     0b00000000,
     0b00000000,
     0b00000000,
-    0b00000110,
-    0b00000110,
+    0b00011000,
+    0b00011000,
     0b00000000,
     0b00000000,
-    0b00000110,
-    0b00000110,
+    0b00011000,
+    0b00011000,
     0b00000000,
     0b00000000,
     0b00000000,
@@ -409,16 +452,16 @@ const glypht_t GL_CAPITAL_D = {
     0b00000000,
     0b00000000,
     0b00000000,
-    0b11111100,
+    0b11111000,
+    0b11001100,
     0b11000110,
     0b11000110,
     0b11000110,
     0b11000110,
     0b11000110,
     0b11000110,
-    0b11000110,
-    0b11000110,
-    0b11111100,
+    0b11001100,
+    0b11111000,
     0b00000000,
     0b00000000,
     0b00000000,
@@ -598,6 +641,50 @@ const glypht_t GL_CAPITAL_T = {
     0b00000000,
     0b00000000,
     0b00000000
+  }
+};
+
+const glypht_t GL_CAPITAL_U = {
+  .value = 'V',
+  .points = {
+    0b00000000,
+    0b00000000,
+    0b00000000,
+    0b11000110,
+    0b11000110,
+    0b11000110,
+    0b11000110,
+    0b11000110,
+    0b11000110,
+    0b11000110,
+    0b11000110,
+    0b11000110,
+    0b01111100,
+    0b00000000,
+    0b00000000,
+    0b00000000,
+  }
+};
+
+const glypht_t GL_CAPITAL_V = {
+  .value = 'V',
+  .points = {
+    0b00000000,
+    0b00000000,
+    0b00000000,
+    0b11000110,
+    0b11000110,
+    0b11000110,
+    0b11000110,
+    0b11000110,
+    0b11000110,
+    0b11000110,
+    0b01101100,
+    0b00111000,
+    0b00010000,
+    0b00000000,
+    0b00000000,
+    0b00000000,
   }
 };
 
@@ -1041,6 +1128,72 @@ const glypht_t GL_SMALL_U = {
   }
 };
 
+const glypht_t GL_SMALL_V = {
+  .value = 'v',
+  .points = {
+    0b00000000,
+    0b00000000,
+    0b00000000,
+    0b00000000,
+    0b00000000,
+    0b00000000,
+    0b00000000,
+    0b11000110,
+    0b11000110,
+    0b11000110,
+    0b01101100,
+    0b00111000,
+    0b00010000,
+    0b00000000,
+    0b00000000,
+    0b00000000
+  }
+};
+
+const glypht_t GL_SMALL_W = {
+  .value = 'w',
+  .points = {
+    0b00000000,
+    0b00000000,
+    0b00000000,
+    0b00000000,
+    0b00000000,
+    0b00000000,
+    0b00000000,
+    0b11000110,
+    0b11000110,
+    0b11010110,
+    0b11111110,
+    0b11101110,
+    0b01000100,
+    0b00000000,
+    0b00000000,
+    0b00000000
+  }
+};
+
+const glypht_t GL_SMALL_X = {
+  .value = 'x',
+  .points = {
+    0b00000000,
+    0b00000000,
+    0b00000000,
+    0b00000000,
+    0b00000000,
+    0b00000000,
+    0b00000000,
+    0b11000110,
+    0b01101100,
+    0b00111000,
+    0b01101100,
+    0b11000110,
+    0b11000110,
+    0b00000000,
+    0b00000000,
+    0b00000000
+  }
+};
+
 const glypht_t GL_SMALL_Y = {
   .value = 'y',
   .points = {
@@ -1062,16 +1215,40 @@ const glypht_t GL_SMALL_Y = {
     0b11111000
   }
 };
+
+const glypht_t GL_SMALL_Z = {
+  .value = 'z',
+  .points = {
+    0b00000000,
+    0b00000000,
+    0b00000000,
+    0b00000000,
+    0b00000000,
+    0b00000000,
+    0b11111110,
+    0b01101100,
+    0b00011000,
+    0b01100000,
+    0b11000110,
+    0b11111110,
+    0b00000000,
+    0b00000000,
+    0b00000000
+  }
+};
+
 void font_init() {
   for (int c = 0; c < 0x100; c++) {
     font_list.glyphs[c] = GL_NULL;
   }
 
   font_list.glyphs[' '] = GL_SPACE;
+  font_list.glyphs['%'] = GL_PERCENT;
   font_list.glyphs['*'] = GL_ASTERISK;
   font_list.glyphs['+'] = GL_PLUS;
   font_list.glyphs['-'] = GL_MINUS;
   font_list.glyphs['.'] = GL_PERIOD;
+  font_list.glyphs['/'] = GL_SLASH;
   font_list.glyphs['0'] = GL_ZERO;
   font_list.glyphs['1'] = GL_ONE;
   font_list.glyphs['2'] = GL_TWO;
@@ -1092,6 +1269,8 @@ void font_init() {
   font_list.glyphs['K'] = GL_CAPITAL_K;
   font_list.glyphs['S'] = GL_CAPITAL_S;
   font_list.glyphs['T'] = GL_CAPITAL_T;
+  font_list.glyphs['V'] = GL_CAPITAL_U;
+  font_list.glyphs['V'] = GL_CAPITAL_V;
   font_list.glyphs['W'] = GL_CAPITAL_W;
   font_list.glyphs['a'] = GL_SMALL_A;
   font_list.glyphs['b'] = GL_SMALL_B;
@@ -1112,7 +1291,11 @@ void font_init() {
   font_list.glyphs['s'] = GL_SMALL_S;
   font_list.glyphs['t'] = GL_SMALL_T;
   font_list.glyphs['u'] = GL_SMALL_U;
+  font_list.glyphs['v'] = GL_SMALL_V;
+  font_list.glyphs['w'] = GL_SMALL_W;
+  font_list.glyphs['x'] = GL_SMALL_X;
   font_list.glyphs['y'] = GL_SMALL_Y;
+  font_list.glyphs['z'] = GL_SMALL_Z;
 };
 
 glypht_t font_glyph(uint8_t ascii) {

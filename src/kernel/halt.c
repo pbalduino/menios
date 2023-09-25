@@ -1,13 +1,13 @@
+#include <kernel/console.h>
 #include <kernel/kernel.h>
-#include <boot/framebuffer.h>
 
 void cli() {
-  fb_puts("- Stopping interruptions.\n");
+  puts("- Stopping interruptions.\n");
   asm("cli");
 }
 
 void sti() {
-  fb_puts("- Resuming interruptions.\n");
+  puts("- Resuming interruptions.\n");
   asm("sti");
 }
 
@@ -15,7 +15,7 @@ void sti() {
 void hcf(void) {
   cli();
 
-  fb_puts("- Halting the system.\n");
+  puts("- Halting the system.\n");
   // for (;;) {
   asm("hlt");
   // }

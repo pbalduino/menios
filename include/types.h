@@ -1,5 +1,5 @@
 #ifndef MENIOS_INCLUDE_TYPES_H
-#define MENIOS_INCLUDE_TYPES_H
+#define MENIOS_INCLUDE_TYPES_H 1
 
 #ifdef __cplusplus
 extern "C" {
@@ -12,17 +12,18 @@ extern "C" {
 typedef _Bool bool;
 enum { false, true };
 
-typedef int int32_t;
+typedef short int16_t;
+typedef int   int32_t;
+typedef long  int64_t;
 
-typedef unsigned char uint8_t;
-typedef unsigned short int uint16_t;
+typedef unsigned char  uint8_t;
+typedef unsigned short uint16_t;
+typedef unsigned int   uint32_t;
+typedef unsigned long  uint64_t;
 
-typedef unsigned int size_t;
-typedef unsigned int uint32_t;
+typedef uint64_t size_t;
 
-typedef int32_t intptr_t;
-typedef uint32_t uintptr_t;
-typedef uint32_t physaddr_t;
+typedef unsigned long uintptr_t;
 
 #define ROUNDDOWN(a, n)						\
 ({								\
