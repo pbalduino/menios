@@ -3,6 +3,24 @@
 
 #include <types.h>
 
+#define ISR_DIVISION_BY_ZERO         0x00
+#define ISR_DEBUG                    0x01
+#define ISR_NON_MASKABLE             0x02
+#define ISR_BREAKPOINT               0x03
+#define ISR_OVERFLOW                 0x04
+#define ISR_BOUND_RANGE_EXCEEDED     0x05
+#define ISR_INVALID_OPCODE           0x06
+#define ISR_DEVICE_NOT_AVAILABLE     0x07
+#define ISR_DOUBLE_FAULT             0x08
+#define ISR_INVALID_TSS              0x0A
+#define ISR_SEGMENT_NOT_PRESENT      0x0B
+#define ISR_STACK_SEGMENT_FAULT      0x0C
+#define ISR_GENERAL_PROTECTION_FAULT 0x0D
+#define ISR_PAGE_FAULT               0x0E
+#define ISR_FLOAT_POINT_EXCEPTION    0x10
+#define ISR_ALIGNMENT_CHECK          0x11
+#define ISR_MACHINE_CHECK            0x12
+
 typedef struct {
   uint16_t base_low;      // Lower 16 bits of ISR address
   uint16_t selector;      // Code segment selector
@@ -46,10 +64,9 @@ typedef struct {
     uint64_t ss;
 } idt_exception_t;
 
-extern void idt_division_by_zero_isr();
+extern void idt_generic_isr_asm_handler();
 extern void idt_load(idt_pointer_t *idt_ptr);
 
-void idt_division_by_zero_handler();
 void idt_init();
 
 #endif

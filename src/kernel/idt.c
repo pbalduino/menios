@@ -6,53 +6,37 @@
 idt_pointer_t idt_p;
 idt_entry_t idt[0x100];
 
-int b = 0;
-
-void divide_by_zero() {
-  int a = 1;
-  int c = a / b++;
-  printf("- Recovered from a division by zero: %d", c);
-}
-
-void set_division_by_zero(){
-  uint64_t isr_address = (uint64_t)idt_division_by_zero_isr;
-
+void idt_add_isr(int interruption, void* handler) {
   // Set up the IDT entry
-  idt[0].base_low = (uint16_t)(isr_address & 0xFFFF);
-  idt[0].selector = KERNEL_CODE_SEGMENT; // Your code segment selector
-  idt[0].ist = 0;   // Set to 0 for most cases
-  idt[0].type_attr = 0x8e; // 0x8E indicates an interrupt gate (64-bit interrupt gate)
-  idt[0].base_mid = (uint16_t)((isr_address >> 16) & 0xFFFF);
-  idt[0].base_high = (uint32_t)((isr_address >> 32) & 0xFFFFFFFF);
-  idt[0].reserved = 0;
+  uintptr_t handler_address = (uintptr_t)handler;
 
-  puts("DIV0");
+  idt[interruption].base_low = (uint16_t)(handler_address & 0xFFFF);
+  idt[interruption].selector = KERNEL_CODE_SEGMENT; // Your code segment selector
+  idt[interruption].ist = 0;   // Set to 0 for most cases
+  idt[interruption].type_attr = 0x8e; // 0x8E indicates an interrupt gate (64-bit interrupt gate)
+  idt[interruption].base_mid = (uint16_t)((handler_address >> 16) & 0xFFFF);
+  idt[interruption].base_high = (uint32_t)((handler_address >> 32) & 0xFFFFFFFF);
+  idt[interruption].reserved = 0;
+  puts(".");
 }
-
 
 void idt_init() {
   puts("- Setting IDT:");
   idt_p.size = sizeof(idt) - 1;
   idt_p.offset = (uint64_t)&idt;
   puts(".");
-
-  set_division_by_zero();
-
-  puts(".");
+  idt_add_isr(ISR_DIVISION_BY_ZERO, &idt_generic_isr_asm_handler);
+  idt_add_isr(ISR_DEBUG, &idt_generic_isr_asm_handler);
+  idt_add_isr(ISR_BREAKPOINT, &idt_generic_isr_asm_handler);
+  idt_add_isr(ISR_DOUBLE_FAULT, &idt_generic_isr_asm_handler);
+  idt_add_isr(ISR_GENERAL_PROTECTION_FAULT, &idt_generic_isr_asm_handler);
+  idt_add_isr(ISR_PAGE_FAULT, &idt_generic_isr_asm_handler);
 
   idt_load(&idt_p);
-
-  puts("!");
-
-  divide_by_zero();
-
-  puts(".");
 
   puts("OK\n");
 }
 
-
-void idt_division_by_zero_handler() {
-  puts("\n>>> Exception caught: Division by zero\n");
-  // hcf();
+void idt_generic_isr_handler() {
+  puts("Exception caught.");
 }

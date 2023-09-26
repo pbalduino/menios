@@ -206,24 +206,7 @@ const glypht_t GL_SLASH = {
 
 const glypht_t GL_ZERO = {
   .value = '0',
-  .points = {
-    0b00000000,
-    0b00000000,
-    0b00000000,
-    0b00111000,
-    0b01101100,
-    0b11000110,
-    0b11000110,
-    0b11010110,
-    0b11010110,
-    0b11000110,
-    0b11000110,
-    0b01101100,
-    0b00111000,
-    0b00000000,
-    0b00000000,
-    0b00000000,
-  }
+  .points = {0x00, 0x00, 0x3C, 0x42, 0x42, 0x46, 0x4A, 0x52, 0x62, 0x42, 0x42, 0x3C, 0x00, 0x00, 0x00, 0x00}
 };
 
 const glypht_t GL_ONE = {
@@ -270,6 +253,11 @@ const glypht_t GL_TWO = {
   }
 };
 
+const glypht_t GL_THREE = {
+  .value = '3',
+  .points = {0x00, 0x00, 0x3C, 0x42, 0x42, 0x02, 0x1C, 0x02, 0x02, 0x42, 0x42, 0x3C, 0x00, 0x00, 0x00, 0x00}
+};
+
 const glypht_t GL_FOUR = {
   .value = '4',
   .points = {
@@ -292,6 +280,11 @@ const glypht_t GL_FOUR = {
   }
 };
 
+const glypht_t GL_FIVE = {
+  .value = '5',
+  .points = {0x00, 0x00, 0x7E, 0x40, 0x40, 0x40, 0x7C, 0x02, 0x02, 0x02, 0x42, 0x3C, 0x00, 0x00, 0x00, 0x00}
+};
+
 const glypht_t GL_SIX = {
   .value = '6',
   .points = {
@@ -312,6 +305,16 @@ const glypht_t GL_SIX = {
     0b00000000,
     0b00000000,
   }
+};
+
+const glypht_t GL_SEVEN = {
+  .value = '7',
+  .points = {0x00, 0x00, 0x7E, 0x02, 0x02, 0x04, 0x04, 0x08, 0x08, 0x10, 0x10, 0x10, 0x00, 0x00, 0x00, 0x00}
+};
+
+const glypht_t GL_EIGHT = {
+  .value = '7',
+  .points = {0x00, 0x00, 0x3C, 0x42, 0x42, 0x42, 0x3C, 0x42, 0x42, 0x42, 0x42, 0x3C, 0x00, 0x00, 0x00, 0x00}
 };
 
 const glypht_t GL_NINE = {
@@ -466,6 +469,11 @@ const glypht_t GL_CAPITAL_D = {
     0b00000000,
     0b00000000,
   }
+};
+
+const glypht_t GL_CAPITAL_E = {
+  .value = 'E',
+  .points = { 0x00, 0x00, 0xFE, 0xC0, 0xC0, 0xC0, 0xF8, 0xC0, 0xC0, 0xC0, 0xC0, 0xFE, 0x00, 0x00, 0x00, 0x00 }
 };
 
 const glypht_t GL_CAPITAL_G = {
@@ -1257,8 +1265,12 @@ void font_init() {
   font_list.glyphs['0'] = GL_ZERO;
   font_list.glyphs['1'] = GL_ONE;
   font_list.glyphs['2'] = GL_TWO;
+  font_list.glyphs['3'] = GL_THREE;
   font_list.glyphs['4'] = GL_FOUR;
+  font_list.glyphs['5'] = GL_FIVE;
   font_list.glyphs['6'] = GL_SIX;
+  font_list.glyphs['7'] = GL_SEVEN;
+  font_list.glyphs['8'] = GL_EIGHT;
   font_list.glyphs['9'] = GL_NINE;
   font_list.glyphs[':'] = GL_COLON;
   font_list.glyphs[';'] = GL_SEMICOLON;
@@ -1266,6 +1278,7 @@ void font_init() {
   font_list.glyphs['B'] = GL_CAPITAL_B;
   font_list.glyphs['C'] = GL_CAPITAL_C;
   font_list.glyphs['D'] = GL_CAPITAL_D;
+  font_list.glyphs['E'] = GL_CAPITAL_E;
   font_list.glyphs['G'] = GL_CAPITAL_G;
   font_list.glyphs['O'] = GL_CAPITAL_O;
   font_list.glyphs['H'] = GL_CAPITAL_H;
