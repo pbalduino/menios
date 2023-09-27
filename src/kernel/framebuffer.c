@@ -1,12 +1,16 @@
 #include <stddef.h>
 #include <boot/limine.h>
+#include <kernel/console.h>
 #include <kernel/fonts.h>
 #include <kernel/framebuffer.h>
 #include <kernel/kernel.h>
+#include <stdlib.h>
+#include <string.h>
 #include <types.h>
 static volatile struct limine_framebuffer_request framebuffer_request = {
-    .id = LIMINE_FRAMEBUFFER_REQUEST,
-    .revision = 0};
+  .id = LIMINE_FRAMEBUFFER_REQUEST,
+  .revision = 0
+};
 
 static bool active;
 static int char_line_height;
@@ -20,8 +24,16 @@ static struct limine_framebuffer *framebuffer;
 #define ROWS 50
 #define COLS 140
 
-int fb_count() {
+inline uint64_t fb_count() {
   return framebuffer_request.response->framebuffer_count;
+}
+
+inline uint16_t fb_bpp() {
+  return framebuffer->bpp;
+}
+
+inline uint64_t fb_mode_count() {
+  return framebuffer->mode_count;
 }
 
 void fb_init() {
@@ -108,4 +120,13 @@ inline uint64_t fb_width() {
 
 inline uint64_t fb_height() {
   return framebuffer->height;
+}
+
+void fb_list_modes() {
+  for(uint64_t m = 0; m < framebuffer->mode_count; m++) {
+    printf("  %lu: %lu x %lu x %d | ", m, framebuffer->modes[m]->width, framebuffer->modes[m]->height, framebuffer->modes[m]->bpp);
+    if(m > 0 && m % 4 == 0) {
+      putchar('\n');
+    }
+  }
 }

@@ -6,6 +6,7 @@
 #include <kernel/gdt.h>
 #include <kernel/idt.h>
 #include <kernel/kernel.h>
+#include <kernel/smp.h>
 
 void draw_background() {
   int lighter = FB_DARK_BLUE;
@@ -33,7 +34,9 @@ void boot_graphics_init() {
     putchar(' ');
   }
   putchar('\n');
-  printf("- Screen mode: %lu x %lu\n", fb_width(), fb_height());
+  printf("- Screen mode: %lu x %lu x %d\n", fb_width(), fb_height(), fb_bpp());
+  printf("- Available modes: %lu\n", fb_mode_count());
+  fb_list_modes();
 }
 
 void _start() {
@@ -48,6 +51,7 @@ void _start() {
 
   // TODO: Paging
   // TODO: CPUs
+  smp_init();
   // TODO: APIC / LAPIC
   // TODO: Show hardware
   // TODO: Filesystem

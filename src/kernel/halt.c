@@ -15,8 +15,8 @@ void sti() {
 void hcf(void) {
   cli();
 
-  puts("- Halting the system.\n");
-  // for (;;) {
-  asm("hlt");
-  // }
+  puts("System halted.\n");
+  for (;;) {
+    asm("hlt");
+  }
 }

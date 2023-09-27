@@ -586,6 +586,16 @@ const glypht_t GL_CAPITAL_K = {
   }
 };
 
+const glypht_t GL_CAPITAL_M = {
+  .value = 'M',
+  .points = { 0x00, 0x00, 0x82, 0xC6, 0xAA, 0x92, 0x92, 0x82, 0x82, 0x82, 0x82, 0x82, 0x00, 0x00, 0x00, 0x00 }
+};
+
+const glypht_t GL_CAPITAL_N = {
+  .value = 'N',
+  .points = { 0x00, 0x00, 0x42, 0x42, 0x42, 0x62, 0x52, 0x4A, 0x46, 0x42, 0x42, 0x42, 0x00, 0x00, 0x00, 0x00 }
+};
+
 const glypht_t GL_CAPITAL_O = {
   .value = 'O',
   .points = {
@@ -606,6 +616,11 @@ const glypht_t GL_CAPITAL_O = {
     0b00000000,
     0b00000000
   }
+};
+
+const glypht_t GL_CAPITAL_P = {
+  .value = 'S',
+  .points = { 0x00, 0x00, 0x7C, 0x42, 0x42, 0x42, 0x42, 0x7C, 0x40, 0x40, 0x40, 0x40, 0x00, 0x00, 0x00, 0x00 }
 };
 
 const glypht_t GL_CAPITAL_S = {
@@ -1250,6 +1265,11 @@ const glypht_t GL_SMALL_Z = {
   }
 };
 
+const glypht_t GL_PIPE = {
+  .value = '|',
+  .points = { 0x00, 0x00, 0x10, 0x10, 0x10, 0x10, 0x10, 0x10, 0x10, 0x10, 0x10, 0x10, 0x00, 0x00, 0x00, 0x00 }
+};
+
 void font_init() {
   for (int c = 0; c < 0x100; c++) {
     font_list.glyphs[c] = GL_NULL;
@@ -1280,14 +1300,17 @@ void font_init() {
   font_list.glyphs['D'] = GL_CAPITAL_D;
   font_list.glyphs['E'] = GL_CAPITAL_E;
   font_list.glyphs['G'] = GL_CAPITAL_G;
+  font_list.glyphs['M'] = GL_CAPITAL_M;
+  font_list.glyphs['N'] = GL_CAPITAL_N;
   font_list.glyphs['O'] = GL_CAPITAL_O;
   font_list.glyphs['H'] = GL_CAPITAL_H;
   font_list.glyphs['I'] = GL_CAPITAL_I;
   font_list.glyphs['J'] = GL_CAPITAL_J;
+  font_list.glyphs['P'] = GL_CAPITAL_P;
   font_list.glyphs['K'] = GL_CAPITAL_K;
   font_list.glyphs['S'] = GL_CAPITAL_S;
   font_list.glyphs['T'] = GL_CAPITAL_T;
-  font_list.glyphs['V'] = GL_CAPITAL_U;
+  font_list.glyphs['U'] = GL_CAPITAL_U;
   font_list.glyphs['V'] = GL_CAPITAL_V;
   font_list.glyphs['W'] = GL_CAPITAL_W;
   font_list.glyphs['a'] = GL_SMALL_A;
@@ -1315,6 +1338,7 @@ void font_init() {
   font_list.glyphs['x'] = GL_SMALL_X;
   font_list.glyphs['y'] = GL_SMALL_Y;
   font_list.glyphs['z'] = GL_SMALL_Z;
+  font_list.glyphs['|'] = GL_PIPE;
 };
 
 glypht_t font_glyph(uint8_t ascii) {

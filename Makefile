@@ -17,6 +17,7 @@ KERNEL = $(OUTPUT_DIR)/kernel.elf
 override CFLAGS += \
     -Wall \
     -Wextra \
+		-Winline \
     -std=gnu11 \
     -ffreestanding \
     -fno-stack-protector \
@@ -115,4 +116,4 @@ endif
 
 .PHONY: run
 run:
-	qemu-system-x86_64 -vga std -no-reboot -no-shutdown -M q35 -m 2G -hda menios.hdd
+	qemu-system-x86_64 -smp cpus=16,maxcpus=16,sockets=4,dies=1,clusters=1,cores=4 -vga std -no-reboot -no-shutdown -M q35 -m 2G -hda menios.hdd

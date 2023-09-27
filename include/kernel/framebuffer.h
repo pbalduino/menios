@@ -12,15 +12,20 @@
 #define FB_RED 0xff0000
 #define FB_WHITE 0x7f7f7f
 
+typedef struct limine_video_mode** limine_video_mode_list_t;
+typedef struct limine_video_mode* limine_video_mode_t;
+
 bool fb_active();
 
-int fb_count();
-
+uint16_t fb_bpp();
+uint64_t fb_count();
 uint64_t fb_height();
+uint64_t fb_mode_count();
 uint64_t fb_width();
 
 void fb_draw();
 void fb_init();
 void fb_putpixel(uint32_t x, uint32_t y, uint32_t rgb);
+void fb_list_modes();
 
 #endif
