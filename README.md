@@ -1,5 +1,7 @@
 # MeniOS
 
+![image](https://github.com/pbalduino/menios/assets/32979/bea730e3-1cfa-40ea-85b8-c03206f5d0f0)
+
 I'm trying again. Let's see how far I can go.
 
 Prerequisites:
