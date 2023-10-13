@@ -12,7 +12,7 @@ void sti() {
 }
 
 // Halt and catch fire function.
-void hcf(void) {
+void hcf() {
   cli();
 
   puts("System halted.\n");

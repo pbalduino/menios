@@ -28,9 +28,9 @@ void idt_init() {
   idt_add_isr(ISR_DIVISION_BY_ZERO, &idt_generic_isr_asm_handler);
   idt_add_isr(ISR_DEBUG, &idt_generic_isr_asm_handler);
   idt_add_isr(ISR_BREAKPOINT, &idt_generic_isr_asm_handler);
-  idt_add_isr(ISR_DOUBLE_FAULT, &idt_generic_isr_asm_handler);
-  idt_add_isr(ISR_GENERAL_PROTECTION_FAULT, &idt_generic_isr_asm_handler);
-  idt_add_isr(ISR_PAGE_FAULT, &idt_generic_isr_asm_handler);
+  idt_add_isr(ISR_DOUBLE_FAULT, &idt_df_isr_asm_handler);
+  idt_add_isr(ISR_GENERAL_PROTECTION_FAULT, &idt_gpf_isr_asm_handler);
+  idt_add_isr(ISR_PAGE_FAULT, &idt_pf_isr_asm_handler);
 
   idt_load(&idt_p);
 
@@ -39,4 +39,21 @@ void idt_init() {
 
 void idt_generic_isr_handler() {
   puts("Exception caught.");
+  hcf();
 }
+
+void idt_df_isr_handler() {
+  puts("- Page fault caught.\n");
+  hcf();
+}
+
+void idt_gpf_isr_handler() {
+  puts("- General protection fault caught.\n");
+  hcf();
+}
+
+void idt_pf_isr_handler() {
+  puts("- Page fault caught.\n");
+  hcf();
+}
+

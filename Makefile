@@ -108,6 +108,14 @@ ifeq ($(OS_NAME),linux)
 	mcopy -i $(IMAGE_NAME).hdd@@1M $(KERNEL) limine.cfg /limine/bin/limine-bios.sys ::/
 	mcopy -i $(IMAGE_NAME).hdd@@1M /limine/bin/BOOTX64.EFI ::/EFI/BOOT
 
+	@echo Building ISO
+	cp /limine/bin/*.bin bin/
+	xorriso -as mkisofs -b limine-bios-cd.bin \
+        -no-emul-boot -boot-load-size 4 -boot-info-table \
+        --efi-boot limine-uefi-cd.bin \
+        -efi-boot-part --efi-boot-image --protective-msdos-label \
+        ./bin -o $(IMAGE_NAME).iso
+	/limine/bin/limine bios-install $(IMAGE_NAME).iso
 else
 	@make docker
 	@echo "Building inside Docker"

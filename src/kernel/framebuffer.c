@@ -51,8 +51,8 @@ void fb_init() {
   viewpoint_y = framebuffer->height - 20;
   row = 0;
   col = 0;
-  char_line_width = viewpoint_x / COLS;
-  char_line_height = viewpoint_y / ROWS;
+  char_line_width = 8; //viewpoint_x / COLS;
+  char_line_height = 16; // viewpoint_y / ROWS;
 }
 
 inline bool fb_active() {
@@ -124,9 +124,20 @@ inline uint64_t fb_height() {
 
 void fb_list_modes() {
   for(uint64_t m = 0; m < framebuffer->mode_count; m++) {
-    printf("  %lu: %lu x %lu x %d | ", m, framebuffer->modes[m]->width, framebuffer->modes[m]->height, framebuffer->modes[m]->bpp);
-    if(m > 0 && m % 4 == 0) {
+    printf("  %s%lu: %s%lu x %s%lu x %d ",
+      m < 10 ? "0" : "",
+      m,
+      framebuffer->modes[m]->width < 1000 ? " " : "",
+      framebuffer->modes[m]->width,
+      framebuffer->modes[m]->height < 1000 ? " " : "",
+      framebuffer->modes[m]->height,
+      framebuffer->modes[m]->bpp,
+      m == framebuffer->mode_count - 1 ? "" : "|");
+
+    if((m + 1) % 4 == 0 || m == framebuffer->mode_count - 1) {
       putchar('\n');
+    } else {
+      putchar('|');
     }
   }
 }

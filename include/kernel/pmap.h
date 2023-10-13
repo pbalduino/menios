@@ -42,6 +42,6 @@ typedef struct {
 
 extern void init_paging(uint32_t page_dir);
 
-void init_memory();
+void mem_init();
 
 #endif

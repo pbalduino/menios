@@ -64,8 +64,11 @@ typedef struct {
     uint64_t ss;
 } idt_exception_t;
 
+extern void idt_df_isr_asm_handler();
 extern void idt_generic_isr_asm_handler();
+extern void idt_gpf_isr_asm_handler();
 extern void idt_load(idt_pointer_t *idt_ptr);
+extern void idt_pf_isr_asm_handler();
 
 void idt_init();
 

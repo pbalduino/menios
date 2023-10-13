@@ -6,6 +6,7 @@
 #include <kernel/gdt.h>
 #include <kernel/idt.h>
 #include <kernel/kernel.h>
+#include <kernel/pmap.h>
 #include <kernel/smp.h>
 
 void draw_background() {
@@ -50,6 +51,8 @@ void _start() {
   idt_init();
 
   // TODO: Paging
+  mem_init();
+
   // TODO: CPUs
   smp_init();
   // TODO: APIC / LAPIC

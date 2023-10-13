@@ -7,3 +7,4 @@
 .vscode/
 bin/
 bochsout.txt
+*.iso
