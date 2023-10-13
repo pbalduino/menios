@@ -99,9 +99,9 @@ int vprintf(const char* format, va_list args) {
         }
         case 'X':
         case 'x': {
-          uint32_t val = va_arg(args, uint32_t);
+          uint64_t val = va_arg(args, uint64_t);
           char str[256];
-          utoa(val, str, 16);
+          lutoa(val, str, 16);
           puts(str);
           break;
         }

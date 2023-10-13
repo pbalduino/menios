@@ -9,6 +9,8 @@ static volatile struct limine_memmap_request memmap_request = {
 };
 
 static struct limine_memmap_response *memmap;
+static uint64_t mem_total = 0;
+static uint64_t mem_available = 0;
 
 void mem_init() {
   printf("- Starting memory management");
@@ -16,12 +18,20 @@ void mem_init() {
     printf(" > Error mapping the memory. Halting.");
     hcf();
   }
-  printf("...\n");
 
-  // for(uint64_t p = 0; p < memmap->entry_count; p++) {
-  printf("addr: %lu | ", (uintptr_t)memmap->entries[0]);
-  printf("%lu | ", memmap->entries[0]->length);
-  // }
+  memmap = memmap_request.response;
 
+  printf(". %lu entries found..\n", memmap->entry_count);
+
+  for(uint64_t e = 0; e < memmap->entry_count; e++) {
+    printf("  Entry %lu:  base: %x - size: %lu - type: %lu\n", e, memmap->entries[e]->base, memmap->entries[e]->length, memmap->entries[e]->type);
+
+    if(memmap->entries[e]->type == LIMINE_MEMMAP_USABLE) {
+      mem_available += memmap->entries[e]->length;
+    }
+    mem_total += memmap->entries[e]->length;
+  }
+
+  printf("  Total: %luMB - available: %luMB\n", mem_total / (1024 * 1024), mem_available / (1024 * 1024));
 
 }

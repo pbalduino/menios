@@ -1173,6 +1173,7 @@ void font_init() {
   font_list.glyphs['%'] = GL_PERCENT;
   font_list.glyphs['*'] = GL_ASTERISK;
   font_list.glyphs['+'] = GL_PLUS;
+  font_list.glyphs[','] = GL_COMMA;
   font_list.glyphs['-'] = GL_MINUS;
   font_list.glyphs['.'] = GL_PERIOD;
   font_list.glyphs['/'] = GL_SLASH;

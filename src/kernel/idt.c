@@ -52,8 +52,20 @@ void idt_gpf_isr_handler() {
   hcf();
 }
 
-void idt_pf_isr_handler() {
-  puts("- Page fault caught.\n");
+void idt_pf_isr_handler(uint64_t error_code) {
+  uint64_t faulting_address;
+  int present   = (error_code & 0x1);
+  int write     = (error_code & 0x2) >> 1;
+  int user_mode = (error_code & 0x4) >> 2;
+  int reserved  = (error_code & 0x8) >> 3;
+  int index     = (error_code & 0xFF0) >> 4;
+
+  asm volatile ("movq %%cr2, %0" : "=r" (faulting_address));
+
+  printf("- Page fault caught trying to access address %lu.\n", faulting_address);
+  printf("  Index %d\n", index);
+  printf("  Present: %d, Write: %d, User Mode: %d, Reserved: %d\n", present, write, user_mode, reserved);
+
   hcf();
 }
 
