@@ -24,7 +24,7 @@ void mem_init() {
   printf(". %lu entries found..\n", memmap->entry_count);
 
   for(uint64_t e = 0; e < memmap->entry_count; e++) {
-    printf("  Entry %lu:  base: %x - size: %lu - type: %lu\n", e, memmap->entries[e]->base, memmap->entries[e]->length, memmap->entries[e]->type);
+    // printf("  Entry %lu:  base: %x - size: %lu - type: %lu\n", e, memmap->entries[e]->base, memmap->entries[e]->length, memmap->entries[e]->type);
 
     if(memmap->entries[e]->type == LIMINE_MEMMAP_USABLE) {
       mem_available += memmap->entries[e]->length;

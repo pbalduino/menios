@@ -15,8 +15,8 @@ static volatile struct limine_framebuffer_request framebuffer_request = {
 static bool active;
 static int char_line_height;
 static int char_line_width;
-static int col;
-static int row;
+static int current_col;
+static int current_row;
 static int viewpoint_x;
 static int viewpoint_y;
 static struct limine_framebuffer *framebuffer;
@@ -49,8 +49,8 @@ void fb_init() {
 
   viewpoint_x = framebuffer->width - 20;
   viewpoint_y = framebuffer->height - 20;
-  row = 0;
-  col = 0;
+  current_row = 0;
+  current_col = 0;
   char_line_width = 8; //viewpoint_x / COLS;
   char_line_height = 16; // viewpoint_y / ROWS;
 }
@@ -86,15 +86,15 @@ void fb_putchar(char c) {
   }
 
   if(c == '\n') {
-    col = 0;
-    row++;
+    current_col = 0;
+    current_row++;
     return;
   }
 
   glypht_t glyph = font_glyph(c);
 
-  int x = (col * char_line_width) + 10;
-  int y = (row * char_line_height) + 10;
+  int x = (current_col * char_line_width) + 10;
+  int y = (current_row * char_line_height) + 10;
 
   // fb_drawline(x, y, fb_width(), y, 0xff0000);
   // fb_drawline(x, y, x, fb_height(), 0xff0000);
@@ -106,11 +106,11 @@ void fb_putchar(char c) {
       }
     }
   }
-  if(col < COLS){
-    col++;
+  if(current_col < COLS){
+    current_col++;
   } else {
-    col = 0;
-    row++;
+    current_col = 0;
+    current_row++;
   }
 }
 
@@ -124,7 +124,7 @@ inline uint64_t fb_height() {
 
 void fb_list_modes() {
   for(uint64_t m = 0; m < framebuffer->mode_count; m++) {
-    printf("  %s%lu: %s%lu x %s%lu x %d ",
+    printf("  %s%lu: %s%lu x %s%lu x %d %s",
       m < 10 ? "0" : "",
       m,
       framebuffer->modes[m]->width < 1000 ? " " : "",

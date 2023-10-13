@@ -362,6 +362,11 @@ const glypht_t GL_CAPITAL_E = {
   .points = { 0x00, 0x00, 0xFE, 0xC0, 0xC0, 0xC0, 0xF8, 0xC0, 0xC0, 0xC0, 0xC0, 0xFE, 0x00, 0x00, 0x00, 0x00 }
 };
 
+const glypht_t GL_CAPITAL_F = {
+  .value = 'f',
+  .points = { 0x00, 0x00, 0x7e, 0x40, 0x40, 0x40, 0x78, 0x40, 0x40, 0x40, 0x40, 0x40, 0x00, 0x00, 0x00, 0x00 }
+};
+
 const glypht_t GL_CAPITAL_G = {
   .value = 'C',
   .points = {
@@ -470,6 +475,11 @@ const glypht_t GL_CAPITAL_K = {
     0b00000000,
     0b00000000
   }
+};
+
+const glypht_t GL_CAPITAL_L = {
+  .value = 'M',
+  .points = { 0x00, 0x00, 0x40, 0x40, 0x40, 0x40, 0x40, 0x40, 0x40, 0x40, 0x40, 0x7e, 0x00, 0x00, 0x00, 0x00 }
 };
 
 const glypht_t GL_CAPITAL_M = {
@@ -714,7 +724,7 @@ const glypht_t GL_SMALL_E = {
 
 const glypht_t GL_SMALL_F = {
   .value = 'f',
-  .points = { 0x00, 0x00, 0x7e, 0x40, 0x40, 0x40, 0x78, 0x40, 0x40, 0x40, 0x40, 0x40, 0x00, 0x00, 0x00, 0x00 }
+  .points = { 0x00, 0x00, 0x0e, 0x10, 0x10, 0x7c, 0x10, 0x10, 0x10, 0x10, 0x10, 0x10, 0x00, 0x00, 0x00, 0x00 }
 };
 
 const glypht_t GL_SMALL_G = {
@@ -1194,7 +1204,9 @@ void font_init() {
   font_list.glyphs['C'] = GL_CAPITAL_C;
   font_list.glyphs['D'] = GL_CAPITAL_D;
   font_list.glyphs['E'] = GL_CAPITAL_E;
+  font_list.glyphs['F'] = GL_CAPITAL_F;
   font_list.glyphs['G'] = GL_CAPITAL_G;
+  font_list.glyphs['L'] = GL_CAPITAL_L;
   font_list.glyphs['M'] = GL_CAPITAL_M;
   font_list.glyphs['N'] = GL_CAPITAL_N;
   font_list.glyphs['O'] = GL_CAPITAL_O;
@@ -1235,8 +1247,6 @@ void font_init() {
   font_list.glyphs['y'] = GL_SMALL_Y;
   font_list.glyphs['z'] = GL_SMALL_Z;
   font_list.glyphs['|'] = GL_PIPE;
-
- font2_t* fonts = (font2_t*)font_terminus;
 };
 
 glypht_t font_glyph(uint8_t ascii) {

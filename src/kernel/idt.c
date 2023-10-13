@@ -24,7 +24,6 @@ void idt_init() {
   puts("- Setting IDT:");
   idt_p.size = sizeof(idt) - 1;
   idt_p.offset = (uint64_t)&idt;
-  puts(".");
   idt_add_isr(ISR_DIVISION_BY_ZERO, &idt_generic_isr_asm_handler);
   idt_add_isr(ISR_DEBUG, &idt_generic_isr_asm_handler);
   idt_add_isr(ISR_BREAKPOINT, &idt_generic_isr_asm_handler);

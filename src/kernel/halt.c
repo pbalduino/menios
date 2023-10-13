@@ -20,3 +20,43 @@ void hcf() {
     asm("hlt");
   }
 }
+
+// Writes a byte to a port
+void outb(uint16_t port, uint8_t value) {
+  asm volatile (
+    "outb %0, %1"
+    :
+    : "a"(value), "Nd"(port)
+  );
+}
+
+// Reads a byte from a port
+uint8_t inb(uint16_t port) {
+  uint8_t result;
+  asm volatile (
+    "inb %1, %0"
+    : "=a"(result)
+    : "Nd"(port)
+  );
+  return result;
+}
+
+// Function to write a 16-bit value to a port
+void outw(uint16_t port, uint16_t value) {
+  asm volatile (
+    "outw %0, %1"
+    :
+    : "a"(value), "Nd"(port)
+  );
+}
+
+// Function to read a 16-bit value from a port
+uint16_t inw(uint16_t port) {
+  uint16_t result;
+  asm volatile (
+    "inw %1, %0"
+    : "=a"(result)
+    : "Nd"(port)
+  );
+  return result;
+}
