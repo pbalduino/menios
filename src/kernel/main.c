@@ -8,6 +8,7 @@
 #include <kernel/idt.h>
 #include <kernel/kernel.h>
 #include <kernel/pmap.h>
+#include <kernel/serial.h>
 #include <kernel/smp.h>
 
 void boot_graphics_init() {
@@ -26,10 +27,12 @@ void boot_graphics_init() {
   putchar('\n');
   printf("- Screen mode: %lu x %lu x %d\n", fb_width(), fb_height(), fb_bpp());
   printf("- Available modes: %lu\n", fb_mode_count());
-  fb_list_modes();
+  // fb_list_modes();
 }
 
 void _start() {
+  serial_init();
+  serial_puts("OK\n");
   // FIXME: needs to finish the typefaces
   boot_graphics_init();
 

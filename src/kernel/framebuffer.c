@@ -4,9 +4,11 @@
 #include <kernel/fonts.h>
 #include <kernel/framebuffer.h>
 #include <kernel/kernel.h>
+#include <kernel/serial.h>
 #include <stdlib.h>
 #include <string.h>
 #include <types.h>
+
 static volatile struct limine_framebuffer_request framebuffer_request = {
   .id = LIMINE_FRAMEBUFFER_REQUEST,
   .revision = 0
