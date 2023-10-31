@@ -68,6 +68,12 @@ int vprintf(const char* format, va_list args) {
               puts(str);
               pos++;
               break;
+            case 'x':
+              uint64_t val = va_arg(args, uint64_t);
+              char str[256];
+              lutoa(val, str, 16);
+              puts(str);
+              break;
             default: {
               int64_t val = va_arg(args, int64_t);
               char str[256];
