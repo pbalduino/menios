@@ -1,7 +1,7 @@
 #ifndef _KERNEL_MEM_H_
 #define _KERNEL_MEM_H_ 1
 
-#include <types.h>
+#include <stddef.h>
 
 void memzero(void * s, uint64_t n);
 void*	memset(void *dst, int32_t c, size_t len);

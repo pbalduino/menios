@@ -1,5 +1,6 @@
-#include <kernel/console.h>
+#include <stdio.h>
 #include <kernel/kernel.h>
+#include <kernel/serial.h>
 
 void cli() {
   puts("- Stopping interruptions.\n");
@@ -16,6 +17,7 @@ void hcf() {
   cli();
 
   puts("System halted.\n");
+  serial_puts("System halted.\n");
   for (;;) {
     asm("hlt");
   }

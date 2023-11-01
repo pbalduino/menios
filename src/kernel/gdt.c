@@ -1,5 +1,5 @@
 #include <kernel/gdt.h>
-#include <kernel/console.h>
+#include <stdio.h>
 
 gdt_t gdt = {
   {0, 0, 0, 0, 0, 0}, // null

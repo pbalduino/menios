@@ -26,6 +26,7 @@ uint64_t fb_width();
 void fb_draw();
 void fb_init();
 void fb_putpixel(uint32_t x, uint32_t y, uint32_t rgb);
+int fb_putchar(int c);
 void fb_list_modes();
 
 #endif

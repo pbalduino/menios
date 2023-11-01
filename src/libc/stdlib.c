@@ -1,6 +1,7 @@
-#include <types.h>
 #include <stdlib.h>
 #include <string.h>
+
+#include <kernel/serial.h>
 
 char* utoa(uint32_t num, char* str, int32_t base) {
   int i = 0;
@@ -33,6 +34,8 @@ char* utoa(uint32_t num, char* str, int32_t base) {
 }
 
 char* itoa(int32_t num, char* str, int32_t base) {
+  serial_puts("itoa\n");
+
   int i = 0;
   bool isNegative = false;
 
@@ -49,13 +52,18 @@ char* itoa(int32_t num, char* str, int32_t base) {
     isNegative = true;
     num = -num;
   }
-
+  serial_puts("  55\n");
   // Process individual digits
   while (num != 0) {
+    serial_puts("  58\n");
     int rem = num % base;
-    str[i++] = (rem > 9)? (rem-10) + 'a' : rem + '0';
+    str[i++] = (rem > 9)? (rem - 10) + 'a' : rem + '0';
+    serial_puts("  ");
+    serial_puts(str);
+    serial_puts("\n");
     num = num / base;
   }
+  serial_puts("  62\n");
 
   // If number is negative, append '-'
   if (isNegative) {
@@ -66,6 +74,8 @@ char* itoa(int32_t num, char* str, int32_t base) {
 
   // Reverse the string
   strrev(str, i);
+
+  serial_puts("  74\n");
 
   return str;
 }

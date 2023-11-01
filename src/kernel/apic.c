@@ -1,7 +1,8 @@
 #include <kernel/apic.h>
-#include <kernel/console.h>
 #include <kernel/kernel.h>
 #include <kernel/timer.h>
+#include <stdint.h>
+#include <stdio.h>
 
 // Function to disable the PIC by masking all interrupts
 void pic_disable() {

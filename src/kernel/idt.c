@@ -1,7 +1,9 @@
-#include <kernel/console.h>
 #include <kernel/gdt.h>
 #include <kernel/idt.h>
 #include <kernel/kernel.h>
+#include <kernel/serial.h>
+
+#include <stdio.h>
 
 idt_pointer_t idt_p;
 idt_entry_t idt[0x100];
@@ -37,21 +39,25 @@ void idt_init() {
 }
 
 void idt_generic_isr_handler() {
-  puts("Exception caught.");
+  serial_puts("generic exception caught");
+  puts("Exception caught.\n");
   hcf();
 }
 
 void idt_df_isr_handler() {
-  puts("- Page fault caught.\n");
+  serial_puts("Double fault caught.\n");
+  puts("- Double fault caught.\n");
   hcf();
 }
 
 void idt_gpf_isr_handler() {
+  serial_puts("General protection fault caught.\n");
   puts("- General protection fault caught.\n");
   hcf();
 }
 
 void idt_pf_isr_handler(uint64_t error_code) {
+  serial_puts("Page fault caught.\n");
   uint64_t faulting_address;
   int present   = (error_code & 0x1);
   int write     = (error_code & 0x2) >> 1;

@@ -3,5 +3,6 @@
 
 void serial_init();
 void serial_putchar(uint8_t ch);
+int serial_puts(const char* text);
 
 #endif

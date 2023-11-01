@@ -2,6 +2,7 @@
 FROM --platform=amd64 debian as base
 RUN apt-get update
 RUN apt-get install \
+  apt-utils \
   automake \
   coreutils \
   cppcheck \

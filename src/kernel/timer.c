@@ -1,5 +1,5 @@
 #include <kernel/timer.h>
-#include <kernel/console.h>
+#include <stdio.h>
 
 extern void reset_timer();
 

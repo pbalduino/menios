@@ -19,12 +19,12 @@ void serial_init() {
   // outb(0x3f8 + 1, 0x01);
 }
 
-void serial_putchar(uint8_t ch) {
+void serial_putchar(int ch) {
   // Wait for the serial port to be ready
   while ((inb(0x3f8 + 5) & 0x20) == 0);
 
   // Send the character to the serial port
-  outb(0x3F8, ch);
+  outb(0x3F8, ch & 0xff);
 }
 
 int serial_puts(const char* text) {

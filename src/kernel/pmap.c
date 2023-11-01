@@ -1,7 +1,8 @@
 #include <boot/limine.h>
-#include <kernel/console.h>
 #include <kernel/pmap.h>
 #include <kernel/kernel.h>
+
+#include <stdio.h>
 
 static volatile struct limine_memmap_request memmap_request = {
   .id = LIMINE_MEMMAP_REQUEST,
@@ -25,7 +26,7 @@ void mem_init() {
   printf(". %lu entries found..\n", memmap->entry_count);
 
   for(uint64_t e = 0; e < memmap->entry_count; e++) {
-    printf("  Entry %lu:  base: %lx - size: %lu - type: %lu\n", e, memmap->entries[e]->base, memmap->entries[e]->length, memmap->entries[e]->type);
+    printf("  Entry %lu:  base: %lx - size: %lu (%lx) - type: %lu\n", e, memmap->entries[e]->base, memmap->entries[e]->length, memmap->entries[e]->length, memmap->entries[e]->type);
     switch (memmap->entries[e]->type) {
     case LIMINE_MEMMAP_USABLE:
       mem_available += memmap->entries[e]->length;

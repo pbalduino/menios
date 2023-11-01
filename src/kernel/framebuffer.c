@@ -6,6 +6,7 @@
 #include <kernel/kernel.h>
 #include <kernel/serial.h>
 #include <stdlib.h>
+#include <stdio.h>
 #include <string.h>
 #include <types.h>
 
@@ -23,6 +24,7 @@ static int viewpoint_x;
 static int viewpoint_y;
 static struct limine_framebuffer *framebuffer;
 
+static FILE* fb_d;
 #define ROWS 50
 #define COLS 140
 
@@ -41,6 +43,7 @@ inline uint64_t fb_mode_count() {
 void fb_init() {
   // Ensure we got a framebuffer.
   if (framebuffer_request.response == NULL || framebuffer_request.response->framebuffer_count < 1) {
+    serial_puts("panic in framebuffer.c:46");
     hcf();
   }
 
@@ -55,6 +58,13 @@ void fb_init() {
   current_col = 0;
   char_line_width = 8; //viewpoint_x / COLS;
   char_line_height = 16; // viewpoint_y / ROWS;
+
+  fb_d = freopen("/dev/fb", "w", stdout);
+
+  if (fb_d == NULL) {
+    serial_puts("panic in framebuffer.c:64");
+    hcf();
+  }
 }
 
 inline bool fb_active() {
@@ -82,15 +92,15 @@ void fb_drawline(uint32_t left, uint32_t right, uint32_t top, uint32_t bottom, u
   }
 }
 
-void fb_putchar(char c) {
+int fb_putchar(int c) {
   if(c == '\0') {
-    return;
+    return 0;
   }
 
   if(c == '\n') {
     current_col = 0;
     current_row++;
-    return;
+    return 0;
   }
 
   glypht_t glyph = font_glyph(c);

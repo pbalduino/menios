@@ -1,9 +1,6 @@
 #include <stdint.h>
 #include <stddef.h>
 
-#include <stdint.h>
-#include <stddef.h>
-
 void* memcpy(void* dest, const void* src, size_t n) {
   uint64_t* dest64 = (uint64_t*)dest;
   const uint64_t* src64 = (const uint64_t*)src;

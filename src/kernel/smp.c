@@ -1,7 +1,7 @@
 #include <boot/limine.h>
-#include <kernel/console.h>
 #include <kernel/kernel.h>
 #include <kernel/smp.h>
+#include <stdio.h>
 
 static volatile struct limine_smp_request smp_request = {
   .id = LIMINE_SMP_REQUEST,

@@ -1,7 +1,7 @@
 #ifndef INCLUDE_STRING_H
 #define INCLUDE_STRING_H
 
-#include <types.h>
+#include <stddef.h>
 
 #ifdef __cplusplus
 extern "C" {

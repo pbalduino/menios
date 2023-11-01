@@ -5,25 +5,10 @@
 extern "C" {
 #endif
 
-#ifndef NULL
-#define NULL ((void*) 0)
-#endif
+#include <stdint.h>
 
 typedef _Bool bool;
 enum { false, true };
-
-typedef short int16_t;
-typedef int   int32_t;
-typedef long  int64_t;
-
-typedef unsigned char  uint8_t;
-typedef unsigned short uint16_t;
-typedef unsigned int   uint32_t;
-typedef unsigned long  uint64_t;
-
-typedef uint64_t size_t;
-
-typedef unsigned long uintptr_t;
 
 #define ROUNDDOWN(a, n)						\
 ({								\

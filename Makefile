@@ -1,4 +1,4 @@
-DOCKER = /usr/local/bin/docker
+DOCKER = $(shell which docker)
 DOCKER_IMAGE = menios:latest
 
 IMAGE_NAME = menios
@@ -84,13 +84,15 @@ clean:
 
 .PHONY: docker
 docker:
-	@docker rmi -f menios && docker build -t menios:latest .
+	# docker rmi -f menios && \
+	docker build -t menios:latest .
 
 .PHONY: build
 build:
 	@set +eux
 
 ifeq ($(OS_NAME),linux)
+	@echo Building kernel
 	$(GCC) $(GCC_KERNEL_OPTS) $(shell find -L . -type f -name '*.c')
 
 	for file in $(shell find -L . -type f -name '*.s'); do \
