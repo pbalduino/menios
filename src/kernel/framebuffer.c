@@ -43,7 +43,7 @@ inline uint64_t fb_mode_count() {
 void fb_init() {
   // Ensure we got a framebuffer.
   if (framebuffer_request.response == NULL || framebuffer_request.response->framebuffer_count < 1) {
-    serial_puts("panic in framebuffer.c:46");
+    serial_error("Panic in framebuffer.c:46");
     hcf();
   }
 
@@ -62,7 +62,7 @@ void fb_init() {
   fb_d = freopen("/dev/fb", "w", stdout);
 
   if (fb_d == NULL) {
-    serial_puts("panic in framebuffer.c:64");
+    serial_error("freopen(/dev/fb) -> NULL");
     hcf();
   }
 }

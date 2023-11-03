@@ -5,7 +5,7 @@
 
 typedef struct __fd_t {
   bool used;
-  int (*write)(int32_t);
+  int (*write)(int);
   int (*read)();
   int (*close)();
 } *file_descriptor_t;

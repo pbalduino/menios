@@ -2,7 +2,6 @@
 #include <mem.h>
 #include <string.h>
 #include <types.h>
-#include <kernel/serial.h>
 
 size_t strlen(const char *s) {
   uint16_t len = 0;
@@ -24,7 +23,6 @@ int	strcmp(const char *s1, const char *s2) {
 }
 
 void strrev(char str[], int32_t length) {
-  serial_puts("strrev\n");
   int32_t start = 0;
   int32_t end = length -1;
   while (start < end) {

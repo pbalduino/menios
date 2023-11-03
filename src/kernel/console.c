@@ -4,13 +4,12 @@
 
 #include <kernel/console.h>
 #include <kernel/file.h>
-
-int	vprintf(const char*, va_list);
-int	fvprintf(const char*, va_list, FILE* file);
+#include <kernel/serial.h>
 
 int fputchar(int ch, FILE* file) {
+  serial_log("Entering fputchar");
   if(file == NULL) {
-    serial_puts("  file is null\n");
+    serial_error("file is null\n");
     return -1;
   }
 
@@ -19,6 +18,7 @@ int fputchar(int ch, FILE* file) {
     return -1;
   }
 
+  serial_log("Leaving fputchar");
   return fd->write(ch);
 }
 
@@ -38,10 +38,10 @@ int fputs(const char* text, FILE* file) {
 }
 
 int vprintf(const char* format, va_list args) {
-  return fvprintf(format, args, stdout);
+  return fvprintf(stdout, format, args);
 }
 
-int fvprintf(const char* format, va_list args, FILE* file) {
+int fvprintf(FILE *file, const char *format, va_list args){
   for(int pos = 0; format[pos]; pos++) {
     if(format[pos] == '%') {
       switch(format[++pos]) {
@@ -114,8 +114,8 @@ int fvprintf(const char* format, va_list args, FILE* file) {
         case 'p': {
           void* val = va_arg(args, void*);
           char str[256];
-          lutoa((uintptr_t)&val, str, 8);
-          fputs(str, file);
+          lutoa((uintptr_t)&val, str, 16);
+          fprintf(file, "0x%s", str);
           break;
         }
         case 's': {
@@ -162,7 +162,7 @@ int printf(const char* format, ...) {
 int fprintf(FILE* file, const char* format, ...) {
   va_list list;
   va_start(list, format);
-  int i = fvprintf(format, list, file);
+  int i = fvprintf(file, format, list);
   va_end(list);
   return i;
 }

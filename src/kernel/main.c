@@ -35,12 +35,10 @@ void boot_graphics_init() {
 }
 
 void _start() {
-  int c;
+  file_init();
 
   serial_init();
-  serial_puts("\n-----  starting -----\n");
-
-  file_init();
+  serial_log("Hello");
 
   // FIXME: needs to finish the typefaces
   boot_graphics_init();
@@ -53,7 +51,6 @@ void _start() {
 
   // TODO: Paging
   mem_init();
-  printf("addr: %p", &c);
 
   // TODO: CPUs
   smp_init();
@@ -67,7 +64,7 @@ void _start() {
   // TODO: Filesystem
 
   puts("- Bye\n");
-  serial_puts("----- done -----\n");
+  serial_log("Bye\n");
 
   hcf();
 }

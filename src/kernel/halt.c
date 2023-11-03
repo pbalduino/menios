@@ -17,7 +17,7 @@ void hcf() {
   cli();
 
   puts("System halted.\n");
-  serial_puts("System halted.\n");
+  serial_log("System halted.");
   for (;;) {
     asm("hlt");
   }

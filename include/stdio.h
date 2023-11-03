@@ -1,7 +1,7 @@
 #ifndef _STDIO_H
 #define _STDIO_H_
 
-#include <types.h>
+#include <stdarg.h>
 
 #ifndef NULL
 #define NULL ((void*)0)
@@ -31,11 +31,14 @@ int puts(const char* str);
 __attribute__ ((format (printf, 1, 2)))
 int printf(const char* format, ...);
 
+int vprintf(const char *format, va_list arg);
+
 FILE* fopen(const char *filename, const char *mode);
 int   fclose(FILE *stream);
 int   fprintf(FILE *stream, const char *format, ...);
 int   fscanf(FILE *stream, const char *format, ...);
 int   fputs(const char *text, FILE* file);
+int fvprintf(FILE *stream, const char *format, va_list arg);
 
 FILE* freopen(const char *filename, const char *mode, FILE *file);
 
