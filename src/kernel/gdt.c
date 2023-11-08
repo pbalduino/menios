@@ -1,4 +1,5 @@
 #include <kernel/gdt.h>
+#include <kernel/serial.h>
 #include <stdio.h>
 
 gdt_t gdt = {
@@ -16,6 +17,7 @@ gdt_t gdt = {
 gdt_pointer_t gdt_p;
 
 void gdt_init() {
+  serial_log("Entering gdt_init");
   puts("- Setting GDT");
 
   // Create a GDT pointer
@@ -23,8 +25,9 @@ void gdt_init() {
   gdt_p.offset = (uint64_t)&gdt;
 
   puts("...");
-  // Load the GDT using inline assembly
+
   gdt_load(&gdt_p);
 
   puts(" OK\n");
+  serial_log("Leaving gdt_init");
 }

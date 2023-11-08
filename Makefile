@@ -126,4 +126,4 @@ endif
 
 .PHONY: run
 run:
-	qemu-system-x86_64 -smp cpus=1,maxcpus=1,sockets=1,dies=1,clusters=1,cores=1 -vga std -no-reboot -M q35 -m size=2G,maxmem=2G -hda menios.hdd -serial file:com1.log -monitor stdio
+	qemu-system-x86_64 -smp cpus=1,maxcpus=1,sockets=1,dies=1,clusters=1,cores=1 -vga std -no-reboot --no-shutdown -M q35 -m size=2G,maxmem=2G -hda menios.hdd -serial file:com1.log -monitor stdio -d int

@@ -44,7 +44,7 @@ void idt_generic_isr_handler() {
 }
 
 void idt_df_isr_handler() {
-  puts("- Page fault caught.\n");
+  puts("- Double fault caught.\n");
   hcf();
 }
 
@@ -54,19 +54,27 @@ void idt_gpf_isr_handler() {
 }
 
 void idt_pf_isr_handler(uint64_t error_code) {
+  puts("- Page fault caught.\n");
   uint64_t faulting_address;
-  int present   = (error_code & 0x1);
-  int write     = (error_code & 0x2) >> 1;
-  int user_mode = (error_code & 0x4) >> 2;
-  int reserved  = (error_code & 0x8) >> 3;
-  int index     = (error_code & 0xFF0) >> 4;
+  int present    = (error_code & 0x01);
+  int write      = (error_code & 0x02) >> 1;
+  int user_mode  = (error_code & 0x04) >> 2;
+  int reserved   = (error_code & 0x08) >> 3;
+  int fetch      = (error_code & 0x10) >> 4;
+  int protection = (error_code & 0x20) >> 5;
+  int shadow     = (error_code & 0x40) >> 6;
+  int index      = (error_code & 0xff0) >> 4;
 
   asm volatile ("movq %%cr2, %0" : "=r" (faulting_address));
 
-  serial_printf("%s[%d]: Page fault caught trying to access address 0x%lx.\n", __FILE__, __LINE__, faulting_address);
-  printf("- Page fault caught trying to access address %lx.\n", faulting_address);
+  // serial_printf("%s[%d]: Page fault caught trying to access address 0x%lx.\n", __FILE__, __LINE__, faulting_address);
+  serial_puts("Page fault caught trying to access address:\n");
+
+  printf("- Page fault caught trying to access address %lx. Error code: %ld\n", faulting_address, error_code);
   printf("  Index %d\n", index);
   printf("  Present: %d, Write: %d, User Mode: %d, Reserved: %d\n", present, write, user_mode, reserved);
+
+
 
   hcf();
 }

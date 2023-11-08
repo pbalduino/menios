@@ -124,6 +124,7 @@ int fb_putchar(int c) {
     current_col = 0;
     current_row++;
   }
+  return 0;
 }
 
 inline uint64_t fb_width() {

@@ -11,7 +11,7 @@
 #include <kernel/gdt.h>
 #include <kernel/idt.h>
 #include <kernel/kernel.h>
-#include <kernel/pmap.h>
+#include <kernel/mm.h>
 #include <kernel/serial.h>
 #include <kernel/smp.h>
 
@@ -38,19 +38,23 @@ void _start() {
   file_init();
 
   serial_init();
-  serial_log("Hello");
+  serial_putchar('L');
 
   // FIXME: needs to finish the typefaces
   boot_graphics_init();
+  serial_putchar('M');
 
   // GDT
   gdt_init();
+  serial_putchar('N');
 
   // IDT
   idt_init();
+  serial_putchar('O');
 
   // TODO: Paging
-  mem_init();
+  mm_init();
+  serial_putchar('P');
 
   // TODO: CPUs
   smp_init();
@@ -65,6 +69,9 @@ void _start() {
 
   puts("- Bye\n");
   serial_log("Bye\n");
+
+  // char* x = (char*)0xffff800000000000;
+  // serial_puts(x);
 
   hcf();
 }

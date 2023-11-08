@@ -9,6 +9,7 @@
 int fputchar(int ch, FILE* file) {
   serial_log("Entering fputchar");
   if(file == NULL) {
+    printf("file is null ");
     serial_error("file is null\n");
     return -1;
   }
@@ -70,7 +71,7 @@ int fvprintf(FILE *file, const char *format, va_list args){
           break;
         }
         case 'l': {
-          switch(format[pos+1]) {
+          switch(format[pos + 1]) {
             case 'u': {
               uint64_t val = va_arg(args, uint64_t);
               char str[256];
@@ -91,7 +92,9 @@ int fvprintf(FILE *file, const char *format, va_list args){
               uint64_t val = va_arg(args, uint64_t);
               char str[256];
               lutoa(val, str, 16);
+              fputs("0x", file);
               fputs(str, file);
+              pos++;
               break;
             }
             default: {
