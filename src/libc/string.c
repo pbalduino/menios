@@ -11,10 +11,16 @@ size_t strlen(const char *s) {
   return len;
 }
 
-void swap(char* a, char* b) {
-  char t = *b;
-  *b = *a;
-  *a = t;
+int swap(char* a, char* b) {
+  if (a == NULL || b == NULL) {
+    return 0;
+  }
+
+  char t = *a;
+  *a = *b;
+  *b = t;
+
+  return 1;
 }
 
 int	strcmp(const char *s1, const char *s2) {
