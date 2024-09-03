@@ -2,7 +2,7 @@
 
 ![image](https://github.com/pbalduino/menios/assets/32979/ea081272-ecb0-44ba-9b50-bf73e5052cc0)
 
-I'm trying again. Let's see how far I can go.
+I'm trying again again. Let's see how far I can go.
 
 Prerequisites:
   Linux:
@@ -21,73 +21,16 @@ To run:
 
 To do:
 
-  [ ] Add support to gdb
+[X] Integration with Limine
 
-  [x] Create a todo list
+[X] Map physical memory
 
-  [ ] Dev environment
+[ ] Request a page from physical memory
 
-  [ ] ASM 512b bootloader
-
-  [ ] Load bootloader beyond 512b
-
-  [ ] Enable A20 bit
-
-  [ ] Set GDT
-
-  [ ] Set IDT
-
-  [ ] Set PIC
-
-  [ ] Add support to keyboard
-
-  [ ] Set 32bits
-
-  [ ] Set Protected Mode
-
-  [ ] Enable memory paging
-
-  [ ] Enable virtual memory
-
-  [ ] Add a memory manager
-
-  [ ] Add a process manager
-
-  [ ] Read PCI bus and detect hardware
-
-  [ ] Identify one drive
-
-  [ ] Identify more drives
-
-  [ ] Read data from drive
-
-  [ ] Write data to drive
-
-  [?] Fix MBR
-
-  [ ] Add a file system
-
-  [ ] Load dummy code from disk and run
-
-  [ ] Segregate code for kernel and userland
-
-  [ ] Call kernel task from userland dummy code
-
-  [ ] Simple shell
-
-  [ ] Connect to network using E1000
-
-  [ ] Add support to soundcard
-
-  [ ] Set 64bits
-
-  [ ] UEFI support
-
-  [ ] Test on real machines
-
-  [ ] Run gcc inside meniOS (muahahahaha)
+[ ] Implement a malloc to provide virtual memory to the process
 
 Reference
+  - Intel® 64 and IA-32 Architectures Software Developer’s Manual Combined Volumes: 1, 2A, 2B, 2C, 2D, 3A, 3B, 3C, 3D, and 4: https://www.intel.com/content/www/us/en/developer/articles/technical/intel-sdm.html
   - PIC:  https://pdos.csail.mit.edu/6.828/2014/readings/hardware/8259A.pdf
           http://www.brokenthorn.com/Resources/OSDevPic.html
   - APIC: http://web.archive.org/web/20070112195752/http://developer.intel.com/design/pentium/datashts/24201606.pdf
@@ -97,5 +40,6 @@ Reference
   - Mem:  https://arjunsreedharan.org/post/148675821737/memory-allocators-101-write-a-simple-memory
   - AMD:  https://developer.amd.com/resources/developer-guides-manuals/
           https://www.amd.com/system/files/TechDocs/48751_16h_bkdg.pdf
+  - Limine 8.x: https://github.com/limine-bootloader/limine/blob/v8.x/PROTOCOL.md
 
 ![image](https://user-images.githubusercontent.com/32979/212723683-73387eaf-4a48-4193-83b6-5ec155360a50.png)
