@@ -16,8 +16,8 @@ void idt_add_isr(int interruption, void* handler) {
   idt[interruption].selector = KERNEL_CODE_SEGMENT; // Your code segment selector
   idt[interruption].ist = 0;   // Set to 0 for most cases
   idt[interruption].type_attr = 0x8e; // 0x8E indicates an interrupt gate (64-bit interrupt gate)
-  idt[interruption].base_mid = (uint16_t)((handler_address >> 16) & 0xFFFF);
-  idt[interruption].base_high = (uint32_t)((handler_address >> 32) & 0xFFFFFFFF);
+  idt[interruption].base_mid = (uint16_t)((handler_address >> 16) & 0xffff);
+  idt[interruption].base_high = (uint32_t)((handler_address >> 32) & 0xffffffff);
   idt[interruption].reserved = 0;
   puts(".");
 }
@@ -73,8 +73,6 @@ void idt_pf_isr_handler(uint64_t error_code) {
   printf("- Page fault caught trying to access address %lx. Error code: %ld\n", faulting_address, error_code);
   printf("  Index %d\n", index);
   printf("  Present: %d, Write: %d, User Mode: %d, Reserved: %d\n", present, write, user_mode, reserved);
-
-
 
   hcf();
 }

@@ -11,7 +11,7 @@
 #include <kernel/gdt.h>
 #include <kernel/idt.h>
 #include <kernel/kernel.h>
-#include <kernel/mm.h>
+#include <kernel/mem.h>
 #include <kernel/serial.h>
 #include <kernel/smp.h>
 
@@ -21,7 +21,7 @@ void boot_graphics_init() {
 
   puts("Welcome to meniOS 0.0.2 64bits\n\n- Typeset test:");
   for(int c = ' '; c < 128; c++) {
-    if((c - ' ') % 16 == 0) {
+    if(c % 16 == 0) {
       puts("\n ");
     }
 
@@ -53,17 +53,17 @@ void _start() {
   serial_putchar('O');
 
   // TODO: Paging
-  mm_init();
+  mem_init();
   serial_putchar('P');
 
   // TODO: CPUs
-  smp_init();
+  // smp_init();
 
   // TODO: ACPI
-  acpi_init();
+  // acpi_init();
 
   // TODO: APIC / LAPIC
-  apic_init();
+  // apic_init();
   // TODO: Show hardware
   // TODO: Filesystem
 

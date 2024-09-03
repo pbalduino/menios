@@ -81,11 +81,23 @@ int fvprintf(FILE *file, const char *format, va_list args){
               break;
             }
             case 'l':{
-              int64_t val = va_arg(args, int64_t);
-              char str[256];
-              ltoa(val, str, 10);
-              fputs(str, file);
-              pos++;
+              switch(format[pos + 2]) {
+              case 'x': {
+                  uint64_t val = va_arg(args, uint64_t);
+                  char str[256];
+                  ltoa(val, str, 16);
+                  fputs(str, file);
+                  pos++;
+                  break;
+                }
+              default:{
+                  int64_t val = va_arg(args, int64_t);
+                  char str[256];
+                  ltoa(val, str, 10);
+                  fputs(str, file);
+                  break;
+                }
+              }
               break;
             }
             case 'x': {

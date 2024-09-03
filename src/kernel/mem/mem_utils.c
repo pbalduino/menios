@@ -1,3 +1,8 @@
+/**
+ * mem_utils.c - Memory Manager Utils
+ * Contains functions to manipulate contiguous memory areas like arrays
+ */
+
 #include <stdint.h>
 #include <stddef.h>
 
@@ -31,6 +36,24 @@ void* memset(void *v, int32_t c, size_t n) {
 		c = (c << 24) | (c << 16) | (c << 8) | c;
 		asm volatile("cld; rep stosl\n"
 			:: "D" (v), "a" (c), "c" (n / 4)
+			: "cc", "memory");
+	} else {
+		asm volatile("cld; rep stosb\n"
+			:: "D" (v), "a" (c), "c" (n)
+			: "cc", "memory");
+  }
+
+	return v;
+}
+
+void* memsetl(void *v, int64_t c, size_t n) {
+	if (n == 0)
+		return v;
+
+	if ((uintptr_t)v % 8 == 0 && n % 8 == 0) {
+		asm volatile("cld; rep stosq\n"
+			:
+			: "D" (v), "a" (c), "c" (n)
 			: "cc", "memory");
 	} else {
 		asm volatile("cld; rep stosb\n"

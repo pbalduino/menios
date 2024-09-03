@@ -73,7 +73,7 @@ void file_init() {
   ffstdout.reserved = FD_STDOUT;
 
   stdout = &ffstdout;
-  descriptors[FD_STDOUT] = &fdstdout;
+  descriptors[FD_STDOUT] = &fdserial0;
 
   printf("- Setting file descriptor...OK\n");
   serial_log("Leaving file_init");
@@ -160,6 +160,11 @@ FILE* fopen(const char* filename, const char* mode) {
 
   return file;
 }
+
+int fclose(FILE *stream) {
+  return -1;
+}
+
 FILE* freopen(const char *filename, const char *mode, FILE *file) {
   serial_log("Entering freopen");
   FILE* new_file = fopen(filename, mode);
@@ -174,9 +179,17 @@ FILE* freopen(const char *filename, const char *mode, FILE *file) {
     }
 
     serial_error("Leaving freopen");
+
+    fclose(new_file);
+
     return NULL;
   }
 
+  fclose(file);
+
+  file = new_file;
+
   serial_log("Leaving freopen with OK");
+
   return new_file;
 }
