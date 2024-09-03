@@ -251,11 +251,6 @@ void pmm_init() {
     }
   }
 
-  for(int i = 0; i < 100; i++) {
-    uint64_t m = get_first_free_page();
-    set_page_used(m);
-  }
-
   get_first_free_page();
 
   kmalloc(1);

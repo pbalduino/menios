@@ -19,7 +19,7 @@ void boot_graphics_init() {
   fb_init();
   font_init();
 
-  puts("Welcome to meniOS 0.0.2 64bits\n\n- Typeset test:");
+  puts("Welcome to meniOS 0.0.3 64bits\n\n- Typeset test:");
   for(int c = ' '; c < 128; c++) {
     if(c % 16 == 0) {
       puts("\n ");
