@@ -84,8 +84,12 @@ clean:
 
 .PHONY: docker
 docker:
-	# docker rmi -f menios && \
-	docker build -t menios:latest .
+ifeq ($(shell docker images menios -q), )
+	docker rmi -f menios && \
+	docker build --platform linux/amd64 -t menios:latest .
+else
+	@echo "The Docker image for meniOS already exists"
+endif
 
 .PHONY: build
 build:
@@ -107,7 +111,7 @@ ifeq ($(OS_NAME),linux)
 	/limine/bin/limine bios-install $(IMAGE_NAME).hdd
 	mformat -i $(IMAGE_NAME).hdd@@1M
 	mmd -i $(IMAGE_NAME).hdd@@1M ::/EFI ::/EFI/BOOT
-	mcopy -i $(IMAGE_NAME).hdd@@1M $(KERNEL) limine.cfg /limine/bin/limine-bios.sys ::/
+	mcopy -i $(IMAGE_NAME).hdd@@1M $(KERNEL) limine.conf /limine/bin/limine-bios.sys ::/
 	mcopy -i $(IMAGE_NAME).hdd@@1M /limine/bin/BOOTX64.EFI ::/EFI/BOOT
 
 	@echo Building ISO
@@ -121,7 +125,7 @@ ifeq ($(OS_NAME),linux)
 else
 	@make docker
 	@echo "Building inside Docker"
-	$(DOCKER) run -it --mount type=bind,source=$$(pwd),target=/mnt $(DOCKER_IMAGE) /bin/sh -c "cd /mnt && make build"
+	$(DOCKER) run --rm -it --mount type=bind,source=$$(pwd),target=/mnt $(DOCKER_IMAGE) /bin/sh -c "cd /mnt && make build"
 endif
 
 .PHONY: run

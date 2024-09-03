@@ -1,12 +1,15 @@
 *.bin
+*.c!
 *.elf
+*.h!
 *.hdd
 *.img
+*.iso
+*.log
 *.o
 .DS_Store
 .vscode/
 bin/
 bochsout.txt
-*.iso
-*.log
+core
 usermode
