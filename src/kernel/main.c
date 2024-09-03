@@ -21,7 +21,7 @@ void boot_graphics_init() {
 
   puts("Welcome to meniOS 0.0.3 64bits\n\n- Typeset test:");
   for(int c = ' '; c < 128; c++) {
-    if(c % 16 == 0) {
+    if(c % 32 == 0) {
       puts("\n ");
     }
 
@@ -30,7 +30,7 @@ void boot_graphics_init() {
   }
   putchar('\n');
   printf("- Screen mode: %lu x %lu x %d\n", fb_width(), fb_height(), fb_bpp());
-  printf("- Available modes: %lu\n", fb_mode_count());
+  printf("  Available modes: %lu\n", fb_mode_count());
   // fb_list_modes();
 }
 
@@ -38,23 +38,15 @@ void _start() {
   file_init();
 
   serial_init();
-  serial_putchar('L');
 
-  // FIXME: needs to finish the typefaces
   boot_graphics_init();
-  serial_putchar('M');
 
-  // GDT
   gdt_init();
-  serial_putchar('N');
 
-  // IDT
   idt_init();
-  serial_putchar('O');
 
-  // TODO: Paging
+  // WIP: Paging
   mem_init();
-  serial_putchar('P');
 
   // TODO: CPUs
   // smp_init();
