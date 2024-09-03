@@ -13,24 +13,7 @@ const glypht_t GL_NULL = {
 
 const glypht_t GL_SPACE = {
   .value = ' ',
-  .points = {
-    0b00000000,
-    0b00000000,
-    0b00000000,
-    0b00000000,
-    0b00000000,
-    0b00000000,
-    0b00000000,
-    0b00000000,
-    0b00000000,
-    0b00000000,
-    0b00000000,
-    0b00000000,
-    0b00000000,
-    0b00000000,
-    0b00000000,
-    0b00000000
-  }
+  .points = { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }
 };
 
 const glypht_t GL_EXCLAMATION = {
@@ -38,114 +21,64 @@ const glypht_t GL_EXCLAMATION = {
   .points = { 0x00, 0x00, 0x10, 0x10, 0x10, 0x10, 0x10, 0x10, 0x10, 0x00, 0x10, 0x10, 0x00, 0x00, 0x00, 0x00 }
 };
 
+const glypht_t GL_QUOTATION = {
+  .value = '"',
+  .points = { 0x00, 0x24, 0x24, 0x24, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }
+};
+
+const glypht_t GL_NUMBER = {
+  .value = '"',
+  .points = { 0x00, 0x00, 0x24, 0x24, 0x24, 0x7E, 0x24, 0x24, 0x7E, 0x24, 0x24, 0x24, 0x00, 0x00, 0x00, 0x00 }
+};
+
+const glypht_t GL_DOLLAR = {
+  .value = '$',
+  .points = { 0x00, 0x10, 0x10, 0x7C, 0x92, 0x90, 0x90, 0x7C, 0x12, 0x12, 0x92, 0x7C, 0x10, 0x10, 0x00, 0x00 }
+};
+
 const glypht_t GL_PERCENT = {
   .value = '*',
-  .points = {
-    0b00000000,
-    0b00000000,
-    0b00000000,
-    0b00000000,
-    0b11000001,
-    0b11000011,
-    0b00000110,
-    0b00001100,
-    0b00011000,
-    0b00110000,
-    0b01100000,
-    0b11000110,
-    0b10000110,
-    0b00000000,
-    0b00000000,
-    0b00000000
-  }
+  .points = { 0x00, 0x00, 0x64, 0x94, 0x68, 0x08, 0x10, 0x10, 0x20, 0x2C, 0x52, 0x4C, 0x00, 0x00, 0x00, 0x00 }
+};
+
+const glypht_t GL_AMPERSAND = {
+  .value = '*',
+  .points = { 0x00, 0x00, 0x18, 0x24, 0x24, 0x18, 0x30, 0x4A, 0x44, 0x44, 0x44, 0x3A, 0x00, 0x00, 0x00, 0x00 }
+};
+
+const glypht_t GL_APOSTROPHE = {
+  .value = '*',
+  .points = { 0x00, 0x10, 0x10, 0x10, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }
+};
+
+const glypht_t GL_LPARENTHESIS = {
+  .value = '*',
+  .points = { 0x00, 0x00, 0x08, 0x10, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x10, 0x08, 0x00, 0x00, 0x00, 0x00 }
+};
+
+const glypht_t GL_RPARENTHESIS = {
+  .value = '*',
+  .points = { 0x00, 0x00, 0x20, 0x10, 0x08, 0x08, 0x08, 0x08, 0x08, 0x08, 0x10, 0x20, 0x00, 0x00, 0x00, 0x00 }
 };
 
 const glypht_t GL_ASTERISK = {
   .value = '*',
-  .points = {
-    0b00000000,
-    0b00000000,
-    0b00000000,
-    0b00000000,
-    0b01000100,
-    0b01101100,
-    0b00111000,
-    0b11111110,
-    0b00111000,
-    0b01101100,
-    0b01000100,
-    0b00000000,
-    0b00000000,
-    0b00000000,
-    0b00000000,
-    0b00000000
-  }
+  .points = { 0x00, 0x00, 0x00, 0x00, 0x00, 0x24, 0x18, 0x7E, 0x18, 0x24, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }
 };
 
 const glypht_t GL_PLUS = {
   .value = '+',
-  .points = {
-    0b00000000,
-    0b00000000,
-    0b00000000,
-    0b00000000,
-    0b00000000,
-    0b00011000,
-    0b00011000,
-    0b01111110,
-    0b00011000,
-    0b00011000,
-    0b00000000,
-    0b00000000,
-    0b00000000,
-    0b00000000,
-    0b00000000,
-    0b00000000
-  }
+  .points = { 0x00, 0x00, 0x00, 0x00, 0x00, 0x10, 0x10, 0x7C, 0x10, 0x10, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }
 };
 
 const glypht_t GL_COMMA = {
   .value = ',',
-  .points = {
-    0b00000000,
-    0b00000000,
-    0b00000000,
-    0b00000000,
-    0b00000000,
-    0b00000000,
-    0b00000000,
-    0b00000000,
-    0b00000000,
-    0b00000000,
-    0b00000000,
-    0b00000110,
-    0b00000110,
-    0b00001100,
-    0b00000000,
-    0b00000000,
-  }
+  .points = { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x10, 0x10, 0x20, 0x00, 0x00, 0x00 }
 };
 
 const glypht_t GL_MINUS = {
   .value = '-',
-  .points = {
-    0b00000000,
-    0b00000000,
-    0b00000000,
-    0b00000000,
-    0b00000000,
-    0b00000000,
-    0b00000000,
-    0b01111110,
-    0b00000000,
-    0b00000000,
-    0b00000000,
-    0b00000000,
-    0b00000000,
-    0b00000000,
-    0b00000000,
-    0b00000000
-  }
+  .points = { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x7E, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }
 };
 
 const glypht_t GL_PERIOD = {
@@ -155,24 +88,7 @@ const glypht_t GL_PERIOD = {
 
 const glypht_t GL_SLASH = {
   .value = '/',
-  .points = {
-    0b00000000,
-    0b00000000,
-    0b00000000,
-    0b00000001,
-    0b00000011,
-    0b00000111,
-    0b00001110,
-    0b00011100,
-    0b00111000,
-    0b01110000,
-    0b11100000,
-    0b11000000,
-    0b10000000,
-    0b00000000,
-    0b00000000,
-    0b00000000
-  }
+  .points = { 0x00, 0x00, 0x04, 0x04, 0x08, 0x08, 0x10, 0x10, 0x20, 0x20, 0x40, 0x40, 0x00, 0x00, 0x00, 0x00 }
 };
 
 const glypht_t GL_ZERO = {
@@ -227,134 +143,57 @@ const glypht_t GL_NINE = {
 
 const glypht_t GL_COLON = {
   .value = ':',
-  .points = {
-    0b00000000,
-    0b00000000,
-    0b00000000,
-    0b00000000,
-    0b00000000,
-    0b00000000,
-    0b00000000,
-    0b00011000,
-    0b00011000,
-    0b00000000,
-    0b00000000,
-    0b00011000,
-    0b00011000,
-    0b00000000,
-    0b00000000,
-    0b00000000,
-  }
+  .points = {0x00, 0x00, 0x00, 0x00, 0x00, 0x10, 0x10, 0x00, 0x00, 0x00, 0x10, 0x10, 0x00, 0x00, 0x00, 0x00 }
 };
 
 const glypht_t GL_SEMICOLON = {
   .value = ';',
-  .points = {
-    0b00000000,
-    0b00000000,
-    0b00000000,
-    0b00000000,
-    0b00000000,
-    0b00000000,
-    0b00000000,
-    0b00000110,
-    0b00000110,
-    0b00000000,
-    0b00000000,
-    0b00000110,
-    0b00000110,
-    0b00001100,
-    0b00000000,
-    0b00000000,
-  }
+  .points = { 0x00, 0x00, 0x00, 0x00, 0x00, 0x10, 0x10, 0x00, 0x00, 0x00, 0x10, 0x10, 0x20, 0x00, 0x00, 0x00 }
+};
+
+const glypht_t GL_LESS = {
+  .value = '<',
+  .points = { 0x00, 0x00, 0x00, 0x04, 0x08, 0x10, 0x20, 0x40, 0x20, 0x10, 0x08, 0x04, 0x00, 0x00, 0x00, 0x00 }
+};
+
+const glypht_t GL_EQUAL = {
+  .value = '<',
+  .points = { 0x00, 0x00, 0x00, 0x00, 0x00, 0x7E, 0x00, 0x00, 0x7E, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }
+};
+
+const glypht_t GL_GREATER = {
+  .value = '<',
+  .points = { 0x00, 0x00, 0x00, 0x40, 0x20, 0x10, 0x08, 0x04, 0x08, 0x10, 0x20, 0x40, 0x00, 0x00, 0x00, 0x00 }
+};
+
+const glypht_t GL_QUESTION = {
+  .value = '<',
+  .points = { 0x00, 0x00, 0x3C, 0x42, 0x42, 0x42, 0x04, 0x08, 0x08, 0x00, 0x08, 0x08, 0x00, 0x00, 0x00, 0x00 }
+};
+
+const glypht_t GL_AT = {
+  .value = '<',
+  .points = { 0x00, 0x00, 0x7C, 0x82, 0x9E, 0xA2, 0xA2, 0xA2, 0xA6, 0x9A, 0x80, 0x7E, 0x00, 0x00, 0x00, 0x00 }
 };
 
 const glypht_t GL_CAPITAL_A = {
   .value = 'A',
-  .points = {
-    0b00000000,
-    0b00000000,
-    0b00000000,
-    0b00010000,
-    0b00111000,
-    0b01101100,
-    0b11000110,
-    0b11000110,
-    0b11111110,
-    0b11000110,
-    0b11000110,
-    0b11000110,
-    0b11000110,
-    0b00000000,
-    0b00000000,
-    0b00000000,
-  }
+  .points = { 0x00, 0x00, 0x3C, 0x42, 0x42, 0x42, 0x42, 0x7E, 0x42, 0x42, 0x42, 0x42, 0x00, 0x00, 0x00, 0x00 }
 };
 
 const glypht_t GL_CAPITAL_B = {
   .value = 'B',
-  .points = {
-    0b00000000,
-    0b00000000,
-    0b00000000,
-    0b11111100,
-    0b11000110,
-    0b11000110,
-    0b11000110,
-    0b11111100,
-    0b11000110,
-    0b11000110,
-    0b11000110,
-    0b11000110,
-    0b11111100,
-    0b00000000,
-    0b00000000,
-    0b00000000,
-  }
+  .points = { 0x00, 0x00, 0x7C, 0x42, 0x42, 0x42, 0x7C, 0x42, 0x42, 0x42, 0x42, 0x7C, 0x00, 0x00, 0x00, 0x00 }
 };
 
 const glypht_t GL_CAPITAL_C = {
   .value = 'C',
-  .points = {
-    0b00000000,
-    0b00000000,
-    0b00000000,
-    0b01111100,
-    0b11000110,
-    0b11000010,
-    0b11000000,
-    0b11000000,
-    0b11000000,
-    0b11000000,
-    0b11000010,
-    0b11000110,
-    0b01111100,
-    0b00000000,
-    0b00000000,
-    0b00000000,
-  }
+  .points = { 0x00, 0x00, 0x3C, 0x42, 0x42, 0x40, 0x40, 0x40, 0x40, 0x42, 0x42, 0x3C, 0x00, 0x00, 0x00, 0x00 }
 };
 
 const glypht_t GL_CAPITAL_D = {
   .value = 'D',
-  .points = {
-    0b00000000,
-    0b00000000,
-    0b00000000,
-    0b11111000,
-    0b11001100,
-    0b11000110,
-    0b11000110,
-    0b11000110,
-    0b11000110,
-    0b11000110,
-    0b11000110,
-    0b11001100,
-    0b11111000,
-    0b00000000,
-    0b00000000,
-    0b00000000,
-  }
+  .points = { 0x00, 0x00, 0x78, 0x44, 0x42, 0x42, 0x42, 0x42, 0x42, 0x42, 0x44, 0x78, 0x00, 0x00, 0x00, 0x00 }
 };
 
 const glypht_t GL_CAPITAL_E = {
@@ -368,113 +207,28 @@ const glypht_t GL_CAPITAL_F = {
 };
 
 const glypht_t GL_CAPITAL_G = {
-  .value = 'C',
-  .points = {
-    0b00000000,
-    0b00000000,
-    0b00000000,
-    0b01111100,
-    0b11000110,
-    0b11000010,
-    0b11000000,
-    0b11000000,
-    0b11000000,
-    0b11011110,
-    0b11000110,
-    0b11000110,
-    0b01111010,
-    0b00000000,
-    0b00000000,
-    0b00000000,
-  }
+  .value = 'G',
+  .points = { 0x00, 0x00, 0x3C, 0x42, 0x42, 0x40, 0x40, 0x4E, 0x42, 0x42, 0x42, 0x3C, 0x00, 0x00, 0x00, 0x00 }
 };
 
 const glypht_t GL_CAPITAL_H = {
   .value = 'H',
-  .points = {
-    0b00000000,
-    0b00000000,
-    0b00000000,
-    0b11000110,
-    0b11000110,
-    0b11000110,
-    0b11000110,
-    0b11111110,
-    0b11000110,
-    0b11000110,
-    0b11000110,
-    0b11000110,
-    0b11000110,
-    0b00000000,
-    0b00000000,
-    0b00000000
-  }
+  .points = { 0x00, 0x00, 0x42, 0x42, 0x42, 0x42, 0x7E, 0x42, 0x42, 0x42, 0x42, 0x42, 0x00, 0x00, 0x00, 0x00 }
 };
 
 const glypht_t GL_CAPITAL_I = {
   .value = 'I',
-  .points = {
-    0b00000000,
-    0b00000000,
-    0b00000000,
-    0b00111100,
-    0b00011000,
-    0b00011000,
-    0b00011000,
-    0b00011000,
-    0b00011000,
-    0b00011000,
-    0b00011000,
-    0b00011000,
-    0b00111100,
-    0b00000000,
-    0b00000000,
-    0b00000000
-  }
+  .points = { 0x00, 0x00, 0x38, 0x10, 0x10, 0x10, 0x10, 0x10, 0x10, 0x10, 0x10, 0x38, 0x00, 0x00, 0x00, 0x00 }
 };
 
 const glypht_t GL_CAPITAL_J = {
   .value = 'J',
-  .points = {
-    0b00000000,
-    0b00000000,
-    0b00000000,
-    0b00011110,
-    0b00001100,
-    0b00001100,
-    0b00001100,
-    0b00001100,
-    0b00001100,
-    0b00001100,
-    0b11001100,
-    0b11001100,
-    0b01111000,
-    0b00000000,
-    0b00000000,
-    0b00000000
-  }
+  .points = { 0x00, 0x00, 0x0E, 0x04, 0x04, 0x04, 0x04, 0x04, 0x04, 0x44, 0x44, 0x38, 0x00, 0x00, 0x00, 0x00 }
 };
 
 const glypht_t GL_CAPITAL_K = {
   .value = 'K',
-  .points = {
-    0b00000000,
-    0b00000000,
-    0b00000000,
-    0b11100110,
-    0b01100110,
-    0b01100110,
-    0b01101100,
-    0b01111000,
-    0b01111000,
-    0b01101100,
-    0b01100110,
-    0b01100110,
-    0b11100110,
-    0b00000000,
-    0b00000000,
-    0b00000000
-  }
+  .points = { 0x00, 0x00, 0x42, 0x44, 0x48, 0x50, 0x60, 0x60, 0x50, 0x48, 0x44, 0x42, 0x00, 0x00, 0x00, 0x00 }
 };
 
 const glypht_t GL_CAPITAL_L = {
@@ -494,142 +248,65 @@ const glypht_t GL_CAPITAL_N = {
 
 const glypht_t GL_CAPITAL_O = {
   .value = 'O',
-  .points = {
-    0b00000000,
-    0b00000000,
-    0b00000000,
-    0b01111100,
-    0b11000110,
-    0b11000110,
-    0b11000110,
-    0b11000110,
-    0b11000110,
-    0b11000110,
-    0b11000110,
-    0b11000110,
-    0b01111100,
-    0b00000000,
-    0b00000000,
-    0b00000000
-  }
+  .points = { 0x00, 0x00, 0x3C, 0x42, 0x42, 0x42, 0x42, 0x42, 0x42, 0x42, 0x42, 0x3C, 0x00, 0x00, 0x00, 0x00 }
 };
 
 const glypht_t GL_CAPITAL_P = {
-  .value = 'S',
+  .value = 'P',
   .points = { 0x00, 0x00, 0x7C, 0x42, 0x42, 0x42, 0x42, 0x7C, 0x40, 0x40, 0x40, 0x40, 0x00, 0x00, 0x00, 0x00 }
+};
+
+const glypht_t GL_CAPITAL_Q = {
+  .value = 'Q',
+  .points = { 0x00, 0x00, 0x3C, 0x42, 0x42, 0x42, 0x42, 0x42, 0x42, 0x42, 0x4A, 0x3C, 0x02, 0x00, 0x00, 0x00 }
+};
+
+const glypht_t GL_CAPITAL_R = {
+  .value = 'R',
+  .points = { 0x00, 0x00, 0x7C, 0x42, 0x42, 0x42, 0x42, 0x7C, 0x50, 0x48, 0x44, 0x42, 0x00, 0x00, 0x00, 0x00 }
 };
 
 const glypht_t GL_CAPITAL_S = {
   .value = 'S',
-  .points = {
-    0b00000000,
-    0b00000000,
-    0b00000000,
-    0b01111100,
-    0b11000110,
-    0b11000000,
-    0b01100000,
-    0b00111000,
-    0b00001100,
-    0b00000110,
-    0b00000110,
-    0b11000110,
-    0b01111100,
-    0b00000000,
-    0b00000000,
-    0b00000000
-  }
+  .points = { 0x00, 0x00, 0x3C, 0x42, 0x40, 0x40, 0x3C, 0x02, 0x02, 0x42, 0x42, 0x3C, 0x00, 0x00, 0x00, 0x00 }
 };
 
 const glypht_t GL_CAPITAL_T = {
   .value = 'T',
-  .points = {
-    0b00000000,
-    0b00000000,
-    0b00000000,
-    0b11111110,
-    0b10011010,
-    0b00011000,
-    0b00011000,
-    0b00011000,
-    0b00011000,
-    0b00011000,
-    0b00011000,
-    0b00011000,
-    0b00111100,
-    0b00000000,
-    0b00000000,
-    0b00000000
-  }
+  .points = { 0x00, 0x00, 0xFE, 0x10, 0x10, 0x10, 0x10, 0x10, 0x10, 0x10, 0x10, 0x10, 0x00, 0x00, 0x00, 0x00 }
 };
 
 const glypht_t GL_CAPITAL_U = {
-  .value = 'V',
-  .points = {
-    0b00000000,
-    0b00000000,
-    0b00000000,
-    0b11000110,
-    0b11000110,
-    0b11000110,
-    0b11000110,
-    0b11000110,
-    0b11000110,
-    0b11000110,
-    0b11000110,
-    0b11000110,
-    0b01111100,
-    0b00000000,
-    0b00000000,
-    0b00000000,
-  }
+  .value = 'U',
+  .points = { 0x00, 0x00, 0x42, 0x42, 0x42, 0x42, 0x42, 0x42, 0x42, 0x42, 0x42, 0x3C, 0x00, 0x00, 0x00, 0x00 }
 };
 
 const glypht_t GL_CAPITAL_V = {
   .value = 'V',
-  .points = {
-    0b00000000,
-    0b00000000,
-    0b00000000,
-    0b11000110,
-    0b11000110,
-    0b11000110,
-    0b11000110,
-    0b11000110,
-    0b11000110,
-    0b11000110,
-    0b01101100,
-    0b00111000,
-    0b00010000,
-    0b00000000,
-    0b00000000,
-    0b00000000,
-  }
+  .points = { 0x00, 0x00, 0x42, 0x42, 0x42, 0x42, 0x42, 0x24, 0x24, 0x24, 0x18, 0x18, 0x00, 0x00, 0x00, 0x00 }
 };
 
 const glypht_t GL_CAPITAL_W = {
   .value = 'W',
-  .points = {
-    0b00000000,
-    0b00000000,
-    0b00000000,
-    0b11000110,
-    0b11000110,
-    0b11000110,
-    0b11000110,
-    0b11000110,
-    0b11010110,
-    0b11111110,
-    0b11111110,
-    0b11101110,
-    0b01000100,
-    0b00000000,
-    0b00000000,
-    0b00000000,
-  }
+  .points = { 0x00, 0x00, 0x82, 0x82, 0x82, 0x82, 0x82, 0x92, 0x92, 0xAA, 0xC6, 0x82, 0x00, 0x00, 0x00, 0x00 }
 };
 
-const glypht_t GL_BRACKET_LEFT = {
+const glypht_t GL_CAPITAL_X = {
+  .value = 'X',
+  .points = { 0x00, 0x00, 0x42, 0x42, 0x24, 0x24, 0x18, 0x18, 0x24, 0x24, 0x42, 0x42, 0x00, 0x00, 0x00, 0x00 }
+};
+
+const glypht_t GL_CAPITAL_Y = {
+  .value = 'Y',
+  .points = { 0x00, 0x00, 0x82, 0x82, 0x44, 0x44, 0x28, 0x10, 0x10, 0x10, 0x10, 0x10, 0x00, 0x00, 0x00, 0x00 }
+};
+
+const glypht_t GL_CAPITAL_Z = {
+  .value = 'Z',
+  .points = { 0x00, 0x00, 0x7E, 0x02, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x40, 0x7E, 0x00, 0x00, 0x00, 0x00 }
+};
+
+const glypht_t GL_LBRACKET = {
   .value = '[',
   .points = { 0x00, 0x00, 0x38, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x38, 0x00, 0x00, 0x00, 0x00 }
 };
@@ -639,31 +316,29 @@ const glypht_t GL_BACKSLASH = {
   .points = { 0x00, 0x00, 0x40, 0x40, 0x20, 0x20, 0x10, 0x10, 0x08, 0x08, 0x04, 0x04, 0x00, 0x00, 0x00, 0x00 }
 };
 
-const glypht_t GL_BRACKET_RIGHT = {
+const glypht_t GL_RBRACKET = {
   .value = ']',
   .points = { 0x00, 0x00, 0x38, 0x08, 0x08, 0x08, 0x08, 0x08, 0x08, 0x08, 0x08, 0x38, 0x00, 0x00, 0x00, 0x00 }
 };
 
+const glypht_t GL_CARET = {
+  .value = '^',
+  .points = { 0x00, 0x10, 0x28, 0x44, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }
+};
+
+const glypht_t GL_UNDERSCORE = {
+  .value = '_',
+  .points = { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x7E, 0x00, 0x00 }
+};
+
+const glypht_t GL_BACKTICK = {
+  .value = '_',
+  .points = { 0x10, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }
+};
+
 const glypht_t GL_SMALL_A = {
   .value = 'a',
-  .points = {
-    0b00000000,
-    0b00000000,
-    0b00000000,
-    0b00000000,
-    0b00000000,
-    0b00000000,
-    0b00000000,
-    0b01111000,
-    0b00001100,
-    0b01111100,
-    0b11001100,
-    0b11011100,
-    0b01110110,
-    0b00000000,
-    0b00000000,
-    0b00000000
-  }
+  .points = { 0x00, 0x00, 0x00, 0x00, 0x00, 0x3C, 0x02, 0x3E, 0x42, 0x42, 0x42, 0x3E, 0x00, 0x00, 0x00, 0x00 }
 };
 
 const glypht_t GL_SMALL_B = {
@@ -1181,9 +856,24 @@ const glypht_t GL_SMALL_Z = {
   }
 };
 
+const glypht_t GL_LCURLY = {
+  .value = '{',
+  .points = { 0x00, 0x00, 0x10, 0x10, 0x10, 0x10, 0x10, 0x10, 0x10, 0x10, 0x10, 0x10, 0x00, 0x00, 0x00, 0x00 }
+};
+
 const glypht_t GL_PIPE = {
   .value = '|',
-  .points = { 0x00, 0x00, 0x10, 0x10, 0x10, 0x10, 0x10, 0x10, 0x10, 0x10, 0x10, 0x10, 0x00, 0x00, 0x00, 0x00 }
+  .points = { 0x00, 0x00, 0x0C, 0x10, 0x10, 0x10, 0x20, 0x10, 0x10, 0x10, 0x10, 0x0C, 0x00, 0x00, 0x00, 0x00 }
+};
+
+const glypht_t GL_RCURLY = {
+  .value = '{',
+  .points = { 0x00, 0x00, 0x30, 0x08, 0x08, 0x08, 0x04, 0x08, 0x08, 0x08, 0x08, 0x30, 0x00, 0x00, 0x00, 0x00 }
+};
+
+const glypht_t GL_TILDE = {
+  .value = '~',
+  .points = { 0x00, 0x62, 0x92, 0x8C, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }
 };
 
 extern uint8_t font_terminus[];
@@ -1195,7 +885,14 @@ void font_init() {
 
   font_list.glyphs[' '] = GL_SPACE;
   font_list.glyphs['!'] = GL_EXCLAMATION;
+  font_list.glyphs['"'] = GL_QUOTATION;
+  font_list.glyphs['#'] = GL_NUMBER;
+  font_list.glyphs['$'] = GL_DOLLAR;
   font_list.glyphs['%'] = GL_PERCENT;
+  font_list.glyphs['&'] = GL_AMPERSAND;
+  font_list.glyphs['\''] = GL_APOSTROPHE;
+  font_list.glyphs['('] = GL_LPARENTHESIS;
+  font_list.glyphs[')'] = GL_RPARENTHESIS;
   font_list.glyphs['*'] = GL_ASTERISK;
   font_list.glyphs['+'] = GL_PLUS;
   font_list.glyphs[','] = GL_COMMA;
@@ -1214,6 +911,11 @@ void font_init() {
   font_list.glyphs['9'] = GL_NINE;
   font_list.glyphs[':'] = GL_COLON;
   font_list.glyphs[';'] = GL_SEMICOLON;
+  font_list.glyphs['<'] = GL_LESS;
+  font_list.glyphs['='] = GL_EQUAL;
+  font_list.glyphs['>'] = GL_GREATER;
+  font_list.glyphs['?'] = GL_QUESTION;
+  font_list.glyphs['@'] = GL_AT;
   font_list.glyphs['A'] = GL_CAPITAL_A;
   font_list.glyphs['B'] = GL_CAPITAL_B;
   font_list.glyphs['C'] = GL_CAPITAL_C;
@@ -1221,23 +923,31 @@ void font_init() {
   font_list.glyphs['E'] = GL_CAPITAL_E;
   font_list.glyphs['F'] = GL_CAPITAL_F;
   font_list.glyphs['G'] = GL_CAPITAL_G;
+  font_list.glyphs['H'] = GL_CAPITAL_H;
+  font_list.glyphs['I'] = GL_CAPITAL_I;
+  font_list.glyphs['J'] = GL_CAPITAL_J;
+  font_list.glyphs['K'] = GL_CAPITAL_K;
   font_list.glyphs['L'] = GL_CAPITAL_L;
   font_list.glyphs['M'] = GL_CAPITAL_M;
   font_list.glyphs['N'] = GL_CAPITAL_N;
   font_list.glyphs['O'] = GL_CAPITAL_O;
-  font_list.glyphs['H'] = GL_CAPITAL_H;
-  font_list.glyphs['I'] = GL_CAPITAL_I;
-  font_list.glyphs['J'] = GL_CAPITAL_J;
   font_list.glyphs['P'] = GL_CAPITAL_P;
-  font_list.glyphs['K'] = GL_CAPITAL_K;
+  font_list.glyphs['Q'] = GL_CAPITAL_Q;
+  font_list.glyphs['R'] = GL_CAPITAL_R;
   font_list.glyphs['S'] = GL_CAPITAL_S;
   font_list.glyphs['T'] = GL_CAPITAL_T;
   font_list.glyphs['U'] = GL_CAPITAL_U;
   font_list.glyphs['V'] = GL_CAPITAL_V;
   font_list.glyphs['W'] = GL_CAPITAL_W;
-  font_list.glyphs['['] = GL_BRACKET_LEFT;
+  font_list.glyphs['X'] = GL_CAPITAL_X;
+  font_list.glyphs['Y'] = GL_CAPITAL_Y;
+  font_list.glyphs['Z'] = GL_CAPITAL_Z;
+  font_list.glyphs['['] = GL_LBRACKET;
   font_list.glyphs['\\'] = GL_BACKSLASH;
-  font_list.glyphs[']'] = GL_BRACKET_RIGHT;
+  font_list.glyphs[']'] = GL_RBRACKET;
+  font_list.glyphs['^'] = GL_CARET;
+  font_list.glyphs['_'] = GL_UNDERSCORE;
+  font_list.glyphs['`'] = GL_BACKTICK;
   font_list.glyphs['a'] = GL_SMALL_A;
   font_list.glyphs['b'] = GL_SMALL_B;
   font_list.glyphs['c'] = GL_SMALL_C;
@@ -1264,7 +974,10 @@ void font_init() {
   font_list.glyphs['x'] = GL_SMALL_X;
   font_list.glyphs['y'] = GL_SMALL_Y;
   font_list.glyphs['z'] = GL_SMALL_Z;
+  font_list.glyphs['{'] = GL_LCURLY;
   font_list.glyphs['|'] = GL_PIPE;
+  font_list.glyphs['}'] = GL_RCURLY;
+  font_list.glyphs['~'] = GL_TILDE;
 };
 
 glypht_t font_glyph(uint8_t ascii) {
