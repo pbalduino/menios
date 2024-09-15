@@ -1,4 +1,4 @@
-#include <kernel/kheap.h>
+#include <kernel/heap.h>
 #include <kernel/mem.h>
 #include <kernel/pmm.h>
 #include <kernel/serial.h>
@@ -6,24 +6,24 @@
 #include <stddef.h>
 #include <types.h>
 
-static uint8_t arena[PAGE_SIZE * KHEAP_SIZE];
-struct kheap_node* kheap;
+static uint8_t arena[PAGE_SIZE * HEAP_SIZE];
+heap_node_p heap;
 
 void init_arena() {
   serial_printf("kmalloc: First time kmallocin'\n");
-  kheap = (struct kheap_node*)arena;
-  memcpy(kheap->magic, KHEAP_MAGIC, sizeof(kheap->magic));
-  kheap->next = NULL;
-  kheap->size = (PAGE_SIZE * KHEAP_SIZE) - KHEAP_HEADER;
-  kheap->status = KHEAP_FREE;
+  heap = (heap_node_p)arena;
+  memcpy(heap->magic, HEAP_MAGIC, sizeof(heap->magic));
+  heap->next = NULL;
+  heap->size = (PAGE_SIZE * HEAP_SIZE) - HEAP_HEADER;
+  heap->status = HEAP_FREE;
 }
 
 void* kmalloc(uint32_t size) {
-  if(kheap == NULL) {
+  if(heap == NULL) {
     init_arena();
   }
 
-  serial_printf("kmalloc: arena @ %p\n", kheap);
+  serial_printf("kmalloc: arena @ %p\n", heap);
 
   // iterate through kheap until find a free node that fits size
   // save the address

@@ -39,30 +39,33 @@ void idt_init() {
 }
 
 void idt_generic_isr_handler() {
-  puts("Exception caught.");
+  puts("= Exception caught.");
+  serial_printf("== Exception caught ==\n");
   hcf();
 }
 
 void idt_df_isr_handler() {
-  puts("- Double fault caught.\n");
+  puts("= Double fault caught.\n");
+  serial_printf("== Double fault raised ==\n");
   hcf();
 }
 
-void idt_gpf_isr_handler() {
-  puts("- General protection fault caught.\n");
+void idt_gpf_isr_handler(idt_exception_p cpu_state) {
+  puts("= General protection fault caught.\n");
+  serial_printf("== General protection fault: %lx ==\n", cpu_state);
   hcf();
 }
 
 void idt_pf_isr_handler(uint64_t error_code) {
-  puts("- Page fault caught.\n");
+  puts("= Page fault caught.\n");
   uint64_t faulting_address;
   int present    = (error_code & 0x01);
   int write      = (error_code & 0x02) >> 1;
   int user_mode  = (error_code & 0x04) >> 2;
   int reserved   = (error_code & 0x08) >> 3;
-  int fetch      = (error_code & 0x10) >> 4;
-  int protection = (error_code & 0x20) >> 5;
-  int shadow     = (error_code & 0x40) >> 6;
+  // int fetch      = (error_code & 0x10) >> 4;
+  // int protection = (error_code & 0x20) >> 5;
+  // int shadow     = (error_code & 0x40) >> 6;
   int index      = (error_code & 0xff0) >> 4;
 
   asm volatile ("movq %%cr2, %0" : "=r" (faulting_address));
@@ -73,6 +76,7 @@ void idt_pf_isr_handler(uint64_t error_code) {
   printf("- Page fault caught trying to access address %lx. Error code: %ld\n", faulting_address, error_code);
   printf("  Index %d\n", index);
   printf("  Present: %d, Write: %d, User Mode: %d, Reserved: %d\n", present, write, user_mode, reserved);
+  serial_printf("  Present: %d, Write: %d, User Mode: %d, Reserved: %d\n", present, write, user_mode, reserved);
 
   hcf();
 }

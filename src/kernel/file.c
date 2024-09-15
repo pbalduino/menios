@@ -136,7 +136,7 @@ FILE* fopen(const char* filename, const char* mode) {
     return file;
   }
 
-  if(strcmp(filename, "/dev/fb") == 0 && strcmp(mode, "w") == 0) {
+  if(strcmp(filename, "/dev/fb") == 0 && strncmp(mode, "w", 1) == 0) {
     serial_log("Opening framebuffer");
     fd.used = true;
     fd.write = fb_putchar;
@@ -146,7 +146,7 @@ FILE* fopen(const char* filename, const char* mode) {
     descriptors[fid] = &fd;
     ff.reserved = fid;
     file = &ff;
-  } else if(strcmp(filename, "/dev/ttyS0") == 0 && strcmp(mode, "w") == 0) {
+  } else if(strcmp(filename, "/dev/ttyS0") == 0 && strncmp(mode, "w", 1) == 0) {
     serial_log("Opening serial");
 
     descriptors[fid] = &fdserial0;

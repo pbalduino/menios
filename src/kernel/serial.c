@@ -60,6 +60,8 @@ int serial_puts(const char* text) {
 }
 
 int svprintf(const char *format, va_list args){
+  char str[256];
+
   for(int pos = 0; format[pos]; pos++) {
     if(format[pos] == '%') {
       switch(format[++pos]) {
@@ -69,7 +71,6 @@ int svprintf(const char *format, va_list args){
         }
         case 'b': {
           int val = va_arg(args, uint32_t);
-          char str[256];
           utoa(val, str, 2);
           serial_puts(str);
           break;
@@ -82,7 +83,6 @@ int svprintf(const char *format, va_list args){
         case 'i':
         case 'd': {
           int val = va_arg(args, int32_t);
-          char str[256];
           itoa(val, str, 10);
           serial_puts(str);
           break;
@@ -91,7 +91,6 @@ int svprintf(const char *format, va_list args){
           switch(format[pos + 1]) {
             case 'u': {
               uint64_t val = va_arg(args, uint64_t);
-              char str[256];
               lutoa(val, str, 10);
               serial_puts(str);
               pos++;
@@ -99,7 +98,6 @@ int svprintf(const char *format, va_list args){
             }
             case 'l':{
               int64_t val = va_arg(args, int64_t);
-              char str[256];
               ltoa(val, str, 10);
               serial_puts(str);
               pos++;
@@ -107,7 +105,6 @@ int svprintf(const char *format, va_list args){
             }
             case 'x': {
               uint64_t val = va_arg(args, uint64_t);
-              char str[256];
               lutoa(val, str, 16);
               serial_puts("0x");
               serial_puts(str);
@@ -116,7 +113,6 @@ int svprintf(const char *format, va_list args){
             }
             default: {
               int64_t val = va_arg(args, int64_t);
-              char str[256];
               itoa(val, str, 10);
               serial_puts(str);
               break;
@@ -126,26 +122,23 @@ int svprintf(const char *format, va_list args){
         }
         case 'o': {
           int val = va_arg(args, uint32_t);
-          char str[256];
           utoa(val, str, 8);
           serial_puts(str);
           break;
         }
         case 'p': {
           void* val = va_arg(args, void*);
-          char str[256];
-          lutoa((uintptr_t)&val, str, 16);
+          lutoa((uintptr_t)val, str, 16);
           serial_printf("0x%s", str);
           break;
         }
         case 's': {
           const char* val = (const char*)va_arg(args, char*);
-          serial_puts(val);
+          serial_puts(val == NULL ? "<null>" : val);
           break;
         }
         case 'u': {
-          int val = va_arg(args, uint32_t);
-          char str[256];
+          uint32_t val = va_arg(args, uint32_t);
           utoa(val, str, 10);
           serial_puts(str);
           break;
@@ -153,7 +146,6 @@ int svprintf(const char *format, va_list args){
         case 'X':
         case 'x': {
           uint64_t val = va_arg(args, uint64_t);
-          char str[256];
           lutoa(val, str, 16);
           serial_puts(str);
           break;

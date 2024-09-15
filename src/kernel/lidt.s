@@ -50,17 +50,41 @@ idt_df_isr_asm_handler:
   iretq                      ; Return from the interrupt
 
 idt_gpf_isr_asm_handler:
-  pushfq                     ; Push the flags register (RFLAGS)
-  push rax                   ; Push the accumulator register (RAX)
-  push rcx                   ; Push a general-purpose register (RCX) for backup
-
-  ; Optionally, you can save more registers and perform additional error handling here.
+  pushfq                     ; Save RFLAGS
+  push rax                   ; Save RAX
+  push rcx                   ; Save RCX
+  push rbx                   ; Save RBX
+  push rdx                   ; Save RDX
+  push rsi                   ; Save RSI
+  push rdi                   ; Save RDI
+  push rbp                   ; Save RBP
+  push r8                    ; Save R8
+  push r9                    ; Save R9
+  push r10                   ; Save R10
+  push r11                   ; Save R11
+  push r12                   ; Save R12
+  push r13                   ; Save R13
+  push r14                   ; Save R14
+  push r15                   ; Save R15
 
   ; Call your C exception handler (division_by_zero_handler) in C code
   call idt_gpf_isr_handler
 
-  ; Optionally, you can perform additional error handling after the C handler.
-  pop rcx                    ; Restore the backup of RCX
+  ; Restore registers in reverse order
+  pop r15                    ; Restore R15
+  pop r14                    ; Restore R14
+  pop r13                    ; Restore R13
+  pop r12                    ; Restore R12
+  pop r11                    ; Restore R11
+  pop r10                    ; Restore R10
+  pop r9                     ; Restore R9
+  pop r8                     ; Restore R8
+  pop rbp                    ; Restore RBP
+  pop rdi                    ; Restore RDI
+  pop rsi                    ; Restore RSI
+  pop rdx                    ; Restore RDX
+  pop rbx                    ; Restore RBX
+  pop rcx                    ; Restore RCX
   pop rax                    ; Restore RAX
   popfq                      ; Restore RFLAGS
 

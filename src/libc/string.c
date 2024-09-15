@@ -11,21 +11,35 @@ size_t strlen(const char *s) {
   return len;
 }
 
-int swap(char* a, char* b) {
+bool swap(char* a, char* b) {
   if (a == NULL || b == NULL) {
-    return 0;
+    return false;
   }
 
   char t = *a;
   *a = *b;
   *b = t;
 
-  return 1;
+  return true;
 }
 
 int	strcmp(const char *s1, const char *s2) {
   for(; *s1==*s2 && *s1; s1++, s2++){ };
 	return *(unsigned char *)s1 - *(unsigned char *)s2;
+}
+
+int	strncmp(const char *s1, const char *s2, size_t num) {
+  for(; num && *s1==*s2 && *s1; s1++, s2++, num--){ 
+    if (*s1 == '\0') {
+      return 0;
+    }
+  };
+
+  if (num == 0) {
+    return 0;
+  }
+
+	return *(uint8_t*)s1 - *(uint8_t*)s2;
 }
 
 void strrev(char str[], int32_t length) {

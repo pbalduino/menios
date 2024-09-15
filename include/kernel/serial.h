@@ -8,6 +8,12 @@ int serial_printf(const char* format, ...);
 
 #define serial_log(a)
 #define serial_error(a)
+
+#define serial_line(a) serial_printf("%s: [%s:%d] %s\n", __func__, __FILE__, __LINE__, a)
+// #define serial_log(a) serial_printf("[INFO] %s[%d]: %s\n", __FILE__, __LINE__, a)
+// #define serial_error(a) serial_printf("[ERRO] %s[%d]: %s\n", __FILE__, __LINE__, a)
+
+// #define serial_line(a
 // #define serial_log(a) serial_printf("[INFO] %s[%d]: %s\n", __FILE__, __LINE__, a)
 // #define serial_error(a) serial_printf("[ERRO] %s[%d]: %s\n", __FILE__, __LINE__, a)
 

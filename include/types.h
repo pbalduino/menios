@@ -10,6 +10,8 @@ extern "C" {
 typedef _Bool bool;
 enum { false, true };
 
+typedef long long off_t;
+
 #define ROUNDDOWN(a, n)						\
 ({								\
 	uint32_t __a = (uint32_t) (a);				\

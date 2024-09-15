@@ -54,15 +54,12 @@ typedef struct {
     uint64_t rbx;
     uint64_t rax;
 
-    uint64_t isr_number;
-    uint64_t error_code;
-
-    uint64_t rip;
-    uint64_t cs;
     uint64_t rflags;
-    uint64_t rsp;
-    uint64_t ss;
+
+    uint64_t error_code;
 } idt_exception_t;
+
+typedef idt_exception_t* idt_exception_p;
 
 extern void idt_df_isr_asm_handler();
 extern void idt_generic_isr_asm_handler();

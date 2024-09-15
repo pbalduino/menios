@@ -1,13 +1,16 @@
 #include <boot/limine.h>
-#include <kernel/kheap.h>
+#include <kernel/heap.h>
 #include <kernel/pmm.h>
+#include <kernel/proc.h>
 #include <kernel/serial.h>
-#include <stdio.h>
 #include <mem.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <sys/mman.h>
 
 static uint64_t page_bitmap[PAGE_BITMAP_SIZE];
 static uintptr_t kernel_offset;
-static uintptr_t heap_offset;
+static uintptr_t cr3_vaddr;
 
 static volatile struct limine_hhdm_request hhdm_request = {
   .id = LIMINE_HHDM_REQUEST,
@@ -30,33 +33,20 @@ static char* mem_type[8] = {
   "Framebuffer"
 };
 
-static inline uintptr_t physical_to_virtual(uintptr_t physical_address) {
+uintptr_t physical_to_virtual(uintptr_t physical_address) {
   // serial_printf("p2v: %lx + %lx = %lx\n", physical_address, kernel_offset, physical_address - kernel_offset);
   return physical_address + kernel_offset;
 }
 
-static inline uintptr_t virtual_to_physical(uintptr_t virtual_address) {
+uintptr_t virtual_to_physical(uintptr_t virtual_address) {
   // serial_printf("v2p: %lx - %lx = %lx\n", virtual_address, kernel_offset, virtual_address - kernel_offset);
   return virtual_address - kernel_offset;
 }
 
-uint64_t read_cr2() {
-  uint64_t value;
+uintptr_t read_cr2() {
+  uintptr_t value;
   asm volatile("movq %%cr2, %0" : "=r" (value));
   return value;
-}
-
-void force_page_fault() {
-  uint8_t *y = (uint8_t*)0x7f0080000000;
-  // *y = 
-
-  y[0] = 'A';
-  y[1] = 'B';
-  y[2] = 'C';
-  y[3] = 'D';
-
-  printf("y: %x\n", (unsigned long)y);
-  printf("y.str = %s\n", y);
 }
 
 void set_page_free(uintptr_t physical_address) {
@@ -81,10 +71,12 @@ void set_page_row_free(uintptr_t physical_address) {
 }
 
 uint8_t get_page_status(uintptr_t physical_address) {
+  serial_printf("get_page_status: %d\n", __LINE__);
   size_t page_number = physical_address / PAGE_SIZE;
   size_t index = page_number / (sizeof(uint64_t) * 8);
   size_t bit_position = page_number % (sizeof(uint64_t) * 8);
   
+  serial_printf("get_page_status: %d - idx %d - pa %lx\n", __LINE__, index, physical_address);
   return (page_bitmap[index] & (1UL << bit_position)) ? PAGE_USED : PAGE_FREE;
 }
 
@@ -153,12 +145,16 @@ void init_kernel_offset() {
   serial_printf("  Kernel offset %lx:\n", kernel_offset);
 }
 
+uintptr_t get_kernel_offset() {
+  return kernel_offset;
+}
+
 void init_page_bitmap() {
   memsetl(&page_bitmap, PAGE_BITMAP_FULL, PAGE_BITMAP_SIZE);
 }
 
 uint64_t get_first_free_page() {
-for(size_t p = 0; p < PAGE_BITMAP_SIZE; p++) {
+  for(size_t p = 0; p < PAGE_BITMAP_SIZE; p++) {
     uint64_t page_row = page_bitmap[p];
     if(page_row != PAGE_BITMAP_FULL) {
       for(int b = 0; b < 64; b++) {
@@ -173,52 +169,70 @@ for(size_t p = 0; p < PAGE_BITMAP_SIZE; p++) {
   return 0L;
 }
 
-uint64_t read_cr3() {
-  uint64_t value;
+uintptr_t read_cr3() {
+  uintptr_t value;
   asm volatile("movq %%cr3, %0" : "=r" (value));
   return value;
 }
 
-void invalidate_pages_from_cr3() {
-  serial_printf("> invalidate_pages_from_cr3\n");
+void init_cr3() {
+  cr3_vaddr = physical_to_virtual(read_cr3());
+}
 
-  uint64_t cr3_physaddr = read_cr3();
-  serial_printf("> invalidate_pages_from_cr3 - cr3: %lx - %lx\n", cr3_physaddr, physical_to_virtual(cr3_physaddr));
+uintptr_t get_first_free_virtual_address(uintptr_t offset) {
+  pml4_t* root = (pml4_t*)cr3_vaddr;
 
-  page_map_l4_entry_t *entry = (page_map_l4_entry_t *)physical_to_virtual(cr3_physaddr);
+  for(uint64_t pml4_e = (offset >> 39) & 0x1ff; pml4_e < 0x200; pml4_e++) {
+    if(!root->entries[pml4_e].present) {
+      uintptr_t base = pml4_e << 39;
+      serial_printf("found: pml4e %lx\n", base);
+      return base | VADDR_UNUSED;
+    }
 
-  uint64_t pdbase;
+    page_directory_pointer_t* pdpt = (page_directory_pointer_t*)physical_to_virtual(root->entries[pml4_e].page_directory_base << 12);
 
-  serial_printf("pml4 offset: %lx\n", (kernel_offset >> 39) & 0x1ff);
+    for(uint64_t pdpt_e = (offset >> 30) & 0x1ff; pdpt_e < 0x200; pdpt_e++) {
+      if(!pdpt->entries[pdpt_e].present) {
+        uintptr_t base = (pml4_e << 39) | (pdpt_e << 30);
+        serial_printf("  found: pdpte: %lx(%lx) | %lx(%lx) - %lx\n", pml4_e, pml4_e << 39, pdpt_e, pdpt_e << 30, base);
+        return base | VADDR_UNUSED;
+      }
 
-  for(int h = 0x100; h < 512; h++) {
-    if(entry[h].present == 1 && entry[h].writable) {
-      serial_printf("pe: %lx(%d) @ %lx\n", h, entry[h].present, entry[h].page_directory_base);
-      pdbase = entry[h].page_directory_base;
+      page_directory_t* pd = (page_directory_entry_t*)physical_to_virtual(pdpt->entries[pdpt_e].page_directory_base << 12);
 
-      page_directory_pointer_t *pdp = (page_directory_pointer_t *)physical_to_virtual(pdbase * 0x1000);
+      for(uint64_t pd_e = (offset >> 21) & 0x1ff; pd_e < 0x200; pd_e++) {
+        if(!pd->entries[pd_e].present) {
+          uintptr_t base = (pml4_e << 39) | (pdpt_e << 30) | (pd_e << 21);
+          serial_printf("    found: pde: %lx(%lx) | %lx(%lx) | %lx(%lx) - %lx\n", pml4_e, pml4_e << 39, pdpt_e, pdpt_e << 30, pd_e, pd_e << 21, base);
+          return base | VADDR_UNUSED;
+        }
 
-      for (int i = 0; i < 512; i++) {
-        if(pdp->entries[i].present == 1 && pdp->entries[i].writable) {
-          serial_printf("  pd: %lx(%d) @ %lx\n", i, pdp->entries[i].present, pdp->entries[i].page_directory_base);
-          page_directory_t *pd = (page_directory_t *)physical_to_virtual(pdp->entries[i].page_directory_base * 0x1000);
+        page_table_t* pt = (page_table_t*)physical_to_virtual(pd->entries[pd_e].page_table_base << 12);
 
-          for (int j = 0; j < 512; j++) {
-            if(pd->entries[j].present == 1 && pd->entries[j].writable) {
-              serial_printf("    pt: %lx(%d) @ %lx\n", j, pd->entries[j].present, pd->entries[j].page_table_base);
-              page_table_t *pt = (page_table_t *)physical_to_virtual(pd->entries[j].page_table_base * 0x1000);
-
-              for (int k = 0; k < 512; k++) {
-                if(pt->entries[k].present == 0) {
-                  serial_printf("      p: %lx(%d) @ %lx\n", k, pt->entries[k].present, pt->entries[k].frame);
-                }
-              }
-            }
+        for(uint64_t pt_e = (offset >> 12) & 0x1ff; pt_e < 0x200; pt_e++) {
+          if(!pt->entries[pt_e].present) {
+            uintptr_t base = (pml4_e << 39) | (pdpt_e << 30) | (pd_e << 21) | (pt_e << 12);
+            serial_printf("      found: pte: %lx(%lx) | %lx(%lx) | %lx(%lx) | %lx(%lx) - %lx\n", pml4_e, pml4_e << 39, pdpt_e, pdpt_e << 30, pd_e, pd_e << 21, pt_e, pt_e << 12, base);
+            return base | VADDR_UNUSED;
           }
         }
       }
     }
   }
+}
+
+void force_page_fault() {
+  // uint8_t *y = (uint8_t*)0x7f0080000000;
+  uint8_t *y = (uint8_t*)physical_to_virtual(get_first_free_page());
+  // *y = 
+
+  y[0] = 'A';
+  y[1] = 'B';
+  y[2] = 'C';
+  y[3] = 'D';
+
+  printf("y: %x\n", (unsigned long)y);
+  printf("y.str = %s\n", y);
 }
 
 /*
@@ -241,22 +255,22 @@ void pmm_init() {
 
   init_kernel_offset();
 
+  init_cr3();
+
   list_memory_areas();
 
-  // invalidate_pages_from_cr3();
-
-  for(uint64_t p = 0; p < PAGE_BITMAP_SIZE; p++) {
-    if(page_bitmap[p] != PAGE_BITMAP_FULL) {
-      serial_printf("%lx: %lx\n", p * PAGE_ROW_SIZE, page_bitmap[p]);
-    }
+  char* objs[100];
+  for(int i = 0; i < 100; i++) {
+    objs[i] = malloc(10 * (1 * i));
   }
 
-  get_first_free_page();
+  for(int i = 0; i < 100; i+=2) {
+    free((char*)objs[i]);
+  }
 
-  kmalloc(1);
-
-  force_page_fault();
+  printf(" OK");
 }
+
 
 // Page Fault handler stub
 void page_fault_handler(uint64_t error_code, uint64_t rip, uint64_t cs, uint64_t rflags, uint64_t rsp, uint64_t ss) {
