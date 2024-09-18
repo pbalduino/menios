@@ -9,7 +9,6 @@
 *.o
 .DS_Store
 .vscode/
-bin/
 bochsout.txt
 core
 usermode

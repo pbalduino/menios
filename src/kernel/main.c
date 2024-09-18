@@ -13,7 +13,6 @@
 #include <kernel/kernel.h>
 #include <kernel/mem.h>
 #include <kernel/serial.h>
-#include <kernel/smp.h>
 
 void boot_graphics_init() {
   fb_init();
@@ -34,6 +33,16 @@ void boot_graphics_init() {
   // fb_list_modes();
 }
 
+void turn_off() {
+  printf("  Preparing shutdown...\n");
+  AcpiEnterSleepStatePrep(5);
+  cli(); // disable interrupts
+  printf("  Shuting down.\n");
+  AcpiEnterSleepState(5);
+  printf("  OH NOES!\n");
+  hcf();
+}
+
 void _start() {
   file_init();
 
@@ -45,15 +54,12 @@ void _start() {
 
   idt_init();
 
-  // WIP: Paging
   mem_init();
+
+  acpi_init();
 
   // TODO: CPUs
   // smp_init();
-
-  // TODO: ACPI
-  // acpi_init();
-
   // TODO: APIC / LAPIC
   // apic_init();
   // TODO: Show hardware
@@ -65,5 +71,6 @@ void _start() {
   // char* x = (char*)0xffff800000000000;
   // serial_puts(x);
 
-  hcf();
+  // hcf();
+  turn_off();
 }

@@ -1,5 +1,4 @@
 #include <assert.h>
-#include <mem.h>
 #include <string.h>
 #include <types.h>
 
@@ -67,6 +66,54 @@ char*	strncat(char *dst, const char *src, size_t size) {
   assert(dst[strlen(dst) - 1] == 0);
 
 	return dst;
+}
+
+char* strcat(char* dst, const char* src) {
+  char* ptr = dst;
+  while (*ptr != '\0') {
+    ptr++;
+  }
+
+  // Append the source string to the destination string
+  while (*src != '\0') {
+    *ptr = *src;
+    ptr++;
+    src++;
+  }
+
+  *ptr = '\0';
+
+  return dst;
+}
+
+char*	strcpy(char *dst, const char *src) {
+  char* original = dst;
+
+  while (*src != '\0') {
+    *dst = *src;
+    dst++;
+    src++;
+  }
+
+  *dst = '\0';
+
+  return original;
+}
+
+char*	strncpy(char *dst, const char *src, size_t size) {
+  size_t i;
+
+  // Copy up to 'num' characters from source to destination
+  for (i = 0; i < size && src[i] != '\0'; i++) {
+    dst[i] = src[i];
+  }
+
+  // If the length of the source is less than 'num', fill the rest with null characters
+  for (; i < size; i++) {
+    dst[i] = '\0';
+  }
+
+  return dst;
 }
 
 #ifdef __GNUC__

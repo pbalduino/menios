@@ -70,7 +70,6 @@ void idt_pf_isr_handler(uint64_t error_code) {
 
   asm volatile ("movq %%cr2, %0" : "=r" (faulting_address));
 
-  // serial_printf("%s[%d]: Page fault caught trying to access address 0x%lx.\n", __FILE__, __LINE__, faulting_address);
   serial_puts("Page fault caught trying to access address:\n");
 
   printf("- Page fault caught trying to access address %lx. Error code: %ld\n", faulting_address, error_code);

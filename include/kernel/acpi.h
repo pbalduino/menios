@@ -1,8 +1,17 @@
 #ifndef MENIOS_INCLUDE_KERNEL_ACPI_H
 #define MENIOS_INCLUDE_KERNEL_ACPI_H
 
-// #include <types.h>
-// #include <boot/limine.h>
+#include <acpi.h>
+#include <acpixf.h>
+
+typedef struct {
+ char     signature[8];
+ uint8_t  checksum;
+ char     oemid[6];
+ uint8_t  revision;
+ uint32_t rsdt_address;
+} acpi_rsdp_t;
+
 typedef struct {
   char     signature[8];
   uint8_t  checksum;
@@ -27,13 +36,18 @@ typedef struct {
   uint32_t creator_revision;
 } acpi_sdt_header_t;
 
+#define ACPI_SDT_HEADER_SIZE 36
+
 typedef struct {
   acpi_sdt_header_t header;
-  uint64_t sdt_addr[];
+  uint32_t* sdt;
+} acpi_rsdt_t;
+
+typedef struct {
+  acpi_sdt_header_t header;
+  uint64_t* sdt;
 } acpi_xsdt_t;
 
 void acpi_init();
-
-
 
 #endif
