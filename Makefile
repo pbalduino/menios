@@ -6,8 +6,9 @@ IMAGE_NAME = menios
 ARCH ?= x86-64
 GCC_DIR = /usr/bin
 LIB_DIR = src/libc
-INCLUDE_DIR = \
-	./limine
+CINCLUDE = \
+	-I./include \
+	-I./vendor/acpica/include
 
 OUTPUT_DIR = bin
 KERNEL_DIR = src/kernel
@@ -18,6 +19,8 @@ override CFLAGS += \
     -Wall \
     -Wextra \
 		-Winline \
+		-Wfatal-errors \
+		-Wno-unused-parameter \
     -std=gnu11 \
     -ffreestanding \
     -fno-stack-protector \
@@ -32,11 +35,12 @@ override CFLAGS += \
     -mno-sse2 \
     -mno-red-zone \
 		-nostdlib \
+		-nostdinc \
 		-static \
 		-c
 
 override CPPFLAGS := \
-    -I./limine \
+    $(CINCLUDE) \
     $(CPPFLAGS) \
     -MMD \
     -MP
@@ -58,7 +62,7 @@ override NASMFLAGS += \
 
 GCC_KERNEL_OPTS = \
 		$(CFLAGS) \
-		-I./include
+		$(CINCLUDE)
 
 GCC = $(GCC_DIR)/gcc
 LD = $(GCC_DIR)/ld
@@ -69,6 +73,10 @@ QEMU_X86 = qemu-system-amd64
 QEMU_OPTS = -smp cpus=4,cores=2,sockets=2 -hda $(BOOTLOADER) -m $(QEMU_MEMORY) -no-reboot -no-shutdown
 
 OS_NAME = $(shell uname -s | tr A-Z a-z)
+
+.PHONY: acpica
+acpica:
+	$(DOCKER) run --rm -it --mount type=bind,source=$$(pwd)/vendor/acpica,target=/mnt $(DOCKER_IMAGE) /bin/sh -c "cd /mnt && make"
 
 .PHONY: clean
 all: build
@@ -93,35 +101,35 @@ endif
 
 .PHONY: build
 build:
-	@set +eux
+	set -eux
 
 ifeq ($(OS_NAME),linux)
 	@echo Building kernel
-	$(GCC) $(GCC_KERNEL_OPTS) $(shell find -L . -type f -name '*.c')
+	$(GCC) $(GCC_KERNEL_OPTS) $(shell find -L src vendor/acpica -type f -name '*.c')
 
 	for file in $(shell find -L . -type f -name '*.s'); do \
 		$(NASM) -f elf64 $$file ; \
 	done;
-
+	
 	$(LD) $(LDFLAGS) -o $(KERNEL) $(shell find -L . -type f -name '*.o')
 	@echo Building image
 	rm -f $(IMAGE_NAME).hdd
 	dd if=/dev/zero bs=1M count=0 seek=64 of=$(IMAGE_NAME).hdd
 	sgdisk $(IMAGE_NAME).hdd -n 1:2048 -t 1:ef00
-	/limine/bin/limine bios-install $(IMAGE_NAME).hdd
+	./bin/limine bios-install $(IMAGE_NAME).hdd
 	mformat -i $(IMAGE_NAME).hdd@@1M
 	mmd -i $(IMAGE_NAME).hdd@@1M ::/EFI ::/EFI/BOOT
-	mcopy -i $(IMAGE_NAME).hdd@@1M $(KERNEL) limine.conf /limine/bin/limine-bios.sys ::/
-	mcopy -i $(IMAGE_NAME).hdd@@1M /limine/bin/BOOTX64.EFI ::/EFI/BOOT
+	mcopy -i $(IMAGE_NAME).hdd@@1M $(KERNEL) limine.conf ./bin/limine-bios.sys ::/
+	mcopy -i $(IMAGE_NAME).hdd@@1M ./bin/BOOTX64.EFI ::/EFI/BOOT
 
 	@echo Building ISO
-	cp /limine/bin/*.bin bin/
+	# cp /limine/bin/*.bin bin/
 	xorriso -as mkisofs -b limine-bios-cd.bin \
         -no-emul-boot -boot-load-size 4 -boot-info-table \
         --efi-boot limine-uefi-cd.bin \
         -efi-boot-part --efi-boot-image --protective-msdos-label \
         ./bin -o $(IMAGE_NAME).iso
-	/limine/bin/limine bios-install $(IMAGE_NAME).iso
+	./bin/limine bios-install $(IMAGE_NAME).iso
 else
 	@make docker
 	@echo "Building inside Docker"
@@ -130,4 +138,4 @@ endif
 
 .PHONY: run
 run:
-	qemu-system-x86_64 -smp cpus=1,maxcpus=1,sockets=1,dies=1,clusters=1,cores=1 -vga std -no-reboot --no-shutdown -M q35 -m size=2G,maxmem=2G -hda menios.hdd -serial file:com1.log -monitor stdio -d int -M hpet=on
+	qemu-system-x86_64 -smp cpus=1,maxcpus=1,sockets=1,dies=1,clusters=1,cores=1 -vga std -no-reboot --no-shutdown -M q35 -m size=2G,maxmem=2G -hda menios.hdd -serial file:com1.log -monitor stdio -d int -M hpet=on -usb -machine q35

@@ -3,9 +3,10 @@
 #include <kernel/kernel.h>
 #include <kernel/serial.h>
 
-static FILE* com1 = NULL;
+// static FILE* com1 = NULL;
 
 void serial_init() {
+  printf("- Initing serial communication");
   // Disable interrupts
   outb(0x3f8 + 1, 0x00);
 
@@ -32,6 +33,7 @@ void serial_init() {
 */
   // Enable interrupts (optional, if using interrupts)
   // outb(0x3f8 + 1, 0x01);
+  printf(".OK\n");
 }
 
 int serial_putchar(int ch) {

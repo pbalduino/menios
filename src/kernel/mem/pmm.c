@@ -1,11 +1,12 @@
 #include <boot/limine.h>
 #include <kernel/heap.h>
+#include <kernel/kernel.h>
 #include <kernel/pmm.h>
 #include <kernel/proc.h>
 #include <kernel/serial.h>
-#include <mem.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <sys/mman.h>
 
 static uint64_t page_bitmap[PAGE_BITMAP_SIZE];
@@ -34,7 +35,7 @@ static char* mem_type[8] = {
 };
 
 uintptr_t physical_to_virtual(uintptr_t physical_address) {
-  // serial_printf("p2v: %lx + %lx = %lx\n", physical_address, kernel_offset, physical_address - kernel_offset);
+  serial_printf("p2v: %lx + %lx = %lx\n", physical_address, kernel_offset, physical_address - kernel_offset);
   return physical_address + kernel_offset;
 }
 
@@ -66,7 +67,6 @@ void set_page_used(uintptr_t physical_address) {
 void set_page_row_free(uintptr_t physical_address) {
   size_t page_number = physical_address / PAGE_SIZE;
   size_t index = page_number / (sizeof(unsigned long) * 8);
-  size_t bit_position = page_number % (sizeof(unsigned long) * 8);
   page_bitmap[index] = PAGE_FREE;
 }
 
@@ -118,8 +118,17 @@ void list_memory_areas() {
    memmap_response = memmap_request.response;
   
   for(uint64_t e = 0; e < memmap_response->entry_count; e++) {
-    printf("  Entry %lu:  base: %lx - size: %lu (%lx) - type: %s\n", e, memmap_response->entries[e]->base, memmap_response->entries[e]->length, memmap_response->entries[e]->length, mem_type[memmap_response->entries[e]->type]);
-    serial_printf("  Entry %lu:  base: %lx - size: %lu (%lx) - type: %s\n", e, memmap_response->entries[e]->base, memmap_response->entries[e]->length, memmap_response->entries[e]->length, mem_type[memmap_response->entries[e]->type]);
+    printf("  Entry %lu:  base: %lx - size: %lu (%lx) - type: %s\n", e, 
+      memmap_response->entries[e]->base, 
+      memmap_response->entries[e]->length, 
+      memmap_response->entries[e]->length, 
+      mem_type[memmap_response->entries[e]->type]);
+
+    serial_printf("  Entry %lu:  base: %lx - size: %lu (%lx) - type: %s\n", e, memmap_response->entries[e]->base, 
+      memmap_response->entries[e]->length, 
+      memmap_response->entries[e]->length, 
+      mem_type[memmap_response->entries[e]->type]);
+
     switch (memmap_response->entries[e]->type) {
     case LIMINE_MEMMAP_USABLE:
       mem_available += memmap_response->entries[e]->length;
@@ -135,13 +144,15 @@ void list_memory_areas() {
     mem_total += memmap_response->entries[e]->length;
   }
 
-  serial_printf("  Total: %luMB - available: %luMB - video: %luMB\n", mem_total / (1024 * 1024), mem_available / (1024 * 1024), mem_framebuffer / (1024 * 1024));
+  serial_printf("  Total: %luMB - available: %luMB - video: %luMB\n", 
+    mem_total / (1024 * 1024), 
+    mem_available / (1024 * 1024), 
+    mem_framebuffer / (1024 * 1024));
 }
 
 void init_kernel_offset() {
   serial_printf("> init_kernel_offset\n");
   kernel_offset = hhdm_request.response->offset;
-  printf("  Kernel offset %lx:\n", kernel_offset);
   serial_printf("  Kernel offset %lx:\n", kernel_offset);
 }
 
@@ -159,7 +170,11 @@ uint64_t get_first_free_page() {
     if(page_row != PAGE_BITMAP_FULL) {
       for(int b = 0; b < 64; b++) {
         if((page_row & (1UL << b)) == 0) {
-          serial_printf("get_first_free_page: first free page: %d - %lx - %lx - %lx\n", b, p * PAGE_ROW_SIZE, page_row, (p * PAGE_ROW_SIZE) + (b * PAGE_SIZE));
+          serial_printf("get_first_free_page: first free page: %d - %lx - %lx - %lx\n", b, 
+            p * PAGE_ROW_SIZE, 
+            page_row, 
+            (p * PAGE_ROW_SIZE) + (b * PAGE_SIZE));
+
           return (p * PAGE_ROW_SIZE) + (b * PAGE_SIZE);
         }
       }
@@ -189,7 +204,8 @@ uintptr_t get_first_free_virtual_address(uintptr_t offset) {
       return base | VADDR_UNUSED;
     }
 
-    page_directory_pointer_t* pdpt = (page_directory_pointer_t*)physical_to_virtual(root->entries[pml4_e].page_directory_base << 12);
+    page_directory_pointer_t* pdpt = 
+      (page_directory_pointer_t*)physical_to_virtual(root->entries[pml4_e].page_directory_base << 12);
 
     for(uint64_t pdpt_e = (offset >> 30) & 0x1ff; pdpt_e < 0x200; pdpt_e++) {
       if(!pdpt->entries[pdpt_e].present) {
@@ -198,12 +214,21 @@ uintptr_t get_first_free_virtual_address(uintptr_t offset) {
         return base | VADDR_UNUSED;
       }
 
-      page_directory_t* pd = (page_directory_entry_t*)physical_to_virtual(pdpt->entries[pdpt_e].page_directory_base << 12);
+      page_directory_t* pd = 
+        (page_directory_t*)physical_to_virtual(pdpt->entries[pdpt_e].page_directory_base << 12);
 
       for(uint64_t pd_e = (offset >> 21) & 0x1ff; pd_e < 0x200; pd_e++) {
         if(!pd->entries[pd_e].present) {
           uintptr_t base = (pml4_e << 39) | (pdpt_e << 30) | (pd_e << 21);
-          serial_printf("    found: pde: %lx(%lx) | %lx(%lx) | %lx(%lx) - %lx\n", pml4_e, pml4_e << 39, pdpt_e, pdpt_e << 30, pd_e, pd_e << 21, base);
+          serial_printf("    found: pde: %lx(%lx) | %lx(%lx) | %lx(%lx) - %lx\n", 
+            pml4_e, 
+            pml4_e << 39, 
+            pdpt_e, 
+            pdpt_e << 30, 
+            pd_e, 
+            pd_e << 21, 
+            base);
+
           return base | VADDR_UNUSED;
         }
 
@@ -212,27 +237,24 @@ uintptr_t get_first_free_virtual_address(uintptr_t offset) {
         for(uint64_t pt_e = (offset >> 12) & 0x1ff; pt_e < 0x200; pt_e++) {
           if(!pt->entries[pt_e].present) {
             uintptr_t base = (pml4_e << 39) | (pdpt_e << 30) | (pd_e << 21) | (pt_e << 12);
-            serial_printf("      found: pte: %lx(%lx) | %lx(%lx) | %lx(%lx) | %lx(%lx) - %lx\n", pml4_e, pml4_e << 39, pdpt_e, pdpt_e << 30, pd_e, pd_e << 21, pt_e, pt_e << 12, base);
+            serial_printf("      found: pte: %lx(%lx) | %lx(%lx) | %lx(%lx) | %lx(%lx) - %lx\n", 
+              pml4_e, 
+              pml4_e << 39, 
+              pdpt_e, 
+              pdpt_e << 30, 
+              pd_e, 
+              pd_e << 21, 
+              pt_e, 
+              pt_e << 12, 
+              base);
+
             return base | VADDR_UNUSED;
           }
         }
       }
     }
   }
-}
-
-void force_page_fault() {
-  // uint8_t *y = (uint8_t*)0x7f0080000000;
-  uint8_t *y = (uint8_t*)physical_to_virtual(get_first_free_page());
-  // *y = 
-
-  y[0] = 'A';
-  y[1] = 'B';
-  y[2] = 'C';
-  y[3] = 'D';
-
-  printf("y: %x\n", (unsigned long)y);
-  printf("y.str = %s\n", y);
+  return 0L;
 }
 
 /*
@@ -248,27 +270,19 @@ void force_page_fault() {
   - read the value in the request address
 */
 void pmm_init() {
-  printf("- Initing Physical memory manager:\n");
-  serial_puts("\n- Initing Physical memory manager:\n");
+  printf("- Initing Physical memory manager:");
+  serial_puts("\n- Initing Physical memory manager:");
 
   init_page_bitmap();
+  puts(".");
 
   init_kernel_offset();
+  puts(".");
 
   init_cr3();
+  puts(".");
 
-  list_memory_areas();
-
-  char* objs[100];
-  for(int i = 0; i < 100; i++) {
-    objs[i] = malloc(10 * (1 * i));
-  }
-
-  for(int i = 0; i < 100; i+=2) {
-    free((char*)objs[i]);
-  }
-
-  printf(" OK");
+  printf("OK\n");
 }
 
 

@@ -3,7 +3,6 @@
 #include <kernel/proc.h>
 #include <kernel/serial.h>
 
-#include <mem.h>
 #include <stddef.h>
 #include <string.h>
 #include <types.h>
@@ -14,7 +13,7 @@
 void init_heap() {
   heap_node_p heap = (heap_node_p)current->heap;
   serial_printf("init_heap: heap @ %lx\n", heap);
-  memcpy(heap->magic, HEAP_MAGIC, sizeof(heap->magic));
+  memcpy(heap->magic, (const void*)HEAP_MAGIC, sizeof(heap->magic));
   heap->next = NULL;
   heap->prev = NULL;
   heap->size = PAGE_SIZE - HEAP_HEADER;
@@ -27,7 +26,7 @@ void init_heap() {
 void check_heap() {
   if(current->heap == current->brk) {
     serial_printf("check_heap: initializing heap\n");
-    current->heap = mmap(NULL, 0, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
+    current->heap = (uintptr_t)mmap(NULL, 0, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
   }
 
   serial_printf("check_heap: current->heap @ %lx\n", current->heap);
@@ -50,8 +49,8 @@ void debug_heap() {
     serial_printf("heap->magic: %s(%s) - ", strncmp(heap->magic, HEAP_MAGIC, 3) == 0 ? "OK " : "BAD", heap->magic);
     serial_printf("heap->status: %s - ", heap->status == HEAP_FREE ? "FREE" : "USED");
     serial_printf("heap->data: %p - ", heap->data);
-    serial_printf("heap->next: %p - ", heap->next ? heap->next : "NULL");
-    serial_printf("heap->prev: %p - ", heap->prev ? heap->prev : "NULL");
+    serial_printf("heap->next: %p - ", heap->next ? heap->next : NULL);
+    serial_printf("heap->prev: %p - ", heap->prev ? heap->prev : NULL);
     serial_printf("heap->size: %u\n", heap->size);
 
     heap = (heap_node_p)heap->next;

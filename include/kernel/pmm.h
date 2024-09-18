@@ -104,6 +104,9 @@ uintptr_t read_cr3();
 void pmm_init();
 void write_cr3(uint64_t value);
 
+uint64_t get_first_free_page();
+uintptr_t get_first_free_virtual_address(uintptr_t offset);
+
 uintptr_t physical_to_virtual(uintptr_t physical_address);
 uintptr_t virtual_to_physical(uintptr_t virtual_to_physical);
 

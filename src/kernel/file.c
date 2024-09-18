@@ -26,12 +26,12 @@ static struct __fd_t fd;
 static struct __sFile ff;
 
 
-static struct __fd_t fdstdout = {
-  .used = true,
-  .close = noop_close,
-  .read = noop_read,
-  .write = noop_write
-};
+// static struct __fd_t fdstdout = {
+//   .used = true,
+//   .close = noop_close,
+//   .read = noop_read,
+//   .write = noop_write
+// };
 
 static struct __fd_t fdserial0 = {
   .used = true,

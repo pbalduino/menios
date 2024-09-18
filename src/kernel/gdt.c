@@ -28,6 +28,6 @@ void gdt_init() {
 
   gdt_load(&gdt_p);
 
-  puts(" OK\n");
+  puts("OK\n");
   serial_log("Leaving gdt_init");
 }

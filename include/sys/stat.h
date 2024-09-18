@@ -1,0 +1,4 @@
+#ifndef MENIOS_INCLUDE_SYS_STAT_H
+#define MENIOS_INCLUDE_SYS_STAT_H
+
+#endif
