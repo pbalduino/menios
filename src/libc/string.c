@@ -11,7 +11,7 @@ size_t strlen(const char *s) {
 }
 
 bool swap(char* a, char* b) {
-  if (a == NULL || b == NULL) {
+  if(a == NULL || b == NULL) {
     return false;
   }
 
@@ -29,12 +29,12 @@ int	strcmp(const char *s1, const char *s2) {
 
 int	strncmp(const char *s1, const char *s2, size_t num) {
   for(; num && *s1==*s2 && *s1; s1++, s2++, num--){ 
-    if (*s1 == '\0') {
+    if(*s1 == '\0') {
       return 0;
     }
   };
 
-  if (num == 0) {
+  if(num == 0) {
     return 0;
   }
 
@@ -52,12 +52,12 @@ void strrev(char str[], int32_t length) {
 }
 
 char*	strncat(char *dst, const char *src, size_t size) {
-	if (size != 0) {
+	if(size != 0) {
 		char *d = dst;
 		const char *s = src;
 		while (*d != 0) d++;
 		do {
-			if ((*d = *s++) == 0) break;
+			if((*d = *s++) == 0) break;
 			d++;
 		} while (--size != 0);
 		*d = 0;

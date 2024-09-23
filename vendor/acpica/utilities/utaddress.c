@@ -195,7 +195,7 @@ AcpiUtAddAddressRange (
     ACPI_FUNCTION_TRACE (UtAddAddressRange);
 
 
-    if ((SpaceId != ACPI_ADR_SPACE_SYSTEM_MEMORY) &&
+    if((SpaceId != ACPI_ADR_SPACE_SYSTEM_MEMORY) &&
         (SpaceId != ACPI_ADR_SPACE_SYSTEM_IO))
     {
         return_ACPI_STATUS (AE_OK);
@@ -204,7 +204,7 @@ AcpiUtAddAddressRange (
     /* Allocate/init a new info block, add it to the appropriate list */
 
     RangeInfo = ACPI_ALLOCATE (sizeof (ACPI_ADDRESS_RANGE));
-    if (!RangeInfo)
+    if(!RangeInfo)
     {
         return_ACPI_STATUS (AE_NO_MEMORY);
     }
@@ -255,7 +255,7 @@ AcpiUtRemoveAddressRange (
     ACPI_FUNCTION_TRACE (UtRemoveAddressRange);
 
 
-    if ((SpaceId != ACPI_ADR_SPACE_SYSTEM_MEMORY) &&
+    if((SpaceId != ACPI_ADR_SPACE_SYSTEM_MEMORY) &&
         (SpaceId != ACPI_ADR_SPACE_SYSTEM_IO))
     {
         return_VOID;
@@ -266,9 +266,9 @@ AcpiUtRemoveAddressRange (
     RangeInfo = Prev = AcpiGbl_AddressRangeList[SpaceId];
     while (RangeInfo)
     {
-        if (RangeInfo->RegionNode == RegionNode)
+        if(RangeInfo->RegionNode == RegionNode)
         {
-            if (RangeInfo == Prev) /* Found at list head */
+            if(RangeInfo == Prev) /* Found at list head */
             {
                 AcpiGbl_AddressRangeList[SpaceId] = RangeInfo->Next;
             }
@@ -331,7 +331,7 @@ AcpiUtCheckAddressRange (
     ACPI_FUNCTION_TRACE (UtCheckAddressRange);
 
 
-    if ((SpaceId != ACPI_ADR_SPACE_SYSTEM_MEMORY) &&
+    if((SpaceId != ACPI_ADR_SPACE_SYSTEM_MEMORY) &&
         (SpaceId != ACPI_ADR_SPACE_SYSTEM_IO))
     {
         return_UINT32 (0);
@@ -354,13 +354,13 @@ AcpiUtCheckAddressRange (
          * 3) Input address/length overlaps range at the range end
          * 4) Input address/length completely encompasses the range
          */
-        if ((Address <= RangeInfo->EndAddress) &&
+        if((Address <= RangeInfo->EndAddress) &&
             (EndAddress >= RangeInfo->StartAddress))
         {
             /* Found an address range overlap */
 
             OverlapCount++;
-            if (Warn)   /* Optional warning message */
+            if(Warn)   /* Optional warning message */
             {
                 Pathname = AcpiNsGetNormalizedPathname (RangeInfo->RegionNode, TRUE);
 

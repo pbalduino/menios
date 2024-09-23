@@ -243,7 +243,7 @@ const ACPI_PREDEFINED_NAMES     AcpiGbl_PreDefinedNames[] =
 };
 
 
-#if (!ACPI_REDUCED_HARDWARE)
+#if(!ACPI_REDUCED_HARDWARE)
 /******************************************************************************
  *
  * Event and Hardware globals

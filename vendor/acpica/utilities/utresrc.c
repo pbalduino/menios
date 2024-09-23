@@ -309,7 +309,7 @@ AcpiUtWalkAmlResources (
 
     /* The absolute minimum resource template is one EndTag descriptor */
 
-    if (AmlLength < sizeof (AML_RESOURCE_END_TAG))
+    if(AmlLength < sizeof (AML_RESOURCE_END_TAG))
     {
         return_ACPI_STATUS (AE_AML_NO_RESOURCE_END_TAG);
     }
@@ -325,7 +325,7 @@ AcpiUtWalkAmlResources (
         /* Validate the Resource Type and Resource Length */
 
         Status = AcpiUtValidateResource (WalkState, Aml, &ResourceIndex);
-        if (ACPI_FAILURE (Status))
+        if(ACPI_FAILURE (Status))
         {
             /*
              * Exit on failure. Cannot continue because the descriptor
@@ -340,11 +340,11 @@ AcpiUtWalkAmlResources (
 
         /* Invoke the user function */
 
-        if (UserFunction)
+        if(UserFunction)
         {
             Status = UserFunction (
                 Aml, Length, Offset, ResourceIndex, Context);
-            if (ACPI_FAILURE (Status))
+            if(ACPI_FAILURE (Status))
             {
                 return_ACPI_STATUS (Status);
             }
@@ -352,13 +352,13 @@ AcpiUtWalkAmlResources (
 
         /* An EndTag descriptor terminates this resource template */
 
-        if (AcpiUtGetResourceType (Aml) == ACPI_RESOURCE_NAME_END_TAG)
+        if(AcpiUtGetResourceType (Aml) == ACPI_RESOURCE_NAME_END_TAG)
         {
             /*
              * There must be at least one more byte in the buffer for
              * the 2nd byte of the EndTag
              */
-            if ((Aml + 1) >= EndAml)
+            if((Aml + 1) >= EndAml)
             {
                 return_ACPI_STATUS (AE_AML_NO_RESOURCE_END_TAG);
             }
@@ -372,7 +372,7 @@ AcpiUtWalkAmlResources (
 
             /* Return the pointer to the EndTag if requested */
 
-            if (!UserFunction)
+            if(!UserFunction)
             {
                 *Context = Aml;
             }
@@ -388,13 +388,13 @@ AcpiUtWalkAmlResources (
 
     /* Did not find an EndTag descriptor */
 
-    if (UserFunction)
+    if(UserFunction)
     {
         /* Insert an EndTag anyway. AcpiRsGetListLength always leaves room */
 
         (void) AcpiUtValidateResource (WalkState, EndTag, &ResourceIndex);
         Status = UserFunction (EndTag, 2, Offset, ResourceIndex, Context);
-        if (ACPI_FAILURE (Status))
+        if(ACPI_FAILURE (Status))
         {
             return_ACPI_STATUS (Status);
         }
@@ -446,11 +446,11 @@ AcpiUtValidateResource (
      * Byte 0 contains the descriptor name (Resource Type)
      * Examine the large/small bit in the resource header
      */
-    if (ResourceType & ACPI_RESOURCE_NAME_LARGE)
+    if(ResourceType & ACPI_RESOURCE_NAME_LARGE)
     {
         /* Verify the large resource type (name) against the max */
 
-        if (ResourceType > ACPI_RESOURCE_NAME_LARGE_MAX)
+        if(ResourceType > ACPI_RESOURCE_NAME_LARGE_MAX)
         {
             goto InvalidResource;
         }
@@ -475,7 +475,7 @@ AcpiUtValidateResource (
      * Check validity of the resource type, via AcpiGbl_ResourceTypes.
      * Zero indicates an invalid resource.
      */
-    if (!AcpiGbl_ResourceTypes[ResourceIndex])
+    if(!AcpiGbl_ResourceTypes[ResourceIndex])
     {
         goto InvalidResource;
     }
@@ -495,7 +495,7 @@ AcpiUtValidateResource (
 
         /* Fixed length resource, length must match exactly */
 
-        if (ResourceLength != MinimumResourceLength)
+        if(ResourceLength != MinimumResourceLength)
         {
             goto BadResourceLength;
         }
@@ -505,7 +505,7 @@ AcpiUtValidateResource (
 
         /* Variable length resource, length must be at least the minimum */
 
-        if (ResourceLength < MinimumResourceLength)
+        if(ResourceLength < MinimumResourceLength)
         {
             goto BadResourceLength;
         }
@@ -515,7 +515,7 @@ AcpiUtValidateResource (
 
         /* Small variable length resource, length can be (Min) or (Min-1) */
 
-        if ((ResourceLength > MinimumResourceLength) ||
+        if((ResourceLength > MinimumResourceLength) ||
             (ResourceLength < (MinimumResourceLength - 1)))
         {
             goto BadResourceLength;
@@ -530,7 +530,7 @@ AcpiUtValidateResource (
     }
 
     AmlResource = ACPI_CAST_PTR (AML_RESOURCE, Aml);
-    if (ResourceType == ACPI_RESOURCE_NAME_SERIAL_BUS)
+    if(ResourceType == ACPI_RESOURCE_NAME_SERIAL_BUS)
     {
         /* Avoid undefined behavior: member access within misaligned address */
 
@@ -539,10 +539,10 @@ AcpiUtValidateResource (
 
         /* Validate the BusType field */
 
-        if ((CommonSerialBus.Type == 0) ||
+        if((CommonSerialBus.Type == 0) ||
             (CommonSerialBus.Type > AML_RESOURCE_MAX_SERIALBUSTYPE))
         {
-            if (WalkState)
+            if(WalkState)
             {
                 ACPI_ERROR ((AE_INFO,
                     "Invalid/unsupported SerialBus resource descriptor: BusType 0x%2.2X",
@@ -554,7 +554,7 @@ AcpiUtValidateResource (
 
     /* Optionally return the resource table index */
 
-    if (ReturnIndex)
+    if(ReturnIndex)
     {
         *ReturnIndex = ResourceIndex;
     }
@@ -564,7 +564,7 @@ AcpiUtValidateResource (
 
 InvalidResource:
 
-    if (WalkState)
+    if(WalkState)
     {
         ACPI_ERROR ((AE_INFO,
             "Invalid/unsupported resource descriptor: Type 0x%2.2X",
@@ -574,7 +574,7 @@ InvalidResource:
 
 BadResourceLength:
 
-    if (WalkState)
+    if(WalkState)
     {
         ACPI_ERROR ((AE_INFO,
             "Invalid resource descriptor length: Type "
@@ -610,7 +610,7 @@ AcpiUtGetResourceType (
      * Byte 0 contains the descriptor name (Resource Type)
      * Examine the large/small bit in the resource header
      */
-    if (ACPI_GET8 (Aml) & ACPI_RESOURCE_NAME_LARGE)
+    if(ACPI_GET8 (Aml) & ACPI_RESOURCE_NAME_LARGE)
     {
         /* Large Resource Type -- bits 6:0 contain the name */
 
@@ -653,7 +653,7 @@ AcpiUtGetResourceLength (
      * Byte 0 contains the descriptor name (Resource Type)
      * Examine the large/small bit in the resource header
      */
-    if (ACPI_GET8 (Aml) & ACPI_RESOURCE_NAME_LARGE)
+    if(ACPI_GET8 (Aml) & ACPI_RESOURCE_NAME_LARGE)
     {
         /* Large Resource type -- bytes 1-2 contain the 16-bit length */
 
@@ -693,7 +693,7 @@ AcpiUtGetResourceHeaderLength (
 
     /* Examine the large/small bit in the resource header */
 
-    if (ACPI_GET8 (Aml) & ACPI_RESOURCE_NAME_LARGE)
+    if(ACPI_GET8 (Aml) & ACPI_RESOURCE_NAME_LARGE)
     {
         return (sizeof (AML_RESOURCE_LARGE_HEADER));
     }
@@ -761,7 +761,7 @@ AcpiUtGetResourceEndTag (
 
     /* Allow a buffer length of zero */
 
-    if (!ObjDesc->Buffer.Length)
+    if(!ObjDesc->Buffer.Length)
     {
         *EndTag = ObjDesc->Buffer.Pointer;
         return_ACPI_STATUS (AE_OK);

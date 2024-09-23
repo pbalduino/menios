@@ -307,7 +307,7 @@ AcpiPsGetNextNamestring (
 
         /* NullName */
 
-        if (End == Start)
+        if(End == Start)
         {
             Start = NULL;
         }
@@ -385,7 +385,7 @@ AcpiPsGetNextNamepath (
 
     /* Null path case is allowed, just exit */
 
-    if (!Path)
+    if(!Path)
     {
         Arg->Common.Value.Name = Path;
         return_ACPI_STATUS (AE_OK);
@@ -407,11 +407,11 @@ AcpiPsGetNextNamepath (
      * If this name is a control method invocation, we must
      * setup the method call
      */
-    if (ACPI_SUCCESS (Status) &&
+    if(ACPI_SUCCESS (Status) &&
         PossibleMethodCall &&
         (Node->Type == ACPI_TYPE_METHOD))
     {
-        if ((GET_CURRENT_ARG_TYPE (WalkState->ArgTypes) == ARGP_SUPERNAME) ||
+        if((GET_CURRENT_ARG_TYPE (WalkState->ArgTypes) == ARGP_SUPERNAME) ||
             (GET_CURRENT_ARG_TYPE (WalkState->ArgTypes) == ARGP_TARGET))
         {
             /*
@@ -433,7 +433,7 @@ AcpiPsGetNextNamepath (
             Node->Name.Ascii, Node, MethodDesc, Path));
 
         NameOp = AcpiPsAllocOp (AML_INT_NAMEPATH_OP, Start);
-        if (!NameOp)
+        if(!NameOp)
         {
             return_ACPI_STATUS (AE_NO_MEMORY);
         }
@@ -448,7 +448,7 @@ AcpiPsGetNextNamepath (
         NameOp->Common.Node = Node;
         AcpiPsAppendArg (Arg, NameOp);
 
-        if (!MethodDesc)
+        if(!MethodDesc)
         {
             ACPI_ERROR ((AE_INFO,
                 "Control Method %p has no attached object",
@@ -470,11 +470,11 @@ AcpiPsGetNextNamepath (
      * Special handling if the name was not found during the lookup -
      * some NotFound cases are allowed
      */
-    if (Status == AE_NOT_FOUND)
+    if(Status == AE_NOT_FOUND)
     {
         /* 1) NotFound is ok during load pass 1/2 (allow forward references) */
 
-        if ((WalkState->ParseFlags & ACPI_PARSE_MODE_MASK) !=
+        if((WalkState->ParseFlags & ACPI_PARSE_MODE_MASK) !=
             ACPI_PARSE_EXECUTE)
         {
             Status = AE_OK;
@@ -482,7 +482,7 @@ AcpiPsGetNextNamepath (
 
         /* 2) NotFound during a CondRefOf(x) is ok by definition */
 
-        else if (WalkState->Op->Common.AmlOpcode == AML_CONDITIONAL_REF_OF_OP)
+        else if(WalkState->Op->Common.AmlOpcode == AML_CONDITIONAL_REF_OF_OP)
         {
             Status = AE_OK;
         }
@@ -492,7 +492,7 @@ AcpiPsGetNextNamepath (
          * may flag as an error later if slack mode is not enabled.
          * (Some ASL code depends on allowing this behavior)
          */
-        else if ((Arg->Common.Parent) &&
+        else if((Arg->Common.Parent) &&
             ((Arg->Common.Parent->Common.AmlOpcode == AML_PACKAGE_OP) ||
              (Arg->Common.Parent->Common.AmlOpcode == AML_VARIABLE_PACKAGE_OP)))
         {
@@ -502,11 +502,11 @@ AcpiPsGetNextNamepath (
 
     /* Final exception check (may have been changed from code above) */
 
-    if (ACPI_FAILURE (Status))
+    if(ACPI_FAILURE (Status))
     {
         ACPI_ERROR_NAMESPACE (WalkState->ScopeInfo, Path, Status);
 
-        if ((WalkState->ParseFlags & ACPI_PARSE_MODE_MASK) ==
+        if((WalkState->ParseFlags & ACPI_PARSE_MODE_MASK) ==
             ACPI_PARSE_EXECUTE)
         {
             /* Report a control method execution error */
@@ -696,7 +696,7 @@ AcpiPsGetNextField (
     /* Allocate a new field op */
 
     Field = AcpiPsAllocOp (Opcode, Aml);
-    if (!Field)
+    if(!Field)
     {
         return_PTR (NULL);
     }
@@ -723,7 +723,7 @@ AcpiPsGetNextField (
          * take comments surrounding this and add to the previously created
          * parse node.
          */
-        if (Field->Common.InlineComment)
+        if(Field->Common.InlineComment)
         {
             Field->Common.NameComment = Field->Common.InlineComment;
         }
@@ -766,7 +766,7 @@ AcpiPsGetNextField (
 
         /* This opcode has a third byte, AccessLength */
 
-        if (Opcode == AML_INT_EXTACCESSFIELD_OP)
+        if(Opcode == AML_INT_EXTACCESSFIELD_OP)
         {
             AccessLength = ACPI_GET8 (ParserState->Aml);
             ParserState->Aml++;
@@ -783,7 +783,7 @@ AcpiPsGetNextField (
          * (resource descriptor), or a NameString.
          */
         Aml = ParserState->Aml;
-        if (ACPI_GET8 (ParserState->Aml) == AML_BUFFER_OP)
+        if(ACPI_GET8 (ParserState->Aml) == AML_BUFFER_OP)
         {
             ParserState->Aml++;
 
@@ -793,12 +793,12 @@ AcpiPsGetNextField (
             PkgEnd += PkgLength;
 
             ASL_CV_CAPTURE_COMMENTS_ONLY (ParserState);
-            if (ParserState->Aml < PkgEnd)
+            if(ParserState->Aml < PkgEnd)
             {
                 /* Non-empty list */
 
                 Arg = AcpiPsAllocOp (AML_INT_BYTELIST_OP, Aml);
-                if (!Arg)
+                if(!Arg)
                 {
                     AcpiPsFreeOp (Field);
                     return_PTR (NULL);
@@ -850,7 +850,7 @@ AcpiPsGetNextField (
         else
         {
             Arg = AcpiPsAllocOp (AML_INT_NAMEPATH_OP, Aml);
-            if (!Arg)
+            if(!Arg)
             {
                 AcpiPsFreeOp (Field);
                 return_PTR (NULL);
@@ -903,7 +903,7 @@ AcpiPsFreeFieldList (
         /* AML_INT_CONNECTION_OP can have a single argument */
 
         Arg = AcpiPsGetArg (Current, 0);
-        if (Arg)
+        if(Arg)
         {
             AcpiPsFreeOp (Arg);
         }
@@ -963,7 +963,7 @@ AcpiPsGetNextArg (
         /* Constants, strings, and namestrings are all the same size */
 
         Arg = AcpiPsAllocOp (AML_BYTE_OP, ParserState->Aml);
-        if (!Arg)
+        if(!Arg)
         {
             return_ACPI_STATUS (AE_NO_MEMORY);
         }
@@ -980,16 +980,16 @@ AcpiPsGetNextArg (
 
     case ARGP_FIELDLIST:
 
-        if (ParserState->Aml < ParserState->PkgEnd)
+        if(ParserState->Aml < ParserState->PkgEnd)
         {
             /* Non-empty list */
 
             while (ParserState->Aml < ParserState->PkgEnd)
             {
                 Field = AcpiPsGetNextField (ParserState);
-                if (!Field)
+                if(!Field)
                 {
-                    if (Arg)
+                    if(Arg)
                     {
                         AcpiPsFreeFieldList(Arg);
                     }
@@ -997,7 +997,7 @@ AcpiPsGetNextArg (
                     return_ACPI_STATUS (AE_NO_MEMORY);
                 }
 
-                if (Prev)
+                if(Prev)
                 {
                     Prev->Common.Next = Field;
                 }
@@ -1016,13 +1016,13 @@ AcpiPsGetNextArg (
 
     case ARGP_BYTELIST:
 
-        if (ParserState->Aml < ParserState->PkgEnd)
+        if(ParserState->Aml < ParserState->PkgEnd)
         {
             /* Non-empty list */
 
             Arg = AcpiPsAllocOp (AML_INT_BYTELIST_OP,
                 ParserState->Aml);
-            if (!Arg)
+            if(!Arg)
             {
                 return_ACPI_STATUS (AE_NO_MEMORY);
             }
@@ -1047,7 +1047,7 @@ AcpiPsGetNextArg (
             AcpiUtGetArgumentTypeName (ArgType), ArgType));
 
         Subop = AcpiPsPeekOpcode (ParserState);
-        if (Subop == 0                  ||
+        if(Subop == 0                  ||
             AcpiPsIsLeadingChar (Subop) ||
             ACPI_IS_ROOT_PREFIX (Subop) ||
             ACPI_IS_PARENT_PREFIX (Subop))
@@ -1055,14 +1055,14 @@ AcpiPsGetNextArg (
             /* NullName or NameString */
 
             Arg = AcpiPsAllocOp (AML_INT_NAMEPATH_OP, ParserState->Aml);
-            if (!Arg)
+            if(!Arg)
             {
                 return_ACPI_STATUS (AE_NO_MEMORY);
             }
 
             Status = AcpiPsGetNextNamepath (WalkState, ParserState,
                 Arg, ACPI_NOT_METHOD_CALL);
-            if (ACPI_FAILURE(Status))
+            if(ACPI_FAILURE(Status))
             {
                 AcpiPsFreeOp (Arg);
                 return_ACPI_STATUS (Status);
@@ -1084,7 +1084,7 @@ AcpiPsGetNextArg (
             AcpiUtGetArgumentTypeName (ArgType), ArgType));
 
         Subop = AcpiPsPeekOpcode (ParserState);
-        if (Subop == 0                  ||
+        if(Subop == 0                  ||
             AcpiPsIsLeadingChar (Subop) ||
             ACPI_IS_ROOT_PREFIX (Subop) ||
             ACPI_IS_PARENT_PREFIX (Subop))
@@ -1092,20 +1092,20 @@ AcpiPsGetNextArg (
             /* NULL target (zero). Convert to a NULL namepath */
 
             Arg = AcpiPsAllocOp (AML_INT_NAMEPATH_OP, ParserState->Aml);
-            if (!Arg)
+            if(!Arg)
             {
                 return_ACPI_STATUS (AE_NO_MEMORY);
             }
 
             Status = AcpiPsGetNextNamepath (WalkState, ParserState,
                 Arg, ACPI_POSSIBLE_METHOD_CALL);
-            if (ACPI_FAILURE(Status))
+            if(ACPI_FAILURE(Status))
             {
                 AcpiPsFreeOp (Arg);
                 return_ACPI_STATUS (Status);
             }
 
-            if (Arg->Common.AmlOpcode == AML_INT_METHODCALL_OP)
+            if(Arg->Common.AmlOpcode == AML_INT_METHODCALL_OP)
             {
                 /* Free method call op and corresponding namestring sub-ob */
 
@@ -1139,7 +1139,7 @@ AcpiPsGetNextArg (
     case ARGP_TERMLIST:
     case ARGP_OBJLIST:
 
-        if (ParserState->Aml < ParserState->PkgEnd)
+        if(ParserState->Aml < ParserState->PkgEnd)
         {
             /* Non-empty list of variable arguments, nothing returned */
 

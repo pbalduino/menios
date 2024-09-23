@@ -179,7 +179,7 @@ AcpiUtIsPciRootBridge (
      * Check if this is a PCI root bridge.
      * ACPI 3.0+: check for a PCI Express root also.
      */
-    if (!(strcmp (Id,
+    if(!(strcmp (Id,
         PCI_ROOT_HID_STRING)) ||
 
         !(strcmp (Id,
@@ -192,7 +192,7 @@ AcpiUtIsPciRootBridge (
 }
 
 
-#if (defined ACPI_ASL_COMPILER || defined ACPI_EXEC_APP || defined ACPI_NAMES_APP)
+#if(defined ACPI_ASL_COMPILER || defined ACPI_EXEC_APP || defined ACPI_NAMES_APP)
 /*******************************************************************************
  *
  * FUNCTION:    AcpiUtIsAmlTable
@@ -214,7 +214,7 @@ AcpiUtIsAmlTable (
 
     /* These are the only tables that contain executable AML */
 
-    if (ACPI_COMPARE_NAMESEG (Table->Signature, ACPI_SIG_DSDT) ||
+    if(ACPI_COMPARE_NAMESEG (Table->Signature, ACPI_SIG_DSDT) ||
         ACPI_COMPARE_NAMESEG (Table->Signature, ACPI_SIG_PSDT) ||
         ACPI_COMPARE_NAMESEG (Table->Signature, ACPI_SIG_SSDT) ||
         ACPI_COMPARE_NAMESEG (Table->Signature, ACPI_SIG_OSDT) ||
@@ -290,7 +290,7 @@ AcpiUtSetIntegerWidth (
     UINT8                   Revision)
 {
 
-    if (Revision < 2)
+    if(Revision < 2)
     {
         /* 32-bit case */
 
@@ -337,13 +337,13 @@ AcpiUtCreateUpdateStateAndPush (
 
     /* Ignore null objects; these are expected */
 
-    if (!Object)
+    if(!Object)
     {
         return (AE_OK);
     }
 
     State = AcpiUtCreateUpdateState (Object, Action);
-    if (!State)
+    if(!State)
     {
         return (AE_NO_MEMORY);
     }
@@ -386,7 +386,7 @@ AcpiUtWalkPackageTree (
 
 
     State = AcpiUtCreatePkgState (SourceObject, TargetObject, 0);
-    if (!State)
+    if(!State)
     {
         return_ACPI_STATUS (AE_NO_MEMORY);
     }
@@ -409,14 +409,14 @@ AcpiUtWalkPackageTree (
          * 3) Any type other than a package. Packages are handled in else
          *    case below.
          */
-        if ((!ThisSourceObj) ||
+        if((!ThisSourceObj) ||
             (ACPI_GET_DESCRIPTOR_TYPE (ThisSourceObj) !=
                 ACPI_DESC_TYPE_OPERAND) ||
             (ThisSourceObj->Common.Type != ACPI_TYPE_PACKAGE))
         {
             Status = WalkCallback (ACPI_COPY_TYPE_SIMPLE, ThisSourceObj,
                 State, Context);
-            if (ACPI_FAILURE (Status))
+            if(ACPI_FAILURE (Status))
             {
                 return_ACPI_STATUS (Status);
             }
@@ -437,7 +437,7 @@ AcpiUtWalkPackageTree (
 
                 /* Finished when there are no more states */
 
-                if (!State)
+                if(!State)
                 {
                     /*
                      * We have handled all of the objects in the top level
@@ -460,7 +460,7 @@ AcpiUtWalkPackageTree (
 
             Status = WalkCallback (
                 ACPI_COPY_TYPE_PACKAGE, ThisSourceObj, State, Context);
-            if (ACPI_FAILURE (Status))
+            if(ACPI_FAILURE (Status))
             {
                 return_ACPI_STATUS (Status);
             }
@@ -472,7 +472,7 @@ AcpiUtWalkPackageTree (
             AcpiUtPushGenericState (&StateList, State);
             State = AcpiUtCreatePkgState (
                 ThisSourceObj, State->Pkg.ThisTargetObj, 0);
-            if (!State)
+            if(!State)
             {
                 /* Free any stacked Update State objects */
 
@@ -526,7 +526,7 @@ AcpiUtDisplayInitPathname (
 
     /* Only print the path if the appropriate debug level is enabled */
 
-    if (!(AcpiDbgLevel & ACPI_LV_INIT_NAMES))
+    if(!(AcpiDbgLevel & ACPI_LV_INIT_NAMES))
     {
         return;
     }
@@ -535,7 +535,7 @@ AcpiUtDisplayInitPathname (
 
     Buffer.Length = ACPI_ALLOCATE_LOCAL_BUFFER;
     Status = AcpiNsHandleToPathname (ObjHandle, &Buffer, TRUE);
-    if (ACPI_FAILURE (Status))
+    if(ACPI_FAILURE (Status))
     {
         return;
     }
@@ -562,7 +562,7 @@ AcpiUtDisplayInitPathname (
 
     /* Extra path is used to append names like _STA, _INI, etc. */
 
-    if (Path)
+    if(Path)
     {
         AcpiOsPrintf (".%s", Path);
     }

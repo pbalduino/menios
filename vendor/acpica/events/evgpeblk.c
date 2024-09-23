@@ -157,7 +157,7 @@
 #define _COMPONENT          ACPI_EVENTS
         ACPI_MODULE_NAME    ("evgpeblk")
 
-#if (!ACPI_REDUCED_HARDWARE) /* Entire module */
+#if(!ACPI_REDUCED_HARDWARE) /* Entire module */
 
 /* Local prototypes */
 
@@ -200,13 +200,13 @@ AcpiEvInstallGpeBlock (
 
 
     Status = AcpiUtAcquireMutex (ACPI_MTX_EVENTS);
-    if (ACPI_FAILURE (Status))
+    if(ACPI_FAILURE (Status))
     {
         return_ACPI_STATUS (Status);
     }
 
     Status = AcpiEvGetGpeXruptBlock (InterruptNumber, &GpeXruptBlock);
-    if (ACPI_FAILURE (Status))
+    if(ACPI_FAILURE (Status))
     {
         goto UnlockAndExit;
     }
@@ -214,7 +214,7 @@ AcpiEvInstallGpeBlock (
     /* Install the new block at the end of the list with lock */
 
     Flags = AcpiOsAcquireLock (AcpiGbl_GpeLock);
-    if (GpeXruptBlock->GpeBlockListHead)
+    if(GpeXruptBlock->GpeBlockListHead)
     {
         NextGpeBlock = GpeXruptBlock->GpeBlockListHead;
         while (NextGpeBlock->Next)
@@ -264,7 +264,7 @@ AcpiEvDeleteGpeBlock (
 
 
     Status = AcpiUtAcquireMutex (ACPI_MTX_EVENTS);
-    if (ACPI_FAILURE (Status))
+    if(ACPI_FAILURE (Status))
     {
         return_ACPI_STATUS (Status);
     }
@@ -272,17 +272,17 @@ AcpiEvDeleteGpeBlock (
     /* Disable all GPEs in this block */
 
     Status = AcpiHwDisableGpeBlock (GpeBlock->XruptBlock, GpeBlock, NULL);
-    if (ACPI_FAILURE (Status))
+    if(ACPI_FAILURE (Status))
     {
         return_ACPI_STATUS (Status);
     }
 
-    if (!GpeBlock->Previous && !GpeBlock->Next)
+    if(!GpeBlock->Previous && !GpeBlock->Next)
     {
         /* This is the last GpeBlock on this interrupt */
 
         Status = AcpiEvDeleteGpeXrupt (GpeBlock->XruptBlock);
-        if (ACPI_FAILURE (Status))
+        if(ACPI_FAILURE (Status))
         {
             goto UnlockAndExit;
         }
@@ -292,7 +292,7 @@ AcpiEvDeleteGpeBlock (
         /* Remove the block on this interrupt with lock */
 
         Flags = AcpiOsAcquireLock (AcpiGbl_GpeLock);
-        if (GpeBlock->Previous)
+        if(GpeBlock->Previous)
         {
             GpeBlock->Previous->Next = GpeBlock->Next;
         }
@@ -301,7 +301,7 @@ AcpiEvDeleteGpeBlock (
             GpeBlock->XruptBlock->GpeBlockListHead = GpeBlock->Next;
         }
 
-        if (GpeBlock->Next)
+        if(GpeBlock->Next)
         {
             GpeBlock->Next->Previous = GpeBlock->Previous;
         }
@@ -356,7 +356,7 @@ AcpiEvCreateGpeInfoBlocks (
     GpeRegisterInfo = ACPI_ALLOCATE_ZEROED (
         (ACPI_SIZE) GpeBlock->RegisterCount *
         sizeof (ACPI_GPE_REGISTER_INFO));
-    if (!GpeRegisterInfo)
+    if(!GpeRegisterInfo)
     {
         ACPI_ERROR ((AE_INFO,
             "Could not allocate the GpeRegisterInfo table"));
@@ -369,7 +369,7 @@ AcpiEvCreateGpeInfoBlocks (
      */
     GpeEventInfo = ACPI_ALLOCATE_ZEROED ((ACPI_SIZE) GpeBlock->GpeCount *
         sizeof (ACPI_GPE_EVENT_INFO));
-    if (!GpeEventInfo)
+    if(!GpeEventInfo)
     {
         ACPI_ERROR ((AE_INFO,
             "Could not allocate the GpeEventInfo table"));
@@ -423,7 +423,7 @@ AcpiEvCreateGpeInfoBlocks (
         /* Disable all GPEs within this register */
 
         Status = AcpiHwWrite (0x00, &ThisRegister->EnableAddress);
-        if (ACPI_FAILURE (Status))
+        if(ACPI_FAILURE (Status))
         {
             goto ErrorExit;
         }
@@ -431,7 +431,7 @@ AcpiEvCreateGpeInfoBlocks (
         /* Clear any pending GPE events within this register */
 
         Status = AcpiHwWrite (0xFF, &ThisRegister->StatusAddress);
-        if (ACPI_FAILURE (Status))
+        if(ACPI_FAILURE (Status))
         {
             goto ErrorExit;
         }
@@ -443,11 +443,11 @@ AcpiEvCreateGpeInfoBlocks (
 
 
 ErrorExit:
-    if (GpeRegisterInfo)
+    if(GpeRegisterInfo)
     {
         ACPI_FREE (GpeRegisterInfo);
     }
-    if (GpeEventInfo)
+    if(GpeEventInfo)
     {
         ACPI_FREE (GpeEventInfo);
     }
@@ -493,7 +493,7 @@ AcpiEvCreateGpeBlock (
     ACPI_FUNCTION_TRACE (EvCreateGpeBlock);
 
 
-    if (!RegisterCount)
+    if(!RegisterCount)
     {
         return_ACPI_STATUS (AE_OK);
     }
@@ -501,7 +501,7 @@ AcpiEvCreateGpeBlock (
     /* Allocate a new GPE block */
 
     GpeBlock = ACPI_ALLOCATE_ZEROED (sizeof (ACPI_GPE_BLOCK_INFO));
-    if (!GpeBlock)
+    if(!GpeBlock)
     {
         return_ACPI_STATUS (AE_NO_MEMORY);
     }
@@ -521,7 +521,7 @@ AcpiEvCreateGpeBlock (
      * Note: disables and clears all GPEs in the block
      */
     Status = AcpiEvCreateGpeInfoBlocks (GpeBlock);
-    if (ACPI_FAILURE (Status))
+    if(ACPI_FAILURE (Status))
     {
         ACPI_FREE (GpeBlock);
         return_ACPI_STATUS (Status);
@@ -530,7 +530,7 @@ AcpiEvCreateGpeBlock (
     /* Install the new block in the global lists */
 
     Status = AcpiEvInstallGpeBlock (GpeBlock, InterruptNumber);
-    if (ACPI_FAILURE (Status))
+    if(ACPI_FAILURE (Status))
     {
         ACPI_FREE (GpeBlock->RegisterInfo);
         ACPI_FREE (GpeBlock->EventInfo);
@@ -552,7 +552,7 @@ AcpiEvCreateGpeBlock (
 
     /* Return the new block */
 
-    if (ReturnGpeBlock)
+    if(ReturnGpeBlock)
     {
         (*ReturnGpeBlock) = GpeBlock;
     }
@@ -608,7 +608,7 @@ AcpiEvInitializeGpeBlock (
      * Ignore a null GPE block (e.g., if no GPE block 1 exists), and
      * any GPE blocks that have been initialized already.
      */
-    if (!GpeBlock || GpeBlock->Initialized)
+    if(!GpeBlock || GpeBlock->Initialized)
     {
         return_ACPI_STATUS (AE_OK);
     }
@@ -635,14 +635,14 @@ AcpiEvInitializeGpeBlock (
              * Ignore GPEs that have no corresponding _Lxx/_Exx method
              * and GPEs that are used to wake the system
              */
-            if ((ACPI_GPE_DISPATCH_TYPE (GpeEventInfo->Flags) != ACPI_GPE_DISPATCH_METHOD) ||
+            if((ACPI_GPE_DISPATCH_TYPE (GpeEventInfo->Flags) != ACPI_GPE_DISPATCH_METHOD) ||
                 (GpeEventInfo->Flags & ACPI_GPE_CAN_WAKE))
             {
                 continue;
             }
 
             Status = AcpiEvAddGpeReference (GpeEventInfo, FALSE);
-            if (ACPI_FAILURE (Status))
+            if(ACPI_FAILURE (Status))
             {
                 ACPI_EXCEPTION ((AE_INFO, Status,
                     "Could not enable GPE 0x%02X",
@@ -652,7 +652,7 @@ AcpiEvInitializeGpeBlock (
 
             GpeEventInfo->Flags |= ACPI_GPE_AUTO_ENABLED;
 
-            if (IsPollingNeeded &&
+            if(IsPollingNeeded &&
                 ACPI_GPE_IS_POLLING_NEEDED (GpeEventInfo))
             {
                 *IsPollingNeeded = TRUE;
@@ -662,7 +662,7 @@ AcpiEvInitializeGpeBlock (
         }
     }
 
-    if (GpeEnabledCount)
+    if(GpeEnabledCount)
     {
         ACPI_INFO ((
             "Enabled %u GPEs in block %02X to %02X", GpeEnabledCount,

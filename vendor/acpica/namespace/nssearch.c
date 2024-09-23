@@ -216,12 +216,12 @@ AcpiNsSearchOneScope (
 
 
 #ifdef ACPI_DEBUG_OUTPUT
-    if (ACPI_LV_NAMES & AcpiDbgLevel)
+    if(ACPI_LV_NAMES & AcpiDbgLevel)
     {
         char                *ScopeName;
 
         ScopeName = AcpiNsGetNormalizedPathname (ParentNode, TRUE);
-        if (ScopeName)
+        if(ScopeName)
         {
             ACPI_DEBUG_PRINT ((ACPI_DB_NAMES,
                 "Searching %s (%p) For [%4.4s] (%s)\n",
@@ -242,11 +242,11 @@ AcpiNsSearchOneScope (
     {
         /* Check for match against the name */
 
-        if (Node->Name.Integer == TargetName)
+        if(Node->Name.Integer == TargetName)
         {
             /* Resolve a control method alias if any */
 
-            if (AcpiNsGetType (Node) == ACPI_TYPE_LOCAL_METHOD_ALIAS)
+            if(AcpiNsGetType (Node) == ACPI_TYPE_LOCAL_METHOD_ALIAS)
             {
                 Node = ACPI_CAST_PTR (ACPI_NAMESPACE_NODE, Node->Object);
             }
@@ -325,14 +325,14 @@ AcpiNsSearchParentTree (
      * If there is no parent (i.e., we are at the root) or type is "local",
      * we won't be searching the parent tree.
      */
-    if (!ParentNode)
+    if(!ParentNode)
     {
         ACPI_DEBUG_PRINT ((ACPI_DB_NAMES, "[%4.4s] has no parent\n",
             ACPI_CAST_PTR (char, &TargetName)));
         return_ACPI_STATUS (AE_NOT_FOUND);
     }
 
-    if (AcpiNsLocal (Type))
+    if(AcpiNsLocal (Type))
     {
         ACPI_DEBUG_PRINT ((ACPI_DB_NAMES,
             "[%4.4s] type [%s] must be local to this scope (no parent search)\n",
@@ -357,7 +357,7 @@ AcpiNsSearchParentTree (
          */
         Status = AcpiNsSearchOneScope (
             TargetName, ParentNode, ACPI_TYPE_ANY, ReturnNode);
-        if (ACPI_SUCCESS (Status))
+        if(ACPI_SUCCESS (Status))
         {
             return_ACPI_STATUS (Status);
         }
@@ -417,7 +417,7 @@ AcpiNsSearchAndEnter (
 
     /* Parameter validation */
 
-    if (!Node || !TargetName || !ReturnNode)
+    if(!Node || !TargetName || !ReturnNode)
     {
         ACPI_ERROR ((AE_INFO,
             "Null parameter: Node %p Name 0x%X ReturnNode %p",
@@ -440,13 +440,13 @@ AcpiNsSearchAndEnter (
 
     *ReturnNode = ACPI_ENTRY_NOT_FOUND;
     Status = AcpiNsSearchOneScope (TargetName, Node, Type, ReturnNode);
-    if (Status != AE_NOT_FOUND)
+    if(Status != AE_NOT_FOUND)
     {
         /*
          * If we found it AND the request specifies that a find is an error,
          * return the error
          */
-        if (Status == AE_OK)
+        if(Status == AE_OK)
         {
             /* The node was found in the namespace */
 
@@ -455,7 +455,7 @@ AcpiNsSearchAndEnter (
              * delete any existing attached sub-object and make the node
              * look like a new node that is owned by the override table.
              */
-            if (Flags & ACPI_NS_OVERRIDE_IF_FOUND)
+            if(Flags & ACPI_NS_OVERRIDE_IF_FOUND)
             {
                 ACPI_DEBUG_PRINT ((ACPI_DB_NAMES,
                     "Namespace override: %4.4s pass %u type %X Owner %X\n",
@@ -463,7 +463,7 @@ AcpiNsSearchAndEnter (
                     (*ReturnNode)->Type, WalkState->OwnerId));
 
                 AcpiNsDeleteChildren (*ReturnNode);
-                if (AcpiGbl_RuntimeNamespaceOverride)
+                if(AcpiGbl_RuntimeNamespaceOverride)
                 {
                     AcpiUtRemoveReference ((*ReturnNode)->Object);
                     (*ReturnNode)->Object = NULL;
@@ -478,14 +478,14 @@ AcpiNsSearchAndEnter (
 
             /* Return an error if we don't expect to find the object */
 
-            else if (Flags & ACPI_NS_ERROR_IF_FOUND)
+            else if(Flags & ACPI_NS_ERROR_IF_FOUND)
             {
                 Status = AE_ALREADY_EXISTS;
             }
         }
 
 #ifdef ACPI_ASL_COMPILER
-        if (*ReturnNode && (*ReturnNode)->Type == ACPI_TYPE_ANY)
+        if(*ReturnNode && (*ReturnNode)->Type == ACPI_TYPE_ANY)
         {
             (*ReturnNode)->Flags |= ANOBJ_IS_EXTERNAL;
         }
@@ -504,7 +504,7 @@ AcpiNsSearchAndEnter (
      * the search when namespace references are being resolved (load pass 2)
      * and during the execution phase.
      */
-    if ((InterpreterMode != ACPI_IMODE_LOAD_PASS1) &&
+    if((InterpreterMode != ACPI_IMODE_LOAD_PASS1) &&
         (Flags & ACPI_NS_SEARCH_PARENT))
     {
         /*
@@ -512,7 +512,7 @@ AcpiNsSearchAndEnter (
          * ACPI specification
          */
         Status = AcpiNsSearchParentTree (TargetName, Node, Type, ReturnNode);
-        if (ACPI_SUCCESS (Status))
+        if(ACPI_SUCCESS (Status))
         {
             return_ACPI_STATUS (Status);
         }
@@ -520,7 +520,7 @@ AcpiNsSearchAndEnter (
 
     /* In execute mode, just search, never add names. Exit now */
 
-    if (InterpreterMode == ACPI_IMODE_EXECUTE)
+    if(InterpreterMode == ACPI_IMODE_EXECUTE)
     {
         ACPI_DEBUG_PRINT ((ACPI_DB_NAMES,
             "%4.4s Not found in %p [Not adding]\n",
@@ -532,7 +532,7 @@ AcpiNsSearchAndEnter (
     /* Create the new named object */
 
     NewNode = AcpiNsCreateNode (TargetName);
-    if (!NewNode)
+    if(!NewNode)
     {
         return_ACPI_STATUS (AE_NO_MEMORY);
     }
@@ -541,14 +541,14 @@ AcpiNsSearchAndEnter (
 
     /* Node is an object defined by an External() statement */
 
-    if (Flags & ACPI_NS_EXTERNAL ||
+    if(Flags & ACPI_NS_EXTERNAL ||
         (WalkState && WalkState->Opcode == AML_SCOPE_OP))
     {
         NewNode->Flags |= ANOBJ_IS_EXTERNAL;
     }
 #endif
 
-    if (Flags & ACPI_NS_TEMPORARY)
+    if(Flags & ACPI_NS_TEMPORARY)
     {
         NewNode->Flags |= ANOBJ_TEMPORARY;
     }

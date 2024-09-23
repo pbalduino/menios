@@ -25,14 +25,14 @@ int isxdigit(int c) {
 }
 
 int tolower(int c) {
-  if (c >= 'A' && c <= 'Z') {
+  if(c >= 'A' && c <= 'Z') {
       c = c + ('a' - 'A');
   }
   return c;
 }
 
 int toupper(int c) {
-  if (c >= 'a' && c <= 'z') {
+  if(c >= 'a' && c <= 'z') {
       c = c - ('a' - 'A');
   }
   return c;

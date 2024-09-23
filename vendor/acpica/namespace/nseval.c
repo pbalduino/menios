@@ -197,12 +197,12 @@ AcpiNsEvaluate (
     ACPI_FUNCTION_TRACE (NsEvaluate);
 
 
-    if (!Info)
+    if(!Info)
     {
         return_ACPI_STATUS (AE_BAD_PARAMETER);
     }
 
-    if (!Info->Node)
+    if(!Info->Node)
     {
         /*
          * Get the actual namespace node for the target object if we
@@ -214,7 +214,7 @@ AcpiNsEvaluate (
          */
         Status = AcpiNsGetNode (Info->PrefixNode, Info->RelativePathname,
             ACPI_NS_NO_UPSEARCH, &Info->Node);
-        if (ACPI_FAILURE (Status))
+        if(ACPI_FAILURE (Status))
         {
             return_ACPI_STATUS (Status);
         }
@@ -224,7 +224,7 @@ AcpiNsEvaluate (
      * For a method alias, we must grab the actual method node so that
      * proper scoping context will be established before execution.
      */
-    if (AcpiNsGetType (Info->Node) == ACPI_TYPE_LOCAL_METHOD_ALIAS)
+    if(AcpiNsGetType (Info->Node) == ACPI_TYPE_LOCAL_METHOD_ALIAS)
     {
         Info->Node = ACPI_CAST_PTR (
             ACPI_NAMESPACE_NODE, Info->Node->Object);
@@ -247,7 +247,7 @@ AcpiNsEvaluate (
     /* Get the full pathname to the object, for use in warning messages */
 
     Info->FullPathname = AcpiNsGetNormalizedPathname (Info->Node, TRUE);
-    if (!Info->FullPathname)
+    if(!Info->FullPathname)
     {
         return_ACPI_STATUS (AE_NO_MEMORY);
     }
@@ -261,7 +261,7 @@ AcpiNsEvaluate (
     /* Count the number of arguments being passed in */
 
     Info->ParamCount = 0;
-    if (Info->Parameters)
+    if(Info->Parameters)
     {
         while (Info->Parameters[Info->ParamCount])
         {
@@ -270,7 +270,7 @@ AcpiNsEvaluate (
 
         /* Warn on impossible argument count */
 
-        if (Info->ParamCount > ACPI_METHOD_NUM_ARGS)
+        if(Info->ParamCount > ACPI_METHOD_NUM_ARGS)
         {
             ACPI_WARN_PREDEFINED ((AE_INFO, Info->FullPathname, ACPI_WARN_ALWAYS,
                 "Excess arguments (%u) - using only %u",
@@ -333,7 +333,7 @@ AcpiNsEvaluate (
 
         /* Verify that there is a method object associated with this node */
 
-        if (!Info->ObjDesc)
+        if(!Info->ObjDesc)
         {
             ACPI_ERROR ((AE_INFO, "%s: Method has no attached sub-object",
                 Info->FullPathname));
@@ -391,7 +391,7 @@ AcpiNsEvaluate (
             ACPI_NAMESPACE_NODE, &Info->ReturnObject), NULL);
         AcpiExExitInterpreter ();
 
-        if (ACPI_FAILURE (Status))
+        if(ACPI_FAILURE (Status))
         {
             Info->ReturnObject = NULL;
             goto Cleanup;
@@ -414,11 +414,11 @@ AcpiNsEvaluate (
 
     /* Check if there is a return value that must be dealt with */
 
-    if (Status == AE_CTRL_RETURN_VALUE)
+    if(Status == AE_CTRL_RETURN_VALUE)
     {
         /* If caller does not want the return value, delete it */
 
-        if (Info->Flags & ACPI_IGNORE_RETURN_VALUE)
+        if(Info->Flags & ACPI_IGNORE_RETURN_VALUE)
         {
             AcpiUtRemoveReference (Info->ReturnObject);
             Info->ReturnObject = NULL;
@@ -428,11 +428,11 @@ AcpiNsEvaluate (
 
         Status = AE_OK;
     }
-    else if (ACPI_FAILURE(Status))
+    else if(ACPI_FAILURE(Status))
     {
         /* If ReturnObject exists, delete it */
 
-        if (Info->ReturnObject)
+        if(Info->ReturnObject)
         {
             AcpiUtRemoveReference (Info->ReturnObject);
             Info->ReturnObject = NULL;

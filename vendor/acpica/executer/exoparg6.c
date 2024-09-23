@@ -243,7 +243,7 @@ AcpiExDoMatch (
          */
         Status = AcpiExDoLogicalOp (
             AML_LOGICAL_EQUAL_OP, MatchObj, PackageObj, &LogicalResult);
-        if (ACPI_FAILURE (Status))
+        if(ACPI_FAILURE (Status))
         {
             return (FALSE);
         }
@@ -256,7 +256,7 @@ AcpiExDoMatch (
          */
         Status = AcpiExDoLogicalOp (
             AML_LOGICAL_LESS_OP, MatchObj, PackageObj, &LogicalResult);
-        if (ACPI_FAILURE (Status))
+        if(ACPI_FAILURE (Status))
         {
             return (FALSE);
         }
@@ -270,7 +270,7 @@ AcpiExDoMatch (
          */
         Status = AcpiExDoLogicalOp (
             AML_LOGICAL_GREATER_OP, MatchObj, PackageObj, &LogicalResult);
-        if (ACPI_FAILURE (Status))
+        if(ACPI_FAILURE (Status))
         {
             return (FALSE);
         }
@@ -283,7 +283,7 @@ AcpiExDoMatch (
          */
         Status = AcpiExDoLogicalOp (
             AML_LOGICAL_GREATER_OP, MatchObj, PackageObj, &LogicalResult);
-        if (ACPI_FAILURE (Status))
+        if(ACPI_FAILURE (Status))
         {
             return (FALSE);
         }
@@ -297,7 +297,7 @@ AcpiExDoMatch (
          */
         Status = AcpiExDoLogicalOp (
             AML_LOGICAL_LESS_OP, MatchObj, PackageObj, &LogicalResult);
-        if (ACPI_FAILURE (Status))
+        if(ACPI_FAILURE (Status))
         {
             return (FALSE);
         }
@@ -351,7 +351,7 @@ AcpiExOpcode_6A_0T_1R (
 
         /* Validate both Match Term Operators (MTR, MEQ, etc.) */
 
-        if ((Operand[1]->Integer.Value > MAX_MATCH_OPERATOR) ||
+        if((Operand[1]->Integer.Value > MAX_MATCH_OPERATOR) ||
             (Operand[3]->Integer.Value > MAX_MATCH_OPERATOR))
         {
             ACPI_ERROR ((AE_INFO, "Match operator out of range"));
@@ -362,7 +362,7 @@ AcpiExOpcode_6A_0T_1R (
         /* Get the package StartIndex, validate against the package length */
 
         Index = Operand[5]->Integer.Value;
-        if (Index >= Operand[0]->Package.Count)
+        if(Index >= Operand[0]->Package.Count)
         {
             ACPI_ERROR ((AE_INFO,
                 "Index (0x%8.8X%8.8X) beyond package end (0x%X)",
@@ -375,7 +375,7 @@ AcpiExOpcode_6A_0T_1R (
         /* Default return value is ACPI_UINT64_MAX if no match found */
 
         ReturnDesc = AcpiUtCreateIntegerObject (ACPI_UINT64_MAX);
-        if (!ReturnDesc)
+        if(!ReturnDesc)
         {
             Status = AE_NO_MEMORY;
             goto Cleanup;
@@ -401,7 +401,7 @@ AcpiExOpcode_6A_0T_1R (
 
             /* Treat any uninitialized (NULL) elements as non-matching */
 
-            if (!ThisElement)
+            if(!ThisElement)
             {
                 continue;
             }
@@ -411,13 +411,13 @@ AcpiExOpcode_6A_0T_1R (
              * (proceed to next iteration of enclosing for loop) signifies a
              * non-match.
              */
-            if (!AcpiExDoMatch ((UINT32) Operand[1]->Integer.Value,
+            if(!AcpiExDoMatch ((UINT32) Operand[1]->Integer.Value,
                     ThisElement, Operand[2]))
             {
                 continue;
             }
 
-            if (!AcpiExDoMatch ((UINT32) Operand[3]->Integer.Value,
+            if(!AcpiExDoMatch ((UINT32) Operand[3]->Integer.Value,
                     ThisElement, Operand[4]))
             {
                 continue;
@@ -449,7 +449,7 @@ Cleanup:
 
     /* Delete return object on error */
 
-    if (ACPI_FAILURE (Status))
+    if(ACPI_FAILURE (Status))
     {
         AcpiUtRemoveReference (ReturnDesc);
     }

@@ -373,7 +373,7 @@ typedef UINT64                          ACPI_PHYSICAL_ADDRESS;
 /*
  * Synchronization objects - Mutexes, Semaphores, and SpinLocks
  */
-#if (ACPI_MUTEX_TYPE == ACPI_BINARY_SEMAPHORE)
+#if(ACPI_MUTEX_TYPE == ACPI_BINARY_SEMAPHORE)
 /*
  * These macros are used if the host OS does not support a mutex object.
  * Map the OSL Mutex interfaces to binary semaphores.

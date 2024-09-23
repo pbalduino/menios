@@ -178,7 +178,7 @@ AcpiUtValidNameseg (
 
     for (i = 0; i < ACPI_NAMESEG_SIZE; i++)
     {
-        if (!AcpiUtValidNameChar (Name[i], i))
+        if(!AcpiUtValidNameChar (Name[i], i))
         {
             return (FALSE);
         }
@@ -212,13 +212,13 @@ AcpiUtValidNameChar (
     UINT32                  Position)
 {
 
-    if (!((Character >= 'A' && Character <= 'Z') ||
+    if(!((Character >= 'A' && Character <= 'Z') ||
           (Character >= '0' && Character <= '9') ||
           (Character == '_')))
     {
         /* Allow a '!' in the last position */
 
-        if (Character == '!' && Position == 3)
+        if(Character == '!' && Position == 3)
         {
             return (TRUE);
         }
@@ -257,11 +257,11 @@ AcpiUtCheckAndRepairAscii (
     {
         RepairedName[i] = (char) Name[i];
 
-        if (!Name[i])
+        if(!Name[i])
         {
             return;
         }
-        if (!isprint (Name[i]))
+        if(!isprint (Name[i]))
         {
             RepairedName[i] = ' ';
         }

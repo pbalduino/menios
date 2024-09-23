@@ -184,7 +184,7 @@ AcpiNsGetNextNode (
     ACPI_FUNCTION_ENTRY ();
 
 
-    if (!ChildNode)
+    if(!ChildNode)
     {
         /* It's really the parent's _scope_ that we want */
 
@@ -232,7 +232,7 @@ AcpiNsGetNextNodeTyped (
 
     /* If any type is OK, we are done */
 
-    if (Type == ACPI_TYPE_ANY)
+    if(Type == ACPI_TYPE_ANY)
     {
         /* NextNode is NULL if we are at the end-of-list */
 
@@ -245,7 +245,7 @@ AcpiNsGetNextNodeTyped (
     {
         /* If type matches, we are done */
 
-        if (NextNode->Type == Type)
+        if(NextNode->Type == Type)
         {
             return (NextNode);
         }
@@ -319,10 +319,10 @@ AcpiNsWalkNamespace (
 
     /* Special case for the namespace Root Node */
 
-    if (StartNode == ACPI_ROOT_OBJECT)
+    if(StartNode == ACPI_ROOT_OBJECT)
     {
         StartNode = AcpiGbl_RootNode;
-        if (!StartNode)
+        if(!StartNode)
         {
             return_ACPI_STATUS (AE_NO_NAMESPACE);
         }
@@ -346,7 +346,7 @@ AcpiNsWalkNamespace (
 
         /* Found next child, get the type if we are not searching for ANY */
 
-        if (Type != ACPI_TYPE_ANY)
+        if(Type != ACPI_TYPE_ANY)
         {
             ChildType = ChildNode->Type;
         }
@@ -359,7 +359,7 @@ AcpiNsWalkNamespace (
          * unlocked before invocation of the user function.) Only the
          * debugger namespace dump will examine the temporary nodes.
          */
-        if ((ChildNode->Flags & ANOBJ_TEMPORARY) &&
+        if((ChildNode->Flags & ANOBJ_TEMPORARY) &&
             !(Flags & ACPI_NS_WALK_TEMP_NODES))
         {
             Status = AE_CTRL_DEPTH;
@@ -367,16 +367,16 @@ AcpiNsWalkNamespace (
 
         /* Type must match requested type */
 
-        else if (ChildType == Type)
+        else if(ChildType == Type)
         {
             /*
              * Found a matching node, invoke the user callback function.
              * Unlock the namespace if flag is set.
              */
-            if (Flags & ACPI_NS_WALK_UNLOCK)
+            if(Flags & ACPI_NS_WALK_UNLOCK)
             {
                 MutexStatus = AcpiUtReleaseMutex (ACPI_MTX_NAMESPACE);
-                if (ACPI_FAILURE (MutexStatus))
+                if(ACPI_FAILURE (MutexStatus))
                 {
                     return_ACPI_STATUS (MutexStatus);
                 }
@@ -386,9 +386,9 @@ AcpiNsWalkNamespace (
              * Invoke the user function, either descending, ascending,
              * or both.
              */
-            if (!NodePreviouslyVisited)
+            if(!NodePreviouslyVisited)
             {
-                if (DescendingCallback)
+                if(DescendingCallback)
                 {
                     Status = DescendingCallback (ChildNode, Level,
                         Context, ReturnValue);
@@ -396,17 +396,17 @@ AcpiNsWalkNamespace (
             }
             else
             {
-                if (AscendingCallback)
+                if(AscendingCallback)
                 {
                     Status = AscendingCallback (ChildNode, Level,
                         Context, ReturnValue);
                 }
             }
 
-            if (Flags & ACPI_NS_WALK_UNLOCK)
+            if(Flags & ACPI_NS_WALK_UNLOCK)
             {
                 MutexStatus = AcpiUtAcquireMutex (ACPI_MTX_NAMESPACE);
-                if (ACPI_FAILURE (MutexStatus))
+                if(ACPI_FAILURE (MutexStatus))
                 {
                     return_ACPI_STATUS (MutexStatus);
                 }
@@ -440,11 +440,11 @@ AcpiNsWalkNamespace (
          * reached the caller specified maximum depth or if the user
          * function has specified that the maximum depth has been reached.
          */
-        if (!NodePreviouslyVisited &&
+        if(!NodePreviouslyVisited &&
             (Level < MaxDepth) &&
             (Status != AE_CTRL_DEPTH))
         {
-            if (ChildNode->Child)
+            if(ChildNode->Child)
             {
                 /* There is at least one child of this node, visit it */
 
@@ -457,7 +457,7 @@ AcpiNsWalkNamespace (
 
         /* No more children, re-visit this node */
 
-        if (!NodePreviouslyVisited)
+        if(!NodePreviouslyVisited)
         {
             NodePreviouslyVisited = TRUE;
             continue;
@@ -466,7 +466,7 @@ AcpiNsWalkNamespace (
         /* No more children, visit peers */
 
         ChildNode = AcpiNsGetNextNode (ParentNode, ChildNode);
-        if (ChildNode)
+        if(ChildNode)
         {
             NodePreviouslyVisited = FALSE;
         }

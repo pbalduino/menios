@@ -284,7 +284,7 @@ void AcpiOsStall(UINT32 Microseconds) {
   serial_printf("AcpiOsStall: Not implemented.\n");
 }
 
-#if (ACPI_MUTEX_TYPE != ACPI_BINARY_SEMAPHORE)
+#if(ACPI_MUTEX_TYPE != ACPI_BINARY_SEMAPHORE)
 ACPI_STATUS AcpiOsCreateMutex(ACPI_MUTEX *OutHandle) {
   serial_printf("AcpiOsCreateMutex: Not implemented.\n");
   return AE_OK;

@@ -195,7 +195,7 @@ AcpiTbFixString (
 
     while (Length && *String)
     {
-        if (!isprint ((int) (UINT8) *String))
+        if(!isprint ((int) (UINT8) *String))
         {
             *String = '?';
         }
@@ -256,7 +256,7 @@ AcpiTbPrintTableHeader (
     ACPI_TABLE_HEADER       LocalHeader;
 
 
-    if (ACPI_COMPARE_NAMESEG (Header->Signature, ACPI_SIG_FACS))
+    if(ACPI_COMPARE_NAMESEG (Header->Signature, ACPI_SIG_FACS))
     {
         /* FACS only has signature and length fields */
 
@@ -264,7 +264,7 @@ AcpiTbPrintTableHeader (
             Header->Signature, ACPI_FORMAT_UINT64 (Address),
             Header->Length));
     }
-    else if (ACPI_VALIDATE_RSDP_SIG (ACPI_CAST_PTR (ACPI_TABLE_RSDP,
+    else if(ACPI_VALIDATE_RSDP_SIG (ACPI_CAST_PTR (ACPI_TABLE_RSDP,
         Header)->Signature))
     {
         /* RSDP has no common fields */

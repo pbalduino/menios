@@ -192,7 +192,7 @@ AcpiHwExecuteSleepMethod (
     Arg.Integer.Value = (UINT64) IntegerArgument;
 
     Status = AcpiEvaluateObject (NULL, MethodPathname, &ArgList, NULL);
-    if (ACPI_FAILURE (Status) && Status != AE_NOT_FOUND)
+    if(ACPI_FAILURE (Status) && Status != AE_NOT_FOUND)
     {
         ACPI_EXCEPTION ((AE_INFO, Status, "While executing method %s",
             MethodPathname));
@@ -230,7 +230,7 @@ AcpiHwExtendedSleep (
 
     /* Extended sleep registers must be valid */
 
-    if (!AcpiGbl_FADT.SleepControl.Address ||
+    if(!AcpiGbl_FADT.SleepControl.Address ||
         !AcpiGbl_FADT.SleepStatus.Address)
     {
         return_ACPI_STATUS (AE_NOT_EXIST);
@@ -240,7 +240,7 @@ AcpiHwExtendedSleep (
 
     Status = AcpiWrite ((UINT64) ACPI_X_WAKE_STATUS,
         &AcpiGbl_FADT.SleepStatus);
-    if (ACPI_FAILURE (Status))
+    if(ACPI_FAILURE (Status))
     {
         return_ACPI_STATUS (Status);
     }
@@ -261,23 +261,23 @@ AcpiHwExtendedSleep (
 
     /* Flush caches, as per ACPI specification */
 
-    if (SleepState < ACPI_STATE_S4)
+    if(SleepState < ACPI_STATE_S4)
     {
         ACPI_FLUSH_CPU_CACHE ();
     }
 
     Status = AcpiOsEnterSleep (SleepState, SleepControl, 0);
-    if (Status == AE_CTRL_TERMINATE)
+    if(Status == AE_CTRL_TERMINATE)
     {
         return_ACPI_STATUS (AE_OK);
     }
-    if (ACPI_FAILURE (Status))
+    if(ACPI_FAILURE (Status))
     {
         return_ACPI_STATUS (Status);
     }
 
     Status = AcpiWrite ((UINT64) SleepControl, &AcpiGbl_FADT.SleepControl);
-    if (ACPI_FAILURE (Status))
+    if(ACPI_FAILURE (Status))
     {
         return_ACPI_STATUS (Status);
     }
@@ -287,7 +287,7 @@ AcpiHwExtendedSleep (
     do
     {
         Status = AcpiRead (&SleepStatus, &AcpiGbl_FADT.SleepStatus);
-        if (ACPI_FAILURE (Status))
+        if(ACPI_FAILURE (Status))
         {
             return_ACPI_STATUS (Status);
         }
@@ -321,7 +321,7 @@ AcpiHwExtendedWakePrep (
     ACPI_FUNCTION_TRACE (HwExtendedWakePrep);
 
 
-    if (AcpiGbl_SleepTypeAS0 != ACPI_SLEEP_TYPE_INVALID)
+    if(AcpiGbl_SleepTypeAS0 != ACPI_SLEEP_TYPE_INVALID)
     {
         SleepTypeValue = ((AcpiGbl_SleepTypeAS0 << ACPI_X_SLEEP_TYPE_POSITION) &
             ACPI_X_SLEEP_TYPE_MASK);

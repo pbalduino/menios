@@ -191,14 +191,14 @@ AcpiTbFindTable (
 
     /* Validate the input table signature */
 
-    if (!AcpiUtValidNameseg (Signature))
+    if(!AcpiUtValidNameseg (Signature))
     {
         return_ACPI_STATUS (AE_BAD_SIGNATURE);
     }
 
     /* Don't allow the OEM strings to be too long */
 
-    if ((strlen (OemId) > ACPI_OEM_ID_SIZE) ||
+    if((strlen (OemId) > ACPI_OEM_ID_SIZE) ||
         (strlen (OemTableId) > ACPI_OEM_TABLE_ID_SIZE))
     {
         return_ACPI_STATUS (AE_AML_STRING_LIMIT);
@@ -216,7 +216,7 @@ AcpiTbFindTable (
     (void) AcpiUtAcquireMutex (ACPI_MTX_TABLES);
     for (i = 0; i < AcpiGbl_RootTableList.CurrentTableCount; ++i)
     {
-        if (memcmp (&(AcpiGbl_RootTableList.Tables[i].Signature),
+        if(memcmp (&(AcpiGbl_RootTableList.Tables[i].Signature),
             Header.Signature, ACPI_NAMESEG_SIZE))
         {
             /* Not the requested table */
@@ -226,17 +226,17 @@ AcpiTbFindTable (
 
         /* Table with matching signature has been found */
 
-        if (!AcpiGbl_RootTableList.Tables[i].Pointer)
+        if(!AcpiGbl_RootTableList.Tables[i].Pointer)
         {
             /* Table is not currently mapped, map it */
 
             Status = AcpiTbValidateTable (&AcpiGbl_RootTableList.Tables[i]);
-            if (ACPI_FAILURE (Status))
+            if(ACPI_FAILURE (Status))
             {
                 goto UnlockAndExit;
             }
 
-            if (!AcpiGbl_RootTableList.Tables[i].Pointer)
+            if(!AcpiGbl_RootTableList.Tables[i].Pointer)
             {
                 continue;
             }
@@ -244,7 +244,7 @@ AcpiTbFindTable (
 
         /* Check for table match on all IDs */
 
-        if (!memcmp (AcpiGbl_RootTableList.Tables[i].Pointer->Signature,
+        if(!memcmp (AcpiGbl_RootTableList.Tables[i].Pointer->Signature,
                 Header.Signature, ACPI_NAMESEG_SIZE) &&
             (!OemId[0] ||
              !memcmp (AcpiGbl_RootTableList.Tables[i].Pointer->OemId,

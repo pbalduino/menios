@@ -199,7 +199,7 @@ AcpiUtDeleteInternalObj (
     ACPI_FUNCTION_TRACE_PTR (UtDeleteInternalObj, Object);
 
 
-    if (!Object)
+    if(!Object)
     {
         return_VOID;
     }
@@ -217,7 +217,7 @@ AcpiUtDeleteInternalObj (
 
         /* Free the actual string buffer */
 
-        if (!(Object->Common.Flags & AOPOBJ_STATIC_POINTER))
+        if(!(Object->Common.Flags & AOPOBJ_STATIC_POINTER))
         {
             /* But only if it is NOT a pointer into an ACPI table */
 
@@ -232,7 +232,7 @@ AcpiUtDeleteInternalObj (
 
         /* Free the actual buffer */
 
-        if (!(Object->Common.Flags & AOPOBJ_STATIC_POINTER))
+        if(!(Object->Common.Flags & AOPOBJ_STATIC_POINTER))
         {
             /* But only if it is NOT a pointer into an ACPI table */
 
@@ -261,7 +261,7 @@ AcpiUtDeleteInternalObj (
      */
     case ACPI_TYPE_DEVICE:
 
-        if (Object->Device.GpeBlock)
+        if(Object->Device.GpeBlock)
         {
             (void) AcpiEvDeleteGpeBlock (Object->Device.GpeBlock);
         }
@@ -288,7 +288,7 @@ AcpiUtDeleteInternalObj (
             "***** Mutex %p, OS Mutex %p\n",
             Object, Object->Mutex.OsMutex));
 
-        if (Object == AcpiGbl_GlobalLockMutex)
+        if(Object == AcpiGbl_GlobalLockMutex)
         {
             /* Global Lock has extra semaphore */
 
@@ -322,14 +322,14 @@ AcpiUtDeleteInternalObj (
 
         /* Delete the method mutex if it exists */
 
-        if (Object->Method.Mutex)
+        if(Object->Method.Mutex)
         {
             AcpiOsDeleteMutex (Object->Method.Mutex->Mutex.OsMutex);
             AcpiUtDeleteObjectDesc (Object->Method.Mutex);
             Object->Method.Mutex = NULL;
         }
 
-        if (Object->Method.Node)
+        if(Object->Method.Node)
         {
             Object->Method.Node = NULL;
         }
@@ -344,14 +344,14 @@ AcpiUtDeleteInternalObj (
          * Update AddressRange list. However, only permanent regions
          * are installed in this list. (Not created within a method)
          */
-        if (!(Object->Region.Node->Flags & ANOBJ_TEMPORARY))
+        if(!(Object->Region.Node->Flags & ANOBJ_TEMPORARY))
         {
             AcpiUtRemoveAddressRange (Object->Region.SpaceId,
                 Object->Region.Node);
         }
 
         SecondDesc = AcpiNsGetSecondaryObject (Object);
-        if (SecondDesc)
+        if(SecondDesc)
         {
             /*
              * Free the RegionContext if and only if the handler is one of the
@@ -359,7 +359,7 @@ AcpiUtDeleteInternalObj (
              * locally, it was not created by an external caller.
              */
             HandlerDesc = Object->Region.Handler;
-            if (HandlerDesc)
+            if(HandlerDesc)
             {
                 NextDesc = HandlerDesc->AddressSpace.RegionList;
                 StartDesc = NextDesc;
@@ -369,7 +369,7 @@ AcpiUtDeleteInternalObj (
 
                 while (NextDesc)
                 {
-                    if (NextDesc == Object)
+                    if(NextDesc == Object)
                     {
                         *LastObjPtr = NextDesc->Region.Next;
                         break;
@@ -382,7 +382,7 @@ AcpiUtDeleteInternalObj (
 
                     /* Prevent infinite loop if list is corrupted */
 
-                    if (NextDesc == StartDesc)
+                    if(NextDesc == StartDesc)
                     {
                         ACPI_ERROR ((AE_INFO,
                             "Circular region list in address handler object %p",
@@ -391,12 +391,12 @@ AcpiUtDeleteInternalObj (
                     }
                 }
 
-                if (HandlerDesc->AddressSpace.HandlerFlags &
+                if(HandlerDesc->AddressSpace.HandlerFlags &
                     ACPI_ADDR_HANDLER_DEFAULT_INSTALLED)
                 {
                     /* Deactivate region and free region context */
 
-                    if (HandlerDesc->AddressSpace.Setup)
+                    if(HandlerDesc->AddressSpace.Setup)
                     {
                         (void) HandlerDesc->AddressSpace.Setup (Object,
                             ACPI_REGION_DEACTIVATE,
@@ -412,7 +412,7 @@ AcpiUtDeleteInternalObj (
 
             AcpiUtDeleteObjectDesc (SecondDesc);
         }
-        if (Object->Field.InternalPccBuffer)
+        if(Object->Field.InternalPccBuffer)
         {
             ACPI_FREE(Object->Field.InternalPccBuffer);
         }
@@ -425,7 +425,7 @@ AcpiUtDeleteInternalObj (
             "***** Buffer Field %p\n", Object));
 
         SecondDesc = AcpiNsGetSecondaryObject (Object);
-        if (SecondDesc)
+        if(SecondDesc)
         {
             AcpiUtDeleteObjectDesc (SecondDesc);
         }
@@ -437,7 +437,7 @@ AcpiUtDeleteInternalObj (
             "***** Bank Field %p\n", Object));
 
         SecondDesc = AcpiNsGetSecondaryObject (Object);
-        if (SecondDesc)
+        if(SecondDesc)
         {
             AcpiUtDeleteObjectDesc (SecondDesc);
         }
@@ -458,7 +458,7 @@ AcpiUtDeleteInternalObj (
 
     /* Free any allocated memory (pointer within the object) found above */
 
-    if (ObjPointer)
+    if(ObjPointer)
     {
         ACPI_DEBUG_PRINT ((ACPI_DB_ALLOCATIONS, "Deleting Object Subptr %p\n",
             ObjPointer));
@@ -539,7 +539,7 @@ AcpiUtUpdateRefCount (
     ACPI_FUNCTION_NAME (UtUpdateRefCount);
 
 
-    if (!Object)
+    if(!Object)
     {
         return;
     }
@@ -563,7 +563,7 @@ AcpiUtUpdateRefCount (
 
         /* The current reference count should never be zero here */
 
-        if (!OriginalCount)
+        if(!OriginalCount)
         {
             ACPI_WARNING ((AE_INFO,
                 "Obj %p, Reference Count was zero before increment\n",
@@ -581,7 +581,7 @@ AcpiUtUpdateRefCount (
 
         /* The current reference count must be non-zero */
 
-        if (OriginalCount)
+        if(OriginalCount)
         {
             NewCount = OriginalCount - 1;
             Object->Common.ReferenceCount = NewCount;
@@ -589,7 +589,7 @@ AcpiUtUpdateRefCount (
 
         AcpiOsReleaseLock (AcpiGbl_ReferenceCountLock, LockFlags);
 
-        if (!OriginalCount)
+        if(!OriginalCount)
         {
             ACPI_WARNING ((AE_INFO,
                 "Obj %p, Reference Count is already zero, cannot decrement\n",
@@ -603,7 +603,7 @@ AcpiUtUpdateRefCount (
 
         /* Actually delete the object on a reference count of zero */
 
-        if (NewCount == 0)
+        if(NewCount == 0)
         {
             AcpiUtDeleteInternalObj (Object);
         }
@@ -622,7 +622,7 @@ AcpiUtUpdateRefCount (
      * Sanity check the reference count, for debug purposes only.
      * (A deleted object will have a huge reference count)
      */
-    if (NewCount > ACPI_MAX_REFERENCE_COUNT)
+    if(NewCount > ACPI_MAX_REFERENCE_COUNT)
     {
         ACPI_WARNING ((AE_INFO,
             "Large Reference Count (0x%X) in object %p, Type=0x%.2X Operation=%s",
@@ -672,7 +672,7 @@ AcpiUtUpdateObjectReference (
     {
         /* Make sure that this isn't a namespace handle */
 
-        if (ACPI_GET_DESCRIPTOR_TYPE (Object) == ACPI_DESC_TYPE_NAMED)
+        if(ACPI_GET_DESCRIPTOR_TYPE (Object) == ACPI_DESC_TYPE_NAMED)
         {
             ACPI_DEBUG_PRINT ((ACPI_DB_ALLOCATIONS,
                 "Object %p is NS handle\n", Object));
@@ -717,7 +717,7 @@ AcpiUtUpdateObjectReference (
                  * ignored.
                  */
                 NextObject = Object->Package.Elements[i];
-                if (!NextObject)
+                if(!NextObject)
                 {
                     continue;
                 }
@@ -742,7 +742,7 @@ AcpiUtUpdateObjectReference (
                      */
                     Status = AcpiUtCreateUpdateStateAndPush (
                         NextObject, Action, &StateList);
-                    if (ACPI_FAILURE (Status))
+                    if(ACPI_FAILURE (Status))
                     {
                         goto ErrorExit;
                     }
@@ -763,7 +763,7 @@ AcpiUtUpdateObjectReference (
             NextObject = Object->BankField.BankObj;
             Status = AcpiUtCreateUpdateStateAndPush (
                 Object->BankField.RegionObj, Action, &StateList);
-            if (ACPI_FAILURE (Status))
+            if(ACPI_FAILURE (Status))
             {
                 goto ErrorExit;
             }
@@ -774,7 +774,7 @@ AcpiUtUpdateObjectReference (
             NextObject = Object->IndexField.IndexObj;
             Status = AcpiUtCreateUpdateStateAndPush (
                 Object->IndexField.DataObj, Action, &StateList);
-            if (ACPI_FAILURE (Status))
+            if(ACPI_FAILURE (Status))
             {
                 goto ErrorExit;
             }
@@ -786,7 +786,7 @@ AcpiUtUpdateObjectReference (
              * reference must track changes to the ref count of the index or
              * target object.
              */
-            if ((Object->Reference.Class == ACPI_REFCLASS_INDEX) ||
+            if((Object->Reference.Class == ACPI_REFCLASS_INDEX) ||
                 (Object->Reference.Class== ACPI_REFCLASS_NAME))
             {
                 NextObject = Object->Reference.Object;
@@ -810,12 +810,12 @@ AcpiUtUpdateObjectReference (
 
         /* Move on to the next object to be updated */
 
-        if (NextObject)
+        if(NextObject)
         {
             Object = NextObject;
             NextObject = NULL;
         }
-        else if (StateList)
+        else if(StateList)
         {
             State = AcpiUtPopGenericState (&StateList);
             Object = State->Update.Object;
@@ -866,7 +866,7 @@ AcpiUtAddReference (
 
     /* Ensure that we have a valid object */
 
-    if (!AcpiUtValidInternalObject (Object))
+    if(!AcpiUtValidInternalObject (Object))
     {
         return;
     }
@@ -906,7 +906,7 @@ AcpiUtRemoveReference (
      * Allow a NULL pointer to be passed in, just ignore it. This saves
      * each caller from having to check. Also, ignore NS nodes.
      */
-    if (!Object ||
+    if(!Object ||
         (ACPI_GET_DESCRIPTOR_TYPE (Object) == ACPI_DESC_TYPE_NAMED))
 
     {
@@ -915,7 +915,7 @@ AcpiUtRemoveReference (
 
     /* Ensure that we have a valid object */
 
-    if (!AcpiUtValidInternalObject (Object))
+    if(!AcpiUtValidInternalObject (Object))
     {
         return;
     }

@@ -8,6 +8,7 @@ RUN apt-get update && \
       apt-utils \
       automake \
       bash \
+      binutils \
       bison \
       coreutils \
       cppcheck \
@@ -22,7 +23,6 @@ RUN apt-get update && \
       m4 \
       make \
       mtools \
-      nasm \
       nasm \
       python3-pkg-resources \
       python3-pygments \

@@ -37,13 +37,13 @@ static inline void cpuid(uint32_t info, uint32_t *eaxp, uint32_t *ebxp, uint32_t
 	asm volatile("cpuid"
 		     : "=a" (eax), "=b" (ebx), "=c" (ecx), "=d" (edx)
 		     : "a" (info));
-	if (eaxp)
+	if(eaxp)
 		*eaxp = eax;
-	if (ebxp)
+	if(ebxp)
 		*ebxp = ebx;
-	if (ecxp)
+	if(ecxp)
 		*ecxp = ecx;
-	if (edxp)
+	if(edxp)
 		*edxp = edx;
 }
 

@@ -439,7 +439,7 @@ ACPI_GLOBAL (BOOLEAN,               AcpiGbl_SystemAwakeAndRunning);
  * the flag will enable similar behavior -- ACPICA will not attempt
  * to access any ACPI-relate hardware (SCI, GPEs, Fixed Events, etc.)
  */
-#if (!ACPI_REDUCED_HARDWARE)
+#if(!ACPI_REDUCED_HARDWARE)
 #define ACPI_HW_DEPENDENT_RETURN_STATUS(Prototype) \
     ACPI_EXTERNAL_RETURN_STATUS(Prototype)
 

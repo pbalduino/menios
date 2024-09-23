@@ -194,7 +194,7 @@ AcpiDsPrintNodePathname (
 
     ACPI_FUNCTION_TRACE (DsPrintNodePathname);
 
-    if (!Node)
+    if(!Node)
     {
         ACPI_DEBUG_PRINT_RAW ((ACPI_DB_DISPATCH, "[NULL NAME]"));
         return_VOID;
@@ -205,9 +205,9 @@ AcpiDsPrintNodePathname (
     Buffer.Length = ACPI_ALLOCATE_LOCAL_BUFFER;
 
     Status = AcpiNsHandleToPathname (Node, &Buffer, TRUE);
-    if (ACPI_SUCCESS (Status))
+    if(ACPI_SUCCESS (Status))
     {
-        if (Message)
+        if(Message)
         {
             ACPI_DEBUG_PRINT_RAW ((ACPI_DB_DISPATCH, "%s ", Message));
         }
@@ -254,14 +254,14 @@ AcpiDsDumpMethodStack (
 
     /* Ignore control codes, they are not errors */
 
-    if (ACPI_CNTL_EXCEPTION (Status))
+    if(ACPI_CNTL_EXCEPTION (Status))
     {
         return_VOID;
     }
 
     /* We may be executing a deferred opcode */
 
-    if (WalkState->DeferredNode)
+    if(WalkState->DeferredNode)
     {
         ACPI_DEBUG_PRINT ((ACPI_DB_DISPATCH,
             "Executing subtree for Buffer/Package/Region\n"));
@@ -274,7 +274,7 @@ AcpiDsDumpMethodStack (
      * to perform constant folding.
      */
     Thread = WalkState->Thread;
-    if (!Thread)
+    if(!Thread)
     {
         return_VOID;
     }
@@ -298,7 +298,7 @@ AcpiDsDumpMethodStack (
     while (NextWalkState)
     {
         MethodDesc = NextWalkState->MethodDesc;
-        if (MethodDesc)
+        if(MethodDesc)
         {
             AcpiExStopTraceMethod (
                 (ACPI_NAMESPACE_NODE *) MethodDesc->Method.Node,
@@ -311,9 +311,9 @@ AcpiDsDumpMethodStack (
 
         /* First method is the currently executing method */
 
-        if (NextWalkState == WalkState)
+        if(NextWalkState == WalkState)
         {
-            if (Op)
+            if(Op)
             {
                 /* Display currently executing ASL statement */
 
@@ -321,7 +321,7 @@ AcpiDsDumpMethodStack (
                 Op->Common.Next = NULL;
 
 #ifdef ACPI_DISASSEMBLER
-                if (WalkState->MethodNode != AcpiGbl_RootNode)
+                if(WalkState->MethodNode != AcpiGbl_RootNode)
                 {
                     /* More verbose if not module-level code */
 

@@ -192,14 +192,14 @@ AcpiUtExecute_HID (
 
     Status = AcpiUtEvaluateObject (DeviceNode, METHOD_NAME__HID,
         ACPI_BTYPE_INTEGER | ACPI_BTYPE_STRING, &ObjDesc);
-    if (ACPI_FAILURE (Status))
+    if(ACPI_FAILURE (Status))
     {
         return_ACPI_STATUS (Status);
     }
 
     /* Get the size of the String to be returned, includes null terminator */
 
-    if (ObjDesc->Common.Type == ACPI_TYPE_INTEGER)
+    if(ObjDesc->Common.Type == ACPI_TYPE_INTEGER)
     {
         Length = ACPI_EISAID_STRING_SIZE;
     }
@@ -212,7 +212,7 @@ AcpiUtExecute_HID (
 
     Hid = ACPI_ALLOCATE_ZEROED (
         sizeof (ACPI_PNP_DEVICE_ID) + (ACPI_SIZE) Length);
-    if (!Hid)
+    if(!Hid)
     {
         Status = AE_NO_MEMORY;
         goto Cleanup;
@@ -224,7 +224,7 @@ AcpiUtExecute_HID (
 
     /* Convert EISAID to a string or simply copy existing string */
 
-    if (ObjDesc->Common.Type == ACPI_TYPE_INTEGER)
+    if(ObjDesc->Common.Type == ACPI_TYPE_INTEGER)
     {
         AcpiExEisaIdToString (Hid->String, ObjDesc->Integer.Value);
     }
@@ -280,14 +280,14 @@ AcpiUtExecute_UID (
 
     Status = AcpiUtEvaluateObject (DeviceNode, METHOD_NAME__UID,
         ACPI_BTYPE_INTEGER | ACPI_BTYPE_STRING, &ObjDesc);
-    if (ACPI_FAILURE (Status))
+    if(ACPI_FAILURE (Status))
     {
         return_ACPI_STATUS (Status);
     }
 
     /* Get the size of the String to be returned, includes null terminator */
 
-    if (ObjDesc->Common.Type == ACPI_TYPE_INTEGER)
+    if(ObjDesc->Common.Type == ACPI_TYPE_INTEGER)
     {
         Length = ACPI_MAX64_DECIMAL_DIGITS + 1;
     }
@@ -300,7 +300,7 @@ AcpiUtExecute_UID (
 
     Uid = ACPI_ALLOCATE_ZEROED (
         sizeof (ACPI_PNP_DEVICE_ID) + (ACPI_SIZE) Length);
-    if (!Uid)
+    if(!Uid)
     {
         Status = AE_NO_MEMORY;
         goto Cleanup;
@@ -312,7 +312,7 @@ AcpiUtExecute_UID (
 
     /* Convert an Integer to string, or just copy an existing string */
 
-    if (ObjDesc->Common.Type == ACPI_TYPE_INTEGER)
+    if(ObjDesc->Common.Type == ACPI_TYPE_INTEGER)
     {
         AcpiExIntegerToString (Uid->String, ObjDesc->Integer.Value);
     }
@@ -382,7 +382,7 @@ AcpiUtExecute_CID (
     Status = AcpiUtEvaluateObject (DeviceNode, METHOD_NAME__CID,
         ACPI_BTYPE_INTEGER | ACPI_BTYPE_STRING | ACPI_BTYPE_PACKAGE,
         &ObjDesc);
-    if (ACPI_FAILURE (Status))
+    if(ACPI_FAILURE (Status))
     {
         return_ACPI_STATUS (Status);
     }
@@ -393,7 +393,7 @@ AcpiUtExecute_CID (
      * Note: This section also validates that all CID elements are of the
      * correct type (Integer or String).
      */
-    if (ObjDesc->Common.Type == ACPI_TYPE_PACKAGE)
+    if(ObjDesc->Common.Type == ACPI_TYPE_PACKAGE)
     {
         Count = ObjDesc->Package.Count;
         CidObjects = ObjDesc->Package.Elements;
@@ -439,7 +439,7 @@ AcpiUtExecute_CID (
         StringAreaSize;
 
     CidList = ACPI_ALLOCATE_ZEROED (CidListSize);
-    if (!CidList)
+    if(!CidList)
     {
         Status = AE_NO_MEMORY;
         goto Cleanup;
@@ -454,7 +454,7 @@ AcpiUtExecute_CID (
 
     for (i = 0; i < Count; i++)
     {
-        if (CidObjects[i]->Common.Type == ACPI_TYPE_INTEGER)
+        if(CidObjects[i]->Common.Type == ACPI_TYPE_INTEGER)
         {
             /* Convert the Integer (EISAID) CID to a string */
 
@@ -529,7 +529,7 @@ AcpiUtExecute_CLS (
 
     Status = AcpiUtEvaluateObject (DeviceNode, METHOD_NAME__CLS,
         ACPI_BTYPE_PACKAGE, &ObjDesc);
-    if (ACPI_FAILURE (Status))
+    if(ACPI_FAILURE (Status))
     {
         return_ACPI_STATUS (Status);
     }
@@ -540,17 +540,17 @@ AcpiUtExecute_CLS (
     ClsObjects = ObjDesc->Package.Elements;
     Count = ObjDesc->Package.Count;
 
-    if (ObjDesc->Common.Type == ACPI_TYPE_PACKAGE)
+    if(ObjDesc->Common.Type == ACPI_TYPE_PACKAGE)
     {
-        if (Count > 0 && ClsObjects[0]->Common.Type == ACPI_TYPE_INTEGER)
+        if(Count > 0 && ClsObjects[0]->Common.Type == ACPI_TYPE_INTEGER)
         {
             ClassCode[0] = (UINT8) ClsObjects[0]->Integer.Value;
         }
-        if (Count > 1 && ClsObjects[1]->Common.Type == ACPI_TYPE_INTEGER)
+        if(Count > 1 && ClsObjects[1]->Common.Type == ACPI_TYPE_INTEGER)
         {
             ClassCode[1] = (UINT8) ClsObjects[1]->Integer.Value;
         }
-        if (Count > 2 && ClsObjects[2]->Common.Type == ACPI_TYPE_INTEGER)
+        if(Count > 2 && ClsObjects[2]->Common.Type == ACPI_TYPE_INTEGER)
         {
             ClassCode[2] = (UINT8) ClsObjects[2]->Integer.Value;
         }
@@ -560,7 +560,7 @@ AcpiUtExecute_CLS (
 
     Cls = ACPI_ALLOCATE_ZEROED (
         sizeof (ACPI_PNP_DEVICE_ID) + (ACPI_SIZE) Length);
-    if (!Cls)
+    if(!Cls)
     {
         Status = AE_NO_MEMORY;
         goto Cleanup;

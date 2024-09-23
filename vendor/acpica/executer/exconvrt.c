@@ -248,7 +248,7 @@ AcpiExConvertToInteger (
          * Explicit conversion is used only by ToInteger.
          * All other string-to-integer conversions are implicit conversions.
          */
-        if (ImplicitConversion)
+        if(ImplicitConversion)
         {
             Result = AcpiUtImplicitStrtoul64 (ACPI_CAST_PTR (char, Pointer));
         }
@@ -262,14 +262,14 @@ AcpiExConvertToInteger (
 
         /* Check for zero-length buffer */
 
-        if (!Count)
+        if(!Count)
         {
             return_ACPI_STATUS (AE_AML_BUFFER_LIMIT);
         }
 
         /* Transfer no more than an integer's worth of data */
 
-        if (Count > AcpiGbl_IntegerByteWidth)
+        if(Count > AcpiGbl_IntegerByteWidth)
         {
             Count = AcpiGbl_IntegerByteWidth;
         }
@@ -299,7 +299,7 @@ AcpiExConvertToInteger (
     /* Create a new integer */
 
     ReturnDesc = AcpiUtCreateIntegerObject (Result);
-    if (!ReturnDesc)
+    if(!ReturnDesc)
     {
         return_ACPI_STATUS (AE_NO_MEMORY);
     }
@@ -357,7 +357,7 @@ AcpiExConvertToBuffer (
          * Need enough space for one integer
          */
         ReturnDesc = AcpiUtCreateBufferObject (AcpiGbl_IntegerByteWidth);
-        if (!ReturnDesc)
+        if(!ReturnDesc)
         {
             return_ACPI_STATUS (AE_NO_MEMORY);
         }
@@ -380,7 +380,7 @@ AcpiExConvertToBuffer (
          */
         ReturnDesc = AcpiUtCreateBufferObject ((ACPI_SIZE)
             ObjDesc->String.Length + 1);
-        if (!ReturnDesc)
+        if(!ReturnDesc)
         {
             return_ACPI_STATUS (AE_NO_MEMORY);
         }
@@ -482,12 +482,12 @@ AcpiExConvertToAscii (
 
             /* Handle leading zeros */
 
-            if (Remainder != 0)
+            if(Remainder != 0)
             {
                 SupressZeros = FALSE;
             }
 
-            if (!SupressZeros)
+            if(!SupressZeros)
             {
                 String[k] = (UINT8) (ACPI_ASCII_ZERO + Remainder);
                 k++;
@@ -509,7 +509,7 @@ AcpiExConvertToAscii (
 
             /* Supress leading zeros until the first non-zero character */
 
-            if (HexChar == ACPI_ASCII_ZERO && SupressZeros)
+            if(HexChar == ACPI_ASCII_ZERO && SupressZeros)
             {
                 continue;
             }
@@ -530,7 +530,7 @@ AcpiExConvertToAscii (
      *
      * Finally, null terminate the string and return the length
      */
-    if (!k)
+    if(!k)
     {
         String [0] = ACPI_ASCII_ZERO;
         k = 1;
@@ -622,13 +622,13 @@ AcpiExConvertToString (
          * Need enough space for one ASCII integer (plus null terminator)
          */
         ReturnDesc = AcpiUtCreateStringObject ((ACPI_SIZE) StringLength);
-        if (!ReturnDesc)
+        if(!ReturnDesc)
         {
             return_ACPI_STATUS (AE_NO_MEMORY);
         }
 
         NewBuf = ReturnDesc->Buffer.Pointer;
-        if (Type == ACPI_EXPLICIT_CONVERT_HEX)
+        if(Type == ACPI_EXPLICIT_CONVERT_HEX)
         {
             /* Append "0x" prefix for explicit hex conversion */
 
@@ -644,7 +644,7 @@ AcpiExConvertToString (
         /* Null terminate at the correct place */
 
         ReturnDesc->String.Length = StringLength;
-        if (Type == ACPI_EXPLICIT_CONVERT_HEX)
+        if(Type == ACPI_EXPLICIT_CONVERT_HEX)
         {
             /* Take "0x" prefix into account */
 
@@ -676,11 +676,11 @@ AcpiExConvertToString (
              */
             for (i = 0; i < ObjDesc->Buffer.Length; i++)
             {
-                if (ObjDesc->Buffer.Pointer[i] >= 100)
+                if(ObjDesc->Buffer.Pointer[i] >= 100)
                 {
                     StringLength += 4;
                 }
-                else if (ObjDesc->Buffer.Pointer[i] >= 10)
+                else if(ObjDesc->Buffer.Pointer[i] >= 10)
                 {
                     StringLength += 3;
                 }
@@ -729,13 +729,13 @@ AcpiExConvertToString (
          * (-1 because of extra separator included in StringLength from above)
          * Allow creation of zero-length strings from zero-length buffers.
          */
-        if (StringLength)
+        if(StringLength)
         {
             StringLength--;
         }
 
         ReturnDesc = AcpiUtCreateStringObject ((ACPI_SIZE) StringLength);
-        if (!ReturnDesc)
+        if(!ReturnDesc)
         {
             return_ACPI_STATUS (AE_NO_MEMORY);
         }
@@ -748,7 +748,7 @@ AcpiExConvertToString (
          */
         for (i = 0; i < ObjDesc->Buffer.Length; i++)
         {
-            if (Base == 16)
+            if(Base == 16)
             {
                 /* Emit 0x prefix for explicit/implicit hex conversion */
 
@@ -768,7 +768,7 @@ AcpiExConvertToString (
          * Null terminate the string
          * (overwrites final comma/space from above)
          */
-        if (ObjDesc->Buffer.Length)
+        if(ObjDesc->Buffer.Length)
         {
             NewBuf--;
         }
@@ -839,7 +839,7 @@ AcpiExConvertToTargetType (
 
             /* No conversion allowed for these types */
 
-            if (DestinationType != SourceDesc->Common.Type)
+            if(DestinationType != SourceDesc->Common.Type)
             {
                 ACPI_DEBUG_PRINT ((ACPI_DB_INFO,
                     "Explicit operator, will store (%s) over existing type (%s)\n",
@@ -915,7 +915,7 @@ AcpiExConvertToTargetType (
      * If conversion to the target type cannot be performed, then simply
      * overwrite the target with the new object and type.
      */
-    if (Status == AE_TYPE)
+    if(Status == AE_TYPE)
     {
         Status = AE_OK;
     }

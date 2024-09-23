@@ -194,7 +194,7 @@ AcpiExGetObjectReference (
     {
     case ACPI_DESC_TYPE_OPERAND:
 
-        if (ObjDesc->Common.Type != ACPI_TYPE_LOCAL_REFERENCE)
+        if(ObjDesc->Common.Type != ACPI_TYPE_LOCAL_REFERENCE)
         {
             return_ACPI_STATUS (AE_AML_OPERAND_TYPE);
         }
@@ -239,7 +239,7 @@ AcpiExGetObjectReference (
     /* Create a new reference object */
 
     ReferenceObj = AcpiUtCreateInternalObject (ACPI_TYPE_LOCAL_REFERENCE);
-    if (!ReferenceObj)
+    if(!ReferenceObj)
     {
         return_ACPI_STATUS (AE_NO_MEMORY);
     }
@@ -318,7 +318,7 @@ AcpiExDoMathOp (
          * We need to check if the shiftcount is larger than the integer bit
          * width since the behavior of this is not well-defined in the C language.
          */
-        if (Integer1 >= AcpiGbl_IntegerBitWidth)
+        if(Integer1 >= AcpiGbl_IntegerBitWidth)
         {
             return (0);
         }
@@ -330,7 +330,7 @@ AcpiExDoMathOp (
          * We need to check if the shiftcount is larger than the integer bit
          * width since the behavior of this is not well-defined in the C language.
          */
-        if (Integer1 >= AcpiGbl_IntegerBitWidth)
+        if(Integer1 >= AcpiGbl_IntegerBitWidth)
         {
             return (0);
         }
@@ -385,7 +385,7 @@ AcpiExDoLogicalNumericOp (
     {
     case AML_LOGICAL_AND_OP:        /* LAnd (Integer0, Integer1) */
 
-        if (Integer0 && Integer1)
+        if(Integer0 && Integer1)
         {
             LocalResult = TRUE;
         }
@@ -393,7 +393,7 @@ AcpiExDoLogicalNumericOp (
 
     case AML_LOGICAL_OR_OP:         /* LOr (Integer0, Integer1) */
 
-        if (Integer0 || Integer1)
+        if(Integer0 || Integer1)
         {
             LocalResult = TRUE;
         }
@@ -495,7 +495,7 @@ AcpiExDoLogicalOp (
         break;
     }
 
-    if (ACPI_FAILURE (Status))
+    if(ACPI_FAILURE (Status))
     {
         goto Cleanup;
     }
@@ -503,7 +503,7 @@ AcpiExDoLogicalOp (
     /*
      * Two cases: 1) Both Integers, 2) Both Strings or Buffers
      */
-    if (Operand0->Common.Type == ACPI_TYPE_INTEGER)
+    if(Operand0->Common.Type == ACPI_TYPE_INTEGER)
     {
         /*
          * 1) Both operands are of type integer
@@ -516,7 +516,7 @@ AcpiExDoLogicalOp (
         {
         case AML_LOGICAL_EQUAL_OP:          /* LEqual (Operand0, Operand1) */
 
-            if (Integer0 == Integer1)
+            if(Integer0 == Integer1)
             {
                 LocalResult = TRUE;
             }
@@ -524,7 +524,7 @@ AcpiExDoLogicalOp (
 
         case AML_LOGICAL_GREATER_OP:        /* LGreater (Operand0, Operand1) */
 
-            if (Integer0 > Integer1)
+            if(Integer0 > Integer1)
             {
                 LocalResult = TRUE;
             }
@@ -532,7 +532,7 @@ AcpiExDoLogicalOp (
 
         case AML_LOGICAL_LESS_OP:           /* LLess (Operand0, Operand1) */
 
-            if (Integer0 < Integer1)
+            if(Integer0 < Integer1)
             {
                 LocalResult = TRUE;
             }
@@ -569,7 +569,7 @@ AcpiExDoLogicalOp (
 
             /* Length and all bytes must be equal */
 
-            if ((Length0 == Length1) &&
+            if((Length0 == Length1) &&
                 (Compare == 0))
             {
                 /* Length and all bytes match ==> TRUE */
@@ -580,19 +580,19 @@ AcpiExDoLogicalOp (
 
         case AML_LOGICAL_GREATER_OP:    /* LGreater (Operand0, Operand1) */
 
-            if (Compare > 0)
+            if(Compare > 0)
             {
                 LocalResult = TRUE;
                 goto Cleanup;   /* TRUE */
             }
-            if (Compare < 0)
+            if(Compare < 0)
             {
                 goto Cleanup;   /* FALSE */
             }
 
             /* Bytes match (to shortest length), compare lengths */
 
-            if (Length0 > Length1)
+            if(Length0 > Length1)
             {
                 LocalResult = TRUE;
             }
@@ -600,11 +600,11 @@ AcpiExDoLogicalOp (
 
         case AML_LOGICAL_LESS_OP:       /* LLess (Operand0, Operand1) */
 
-            if (Compare > 0)
+            if(Compare > 0)
             {
                 goto Cleanup;   /* FALSE */
             }
-            if (Compare < 0)
+            if(Compare < 0)
             {
                 LocalResult = TRUE;
                 goto Cleanup;   /* TRUE */
@@ -612,7 +612,7 @@ AcpiExDoLogicalOp (
 
             /* Bytes match (to shortest length), compare lengths */
 
-            if (Length0 < Length1)
+            if(Length0 < Length1)
             {
                 LocalResult = TRUE;
             }
@@ -631,7 +631,7 @@ Cleanup:
 
     /* New object was created if implicit conversion performed - delete */
 
-    if (LocalOperand1 != Operand1)
+    if(LocalOperand1 != Operand1)
     {
         AcpiUtRemoveReference (LocalOperand1);
     }

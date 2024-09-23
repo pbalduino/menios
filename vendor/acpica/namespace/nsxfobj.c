@@ -185,21 +185,21 @@ AcpiGetType (
 
     /* Parameter Validation */
 
-    if (!RetType)
+    if(!RetType)
     {
         return (AE_BAD_PARAMETER);
     }
 
     /* Special case for the predefined Root Node (return type ANY) */
 
-    if (Handle == ACPI_ROOT_OBJECT)
+    if(Handle == ACPI_ROOT_OBJECT)
     {
         *RetType = ACPI_TYPE_ANY;
         return (AE_OK);
     }
 
     Status = AcpiUtAcquireMutex (ACPI_MTX_NAMESPACE);
-    if (ACPI_FAILURE (Status))
+    if(ACPI_FAILURE (Status))
     {
         return (Status);
     }
@@ -207,7 +207,7 @@ AcpiGetType (
     /* Convert and validate the handle */
 
     Node = AcpiNsValidateHandle (Handle);
-    if (!Node)
+    if(!Node)
     {
         (void) AcpiUtReleaseMutex (ACPI_MTX_NAMESPACE);
         return (AE_BAD_PARAMETER);
@@ -246,20 +246,20 @@ AcpiGetParent (
     ACPI_STATUS             Status;
 
 
-    if (!RetHandle)
+    if(!RetHandle)
     {
         return (AE_BAD_PARAMETER);
     }
 
     /* Special case for the predefined Root Node (no parent) */
 
-    if (Handle == ACPI_ROOT_OBJECT)
+    if(Handle == ACPI_ROOT_OBJECT)
     {
         return (AE_NULL_ENTRY);
     }
 
     Status = AcpiUtAcquireMutex (ACPI_MTX_NAMESPACE);
-    if (ACPI_FAILURE (Status))
+    if(ACPI_FAILURE (Status))
     {
         return (Status);
     }
@@ -267,7 +267,7 @@ AcpiGetParent (
     /* Convert and validate the handle */
 
     Node = AcpiNsValidateHandle (Handle);
-    if (!Node)
+    if(!Node)
     {
         Status = AE_BAD_PARAMETER;
         goto UnlockAndExit;
@@ -280,7 +280,7 @@ AcpiGetParent (
 
     /* Return exception if parent is null */
 
-    if (!ParentNode)
+    if(!ParentNode)
     {
         Status = AE_NULL_ENTRY;
     }
@@ -328,25 +328,25 @@ AcpiGetNextObject (
 
     /* Parameter validation */
 
-    if (Type > ACPI_TYPE_EXTERNAL_MAX)
+    if(Type > ACPI_TYPE_EXTERNAL_MAX)
     {
         return (AE_BAD_PARAMETER);
     }
 
     Status = AcpiUtAcquireMutex (ACPI_MTX_NAMESPACE);
-    if (ACPI_FAILURE (Status))
+    if(ACPI_FAILURE (Status))
     {
         return (Status);
     }
 
     /* If null handle, use the parent */
 
-    if (!Child)
+    if(!Child)
     {
         /* Start search at the beginning of the specified scope */
 
         ParentNode = AcpiNsValidateHandle (Parent);
-        if (!ParentNode)
+        if(!ParentNode)
         {
             Status = AE_BAD_PARAMETER;
             goto UnlockAndExit;
@@ -358,7 +358,7 @@ AcpiGetNextObject (
         /* Convert and validate the handle */
 
         ChildNode = AcpiNsValidateHandle (Child);
-        if (!ChildNode)
+        if(!ChildNode)
         {
             Status = AE_BAD_PARAMETER;
             goto UnlockAndExit;
@@ -368,13 +368,13 @@ AcpiGetNextObject (
     /* Internal function does the real work */
 
     Node = AcpiNsGetNextNodeTyped (Type, ParentNode, ChildNode);
-    if (!Node)
+    if(!Node)
     {
         Status = AE_NOT_FOUND;
         goto UnlockAndExit;
     }
 
-    if (RetHandle)
+    if(RetHandle)
     {
         *RetHandle = ACPI_CAST_PTR (ACPI_HANDLE, Node);
     }

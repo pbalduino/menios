@@ -196,7 +196,7 @@ AcpiUtGetMutexObject (
 
     /* Parameter validation */
 
-    if (!RetObj || (!Handle && !Pathname))
+    if(!RetObj || (!Handle && !Pathname))
     {
         return (AE_BAD_PARAMETER);
     }
@@ -204,11 +204,11 @@ AcpiUtGetMutexObject (
     /* Get a the namespace node for the mutex */
 
     MutexNode = Handle;
-    if (Pathname != NULL)
+    if(Pathname != NULL)
     {
         Status = AcpiGetHandle (
             Handle, Pathname, ACPI_CAST_PTR (ACPI_HANDLE, &MutexNode));
-        if (ACPI_FAILURE (Status))
+        if(ACPI_FAILURE (Status))
         {
             return (Status);
         }
@@ -216,7 +216,7 @@ AcpiUtGetMutexObject (
 
     /* Ensure that we actually have a Mutex object */
 
-    if (!MutexNode ||
+    if(!MutexNode ||
         (MutexNode->Type != ACPI_TYPE_MUTEX))
     {
         return (AE_TYPE);
@@ -225,7 +225,7 @@ AcpiUtGetMutexObject (
     /* Get the low-level mutex object */
 
     MutexObj = AcpiNsGetAttachedObject (MutexNode);
-    if (!MutexObj)
+    if(!MutexObj)
     {
         return (AE_NULL_OBJECT);
     }
@@ -266,7 +266,7 @@ AcpiAcquireMutex (
     /* Get the low-level mutex associated with Handle:Pathname */
 
     Status = AcpiUtGetMutexObject (Handle, Pathname, &MutexObj);
-    if (ACPI_FAILURE (Status))
+    if(ACPI_FAILURE (Status))
     {
         return (Status);
     }
@@ -309,7 +309,7 @@ AcpiReleaseMutex (
     /* Get the low-level mutex associated with Handle:Pathname */
 
     Status = AcpiUtGetMutexObject (Handle, Pathname, &MutexObj);
-    if (ACPI_FAILURE (Status))
+    if(ACPI_FAILURE (Status))
     {
         return (Status);
     }

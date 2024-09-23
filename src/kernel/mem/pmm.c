@@ -109,7 +109,7 @@ void list_memory_areas() {
 
   struct limine_memmap_response* memmap_response;
 
-  if (memmap_request.response == NULL) {
+  if(memmap_request.response == NULL) {
     printf("== error reading limine_memmap_response ==\n");
     serial_error("== error reading limine_memmap_response ==\n");
     hcf();
@@ -165,6 +165,8 @@ void init_page_bitmap() {
 }
 
 uint64_t get_first_free_page() {
+  serial_printf("get_first_free_page\n");
+
   for(size_t p = 0; p < PAGE_BITMAP_SIZE; p++) {
     uint64_t page_row = page_bitmap[p];
     if(page_row != PAGE_BITMAP_FULL) {
@@ -181,6 +183,8 @@ uint64_t get_first_free_page() {
     }
   }
 
+  serial_printf("get_first_free_page: no free page found\n");
+
   return 0L;
 }
 
@@ -194,8 +198,29 @@ void init_cr3() {
   cr3_vaddr = physical_to_virtual(read_cr3());
 }
 
-uintptr_t get_first_free_virtual_address(uintptr_t offset) {
+void pml4_map(uintptr_t vaddr, pml4_map_t* map) {
   pml4_t* root = (pml4_t*)cr3_vaddr;
+  map->pml4 = (vaddr >> 39) & 0x1ff;
+  map->pdpt = (vaddr >> 30) & 0x1ff;
+  map->pd = (vaddr >> 21) & 0x1ff;
+  map->pt = (vaddr >> 12) & 0x1ff;
+  map->offset = vaddr & 0xfff;
+}
+
+uintptr_t get_first_free_virtual_address(uintptr_t offset) {
+  serial_printf("get_first_free_virtual_address: offset: %lx\n", offset);
+  pml4_t* root = (pml4_t*)cr3_vaddr;
+
+  pml4_map_t map;
+
+  pml4_map(offset, &map);
+
+  serial_printf("get_first_free_virtual_address: pml4e %lx - pdpte %lx - pde %lx - pte %lx - offset %lx\n",
+    map.pml4,
+    map.pdpt,
+    map.pd,
+    map.pt,
+    map.offset);
 
   for(uint64_t pml4_e = (offset >> 39) & 0x1ff; pml4_e < 0x200; pml4_e++) {
     if(!root->entries[pml4_e].present) {
@@ -210,7 +235,7 @@ uintptr_t get_first_free_virtual_address(uintptr_t offset) {
     for(uint64_t pdpt_e = (offset >> 30) & 0x1ff; pdpt_e < 0x200; pdpt_e++) {
       if(!pdpt->entries[pdpt_e].present) {
         uintptr_t base = (pml4_e << 39) | (pdpt_e << 30);
-        serial_printf("  found: pdpte: %lx(%lx) | %lx(%lx) - %lx\n", pml4_e, pml4_e << 39, pdpt_e, pdpt_e << 30, base);
+        serial_printf("get_first_free_virtual_address: found: pdpte: %lx(%lx) | %lx(%lx) - %lx\n", pml4_e, pml4_e << 39, pdpt_e, pdpt_e << 30, base);
         return base | VADDR_UNUSED;
       }
 
@@ -220,7 +245,7 @@ uintptr_t get_first_free_virtual_address(uintptr_t offset) {
       for(uint64_t pd_e = (offset >> 21) & 0x1ff; pd_e < 0x200; pd_e++) {
         if(!pd->entries[pd_e].present) {
           uintptr_t base = (pml4_e << 39) | (pdpt_e << 30) | (pd_e << 21);
-          serial_printf("    found: pde: %lx(%lx) | %lx(%lx) | %lx(%lx) - %lx\n", 
+          serial_printf("get_first_free_virtual_address: found: pde: %lx(%lx) | %lx(%lx) | %lx(%lx) - %lx\n", 
             pml4_e, 
             pml4_e << 39, 
             pdpt_e, 
@@ -254,6 +279,7 @@ uintptr_t get_first_free_virtual_address(uintptr_t offset) {
       }
     }
   }
+  serial_printf("get_first_free_virtual_address: WWWWWWHHHHHHHYYYYYYY?");
   return 0L;
 }
 
@@ -276,6 +302,8 @@ void pmm_init() {
   init_page_bitmap();
   puts(".");
 
+  list_memory_areas();
+  
   init_kernel_offset();
   puts(".");
 

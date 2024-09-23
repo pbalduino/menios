@@ -210,7 +210,7 @@ AcpiUtPopGenericState (
     /* Remove the state object at the head of the list (stack) */
 
     State = *ListHead;
-    if (State)
+    if(State)
     {
         /* Update the list head */
 
@@ -245,7 +245,7 @@ AcpiUtCreateGenericState (
 
 
     State = AcpiOsAcquireObject (AcpiGbl_StateCache);
-    if (State)
+    if(State)
     {
         /* Initialize */
         State->Common.DescriptorType = ACPI_DESC_TYPE_STATE;
@@ -281,7 +281,7 @@ AcpiUtCreateThreadState (
     /* Create the generic state object */
 
     State = AcpiUtCreateGenericState ();
-    if (!State)
+    if(!State)
     {
         return (NULL);
     }
@@ -293,7 +293,7 @@ AcpiUtCreateThreadState (
 
     /* Check for invalid thread ID - zero is very bad, it will break things */
 
-    if (!State->Thread.ThreadId)
+    if(!State->Thread.ThreadId)
     {
         ACPI_ERROR ((AE_INFO, "Invalid zero ID from AcpiOsGetThreadId"));
         State->Thread.ThreadId = (ACPI_THREAD_ID) 1;
@@ -332,7 +332,7 @@ AcpiUtCreateUpdateState (
     /* Create the generic state object */
 
     State = AcpiUtCreateGenericState ();
-    if (!State)
+    if(!State)
     {
         return (NULL);
     }
@@ -374,7 +374,7 @@ AcpiUtCreatePkgState (
     /* Create the generic state object */
 
     State = AcpiUtCreateGenericState ();
-    if (!State)
+    if(!State)
     {
         return (NULL);
     }
@@ -417,7 +417,7 @@ AcpiUtCreateControlState (
     /* Create the generic state object */
 
     State = AcpiUtCreateGenericState ();
-    if (!State)
+    if(!State)
     {
         return (NULL);
     }
@@ -453,7 +453,7 @@ AcpiUtDeleteGenericState (
 
     /* Ignore null state */
 
-    if (State)
+    if(State)
     {
         (void) AcpiOsReleaseObject (AcpiGbl_StateCache, State);
     }

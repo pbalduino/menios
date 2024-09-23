@@ -192,7 +192,7 @@ AcpiPsGetArg (
     ACPI_FUNCTION_ENTRY ();
 
 /*
-    if (Op->Common.AmlOpcode == AML_INT_CONNECTION_OP)
+    if(Op->Common.AmlOpcode == AML_INT_CONNECTION_OP)
     {
         return (Op->Common.Value.Arg);
     }
@@ -200,7 +200,7 @@ AcpiPsGetArg (
     /* Get the info structure for this opcode */
 
     OpInfo = AcpiPsGetOpcodeInfo (Op->Common.AmlOpcode);
-    if (OpInfo->Class == AML_CLASS_UNKNOWN)
+    if(OpInfo->Class == AML_CLASS_UNKNOWN)
     {
         /* Invalid opcode or ASCII character */
 
@@ -209,7 +209,7 @@ AcpiPsGetArg (
 
     /* Check if this opcode requires argument sub-objects */
 
-    if (!(OpInfo->Flags & AML_HAS_ARGS))
+    if(!(OpInfo->Flags & AML_HAS_ARGS))
     {
         /* Has no linked argument objects */
 
@@ -254,7 +254,7 @@ AcpiPsAppendArg (
     ACPI_FUNCTION_TRACE (PsAppendArg);
 
 
-    if (!Op)
+    if(!Op)
     {
         return_VOID;
     }
@@ -262,7 +262,7 @@ AcpiPsAppendArg (
     /* Get the info structure for this opcode */
 
     OpInfo = AcpiPsGetOpcodeInfo (Op->Common.AmlOpcode);
-    if (OpInfo->Class == AML_CLASS_UNKNOWN)
+    if(OpInfo->Class == AML_CLASS_UNKNOWN)
     {
         /* Invalid opcode */
 
@@ -273,7 +273,7 @@ AcpiPsAppendArg (
 
     /* Check if this opcode requires argument sub-objects */
 
-    if (!(OpInfo->Flags & AML_HAS_ARGS))
+    if(!(OpInfo->Flags & AML_HAS_ARGS))
     {
         /* Has no linked argument objects */
 
@@ -282,7 +282,7 @@ AcpiPsAppendArg (
 
     /* Append the argument to the linked argument list */
 
-    if (Op->Common.Value.Arg)
+    if(Op->Common.Value.Arg)
     {
         /* Append to existing argument list */
 
@@ -341,7 +341,7 @@ AcpiPsGetDepthNext (
     ACPI_FUNCTION_ENTRY ();
 
 
-    if (!Op)
+    if(!Op)
     {
         return (NULL);
     }
@@ -349,7 +349,7 @@ AcpiPsGetDepthNext (
     /* Look for an argument or child */
 
     Next = AcpiPsGetArg (Op, 0);
-    if (Next)
+    if(Next)
     {
         ASL_CV_LABEL_FILENODE (Next);
         return (Next);
@@ -358,7 +358,7 @@ AcpiPsGetDepthNext (
     /* Look for a sibling */
 
     Next = Op->Common.Next;
-    if (Next)
+    if(Next)
     {
         ASL_CV_LABEL_FILENODE (Next);
         return (Next);
@@ -378,14 +378,14 @@ AcpiPsGetDepthNext (
             Arg = Arg->Common.Next;
         }
 
-        if (Arg == Origin)
+        if(Arg == Origin)
         {
             /* Reached parent of origin, end search */
 
             return (NULL);
         }
 
-        if (Parent->Common.Next)
+        if(Parent->Common.Next)
         {
             /* Found sibling of parent */
 

@@ -160,7 +160,7 @@
         ACPI_MODULE_NAME    ("evxfgpe")
 
 
-#if (!ACPI_REDUCED_HARDWARE) /* Entire module */
+#if(!ACPI_REDUCED_HARDWARE) /* Entire module */
 /*******************************************************************************
  *
  * FUNCTION:    AcpiUpdateAllGpes
@@ -195,19 +195,19 @@ AcpiUpdateAllGpes (
 
 
     Status = AcpiUtAcquireMutex (ACPI_MTX_EVENTS);
-    if (ACPI_FAILURE (Status))
+    if(ACPI_FAILURE (Status))
     {
         return_ACPI_STATUS (Status);
     }
 
-    if (AcpiGbl_AllGpesInitialized)
+    if(AcpiGbl_AllGpesInitialized)
     {
         goto UnlockAndExit;
     }
 
     Status = AcpiEvWalkGpeList (AcpiEvInitializeGpeBlock,
         &IsPollingNeeded);
-    if (ACPI_SUCCESS (Status))
+    if(ACPI_SUCCESS (Status))
     {
         AcpiGbl_AllGpesInitialized = TRUE;
     }
@@ -215,7 +215,7 @@ AcpiUpdateAllGpes (
 UnlockAndExit:
     (void) AcpiUtReleaseMutex (ACPI_MTX_EVENTS);
 
-    if (IsPollingNeeded && AcpiGbl_AllGpesInitialized)
+    if(IsPollingNeeded && AcpiGbl_AllGpesInitialized)
     {
         /* Poll GPEs to handle already triggered events */
 
@@ -262,13 +262,13 @@ AcpiEnableGpe (
      * won't allow a valid GPE to be enabled if there is no way to handle it.
      */
     GpeEventInfo = AcpiEvGetGpeEventInfo (GpeDevice, GpeNumber);
-    if (GpeEventInfo)
+    if(GpeEventInfo)
     {
-        if (ACPI_GPE_DISPATCH_TYPE (GpeEventInfo->Flags) !=
+        if(ACPI_GPE_DISPATCH_TYPE (GpeEventInfo->Flags) !=
             ACPI_GPE_DISPATCH_NONE)
         {
             Status = AcpiEvAddGpeReference (GpeEventInfo, TRUE);
-            if (ACPI_SUCCESS (Status) &&
+            if(ACPI_SUCCESS (Status) &&
                 ACPI_GPE_IS_POLLING_NEEDED (GpeEventInfo))
             {
                 /* Poll edge-triggered GPEs to handle existing events */
@@ -325,7 +325,7 @@ AcpiDisableGpe (
     /* Ensure that we have a valid GPE number */
 
     GpeEventInfo = AcpiEvGetGpeEventInfo (GpeDevice, GpeNumber);
-    if (GpeEventInfo)
+    if(GpeEventInfo)
     {
         Status = AcpiEvRemoveGpeReference (GpeEventInfo);
     }
@@ -385,7 +385,7 @@ AcpiSetGpe (
     /* Ensure that we have a valid GPE number */
 
     GpeEventInfo = AcpiEvGetGpeEventInfo (GpeDevice, GpeNumber);
-    if (!GpeEventInfo)
+    if(!GpeEventInfo)
     {
         Status = AE_BAD_PARAMETER;
         goto UnlockAndExit;
@@ -455,7 +455,7 @@ AcpiMaskGpe (
     /* Ensure that we have a valid GPE number */
 
     GpeEventInfo = AcpiEvGetGpeEventInfo (GpeDevice, GpeNumber);
-    if (!GpeEventInfo)
+    if(!GpeEventInfo)
     {
         Status = AE_BAD_PARAMETER;
         goto UnlockAndExit;
@@ -510,7 +510,7 @@ AcpiMarkGpeForWake (
     /* Ensure that we have a valid GPE number */
 
     GpeEventInfo = AcpiEvGetGpeEventInfo (GpeDevice, GpeNumber);
-    if (GpeEventInfo)
+    if(GpeEventInfo)
     {
         /* Mark the GPE as a possible wake event */
 
@@ -563,7 +563,7 @@ AcpiSetupGpeForWake (
 
     /* Parameter Validation */
 
-    if (!WakeDevice)
+    if(!WakeDevice)
     {
         /*
          * By forcing WakeDevice to be valid, we automatically enable the
@@ -574,7 +574,7 @@ AcpiSetupGpeForWake (
 
     /* Handle root object case */
 
-    if (WakeDevice == ACPI_ROOT_OBJECT)
+    if(WakeDevice == ACPI_ROOT_OBJECT)
     {
         DeviceNode = AcpiGbl_RootNode;
     }
@@ -585,7 +585,7 @@ AcpiSetupGpeForWake (
 
     /* Validate WakeDevice is of type Device */
 
-    if (DeviceNode->Type != ACPI_TYPE_DEVICE)
+    if(DeviceNode->Type != ACPI_TYPE_DEVICE)
     {
         return_ACPI_STATUS (AE_BAD_PARAMETER);
     }
@@ -596,7 +596,7 @@ AcpiSetupGpeForWake (
      * on some hosts.
      */
     NewNotify = ACPI_ALLOCATE_ZEROED (sizeof (ACPI_GPE_NOTIFY_INFO));
-    if (!NewNotify)
+    if(!NewNotify)
     {
         return_ACPI_STATUS (AE_NO_MEMORY);
     }
@@ -606,7 +606,7 @@ AcpiSetupGpeForWake (
     /* Ensure that we have a valid GPE number */
 
     GpeEventInfo = AcpiEvGetGpeEventInfo (GpeDevice, GpeNumber);
-    if (!GpeEventInfo)
+    if(!GpeEventInfo)
     {
         Status = AE_BAD_PARAMETER;
         goto UnlockAndExit;
@@ -618,7 +618,7 @@ AcpiSetupGpeForWake (
      * known as an "implicit notify". Note: The GPE is assumed to be
      * level-triggered (for windows compatibility).
      */
-    if (ACPI_GPE_DISPATCH_TYPE (GpeEventInfo->Flags) ==
+    if(ACPI_GPE_DISPATCH_TYPE (GpeEventInfo->Flags) ==
         ACPI_GPE_DISPATCH_NONE)
     {
         /*
@@ -628,7 +628,7 @@ AcpiSetupGpeForWake (
         GpeEventInfo->Flags =
             (ACPI_GPE_DISPATCH_NOTIFY | ACPI_GPE_LEVEL_TRIGGERED);
     }
-    else if (GpeEventInfo->Flags & ACPI_GPE_AUTO_ENABLED)
+    else if(GpeEventInfo->Flags & ACPI_GPE_AUTO_ENABLED)
     {
         /*
          * A reference to this GPE has been added during the GPE block
@@ -643,7 +643,7 @@ AcpiSetupGpeForWake (
      * If we already have an implicit notify on this GPE, add
      * this device to the notify list.
      */
-    if (ACPI_GPE_DISPATCH_TYPE (GpeEventInfo->Flags) ==
+    if(ACPI_GPE_DISPATCH_TYPE (GpeEventInfo->Flags) ==
         ACPI_GPE_DISPATCH_NOTIFY)
     {
         /* Ensure that the device is not already in the list */
@@ -651,7 +651,7 @@ AcpiSetupGpeForWake (
         Notify = GpeEventInfo->Dispatch.NotifyList;
         while (Notify)
         {
-            if (Notify->DeviceNode == DeviceNode)
+            if(Notify->DeviceNode == DeviceNode)
             {
                 Status = AE_ALREADY_EXISTS;
                 goto UnlockAndExit;
@@ -678,7 +678,7 @@ UnlockAndExit:
 
     /* Delete the notify object if it was not used above */
 
-    if (NewNotify)
+    if(NewNotify)
     {
         ACPI_FREE (NewNotify);
     }
@@ -726,20 +726,20 @@ AcpiSetGpeWakeMask (
      * fact a wake GPE
      */
     GpeEventInfo = AcpiEvGetGpeEventInfo (GpeDevice, GpeNumber);
-    if (!GpeEventInfo)
+    if(!GpeEventInfo)
     {
         Status = AE_BAD_PARAMETER;
         goto UnlockAndExit;
     }
 
-    if (!(GpeEventInfo->Flags & ACPI_GPE_CAN_WAKE))
+    if(!(GpeEventInfo->Flags & ACPI_GPE_CAN_WAKE))
     {
         Status = AE_TYPE;
         goto UnlockAndExit;
     }
 
     GpeRegisterInfo = GpeEventInfo->RegisterInfo;
-    if (!GpeRegisterInfo)
+    if(!GpeRegisterInfo)
     {
         Status = AE_NOT_EXIST;
         goto UnlockAndExit;
@@ -807,7 +807,7 @@ AcpiClearGpe (
     /* Ensure that we have a valid GPE number */
 
     GpeEventInfo = AcpiEvGetGpeEventInfo (GpeDevice, GpeNumber);
-    if (!GpeEventInfo)
+    if(!GpeEventInfo)
     {
         Status = AE_BAD_PARAMETER;
         goto UnlockAndExit;
@@ -857,7 +857,7 @@ AcpiGetGpeStatus (
     /* Ensure that we have a valid GPE number */
 
     GpeEventInfo = AcpiEvGetGpeEventInfo (GpeDevice, GpeNumber);
-    if (!GpeEventInfo)
+    if(!GpeEventInfo)
     {
         Status = AE_BAD_PARAMETER;
         goto UnlockAndExit;
@@ -937,7 +937,7 @@ AcpiFinishGpe (
     /* Ensure that we have a valid GPE number */
 
     GpeEventInfo = AcpiEvGetGpeEventInfo (GpeDevice, GpeNumber);
-    if (!GpeEventInfo)
+    if(!GpeEventInfo)
     {
         Status = AE_BAD_PARAMETER;
         goto UnlockAndExit;
@@ -976,7 +976,7 @@ AcpiDisableAllGpes (
 
 
     Status = AcpiUtAcquireMutex (ACPI_MTX_EVENTS);
-    if (ACPI_FAILURE (Status))
+    if(ACPI_FAILURE (Status))
     {
         return_ACPI_STATUS (Status);
     }
@@ -1013,7 +1013,7 @@ AcpiEnableAllRuntimeGpes (
 
 
     Status = AcpiUtAcquireMutex (ACPI_MTX_EVENTS);
-    if (ACPI_FAILURE (Status))
+    if(ACPI_FAILURE (Status))
     {
         return_ACPI_STATUS (Status);
     }
@@ -1051,7 +1051,7 @@ AcpiEnableAllWakeupGpes (
 
 
     Status = AcpiUtAcquireMutex (ACPI_MTX_EVENTS);
-    if (ACPI_FAILURE (Status))
+    if(ACPI_FAILURE (Status))
     {
         return_ACPI_STATUS (Status);
     }
@@ -1089,7 +1089,7 @@ AcpiAnyGpeStatusSet (
     ACPI_FUNCTION_TRACE (AcpiAnyGpeStatusSet);
 
     Status = AcpiUtAcquireMutex (ACPI_MTX_EVENTS);
-    if (ACPI_FAILURE (Status))
+    if(ACPI_FAILURE (Status))
     {
         return (FALSE);
     }
@@ -1135,7 +1135,7 @@ AcpiInstallGpeBlock (
     ACPI_FUNCTION_TRACE (AcpiInstallGpeBlock);
 
 
-    if ((!GpeDevice)       ||
+    if((!GpeDevice)       ||
         (!GpeBlockAddress) ||
         (!RegisterCount))
     {
@@ -1143,13 +1143,13 @@ AcpiInstallGpeBlock (
     }
 
     Status = AcpiUtAcquireMutex (ACPI_MTX_NAMESPACE);
-    if (ACPI_FAILURE (Status))
+    if(ACPI_FAILURE (Status))
     {
         return_ACPI_STATUS (Status);
     }
 
     Node = AcpiNsValidateHandle (GpeDevice);
-    if (!Node)
+    if(!Node)
     {
         Status = AE_BAD_PARAMETER;
         goto UnlockAndExit;
@@ -1157,13 +1157,13 @@ AcpiInstallGpeBlock (
 
     /* Validate the parent device */
 
-    if (Node->Type != ACPI_TYPE_DEVICE)
+    if(Node->Type != ACPI_TYPE_DEVICE)
     {
         Status = AE_TYPE;
         goto UnlockAndExit;
     }
 
-    if (Node->Object)
+    if(Node->Object)
     {
         Status = AE_ALREADY_EXISTS;
         goto UnlockAndExit;
@@ -1176,7 +1176,7 @@ AcpiInstallGpeBlock (
     Status = AcpiEvCreateGpeBlock (Node, GpeBlockAddress->Address,
         GpeBlockAddress->SpaceId, RegisterCount,
         0, InterruptNumber, &GpeBlock);
-    if (ACPI_FAILURE (Status))
+    if(ACPI_FAILURE (Status))
     {
         goto UnlockAndExit;
     }
@@ -1184,14 +1184,14 @@ AcpiInstallGpeBlock (
     /* Install block in the DeviceObject attached to the node */
 
     ObjDesc = AcpiNsGetAttachedObject (Node);
-    if (!ObjDesc)
+    if(!ObjDesc)
     {
         /*
          * No object, create a new one (Device nodes do not always have
          * an attached object)
          */
         ObjDesc = AcpiUtCreateInternalObject (ACPI_TYPE_DEVICE);
-        if (!ObjDesc)
+        if(!ObjDesc)
         {
             Status = AE_NO_MEMORY;
             goto UnlockAndExit;
@@ -1202,7 +1202,7 @@ AcpiInstallGpeBlock (
         /* Remove local reference to the object */
 
         AcpiUtRemoveReference (ObjDesc);
-        if (ACPI_FAILURE (Status))
+        if(ACPI_FAILURE (Status))
         {
             goto UnlockAndExit;
         }
@@ -1245,19 +1245,19 @@ AcpiRemoveGpeBlock (
     ACPI_FUNCTION_TRACE (AcpiRemoveGpeBlock);
 
 
-    if (!GpeDevice)
+    if(!GpeDevice)
     {
         return_ACPI_STATUS (AE_BAD_PARAMETER);
     }
 
     Status = AcpiUtAcquireMutex (ACPI_MTX_NAMESPACE);
-    if (ACPI_FAILURE (Status))
+    if(ACPI_FAILURE (Status))
     {
         return_ACPI_STATUS (Status);
     }
 
     Node = AcpiNsValidateHandle (GpeDevice);
-    if (!Node)
+    if(!Node)
     {
         Status = AE_BAD_PARAMETER;
         goto UnlockAndExit;
@@ -1265,7 +1265,7 @@ AcpiRemoveGpeBlock (
 
     /* Validate the parent device */
 
-    if (Node->Type != ACPI_TYPE_DEVICE)
+    if(Node->Type != ACPI_TYPE_DEVICE)
     {
         Status = AE_TYPE;
         goto UnlockAndExit;
@@ -1274,7 +1274,7 @@ AcpiRemoveGpeBlock (
     /* Get the DeviceObject attached to the node */
 
     ObjDesc = AcpiNsGetAttachedObject (Node);
-    if (!ObjDesc ||
+    if(!ObjDesc ||
         !ObjDesc->Device.GpeBlock)
     {
         return_ACPI_STATUS (AE_NULL_OBJECT);
@@ -1283,7 +1283,7 @@ AcpiRemoveGpeBlock (
     /* Delete the GPE block (but not the DeviceObject) */
 
     Status = AcpiEvDeleteGpeBlock (ObjDesc->Device.GpeBlock);
-    if (ACPI_SUCCESS (Status))
+    if(ACPI_SUCCESS (Status))
     {
         ObjDesc->Device.GpeBlock = NULL;
     }
@@ -1323,12 +1323,12 @@ AcpiGetGpeDevice (
     ACPI_FUNCTION_TRACE (AcpiGetGpeDevice);
 
 
-    if (!GpeDevice)
+    if(!GpeDevice)
     {
         return_ACPI_STATUS (AE_BAD_PARAMETER);
     }
 
-    if (Index >= AcpiCurrentGpeCount)
+    if(Index >= AcpiCurrentGpeCount)
     {
         return_ACPI_STATUS (AE_NOT_EXIST);
     }
@@ -1341,7 +1341,7 @@ AcpiGetGpeDevice (
     Info.NextBlockBaseIndex = 0;
 
     Status = AcpiEvWalkGpeList (AcpiEvGetGpeDevice, &Info);
-    if (ACPI_FAILURE (Status))
+    if(ACPI_FAILURE (Status))
     {
         return_ACPI_STATUS (Status);
     }

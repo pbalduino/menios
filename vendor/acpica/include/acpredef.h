@@ -1223,7 +1223,7 @@ extern const ACPI_PREDEFINED_INFO       AcpiGbl_PredefinedMethods[];
 #endif
 
 
-#if (defined ACPI_CREATE_RESOURCE_TABLE && defined ACPI_APPLICATION)
+#if(defined ACPI_CREATE_RESOURCE_TABLE && defined ACPI_APPLICATION)
 /******************************************************************************
  *
  * Predefined names for use in Resource Descriptors. These names do not

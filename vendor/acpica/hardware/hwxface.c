@@ -188,13 +188,13 @@ AcpiReset (
 
     /* Check if the reset register is supported */
 
-    if (!(AcpiGbl_FADT.Flags & ACPI_FADT_RESET_REGISTER) ||
+    if(!(AcpiGbl_FADT.Flags & ACPI_FADT_RESET_REGISTER) ||
         !ResetReg->Address)
     {
         return_ACPI_STATUS (AE_NOT_EXIST);
     }
 
-    if (ResetReg->SpaceId == ACPI_ADR_SPACE_SYSTEM_IO)
+    if(ResetReg->SpaceId == ACPI_ADR_SPACE_SYSTEM_IO)
     {
         /*
          * For I/O space, write directly to the OSL. This bypasses the port
@@ -291,7 +291,7 @@ AcpiWrite (
 ACPI_EXPORT_SYMBOL (AcpiWrite)
 
 
-#if (!ACPI_REDUCED_HARDWARE)
+#if(!ACPI_REDUCED_HARDWARE)
 /*******************************************************************************
  *
  * FUNCTION:    AcpiReadBitRegister
@@ -334,7 +334,7 @@ AcpiReadBitRegister (
     /* Get the info structure corresponding to the requested ACPI Register */
 
     BitRegInfo = AcpiHwGetBitRegisterInfo (RegisterId);
-    if (!BitRegInfo)
+    if(!BitRegInfo)
     {
         return_ACPI_STATUS (AE_BAD_PARAMETER);
     }
@@ -343,7 +343,7 @@ AcpiReadBitRegister (
 
     Status = AcpiHwRegisterRead (BitRegInfo->ParentRegister,
         &RegisterValue);
-    if (ACPI_FAILURE (Status))
+    if(ACPI_FAILURE (Status))
     {
         return_ACPI_STATUS (Status);
     }
@@ -403,7 +403,7 @@ AcpiWriteBitRegister (
     /* Get the info structure corresponding to the requested ACPI Register */
 
     BitRegInfo = AcpiHwGetBitRegisterInfo (RegisterId);
-    if (!BitRegInfo)
+    if(!BitRegInfo)
     {
         return_ACPI_STATUS (AE_BAD_PARAMETER);
     }
@@ -414,7 +414,7 @@ AcpiWriteBitRegister (
      * At this point, we know that the parent register is one of the
      * following: PM1 Status, PM1 Enable, PM1 Control, or PM2 Control
      */
-    if (BitRegInfo->ParentRegister != ACPI_REGISTER_PM1_STATUS)
+    if(BitRegInfo->ParentRegister != ACPI_REGISTER_PM1_STATUS)
     {
         /*
          * 1) Case for PM1 Enable, PM1 Control, and PM2 Control
@@ -424,7 +424,7 @@ AcpiWriteBitRegister (
          */
         Status = AcpiHwRegisterRead (BitRegInfo->ParentRegister,
             &RegisterValue);
-        if (ACPI_FAILURE (Status))
+        if(ACPI_FAILURE (Status))
         {
             goto UnlockAndExit;
         }
@@ -454,7 +454,7 @@ AcpiWriteBitRegister (
 
         /* No need to write the register if value is all zeros */
 
-        if (RegisterValue)
+        if(RegisterValue)
         {
             Status = AcpiHwRegisterWrite (ACPI_REGISTER_PM1_STATUS,
                 RegisterValue);
@@ -531,7 +531,7 @@ AcpiGetSleepTypeData (
 
     /* Validate parameters */
 
-    if ((SleepState > ACPI_S_STATES_MAX) ||
+    if((SleepState > ACPI_S_STATES_MAX) ||
         !SleepTypeA || !SleepTypeB)
     {
         return_ACPI_STATUS (AE_BAD_PARAMETER);
@@ -540,7 +540,7 @@ AcpiGetSleepTypeData (
     /* Allocate the evaluation information block */
 
     Info = ACPI_ALLOCATE_ZEROED (sizeof (ACPI_EVALUATE_INFO));
-    if (!Info)
+    if(!Info)
     {
         return_ACPI_STATUS (AE_NO_MEMORY);
     }
@@ -552,9 +552,9 @@ AcpiGetSleepTypeData (
     Info->RelativePathname = AcpiGbl_SleepStateNames[SleepState];
 
     Status = AcpiNsEvaluate (Info);
-    if (ACPI_FAILURE (Status))
+    if(ACPI_FAILURE (Status))
     {
-        if (Status == AE_NOT_FOUND)
+        if(Status == AE_NOT_FOUND)
         {
             /* The _Sx states are optional, ignore NOT_FOUND */
 
@@ -566,7 +566,7 @@ AcpiGetSleepTypeData (
 
     /* Must have a return object */
 
-    if (!Info->ReturnObject)
+    if(!Info->ReturnObject)
     {
         ACPI_ERROR ((AE_INFO, "No Sleep State object returned from [%s]",
             Info->RelativePathname));
@@ -576,7 +576,7 @@ AcpiGetSleepTypeData (
 
     /* Return object must be of type Package */
 
-    if (Info->ReturnObject->Common.Type != ACPI_TYPE_PACKAGE)
+    if(Info->ReturnObject->Common.Type != ACPI_TYPE_PACKAGE)
     {
         ACPI_ERROR ((AE_INFO, "Sleep State return object is not a Package"));
         Status = AE_AML_OPERAND_TYPE;
@@ -598,7 +598,7 @@ AcpiGetSleepTypeData (
 
     case 1:
 
-        if (Elements[0]->Common.Type != ACPI_TYPE_INTEGER)
+        if(Elements[0]->Common.Type != ACPI_TYPE_INTEGER)
         {
             Status = AE_AML_OPERAND_TYPE;
             break;
@@ -613,7 +613,7 @@ AcpiGetSleepTypeData (
     case 2:
     default:
 
-        if ((Elements[0]->Common.Type != ACPI_TYPE_INTEGER) ||
+        if((Elements[0]->Common.Type != ACPI_TYPE_INTEGER) ||
             (Elements[1]->Common.Type != ACPI_TYPE_INTEGER))
         {
             Status = AE_AML_OPERAND_TYPE;
@@ -631,7 +631,7 @@ ReturnValueCleanup:
     AcpiUtRemoveReference (Info->ReturnObject);
 
 WarningCleanup:
-    if (ACPI_FAILURE (Status))
+    if(ACPI_FAILURE (Status))
     {
         ACPI_EXCEPTION ((AE_INFO, Status,
             "While evaluating Sleep State [%s]",

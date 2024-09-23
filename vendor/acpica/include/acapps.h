@@ -208,7 +208,7 @@
 /* Check for unexpected exceptions */
 
 #define ACPI_CHECK_STATUS(Name, Status, Expected) \
-    if (Status != Expected) \
+    if(Status != Expected) \
     { \
         AcpiOsPrintf ("Unexpected %s from %s (%s-%d)\n", \
             AcpiFormatException (Status), #Name, _AcpiModuleName, __LINE__); \

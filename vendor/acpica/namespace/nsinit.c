@@ -227,7 +227,7 @@ AcpiNsInitializeObjects (
      */
     Status = AcpiWalkNamespace (ACPI_TYPE_ANY, ACPI_ROOT_OBJECT,
         ACPI_UINT32_MAX, AcpiNsInitOneObject, NULL, &Info, NULL);
-    if (ACPI_FAILURE (Status))
+    if(ACPI_FAILURE (Status))
     {
         ACPI_EXCEPTION ((AE_INFO, Status, "During WalkNamespace"));
     }
@@ -273,7 +273,7 @@ AcpiNsInitializeDevices (
     ACPI_FUNCTION_TRACE (NsInitializeDevices);
 
 
-    if (!(Flags & ACPI_NO_DEVICE_INIT))
+    if(!(Flags & ACPI_NO_DEVICE_INIT))
     {
         ACPI_DEBUG_PRINT ((ACPI_DB_EXEC,
             "[Init] Initializing ACPI Devices\n"));
@@ -292,7 +292,7 @@ AcpiNsInitializeDevices (
 
         Status = AcpiNsWalkNamespace (ACPI_TYPE_ANY, ACPI_ROOT_OBJECT,
             ACPI_UINT32_MAX, FALSE, AcpiNsFindIniMethods, NULL, &Info, NULL);
-        if (ACPI_FAILURE (Status))
+        if(ACPI_FAILURE (Status))
         {
             goto ErrorExit;
         }
@@ -300,7 +300,7 @@ AcpiNsInitializeDevices (
         /* Allocate the evaluation information block */
 
         Info.EvaluateInfo = ACPI_ALLOCATE_ZEROED (sizeof (ACPI_EVALUATE_INFO));
-        if (!Info.EvaluateInfo)
+        if(!Info.EvaluateInfo)
         {
             Status = AE_NO_MEMORY;
             goto ErrorExit;
@@ -317,7 +317,7 @@ AcpiNsInitializeDevices (
         Info.EvaluateInfo->Flags = ACPI_IGNORE_RETURN_VALUE;
 
         Status = AcpiNsEvaluate (Info.EvaluateInfo);
-        if (ACPI_SUCCESS (Status))
+        if(ACPI_SUCCESS (Status))
         {
             Info.Num_INI++;
         }
@@ -328,7 +328,7 @@ AcpiNsInitializeDevices (
          * which should be evaluated before any _REG evaluations.
          */
         Status = AcpiGetHandle (NULL, "\\_SB", &Handle);
-        if (ACPI_SUCCESS (Status))
+        if(ACPI_SUCCESS (Status))
         {
             memset (Info.EvaluateInfo, 0, sizeof (ACPI_EVALUATE_INFO));
             Info.EvaluateInfo->PrefixNode = Handle;
@@ -337,7 +337,7 @@ AcpiNsInitializeDevices (
             Info.EvaluateInfo->Flags = ACPI_IGNORE_RETURN_VALUE;
 
             Status = AcpiNsEvaluate (Info.EvaluateInfo);
-            if (ACPI_SUCCESS (Status))
+            if(ACPI_SUCCESS (Status))
             {
                 Info.Num_INI++;
             }
@@ -357,19 +357,19 @@ AcpiNsInitializeDevices (
      * root bus that doesn't contain _BBN object. So this code is kept here
      * in order not to break things.
      */
-    if (!(Flags & ACPI_NO_ADDRESS_SPACE_INIT))
+    if(!(Flags & ACPI_NO_ADDRESS_SPACE_INIT))
     {
         ACPI_DEBUG_PRINT ((ACPI_DB_EXEC,
             "[Init] Executing _REG OpRegion methods\n"));
 
         Status = AcpiEvInitializeOpRegions ();
-        if (ACPI_FAILURE (Status))
+        if(ACPI_FAILURE (Status))
         {
             goto ErrorExit;
         }
     }
 
-    if (!(Flags & ACPI_NO_DEVICE_INIT))
+    if(!(Flags & ACPI_NO_DEVICE_INIT))
     {
         /* Walk namespace to execute all _INIs on present devices */
 
@@ -381,13 +381,13 @@ AcpiNsInitializeDevices (
          * requested any Windows OSI strings, we will always truncate
          * I/O addresses to 16 bits -- for Windows compatibility.
          */
-        if (AcpiGbl_OsiData >= ACPI_OSI_WIN_2000)
+        if(AcpiGbl_OsiData >= ACPI_OSI_WIN_2000)
         {
             AcpiGbl_TruncateIoAddresses = TRUE;
         }
 
         ACPI_FREE (Info.EvaluateInfo);
-        if (ACPI_FAILURE (Status))
+        if(ACPI_FAILURE (Status))
         {
             goto ErrorExit;
         }
@@ -436,27 +436,27 @@ AcpiNsInitOnePackage (
 
 
     ObjDesc = AcpiNsGetAttachedObject (Node);
-    if (!ObjDesc)
+    if(!ObjDesc)
     {
         return (AE_OK);
     }
 
     /* Exit if package is already initialized */
 
-    if (ObjDesc->Package.Flags & AOPOBJ_DATA_VALID)
+    if(ObjDesc->Package.Flags & AOPOBJ_DATA_VALID)
     {
         return (AE_OK);
     }
 
     Status = AcpiDsGetPackageArguments (ObjDesc);
-    if (ACPI_FAILURE (Status))
+    if(ACPI_FAILURE (Status))
     {
         return (AE_OK);
     }
 
     Status = AcpiUtWalkPackageTree (ObjDesc, NULL, AcpiDsInitPackageElement,
         NULL);
-    if (ACPI_FAILURE (Status))
+    if(ACPI_FAILURE (Status))
     {
         return (AE_OK);
     }
@@ -509,7 +509,7 @@ AcpiNsInitOneObject (
 
     Type = AcpiNsGetType (ObjHandle);
     ObjDesc = AcpiNsGetAttachedObject (Node);
-    if (!ObjDesc)
+    if(!ObjDesc)
     {
         return (AE_OK);
     }
@@ -552,7 +552,7 @@ AcpiNsInitOneObject (
 
     /* If the object is already initialized, nothing else to do */
 
-    if (ObjDesc->Common.Flags & AOPOBJ_DATA_VALID)
+    if(ObjDesc->Common.Flags & AOPOBJ_DATA_VALID)
     {
         return (AE_OK);
     }
@@ -594,7 +594,7 @@ AcpiNsInitOneObject (
         break;
     }
 
-    if (ACPI_FAILURE (Status))
+    if(ACPI_FAILURE (Status))
     {
         ACPI_EXCEPTION ((AE_INFO, Status,
             "Could not execute arguments for [%4.4s] (%s)",
@@ -641,7 +641,7 @@ AcpiNsFindIniMethods (
     /* Keep count of device/processor/thermal objects */
 
     Node = ACPI_CAST_PTR (ACPI_NAMESPACE_NODE, ObjHandle);
-    if ((Node->Type == ACPI_TYPE_DEVICE)    ||
+    if((Node->Type == ACPI_TYPE_DEVICE)    ||
         (Node->Type == ACPI_TYPE_PROCESSOR) ||
         (Node->Type == ACPI_TYPE_THERMAL))
     {
@@ -651,7 +651,7 @@ AcpiNsFindIniMethods (
 
     /* We are only looking for methods named _INI */
 
-    if (!ACPI_COMPARE_NAMESEG (Node->Name.Ascii, METHOD_NAME__INI))
+    if(!ACPI_COMPARE_NAMESEG (Node->Name.Ascii, METHOD_NAME__INI))
     {
         return (AE_OK);
     }
@@ -719,7 +719,7 @@ AcpiNsInitOneDevice (
     /* We are interested in Devices, Processors and ThermalZones only */
 
     DeviceNode = ACPI_CAST_PTR (ACPI_NAMESPACE_NODE, ObjHandle);
-    if ((DeviceNode->Type != ACPI_TYPE_DEVICE)    &&
+    if((DeviceNode->Type != ACPI_TYPE_DEVICE)    &&
         (DeviceNode->Type != ACPI_TYPE_PROCESSOR) &&
         (DeviceNode->Type != ACPI_TYPE_THERMAL))
     {
@@ -733,7 +733,7 @@ AcpiNsInitOneDevice (
      * If this device subtree does not contain any _INI methods, we
      * can exit now and stop traversing this entire subtree.
      */
-    if (!(DeviceNode->Flags & ANOBJ_SUBTREE_HAS_INI))
+    if(!(DeviceNode->Flags & ANOBJ_SUBTREE_HAS_INI))
     {
         return_ACPI_STATUS (AE_CTRL_DEPTH);
     }
@@ -753,7 +753,7 @@ AcpiNsInitOneDevice (
         ACPI_TYPE_METHOD, DeviceNode, METHOD_NAME__STA));
 
     Status = AcpiUtExecute_STA (DeviceNode, &Flags);
-    if (ACPI_FAILURE (Status))
+    if(ACPI_FAILURE (Status))
     {
         /* Ignore error and move on to next device */
 
@@ -770,7 +770,7 @@ AcpiNsInitOneDevice (
      * _STA object, then OSPM assumes that all of the above bits are set (in
      * other words, the device is present, ..., and functioning)"
      */
-    if (Flags != ACPI_UINT32_MAX)
+    if(Flags != ACPI_UINT32_MAX)
     {
         WalkInfo->Num_STA++;
     }
@@ -781,11 +781,11 @@ AcpiNsInitOneDevice (
      * Note: ACPI spec does not seem to specify behavior for the present but
      * not functioning case, so we assume functioning if present.
      */
-    if (!(Flags & ACPI_STA_DEVICE_PRESENT))
+    if(!(Flags & ACPI_STA_DEVICE_PRESENT))
     {
         /* Device is not present, we must examine the Functioning bit */
 
-        if (Flags & ACPI_STA_DEVICE_FUNCTIONING)
+        if(Flags & ACPI_STA_DEVICE_FUNCTIONING)
         {
             /*
              * Device is not present but is "functioning". In this case,
@@ -828,7 +828,7 @@ AcpiNsInitOneDevice (
      * Note: We know there is an _INI within this subtree, but it may not be
      * under this particular device, it may be lower in the branch.
      */
-    if (!ACPI_COMPARE_NAMESEG (DeviceNode->Name.Ascii, "_SB_") ||
+    if(!ACPI_COMPARE_NAMESEG (DeviceNode->Name.Ascii, "_SB_") ||
         DeviceNode->Parent != AcpiGbl_RootNode)
     {
         ACPI_DEBUG_EXEC (AcpiUtDisplayInitPathname (
@@ -841,13 +841,13 @@ AcpiNsInitOneDevice (
         Info->Flags = ACPI_IGNORE_RETURN_VALUE;
 
         Status = AcpiNsEvaluate (Info);
-        if (ACPI_SUCCESS (Status))
+        if(ACPI_SUCCESS (Status))
         {
             WalkInfo->Num_INI++;
         }
 
 #ifdef ACPI_DEBUG_OUTPUT
-        else if (Status != AE_NOT_FOUND)
+        else if(Status != AE_NOT_FOUND)
         {
             /* Ignore error and move on to next device */
 
@@ -868,7 +868,7 @@ AcpiNsInitOneDevice (
      * The _INI method has been run if present; call the Global Initialization
      * Handler for this device.
      */
-    if (AcpiGbl_InitHandler)
+    if(AcpiGbl_InitHandler)
     {
         Status = AcpiGbl_InitHandler (DeviceNode, ACPI_INIT_DEVICE_INI);
     }

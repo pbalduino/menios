@@ -221,7 +221,7 @@ AcpiExOpcode_3A_0T_0R (
             (UINT32) Operand[2]->Integer.Value));
 
         Fatal = ACPI_ALLOCATE (sizeof (ACPI_SIGNAL_FATAL_INFO));
-        if (Fatal)
+        if(Fatal)
         {
             Fatal->Type = (UINT32) Operand[0]->Integer.Value;
             Fatal->Code = (UINT32) Operand[1]->Integer.Value;
@@ -242,7 +242,7 @@ AcpiExOpcode_3A_0T_0R (
          * If the interpreter sees this opcode, just ignore it. The External
          * op is intended for use by disassemblers in order to properly
          * disassemble control method invocations. The opcode or group of
-         * opcodes should be surrounded by an "if (0)" clause to ensure that
+         * opcodes should be surrounded by an "if(0)" clause to ensure that
          * AML interpreters never see the opcode. Thus, something is
          * wrong if an external opcode ever gets here.
          */
@@ -303,7 +303,7 @@ AcpiExOpcode_3A_1T_1R (
          */
         ReturnDesc = AcpiUtCreateInternalObject (
             (Operand[0])->Common.Type);
-        if (!ReturnDesc)
+        if(!ReturnDesc)
         {
             Status = AE_NO_MEMORY;
             goto Cleanup;
@@ -318,14 +318,14 @@ AcpiExOpcode_3A_1T_1R (
          * If the index is beyond the length of the String/Buffer, or if the
          * requested length is zero, return a zero-length String/Buffer
          */
-        if (Index >= Operand[0]->String.Length)
+        if(Index >= Operand[0]->String.Length)
         {
             Length = 0;
         }
 
         /* Truncate request if larger than the actual String/Buffer */
 
-        else if ((Index + Length) > Operand[0]->String.Length)
+        else if((Index + Length) > Operand[0]->String.Length)
         {
             Length =
                 (ACPI_SIZE) Operand[0]->String.Length - (ACPI_SIZE) Index;
@@ -340,7 +340,7 @@ AcpiExOpcode_3A_1T_1R (
             /* Always allocate a new buffer for the String */
 
             Buffer = ACPI_ALLOCATE_ZEROED ((ACPI_SIZE) Length + 1);
-            if (!Buffer)
+            if(!Buffer)
             {
                 Status = AE_NO_MEMORY;
                 goto Cleanup;
@@ -351,12 +351,12 @@ AcpiExOpcode_3A_1T_1R (
 
             /* If the requested length is zero, don't allocate a buffer */
 
-            if (Length > 0)
+            if(Length > 0)
             {
                 /* Allocate a new buffer for the Buffer */
 
                 Buffer = ACPI_ALLOCATE_ZEROED (Length);
-                if (!Buffer)
+                if(!Buffer)
                 {
                     Status = AE_NO_MEMORY;
                     goto Cleanup;
@@ -370,7 +370,7 @@ AcpiExOpcode_3A_1T_1R (
             goto Cleanup;
         }
 
-        if (Buffer)
+        if(Buffer)
         {
             /* We have a buffer, copy the portion requested */
 
@@ -405,7 +405,7 @@ Cleanup:
 
     /* Delete return object on error */
 
-    if (ACPI_FAILURE (Status) || WalkState->ResultObj)
+    if(ACPI_FAILURE (Status) || WalkState->ResultObj)
     {
         AcpiUtRemoveReference (ReturnDesc);
         WalkState->ResultObj = NULL;

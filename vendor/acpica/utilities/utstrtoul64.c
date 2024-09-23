@@ -242,12 +242,12 @@ AcpiUtStrtoul64 (
 
     /* A NULL return string returns a value of zero */
 
-    if (*String == 0)
+    if(*String == 0)
     {
         return_ACPI_STATUS (AE_OK);
     }
 
-    if (!AcpiUtRemoveWhitespace (&String))
+    if(!AcpiUtRemoveWhitespace (&String))
     {
         return_ACPI_STATUS (AE_OK);
     }
@@ -255,7 +255,7 @@ AcpiUtStrtoul64 (
     /*
      * 1) Check for a hex constant. A "0x" prefix indicates base 16.
      */
-    if (AcpiUtDetectHexPrefix (&String))
+    if(AcpiUtDetectHexPrefix (&String))
     {
         Base = 16;
     }
@@ -264,12 +264,12 @@ AcpiUtStrtoul64 (
      * 2) Check for an octal constant, defined to be a leading zero
      * followed by sequence of octal digits (0-7)
      */
-    else if (AcpiUtDetectOctalPrefix (&String))
+    else if(AcpiUtDetectOctalPrefix (&String))
     {
         Base = 8;
     }
 
-    if (!AcpiUtRemoveLeadingZeros (&String))
+    if(!AcpiUtRemoveLeadingZeros (&String))
     {
         return_ACPI_STATUS (AE_OK);     /* Return value 0 */
     }
@@ -373,7 +373,7 @@ AcpiUtImplicitStrtoul64 (
     ACPI_FUNCTION_TRACE_STR (UtImplicitStrtoul64, String);
 
 
-    if (!AcpiUtRemoveWhitespace (&String))
+    if(!AcpiUtRemoveWhitespace (&String))
     {
         return_VALUE (0);
     }
@@ -385,7 +385,7 @@ AcpiUtImplicitStrtoul64 (
      */
     AcpiUtRemoveHexPrefix (&String);
 
-    if (!AcpiUtRemoveLeadingZeros (&String))
+    if(!AcpiUtRemoveLeadingZeros (&String))
     {
         return_VALUE (0);
     }
@@ -462,7 +462,7 @@ AcpiUtExplicitStrtoul64 (
     ACPI_FUNCTION_TRACE_STR (UtExplicitStrtoul64, String);
 
 
-    if (!AcpiUtRemoveWhitespace (&String))
+    if(!AcpiUtRemoveWhitespace (&String))
     {
         return_VALUE (0);
     }
@@ -471,12 +471,12 @@ AcpiUtExplicitStrtoul64 (
      * Only Hex and Decimal are supported, as per the ACPI specification.
      * A "0x" prefix indicates hex; otherwise decimal is assumed.
      */
-    if (AcpiUtDetectHexPrefix (&String))
+    if(AcpiUtDetectHexPrefix (&String))
     {
         Base = 16;
     }
 
-    if (!AcpiUtRemoveLeadingZeros (&String))
+    if(!AcpiUtRemoveLeadingZeros (&String))
     {
         return_VALUE (0);
     }

@@ -185,7 +185,7 @@ AcpiExStoreBufferToBuffer (
 
     /* If Source and Target are the same, just return */
 
-    if (SourceDesc == TargetDesc)
+    if(SourceDesc == TargetDesc)
     {
         return_ACPI_STATUS (AE_OK);
     }
@@ -199,11 +199,11 @@ AcpiExStoreBufferToBuffer (
      * If target is a buffer of length zero or is a static buffer,
      * allocate a new buffer of the proper length
      */
-    if ((TargetDesc->Buffer.Length == 0) ||
+    if((TargetDesc->Buffer.Length == 0) ||
         (TargetDesc->Common.Flags & AOPOBJ_STATIC_POINTER))
     {
         TargetDesc->Buffer.Pointer = ACPI_ALLOCATE (Length);
-        if (!TargetDesc->Buffer.Pointer)
+        if(!TargetDesc->Buffer.Pointer)
         {
             return_ACPI_STATUS (AE_NO_MEMORY);
         }
@@ -213,7 +213,7 @@ AcpiExStoreBufferToBuffer (
 
     /* Copy source buffer to target buffer */
 
-    if (Length <= TargetDesc->Buffer.Length)
+    if(Length <= TargetDesc->Buffer.Length)
     {
         /* Clear existing buffer and copy in the new one */
 
@@ -235,7 +235,7 @@ AcpiExStoreBufferToBuffer (
          * according to the ACPI spec. Integer-to-Buffer and Buffer-to-Buffer
          * copy must not truncate the original buffer.
          */
-        if (OriginalSrcType == ACPI_TYPE_STRING)
+        if(OriginalSrcType == ACPI_TYPE_STRING)
         {
             /* Set the new length of the target */
 
@@ -290,7 +290,7 @@ AcpiExStoreStringToString (
 
     /* If Source and Target are the same, just return */
 
-    if (SourceDesc == TargetDesc)
+    if(SourceDesc == TargetDesc)
     {
         return_ACPI_STATUS (AE_OK);
     }
@@ -304,7 +304,7 @@ AcpiExStoreStringToString (
      * Replace existing string value if it will fit and the string
      * pointer is not a static pointer (part of an ACPI table)
      */
-    if ((Length < TargetDesc->String.Length) &&
+    if((Length < TargetDesc->String.Length) &&
        (!(TargetDesc->Common.Flags & AOPOBJ_STATIC_POINTER)))
     {
         /*
@@ -321,7 +321,7 @@ AcpiExStoreStringToString (
          * Free the current buffer, then allocate a new buffer
          * large enough to hold the value
          */
-        if (TargetDesc->String.Pointer &&
+        if(TargetDesc->String.Pointer &&
            (!(TargetDesc->Common.Flags & AOPOBJ_STATIC_POINTER)))
         {
             /* Only free if not a pointer into the DSDT */
@@ -332,7 +332,7 @@ AcpiExStoreStringToString (
         TargetDesc->String.Pointer =
             ACPI_ALLOCATE_ZEROED ((ACPI_SIZE) Length + 1);
 
-        if (!TargetDesc->String.Pointer)
+        if(!TargetDesc->String.Pointer)
         {
             return_ACPI_STATUS (AE_NO_MEMORY);
         }

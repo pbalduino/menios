@@ -587,7 +587,7 @@
 
 #endif /* ACPI_NO_ERROR_MESSAGES */
 
-#if (!ACPI_REDUCED_HARDWARE)
+#if(!ACPI_REDUCED_HARDWARE)
 #define ACPI_HW_OPTIONAL_FUNCTION(addr)     addr
 #else
 #define ACPI_HW_OPTIONAL_FUNCTION(addr)     NULL

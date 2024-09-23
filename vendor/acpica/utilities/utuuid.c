@@ -156,7 +156,7 @@
         ACPI_MODULE_NAME    ("utuuid")
 
 
-#if (defined ACPI_ASL_COMPILER || defined ACPI_EXEC_APP || defined ACPI_HELP_APP)
+#if(defined ACPI_ASL_COMPILER || defined ACPI_EXEC_APP || defined ACPI_HELP_APP)
 /*
  * UUID support functions.
  *
@@ -232,7 +232,7 @@ AcpiUtConvertUuidToString (
     UINT32                  i;
 
 
-    if (!UuidBuffer || !OutString)
+    if(!UuidBuffer || !OutString)
     {
         return (AE_BAD_PARAMETER);
     }

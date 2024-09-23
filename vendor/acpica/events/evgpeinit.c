@@ -157,7 +157,7 @@
 #define _COMPONENT          ACPI_EVENTS
         ACPI_MODULE_NAME    ("evgpeinit")
 
-#if (!ACPI_REDUCED_HARDWARE) /* Entire module */
+#if(!ACPI_REDUCED_HARDWARE) /* Entire module */
 
 /*
  * Note: History of _PRW support in ACPICA
@@ -205,7 +205,7 @@ AcpiEvGpeInitialize (
         "Initializing General Purpose Events (GPEs):\n"));
 
     Status = AcpiUtAcquireMutex (ACPI_MTX_NAMESPACE);
-    if (ACPI_FAILURE (Status))
+    if(ACPI_FAILURE (Status))
     {
         return_ACPI_STATUS (Status);
     }
@@ -235,7 +235,7 @@ AcpiEvGpeInitialize (
      * If EITHER the register length OR the block address are zero, then that
      * particular block is not supported.
      */
-    if (AcpiGbl_FADT.Gpe0BlockLength &&
+    if(AcpiGbl_FADT.Gpe0BlockLength &&
         AcpiGbl_FADT.XGpe0Block.Address)
     {
         /* GPE block 0 exists (has both length and address > 0) */
@@ -251,14 +251,14 @@ AcpiEvGpeInitialize (
             RegisterCount0, 0,
             AcpiGbl_FADT.SciInterrupt, &AcpiGbl_GpeFadtBlocks[0]);
 
-        if (ACPI_FAILURE (Status))
+        if(ACPI_FAILURE (Status))
         {
             ACPI_EXCEPTION ((AE_INFO, Status,
                 "Could not create GPE Block 0"));
         }
     }
 
-    if (AcpiGbl_FADT.Gpe1BlockLength &&
+    if(AcpiGbl_FADT.Gpe1BlockLength &&
         AcpiGbl_FADT.XGpe1Block.Address)
     {
         /* GPE block 1 exists (has both length and address > 0) */
@@ -267,7 +267,7 @@ AcpiEvGpeInitialize (
 
         /* Check for GPE0/GPE1 overlap (if both banks exist) */
 
-        if ((RegisterCount0) &&
+        if((RegisterCount0) &&
             (GpeNumberMax >= AcpiGbl_FADT.Gpe1Base))
         {
             ACPI_ERROR ((AE_INFO,
@@ -292,7 +292,7 @@ AcpiEvGpeInitialize (
                 AcpiGbl_FADT.Gpe1Base,
                 AcpiGbl_FADT.SciInterrupt, &AcpiGbl_GpeFadtBlocks[1]);
 
-            if (ACPI_FAILURE (Status))
+            if(ACPI_FAILURE (Status))
             {
                 ACPI_EXCEPTION ((AE_INFO, Status,
                     "Could not create GPE Block 1"));
@@ -307,7 +307,7 @@ AcpiEvGpeInitialize (
 
     /* Exit if there are no GPE registers */
 
-    if ((RegisterCount0 + RegisterCount1) == 0)
+    if((RegisterCount0 + RegisterCount1) == 0)
     {
         /* GPEs are not required by ACPI, this is OK */
 
@@ -357,7 +357,7 @@ AcpiEvUpdateGpes (
      * GpeBlock lists.
      */
     Status = AcpiUtAcquireMutex (ACPI_MTX_EVENTS);
-    if (ACPI_FAILURE (Status))
+    if(ACPI_FAILURE (Status))
     {
         return;
     }
@@ -383,7 +383,7 @@ AcpiEvUpdateGpes (
                 WalkInfo.GpeDevice, ACPI_UINT32_MAX,
                 ACPI_NS_WALK_NO_UNLOCK, AcpiEvMatchGpeMethod,
                 NULL, &WalkInfo, NULL);
-            if (ACPI_FAILURE (Status))
+            if(ACPI_FAILURE (Status))
             {
                 ACPI_EXCEPTION ((AE_INFO, Status,
                     "While decoding _Lxx/_Exx methods"));
@@ -395,7 +395,7 @@ AcpiEvUpdateGpes (
         GpeXruptInfo = GpeXruptInfo->Next;
     }
 
-    if (WalkInfo.Count)
+    if(WalkInfo.Count)
     {
         ACPI_INFO (("Enabled %u new GPEs", WalkInfo.Count));
     }
@@ -453,7 +453,7 @@ AcpiEvMatchGpeMethod (
 
     /* Check if requested OwnerId matches this OwnerId */
 
-    if ((WalkInfo->ExecuteByOwnerId) &&
+    if((WalkInfo->ExecuteByOwnerId) &&
         (MethodNode->OwnerId != WalkInfo->OwnerId))
     {
         return_ACPI_STATUS (AE_OK);
@@ -469,7 +469,7 @@ AcpiEvMatchGpeMethod (
 
     /* 2) Name must begin with an underscore */
 
-    if (Name[0] != '_')
+    if(Name[0] != '_')
     {
         return_ACPI_STATUS (AE_OK); /* Ignore this method */
     }
@@ -503,7 +503,7 @@ AcpiEvMatchGpeMethod (
     /* 4) The last two characters of the name are the hex GPE Number */
 
     Status = AcpiUtAsciiToHexByte (&Name[2], &TempGpeNumber);
-    if (ACPI_FAILURE (Status))
+    if(ACPI_FAILURE (Status))
     {
         /* Conversion failed; invalid method, just ignore it */
 
@@ -517,7 +517,7 @@ AcpiEvMatchGpeMethod (
 
     GpeNumber = (UINT32) TempGpeNumber;
     GpeEventInfo = AcpiEvLowGetGpeInfo (GpeNumber, WalkInfo->GpeBlock);
-    if (!GpeEventInfo)
+    if(!GpeEventInfo)
     {
         /*
          * This GpeNumber is not valid for this GPE block, just ignore it.
@@ -527,7 +527,7 @@ AcpiEvMatchGpeMethod (
         return_ACPI_STATUS (AE_OK);
     }
 
-    if ((ACPI_GPE_DISPATCH_TYPE (GpeEventInfo->Flags) ==
+    if((ACPI_GPE_DISPATCH_TYPE (GpeEventInfo->Flags) ==
             ACPI_GPE_DISPATCH_HANDLER) ||
         (ACPI_GPE_DISPATCH_TYPE (GpeEventInfo->Flags) ==
             ACPI_GPE_DISPATCH_RAW_HANDLER))
@@ -537,14 +537,14 @@ AcpiEvMatchGpeMethod (
         return_ACPI_STATUS (AE_OK);
     }
 
-    if (ACPI_GPE_DISPATCH_TYPE (GpeEventInfo->Flags) ==
+    if(ACPI_GPE_DISPATCH_TYPE (GpeEventInfo->Flags) ==
         ACPI_GPE_DISPATCH_METHOD)
     {
         /*
          * If there is already a method, ignore this method. But check
          * for a type mismatch (if both the _Lxx AND _Exx exist)
          */
-        if (Type != (GpeEventInfo->Flags & ACPI_GPE_XRUPT_TYPE_MASK))
+        if(Type != (GpeEventInfo->Flags & ACPI_GPE_XRUPT_TYPE_MASK))
         {
             ACPI_ERROR ((AE_INFO,
                 "For GPE 0x%.2X, found both _L%2.2X and _E%2.2X methods",

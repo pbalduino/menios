@@ -195,7 +195,7 @@ AcpiUtGetNextPredefinedMethod (
      * Skip next entry in the table if this name returns a Package
      * (next entry contains the package info)
      */
-    if ((ThisName->Info.ExpectedBtypes & ACPI_RTYPE_PACKAGE) &&
+    if((ThisName->Info.ExpectedBtypes & ACPI_RTYPE_PACKAGE) &&
         (ThisName->Info.ExpectedBtypes != ACPI_RTYPE_ALL))
     {
         ThisName++;
@@ -227,7 +227,7 @@ AcpiUtMatchPredefinedMethod (
 
     /* Quick check for a predefined name, first character must be underscore */
 
-    if (Name[0] != '_')
+    if(Name[0] != '_')
     {
         return (NULL);
     }
@@ -237,7 +237,7 @@ AcpiUtMatchPredefinedMethod (
     ThisName = AcpiGbl_PredefinedMethods;
     while (ThisName->Info.Name[0])
     {
-        if (ACPI_COMPARE_NAMESEG (Name, ThisName->Info.Name))
+        if(ACPI_COMPARE_NAMESEG (Name, ThisName->Info.Name))
         {
             return (ThisName);
         }
@@ -272,7 +272,7 @@ AcpiUtGetExpectedReturnTypes (
     UINT32                  j;
 
 
-    if (!ExpectedBtypes)
+    if(!ExpectedBtypes)
     {
         strcpy (Buffer, "NONE");
         return;
@@ -286,7 +286,7 @@ AcpiUtGetExpectedReturnTypes (
     {
         /* If one of the expected types, concatenate the name of this type */
 
-        if (ExpectedBtypes & ThisRtype)
+        if(ExpectedBtypes & ThisRtype)
         {
             strcat (Buffer, &UtRtypeNames[i][j]);
             j = 0;              /* Use name separator from now on */
@@ -303,7 +303,7 @@ AcpiUtGetExpectedReturnTypes (
  *
  ******************************************************************************/
 
-#if (defined ACPI_ASL_COMPILER || defined ACPI_HELP_APP)
+#if(defined ACPI_ASL_COMPILER || defined ACPI_HELP_APP)
 
 /* Local prototypes */
 
@@ -364,7 +364,7 @@ AcpiUtMatchResourceName (
      * Quick check for a predefined name, first character must
      * be underscore
      */
-    if (Name[0] != '_')
+    if(Name[0] != '_')
     {
         return (NULL);
     }
@@ -374,7 +374,7 @@ AcpiUtMatchResourceName (
     ThisName = AcpiGbl_ResourceNames;
     while (ThisName->Info.Name[0])
     {
-        if (ACPI_COMPARE_NAMESEG (Name, ThisName->Info.Name))
+        if(ACPI_COMPARE_NAMESEG (Name, ThisName->Info.Name))
         {
             return (ThisName);
         }
@@ -417,7 +417,7 @@ AcpiUtDisplayPredefinedMethod (
     ArgCount = AcpiUtGetArgumentTypes (Buffer,
         ThisName->Info.ArgumentList);
 
-    if (MultiLine)
+    if(MultiLine)
     {
         printf ("      ");
     }
@@ -430,19 +430,19 @@ AcpiUtDisplayPredefinedMethod (
 
     /* Display the types for any arguments */
 
-    if (ArgCount > 0)
+    if(ArgCount > 0)
     {
         printf (" (%s)", Buffer);
     }
 
-    if (MultiLine)
+    if(MultiLine)
     {
         printf ("\n    ");
     }
 
     /* Get the return value type(s) allowed */
 
-    if (ThisName->Info.ExpectedBtypes)
+    if(ThisName->Info.ExpectedBtypes)
     {
         AcpiUtGetExpectedReturnTypes (Buffer, ThisName->Info.ExpectedBtypes);
         printf ("  Return value types: %s\n", Buffer);
@@ -486,7 +486,7 @@ AcpiUtGetArgumentTypes (
     /* First field in the types list is the count of args to follow */
 
     ArgCount = METHOD_GET_ARG_COUNT (ArgumentTypes);
-    if (ArgCount > METHOD_PREDEF_ARGS_MAX)
+    if(ArgCount > METHOD_PREDEF_ARGS_MAX)
     {
         printf ("**** Invalid argument count (%u) "
             "in predefined info structure\n", ArgCount);
@@ -499,7 +499,7 @@ AcpiUtGetArgumentTypes (
     {
         ThisArgumentType = METHOD_GET_NEXT_TYPE (ArgumentTypes);
 
-        if (ThisArgumentType > METHOD_MAX_ARG_TYPE)
+        if(ThisArgumentType > METHOD_MAX_ARG_TYPE)
         {
             printf ("**** Invalid argument type (%u) "
                 "in predefined info structure\n", ThisArgumentType);
@@ -543,7 +543,7 @@ AcpiUtGetResourceBitWidth (
 
     for (i = 0; i < NUM_RESOURCE_WIDTHS; i++)
     {
-        if (Types & 1)
+        if(Types & 1)
         {
             strcat (Buffer, &(UtResourceTypeNames[i][SubIndex]));
             SubIndex = 0;

@@ -190,18 +190,18 @@ AcpiDsBuildInternalObject (
 
 
     *ObjDescPtr = NULL;
-    if (Op->Common.AmlOpcode == AML_INT_NAMEPATH_OP)
+    if(Op->Common.AmlOpcode == AML_INT_NAMEPATH_OP)
     {
         /*
          * This is a named object reference. If this name was
          * previously looked up in the namespace, it was stored in
          * this op. Otherwise, go ahead and look it up now
          */
-        if (!Op->Common.Node)
+        if(!Op->Common.Node)
         {
             /* Check if we are resolving a named reference within a package */
 
-            if ((Op->Common.Parent->Common.AmlOpcode == AML_PACKAGE_OP) ||
+            if((Op->Common.Parent->Common.AmlOpcode == AML_PACKAGE_OP) ||
                 (Op->Common.Parent->Common.AmlOpcode == AML_VARIABLE_PACKAGE_OP))
             {
                 /*
@@ -220,7 +220,7 @@ AcpiDsBuildInternalObject (
                     ACPI_NS_SEARCH_PARENT | ACPI_NS_DONT_OPEN_SCOPE, NULL,
                     ACPI_CAST_INDIRECT_PTR (
                         ACPI_NAMESPACE_NODE, &(Op->Common.Node)));
-                if (ACPI_FAILURE (Status))
+                if(ACPI_FAILURE (Status))
                 {
                     ACPI_ERROR_NAMESPACE (WalkState->ScopeInfo,
                         Op->Common.Value.String, Status);
@@ -236,14 +236,14 @@ CreateNewObject:
 
     ObjDesc = AcpiUtCreateInternalObject (
         (AcpiPsGetOpcodeInfo (Op->Common.AmlOpcode))->ObjectType);
-    if (!ObjDesc)
+    if(!ObjDesc)
     {
         return_ACPI_STATUS (AE_NO_MEMORY);
     }
 
     Status = AcpiDsInitObjectFromOp (
         WalkState, Op, Op->Common.AmlOpcode, &ObjDesc);
-    if (ACPI_FAILURE (Status))
+    if(ACPI_FAILURE (Status))
     {
         AcpiUtRemoveReference (ObjDesc);
         return_ACPI_STATUS (Status);
@@ -253,12 +253,12 @@ CreateNewObject:
      * Handling for unresolved package reference elements.
      * These are elements that are namepaths.
      */
-    if ((Op->Common.Parent->Common.AmlOpcode == AML_PACKAGE_OP) ||
+    if((Op->Common.Parent->Common.AmlOpcode == AML_PACKAGE_OP) ||
         (Op->Common.Parent->Common.AmlOpcode == AML_VARIABLE_PACKAGE_OP))
     {
         ObjDesc->Reference.Resolved = TRUE;
 
-        if ((Op->Common.AmlOpcode == AML_INT_NAMEPATH_OP) &&
+        if((Op->Common.AmlOpcode == AML_INT_NAMEPATH_OP) &&
             !ObjDesc->Reference.Node)
         {
             /*
@@ -314,13 +314,13 @@ AcpiDsBuildInternalBufferObj (
      * be created.
      */
     ObjDesc = *ObjDescPtr;
-    if (!ObjDesc)
+    if(!ObjDesc)
     {
         /* Create a new buffer object */
 
         ObjDesc = AcpiUtCreateInternalObject (ACPI_TYPE_BUFFER);
         *ObjDescPtr = ObjDesc;
-        if (!ObjDesc)
+        if(!ObjDesc)
         {
             return_ACPI_STATUS (AE_NO_MEMORY);
         }
@@ -334,9 +334,9 @@ AcpiDsBuildInternalBufferObj (
     Arg = Op->Common.Value.Arg;         /* skip first arg */
 
     ByteList = Arg->Named.Next;
-    if (ByteList)
+    if(ByteList)
     {
-        if (ByteList->Common.AmlOpcode != AML_INT_BYTELIST_OP)
+        if(ByteList->Common.AmlOpcode != AML_INT_BYTELIST_OP)
         {
             ACPI_ERROR ((AE_INFO,
                 "Expecting bytelist, found AML opcode 0x%X in op %p",
@@ -355,14 +355,14 @@ AcpiDsBuildInternalBufferObj (
      * 2) The length of the initializer byte list
      */
     ObjDesc->Buffer.Length = BufferLength;
-    if (ByteListLength > BufferLength)
+    if(ByteListLength > BufferLength)
     {
         ObjDesc->Buffer.Length = ByteListLength;
     }
 
     /* Allocate the buffer */
 
-    if (ObjDesc->Buffer.Length == 0)
+    if(ObjDesc->Buffer.Length == 0)
     {
         ObjDesc->Buffer.Pointer = NULL;
         ACPI_DEBUG_PRINT ((ACPI_DB_EXEC,
@@ -372,7 +372,7 @@ AcpiDsBuildInternalBufferObj (
     {
         ObjDesc->Buffer.Pointer =
             ACPI_ALLOCATE_ZEROED (ObjDesc->Buffer.Length);
-        if (!ObjDesc->Buffer.Pointer)
+        if(!ObjDesc->Buffer.Pointer)
         {
             AcpiUtDeleteObjectDesc (ObjDesc);
             return_ACPI_STATUS (AE_NO_MEMORY);
@@ -380,7 +380,7 @@ AcpiDsBuildInternalBufferObj (
 
         /* Initialize buffer from the ByteList (if present) */
 
-        if (ByteList)
+        if(ByteList)
         {
             memcpy (ObjDesc->Buffer.Pointer, ByteList->Named.Data,
                 ByteListLength);
@@ -424,12 +424,12 @@ AcpiDsCreateNode (
      * parts of the table, we can arrive here twice. Only init
      * the named object node the first time through
      */
-    if (AcpiNsGetAttachedObject (Node))
+    if(AcpiNsGetAttachedObject (Node))
     {
         return_ACPI_STATUS (AE_OK);
     }
 
-    if (!Op->Common.Value.Arg)
+    if(!Op->Common.Value.Arg)
     {
         /* No arguments, there is nothing to do */
 
@@ -440,7 +440,7 @@ AcpiDsCreateNode (
 
     Status = AcpiDsBuildInternalObject (
         WalkState, Op->Common.Value.Arg, &ObjDesc);
-    if (ACPI_FAILURE (Status))
+    if(ACPI_FAILURE (Status))
     {
         return_ACPI_STATUS (Status);
     }
@@ -494,7 +494,7 @@ AcpiDsInitObjectFromOp (
 
     ObjDesc = *RetObjDesc;
     OpInfo = AcpiPsGetOpcodeInfo (Opcode);
-    if (OpInfo->Class == AML_CLASS_UNKNOWN)
+    if(OpInfo->Class == AML_CLASS_UNKNOWN)
     {
         /* Unknown opcode */
 
@@ -526,7 +526,7 @@ AcpiDsInitObjectFromOp (
         ObjDesc->Package.Node = ACPI_CAST_PTR (
             ACPI_NAMESPACE_NODE, WalkState->Operands[0]);
 
-        if (!Op->Named.Data)
+        if(!Op->Named.Data)
         {
             return_ACPI_STATUS (AE_OK);
         }
@@ -589,7 +589,7 @@ AcpiDsInitObjectFromOp (
 
             ObjDesc->Integer.Value = Op->Common.Value.Integer;
 
-            if (AcpiExTruncateFor32bitTable (ObjDesc))
+            if(AcpiExTruncateFor32bitTable (ObjDesc))
             {
                 /* Warn if we found a 64-bit constant in a 32-bit table */
 
@@ -664,7 +664,7 @@ AcpiDsInitObjectFromOp (
 
                 ObjDesc->Reference.Node = Op->Common.Node;
                 ObjDesc->Reference.Class = ACPI_REFCLASS_NAME;
-                if (Op->Common.Node)
+                if(Op->Common.Node)
                 {
                     ObjDesc->Reference.Object = Op->Common.Node->Object;
                 }

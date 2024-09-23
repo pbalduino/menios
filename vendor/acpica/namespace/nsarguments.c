@@ -190,7 +190,7 @@ AcpiNsCheckArgumentTypes (
      * has already been evaluated at least once -- in order
      * to suppress repetitive messages.
      */
-    if (!Info->Predefined || (Info->Node->Flags & ANOBJ_EVALUATED))
+    if(!Info->Predefined || (Info->Node->Flags & ANOBJ_EVALUATED))
     {
         return;
     }
@@ -207,7 +207,7 @@ AcpiNsCheckArgumentTypes (
 
         /* No typechecking for ACPI_TYPE_ANY */
 
-        if ((UserArgType != ArgType) && (ArgType != ACPI_TYPE_ANY))
+        if((UserArgType != ArgType) && (ArgType != ACPI_TYPE_ANY))
         {
             ACPI_WARN_PREDEFINED ((AE_INFO, Info->FullPathname, ACPI_WARN_ALWAYS,
                 "Argument #%u type mismatch - "
@@ -249,7 +249,7 @@ AcpiNsCheckAcpiCompliance (
     UINT32                      RequiredParamCount;
 
 
-    if (!Predefined || (Node->Flags & ANOBJ_EVALUATED))
+    if(!Predefined || (Node->Flags & ANOBJ_EVALUATED))
     {
         return;
     }
@@ -263,9 +263,9 @@ AcpiNsCheckAcpiCompliance (
      * If this object is not a control method, we can check if the ACPI
      * spec requires that it be a method.
      */
-    if (Node->Type != ACPI_TYPE_METHOD)
+    if(Node->Type != ACPI_TYPE_METHOD)
     {
-        if (RequiredParamCount > 0)
+        if(RequiredParamCount > 0)
         {
             /* Object requires args, must be implemented as a method */
 
@@ -273,7 +273,7 @@ AcpiNsCheckAcpiCompliance (
                 "Object (%s) must be a control method with %u arguments",
                 AcpiUtGetTypeName (Node->Type), RequiredParamCount));
         }
-        else if (!RequiredParamCount && !Predefined->Info.ExpectedBtypes)
+        else if(!RequiredParamCount && !Predefined->Info.ExpectedBtypes)
         {
             /* Object requires no args and no return value, must be a method */
 
@@ -298,14 +298,14 @@ AcpiNsCheckAcpiCompliance (
      */
     AmlParamCount = Node->Object->Method.ParamCount;
 
-    if (AmlParamCount < RequiredParamCount)
+    if(AmlParamCount < RequiredParamCount)
     {
         ACPI_BIOS_ERROR_PREDEFINED ((AE_INFO, Pathname, ACPI_WARN_ALWAYS,
             "Insufficient arguments - "
             "ASL declared %u, ACPI requires %u",
             AmlParamCount, RequiredParamCount));
     }
-    else if ((AmlParamCount > RequiredParamCount) &&
+    else if((AmlParamCount > RequiredParamCount) &&
         !(Predefined->Info.ArgumentList & ARG_COUNT_IS_MINIMUM))
     {
         ACPI_BIOS_ERROR_PREDEFINED ((AE_INFO, Pathname, ACPI_WARN_ALWAYS,
@@ -343,20 +343,20 @@ AcpiNsCheckArgumentCount (
     UINT32                      RequiredParamCount;
 
 
-    if (Node->Flags & ANOBJ_EVALUATED)
+    if(Node->Flags & ANOBJ_EVALUATED)
     {
         return;
     }
 
-    if (!Predefined)
+    if(!Predefined)
     {
         /*
          * Not a predefined name. Check the incoming user argument count
          * against the count that is specified in the method/object.
          */
-        if (Node->Type != ACPI_TYPE_METHOD)
+        if(Node->Type != ACPI_TYPE_METHOD)
         {
-            if (UserParamCount)
+            if(UserParamCount)
             {
                 ACPI_INFO_PREDEFINED ((AE_INFO, Pathname, ACPI_WARN_ALWAYS,
                     "%u arguments were passed to a non-method ACPI object (%s)",
@@ -380,14 +380,14 @@ AcpiNsCheckArgumentCount (
          */
         AmlParamCount = Node->Object->Method.ParamCount;
 
-        if (UserParamCount < AmlParamCount)
+        if(UserParamCount < AmlParamCount)
         {
             ACPI_WARN_PREDEFINED ((AE_INFO, Pathname, ACPI_WARN_ALWAYS,
                 "Insufficient arguments - "
                 "Caller passed %u, method requires %u",
                 UserParamCount, AmlParamCount));
         }
-        else if (UserParamCount > AmlParamCount)
+        else if(UserParamCount > AmlParamCount)
         {
             ACPI_INFO_PREDEFINED ((AE_INFO, Pathname, ACPI_WARN_ALWAYS,
                 "Excess arguments - "
@@ -411,14 +411,14 @@ AcpiNsCheckArgumentCount (
     RequiredParamCount =
         METHOD_GET_ARG_COUNT (Predefined->Info.ArgumentList);
 
-    if (UserParamCount < RequiredParamCount)
+    if(UserParamCount < RequiredParamCount)
     {
         ACPI_WARN_PREDEFINED ((AE_INFO, Pathname, ACPI_WARN_ALWAYS,
             "Insufficient arguments - "
             "Caller passed %u, ACPI requires %u",
             UserParamCount, RequiredParamCount));
     }
-    else if ((UserParamCount > RequiredParamCount) &&
+    else if((UserParamCount > RequiredParamCount) &&
         !(Predefined->Info.ArgumentList & ARG_COUNT_IS_MINIMUM))
     {
         ACPI_INFO_PREDEFINED ((AE_INFO, Pathname, ACPI_WARN_ALWAYS,

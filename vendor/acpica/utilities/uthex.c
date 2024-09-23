@@ -213,7 +213,7 @@ AcpiUtAsciiToHexByte (
 
     /* Both ASCII characters must be valid hex digits */
 
-    if (!isxdigit ((int) TwoAsciiChars[0]) ||
+    if(!isxdigit ((int) TwoAsciiChars[0]) ||
         !isxdigit ((int) TwoAsciiChars[1]))
     {
         return (AE_BAD_HEX_CONSTANT);
@@ -247,14 +247,14 @@ AcpiUtAsciiCharToHex (
 
     /* Values 0-9 */
 
-    if (HexChar <= '9')
+    if(HexChar <= '9')
     {
         return ((UINT8) (HexChar - '0'));
     }
 
     /* Upper case A-F */
 
-    if (HexChar <= 'F')
+    if(HexChar <= 'F')
     {
         return ((UINT8) (HexChar - 0x37));
     }

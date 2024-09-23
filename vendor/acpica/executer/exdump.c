@@ -496,7 +496,7 @@ AcpiExDumpObject (
     ACPI_NAMESPACE_NODE     *Node;
 
 
-    if (!Info)
+    if(!Info)
     {
         AcpiOsPrintf (
             "ExDumpObject: Display not implemented for object type %s\n",
@@ -510,7 +510,7 @@ AcpiExDumpObject (
 
     while (Count)
     {
-        if (!ObjDesc)
+        if(!ObjDesc)
         {
             return;
         }
@@ -595,14 +595,14 @@ AcpiExDumpObject (
             Next = Start;
 
             AcpiOsPrintf ("%20s : %p ", Name, Next);
-            if (Next)
+            if(Next)
             {
                 AcpiOsPrintf ("%s (Type %2.2X)",
                     AcpiUtGetObjectTypeName (Next), Next->Common.Type);
 
                 while (Next->Common.NextObject)
                 {
-                    if ((Next->Common.Type == ACPI_TYPE_LOCAL_DATA) &&
+                    if((Next->Common.Type == ACPI_TYPE_LOCAL_DATA) &&
                         !Data)
                     {
                         Data = Next;
@@ -612,7 +612,7 @@ AcpiExDumpObject (
                     AcpiOsPrintf ("->%p(%s %2.2X)", Next,
                         AcpiUtGetObjectTypeName (Next), Next->Common.Type);
 
-                    if ((Next == Start) || (Next == Data))
+                    if((Next == Start) || (Next == Data))
                     {
                         AcpiOsPrintf (
                             "\n**** Error: Object list appears to be circular linked");
@@ -634,7 +634,7 @@ AcpiExDumpObject (
             Next = Start;
 
             AcpiOsPrintf ("%20s : %p", Name, Next);
-            if (Next)
+            if(Next)
             {
                 AcpiOsPrintf ("(%s %2.2X)",
                     AcpiUtGetObjectTypeName (Next),
@@ -642,7 +642,7 @@ AcpiExDumpObject (
 
                 while (Next->AddressSpace.Next)
                 {
-                    if ((Next->Common.Type == ACPI_TYPE_LOCAL_DATA) &&
+                    if((Next->Common.Type == ACPI_TYPE_LOCAL_DATA) &&
                         !Data)
                     {
                         Data = Next;
@@ -653,7 +653,7 @@ AcpiExDumpObject (
                         AcpiUtGetObjectTypeName (Next),
                         Next->AddressSpace.SpaceId);
 
-                    if ((Next == Start) || (Next == Data))
+                    if((Next == Start) || (Next == Data))
                     {
                         AcpiOsPrintf (
                             "\n**** Error: Handler list appears to be circular linked");
@@ -671,14 +671,14 @@ AcpiExDumpObject (
             Next = Start;
 
             AcpiOsPrintf ("%20s : %p", Name, Next);
-            if (Next)
+            if(Next)
             {
                 AcpiOsPrintf ("(%s %2.2X)",
                     AcpiUtGetObjectTypeName (Next), Next->Common.Type);
 
                 while (Next->Region.Next)
                 {
-                    if ((Next->Common.Type == ACPI_TYPE_LOCAL_DATA) &&
+                    if((Next->Common.Type == ACPI_TYPE_LOCAL_DATA) &&
                         !Data)
                     {
                         Data = Next;
@@ -688,7 +688,7 @@ AcpiExDumpObject (
                     AcpiOsPrintf ("->%p(%s %2.2X)", Next,
                         AcpiUtGetObjectTypeName (Next), Next->Common.Type);
 
-                    if ((Next == Start) || (Next == Data))
+                    if((Next == Start) || (Next == Data))
                     {
                         AcpiOsPrintf (
                             "\n**** Error: Region list appears to be circular linked");
@@ -705,7 +705,7 @@ AcpiExDumpObject (
             Node = *ACPI_CAST_PTR (ACPI_NAMESPACE_NODE *, Target);
 
             AcpiOsPrintf ("%20s : %p", Name, Node);
-            if (Node)
+            if(Node)
             {
                 AcpiOsPrintf (" [%4.4s]", Node->Name.Ascii);
             }
@@ -752,12 +752,12 @@ AcpiExDumpOperand (
 
     /* Check if debug output enabled */
 
-    if (!ACPI_IS_DEBUG_ENABLED (ACPI_LV_EXEC, _COMPONENT))
+    if(!ACPI_IS_DEBUG_ENABLED (ACPI_LV_EXEC, _COMPONENT))
     {
         return;
     }
 
-    if (!ObjDesc)
+    if(!ObjDesc)
     {
         /* This could be a null element of a package */
 
@@ -765,14 +765,14 @@ AcpiExDumpOperand (
         return;
     }
 
-    if (ACPI_GET_DESCRIPTOR_TYPE (ObjDesc) == ACPI_DESC_TYPE_NAMED)
+    if(ACPI_GET_DESCRIPTOR_TYPE (ObjDesc) == ACPI_DESC_TYPE_NAMED)
     {
         ACPI_DEBUG_PRINT ((ACPI_DB_EXEC, "%p Namespace Node: ", ObjDesc));
         ACPI_DUMP_ENTRY (ObjDesc, ACPI_LV_EXEC);
         return;
     }
 
-    if (ACPI_GET_DESCRIPTOR_TYPE (ObjDesc) != ACPI_DESC_TYPE_OPERAND)
+    if(ACPI_GET_DESCRIPTOR_TYPE (ObjDesc) != ACPI_DESC_TYPE_OPERAND)
     {
         ACPI_DEBUG_PRINT ((ACPI_DB_EXEC,
             "%p is not a node or operand object: [%s]\n",
@@ -783,7 +783,7 @@ AcpiExDumpOperand (
 
     /* ObjDesc is a valid object */
 
-    if (Depth > 0)
+    if(Depth > 0)
     {
         ACPI_DEBUG_PRINT ((ACPI_DB_EXEC, "%*s[%u] %p Refs=%u ",
             Depth, " ", Depth, ObjDesc, ObjDesc->Common.ReferenceCount));
@@ -855,10 +855,10 @@ AcpiExDumpOperand (
 
         /* Debug only -- dump the buffer contents */
 
-        if (ObjDesc->Buffer.Pointer)
+        if(ObjDesc->Buffer.Pointer)
         {
             Length = ObjDesc->Buffer.Length;
-            if (Length > 128)
+            if(Length > 128)
             {
                 Length = 128;
             }
@@ -884,7 +884,7 @@ AcpiExDumpOperand (
          * If elements exist, package element pointer is valid,
          * and debug_level exceeds 1, dump package's elements.
          */
-        if (ObjDesc->Package.Count &&
+        if(ObjDesc->Package.Count &&
             ObjDesc->Package.Elements &&
             AcpiDbgLevel > 1)
         {
@@ -906,7 +906,7 @@ AcpiExDumpOperand (
          * If the address and length have not been evaluated,
          * don't print them.
          */
-        if (!(ObjDesc->Region.Flags & AOPOBJ_DATA_VALID))
+        if(!(ObjDesc->Region.Flags & AOPOBJ_DATA_VALID))
         {
             AcpiOsPrintf ("\n");
         }
@@ -959,11 +959,11 @@ AcpiExDumpOperand (
             ObjDesc->BufferField.BaseByteOffset,
             ObjDesc->BufferField.StartFieldBitOffset);
 
-        if (!ObjDesc->BufferField.BufferObj)
+        if(!ObjDesc->BufferField.BufferObj)
         {
             ACPI_DEBUG_PRINT ((ACPI_DB_EXEC, "*NULL*\n"));
         }
-        else if ((ObjDesc->BufferField.BufferObj)->Common.Type !=
+        else if((ObjDesc->BufferField.BufferObj)->Common.Type !=
             ACPI_TYPE_BUFFER)
         {
             AcpiOsPrintf ("*not a Buffer*\n");
@@ -1045,7 +1045,7 @@ AcpiExDumpOperands (
     ACPI_FUNCTION_TRACE (ExDumpOperands);
 
 
-    if (!OpcodeName)
+    if(!OpcodeName)
     {
         OpcodeName = "UNKNOWN";
     }
@@ -1054,7 +1054,7 @@ AcpiExDumpOperands (
         "**** Start operand dump for opcode [%s], %u operands\n",
         OpcodeName, NumOperands));
 
-    if (NumOperands == 0)
+    if(NumOperands == 0)
     {
         NumOperands = 1;
     }
@@ -1124,11 +1124,11 @@ AcpiExDumpNamespaceNode (
     ACPI_FUNCTION_ENTRY ();
 
 
-    if (!Flags)
+    if(!Flags)
     {
         /* Check if debug output enabled */
 
-        if (!ACPI_IS_DEBUG_ENABLED (ACPI_LV_OBJECTS, _COMPONENT))
+        if(!ACPI_IS_DEBUG_ENABLED (ACPI_LV_OBJECTS, _COMPONENT))
         {
             return;
         }
@@ -1163,13 +1163,13 @@ AcpiExDumpReferenceObj (
 
     RetBuf.Length = ACPI_ALLOCATE_LOCAL_BUFFER;
 
-    if (ObjDesc->Reference.Class == ACPI_REFCLASS_NAME)
+    if(ObjDesc->Reference.Class == ACPI_REFCLASS_NAME)
     {
         AcpiOsPrintf (" %p ", ObjDesc->Reference.Node);
 
         Status = AcpiNsHandleToPathname (ObjDesc->Reference.Node,
             &RetBuf, TRUE);
-        if (ACPI_FAILURE (Status))
+        if(ACPI_FAILURE (Status))
         {
             AcpiOsPrintf (" Could not convert name to pathname: %s\n",
                 AcpiFormatException (Status));
@@ -1182,13 +1182,13 @@ AcpiExDumpReferenceObj (
             ACPI_FREE (RetBuf.Pointer);
         }
     }
-    else if (ObjDesc->Reference.Object)
+    else if(ObjDesc->Reference.Object)
     {
-        if (ACPI_GET_DESCRIPTOR_TYPE (ObjDesc) == ACPI_DESC_TYPE_OPERAND)
+        if(ACPI_GET_DESCRIPTOR_TYPE (ObjDesc) == ACPI_DESC_TYPE_OPERAND)
         {
             AcpiOsPrintf ("%22s %p", "Target :",
                 ObjDesc->Reference.Object);
-            if (ObjDesc->Reference.Class == ACPI_REFCLASS_TABLE)
+            if(ObjDesc->Reference.Class == ACPI_REFCLASS_TABLE)
             {
                 AcpiOsPrintf (" Table Index: %X\n",
                     ObjDesc->Reference.Value);
@@ -1231,7 +1231,7 @@ AcpiExDumpPackageObj (
 
     /* Indentation and index output */
 
-    if (Level > 0)
+    if(Level > 0)
     {
         for (i = 0; i < Level; i++)
         {
@@ -1245,7 +1245,7 @@ AcpiExDumpPackageObj (
 
     /* Null package elements are allowed */
 
-    if (!ObjDesc)
+    if(!ObjDesc)
     {
         AcpiOsPrintf ("[Null Object]\n");
         return;
@@ -1271,7 +1271,7 @@ AcpiExDumpPackageObj (
     case ACPI_TYPE_BUFFER:
 
         AcpiOsPrintf ("[Buffer] Length %.2X = ", ObjDesc->Buffer.Length);
-        if (ObjDesc->Buffer.Length)
+        if(ObjDesc->Buffer.Length)
         {
             AcpiUtDebugDumpBuffer (
                 ACPI_CAST_PTR (UINT8, ObjDesc->Buffer.Pointer),
@@ -1330,33 +1330,33 @@ AcpiExDumpObjectDescriptor (
     ACPI_FUNCTION_TRACE (ExDumpObjectDescriptor);
 
 
-    if (!ObjDesc)
+    if(!ObjDesc)
     {
         return_VOID;
     }
 
-    if (!Flags)
+    if(!Flags)
     {
         /* Check if debug output enabled */
 
-        if (!ACPI_IS_DEBUG_ENABLED (ACPI_LV_OBJECTS, _COMPONENT))
+        if(!ACPI_IS_DEBUG_ENABLED (ACPI_LV_OBJECTS, _COMPONENT))
         {
             return_VOID;
         }
     }
 
-    if (ACPI_GET_DESCRIPTOR_TYPE (ObjDesc) == ACPI_DESC_TYPE_NAMED)
+    if(ACPI_GET_DESCRIPTOR_TYPE (ObjDesc) == ACPI_DESC_TYPE_NAMED)
     {
         AcpiExDumpNamespaceNode ((ACPI_NAMESPACE_NODE *) ObjDesc, Flags);
 
         ObjDesc = ((ACPI_NAMESPACE_NODE *) ObjDesc)->Object;
-        if (!ObjDesc)
+        if(!ObjDesc)
         {
             return_VOID;
         }
 
         AcpiOsPrintf ("\nAttached Object %p", ObjDesc);
-        if (ACPI_GET_DESCRIPTOR_TYPE (ObjDesc) == ACPI_DESC_TYPE_NAMED)
+        if(ACPI_GET_DESCRIPTOR_TYPE (ObjDesc) == ACPI_DESC_TYPE_NAMED)
         {
             AcpiOsPrintf (" - Namespace Node");
         }
@@ -1365,7 +1365,7 @@ AcpiExDumpObjectDescriptor (
         goto DumpObject;
     }
 
-    if (ACPI_GET_DESCRIPTOR_TYPE (ObjDesc) != ACPI_DESC_TYPE_OPERAND)
+    if(ACPI_GET_DESCRIPTOR_TYPE (ObjDesc) != ACPI_DESC_TYPE_OPERAND)
     {
         AcpiOsPrintf (
             "%p is not an ACPI operand object: [%s]\n",
@@ -1375,7 +1375,7 @@ AcpiExDumpObjectDescriptor (
 
     /* Validate the object type */
 
-    if (ObjDesc->Common.Type > ACPI_TYPE_LOCAL_MAX)
+    if(ObjDesc->Common.Type > ACPI_TYPE_LOCAL_MAX)
     {
         AcpiOsPrintf ("Not a known object type: %2.2X\n",
             ObjDesc->Common.Type);
@@ -1385,7 +1385,7 @@ AcpiExDumpObjectDescriptor (
 
 DumpObject:
 
-    if (!ObjDesc)
+    if(!ObjDesc)
     {
         return_VOID;
     }
@@ -1398,10 +1398,10 @@ DumpObject:
 
     AcpiExDumpObject (ObjDesc, AcpiExDumpInfo[ObjDesc->Common.Type]);
 
-    if (ObjDesc->Common.Type == ACPI_TYPE_REGION)
+    if(ObjDesc->Common.Type == ACPI_TYPE_REGION)
     {
         ObjDesc = ObjDesc->Common.NextObject;
-        if (ObjDesc->Common.Type > ACPI_TYPE_LOCAL_MAX)
+        if(ObjDesc->Common.Type > ACPI_TYPE_LOCAL_MAX)
         {
             AcpiOsPrintf (
                 "Secondary object is not a known object type: %2.2X\n",

@@ -9,7 +9,7 @@ This document outlines the coding style guidelines for meniOS, inspired by the L
 - **Good Example**:
 
     ```c
-    if (condition) {
+    if(condition) {
       do_something();
     }
     ```
@@ -17,19 +17,19 @@ This document outlines the coding style guidelines for meniOS, inspired by the L
 - **Bad Example**:
 
     ```c
-    if (condition) {
+    if(condition) {
         do_something();  // Four spaces used for indentation
     }
 
-    if (condition) {
+    if(condition) {
     do_something();  // No indentation used
     }
 
-    if (condition) {
+    if(condition) {
     do_something();  // No indentation used
     }
 
-    if (condition) {
+    if(condition) {
         do_something();  // Tab used for indentation
     }
     ```
@@ -61,7 +61,7 @@ This document outlines the coding style guidelines for meniOS, inspired by the L
 - **Good Example**:
 
     ```c
-    if (condition) {
+    if(condition) {
       do_something();
     }
 
@@ -77,7 +77,7 @@ This document outlines the coding style guidelines for meniOS, inspired by the L
 - **Bad Example**:
 
     ```c
-    if (condition)
+    if(condition)
     {
       do_something();  // Opening brace is on a new line
     }
@@ -100,7 +100,7 @@ This document outlines the coding style guidelines for meniOS, inspired by the L
 - **Good Example**:
 
     ```c
-    if (condition) {
+    if(condition) {
       do_something();
     }
 
@@ -112,7 +112,7 @@ This document outlines the coding style guidelines for meniOS, inspired by the L
 - **Bad Example**:
 
     ```c
-    if (condition)
+    if(condition)
       do_something();  // Braces are missing
 
     while (condition)

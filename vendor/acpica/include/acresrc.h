@@ -166,7 +166,7 @@
  * 1) Hardware does not support misaligned memory transfers
  * 2) Compiler does not support pointers within packed structures
  */
-#if (!defined(ACPI_MISALIGNMENT_NOT_SUPPORTED) && !defined(ACPI_PACKED_POINTERS_NOT_SUPPORTED))
+#if(!defined(ACPI_MISALIGNMENT_NOT_SUPPORTED) && !defined(ACPI_PACKED_POINTERS_NOT_SUPPORTED))
 #pragma pack(1)
 #endif
 

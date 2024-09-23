@@ -869,7 +869,7 @@ AcpiUtGetExpectedReturnTypes (
     char                    *Buffer,
     UINT32                  ExpectedBtypes);
 
-#if (defined ACPI_ASL_COMPILER || defined ACPI_HELP_APP)
+#if(defined ACPI_ASL_COMPILER || defined ACPI_HELP_APP)
 const ACPI_PREDEFINED_INFO *
 AcpiUtMatchResourceName (
     char                        *Name);
@@ -981,7 +981,7 @@ BOOLEAN
 AcpiUtIsPciRootBridge (
     char                    *Id);
 
-#if (defined ACPI_ASL_COMPILER || defined ACPI_EXEC_APP || defined ACPI_NAMES_APP)
+#if(defined ACPI_ASL_COMPILER || defined ACPI_EXEC_APP || defined ACPI_NAMES_APP)
 BOOLEAN
 AcpiUtIsAmlTable (
     ACPI_TABLE_HEADER       *Table);
@@ -1290,7 +1290,7 @@ AcpiAhMatchUuid (
 /*
  * utuuid -- UUID support functions
  */
-#if (defined ACPI_ASL_COMPILER || defined ACPI_EXEC_APP || defined ACPI_HELP_APP)
+#if(defined ACPI_ASL_COMPILER || defined ACPI_EXEC_APP || defined ACPI_HELP_APP)
 void
 AcpiUtConvertStringToUuid (
     char                    *InString,

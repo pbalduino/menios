@@ -179,7 +179,7 @@ AcpiUtCreateRwLock (
 
     Lock->NumReaders = 0;
     Status = AcpiOsCreateMutex (&Lock->ReaderMutex);
-    if (ACPI_FAILURE (Status))
+    if(ACPI_FAILURE (Status))
     {
         return (Status);
     }
@@ -229,7 +229,7 @@ AcpiUtAcquireReadLock (
 
 
     Status = AcpiOsAcquireMutex (Lock->ReaderMutex, ACPI_WAIT_FOREVER);
-    if (ACPI_FAILURE (Status))
+    if(ACPI_FAILURE (Status))
     {
         return (Status);
     }
@@ -237,7 +237,7 @@ AcpiUtAcquireReadLock (
     /* Acquire the write lock only for the first reader */
 
     Lock->NumReaders++;
-    if (Lock->NumReaders == 1)
+    if(Lock->NumReaders == 1)
     {
         Status = AcpiOsAcquireMutex (Lock->WriterMutex, ACPI_WAIT_FOREVER);
     }
@@ -255,7 +255,7 @@ AcpiUtReleaseReadLock (
 
 
     Status = AcpiOsAcquireMutex (Lock->ReaderMutex, ACPI_WAIT_FOREVER);
-    if (ACPI_FAILURE (Status))
+    if(ACPI_FAILURE (Status))
     {
         return (Status);
     }
@@ -263,7 +263,7 @@ AcpiUtReleaseReadLock (
     /* Release the write lock only for the very last reader */
 
     Lock->NumReaders--;
-    if (Lock->NumReaders == 0)
+    if(Lock->NumReaders == 0)
     {
         AcpiOsReleaseMutex (Lock->WriterMutex);
     }

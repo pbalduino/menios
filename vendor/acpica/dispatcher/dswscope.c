@@ -224,7 +224,7 @@ AcpiDsScopeStackPush (
     ACPI_FUNCTION_TRACE (DsScopeStackPush);
 
 
-    if (!Node)
+    if(!Node)
     {
         /* Invalid scope   */
 
@@ -234,7 +234,7 @@ AcpiDsScopeStackPush (
 
     /* Make sure object type is valid */
 
-    if (!AcpiUtValidObjectType (Type))
+    if(!AcpiUtValidObjectType (Type))
     {
         ACPI_WARNING ((AE_INFO,
             "Invalid object type: 0x%X", Type));
@@ -243,7 +243,7 @@ AcpiDsScopeStackPush (
     /* Allocate a new scope object */
 
     ScopeInfo = AcpiUtCreateGenericState ();
-    if (!ScopeInfo)
+    if(!ScopeInfo)
     {
         return_ACPI_STATUS (AE_NO_MEMORY);
     }
@@ -260,7 +260,7 @@ AcpiDsScopeStackPush (
         "[%.2d] Pushed scope ", (UINT32) WalkState->ScopeDepth));
 
     OldScopeInfo = WalkState->ScopeInfo;
-    if (OldScopeInfo)
+    if(OldScopeInfo)
     {
         ACPI_DEBUG_PRINT_RAW ((ACPI_DB_EXEC,
             "[%4.4s] (%s)",
@@ -311,7 +311,7 @@ AcpiDsScopeStackPop (
      * Pop scope info object off the stack.
      */
     ScopeInfo = AcpiUtPopGenericState (&WalkState->ScopeInfo);
-    if (!ScopeInfo)
+    if(!ScopeInfo)
     {
         return_ACPI_STATUS (AE_STACK_UNDERFLOW);
     }
@@ -325,7 +325,7 @@ AcpiDsScopeStackPop (
         AcpiUtGetTypeName (ScopeInfo->Common.Value)));
 
     NewScopeInfo = WalkState->ScopeInfo;
-    if (NewScopeInfo)
+    if(NewScopeInfo)
     {
         ACPI_DEBUG_PRINT_RAW ((ACPI_DB_EXEC, "[%4.4s] (%s)\n",
             AcpiUtGetNodeName (NewScopeInfo->Scope.Node),

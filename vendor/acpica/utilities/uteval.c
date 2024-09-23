@@ -195,7 +195,7 @@ AcpiUtEvaluateObject (
     /* Allocate the evaluation information block */
 
     Info = ACPI_ALLOCATE_ZEROED (sizeof (ACPI_EVALUATE_INFO));
-    if (!Info)
+    if(!Info)
     {
         return_ACPI_STATUS (AE_NO_MEMORY);
     }
@@ -206,9 +206,9 @@ AcpiUtEvaluateObject (
     /* Evaluate the object/method */
 
     Status = AcpiNsEvaluate (Info);
-    if (ACPI_FAILURE (Status))
+    if(ACPI_FAILURE (Status))
     {
-        if (Status == AE_NOT_FOUND)
+        if(Status == AE_NOT_FOUND)
         {
             ACPI_DEBUG_PRINT ((ACPI_DB_EXEC, "[%4.4s.%s] was not found\n",
                 AcpiUtGetNodeName (PrefixNode), Path));
@@ -224,9 +224,9 @@ AcpiUtEvaluateObject (
 
     /* Did we get a return object? */
 
-    if (!Info->ReturnObject)
+    if(!Info->ReturnObject)
     {
-        if (ExpectedReturnBtypes)
+        if(ExpectedReturnBtypes)
         {
             ACPI_ERROR_METHOD ("No object was returned from",
                 PrefixNode, Path, AE_NOT_EXIST);
@@ -267,7 +267,7 @@ AcpiUtEvaluateObject (
         break;
     }
 
-    if ((AcpiGbl_EnableInterpreterSlack) &&
+    if((AcpiGbl_EnableInterpreterSlack) &&
         (!ExpectedReturnBtypes))
     {
         /*
@@ -281,7 +281,7 @@ AcpiUtEvaluateObject (
 
     /* Is the return object one of the expected types? */
 
-    if (!(ExpectedReturnBtypes & ReturnBtype))
+    if(!(ExpectedReturnBtypes & ReturnBtype))
     {
         ACPI_ERROR_METHOD ("Return object type is incorrect",
             PrefixNode, Path, AE_TYPE);
@@ -340,7 +340,7 @@ AcpiUtEvaluateNumericObject (
 
     Status = AcpiUtEvaluateObject (DeviceNode, ObjectName,
         ACPI_BTYPE_INTEGER, &ObjDesc);
-    if (ACPI_FAILURE (Status))
+    if(ACPI_FAILURE (Status))
     {
         return_ACPI_STATUS (Status);
     }
@@ -387,9 +387,9 @@ AcpiUtExecute_STA (
 
     Status = AcpiUtEvaluateObject (DeviceNode, METHOD_NAME__STA,
         ACPI_BTYPE_INTEGER, &ObjDesc);
-    if (ACPI_FAILURE (Status))
+    if(ACPI_FAILURE (Status))
     {
-        if (AE_NOT_FOUND == Status)
+        if(AE_NOT_FOUND == Status)
         {
             /*
              * if _STA does not exist, then (as per the ACPI specification),
@@ -461,7 +461,7 @@ AcpiUtExecutePowerMethods (
         Status = AcpiUtEvaluateObject (DeviceNode,
             ACPI_CAST_PTR (char, MethodNames[i]),
             ACPI_BTYPE_INTEGER, &ObjDesc);
-        if (ACPI_SUCCESS (Status))
+        if(ACPI_SUCCESS (Status))
         {
             OutValues[i] = (UINT8) ObjDesc->Integer.Value;
 
@@ -473,7 +473,7 @@ AcpiUtExecutePowerMethods (
         }
 
         OutValues[i] = ACPI_UINT8_MAX;
-        if (Status == AE_NOT_FOUND)
+        if(Status == AE_NOT_FOUND)
         {
             continue; /* Ignore if not found */
         }

@@ -175,7 +175,7 @@ AcpiTbGetRsdpLength (
     ACPI_TABLE_RSDP         *Rsdp)
 {
 
-    if (!ACPI_VALIDATE_RSDP_SIG (Rsdp->Signature))
+    if(!ACPI_VALIDATE_RSDP_SIG (Rsdp->Signature))
     {
         /* BAD Signature */
 
@@ -184,7 +184,7 @@ AcpiTbGetRsdpLength (
 
     /* "Length" field is available if table version >= 2 */
 
-    if (Rsdp->Revision >= 2)
+    if(Rsdp->Revision >= 2)
     {
         return (Rsdp->Length);
     }
@@ -218,7 +218,7 @@ AcpiTbValidateRsdp (
      * Note: Sometimes there exists more than one RSDP in memory; the valid
      * RSDP has a valid checksum, all others have an invalid checksum.
      */
-    if (!ACPI_VALIDATE_RSDP_SIG (Rsdp->Signature))
+    if(!ACPI_VALIDATE_RSDP_SIG (Rsdp->Signature))
     {
         /* Nope, BAD Signature */
 
@@ -227,14 +227,14 @@ AcpiTbValidateRsdp (
 
     /* Check the standard checksum */
 
-    if (AcpiUtChecksum ((UINT8 *) Rsdp, ACPI_RSDP_CHECKSUM_LENGTH) != 0)
+    if(AcpiUtChecksum ((UINT8 *) Rsdp, ACPI_RSDP_CHECKSUM_LENGTH) != 0)
     {
         return (AE_BAD_CHECKSUM);
     }
 
     /* Check extended checksum if table version >= 2 */
 
-    if ((Rsdp->Revision >= 2) &&
+    if((Rsdp->Revision >= 2) &&
         (AcpiUtChecksum ((UINT8 *) Rsdp, ACPI_RSDP_XCHECKSUM_LENGTH) != 0))
     {
         return (AE_BAD_CHECKSUM);
@@ -282,7 +282,7 @@ AcpiFindRootPointer (
     TablePtr = AcpiOsMapMemory (
         (ACPI_PHYSICAL_ADDRESS) ACPI_EBDA_PTR_LOCATION,
         ACPI_EBDA_PTR_LENGTH);
-    if (!TablePtr)
+    if(!TablePtr)
     {
         ACPI_ERROR ((AE_INFO,
             "Could not map memory at 0x%8.8X for length %u",
@@ -304,7 +304,7 @@ AcpiFindRootPointer (
      * Check that the EBDA pointer from memory is sane and does not point
      * above valid low memory
      */
-    if (PhysicalAddress > 0x400 &&
+    if(PhysicalAddress > 0x400 &&
         PhysicalAddress < 0xA0000)
     {
         /*
@@ -322,7 +322,7 @@ AcpiFindRootPointer (
         TablePtr = AcpiOsMapMemory (
             (ACPI_PHYSICAL_ADDRESS) PhysicalAddress,
             EbdaWindowSize);
-        if (!TablePtr)
+        if(!TablePtr)
         {
             ACPI_ERROR ((AE_INFO,
                 "Could not map memory at 0x%8.8X for length %u",
@@ -335,7 +335,7 @@ AcpiFindRootPointer (
             TablePtr, EbdaWindowSize);
         AcpiOsUnmapMemory (TablePtr, EbdaWindowSize);
 
-        if (MemRover)
+        if(MemRover)
         {
             /* Return the physical address */
 
@@ -354,7 +354,7 @@ AcpiFindRootPointer (
         (ACPI_PHYSICAL_ADDRESS) ACPI_HI_RSDP_WINDOW_BASE,
         ACPI_HI_RSDP_WINDOW_SIZE);
 
-    if (!TablePtr)
+    if(!TablePtr)
     {
         ACPI_ERROR ((AE_INFO,
             "Could not map memory at 0x%8.8X for length %u",
@@ -367,7 +367,7 @@ AcpiFindRootPointer (
         TablePtr, ACPI_HI_RSDP_WINDOW_SIZE);
     AcpiOsUnmapMemory (TablePtr, ACPI_HI_RSDP_WINDOW_SIZE);
 
-    if (MemRover)
+    if(MemRover)
     {
         /* Return the physical address */
 
@@ -424,7 +424,7 @@ AcpiTbScanMemoryForRsdp (
 
         Status = AcpiTbValidateRsdp (
             ACPI_CAST_PTR (ACPI_TABLE_RSDP, MemRover));
-        if (ACPI_SUCCESS (Status))
+        if(ACPI_SUCCESS (Status))
         {
             /* Sig and checksum valid, we have found a real RSDP */
 

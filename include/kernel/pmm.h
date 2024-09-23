@@ -97,14 +97,28 @@ typedef struct {
   page_directory_pointer_entry_t entries[512];        // Array of Page Directory Entries
 } page_directory_pointer_t __attribute__((aligned(4096)));
 
+typedef struct pml4_map_t {
+  uint64_t pml4;
+  uint64_t pdpt;
+  uint64_t pd;
+  uint64_t pt;
+  uint64_t frame;
+  uint64_t offset;
+} pml4_map_t;
+
+typedef pml4_map_t* pml4_map_p;
 
 uintptr_t read_cr2();
 uintptr_t read_cr3();
 
+void debug_heap();
 void pmm_init();
 void write_cr3(uint64_t value);
 
 uint64_t get_first_free_page();
+
+void pml4_map(uintptr_t vaddr, pml4_map_t* map);
+
 uintptr_t get_first_free_virtual_address(uintptr_t offset);
 
 uintptr_t physical_to_virtual(uintptr_t physical_address);

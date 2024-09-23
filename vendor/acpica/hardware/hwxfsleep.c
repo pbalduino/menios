@@ -234,9 +234,9 @@ AcpiHwSetFirmwareWakingVector (
 
     Facs->FirmwareWakingVector = (UINT32) PhysicalAddress;
 
-    if (Facs->Length > 32)
+    if(Facs->Length > 32)
     {
-        if (Facs->Version >= 1)
+        if(Facs->Version >= 1)
         {
             /* Set the 64-bit vector */
 
@@ -277,7 +277,7 @@ AcpiSetFirmwareWakingVector (
 
     ACPI_FUNCTION_TRACE (AcpiSetFirmwareWakingVector);
 
-    if (AcpiGbl_FACS)
+    if(AcpiGbl_FACS)
     {
         (void) AcpiHwSetFirmwareWakingVector (AcpiGbl_FACS,
             PhysicalAddress, PhysicalAddress64);
@@ -294,7 +294,7 @@ ACPI_EXPORT_SYMBOL (AcpiSetFirmwareWakingVector)
  *      AcpiEnterSleepStateS4bios
  */
 
-#if (!ACPI_REDUCED_HARDWARE)
+#if(!ACPI_REDUCED_HARDWARE)
 /*******************************************************************************
  *
  * FUNCTION:    AcpiEnterSleepStateS4bios
@@ -322,13 +322,13 @@ AcpiEnterSleepStateS4bios (
     /* Clear the wake status bit (PM1) */
 
     Status = AcpiWriteBitRegister (ACPI_BITREG_WAKE_STATUS, ACPI_CLEAR_STATUS);
-    if (ACPI_FAILURE (Status))
+    if(ACPI_FAILURE (Status))
     {
         return_ACPI_STATUS (Status);
     }
 
     Status = AcpiHwClearAcpiStatus ();
-    if (ACPI_FAILURE (Status))
+    if(ACPI_FAILURE (Status))
     {
         return_ACPI_STATUS (Status);
     }
@@ -338,21 +338,21 @@ AcpiEnterSleepStateS4bios (
      * 2) Enable all wakeup GPEs
      */
     Status = AcpiHwDisableAllGpes ();
-    if (ACPI_FAILURE (Status))
+    if(ACPI_FAILURE (Status))
     {
         return_ACPI_STATUS (Status);
     }
     AcpiGbl_SystemAwakeAndRunning = FALSE;
 
     Status = AcpiHwEnableAllWakeupGpes ();
-    if (ACPI_FAILURE (Status))
+    if(ACPI_FAILURE (Status))
     {
         return_ACPI_STATUS (Status);
     }
 
     Status = AcpiHwWritePort (AcpiGbl_FADT.SmiCommand,
         (UINT32) AcpiGbl_FADT.S4BiosRequest, 8);
-    if (ACPI_FAILURE (Status))
+    if(ACPI_FAILURE (Status))
     {
         return_ACPI_STATUS (Status);
     }
@@ -360,7 +360,7 @@ AcpiEnterSleepStateS4bios (
     do {
         AcpiOsStall (ACPI_USEC_PER_MSEC);
         Status = AcpiReadBitRegister (ACPI_BITREG_WAKE_STATUS, &InValue);
-        if (ACPI_FAILURE (Status))
+        if(ACPI_FAILURE (Status))
         {
             return_ACPI_STATUS (Status);
         }
@@ -398,7 +398,7 @@ AcpiHwSleepDispatch (
     ACPI_SLEEP_FUNCTIONS    *SleepFunctions = &AcpiSleepDispatch[FunctionId];
 
 
-#if (!ACPI_REDUCED_HARDWARE)
+#if(!ACPI_REDUCED_HARDWARE)
     /*
      * If the Hardware Reduced flag is set (from the FADT), we must
      * use the extended sleep registers (FADT). Note: As per the ACPI
@@ -406,7 +406,7 @@ AcpiHwSleepDispatch (
      * platforms only. They are not general-purpose replacements for the
      * legacy PM register sleep support.
      */
-    if (AcpiGbl_ReducedHardware)
+    if(AcpiGbl_ReducedHardware)
     {
         Status = SleepFunctions->ExtendedFunction (SleepState);
     }
@@ -461,14 +461,14 @@ AcpiEnterSleepStatePrep (
 
     Status = AcpiGetSleepTypeData (SleepState,
         &AcpiGbl_SleepTypeA, &AcpiGbl_SleepTypeB);
-    if (ACPI_FAILURE (Status))
+    if(ACPI_FAILURE (Status))
     {
         return_ACPI_STATUS (Status);
     }
 
     Status = AcpiGetSleepTypeData (ACPI_STATE_S0,
         &AcpiGbl_SleepTypeAS0, &AcpiGbl_SleepTypeBS0);
-    if (ACPI_FAILURE (Status)) {
+    if(ACPI_FAILURE (Status)) {
         AcpiGbl_SleepTypeAS0 = ACPI_SLEEP_TYPE_INVALID;
     }
 
@@ -480,7 +480,7 @@ AcpiEnterSleepStatePrep (
     Arg.Integer.Value = SleepState;
 
     Status = AcpiEvaluateObject (NULL, METHOD_PATHNAME__PTS, &ArgList, NULL);
-    if (ACPI_FAILURE (Status) && Status != AE_NOT_FOUND)
+    if(ACPI_FAILURE (Status) && Status != AE_NOT_FOUND)
     {
         return_ACPI_STATUS (Status);
     }
@@ -546,7 +546,7 @@ AcpiEnterSleepState (
     ACPI_FUNCTION_TRACE (AcpiEnterSleepState);
 
 
-    if ((AcpiGbl_SleepTypeA > ACPI_SLEEP_TYPE_MAX) ||
+    if((AcpiGbl_SleepTypeA > ACPI_SLEEP_TYPE_MAX) ||
         (AcpiGbl_SleepTypeB > ACPI_SLEEP_TYPE_MAX))
     {
         ACPI_ERROR ((AE_INFO, "Sleep values out of range: A=0x%X B=0x%X",

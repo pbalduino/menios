@@ -187,7 +187,7 @@ AcpiUtAllocateOwnerId (
 
     /* Guard against multiple allocations of ID to the same location */
 
-    if (*OwnerId)
+    if(*OwnerId)
     {
         ACPI_ERROR ((AE_INFO,
             "Owner ID [0x%3.3X] already exists", *OwnerId));
@@ -197,7 +197,7 @@ AcpiUtAllocateOwnerId (
     /* Mutex for the global ID mask */
 
     Status = AcpiUtAcquireMutex (ACPI_MTX_CACHES);
-    if (ACPI_FAILURE (Status))
+    if(ACPI_FAILURE (Status))
     {
         return_ACPI_STATUS (Status);
     }
@@ -211,14 +211,14 @@ AcpiUtAllocateOwnerId (
          i < (ACPI_NUM_OWNERID_MASKS + 1);
          i++, j++)
     {
-        if (j >= ACPI_NUM_OWNERID_MASKS)
+        if(j >= ACPI_NUM_OWNERID_MASKS)
         {
             j = 0;  /* Wraparound to start of mask array */
         }
 
         for (k = AcpiGbl_NextOwnerIdOffset; k < 32; k++)
         {
-            if (AcpiGbl_OwnerIdMask[j] == ACPI_UINT32_MAX)
+            if(AcpiGbl_OwnerIdMask[j] == ACPI_UINT32_MAX)
             {
                 /* There are no free IDs in this mask */
 
@@ -231,7 +231,7 @@ AcpiUtAllocateOwnerId (
              * int. Some compilers or runtime error detection may flag this as
              * an error.
              */
-            if (!(AcpiGbl_OwnerIdMask[j] & ((UINT32) 1 << k)))
+            if(!(AcpiGbl_OwnerIdMask[j] & ((UINT32) 1 << k)))
             {
                 /*
                  * Found a free ID. The actual ID is the bit index plus one,
@@ -313,7 +313,7 @@ AcpiUtReleaseOwnerId (
 
     /* Zero is not a valid OwnerID */
 
-    if (OwnerId == 0)
+    if(OwnerId == 0)
     {
         ACPI_ERROR ((AE_INFO, "Invalid OwnerId: 0x%3.3X", OwnerId));
         return_VOID;
@@ -322,7 +322,7 @@ AcpiUtReleaseOwnerId (
     /* Mutex for the global ID mask */
 
     Status = AcpiUtAcquireMutex (ACPI_MTX_CACHES);
-    if (ACPI_FAILURE (Status))
+    if(ACPI_FAILURE (Status))
     {
         return_VOID;
     }
@@ -338,7 +338,7 @@ AcpiUtReleaseOwnerId (
 
     /* Free the owner ID only if it is valid */
 
-    if (AcpiGbl_OwnerIdMask[Index] & Bit)
+    if(AcpiGbl_OwnerIdMask[Index] & Bit)
     {
         AcpiGbl_OwnerIdMask[Index] ^= Bit;
     }

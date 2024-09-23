@@ -190,22 +190,22 @@ AcpiPsDeleteParseTree (
 
     while (Op)
     {
-        if (Op != Parent)
+        if(Op != Parent)
         {
             /* This is the descending case */
 
-            if (ACPI_IS_DEBUG_ENABLED (ACPI_LV_PARSE_TREES, _COMPONENT))
+            if(ACPI_IS_DEBUG_ENABLED (ACPI_LV_PARSE_TREES, _COMPONENT))
             {
                 /* This debug option will print the entire parse tree */
 
                 AcpiOsPrintf ("        %*.s%s %p", (Level * 4), " ",
                     AcpiPsGetOpcodeName (Op->Common.AmlOpcode), Op);
 
-                if (Op->Named.AmlOpcode == AML_INT_NAMEPATH_OP)
+                if(Op->Named.AmlOpcode == AML_INT_NAMEPATH_OP)
                 {
                     AcpiOsPrintf ("    %4.4s", Op->Common.Value.String);
                 }
-                if (Op->Named.AmlOpcode == AML_STRING_OP)
+                if(Op->Named.AmlOpcode == AML_STRING_OP)
                 {
                     AcpiOsPrintf ("    %s", Op->Common.Value.String);
                 }
@@ -215,7 +215,7 @@ AcpiPsDeleteParseTree (
             /* Look for an argument or child of the current op */
 
             Next = AcpiPsGetArg (Op, 0);
-            if (Next)
+            if(Next)
             {
                 /* Still going downward in tree (Op is not completed yet) */
 
@@ -234,12 +234,12 @@ AcpiPsDeleteParseTree (
 
         /* If we are back to the starting point, the walk is complete. */
 
-        if (Op == SubtreeRoot)
+        if(Op == SubtreeRoot)
         {
             return_VOID;
         }
 
-        if (Next)
+        if(Next)
         {
             Op = Next;
         }

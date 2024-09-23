@@ -227,7 +227,7 @@ AcpiExDoConcatenate (
 
         Status = AcpiExConvertToObjectTypeString (
             Operand0, &LocalOperand0);
-        if (ACPI_FAILURE (Status))
+        if(ACPI_FAILURE (Status))
         {
             goto Cleanup;
         }
@@ -253,7 +253,7 @@ AcpiExDoConcatenate (
 
         Status = AcpiExConvertToObjectTypeString (
             Operand1, &LocalOperand1);
-        if (ACPI_FAILURE (Status))
+        if(ACPI_FAILURE (Status))
         {
             goto Cleanup;
         }
@@ -310,14 +310,14 @@ AcpiExDoConcatenate (
         Status = AE_AML_INTERNAL;
     }
 
-    if (ACPI_FAILURE (Status))
+    if(ACPI_FAILURE (Status))
     {
         goto Cleanup;
     }
 
     /* Take care with any newly created operand objects */
 
-    if ((LocalOperand1 != Operand1) &&
+    if((LocalOperand1 != Operand1) &&
         (LocalOperand1 != TempOperand1))
     {
         AcpiUtRemoveReference (LocalOperand1);
@@ -345,7 +345,7 @@ AcpiExDoConcatenate (
 
         ReturnDesc = AcpiUtCreateBufferObject (
             (ACPI_SIZE) ACPI_MUL_2 (AcpiGbl_IntegerByteWidth));
-        if (!ReturnDesc)
+        if(!ReturnDesc)
         {
             Status = AE_NO_MEMORY;
             goto Cleanup;
@@ -371,7 +371,7 @@ AcpiExDoConcatenate (
         ReturnDesc = AcpiUtCreateStringObject (
             ((ACPI_SIZE) LocalOperand0->String.Length +
             LocalOperand1->String.Length));
-        if (!ReturnDesc)
+        if(!ReturnDesc)
         {
             Status = AE_NO_MEMORY;
             goto Cleanup;
@@ -392,7 +392,7 @@ AcpiExDoConcatenate (
         ReturnDesc = AcpiUtCreateBufferObject (
             ((ACPI_SIZE) Operand0->Buffer.Length +
             LocalOperand1->Buffer.Length));
-        if (!ReturnDesc)
+        if(!ReturnDesc)
         {
             Status = AE_NO_MEMORY;
             goto Cleanup;
@@ -422,12 +422,12 @@ AcpiExDoConcatenate (
     *ActualReturnDesc = ReturnDesc;
 
 Cleanup:
-    if (LocalOperand0 != Operand0)
+    if(LocalOperand0 != Operand0)
     {
         AcpiUtRemoveReference (LocalOperand0);
     }
 
-    if (LocalOperand1 != Operand1)
+    if(LocalOperand1 != Operand1)
     {
         AcpiUtRemoveReference (LocalOperand1);
     }
@@ -464,7 +464,7 @@ AcpiExConvertToObjectTypeString (
 
     ReturnDesc = AcpiUtCreateStringObject (
         ((ACPI_SIZE) strlen (TypeString) + 9)); /* 9 For "[ Object]" */
-    if (!ReturnDesc)
+    if(!ReturnDesc)
     {
         return (AE_NO_MEMORY);
     }
@@ -521,7 +521,7 @@ AcpiExConcatTemplate (
     /* Get the length of the first resource template */
 
     Status = AcpiUtGetResourceEndTag (Operand0, &EndTag);
-    if (ACPI_FAILURE (Status))
+    if(ACPI_FAILURE (Status))
     {
         return_ACPI_STATUS (Status);
     }
@@ -531,7 +531,7 @@ AcpiExConcatTemplate (
     /* Get the length of the second resource template */
 
     Status = AcpiUtGetResourceEndTag (Operand1, &EndTag);
-    if (ACPI_FAILURE (Status))
+    if(ACPI_FAILURE (Status))
     {
         return_ACPI_STATUS (Status);
     }
@@ -545,7 +545,7 @@ AcpiExConcatTemplate (
     /* Create a new buffer object for the result (with one EndTag) */
 
     ReturnDesc = AcpiUtCreateBufferObject (NewLength);
-    if (!ReturnDesc)
+    if(!ReturnDesc)
     {
         return_ACPI_STATUS (AE_NO_MEMORY);
     }

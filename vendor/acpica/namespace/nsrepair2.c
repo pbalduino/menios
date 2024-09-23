@@ -327,7 +327,7 @@ AcpiNsComplexRepairs (
     /* Check if this name is in the list of repairable names */
 
     Predefined = AcpiNsMatchComplexRepair (Node);
-    if (!Predefined)
+    if(!Predefined)
     {
         return_ACPI_STATUS (ValidateStatus);
     }
@@ -361,7 +361,7 @@ AcpiNsMatchComplexRepair (
     ThisName = AcpiNsRepairableNames;
     while (ThisName->RepairFunction)
     {
-        if (ACPI_COMPARE_NAMESEG (Node->Name.Ascii, ThisName->Name))
+        if(ACPI_COMPARE_NAMESEG (Node->Name.Ascii, ThisName->Name))
         {
             return (ThisName);
         }
@@ -442,14 +442,14 @@ AcpiNsRepair_FDE (
 
         /* This is the expected type. Length should be (at least) 5 DWORDs */
 
-        if (ReturnObject->Buffer.Length >= ACPI_FDE_DWORD_BUFFER_SIZE)
+        if(ReturnObject->Buffer.Length >= ACPI_FDE_DWORD_BUFFER_SIZE)
         {
             return (AE_OK);
         }
 
         /* We can only repair if we have exactly 5 BYTEs */
 
-        if (ReturnObject->Buffer.Length != ACPI_FDE_BYTE_BUFFER_SIZE)
+        if(ReturnObject->Buffer.Length != ACPI_FDE_BYTE_BUFFER_SIZE)
         {
             ACPI_WARN_PREDEFINED ((AE_INFO,
                 Info->FullPathname, Info->NodeFlags,
@@ -463,7 +463,7 @@ AcpiNsRepair_FDE (
 
         BufferObject = AcpiUtCreateBufferObject (
             ACPI_FDE_DWORD_BUFFER_SIZE);
-        if (!BufferObject)
+        if(!BufferObject)
         {
             return (AE_NO_MEMORY);
         }
@@ -533,7 +533,7 @@ AcpiNsRepair_CID (
 
     /* Check for _CID as a simple string */
 
-    if (ReturnObject->Common.Type == ACPI_TYPE_STRING)
+    if(ReturnObject->Common.Type == ACPI_TYPE_STRING)
     {
         Status = AcpiNsRepair_HID (Info, ReturnObjectPtr);
         return_ACPI_STATUS (Status);
@@ -541,7 +541,7 @@ AcpiNsRepair_CID (
 
     /* Exit if not a Package */
 
-    if (ReturnObject->Common.Type != ACPI_TYPE_PACKAGE)
+    if(ReturnObject->Common.Type != ACPI_TYPE_PACKAGE)
     {
         return_ACPI_STATUS (AE_OK);
     }
@@ -555,12 +555,12 @@ AcpiNsRepair_CID (
         OriginalRefCount = OriginalElement->Common.ReferenceCount;
 
         Status = AcpiNsRepair_HID (Info, ElementPtr);
-        if (ACPI_FAILURE (Status))
+        if(ACPI_FAILURE (Status))
         {
             return_ACPI_STATUS (Status);
         }
 
-        if (OriginalElement != *ElementPtr)
+        if(OriginalElement != *ElementPtr)
         {
             /* Update reference count of new object */
 
@@ -620,7 +620,7 @@ AcpiNsRepair_CST (
         OuterElements = &ReturnObject->Package.Elements[i + 1];
         Removing = FALSE;
 
-        if ((*OuterElements)->Package.Count == 0)
+        if((*OuterElements)->Package.Count == 0)
         {
             ACPI_WARN_PREDEFINED ((AE_INFO,
                 Info->FullPathname, Info->NodeFlags,
@@ -630,7 +630,7 @@ AcpiNsRepair_CST (
         }
 
         ObjDesc = (*OuterElements)->Package.Elements[1]; /* Index1 = Type */
-        if ((UINT32) ObjDesc->Integer.Value == 0)
+        if((UINT32) ObjDesc->Integer.Value == 0)
         {
             ACPI_WARN_PREDEFINED ((AE_INFO,
                 Info->FullPathname, Info->NodeFlags,
@@ -639,7 +639,7 @@ AcpiNsRepair_CST (
         }
 
 RemoveElement:
-        if (Removing)
+        if(Removing)
         {
             AcpiNsRemoveElement (ReturnObject, i + 1);
             OuterElementCount--;
@@ -661,7 +661,7 @@ RemoveElement:
      */
     Status = AcpiNsCheckSortedList (Info, ReturnObject, 1, 4, 1,
         ACPI_SORT_ASCENDING, "C-State Type");
-    if (ACPI_FAILURE (Status))
+    if(ACPI_FAILURE (Status))
     {
         return (Status);
     }
@@ -701,12 +701,12 @@ AcpiNsRepair_HID (
 
     /* We only care about string _HID objects (not integers) */
 
-    if (ReturnObject->Common.Type != ACPI_TYPE_STRING)
+    if(ReturnObject->Common.Type != ACPI_TYPE_STRING)
     {
         return_ACPI_STATUS (AE_OK);
     }
 
-    if (ReturnObject->String.Length == 0)
+    if(ReturnObject->String.Length == 0)
     {
         ACPI_WARN_PREDEFINED ((AE_INFO,
             Info->FullPathname, Info->NodeFlags,
@@ -721,7 +721,7 @@ AcpiNsRepair_HID (
     /* It is simplest to always create a new string object */
 
     NewString = AcpiUtCreateStringObject (ReturnObject->String.Length);
-    if (!NewString)
+    if(!NewString)
     {
         return_ACPI_STATUS (AE_NO_MEMORY);
     }
@@ -733,7 +733,7 @@ AcpiNsRepair_HID (
      * Examples: "*PNP0C03", "*ACPI0003"
      */
     Source = ReturnObject->String.Pointer;
-    if (*Source == '*')
+    if(*Source == '*')
     {
         Source++;
         NewString->String.Length--;
@@ -804,7 +804,7 @@ AcpiNsRepair_PRT (
 
         /* Check for minimum required element count */
 
-        if (SubPackage->Package.Count < 4)
+        if(SubPackage->Package.Count < 4)
         {
             continue;
         }
@@ -816,7 +816,7 @@ AcpiNsRepair_PRT (
          * other ACPI implementations.
          */
         ObjDesc = SubObjectList[3];
-        if (!ObjDesc || (ObjDesc->Common.Type != ACPI_TYPE_INTEGER))
+        if(!ObjDesc || (ObjDesc->Common.Type != ACPI_TYPE_INTEGER))
         {
             SubObjectList[3] = SubObjectList[2];
             SubObjectList[2] = ObjDesc;
@@ -873,7 +873,7 @@ AcpiNsRepair_PSS (
      */
     Status = AcpiNsCheckSortedList (Info, ReturnObject, 0, 6, 0,
         ACPI_SORT_DESCENDING, "CpuFrequency");
-    if (ACPI_FAILURE (Status))
+    if(ACPI_FAILURE (Status))
     {
         return (Status);
     }
@@ -891,7 +891,7 @@ AcpiNsRepair_PSS (
         Elements = (*OuterElements)->Package.Elements;
         ObjDesc = Elements[1]; /* Index1 = PowerDissipation */
 
-        if ((UINT32) ObjDesc->Integer.Value > PreviousValue)
+        if((UINT32) ObjDesc->Integer.Value > PreviousValue)
         {
             ACPI_WARN_PREDEFINED ((AE_INFO,
                 Info->FullPathname, Info->NodeFlags,
@@ -942,7 +942,7 @@ AcpiNsRepair_TSS (
      */
     Status = AcpiNsGetNode (Info->Node, "^_PSS",
         ACPI_NS_NO_UPSEARCH, &Node);
-    if (ACPI_SUCCESS (Status))
+    if(ACPI_SUCCESS (Status))
     {
         return (AE_OK);
     }
@@ -997,7 +997,7 @@ AcpiNsCheckSortedList (
 
     /* The top-level object must be a package */
 
-    if (ReturnObject->Common.Type != ACPI_TYPE_PACKAGE)
+    if(ReturnObject->Common.Type != ACPI_TYPE_PACKAGE)
     {
         return (AE_AML_OPERAND_TYPE);
     }
@@ -1008,7 +1008,7 @@ AcpiNsCheckSortedList (
      * to AcpiNsRemoveNullElements.
      */
     OuterElementCount = ReturnObject->Package.Count;
-    if (!OuterElementCount || StartIndex >= OuterElementCount)
+    if(!OuterElementCount || StartIndex >= OuterElementCount)
     {
         return (AE_AML_PACKAGE_LIMIT);
     }
@@ -1017,7 +1017,7 @@ AcpiNsCheckSortedList (
     OuterElementCount -= StartIndex;
 
     PreviousValue = 0;
-    if (SortDirection == ACPI_SORT_DESCENDING)
+    if(SortDirection == ACPI_SORT_DESCENDING)
     {
         PreviousValue = ACPI_UINT32_MAX;
     }
@@ -1028,14 +1028,14 @@ AcpiNsCheckSortedList (
     {
         /* Each element of the top-level package must also be a package */
 
-        if ((*OuterElements)->Common.Type != ACPI_TYPE_PACKAGE)
+        if((*OuterElements)->Common.Type != ACPI_TYPE_PACKAGE)
         {
             return (AE_AML_OPERAND_TYPE);
         }
 
         /* Each subpackage must have the minimum length */
 
-        if ((*OuterElements)->Package.Count < ExpectedCount)
+        if((*OuterElements)->Package.Count < ExpectedCount)
         {
             return (AE_AML_PACKAGE_LIMIT);
         }
@@ -1043,7 +1043,7 @@ AcpiNsCheckSortedList (
         Elements = (*OuterElements)->Package.Elements;
         ObjDesc = Elements[SortIndex];
 
-        if (ObjDesc->Common.Type != ACPI_TYPE_INTEGER)
+        if(ObjDesc->Common.Type != ACPI_TYPE_INTEGER)
         {
             return (AE_AML_OPERAND_TYPE);
         }
@@ -1052,7 +1052,7 @@ AcpiNsCheckSortedList (
          * The list must be sorted in the specified order. If we detect a
          * discrepancy, sort the entire list.
          */
-        if (((SortDirection == ACPI_SORT_ASCENDING) &&
+        if(((SortDirection == ACPI_SORT_ASCENDING) &&
                 (ObjDesc->Integer.Value < PreviousValue)) ||
             ((SortDirection == ACPI_SORT_DESCENDING) &&
                 (ObjDesc->Integer.Value > PreviousValue)))
@@ -1117,7 +1117,7 @@ AcpiNsSortList (
             ObjDesc1 = Elements[j-1]->Package.Elements[Index];
             ObjDesc2 = Elements[j]->Package.Elements[Index];
 
-            if (((SortDirection == ACPI_SORT_ASCENDING) &&
+            if(((SortDirection == ACPI_SORT_ASCENDING) &&
                     (ObjDesc1->Integer.Value > ObjDesc2->Integer.Value)) ||
 
                 ((SortDirection == ACPI_SORT_DESCENDING) &&
@@ -1170,7 +1170,7 @@ AcpiNsRemoveElement (
 
     for (i = 0; i < Count; i++)
     {
-        if (i == Index)
+        if(i == Index)
         {
             AcpiUtRemoveReference (*Source); /* Remove one ref for being in pkg */
             AcpiUtRemoveReference (*Source);

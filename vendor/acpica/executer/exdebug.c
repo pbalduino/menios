@@ -198,7 +198,7 @@ AcpiExDoDebugObject (
 
     /* Output must be enabled via the DebugObject global or the DbgLevel */
 
-    if (!AcpiGbl_EnableAmlDebugObject &&
+    if(!AcpiGbl_EnableAmlDebugObject &&
         !(AcpiDbgLevel & ACPI_LV_DEBUG_OBJECT))
     {
         return_VOID;
@@ -206,11 +206,11 @@ AcpiExDoDebugObject (
 
     /* Newline -- don't emit the line header */
 
-    if (SourceDesc &&
+    if(SourceDesc &&
         (ACPI_GET_DESCRIPTOR_TYPE (SourceDesc) == ACPI_DESC_TYPE_OPERAND) &&
         (SourceDesc->Common.Type == ACPI_TYPE_STRING))
     {
-        if ((SourceDesc->String.Length == 1) &&
+        if((SourceDesc->String.Length == 1) &&
             (*SourceDesc->String.Pointer == '\n'))
         {
             AcpiOsPrintf ("\n");
@@ -222,9 +222,9 @@ AcpiExDoDebugObject (
      * Print line header as long as we are not in the middle of an
      * object display
      */
-    if (!((Level > 0) && Index == 0))
+    if(!((Level > 0) && Index == 0))
     {
-        if (AcpiGbl_DisplayDebugTimer)
+        if(AcpiGbl_DisplayDebugTimer)
         {
             /*
              * We will emit the current timer value (in microseconds) with each
@@ -246,34 +246,34 @@ AcpiExDoDebugObject (
 
     /* Display the index for package output only */
 
-    if (Index > 0)
+    if(Index > 0)
     {
        AcpiOsPrintf ("(%.2u) ", Index - 1);
     }
 
-    if (!SourceDesc)
+    if(!SourceDesc)
     {
         AcpiOsPrintf ("[Null Object]\n");
         return_VOID;
     }
 
-    if (ACPI_GET_DESCRIPTOR_TYPE (SourceDesc) == ACPI_DESC_TYPE_OPERAND)
+    if(ACPI_GET_DESCRIPTOR_TYPE (SourceDesc) == ACPI_DESC_TYPE_OPERAND)
     {
         /* No object type prefix needed for integers and strings */
 
-        if ((SourceDesc->Common.Type != ACPI_TYPE_INTEGER) &&
+        if((SourceDesc->Common.Type != ACPI_TYPE_INTEGER) &&
             (SourceDesc->Common.Type != ACPI_TYPE_STRING))
         {
             AcpiOsPrintf ("%s  ", AcpiUtGetObjectTypeName (SourceDesc));
         }
 
-        if (!AcpiUtValidInternalObject (SourceDesc))
+        if(!AcpiUtValidInternalObject (SourceDesc))
         {
            AcpiOsPrintf ("%p, Invalid Internal Object!\n", SourceDesc);
            return_VOID;
         }
     }
-    else if (ACPI_GET_DESCRIPTOR_TYPE (SourceDesc) == ACPI_DESC_TYPE_NAMED)
+    else if(ACPI_GET_DESCRIPTOR_TYPE (SourceDesc) == ACPI_DESC_TYPE_NAMED)
     {
         AcpiOsPrintf ("%s  (Node %p)\n",
             AcpiUtGetTypeName (((ACPI_NAMESPACE_NODE *) SourceDesc)->Type),
@@ -293,7 +293,7 @@ AcpiExDoDebugObject (
 
         /* Output correct integer width */
 
-        if (AcpiGbl_IntegerByteWidth == 4)
+        if(AcpiGbl_IntegerByteWidth == 4)
         {
             AcpiOsPrintf ("0x%8.8X\n",
                 (UINT32) SourceDesc->Integer.Value);
@@ -361,9 +361,9 @@ AcpiExDoDebugObject (
 
         /* Check for valid node first, then valid object */
 
-        if (SourceDesc->Reference.Node)
+        if(SourceDesc->Reference.Node)
         {
-            if (ACPI_GET_DESCRIPTOR_TYPE (SourceDesc->Reference.Node) !=
+            if(ACPI_GET_DESCRIPTOR_TYPE (SourceDesc->Reference.Node) !=
                 ACPI_DESC_TYPE_NAMED)
             {
                 AcpiOsPrintf (" %p - Not a valid namespace node\n",
@@ -394,9 +394,9 @@ AcpiExDoDebugObject (
                 }
             }
         }
-        else if (SourceDesc->Reference.Object)
+        else if(SourceDesc->Reference.Object)
         {
-            if (ACPI_GET_DESCRIPTOR_TYPE (SourceDesc->Reference.Object) ==
+            if(ACPI_GET_DESCRIPTOR_TYPE (SourceDesc->Reference.Object) ==
                 ACPI_DESC_TYPE_NAMED)
             {
                 /* Reference object is a namespace node */
@@ -428,7 +428,7 @@ AcpiExDoDebugObject (
                 case ACPI_TYPE_PACKAGE:
 
                     AcpiOsPrintf ("Package[%u] = ", Value);
-                    if (!(*SourceDesc->Reference.Where))
+                    if(!(*SourceDesc->Reference.Where))
                     {
                         AcpiOsPrintf ("[Uninitialized Package Element]\n");
                     }

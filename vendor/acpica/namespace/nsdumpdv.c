@@ -199,7 +199,7 @@ AcpiNsDumpOneDevice (
 
     Buffer.Length = ACPI_ALLOCATE_LOCAL_BUFFER;
     Status = AcpiGetObjectInfo (ObjHandle, &Buffer);
-    if (ACPI_SUCCESS (Status))
+    if(ACPI_SUCCESS (Status))
     {
         Info = Buffer.Pointer;
         for (i = 0; i < Level; i++)
@@ -242,13 +242,13 @@ AcpiNsDumpRootDevices (
 
     /* Only dump the table if tracing is enabled */
 
-    if (!(ACPI_LV_TABLES & AcpiDbgLevel))
+    if(!(ACPI_LV_TABLES & AcpiDbgLevel))
     {
         return;
     }
 
     Status = AcpiGetHandle (NULL, METHOD_NAME__SB_, &SysBusHandle);
-    if (ACPI_FAILURE (Status))
+    if(ACPI_FAILURE (Status))
     {
         return;
     }

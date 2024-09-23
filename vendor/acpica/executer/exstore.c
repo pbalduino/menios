@@ -210,7 +210,7 @@ AcpiExStore (
 
     /* Validate parameters */
 
-    if (!SourceDesc || !DestDesc)
+    if(!SourceDesc || !DestDesc)
     {
         ACPI_ERROR ((AE_INFO, "Null parameter"));
         return_ACPI_STATUS (AE_AML_NO_OPERAND);
@@ -218,7 +218,7 @@ AcpiExStore (
 
     /* DestDesc can be either a namespace node or an ACPI object */
 
-    if (ACPI_GET_DESCRIPTOR_TYPE (DestDesc) == ACPI_DESC_TYPE_NAMED)
+    if(ACPI_GET_DESCRIPTOR_TYPE (DestDesc) == ACPI_DESC_TYPE_NAMED)
     {
         /*
          * Dest is a namespace node,
@@ -243,7 +243,7 @@ AcpiExStore (
 
         /* Allow stores to Constants -- a Noop as per ACPI spec */
 
-        if (DestDesc->Common.Flags & AOPOBJ_AML_CONSTANT)
+        if(DestDesc->Common.Flags & AOPOBJ_AML_CONSTANT)
         {
             return_ACPI_STATUS (AE_OK);
         }
@@ -370,7 +370,7 @@ AcpiExStoreObjectToIndex (
          */
         ObjDesc = *(IndexDesc->Reference.Where);
 
-        if (SourceDesc->Common.Type == ACPI_TYPE_LOCAL_REFERENCE &&
+        if(SourceDesc->Common.Type == ACPI_TYPE_LOCAL_REFERENCE &&
             SourceDesc->Reference.Class == ACPI_REFCLASS_TABLE)
         {
             /* This is a DDBHandle, just add a reference to it */
@@ -384,13 +384,13 @@ AcpiExStoreObjectToIndex (
 
             Status = AcpiUtCopyIobjectToIobject (
                 SourceDesc, &NewDesc, WalkState);
-            if (ACPI_FAILURE (Status))
+            if(ACPI_FAILURE (Status))
             {
                 return_ACPI_STATUS (Status);
             }
         }
 
-        if (ObjDesc)
+        if(ObjDesc)
         {
             /* Decrement reference count by the ref count of the parent package */
 
@@ -433,7 +433,7 @@ AcpiExStoreObjectToIndex (
          * by the INDEX_OP code.
          */
         ObjDesc = IndexDesc->Reference.Object;
-        if ((ObjDesc->Common.Type != ACPI_TYPE_BUFFER) &&
+        if((ObjDesc->Common.Type != ACPI_TYPE_BUFFER) &&
             (ObjDesc->Common.Type != ACPI_TYPE_STRING))
         {
             return_ACPI_STATUS (AE_AML_OPERAND_TYPE);
@@ -543,7 +543,7 @@ AcpiExStoreObjectToNode (
 
     /* Only limited target types possible for everything except CopyObject */
 
-    if (WalkState->Opcode != AML_COPY_OBJECT_OP)
+    if(WalkState->Opcode != AML_COPY_OBJECT_OP)
     {
         /*
          * Only CopyObject allows all object types to be overwritten. For
@@ -571,9 +571,9 @@ AcpiExStoreObjectToNode (
              * Storing a package to a Local/Arg is OK, and handled
              * elsewhere.
              */
-            if (WalkState->Opcode == AML_STORE_OP)
+            if(WalkState->Opcode == AML_STORE_OP)
             {
-                if (SourceDesc->Common.Type != ACPI_TYPE_PACKAGE)
+                if(SourceDesc->Common.Type != ACPI_TYPE_PACKAGE)
                 {
                     ACPI_ERROR ((AE_INFO,
                         "Cannot assign type [%s] to [Package] "
@@ -612,7 +612,7 @@ AcpiExStoreObjectToNode (
      * (If it is a reference object)
      */
     Status = AcpiExResolveObject (&SourceDesc, TargetType, WalkState);
-    if (ACPI_FAILURE (Status))
+    if(ACPI_FAILURE (Status))
     {
         return_ACPI_STATUS (Status);
     }
@@ -629,7 +629,7 @@ AcpiExStoreObjectToNode (
     case ACPI_TYPE_STRING:
     case ACPI_TYPE_BUFFER:
 
-        if ((WalkState->Opcode == AML_COPY_OBJECT_OP) ||
+        if((WalkState->Opcode == AML_COPY_OBJECT_OP) ||
             !ImplicitConversion)
         {
             /*
@@ -645,12 +645,12 @@ AcpiExStoreObjectToNode (
 
         Status = AcpiExStoreObjectToObject (SourceDesc, TargetDesc,
             &NewDesc, WalkState);
-        if (ACPI_FAILURE (Status))
+        if(ACPI_FAILURE (Status))
         {
             return_ACPI_STATUS (Status);
         }
 
-        if (NewDesc != TargetDesc)
+        if(NewDesc != TargetDesc)
         {
             /*
              * Store the new NewDesc as the new value of the Name, and set
@@ -739,7 +739,7 @@ AcpiExStoreDirectToNode (
     /* Copy the source object to a new object */
 
     Status = AcpiUtCopyIobjectToIobject (SourceDesc, &NewDesc, WalkState);
-    if (ACPI_FAILURE (Status))
+    if(ACPI_FAILURE (Status))
     {
         return_ACPI_STATUS (Status);
     }

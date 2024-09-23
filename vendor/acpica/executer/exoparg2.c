@@ -229,7 +229,7 @@ AcpiExOpcode_2A_0T_0R (
 
         /* Are notifies allowed on this object? */
 
-        if (!AcpiEvIsNotifyObject (Node))
+        if(!AcpiEvIsNotifyObject (Node))
         {
             ACPI_ERROR ((AE_INFO,
                 "Unexpected notify object type [%s]",
@@ -296,14 +296,14 @@ AcpiExOpcode_2A_2T_1R (
         /* Divide (Dividend, Divisor, RemainderResult QuotientResult) */
 
         ReturnDesc1 = AcpiUtCreateInternalObject (ACPI_TYPE_INTEGER);
-        if (!ReturnDesc1)
+        if(!ReturnDesc1)
         {
             Status = AE_NO_MEMORY;
             goto Cleanup;
         }
 
         ReturnDesc2 = AcpiUtCreateInternalObject (ACPI_TYPE_INTEGER);
-        if (!ReturnDesc2)
+        if(!ReturnDesc2)
         {
             Status = AE_NO_MEMORY;
             goto Cleanup;
@@ -316,7 +316,7 @@ AcpiExOpcode_2A_2T_1R (
             Operand[1]->Integer.Value,
             &ReturnDesc1->Integer.Value,
             &ReturnDesc2->Integer.Value);
-        if (ACPI_FAILURE (Status))
+        if(ACPI_FAILURE (Status))
         {
             goto Cleanup;
         }
@@ -334,13 +334,13 @@ AcpiExOpcode_2A_2T_1R (
     /* Store the results to the target reference operands */
 
     Status = AcpiExStore (ReturnDesc2, Operand[2], WalkState);
-    if (ACPI_FAILURE (Status))
+    if(ACPI_FAILURE (Status))
     {
         goto Cleanup;
     }
 
     Status = AcpiExStore (ReturnDesc1, Operand[3], WalkState);
-    if (ACPI_FAILURE (Status))
+    if(ACPI_FAILURE (Status))
     {
         goto Cleanup;
     }
@@ -352,7 +352,7 @@ Cleanup:
      */
     AcpiUtRemoveReference (ReturnDesc2);
 
-    if (ACPI_FAILURE (Status))
+    if(ACPI_FAILURE (Status))
     {
         /* Delete the return object */
 
@@ -400,12 +400,12 @@ AcpiExOpcode_2A_1T_1R (
 
     /* Execute the opcode */
 
-    if (WalkState->OpInfo->Flags & AML_MATH)
+    if(WalkState->OpInfo->Flags & AML_MATH)
     {
         /* All simple math opcodes (add, etc.) */
 
         ReturnDesc = AcpiUtCreateInternalObject (ACPI_TYPE_INTEGER);
-        if (!ReturnDesc)
+        if(!ReturnDesc)
         {
             Status = AE_NO_MEMORY;
             goto Cleanup;
@@ -423,7 +423,7 @@ AcpiExOpcode_2A_1T_1R (
     case AML_MOD_OP: /* Mod (Dividend, Divisor, RemainderResult (ACPI 2.0) */
 
         ReturnDesc = AcpiUtCreateInternalObject (ACPI_TYPE_INTEGER);
-        if (!ReturnDesc)
+        if(!ReturnDesc)
         {
             Status = AE_NO_MEMORY;
             goto Cleanup;
@@ -470,7 +470,7 @@ AcpiExOpcode_2A_1T_1R (
         /* Allocate a new string object */
 
         ReturnDesc = AcpiUtCreateStringObject (Length);
-        if (!ReturnDesc)
+        if(!ReturnDesc)
         {
             Status = AE_NO_MEMORY;
             goto Cleanup;
@@ -497,7 +497,7 @@ AcpiExOpcode_2A_1T_1R (
         /* Create the internal return object */
 
         ReturnDesc = AcpiUtCreateInternalObject (ACPI_TYPE_LOCAL_REFERENCE);
-        if (!ReturnDesc)
+        if(!ReturnDesc)
         {
             Status = AE_NO_MEMORY;
             goto Cleanup;
@@ -517,7 +517,7 @@ AcpiExOpcode_2A_1T_1R (
         {
         case ACPI_TYPE_STRING:
 
-            if (Index >= Operand[0]->String.Length)
+            if(Index >= Operand[0]->String.Length)
             {
                 Length = Operand[0]->String.Length;
                 Status = AE_AML_STRING_LIMIT;
@@ -530,7 +530,7 @@ AcpiExOpcode_2A_1T_1R (
 
         case ACPI_TYPE_BUFFER:
 
-            if (Index >= Operand[0]->Buffer.Length)
+            if(Index >= Operand[0]->Buffer.Length)
             {
                 Length = Operand[0]->Buffer.Length;
                 Status = AE_AML_BUFFER_LIMIT;
@@ -543,7 +543,7 @@ AcpiExOpcode_2A_1T_1R (
 
         case ACPI_TYPE_PACKAGE:
 
-            if (Index >= Operand[0]->Package.Count)
+            if(Index >= Operand[0]->Package.Count)
             {
                 Length = Operand[0]->Package.Count;
                 Status = AE_AML_PACKAGE_LIMIT;
@@ -564,7 +564,7 @@ AcpiExOpcode_2A_1T_1R (
 
         /* Failure means that the Index was beyond the end of the object */
 
-        if (ACPI_FAILURE (Status))
+        if(ACPI_FAILURE (Status))
         {
             ACPI_BIOS_EXCEPTION ((AE_INFO, Status,
                 "Index (0x%X%8.8X) is beyond end of object (length 0x%X)",
@@ -599,19 +599,19 @@ AcpiExOpcode_2A_1T_1R (
 
 StoreResultToTarget:
 
-    if (ACPI_SUCCESS (Status))
+    if(ACPI_SUCCESS (Status))
     {
         /*
          * Store the result of the operation (which is now in ReturnDesc) into
          * the Target descriptor.
          */
         Status = AcpiExStore (ReturnDesc, Operand[2], WalkState);
-        if (ACPI_FAILURE (Status))
+        if(ACPI_FAILURE (Status))
         {
             goto Cleanup;
         }
 
-        if (!WalkState->ResultObj)
+        if(!WalkState->ResultObj)
         {
             WalkState->ResultObj = ReturnDesc;
         }
@@ -622,7 +622,7 @@ Cleanup:
 
     /* Delete return object on error */
 
-    if (ACPI_FAILURE (Status))
+    if(ACPI_FAILURE (Status))
     {
         AcpiUtRemoveReference (ReturnDesc);
         WalkState->ResultObj = NULL;
@@ -661,7 +661,7 @@ AcpiExOpcode_2A_0T_1R (
     /* Create the internal return object */
 
     ReturnDesc = AcpiUtCreateInternalObject (ACPI_TYPE_INTEGER);
-    if (!ReturnDesc)
+    if(!ReturnDesc)
     {
         Status = AE_NO_MEMORY;
         goto Cleanup;
@@ -669,7 +669,7 @@ AcpiExOpcode_2A_0T_1R (
 
     /* Execute the Opcode */
 
-    if (WalkState->OpInfo->Flags & AML_LOGICAL_NUMERIC)
+    if(WalkState->OpInfo->Flags & AML_LOGICAL_NUMERIC)
     {
         /* LogicalOp  (Operand0, Operand1) */
 
@@ -678,7 +678,7 @@ AcpiExOpcode_2A_0T_1R (
             &LogicalResult);
         goto StoreLogicalResult;
     }
-    else if (WalkState->OpInfo->Flags & AML_LOGICAL)
+    else if(WalkState->OpInfo->Flags & AML_LOGICAL)
     {
         /* LogicalOp  (Operand0, Operand1) */
 
@@ -692,7 +692,7 @@ AcpiExOpcode_2A_0T_1R (
     case AML_ACQUIRE_OP:            /* Acquire (MutexObject, Timeout) */
 
         Status = AcpiExAcquireMutex (Operand[1], Operand[0], WalkState);
-        if (Status == AE_TIME)
+        if(Status == AE_TIME)
         {
             LogicalResult = TRUE;       /* TRUE = Acquire timed out */
             Status = AE_OK;
@@ -703,7 +703,7 @@ AcpiExOpcode_2A_0T_1R (
     case AML_WAIT_OP:               /* Wait (EventObject, Timeout) */
 
         Status = AcpiExSystemWaitEvent (Operand[1], Operand[0]);
-        if (Status == AE_TIME)
+        if(Status == AE_TIME)
         {
             LogicalResult = TRUE;       /* TRUE, Wait timed out */
             Status = AE_OK;
@@ -725,7 +725,7 @@ StoreLogicalResult:
      * Set return value to according to LogicalResult. logical TRUE (all ones)
      * Default is FALSE (zero)
      */
-    if (LogicalResult)
+    if(LogicalResult)
     {
         ReturnDesc->Integer.Value = ACPI_UINT64_MAX;
     }
@@ -734,7 +734,7 @@ Cleanup:
 
     /* Delete return object on error */
 
-    if (ACPI_FAILURE (Status))
+    if(ACPI_FAILURE (Status))
     {
         AcpiUtRemoveReference (ReturnDesc);
     }

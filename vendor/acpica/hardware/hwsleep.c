@@ -157,7 +157,7 @@
         ACPI_MODULE_NAME    ("hwsleep")
 
 
-#if (!ACPI_REDUCED_HARDWARE) /* Entire module */
+#if(!ACPI_REDUCED_HARDWARE) /* Entire module */
 /*******************************************************************************
  *
  * FUNCTION:    AcpiHwLegacySleep
@@ -193,7 +193,7 @@ AcpiHwLegacySleep (
 
     Status = AcpiWriteBitRegister (ACPI_BITREG_WAKE_STATUS,
         ACPI_CLEAR_STATUS);
-    if (ACPI_FAILURE (Status))
+    if(ACPI_FAILURE (Status))
     {
         return_ACPI_STATUS (Status);
     }
@@ -201,12 +201,12 @@ AcpiHwLegacySleep (
     /* Disable all GPEs */
 
     Status = AcpiHwDisableAllGpes ();
-    if (ACPI_FAILURE (Status))
+    if(ACPI_FAILURE (Status))
     {
         return_ACPI_STATUS (Status);
     }
     Status = AcpiHwClearAcpiStatus();
-    if (ACPI_FAILURE(Status))
+    if(ACPI_FAILURE(Status))
     {
         return_ACPI_STATUS(Status);
     }
@@ -215,7 +215,7 @@ AcpiHwLegacySleep (
     /* Enable all wakeup GPEs */
 
     Status = AcpiHwEnableAllWakeupGpes ();
-    if (ACPI_FAILURE (Status))
+    if(ACPI_FAILURE (Status))
     {
         return_ACPI_STATUS (Status);
     }
@@ -224,7 +224,7 @@ AcpiHwLegacySleep (
 
     Status = AcpiHwRegisterRead (ACPI_REGISTER_PM1_CONTROL,
         &Pm1aControl);
-    if (ACPI_FAILURE (Status))
+    if(ACPI_FAILURE (Status))
     {
         return_ACPI_STATUS (Status);
     }
@@ -250,7 +250,7 @@ AcpiHwLegacySleep (
     /* Write #1: write the SLP_TYP data to the PM1 Control registers */
 
     Status = AcpiHwWritePm1Control (Pm1aControl, Pm1bControl);
-    if (ACPI_FAILURE (Status))
+    if(ACPI_FAILURE (Status))
     {
         return_ACPI_STATUS (Status);
     }
@@ -262,17 +262,17 @@ AcpiHwLegacySleep (
 
     /* Flush caches, as per ACPI specification */
 
-    if (SleepState < ACPI_STATE_S4)
+    if(SleepState < ACPI_STATE_S4)
     {
         ACPI_FLUSH_CPU_CACHE ();
     }
 
     Status = AcpiOsEnterSleep (SleepState, Pm1aControl, Pm1bControl);
-    if (Status == AE_CTRL_TERMINATE)
+    if(Status == AE_CTRL_TERMINATE)
     {
         return_ACPI_STATUS (AE_OK);
     }
-    if (ACPI_FAILURE (Status))
+    if(ACPI_FAILURE (Status))
     {
         return_ACPI_STATUS (Status);
     }
@@ -280,12 +280,12 @@ AcpiHwLegacySleep (
     /* Write #2: Write both SLP_TYP + SLP_EN */
 
     Status = AcpiHwWritePm1Control (Pm1aControl, Pm1bControl);
-    if (ACPI_FAILURE (Status))
+    if(ACPI_FAILURE (Status))
     {
         return_ACPI_STATUS (Status);
     }
 
-    if (SleepState > ACPI_STATE_S3)
+    if(SleepState > ACPI_STATE_S3)
     {
         /*
          * We wanted to sleep > S3, but it didn't happen (by virtue of the
@@ -302,7 +302,7 @@ AcpiHwLegacySleep (
 
         Status = AcpiHwRegisterWrite (ACPI_REGISTER_PM1_CONTROL,
             SleepEnableRegInfo->AccessBitMask);
-        if (ACPI_FAILURE (Status))
+        if(ACPI_FAILURE (Status))
         {
             return_ACPI_STATUS (Status);
         }
@@ -313,7 +313,7 @@ AcpiHwLegacySleep (
     do
     {
         Status = AcpiReadBitRegister (ACPI_BITREG_WAKE_STATUS, &InValue);
-        if (ACPI_FAILURE (Status))
+        if(ACPI_FAILURE (Status))
         {
             return_ACPI_STATUS (Status);
         }
@@ -356,7 +356,7 @@ AcpiHwLegacyWakePrep (
      * This is unclear from the ACPI Spec, but it is required
      * by some machines.
      */
-    if (AcpiGbl_SleepTypeAS0 != ACPI_SLEEP_TYPE_INVALID)
+    if(AcpiGbl_SleepTypeAS0 != ACPI_SLEEP_TYPE_INVALID)
     {
         SleepTypeRegInfo =
             AcpiHwGetBitRegisterInfo (ACPI_BITREG_SLEEP_TYPE);
@@ -367,7 +367,7 @@ AcpiHwLegacyWakePrep (
 
         Status = AcpiHwRegisterRead (ACPI_REGISTER_PM1_CONTROL,
             &Pm1aControl);
-        if (ACPI_SUCCESS (Status))
+        if(ACPI_SUCCESS (Status))
         {
             /* Clear the SLP_EN and SLP_TYP fields */
 
@@ -429,13 +429,13 @@ AcpiHwLegacyWake (
      * 2) Enable all runtime GPEs
      */
     Status = AcpiHwDisableAllGpes ();
-    if (ACPI_FAILURE (Status))
+    if(ACPI_FAILURE (Status))
     {
         return_ACPI_STATUS (Status);
     }
 
     Status = AcpiHwEnableAllRuntimeGpes ();
-    if (ACPI_FAILURE (Status))
+    if(ACPI_FAILURE (Status))
     {
         return_ACPI_STATUS (Status);
     }

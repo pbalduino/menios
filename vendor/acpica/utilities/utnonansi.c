@@ -183,7 +183,7 @@ AcpiUtStrlwr (
     ACPI_FUNCTION_ENTRY ();
 
 
-    if (!SrcString)
+    if(!SrcString)
     {
         return;
     }
@@ -219,7 +219,7 @@ AcpiUtStrupr (
     ACPI_FUNCTION_ENTRY ();
 
 
-    if (!SrcString)
+    if(!SrcString)
     {
         return;
     }
@@ -299,7 +299,7 @@ AcpiUtSafeStrcpy (
     char                    *Source)
 {
 
-    if (strlen (Source) >= DestSize)
+    if(strlen (Source) >= DestSize)
     {
         return (TRUE);
     }
@@ -315,7 +315,7 @@ AcpiUtSafeStrcat (
     char                    *Source)
 {
 
-    if ((strlen (Dest) + strlen (Source)) >= DestSize)
+    if((strlen (Dest) + strlen (Source)) >= DestSize)
     {
         return (TRUE);
     }
@@ -336,7 +336,7 @@ AcpiUtSafeStrncat (
 
     ActualTransferLength = ACPI_MIN (MaxTransferLength, strlen (Source));
 
-    if ((strlen (Dest) + ActualTransferLength) >= DestSize)
+    if((strlen (Dest) + ActualTransferLength) >= DestSize)
     {
         return (TRUE);
     }

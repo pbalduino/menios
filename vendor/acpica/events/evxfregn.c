@@ -204,13 +204,13 @@ AcpiInstallAddressSpaceHandlerInternal (
 
     /* Parameter validation */
 
-    if (!Device)
+    if(!Device)
     {
         return_ACPI_STATUS (AE_BAD_PARAMETER);
     }
 
     Status = AcpiUtAcquireMutex (ACPI_MTX_NAMESPACE);
-    if (ACPI_FAILURE (Status))
+    if(ACPI_FAILURE (Status))
     {
         return_ACPI_STATUS (Status);
     }
@@ -218,7 +218,7 @@ AcpiInstallAddressSpaceHandlerInternal (
     /* Convert and validate the device handle */
 
     Node = AcpiNsValidateHandle (Device);
-    if (!Node)
+    if(!Node)
     {
         Status = AE_BAD_PARAMETER;
         goto UnlockAndExit;
@@ -228,14 +228,14 @@ AcpiInstallAddressSpaceHandlerInternal (
 
     Status = AcpiEvInstallSpaceHandler (
         Node, SpaceId, Handler, Setup, Context);
-    if (ACPI_FAILURE (Status))
+    if(ACPI_FAILURE (Status))
     {
         goto UnlockAndExit;
     }
 
     /* Run all _REG methods for this address space */
 
-    if (Run_Reg)
+    if(Run_Reg)
     {
         AcpiEvExecuteRegMethods (Node, SpaceId, ACPI_REG_CONNECT);
     }
@@ -305,13 +305,13 @@ AcpiRemoveAddressSpaceHandler (
 
     /* Parameter validation */
 
-    if (!Device)
+    if(!Device)
     {
         return_ACPI_STATUS (AE_BAD_PARAMETER);
     }
 
     Status = AcpiUtAcquireMutex (ACPI_MTX_NAMESPACE);
-    if (ACPI_FAILURE (Status))
+    if(ACPI_FAILURE (Status))
     {
         return_ACPI_STATUS (Status);
     }
@@ -319,7 +319,7 @@ AcpiRemoveAddressSpaceHandler (
     /* Convert and validate the device handle */
 
     Node = AcpiNsValidateHandle (Device);
-    if (!Node ||
+    if(!Node ||
         ((Node->Type != ACPI_TYPE_DEVICE)    &&
          (Node->Type != ACPI_TYPE_PROCESSOR) &&
          (Node->Type != ACPI_TYPE_THERMAL)   &&
@@ -332,7 +332,7 @@ AcpiRemoveAddressSpaceHandler (
     /* Make sure the internal object exists */
 
     ObjDesc = AcpiNsGetAttachedObject (Node);
-    if (!ObjDesc)
+    if(!ObjDesc)
     {
         Status = AE_NOT_EXIST;
         goto UnlockAndExit;
@@ -346,11 +346,11 @@ AcpiRemoveAddressSpaceHandler (
     {
         /* We have a handler, see if user requested this one */
 
-        if (HandlerObj->AddressSpace.SpaceId == SpaceId)
+        if(HandlerObj->AddressSpace.SpaceId == SpaceId)
         {
             /* Handler must be the same as the installed handler */
 
-            if (HandlerObj->AddressSpace.Handler != Handler)
+            if(HandlerObj->AddressSpace.Handler != Handler)
             {
                 Status = AE_BAD_PARAMETER;
                 goto UnlockAndExit;
@@ -446,13 +446,13 @@ AcpiExecuteRegMethods (
 
     /* Parameter validation */
 
-    if (!Device)
+    if(!Device)
     {
         return_ACPI_STATUS (AE_BAD_PARAMETER);
     }
 
     Status = AcpiUtAcquireMutex (ACPI_MTX_NAMESPACE);
-    if (ACPI_FAILURE (Status))
+    if(ACPI_FAILURE (Status))
     {
         return_ACPI_STATUS (Status);
     }
@@ -460,7 +460,7 @@ AcpiExecuteRegMethods (
     /* Convert and validate the device handle */
 
     Node = AcpiNsValidateHandle (Device);
-    if (Node)
+    if(Node)
     {
         /* Run all _REG methods for this address space */
 

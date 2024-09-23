@@ -196,7 +196,7 @@ AcpiDebugTrace (
 
 
     Status = AcpiUtAcquireMutex (ACPI_MTX_NAMESPACE);
-    if (ACPI_FAILURE (Status))
+    if(ACPI_FAILURE (Status))
     {
         return (Status);
     }
@@ -253,7 +253,7 @@ AcpiPsExecuteMethod (
 
     /* Validate the Info and method Node */
 
-    if (!Info || !Info->Node)
+    if(!Info || !Info->Node)
     {
         return_ACPI_STATUS (AE_NULL_ENTRY);
     }
@@ -261,7 +261,7 @@ AcpiPsExecuteMethod (
     /* Init for new method, wait on concurrency semaphore */
 
     Status = AcpiDsBeginMethodExecution (Info->Node, Info->ObjDesc, NULL);
-    if (ACPI_FAILURE (Status))
+    if(ACPI_FAILURE (Status))
     {
         return_ACPI_STATUS (Status);
     }
@@ -281,7 +281,7 @@ AcpiPsExecuteMethod (
     /* Create and init a Root Node */
 
     Op = AcpiPsCreateScopeOp (Info->ObjDesc->Method.AmlStart);
-    if (!Op)
+    if(!Op)
     {
         Status = AE_NO_MEMORY;
         goto Cleanup;
@@ -292,7 +292,7 @@ AcpiPsExecuteMethod (
     Info->PassNumber = ACPI_IMODE_EXECUTE;
     WalkState = AcpiDsCreateWalkState (
         Info->ObjDesc->Method.OwnerId, NULL, NULL, NULL);
-    if (!WalkState)
+    if(!WalkState)
     {
         Status = AE_NO_MEMORY;
         goto Cleanup;
@@ -301,7 +301,7 @@ AcpiPsExecuteMethod (
     Status = AcpiDsInitAmlWalk (WalkState, Op, Info->Node,
         Info->ObjDesc->Method.AmlStart,
         Info->ObjDesc->Method.AmlLength, Info, Info->PassNumber);
-    if (ACPI_FAILURE (Status))
+    if(ACPI_FAILURE (Status))
     {
         AcpiDsDeleteWalkState (WalkState);
         goto Cleanup;
@@ -310,14 +310,14 @@ AcpiPsExecuteMethod (
     WalkState->MethodPathname = Info->FullPathname;
     WalkState->MethodIsNested = FALSE;
 
-    if (Info->ObjDesc->Method.InfoFlags & ACPI_METHOD_MODULE_LEVEL)
+    if(Info->ObjDesc->Method.InfoFlags & ACPI_METHOD_MODULE_LEVEL)
     {
         WalkState->ParseFlags |= ACPI_PARSE_MODULE_LEVEL;
     }
 
     /* Invoke an internal method if necessary */
 
-    if (Info->ObjDesc->Method.InfoFlags & ACPI_METHOD_INTERNAL_ONLY)
+    if(Info->ObjDesc->Method.InfoFlags & ACPI_METHOD_INTERNAL_ONLY)
     {
         Status = Info->ObjDesc->Method.Dispatch.Implementation (WalkState);
         Info->ReturnObject = WalkState->ReturnDesc;
@@ -335,11 +335,11 @@ AcpiPsExecuteMethod (
      * Start method evaluation with an implicit return of zero.
      * This is done for Windows compatibility.
      */
-    if (AcpiGbl_EnableInterpreterSlack)
+    if(AcpiGbl_EnableInterpreterSlack)
     {
         WalkState->ImplicitReturnObj =
             AcpiUtCreateIntegerObject ((UINT64) 0);
-        if (!WalkState->ImplicitReturnObj)
+        if(!WalkState->ImplicitReturnObj)
         {
             Status = AE_NO_MEMORY;
             AcpiDsDeleteWalkState (WalkState);
@@ -362,7 +362,7 @@ Cleanup:
 
     /* Exit now if error above */
 
-    if (ACPI_FAILURE (Status))
+    if(ACPI_FAILURE (Status))
     {
         return_ACPI_STATUS (Status);
     }
@@ -371,7 +371,7 @@ Cleanup:
      * If the method has returned an object, signal this to the caller with
      * a control exception code
      */
-    if (Info->ReturnObject)
+    if(Info->ReturnObject)
     {
         ACPI_DEBUG_PRINT ((ACPI_DB_PARSE, "Method returned ObjDesc=%p\n",
             Info->ReturnObject));
@@ -416,7 +416,7 @@ AcpiPsExecuteTable (
     /* Create and init a Root Node */
 
     Op = AcpiPsCreateScopeOp (Info->ObjDesc->Method.AmlStart);
-    if (!Op)
+    if(!Op)
     {
         Status = AE_NO_MEMORY;
         goto Cleanup;
@@ -426,7 +426,7 @@ AcpiPsExecuteTable (
 
     WalkState = AcpiDsCreateWalkState (
         Info->ObjDesc->Method.OwnerId, NULL, NULL, NULL);
-    if (!WalkState)
+    if(!WalkState)
     {
         Status = AE_NO_MEMORY;
         goto Cleanup;
@@ -435,7 +435,7 @@ AcpiPsExecuteTable (
     Status = AcpiDsInitAmlWalk (WalkState, Op, Info->Node,
         Info->ObjDesc->Method.AmlStart,
         Info->ObjDesc->Method.AmlLength, Info, Info->PassNumber);
-    if (ACPI_FAILURE (Status))
+    if(ACPI_FAILURE (Status))
     {
         goto Cleanup;
     }
@@ -443,18 +443,18 @@ AcpiPsExecuteTable (
     WalkState->MethodPathname = Info->FullPathname;
     WalkState->MethodIsNested = FALSE;
 
-    if (Info->ObjDesc->Method.InfoFlags & ACPI_METHOD_MODULE_LEVEL)
+    if(Info->ObjDesc->Method.InfoFlags & ACPI_METHOD_MODULE_LEVEL)
     {
         WalkState->ParseFlags |= ACPI_PARSE_MODULE_LEVEL;
     }
 
     /* Info->Node is the default location to load the table  */
 
-    if (Info->Node && Info->Node != AcpiGbl_RootNode)
+    if(Info->Node && Info->Node != AcpiGbl_RootNode)
     {
         Status = AcpiDsScopeStackPush (
             Info->Node, ACPI_TYPE_METHOD, WalkState);
-        if (ACPI_FAILURE (Status))
+        if(ACPI_FAILURE (Status))
         {
             goto Cleanup;
         }
@@ -469,11 +469,11 @@ AcpiPsExecuteTable (
     WalkState = NULL;
 
 Cleanup:
-    if (WalkState)
+    if(WalkState)
     {
         AcpiDsDeleteWalkState (WalkState);
     }
-    if (Op)
+    if(Op)
     {
         AcpiPsDeleteParseTree (Op);
     }
@@ -503,7 +503,7 @@ AcpiPsUpdateParameterList (
     UINT32                  i;
 
 
-    if (Info->Parameters)
+    if(Info->Parameters)
     {
         /* Update reference count for each parameter */
 

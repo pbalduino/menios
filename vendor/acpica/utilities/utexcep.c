@@ -185,7 +185,7 @@ AcpiFormatException (
 
 
     Exception = AcpiUtValidateException (Status);
-    if (!Exception)
+    if(!Exception)
     {
         /* Exception code was not recognized */
 
@@ -235,7 +235,7 @@ AcpiUtValidateException (
     {
     case AE_CODE_ENVIRONMENTAL:
 
-        if (SubStatus <= AE_CODE_ENV_MAX)
+        if(SubStatus <= AE_CODE_ENV_MAX)
         {
             Exception = &AcpiGbl_ExceptionNames_Env [SubStatus];
         }
@@ -243,7 +243,7 @@ AcpiUtValidateException (
 
     case AE_CODE_PROGRAMMER:
 
-        if (SubStatus <= AE_CODE_PGM_MAX)
+        if(SubStatus <= AE_CODE_PGM_MAX)
         {
             Exception = &AcpiGbl_ExceptionNames_Pgm [SubStatus];
         }
@@ -251,7 +251,7 @@ AcpiUtValidateException (
 
     case AE_CODE_ACPI_TABLES:
 
-        if (SubStatus <= AE_CODE_TBL_MAX)
+        if(SubStatus <= AE_CODE_TBL_MAX)
         {
             Exception = &AcpiGbl_ExceptionNames_Tbl [SubStatus];
         }
@@ -259,7 +259,7 @@ AcpiUtValidateException (
 
     case AE_CODE_AML:
 
-        if (SubStatus <= AE_CODE_AML_MAX)
+        if(SubStatus <= AE_CODE_AML_MAX)
         {
             Exception = &AcpiGbl_ExceptionNames_Aml [SubStatus];
         }
@@ -267,7 +267,7 @@ AcpiUtValidateException (
 
     case AE_CODE_CONTROL:
 
-        if (SubStatus <= AE_CODE_CTRL_MAX)
+        if(SubStatus <= AE_CODE_CTRL_MAX)
         {
             Exception = &AcpiGbl_ExceptionNames_Ctrl [SubStatus];
         }
@@ -278,7 +278,7 @@ AcpiUtValidateException (
         break;
     }
 
-    if (!Exception || !Exception->Name)
+    if(!Exception || !Exception->Name)
     {
         return (NULL);
     }

@@ -213,7 +213,7 @@ AcpiUtConvertOctalString (
          * 1) Runtime: terminate with no error, per the ACPI spec
          * 2) Compiler: return an error
          */
-        if (!(ACPI_IS_OCTAL_DIGIT (*String)))
+        if(!(ACPI_IS_OCTAL_DIGIT (*String)))
         {
 #ifdef ACPI_ASL_COMPILER
             Status = AE_BAD_OCTAL_CONSTANT;
@@ -224,7 +224,7 @@ AcpiUtConvertOctalString (
         /* Convert and insert this octal digit into the accumulator */
 
         Status = AcpiUtInsertDigit (&AccumulatedValue, 8, *String);
-        if (ACPI_FAILURE (Status))
+        if(ACPI_FAILURE (Status))
         {
             Status = AE_OCTAL_OVERFLOW;
             break;
@@ -275,7 +275,7 @@ AcpiUtConvertDecimalString (
          * 1) Runtime: terminate with no error, per the ACPI spec
          * 2) Compiler: return an error
          */
-        if (!isdigit ((int) *String))
+        if(!isdigit ((int) *String))
         {
 #ifdef ACPI_ASL_COMPILER
             Status = AE_BAD_DECIMAL_CONSTANT;
@@ -286,7 +286,7 @@ AcpiUtConvertDecimalString (
         /* Convert and insert this decimal digit into the accumulator */
 
         Status = AcpiUtInsertDigit (&AccumulatedValue, 10, *String);
-        if (ACPI_FAILURE (Status))
+        if(ACPI_FAILURE (Status))
         {
             Status = AE_DECIMAL_OVERFLOW;
             break;
@@ -337,7 +337,7 @@ AcpiUtConvertHexString (
          * 1) Runtime: terminate with no error, per the ACPI spec
          * 2) Compiler: return an error
          */
-        if (!isxdigit ((int) *String))
+        if(!isxdigit ((int) *String))
         {
 #ifdef ACPI_ASL_COMPILER
             Status = AE_BAD_HEX_CONSTANT;
@@ -348,7 +348,7 @@ AcpiUtConvertHexString (
         /* Convert and insert this hex digit into the accumulator */
 
         Status = AcpiUtInsertDigit (&AccumulatedValue, 16, *String);
-        if (ACPI_FAILURE (Status))
+        if(ACPI_FAILURE (Status))
         {
             Status = AE_HEX_OVERFLOW;
             break;
@@ -441,7 +441,7 @@ AcpiUtDetectHexPrefix (
     char                    *InitialPosition = *String;
 
     AcpiUtRemoveHexPrefix (String);
-    if (*String != InitialPosition)
+    if(*String != InitialPosition)
     {
         return (TRUE); /* String is past leading 0x */
     }
@@ -466,7 +466,7 @@ void
 AcpiUtRemoveHexPrefix (
     char                    **String)
 {
-    if ((**String == ACPI_ASCII_ZERO) &&
+    if((**String == ACPI_ASCII_ZERO) &&
         (tolower ((int) *(*String + 1)) == 'x'))
     {
         *String += 2;        /* Go past the leading 0x */
@@ -492,7 +492,7 @@ AcpiUtDetectOctalPrefix (
     char                    **String)
 {
 
-    if (**String == ACPI_ASCII_ZERO)
+    if(**String == ACPI_ASCII_ZERO)
     {
         *String += 1;       /* Go past the leading 0 */
         return (TRUE);
@@ -542,7 +542,7 @@ AcpiUtInsertDigit (
      /* Make room in the accumulated value for the incoming digit */
 
     Status = AcpiUtStrtoulMultiply64 (*AccumulatedValue, Base, &Product);
-    if (ACPI_FAILURE (Status))
+    if(ACPI_FAILURE (Status))
     {
         return (Status);
     }
@@ -585,7 +585,7 @@ AcpiUtStrtoulMultiply64 (
     /* Exit if either operand is zero */
 
     *OutProduct = 0;
-    if (!Multiplicand || !Base)
+    if(!Multiplicand || !Base)
     {
         return (AE_OK);
     }
@@ -599,7 +599,7 @@ AcpiUtStrtoulMultiply64 (
      * as the radix (8/10/16), to the 64/32 divide will always work.
      */
     AcpiUtShortDivide (ACPI_UINT64_MAX, Base, &Quotient, NULL);
-    if (Multiplicand > Quotient)
+    if(Multiplicand > Quotient)
     {
         return (AE_NUMERIC_OVERFLOW);
     }
@@ -608,7 +608,7 @@ AcpiUtStrtoulMultiply64 (
 
     /* Check for 32-bit overflow if necessary */
 
-    if ((AcpiGbl_IntegerBitWidth == 32) && (Product > ACPI_UINT32_MAX))
+    if((AcpiGbl_IntegerBitWidth == 32) && (Product > ACPI_UINT32_MAX))
     {
         return (AE_NUMERIC_OVERFLOW);
     }
@@ -645,7 +645,7 @@ AcpiUtStrtoulAdd64 (
 
     /* Check for 64-bit overflow before the actual addition */
 
-    if ((Addend1 > 0) && (Digit > (ACPI_UINT64_MAX - Addend1)))
+    if((Addend1 > 0) && (Digit > (ACPI_UINT64_MAX - Addend1)))
     {
         return (AE_NUMERIC_OVERFLOW);
     }
@@ -654,7 +654,7 @@ AcpiUtStrtoulAdd64 (
 
     /* Check for 32-bit overflow if necessary */
 
-    if ((AcpiGbl_IntegerBitWidth == 32) && (Sum > ACPI_UINT32_MAX))
+    if((AcpiGbl_IntegerBitWidth == 32) && (Sum > ACPI_UINT32_MAX))
     {
         return (AE_NUMERIC_OVERFLOW);
     }

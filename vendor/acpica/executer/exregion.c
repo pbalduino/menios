@@ -236,7 +236,7 @@ AcpiExSystemMemorySpaceHandler (
      * the request.
      */
     (void) AcpiUtShortDivide ((UINT64) Address, Length, NULL, &Remainder);
-    if (Remainder != 0)
+    if(Remainder != 0)
     {
         return_ACPI_STATUS (AE_AML_ALIGNMENT);
     }
@@ -247,7 +247,7 @@ AcpiExSystemMemorySpaceHandler (
      * Is 1) Address below the current mapping? OR
      *    2) Address beyond the current mapping?
      */
-    if (!Mm || (Address < Mm->PhysicalAddress) ||
+    if(!Mm || (Address < Mm->PhysicalAddress) ||
         ((UINT64) Address + Length > (UINT64) Mm->PhysicalAddress + Mm->Length))
     {
         /*
@@ -259,17 +259,17 @@ AcpiExSystemMemorySpaceHandler (
          */
         for (Mm = MemInfo->FirstMm; Mm; Mm = Mm->NextMm)
         {
-            if (Mm == MemInfo->CurMm)
+            if(Mm == MemInfo->CurMm)
             {
                 continue;
             }
 
-            if (Address < Mm->PhysicalAddress)
+            if(Address < Mm->PhysicalAddress)
             {
                 continue;
             }
 
-            if ((UINT64) Address + Length > (UINT64) Mm->PhysicalAddress + Mm->Length)
+            if((UINT64) Address + Length > (UINT64) Mm->PhysicalAddress + Mm->Length)
             {
                 continue;
             }
@@ -281,7 +281,7 @@ AcpiExSystemMemorySpaceHandler (
         /* Create a new mappings list entry */
 
         Mm = ACPI_ALLOCATE_ZEROED(sizeof(*Mm));
-        if (!Mm)
+        if(!Mm)
         {
             ACPI_ERROR((AE_INFO,
                 "Unable to save memory mapping at 0x%8.8X%8.8X, size %u",
@@ -297,7 +297,7 @@ AcpiExSystemMemorySpaceHandler (
         MapLength = (ACPI_SIZE)
             ((MemInfo->Address + MemInfo->Length) - Address);
 
-        if (MapLength > ACPI_DEFAULT_PAGE_SIZE)
+        if(MapLength > ACPI_DEFAULT_PAGE_SIZE)
         {
             MapLength = ACPI_DEFAULT_PAGE_SIZE;
         }
@@ -305,7 +305,7 @@ AcpiExSystemMemorySpaceHandler (
         /* Create a new mapping starting at the address given */
 
         LogicalAddrPtr = AcpiOsMapMemory(Address, MapLength);
-        if (!LogicalAddrPtr)
+        if(!LogicalAddrPtr)
         {
             ACPI_ERROR ((AE_INFO,
                 "Could not map memory at 0x%8.8X%8.8X, size %u",

@@ -336,7 +336,7 @@
  */
 #ifndef ACPI_NO_ERROR_MESSAGES
 #define AE_INFO                         _AcpiModuleName, __LINE__
-#define ACPI_ONCE(_fn, _plist)                  { static char _done; if (!_done) { _done = 1; _fn _plist; } }
+#define ACPI_ONCE(_fn, _plist)                  { static char _done; if(!_done) { _done = 1; _fn _plist; } }
 
 /*
  * Error reporting. Callers module and line number are inserted by AE_INFO,
@@ -445,7 +445,7 @@
 
 #define ACPI_DO_DEBUG_PRINT(Function, Level, Line, Filename, Modulename, Component, ...) \
     ACPI_DO_WHILE0 ({ \
-        if (ACPI_IS_DEBUG_ENABLED (Level, Component)) \
+        if(ACPI_IS_DEBUG_ENABLED (Level, Component)) \
         { \
             Function (Level, Line, Filename, Modulename, Component, __VA_ARGS__); \
         } \
