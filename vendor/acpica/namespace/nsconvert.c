@@ -192,7 +192,7 @@ AcpiNsConvertToInteger (
         /* String-to-Integer conversion */
 
         Status = AcpiUtStrtoul64 (OriginalObject->String.Pointer, &Value);
-        if (ACPI_FAILURE (Status))
+        if(ACPI_FAILURE (Status))
         {
             return (Status);
         }
@@ -202,7 +202,7 @@ AcpiNsConvertToInteger (
 
         /* Buffer-to-Integer conversion. Max buffer size is 64 bits. */
 
-        if (OriginalObject->Buffer.Length > 8)
+        if(OriginalObject->Buffer.Length > 8)
         {
             return (AE_AML_OPERAND_TYPE);
         }
@@ -222,7 +222,7 @@ AcpiNsConvertToInteger (
     }
 
     NewObject = AcpiUtCreateIntegerObject (Value);
-    if (!NewObject)
+    if(!NewObject)
     {
         return (AE_NO_MEMORY);
     }
@@ -263,12 +263,12 @@ AcpiNsConvertToString (
          * an integer of value 0 to a NULL string. The last element of
          * _BIF and _BIX packages occasionally need this fix.
          */
-        if (OriginalObject->Integer.Value == 0)
+        if(OriginalObject->Integer.Value == 0)
         {
             /* Allocate a new NULL string object */
 
             NewObject = AcpiUtCreateStringObject (0);
-            if (!NewObject)
+            if(!NewObject)
             {
                 return (AE_NO_MEMORY);
             }
@@ -277,7 +277,7 @@ AcpiNsConvertToString (
         {
             Status = AcpiExConvertToString (OriginalObject,
                 &NewObject, ACPI_IMPLICIT_CONVERT_HEX);
-            if (ACPI_FAILURE (Status))
+            if(ACPI_FAILURE (Status))
             {
                 return (Status);
             }
@@ -301,7 +301,7 @@ AcpiNsConvertToString (
         /* Allocate a new string object */
 
         NewObject = AcpiUtCreateStringObject (Length);
-        if (!NewObject)
+        if(!NewObject)
         {
             return (AE_NO_MEMORY);
         }
@@ -361,7 +361,7 @@ AcpiNsConvertToBuffer (
          * size (32 or 64 bits).
          */
         Status = AcpiExConvertToBuffer (OriginalObject, &NewObject);
-        if (ACPI_FAILURE (Status))
+        if(ACPI_FAILURE (Status))
         {
             return (Status);
         }
@@ -373,7 +373,7 @@ AcpiNsConvertToBuffer (
 
         NewObject = AcpiUtCreateBufferObject
             (OriginalObject->String.Length);
-        if (!NewObject)
+        if(!NewObject)
         {
             return (AE_NO_MEMORY);
         }
@@ -396,7 +396,7 @@ AcpiNsConvertToBuffer (
 
         for (i = 0; i < Count; i++)
         {
-            if ((!*Elements) ||
+            if((!*Elements) ||
                 ((*Elements)->Common.Type != ACPI_TYPE_INTEGER))
             {
                 return (AE_AML_OPERAND_TYPE);
@@ -407,7 +407,7 @@ AcpiNsConvertToBuffer (
         /* Create the new buffer object to replace the Package */
 
         NewObject = AcpiUtCreateBufferObject (ACPI_MUL_4 (Count));
-        if (!NewObject)
+        if(!NewObject)
         {
             return (AE_NO_MEMORY);
         }
@@ -462,16 +462,16 @@ AcpiNsConvertToUnicode (
     UINT32                  i;
 
 
-    if (!OriginalObject)
+    if(!OriginalObject)
     {
         return (AE_OK);
     }
 
     /* If a Buffer was returned, it must be at least two bytes long */
 
-    if (OriginalObject->Common.Type == ACPI_TYPE_BUFFER)
+    if(OriginalObject->Common.Type == ACPI_TYPE_BUFFER)
     {
-        if (OriginalObject->Buffer.Length < 2)
+        if(OriginalObject->Buffer.Length < 2)
         {
             return (AE_AML_OPERAND_VALUE);
         }
@@ -490,7 +490,7 @@ AcpiNsConvertToUnicode (
     /* Create a new buffer object for the Unicode data */
 
     NewObject = AcpiUtCreateBufferObject (UnicodeLength);
-    if (!NewObject)
+    if(!NewObject)
     {
         return (AE_NO_MEMORY);
     }
@@ -543,7 +543,7 @@ AcpiNsConvertToResource (
      * We will return a buffer containing a single EndTag
      * resource descriptor.
      */
-    if (OriginalObject)
+    if(OriginalObject)
     {
         switch (OriginalObject->Common.Type)
         {
@@ -551,7 +551,7 @@ AcpiNsConvertToResource (
 
             /* We can only repair an Integer==0 */
 
-            if (OriginalObject->Integer.Value)
+            if(OriginalObject->Integer.Value)
             {
                 return (AE_AML_OPERAND_TYPE);
             }
@@ -559,7 +559,7 @@ AcpiNsConvertToResource (
 
         case ACPI_TYPE_BUFFER:
 
-            if (OriginalObject->Buffer.Length)
+            if(OriginalObject->Buffer.Length)
             {
                 /* Additional checks can be added in the future */
 
@@ -578,7 +578,7 @@ AcpiNsConvertToResource (
     /* Create the new buffer object for the resource descriptor */
 
     NewObject = AcpiUtCreateBufferObject (2);
-    if (!NewObject)
+    if(!NewObject)
     {
         return (AE_NO_MEMORY);
     }
@@ -629,7 +629,7 @@ AcpiNsConvertToReference (
     /* Convert path into internal presentation */
 
     Status = AcpiNsInternalizeName (OriginalObject->String.Pointer, &Name);
-    if (ACPI_FAILURE (Status))
+    if(ACPI_FAILURE (Status))
     {
         return_ACPI_STATUS (Status);
     }
@@ -640,7 +640,7 @@ AcpiNsConvertToReference (
     Status = AcpiNsLookup (&ScopeInfo, Name,
         ACPI_TYPE_ANY, ACPI_IMODE_EXECUTE,
         ACPI_NS_SEARCH_PARENT | ACPI_NS_DONT_OPEN_SCOPE, NULL, &Node);
-    if (ACPI_FAILURE (Status))
+    if(ACPI_FAILURE (Status))
     {
         /* Check if we are resolving a named reference within a package */
 
@@ -652,7 +652,7 @@ AcpiNsConvertToReference (
     /* Create and init a new internal ACPI object */
 
     NewObject = AcpiUtCreateInternalObject (ACPI_TYPE_LOCAL_REFERENCE);
-    if (!NewObject)
+    if(!NewObject)
     {
         Status = AE_NO_MEMORY;
         goto ErrorExit;

@@ -185,7 +185,7 @@ AcpiOsCreateCache (
     ACPI_FUNCTION_ENTRY ();
 
 
-    if (!CacheName || !ReturnCache || !ObjectSize)
+    if(!CacheName || !ReturnCache || !ObjectSize)
     {
         return (AE_BAD_PARAMETER);
     }
@@ -193,7 +193,7 @@ AcpiOsCreateCache (
     /* Create the cache object */
 
     Cache = AcpiOsAllocate (sizeof (ACPI_MEMORY_LIST));
-    if (!Cache)
+    if(!Cache)
     {
         return (AE_NO_MEMORY);
     }
@@ -233,13 +233,13 @@ AcpiOsPurgeCache (
     ACPI_FUNCTION_ENTRY ();
 
 
-    if (!Cache)
+    if(!Cache)
     {
         return (AE_BAD_PARAMETER);
     }
 
     Status = AcpiUtAcquireMutex (ACPI_MTX_CACHES);
-    if (ACPI_FAILURE (Status))
+    if(ACPI_FAILURE (Status))
     {
         return (Status);
     }
@@ -288,7 +288,7 @@ AcpiOsDeleteCache (
    /* Purge all objects in the cache */
 
     Status = AcpiOsPurgeCache (Cache);
-    if (ACPI_FAILURE (Status))
+    if(ACPI_FAILURE (Status))
     {
         return (Status);
     }
@@ -325,14 +325,14 @@ AcpiOsReleaseObject (
     ACPI_FUNCTION_ENTRY ();
 
 
-    if (!Cache || !Object)
+    if(!Cache || !Object)
     {
         return (AE_BAD_PARAMETER);
     }
 
     /* If cache is full, just free this object */
 
-    if (Cache->CurrentDepth >= Cache->MaxDepth)
+    if(Cache->CurrentDepth >= Cache->MaxDepth)
     {
         ACPI_FREE (Object);
         ACPI_MEM_TRACKING (Cache->TotalFreed++);
@@ -343,7 +343,7 @@ AcpiOsReleaseObject (
     else
     {
         Status = AcpiUtAcquireMutex (ACPI_MTX_CACHES);
-        if (ACPI_FAILURE (Status))
+        if(ACPI_FAILURE (Status))
         {
             return (Status);
         }
@@ -390,13 +390,13 @@ AcpiOsAcquireObject (
     ACPI_FUNCTION_TRACE (OsAcquireObject);
 
 
-    if (!Cache)
+    if(!Cache)
     {
         return_PTR (NULL);
     }
 
     Status = AcpiUtAcquireMutex (ACPI_MTX_CACHES);
-    if (ACPI_FAILURE (Status))
+    if(ACPI_FAILURE (Status))
     {
         return_PTR (NULL);
     }
@@ -405,7 +405,7 @@ AcpiOsAcquireObject (
 
     /* Check the cache first */
 
-    if (Cache->ListHead)
+    if(Cache->ListHead)
     {
         /* There is an object available, use it */
 
@@ -420,7 +420,7 @@ AcpiOsAcquireObject (
             ACPI_GET_FUNCTION_NAME, Object, Cache->ListName));
 
         Status = AcpiUtReleaseMutex (ACPI_MTX_CACHES);
-        if (ACPI_FAILURE (Status))
+        if(ACPI_FAILURE (Status))
         {
             return_PTR (NULL);
         }
@@ -436,7 +436,7 @@ AcpiOsAcquireObject (
         ACPI_MEM_TRACKING (Cache->TotalAllocated++);
 
 #ifdef ACPI_DBG_TRACK_ALLOCATIONS
-        if ((Cache->TotalAllocated - Cache->TotalFreed) > Cache->MaxOccupied)
+        if((Cache->TotalAllocated - Cache->TotalFreed) > Cache->MaxOccupied)
         {
             Cache->MaxOccupied = Cache->TotalAllocated - Cache->TotalFreed;
         }
@@ -445,13 +445,13 @@ AcpiOsAcquireObject (
         /* Avoid deadlock with ACPI_ALLOCATE_ZEROED */
 
         Status = AcpiUtReleaseMutex (ACPI_MTX_CACHES);
-        if (ACPI_FAILURE (Status))
+        if(ACPI_FAILURE (Status))
         {
             return_PTR (NULL);
         }
 
         Object = ACPI_ALLOCATE_ZEROED (Cache->ObjectSize);
-        if (!Object)
+        if(!Object)
         {
             return_PTR (NULL);
         }

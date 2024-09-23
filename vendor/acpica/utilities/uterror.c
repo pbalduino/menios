@@ -199,7 +199,7 @@ AcpiUtPredefinedWarning (
      * Warning messages for this method/object will be disabled after the
      * first time a validation fails or an object is successfully repaired.
      */
-    if (NodeFlags & ANOBJ_EVALUATED)
+    if(NodeFlags & ANOBJ_EVALUATED)
     {
         return;
     }
@@ -248,7 +248,7 @@ AcpiUtPredefinedInfo (
      * Warning messages for this method/object will be disabled after the
      * first time a validation fails or an object is successfully repaired.
      */
-    if (NodeFlags & ANOBJ_EVALUATED)
+    if(NodeFlags & ANOBJ_EVALUATED)
     {
         return;
     }
@@ -297,7 +297,7 @@ AcpiUtPredefinedBiosError (
      * Warning messages for this method/object will be disabled after the
      * first time a validation fails or an object is successfully repaired.
      */
-    if (NodeFlags & ANOBJ_EVALUATED)
+    if(NodeFlags & ANOBJ_EVALUATED)
     {
         return;
     }
@@ -377,7 +377,7 @@ AcpiUtPrefixedNamespaceError (
         FullPath ? FullPath : "Could not get pathname",
         AcpiFormatException (LookupStatus));
 
-    if (FullPath)
+    if(FullPath)
     {
         ACPI_FREE (FullPath);
     }
@@ -417,7 +417,7 @@ AcpiUtNamespaceError (
     ACPI_MSG_REDIRECT_BEGIN;
     AcpiOsPrintf (ACPI_MSG_ERROR);
 
-    if (LookupStatus == AE_BAD_CHARACTER)
+    if(LookupStatus == AE_BAD_CHARACTER)
     {
         /* There is a non-ascii character in the name */
 
@@ -433,7 +433,7 @@ AcpiUtNamespaceError (
 
         /* Print target name */
 
-        if (ACPI_SUCCESS (Status))
+        if(ACPI_SUCCESS (Status))
         {
             AcpiOsPrintf ("[%s]", Name);
         }
@@ -442,7 +442,7 @@ AcpiUtNamespaceError (
             AcpiOsPrintf ("[COULD NOT EXTERNALIZE NAME]");
         }
 
-        if (Name)
+        if(Name)
         {
             ACPI_FREE (Name);
         }
@@ -489,11 +489,11 @@ AcpiUtMethodError (
     ACPI_MSG_REDIRECT_BEGIN;
     AcpiOsPrintf (ACPI_MSG_ERROR);
 
-    if (Path)
+    if(Path)
     {
         Status = AcpiNsGetNode (PrefixNode, Path,
             ACPI_NS_NO_UPSEARCH, &Node);
-        if (ACPI_FAILURE (Status))
+        if(ACPI_FAILURE (Status))
         {
             AcpiOsPrintf ("[Could not get node by pathname]");
         }

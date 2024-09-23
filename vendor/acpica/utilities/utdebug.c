@@ -213,7 +213,7 @@ AcpiUtTrackStackPtr (
     ACPI_SIZE               CurrentSp;
 
 
-    if (&CurrentSp < AcpiGbl_LowestStackPointer)
+    if(&CurrentSp < AcpiGbl_LowestStackPointer)
     {
 #pragma GCC diagnostic push
 #if defined(__GNUC__) && __GNUC__ >= 12
@@ -223,7 +223,7 @@ AcpiUtTrackStackPtr (
 #pragma GCC diagnostic pop
     }
 
-    if (AcpiGbl_NestingLevel > AcpiGbl_DeepestNesting)
+    if(AcpiGbl_NestingLevel > AcpiGbl_DeepestNesting)
     {
         AcpiGbl_DeepestNesting = AcpiGbl_NestingLevel;
     }
@@ -251,14 +251,14 @@ AcpiUtTrimFunctionName (
 
     /* All Function names are longer than 4 chars, check is safe */
 
-    if (*(ACPI_CAST_PTR (UINT32, FunctionName)) == ACPI_PREFIX_MIXED)
+    if(*(ACPI_CAST_PTR (UINT32, FunctionName)) == ACPI_PREFIX_MIXED)
     {
         /* This is the case where the original source has not been modified */
 
         return (FunctionName + 4);
     }
 
-    if (*(ACPI_CAST_PTR (UINT32, FunctionName)) == ACPI_PREFIX_LOWER)
+    if(*(ACPI_CAST_PTR (UINT32, FunctionName)) == ACPI_PREFIX_LOWER)
     {
         /* This is the case where the source has been 'linuxized' */
 
@@ -306,7 +306,7 @@ AcpiDebugPrint (
 
     /* Check if debug output enabled */
 
-    if (!ACPI_IS_DEBUG_ENABLED (RequestedDebugLevel, ComponentId))
+    if(!ACPI_IS_DEBUG_ENABLED (RequestedDebugLevel, ComponentId))
     {
         return;
     }
@@ -315,9 +315,9 @@ AcpiDebugPrint (
      * Thread tracking and context switch notification
      */
     ThreadId = AcpiOsGetThreadId ();
-    if (ThreadId != AcpiGbl_PreviousThreadId)
+    if(ThreadId != AcpiGbl_PreviousThreadId)
     {
-        if (ACPI_LV_THREADS & AcpiDbgLevel)
+        if(ACPI_LV_THREADS & AcpiDbgLevel)
         {
             AcpiOsPrintf (
                 "\n**** Context Switch from TID %u to TID %u ****\n\n",
@@ -341,14 +341,14 @@ AcpiDebugPrint (
      * execution. Otherwise, multiple threads will keep resetting the
      * level.
      */
-    if (ACPI_LV_THREADS & AcpiDbgLevel)
+    if(ACPI_LV_THREADS & AcpiDbgLevel)
     {
         AcpiOsPrintf ("[%u] ", (UINT32) ThreadId);
     }
 
     FillCount = 48 - AcpiGbl_NestingLevel -
         strlen (AcpiUtTrimFunctionName (FunctionName));
-    if (FillCount < 0)
+    if(FillCount < 0)
     {
         FillCount = 0;
     }
@@ -404,7 +404,7 @@ AcpiDebugPrintRaw (
 
     /* Check if debug output enabled */
 
-    if (!ACPI_IS_DEBUG_ENABLED (RequestedDebugLevel, ComponentId))
+    if(!ACPI_IS_DEBUG_ENABLED (RequestedDebugLevel, ComponentId))
     {
         return;
     }
@@ -446,7 +446,7 @@ AcpiUtTrace (
 
     /* Check if enabled up-front for performance */
 
-    if (ACPI_IS_DEBUG_ENABLED (ACPI_LV_FUNCTIONS, ComponentId))
+    if(ACPI_IS_DEBUG_ENABLED (ACPI_LV_FUNCTIONS, ComponentId))
     {
         AcpiDebugPrint (ACPI_LV_FUNCTIONS,
             LineNumber, FunctionName, ModuleName, ComponentId,
@@ -488,7 +488,7 @@ AcpiUtTracePtr (
 
     /* Check if enabled up-front for performance */
 
-    if (ACPI_IS_DEBUG_ENABLED (ACPI_LV_FUNCTIONS, ComponentId))
+    if(ACPI_IS_DEBUG_ENABLED (ACPI_LV_FUNCTIONS, ComponentId))
     {
         AcpiDebugPrint (ACPI_LV_FUNCTIONS,
             LineNumber, FunctionName, ModuleName, ComponentId,
@@ -528,7 +528,7 @@ AcpiUtTraceStr (
 
     /* Check if enabled up-front for performance */
 
-    if (ACPI_IS_DEBUG_ENABLED (ACPI_LV_FUNCTIONS, ComponentId))
+    if(ACPI_IS_DEBUG_ENABLED (ACPI_LV_FUNCTIONS, ComponentId))
     {
         AcpiDebugPrint (ACPI_LV_FUNCTIONS,
             LineNumber, FunctionName, ModuleName, ComponentId,
@@ -568,7 +568,7 @@ AcpiUtTraceU32 (
 
     /* Check if enabled up-front for performance */
 
-    if (ACPI_IS_DEBUG_ENABLED (ACPI_LV_FUNCTIONS, ComponentId))
+    if(ACPI_IS_DEBUG_ENABLED (ACPI_LV_FUNCTIONS, ComponentId))
     {
         AcpiDebugPrint (ACPI_LV_FUNCTIONS,
             LineNumber, FunctionName, ModuleName, ComponentId,
@@ -603,14 +603,14 @@ AcpiUtExit (
 
     /* Check if enabled up-front for performance */
 
-    if (ACPI_IS_DEBUG_ENABLED (ACPI_LV_FUNCTIONS, ComponentId))
+    if(ACPI_IS_DEBUG_ENABLED (ACPI_LV_FUNCTIONS, ComponentId))
     {
         AcpiDebugPrint (ACPI_LV_FUNCTIONS,
             LineNumber, FunctionName, ModuleName, ComponentId,
             "%s\n", AcpiGbl_FunctionExitPrefix);
     }
 
-    if (AcpiGbl_NestingLevel)
+    if(AcpiGbl_NestingLevel)
     {
         AcpiGbl_NestingLevel--;
     }
@@ -647,9 +647,9 @@ AcpiUtStatusExit (
 
     /* Check if enabled up-front for performance */
 
-    if (ACPI_IS_DEBUG_ENABLED (ACPI_LV_FUNCTIONS, ComponentId))
+    if(ACPI_IS_DEBUG_ENABLED (ACPI_LV_FUNCTIONS, ComponentId))
     {
-        if (ACPI_SUCCESS (Status))
+        if(ACPI_SUCCESS (Status))
         {
             AcpiDebugPrint (ACPI_LV_FUNCTIONS,
                 LineNumber, FunctionName, ModuleName, ComponentId,
@@ -665,7 +665,7 @@ AcpiUtStatusExit (
         }
     }
 
-    if (AcpiGbl_NestingLevel)
+    if(AcpiGbl_NestingLevel)
     {
         AcpiGbl_NestingLevel--;
     }
@@ -702,7 +702,7 @@ AcpiUtValueExit (
 
     /* Check if enabled up-front for performance */
 
-    if (ACPI_IS_DEBUG_ENABLED (ACPI_LV_FUNCTIONS, ComponentId))
+    if(ACPI_IS_DEBUG_ENABLED (ACPI_LV_FUNCTIONS, ComponentId))
     {
         AcpiDebugPrint (ACPI_LV_FUNCTIONS,
             LineNumber, FunctionName, ModuleName, ComponentId,
@@ -710,7 +710,7 @@ AcpiUtValueExit (
             ACPI_FORMAT_UINT64 (Value));
     }
 
-    if (AcpiGbl_NestingLevel)
+    if(AcpiGbl_NestingLevel)
     {
         AcpiGbl_NestingLevel--;
     }
@@ -747,14 +747,14 @@ AcpiUtPtrExit (
 
     /* Check if enabled up-front for performance */
 
-    if (ACPI_IS_DEBUG_ENABLED (ACPI_LV_FUNCTIONS, ComponentId))
+    if(ACPI_IS_DEBUG_ENABLED (ACPI_LV_FUNCTIONS, ComponentId))
     {
         AcpiDebugPrint (ACPI_LV_FUNCTIONS,
             LineNumber, FunctionName, ModuleName, ComponentId,
             "%s %p\n", AcpiGbl_FunctionExitPrefix, Ptr);
     }
 
-    if (AcpiGbl_NestingLevel)
+    if(AcpiGbl_NestingLevel)
     {
         AcpiGbl_NestingLevel--;
     }
@@ -789,14 +789,14 @@ AcpiUtStrExit (
 
     /* Check if enabled up-front for performance */
 
-    if (ACPI_IS_DEBUG_ENABLED (ACPI_LV_FUNCTIONS, ComponentId))
+    if(ACPI_IS_DEBUG_ENABLED (ACPI_LV_FUNCTIONS, ComponentId))
     {
         AcpiDebugPrint (ACPI_LV_FUNCTIONS,
             LineNumber, FunctionName, ModuleName, ComponentId,
             "%s %s\n", AcpiGbl_FunctionExitPrefix, String);
     }
 
-    if (AcpiGbl_NestingLevel)
+    if(AcpiGbl_NestingLevel)
     {
         AcpiGbl_NestingLevel--;
     }

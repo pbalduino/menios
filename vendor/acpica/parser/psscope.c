@@ -228,7 +228,7 @@ AcpiPsInitScope (
 
 
     Scope = AcpiUtCreateGenericState ();
-    if (!Scope)
+    if(!Scope)
     {
         return_ACPI_STATUS (AE_NO_MEMORY);
     }
@@ -275,7 +275,7 @@ AcpiPsPushScope (
 
 
     Scope = AcpiUtCreateGenericState ();
-    if (!Scope)
+    if(!Scope)
     {
         return_ACPI_STATUS (AE_NO_MEMORY);
     }
@@ -290,7 +290,7 @@ AcpiPsPushScope (
 
     AcpiUtPushGenericState (&ParserState->Scope, Scope);
 
-    if (ArgCount == ACPI_VAR_ARGS)
+    if(ArgCount == ACPI_VAR_ARGS)
     {
         /* Multiple arguments */
 
@@ -338,7 +338,7 @@ AcpiPsPopScope (
 
     /* Only pop the scope if there is in fact a next scope */
 
-    if (Scope->Common.Next)
+    if(Scope->Common.Next)
     {
         Scope = AcpiUtPopGenericState (&ParserState->Scope);
 
@@ -391,7 +391,7 @@ AcpiPsCleanupScope (
     ACPI_FUNCTION_TRACE_PTR (PsCleanupScope, ParserState);
 
 
-    if (!ParserState)
+    if(!ParserState)
     {
         return_VOID;
     }

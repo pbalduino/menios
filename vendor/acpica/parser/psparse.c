@@ -189,7 +189,7 @@ AcpiPsGetOpcodeSize (
 
     /* Extended (2-byte) opcode if > 255 */
 
-    if (Opcode > 0x00FF)
+    if(Opcode > 0x00FF)
     {
         return (2);
     }
@@ -223,7 +223,7 @@ AcpiPsPeekOpcode (
     Aml = ParserState->Aml;
     Opcode = (UINT16) ACPI_GET8 (Aml);
 
-    if (Opcode == AML_EXTENDED_PREFIX)
+    if(Opcode == AML_EXTENDED_PREFIX)
     {
         /* Extended opcode, get the second opcode byte */
 
@@ -265,7 +265,7 @@ AcpiPsCompleteThisOp (
 
     /* Check for null Op, can happen if AML code is corrupt */
 
-    if (!Op)
+    if(!Op)
     {
         return_ACPI_STATUS (AE_OK);  /* OK for now */
     }
@@ -274,7 +274,7 @@ AcpiPsCompleteThisOp (
 
     /* Delete this op and the subtree below it if asked to */
 
-    if (((WalkState->ParseFlags & ACPI_PARSE_TREE_MASK) != ACPI_PARSE_DELETE_TREE) ||
+    if(((WalkState->ParseFlags & ACPI_PARSE_TREE_MASK) != ACPI_PARSE_DELETE_TREE) ||
          (WalkState->OpInfo->Class == AML_CLASS_ARGUMENT))
     {
         return_ACPI_STATUS (AE_OK);
@@ -282,10 +282,10 @@ AcpiPsCompleteThisOp (
 
     /* Make sure that we only delete this subtree */
 
-    if (Op->Common.Parent)
+    if(Op->Common.Parent)
     {
         Prev = Op->Common.Parent->Common.Value.Arg;
-        if (!Prev)
+        if(!Prev)
         {
             /* Nothing more to do */
 
@@ -311,7 +311,7 @@ AcpiPsCompleteThisOp (
              */
             ReplacementOp = AcpiPsAllocOp (
                 AML_INT_RETURN_VALUE_OP, Op->Common.Aml);
-            if (!ReplacementOp)
+            if(!ReplacementOp)
             {
                 Status = AE_NO_MEMORY;
             }
@@ -322,7 +322,7 @@ AcpiPsCompleteThisOp (
              * These opcodes contain TermArg operands. The current
              * op must be replaced by a placeholder return op
              */
-            if ((Op->Common.Parent->Common.AmlOpcode == AML_REGION_OP)       ||
+            if((Op->Common.Parent->Common.AmlOpcode == AML_REGION_OP)       ||
                 (Op->Common.Parent->Common.AmlOpcode == AML_DATA_REGION_OP)  ||
                 (Op->Common.Parent->Common.AmlOpcode == AML_BUFFER_OP)       ||
                 (Op->Common.Parent->Common.AmlOpcode == AML_PACKAGE_OP)      ||
@@ -331,21 +331,21 @@ AcpiPsCompleteThisOp (
             {
                 ReplacementOp = AcpiPsAllocOp (
                     AML_INT_RETURN_VALUE_OP, Op->Common.Aml);
-                if (!ReplacementOp)
+                if(!ReplacementOp)
                 {
                     Status = AE_NO_MEMORY;
                 }
             }
-            else if ((Op->Common.Parent->Common.AmlOpcode == AML_NAME_OP) &&
+            else if((Op->Common.Parent->Common.AmlOpcode == AML_NAME_OP) &&
                      (WalkState->PassNumber <= ACPI_IMODE_LOAD_PASS2))
             {
-                if ((Op->Common.AmlOpcode == AML_BUFFER_OP) ||
+                if((Op->Common.AmlOpcode == AML_BUFFER_OP) ||
                     (Op->Common.AmlOpcode == AML_PACKAGE_OP) ||
                     (Op->Common.AmlOpcode == AML_VARIABLE_PACKAGE_OP))
                 {
                     ReplacementOp = AcpiPsAllocOp (Op->Common.AmlOpcode,
                         Op->Common.Aml);
-                    if (!ReplacementOp)
+                    if(!ReplacementOp)
                     {
                         Status = AE_NO_MEMORY;
                     }
@@ -362,7 +362,7 @@ AcpiPsCompleteThisOp (
 
             ReplacementOp = AcpiPsAllocOp (
                 AML_INT_RETURN_VALUE_OP, Op->Common.Aml);
-            if (!ReplacementOp)
+            if(!ReplacementOp)
             {
                 Status = AE_NO_MEMORY;
             }
@@ -370,11 +370,11 @@ AcpiPsCompleteThisOp (
 
         /* We must unlink this op from the parent tree */
 
-        if (Prev == Op)
+        if(Prev == Op)
         {
             /* This op is the first in the list */
 
-            if (ReplacementOp)
+            if(ReplacementOp)
             {
                 ReplacementOp->Common.Parent = Op->Common.Parent;
                 ReplacementOp->Common.Value.Arg = NULL;
@@ -395,9 +395,9 @@ AcpiPsCompleteThisOp (
             /* Traverse all siblings in the parent's argument list */
 
             Next = Prev->Common.Next;
-            if (Next == Op)
+            if(Next == Op)
             {
-                if (ReplacementOp)
+                if(ReplacementOp)
                 {
                     ReplacementOp->Common.Parent = Op->Common.Parent;
                     ReplacementOp->Common.Value.Arg = NULL;
@@ -533,7 +533,7 @@ AcpiPsNextParseState (
     default:
 
         Status = CallbackStatus;
-        if (ACPI_CNTL_EXCEPTION (CallbackStatus))
+        if(ACPI_CNTL_EXCEPTION (CallbackStatus))
         {
             Status = AE_OK;
         }
@@ -574,7 +574,7 @@ AcpiPsParseAml (
         WalkState, WalkState->ParserState.Aml,
         WalkState->ParserState.AmlSize));
 
-    if (!WalkState->ParserState.Aml)
+    if(!WalkState->ParserState.Aml)
     {
         return_ACPI_STATUS (AE_BAD_ADDRESS);
     }
@@ -582,9 +582,9 @@ AcpiPsParseAml (
     /* Create and initialize a new thread state */
 
     Thread = AcpiUtCreateThreadState ();
-    if (!Thread)
+    if(!Thread)
     {
-        if (WalkState->MethodDesc)
+        if(WalkState->MethodDesc)
         {
             /* Executing a control method - additional cleanup */
 
@@ -601,7 +601,7 @@ AcpiPsParseAml (
      * If executing a method, the starting SyncLevel is this method's
      * SyncLevel
      */
-    if (WalkState->MethodDesc)
+    if(WalkState->MethodDesc)
     {
         WalkState->Thread->CurrentSyncLevel =
             WalkState->MethodDesc->Method.SyncLevel;
@@ -624,7 +624,7 @@ AcpiPsParseAml (
     Status = AE_OK;
     while (WalkState)
     {
-        if (ACPI_SUCCESS (Status))
+        if(ACPI_SUCCESS (Status))
         {
             /*
              * The ParseLoop executes AML until the method terminates
@@ -637,7 +637,7 @@ AcpiPsParseAml (
             "Completed one call to walk loop, %s State=%p\n",
             AcpiFormatException (Status), WalkState));
 
-        if (WalkState->MethodPathname && WalkState->MethodIsNested)
+        if(WalkState->MethodPathname && WalkState->MethodIsNested)
         {
             /* Optional object evaluation log */
 
@@ -649,14 +649,14 @@ AcpiPsParseAml (
             ACPI_FREE (WalkState->MethodPathname);
             WalkState->MethodIsNested = FALSE;
         }
-        if (Status == AE_CTRL_TRANSFER)
+        if(Status == AE_CTRL_TRANSFER)
         {
             /*
              * A method call was detected.
              * Transfer control to the called control method
              */
             Status = AcpiDsCallControlMethod (Thread, WalkState, NULL);
-            if (ACPI_FAILURE (Status))
+            if(ACPI_FAILURE (Status))
             {
                 Status = AcpiDsMethodError (Status, WalkState);
             }
@@ -668,16 +668,16 @@ AcpiPsParseAml (
             WalkState = AcpiDsGetCurrentWalkState (Thread);
             continue;
         }
-        else if (Status == AE_CTRL_TERMINATE)
+        else if(Status == AE_CTRL_TERMINATE)
         {
             Status = AE_OK;
         }
-        else if ((Status != AE_OK) && (WalkState->MethodDesc))
+        else if((Status != AE_OK) && (WalkState->MethodDesc))
         {
             /* Either the method parse or actual execution failed */
 
             AcpiExExitInterpreter ();
-            if (Status == AE_ABORT_METHOD)
+            if(Status == AE_ABORT_METHOD)
             {
                 AcpiNsPrintNodePathname (
                     WalkState->MethodNode, "Aborting method");
@@ -692,7 +692,7 @@ AcpiPsParseAml (
 
             /* Check for possible multi-thread reentrancy problem */
 
-            if ((Status == AE_ALREADY_EXISTS) &&
+            if((Status == AE_ALREADY_EXISTS) &&
                 (!(WalkState->MethodDesc->Method.InfoFlags &
                     ACPI_METHOD_SERIALIZED)))
             {
@@ -720,7 +720,7 @@ AcpiPsParseAml (
          * encountered an error during the method parse phase, there's lots of
          * cleanup to do
          */
-        if (((WalkState->ParseFlags & ACPI_PARSE_MODE_MASK) ==
+        if(((WalkState->ParseFlags & ACPI_PARSE_MODE_MASK) ==
             ACPI_PARSE_EXECUTE &&
             !(WalkState->ParseFlags & ACPI_PARSE_MODULE_LEVEL)) ||
             (ACPI_FAILURE (Status)))
@@ -740,27 +740,27 @@ AcpiPsParseAml (
         /* Check if we have restarted a preempted walk */
 
         WalkState = AcpiDsGetCurrentWalkState (Thread);
-        if (WalkState)
+        if(WalkState)
         {
-            if (ACPI_SUCCESS (Status))
+            if(ACPI_SUCCESS (Status))
             {
                 /*
                  * There is another walk state, restart it.
                  * If the method return value is not used by the parent,
                  * The object is deleted
                  */
-                if (!PreviousWalkState->ReturnDesc)
+                if(!PreviousWalkState->ReturnDesc)
                 {
                     /*
                      * In slack mode execution, if there is no return value
                      * we should implicitly return zero (0) as a default value.
                      */
-                    if (AcpiGbl_EnableInterpreterSlack &&
+                    if(AcpiGbl_EnableInterpreterSlack &&
                         !PreviousWalkState->ImplicitReturnObj)
                     {
                         PreviousWalkState->ImplicitReturnObj =
                             AcpiUtCreateIntegerObject ((UINT64) 0);
-                        if (!PreviousWalkState->ImplicitReturnObj)
+                        if(!PreviousWalkState->ImplicitReturnObj)
                         {
                             return_ACPI_STATUS (AE_NO_MEMORY);
                         }
@@ -782,7 +782,7 @@ AcpiPsParseAml (
                     Status = AcpiDsRestartControlMethod (WalkState,
                         PreviousWalkState->ReturnDesc);
                 }
-                if (ACPI_SUCCESS (Status))
+                if(ACPI_SUCCESS (Status))
                 {
                     WalkState->WalkType |= ACPI_WALK_METHOD_RESTART;
                 }
@@ -800,9 +800,9 @@ AcpiPsParseAml (
          * Just completed a 1st-level method, save the final internal return
          * value (if any)
          */
-        else if (PreviousWalkState->CallerReturnDesc)
+        else if(PreviousWalkState->CallerReturnDesc)
         {
-            if (PreviousWalkState->ImplicitReturnObj)
+            if(PreviousWalkState->ImplicitReturnObj)
             {
                 *(PreviousWalkState->CallerReturnDesc) =
                     PreviousWalkState->ImplicitReturnObj;
@@ -817,13 +817,13 @@ AcpiPsParseAml (
         }
         else
         {
-            if (PreviousWalkState->ReturnDesc)
+            if(PreviousWalkState->ReturnDesc)
             {
                 /* Caller doesn't want it, must delete it */
 
                 AcpiUtRemoveReference (PreviousWalkState->ReturnDesc);
             }
-            if (PreviousWalkState->ImplicitReturnObj)
+            if(PreviousWalkState->ImplicitReturnObj)
             {
                 /* Caller doesn't want it, must delete it */
 

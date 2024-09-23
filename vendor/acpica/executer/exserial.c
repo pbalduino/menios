@@ -246,7 +246,7 @@ AcpiExWriteGpio (
      * pin number index. The BitLength is the length of the field, which
      * is thus the number of pins.
      */
-    if (SourceDesc->Common.Type != ACPI_TYPE_INTEGER)
+    if(SourceDesc->Common.Type != ACPI_TYPE_INTEGER)
     {
         return_ACPI_STATUS (AE_AML_OPERAND_TYPE);
     }
@@ -330,7 +330,7 @@ AcpiExReadSerialBus (
     case ACPI_ADR_SPACE_GSBUS:
 
         AccessorType = ObjDesc->Field.Attribute;
-        if (AccessorType == AML_FIELD_ATTRIB_RAW_PROCESS_BYTES)
+        if(AccessorType == AML_FIELD_ATTRIB_RAW_PROCESS_BYTES)
         {
             ACPI_ERROR ((AE_INFO,
                 "Invalid direct read using bidirectional write-then-read protocol"));
@@ -339,7 +339,7 @@ AcpiExReadSerialBus (
         }
 
         Status = AcpiExGetProtocolBufferLength (AccessorType, &BufferLength);
-        if (ACPI_FAILURE (Status))
+        if(ACPI_FAILURE (Status))
         {
             ACPI_ERROR ((AE_INFO,
                 "Invalid protocol ID for GSBus: 0x%4.4X", AccessorType));
@@ -366,7 +366,7 @@ AcpiExReadSerialBus (
     /* Create the local transfer buffer that is returned to the caller */
 
     BufferDesc = AcpiUtCreateBufferObject (BufferLength);
-    if (!BufferDesc)
+    if(!BufferDesc)
     {
         return_ACPI_STATUS (AE_NO_MEMORY);
     }
@@ -436,7 +436,7 @@ AcpiExWriteSerialBus (
      *     Length;    (Byte 1 of the data buffer)
      *     Data[x-1]: (Bytes 2-x of the arbitrary length data buffer)
      */
-    if (SourceDesc->Common.Type != ACPI_TYPE_BUFFER)
+    if(SourceDesc->Common.Type != ACPI_TYPE_BUFFER)
     {
         ACPI_ERROR ((AE_INFO,
             "SMBus/IPMI/GenericSerialBus write requires "
@@ -464,7 +464,7 @@ AcpiExWriteSerialBus (
 
         AccessorType = ObjDesc->Field.Attribute;
         Status = AcpiExGetProtocolBufferLength (AccessorType, &BufferLength);
-        if (ACPI_FAILURE (Status))
+        if(ACPI_FAILURE (Status))
         {
             ACPI_ERROR ((AE_INFO,
                 "Invalid protocol ID for GSBus: 0x%4.4X", AccessorType));
@@ -497,7 +497,7 @@ AcpiExWriteSerialBus (
     /* Create the transfer/bidirectional/return buffer */
 
     BufferDesc = AcpiUtCreateBufferObject (BufferLength);
-    if (!BufferDesc)
+    if(!BufferDesc)
     {
         return_ACPI_STATUS (AE_NO_MEMORY);
     }

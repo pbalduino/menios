@@ -208,12 +208,12 @@ AcpiEvaluateObjectTyped (
 
     /* Return buffer must be valid */
 
-    if (!ReturnBuffer)
+    if(!ReturnBuffer)
     {
         return_ACPI_STATUS (AE_BAD_PARAMETER);
     }
 
-    if (ReturnBuffer->Length == ACPI_ALLOCATE_BUFFER)
+    if(ReturnBuffer->Length == ACPI_ALLOCATE_BUFFER)
     {
         FreeBufferOnError = TRUE;
     }
@@ -221,17 +221,17 @@ AcpiEvaluateObjectTyped (
     /* Get a handle here, in order to build an error message if needed */
 
     TargetHandle = Handle;
-    if (Pathname)
+    if(Pathname)
     {
         Status = AcpiGetHandle (Handle, Pathname, &TargetHandle);
-        if (ACPI_FAILURE (Status))
+        if(ACPI_FAILURE (Status))
         {
             return_ACPI_STATUS (Status);
         }
     }
 
     FullPathname = AcpiNsGetExternalPathname (TargetHandle);
-    if (!FullPathname)
+    if(!FullPathname)
     {
         return_ACPI_STATUS (AE_NO_MEMORY);
     }
@@ -240,19 +240,19 @@ AcpiEvaluateObjectTyped (
 
     Status = AcpiEvaluateObject (TargetHandle, NULL, ExternalParams,
         ReturnBuffer);
-    if (ACPI_FAILURE (Status))
+    if(ACPI_FAILURE (Status))
     {
         goto Exit;
     }
 
     /* Type ANY means "don't care about return value type" */
 
-    if (ReturnType == ACPI_TYPE_ANY)
+    if(ReturnType == ACPI_TYPE_ANY)
     {
         goto Exit;
     }
 
-    if (ReturnBuffer->Length == 0)
+    if(ReturnBuffer->Length == 0)
     {
         /* Error because caller specifically asked for a return value */
 
@@ -264,7 +264,7 @@ AcpiEvaluateObjectTyped (
 
     /* Examine the object type returned from EvaluateObject */
 
-    if (((ACPI_OBJECT *) ReturnBuffer->Pointer)->Type == ReturnType)
+    if(((ACPI_OBJECT *) ReturnBuffer->Pointer)->Type == ReturnType)
     {
         goto Exit;
     }
@@ -277,7 +277,7 @@ AcpiEvaluateObjectTyped (
         AcpiUtGetTypeName (((ACPI_OBJECT *) ReturnBuffer->Pointer)->Type),
         AcpiUtGetTypeName (ReturnType)));
 
-    if (FreeBufferOnError)
+    if(FreeBufferOnError)
     {
         /*
          * Free a buffer created via ACPI_ALLOCATE_BUFFER.
@@ -340,7 +340,7 @@ AcpiEvaluateObject (
     /* Allocate and initialize the evaluation information block */
 
     Info = ACPI_ALLOCATE_ZEROED (sizeof (ACPI_EVALUATE_INFO));
-    if (!Info)
+    if(!Info)
     {
         return_ACPI_STATUS (AE_NO_MEMORY);
     }
@@ -348,7 +348,7 @@ AcpiEvaluateObject (
     /* Convert and validate the device handle */
 
     Info->PrefixNode = AcpiNsValidateHandle (Handle);
-    if (!Info->PrefixNode)
+    if(!Info->PrefixNode)
     {
         Status = AE_BAD_PARAMETER;
         goto Cleanup;
@@ -362,21 +362,21 @@ AcpiEvaluateObject (
      * 2) Node and valid pathname (path relative to Node)
      * 3) Node, Null pathname
      */
-    if ((Pathname) &&
+    if((Pathname) &&
         (ACPI_IS_ROOT_PREFIX (Pathname[0])))
     {
         /* The path is fully qualified, just evaluate by name */
 
         Info->PrefixNode = NULL;
     }
-    else if (!Handle)
+    else if(!Handle)
     {
         /*
          * A handle is optional iff a fully qualified pathname is specified.
          * Since we've already handled fully qualified names above, this is
          * an error.
          */
-        if (!Pathname)
+        if(!Pathname)
         {
             ACPI_DEBUG_PRINT ((ACPI_DB_INFO,
                 "Both Handle and Pathname are NULL"));
@@ -397,13 +397,13 @@ AcpiEvaluateObject (
      * Convert all external objects passed as arguments to the
      * internal version(s).
      */
-    if (ExternalParams && ExternalParams->Count)
+    if(ExternalParams && ExternalParams->Count)
     {
         Info->ParamCount = (UINT16) ExternalParams->Count;
 
         /* Warn on impossible argument count */
 
-        if (Info->ParamCount > ACPI_METHOD_NUM_ARGS)
+        if(Info->ParamCount > ACPI_METHOD_NUM_ARGS)
         {
             ACPI_WARN_PREDEFINED ((AE_INFO, Pathname, ACPI_WARN_ALWAYS,
                 "Excess arguments (%u) - using only %u",
@@ -418,7 +418,7 @@ AcpiEvaluateObject (
          */
         Info->Parameters = ACPI_ALLOCATE_ZEROED (
             ((ACPI_SIZE) Info->ParamCount + 1) * sizeof (void *));
-        if (!Info->Parameters)
+        if(!Info->Parameters)
         {
             Status = AE_NO_MEMORY;
             goto Cleanup;
@@ -430,7 +430,7 @@ AcpiEvaluateObject (
         {
             Status = AcpiUtCopyEobjectToIobject (
                 &ExternalParams->Pointer[i], &Info->Parameters[i]);
-            if (ACPI_FAILURE (Status))
+            if(ACPI_FAILURE (Status))
             {
                 goto Cleanup;
             }
@@ -452,7 +452,7 @@ AcpiEvaluateObject (
 
         /* Check incoming argument count against the method definition */
 
-        if (Info->ObjDesc->Method.ParamCount > Info->ParamCount)
+        if(Info->ObjDesc->Method.ParamCount > Info->ParamCount)
         {
             ACPI_ERROR ((AE_INFO,
                 "Insufficient arguments (%u) - %u are required",
@@ -463,7 +463,7 @@ AcpiEvaluateObject (
             goto Cleanup;
         }
 
-        else if (Info->ObjDesc->Method.ParamCount < Info->ParamCount)
+        else if(Info->ObjDesc->Method.ParamCount < Info->ParamCount)
         {
             ACPI_WARNING ((AE_INFO,
                 "Excess arguments (%u) - only %u are required",
@@ -479,7 +479,7 @@ AcpiEvaluateObject (
          * Any incoming external objects to be passed as arguments to the
          * method must be converted to internal objects
          */
-        if (Info->ParamCount)
+        if(Info->ParamCount)
         {
             /*
              * Allocate a new parameter block for the internal objects
@@ -487,7 +487,7 @@ AcpiEvaluateObject (
              */
             Info->Parameters = ACPI_ALLOCATE_ZEROED (
                 ((ACPI_SIZE) Info->ParamCount + 1) * sizeof (void *));
-            if (!Info->Parameters)
+            if(!Info->Parameters)
             {
                 Status = AE_NO_MEMORY;
                 goto Cleanup;
@@ -499,7 +499,7 @@ AcpiEvaluateObject (
             {
                 Status = AcpiUtCopyEobjectToIobject (
                     &ExternalParams->Pointer[i], &Info->Parameters[i]);
-                if (ACPI_FAILURE (Status))
+                if(ACPI_FAILURE (Status))
                 {
                     goto Cleanup;
                 }
@@ -513,7 +513,7 @@ AcpiEvaluateObject (
 
         /* Warn if arguments passed to an object that is not a method */
 
-        if (Info->ParamCount)
+        if(Info->ParamCount)
         {
             ACPI_WARNING ((AE_INFO,
                 "%u arguments were passed to a non-method ACPI object",
@@ -533,18 +533,18 @@ AcpiEvaluateObject (
      * If we are expecting a return value, and all went well above,
      * copy the return value to an external object.
      */
-    if (!ReturnBuffer)
+    if(!ReturnBuffer)
     {
         goto CleanupReturnObject;
     }
 
-    if (!Info->ReturnObject)
+    if(!Info->ReturnObject)
     {
         ReturnBuffer->Length = 0;
         goto Cleanup;
     }
 
-    if (ACPI_GET_DESCRIPTOR_TYPE (Info->ReturnObject) ==
+    if(ACPI_GET_DESCRIPTOR_TYPE (Info->ReturnObject) ==
         ACPI_DESC_TYPE_NAMED)
     {
         /*
@@ -560,7 +560,7 @@ AcpiEvaluateObject (
         ReturnBuffer->Length = 0;
     }
 
-    if (ACPI_FAILURE (Status))
+    if(ACPI_FAILURE (Status))
     {
         goto CleanupReturnObject;
     }
@@ -573,13 +573,13 @@ AcpiEvaluateObject (
 
     Status = AcpiUtGetObjectSize (Info->ReturnObject,
         &BufferSpaceNeeded);
-    if (ACPI_SUCCESS (Status))
+    if(ACPI_SUCCESS (Status))
     {
         /* Validate/Allocate/Clear caller buffer */
 
         Status = AcpiUtInitializeBuffer (ReturnBuffer,
             BufferSpaceNeeded);
-        if (ACPI_FAILURE (Status))
+        if(ACPI_FAILURE (Status))
         {
             /*
              * Caller's buffer is too small or a new one can't
@@ -601,7 +601,7 @@ AcpiEvaluateObject (
 
 CleanupReturnObject:
 
-    if (Info->ReturnObject)
+    if(Info->ReturnObject)
     {
         /*
          * Delete the internal return object. NOTE: Interpreter must be
@@ -620,7 +620,7 @@ Cleanup:
 
     /* Free the input parameter list (if we created one) */
 
-    if (Info->Parameters)
+    if(Info->Parameters)
     {
         /* Free the allocated parameter block */
 
@@ -665,7 +665,7 @@ AcpiNsResolveReferences (
 
     /* We are interested in reference objects only */
 
-    if ((Info->ReturnObject)->Common.Type != ACPI_TYPE_LOCAL_REFERENCE)
+    if((Info->ReturnObject)->Common.Type != ACPI_TYPE_LOCAL_REFERENCE)
     {
         return;
     }
@@ -687,7 +687,7 @@ AcpiNsResolveReferences (
     case ACPI_REFCLASS_REFOF:
 
         Node = Info->ReturnObject->Reference.Object;
-        if (Node)
+        if(Node)
         {
             ObjDesc = Node->Object;
         }
@@ -700,7 +700,7 @@ AcpiNsResolveReferences (
 
     /* Replace the existing reference object */
 
-    if (ObjDesc)
+    if(ObjDesc)
     {
         AcpiUtAddReference (ObjDesc);
         AcpiUtRemoveReference (Info->ReturnObject);
@@ -762,7 +762,7 @@ AcpiWalkNamespace (
 
     /* Parameter validation */
 
-    if ((Type > ACPI_TYPE_LOCAL_MAX) ||
+    if((Type > ACPI_TYPE_LOCAL_MAX) ||
         (!MaxDepth)                  ||
         (!DescendingCallback && !AscendingCallback))
     {
@@ -781,7 +781,7 @@ AcpiWalkNamespace (
      * methods.)
      */
     Status = AcpiUtAcquireReadLock (&AcpiGbl_NamespaceRwLock);
-    if (ACPI_FAILURE (Status))
+    if(ACPI_FAILURE (Status))
     {
         return_ACPI_STATUS (Status);
     }
@@ -793,14 +793,14 @@ AcpiWalkNamespace (
      * will typically execute control methods during device enumeration.)
      */
     Status = AcpiUtAcquireMutex (ACPI_MTX_NAMESPACE);
-    if (ACPI_FAILURE (Status))
+    if(ACPI_FAILURE (Status))
     {
         goto UnlockAndExit;
     }
 
     /* Now we can validate the starting node */
 
-    if (!AcpiNsValidateHandle (StartObject))
+    if(!AcpiNsValidateHandle (StartObject))
     {
         Status = AE_BAD_PARAMETER;
         goto UnlockAndExit2;
@@ -854,19 +854,19 @@ AcpiNsGetDeviceCallback (
 
 
     Status = AcpiUtAcquireMutex (ACPI_MTX_NAMESPACE);
-    if (ACPI_FAILURE (Status))
+    if(ACPI_FAILURE (Status))
     {
         return (Status);
     }
 
     Node = AcpiNsValidateHandle (ObjHandle);
     Status = AcpiUtReleaseMutex (ACPI_MTX_NAMESPACE);
-    if (ACPI_FAILURE (Status))
+    if(ACPI_FAILURE (Status))
     {
         return (Status);
     }
 
-    if (!Node)
+    if(!Node)
     {
         return (AE_BAD_PARAMETER);
     }
@@ -885,14 +885,14 @@ AcpiNsGetDeviceCallback (
      * would have returned a _STA that indicates it is not present or
      * not functioning (thus aborting the search on that branch).
      */
-    if (Info->Hid != NULL)
+    if(Info->Hid != NULL)
     {
         Status = AcpiUtExecute_HID (Node, &Hid);
-        if (Status == AE_NOT_FOUND)
+        if(Status == AE_NOT_FOUND)
         {
             return (AE_OK);
         }
-        else if (ACPI_FAILURE (Status))
+        else if(ACPI_FAILURE (Status))
         {
             return (AE_CTRL_DEPTH);
         }
@@ -900,18 +900,18 @@ AcpiNsGetDeviceCallback (
         NoMatch = strcmp (Hid->String, Info->Hid);
         ACPI_FREE (Hid);
 
-        if (NoMatch)
+        if(NoMatch)
         {
             /*
              * HID does not match, attempt match within the
              * list of Compatible IDs (CIDs)
              */
             Status = AcpiUtExecute_CID (Node, &Cid);
-            if (Status == AE_NOT_FOUND)
+            if(Status == AE_NOT_FOUND)
             {
                 return (AE_OK);
             }
-            else if (ACPI_FAILURE (Status))
+            else if(ACPI_FAILURE (Status))
             {
                 return (AE_CTRL_DEPTH);
             }
@@ -921,7 +921,7 @@ AcpiNsGetDeviceCallback (
             Found = FALSE;
             for (i = 0; i < Cid->Count; i++)
             {
-                if (strcmp (Cid->Ids[i].String, Info->Hid) == 0)
+                if(strcmp (Cid->Ids[i].String, Info->Hid) == 0)
                 {
                     /* Found a matching CID */
 
@@ -931,7 +931,7 @@ AcpiNsGetDeviceCallback (
             }
 
             ACPI_FREE (Cid);
-            if (!Found)
+            if(!Found)
             {
                 return (AE_OK);
             }
@@ -941,12 +941,12 @@ AcpiNsGetDeviceCallback (
     /* Run _STA to determine if device is present */
 
     Status = AcpiUtExecute_STA (Node, &Flags);
-    if (ACPI_FAILURE (Status))
+    if(ACPI_FAILURE (Status))
     {
         return (AE_CTRL_DEPTH);
     }
 
-    if (!(Flags & ACPI_STA_DEVICE_PRESENT) &&
+    if(!(Flags & ACPI_STA_DEVICE_PRESENT) &&
         !(Flags & ACPI_STA_DEVICE_FUNCTIONING))
     {
         /*
@@ -1006,7 +1006,7 @@ AcpiGetDevices (
 
     /* Parameter validation */
 
-    if (!UserFunction)
+    if(!UserFunction)
     {
         return_ACPI_STATUS (AE_BAD_PARAMETER);
     }
@@ -1026,7 +1026,7 @@ AcpiGetDevices (
      * must be allowed to make Acpi calls itself.
      */
     Status = AcpiUtAcquireMutex (ACPI_MTX_NAMESPACE);
-    if (ACPI_FAILURE (Status))
+    if(ACPI_FAILURE (Status))
     {
         return_ACPI_STATUS (Status);
     }
@@ -1068,7 +1068,7 @@ AcpiAttachData (
 
     /* Parameter validation */
 
-    if (!ObjHandle  ||
+    if(!ObjHandle  ||
         !Handler    ||
         !Data)
     {
@@ -1076,7 +1076,7 @@ AcpiAttachData (
     }
 
     Status = AcpiUtAcquireMutex (ACPI_MTX_NAMESPACE);
-    if (ACPI_FAILURE (Status))
+    if(ACPI_FAILURE (Status))
     {
         return (Status);
     }
@@ -1084,7 +1084,7 @@ AcpiAttachData (
     /* Convert and validate the handle */
 
     Node = AcpiNsValidateHandle (ObjHandle);
-    if (!Node)
+    if(!Node)
     {
         Status = AE_BAD_PARAMETER;
         goto UnlockAndExit;
@@ -1124,14 +1124,14 @@ AcpiDetachData (
 
     /* Parameter validation */
 
-    if (!ObjHandle  ||
+    if(!ObjHandle  ||
         !Handler)
     {
         return (AE_BAD_PARAMETER);
     }
 
     Status = AcpiUtAcquireMutex (ACPI_MTX_NAMESPACE);
-    if (ACPI_FAILURE (Status))
+    if(ACPI_FAILURE (Status))
     {
         return (Status);
     }
@@ -1139,7 +1139,7 @@ AcpiDetachData (
     /* Convert and validate the handle */
 
     Node = AcpiNsValidateHandle (ObjHandle);
-    if (!Node)
+    if(!Node)
     {
         Status = AE_BAD_PARAMETER;
         goto UnlockAndExit;
@@ -1181,7 +1181,7 @@ AcpiGetData (
 
     /* Parameter validation */
 
-    if (!ObjHandle  ||
+    if(!ObjHandle  ||
         !Handler    ||
         !Data)
     {
@@ -1189,7 +1189,7 @@ AcpiGetData (
     }
 
     Status = AcpiUtAcquireMutex (ACPI_MTX_NAMESPACE);
-    if (ACPI_FAILURE (Status))
+    if(ACPI_FAILURE (Status))
     {
         return (Status);
     }
@@ -1197,7 +1197,7 @@ AcpiGetData (
     /* Convert and validate the handle */
 
     Node = AcpiNsValidateHandle (ObjHandle);
-    if (!Node)
+    if(!Node)
     {
         Status = AE_BAD_PARAMETER;
         goto UnlockAndExit;

@@ -271,7 +271,7 @@ AcpiDsMethodDataDeleteAll (
 
     for (Index = 0; Index < ACPI_METHOD_NUM_LOCALS; Index++)
     {
-        if (WalkState->LocalVariables[Index].Object)
+        if(WalkState->LocalVariables[Index].Object)
         {
             ACPI_DEBUG_PRINT ((ACPI_DB_EXEC, "Deleting Local%u=%p\n",
                 Index, WalkState->LocalVariables[Index].Object));
@@ -286,7 +286,7 @@ AcpiDsMethodDataDeleteAll (
 
     for (Index = 0; Index < ACPI_METHOD_NUM_ARGS; Index++)
     {
-        if (WalkState->Arguments[Index].Object)
+        if(WalkState->Arguments[Index].Object)
         {
             ACPI_DEBUG_PRINT ((ACPI_DB_EXEC, "Deleting Arg%u=%p\n",
                 Index, WalkState->Arguments[Index].Object));
@@ -330,7 +330,7 @@ AcpiDsMethodDataInitArgs (
     ACPI_FUNCTION_TRACE_PTR (DsMethodDataInitArgs, Params);
 
 
-    if (!Params)
+    if(!Params)
     {
         ACPI_DEBUG_PRINT ((ACPI_DB_EXEC,
             "No parameter list passed to method\n"));
@@ -350,7 +350,7 @@ AcpiDsMethodDataInitArgs (
          */
         Status = AcpiDsMethodDataSetValue (
             ACPI_REFCLASS_ARG, Index, Params[Index], WalkState);
-        if (ACPI_FAILURE (Status))
+        if(ACPI_FAILURE (Status))
         {
             return_ACPI_STATUS (Status);
         }
@@ -396,7 +396,7 @@ AcpiDsMethodDataGetNode (
     {
     case ACPI_REFCLASS_LOCAL:
 
-        if (Index > ACPI_METHOD_MAX_LOCAL)
+        if(Index > ACPI_METHOD_MAX_LOCAL)
         {
             ACPI_ERROR ((AE_INFO,
                 "Local index %u is invalid (max %u)",
@@ -411,7 +411,7 @@ AcpiDsMethodDataGetNode (
 
     case ACPI_REFCLASS_ARG:
 
-        if (Index > ACPI_METHOD_MAX_ARG)
+        if(Index > ACPI_METHOD_MAX_ARG)
         {
             ACPI_ERROR ((AE_INFO,
                 "Arg index %u is invalid (max %u)",
@@ -473,7 +473,7 @@ AcpiDsMethodDataSetValue (
     /* Get the namespace node for the arg/local */
 
     Status = AcpiDsMethodDataGetNode (Type, Index, WalkState, &Node);
-    if (ACPI_FAILURE (Status))
+    if(ACPI_FAILURE (Status))
     {
         return_ACPI_STATUS (Status);
     }
@@ -527,7 +527,7 @@ AcpiDsMethodDataGetValue (
 
     /* Validate the object descriptor */
 
-    if (!DestDesc)
+    if(!DestDesc)
     {
         ACPI_ERROR ((AE_INFO, "Null object descriptor pointer"));
         return_ACPI_STATUS (AE_BAD_PARAMETER);
@@ -536,7 +536,7 @@ AcpiDsMethodDataGetValue (
     /* Get the namespace node for the arg/local */
 
     Status = AcpiDsMethodDataGetNode (Type, Index, WalkState, &Node);
-    if (ACPI_FAILURE (Status))
+    if(ACPI_FAILURE (Status))
     {
         return_ACPI_STATUS (Status);
     }
@@ -547,7 +547,7 @@ AcpiDsMethodDataGetValue (
 
     /* Examine the returned object, it must be valid. */
 
-    if (!Object)
+    if(!Object)
     {
         /*
          * Index points to uninitialized object.
@@ -559,10 +559,10 @@ AcpiDsMethodDataGetValue (
 
         /* If slack enabled, init the LocalX/ArgX to an Integer of value zero */
 
-        if (AcpiGbl_EnableInterpreterSlack)
+        if(AcpiGbl_EnableInterpreterSlack)
         {
             Object = AcpiUtCreateIntegerObject ((UINT64) 0);
-            if (!Object)
+            if(!Object)
             {
                 return_ACPI_STATUS (AE_NO_MEMORY);
             }
@@ -640,7 +640,7 @@ AcpiDsMethodDataDeleteValue (
     /* Get the namespace node for the arg/local */
 
     Status = AcpiDsMethodDataGetNode (Type, Index, WalkState, &Node);
-    if (ACPI_FAILURE (Status))
+    if(ACPI_FAILURE (Status))
     {
         return_VOID;
     }
@@ -656,7 +656,7 @@ AcpiDsMethodDataDeleteValue (
      */
     Node->Object = NULL;
 
-    if ((Object) &&
+    if((Object) &&
         (ACPI_GET_DESCRIPTOR_TYPE (Object) == ACPI_DESC_TYPE_OPERAND))
     {
         /*
@@ -708,7 +708,7 @@ AcpiDsStoreObjectToLocal (
 
     /* Parameter validation */
 
-    if (!ObjDesc)
+    if(!ObjDesc)
     {
         return_ACPI_STATUS (AE_BAD_PARAMETER);
     }
@@ -716,13 +716,13 @@ AcpiDsStoreObjectToLocal (
     /* Get the namespace node for the arg/local */
 
     Status = AcpiDsMethodDataGetNode (Type, Index, WalkState, &Node);
-    if (ACPI_FAILURE (Status))
+    if(ACPI_FAILURE (Status))
     {
         return_ACPI_STATUS (Status);
     }
 
     CurrentObjDesc = AcpiNsGetAttachedObject (Node);
-    if (CurrentObjDesc == ObjDesc)
+    if(CurrentObjDesc == ObjDesc)
     {
         ACPI_DEBUG_PRINT ((ACPI_DB_EXEC, "Obj=%p already installed!\n",
             ObjDesc));
@@ -737,11 +737,11 @@ AcpiDsStoreObjectToLocal (
      * is not used anywhere else.
      */
     NewObjDesc = ObjDesc;
-    if (ObjDesc->Common.ReferenceCount > 1)
+    if(ObjDesc->Common.ReferenceCount > 1)
     {
         Status = AcpiUtCopyIobjectToIobject (
             ObjDesc, &NewObjDesc, WalkState);
-        if (ACPI_FAILURE (Status))
+        if(ACPI_FAILURE (Status))
         {
             return_ACPI_STATUS (Status);
         }
@@ -753,7 +753,7 @@ AcpiDsStoreObjectToLocal (
      * is an object reference stored there, we have to do
      * an indirect store!
      */
-    if (CurrentObjDesc)
+    if(CurrentObjDesc)
     {
         /*
          * Check for an indirect store if an argument
@@ -771,13 +771,13 @@ AcpiDsStoreObjectToLocal (
          *
          * Weird, but true.
          */
-        if (Type == ACPI_REFCLASS_ARG)
+        if(Type == ACPI_REFCLASS_ARG)
         {
             /*
              * If we have a valid reference object that came from RefOf(),
              * do the indirect store
              */
-            if ((ACPI_GET_DESCRIPTOR_TYPE (CurrentObjDesc) ==
+            if((ACPI_GET_DESCRIPTOR_TYPE (CurrentObjDesc) ==
                     ACPI_DESC_TYPE_OPERAND) &&
                 (CurrentObjDesc->Common.Type ==
                     ACPI_TYPE_LOCAL_REFERENCE) &&
@@ -799,7 +799,7 @@ AcpiDsStoreObjectToLocal (
 
                 /* Remove local reference if we copied the object above */
 
-                if (NewObjDesc != ObjDesc)
+                if(NewObjDesc != ObjDesc)
                 {
                     AcpiUtRemoveReference (NewObjDesc);
                 }
@@ -822,7 +822,7 @@ AcpiDsStoreObjectToLocal (
 
     /* Remove local reference if we copied the object above */
 
-    if (NewObjDesc != ObjDesc)
+    if(NewObjDesc != ObjDesc)
     {
         AcpiUtRemoveReference (NewObjDesc);
     }
@@ -864,7 +864,7 @@ AcpiDsMethodDataGetType (
     /* Get the namespace node for the arg/local */
 
     Status = AcpiDsMethodDataGetNode (Opcode, Index, WalkState, &Node);
-    if (ACPI_FAILURE (Status))
+    if(ACPI_FAILURE (Status))
     {
         return_VALUE ((ACPI_TYPE_NOT_FOUND));
     }
@@ -872,7 +872,7 @@ AcpiDsMethodDataGetType (
     /* Get the object */
 
     Object = AcpiNsGetAttachedObject (Node);
-    if (!Object)
+    if(!Object)
     {
         /* Uninitialized local/arg, return TYPE_ANY */
 

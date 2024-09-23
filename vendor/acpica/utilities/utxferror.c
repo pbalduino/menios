@@ -234,7 +234,7 @@ AcpiException (
 
     /* For AE_OK, just print the message */
 
-    if (ACPI_SUCCESS (Status))
+    if(ACPI_SUCCESS (Status))
     {
         AcpiOsPrintf (ACPI_MSG_ERROR);
 
@@ -399,7 +399,7 @@ AcpiBiosException (
 
     /* For AE_OK, just print the message */
 
-    if (ACPI_SUCCESS (Status))
+    if(ACPI_SUCCESS (Status))
     {
         AcpiOsPrintf (ACPI_MSG_BIOS_ERROR);
 

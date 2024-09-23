@@ -229,10 +229,10 @@ AcpiInitializeTables (
      * Setup the Root Table Array and allocate the table array
      * if requested
      */
-    if (!InitialTableArray)
+    if(!InitialTableArray)
     {
         Status = AcpiAllocateRootTable (InitialTableCount);
-        if (ACPI_FAILURE (Status))
+        if(ACPI_FAILURE (Status))
         {
             return_ACPI_STATUS (Status);
         }
@@ -247,7 +247,7 @@ AcpiInitializeTables (
         AcpiGbl_RootTableList.Tables = InitialTableArray;
         AcpiGbl_RootTableList.MaxTableCount = InitialTableCount;
         AcpiGbl_RootTableList.Flags = ACPI_ROOT_ORIGIN_UNKNOWN;
-        if (AllowResize)
+        if(AllowResize)
         {
             AcpiGbl_RootTableList.Flags |= ACPI_ROOT_ALLOW_RESIZE;
         }
@@ -256,7 +256,7 @@ AcpiInitializeTables (
     /* Get the address of the RSDP */
 
     RsdpAddress = AcpiOsGetRootPointer ();
-    if (!RsdpAddress)
+    if(!RsdpAddress)
     {
         return_ACPI_STATUS (AE_NOT_FOUND);
     }
@@ -306,7 +306,7 @@ AcpiReallocateRootTable (
      * reallocate the root table list if the host provided a static buffer
      * for the table array in the call to AcpiInitializeTables().
      */
-    if ((AcpiGbl_RootTableList.Flags & ACPI_ROOT_ORIGIN_ALLOCATED) &&
+    if((AcpiGbl_RootTableList.Flags & ACPI_ROOT_ORIGIN_ALLOCATED) &&
         AcpiGbl_EnableTableValidation)
     {
         return_ACPI_STATUS (AE_SUPPORT);
@@ -323,7 +323,7 @@ AcpiReallocateRootTable (
     for (i = 0; i < AcpiGbl_RootTableList.CurrentTableCount; ++i)
     {
         TableDesc = &AcpiGbl_RootTableList.Tables[i];
-        if (TableDesc->Pointer)
+        if(TableDesc->Pointer)
         {
             ACPI_ERROR ((AE_INFO,
                 "Table [%4.4s] is not invalidated during early boot stage",
@@ -331,7 +331,7 @@ AcpiReallocateRootTable (
         }
     }
 
-    if (!AcpiGbl_EnableTableValidation)
+    if(!AcpiGbl_EnableTableValidation)
     {
         /*
          * Now it's safe to do full table validation. We can do deferred
@@ -341,10 +341,10 @@ AcpiReallocateRootTable (
         for (i = 0; i < AcpiGbl_RootTableList.CurrentTableCount; ++i)
         {
             TableDesc = &AcpiGbl_RootTableList.Tables[i];
-            if (!(TableDesc->Flags & ACPI_TABLE_IS_VERIFIED))
+            if(!(TableDesc->Flags & ACPI_TABLE_IS_VERIFIED))
             {
                 Status = AcpiTbVerifyTempTable (TableDesc, NULL, &j);
-                if (ACPI_FAILURE (Status))
+                if(ACPI_FAILURE (Status))
                 {
                     AcpiTbUninstallTable (TableDesc);
                 }
@@ -393,7 +393,7 @@ AcpiGetTableHeader (
 
     /* Parameter validation */
 
-    if (!Signature || !OutTableHeader)
+    if(!Signature || !OutTableHeader)
     {
         return (AE_BAD_PARAMETER);
     }
@@ -402,27 +402,27 @@ AcpiGetTableHeader (
 
     for (i = 0, j = 0; i < AcpiGbl_RootTableList.CurrentTableCount; i++)
     {
-        if (!ACPI_COMPARE_NAMESEG (
+        if(!ACPI_COMPARE_NAMESEG (
                 &(AcpiGbl_RootTableList.Tables[i].Signature), Signature))
         {
             continue;
         }
 
-        if (++j < Instance)
+        if(++j < Instance)
         {
             continue;
         }
 
-        if (!AcpiGbl_RootTableList.Tables[i].Pointer)
+        if(!AcpiGbl_RootTableList.Tables[i].Pointer)
         {
-            if ((AcpiGbl_RootTableList.Tables[i].Flags &
+            if((AcpiGbl_RootTableList.Tables[i].Flags &
                     ACPI_TABLE_ORIGIN_MASK) ==
                 ACPI_TABLE_ORIGIN_INTERNAL_PHYSICAL)
             {
                 Header = AcpiOsMapMemory (
                     AcpiGbl_RootTableList.Tables[i].Address,
                     sizeof (ACPI_TABLE_HEADER));
-                if (!Header)
+                if(!Header)
                 {
                     return (AE_NO_MEMORY);
                 }
@@ -485,7 +485,7 @@ AcpiGetTable (
 
     /* Parameter validation */
 
-    if (!Signature || !OutTable)
+    if(!Signature || !OutTable)
     {
         return (AE_BAD_PARAMETER);
     }
@@ -505,12 +505,12 @@ AcpiGetTable (
     {
         TableDesc = &AcpiGbl_RootTableList.Tables[i];
 
-        if (!ACPI_COMPARE_NAMESEG (&TableDesc->Signature, Signature))
+        if(!ACPI_COMPARE_NAMESEG (&TableDesc->Signature, Signature))
         {
             continue;
         }
 
-        if (++j < Instance)
+        if(++j < Instance)
         {
             continue;
         }
@@ -553,7 +553,7 @@ AcpiPutTable (
     ACPI_FUNCTION_TRACE (AcpiPutTable);
 
 
-    if (!Table)
+    if(!Table)
     {
         return_VOID;
     }
@@ -566,7 +566,7 @@ AcpiPutTable (
     {
         TableDesc = &AcpiGbl_RootTableList.Tables[i];
 
-        if (TableDesc->Pointer != Table)
+        if(TableDesc->Pointer != Table)
         {
             continue;
         }
@@ -609,7 +609,7 @@ AcpiGetTableByIndex (
 
     /* Parameter validation */
 
-    if (!OutTable)
+    if(!OutTable)
     {
         return_ACPI_STATUS (AE_BAD_PARAMETER);
     }
@@ -625,7 +625,7 @@ AcpiGetTableByIndex (
 
     /* Validate index */
 
-    if (TableIndex >= AcpiGbl_RootTableList.CurrentTableCount)
+    if(TableIndex >= AcpiGbl_RootTableList.CurrentTableCount)
     {
         Status = AE_BAD_PARAMETER;
         goto UnlockAndExit;
@@ -666,20 +666,20 @@ AcpiInstallTableHandler (
     ACPI_FUNCTION_TRACE (AcpiInstallTableHandler);
 
 
-    if (!Handler)
+    if(!Handler)
     {
         return_ACPI_STATUS (AE_BAD_PARAMETER);
     }
 
     Status = AcpiUtAcquireMutex (ACPI_MTX_EVENTS);
-    if (ACPI_FAILURE (Status))
+    if(ACPI_FAILURE (Status))
     {
         return_ACPI_STATUS (Status);
     }
 
     /* Don't allow more than one handler */
 
-    if (AcpiGbl_TableHandler)
+    if(AcpiGbl_TableHandler)
     {
         Status = AE_ALREADY_EXISTS;
         goto Cleanup;
@@ -722,14 +722,14 @@ AcpiRemoveTableHandler (
 
 
     Status = AcpiUtAcquireMutex (ACPI_MTX_EVENTS);
-    if (ACPI_FAILURE (Status))
+    if(ACPI_FAILURE (Status))
     {
         return_ACPI_STATUS (Status);
     }
 
     /* Make sure that the installed handler is the same */
 
-    if (!Handler ||
+    if(!Handler ||
         Handler != AcpiGbl_TableHandler)
     {
         Status = AE_BAD_PARAMETER;

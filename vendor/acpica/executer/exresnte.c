@@ -213,7 +213,7 @@ AcpiExResolveNodeToValue (
     ACPI_DEBUG_PRINT ((ACPI_DB_EXEC, "Entry=%p SourceDesc=%p [%s]\n",
          Node, SourceDesc, AcpiUtGetTypeName (EntryType)));
 
-    if ((EntryType == ACPI_TYPE_LOCAL_ALIAS) ||
+    if((EntryType == ACPI_TYPE_LOCAL_ALIAS) ||
         (EntryType == ACPI_TYPE_LOCAL_METHOD_ALIAS))
     {
         /* There is always exactly one level of indirection */
@@ -230,7 +230,7 @@ AcpiExResolveNodeToValue (
      * 2) Method locals and arguments have a pseudo-Node
      * 3) 10/2007: Added method type to assist with Package construction.
      */
-    if ((EntryType == ACPI_TYPE_DEVICE)  ||
+    if((EntryType == ACPI_TYPE_DEVICE)  ||
         (EntryType == ACPI_TYPE_THERMAL) ||
         (EntryType == ACPI_TYPE_METHOD)  ||
         (Node->Flags & (ANOBJ_METHOD_ARG | ANOBJ_METHOD_LOCAL)))
@@ -238,7 +238,7 @@ AcpiExResolveNodeToValue (
         return_ACPI_STATUS (AE_OK);
     }
 
-    if (!SourceDesc)
+    if(!SourceDesc)
     {
         ACPI_ERROR ((AE_INFO, "No object attached to node [%4.4s] %p",
             Node->Name.Ascii, Node));
@@ -253,7 +253,7 @@ AcpiExResolveNodeToValue (
     {
     case ACPI_TYPE_PACKAGE:
 
-        if (SourceDesc->Common.Type != ACPI_TYPE_PACKAGE)
+        if(SourceDesc->Common.Type != ACPI_TYPE_PACKAGE)
         {
             ACPI_ERROR ((AE_INFO, "Object not a Package, type %s",
                 AcpiUtGetObjectTypeName (SourceDesc)));
@@ -261,7 +261,7 @@ AcpiExResolveNodeToValue (
         }
 
         Status = AcpiDsGetPackageArguments (SourceDesc);
-        if (ACPI_SUCCESS (Status))
+        if(ACPI_SUCCESS (Status))
         {
             /* Return an additional reference to the object */
 
@@ -272,7 +272,7 @@ AcpiExResolveNodeToValue (
 
     case ACPI_TYPE_BUFFER:
 
-        if (SourceDesc->Common.Type != ACPI_TYPE_BUFFER)
+        if(SourceDesc->Common.Type != ACPI_TYPE_BUFFER)
         {
             ACPI_ERROR ((AE_INFO, "Object not a Buffer, type %s",
                 AcpiUtGetObjectTypeName (SourceDesc)));
@@ -280,7 +280,7 @@ AcpiExResolveNodeToValue (
         }
 
         Status = AcpiDsGetBufferArguments (SourceDesc);
-        if (ACPI_SUCCESS (Status))
+        if(ACPI_SUCCESS (Status))
         {
             /* Return an additional reference to the object */
 
@@ -291,7 +291,7 @@ AcpiExResolveNodeToValue (
 
     case ACPI_TYPE_STRING:
 
-        if (SourceDesc->Common.Type != ACPI_TYPE_STRING)
+        if(SourceDesc->Common.Type != ACPI_TYPE_STRING)
         {
             ACPI_ERROR ((AE_INFO, "Object not a String, type %s",
                 AcpiUtGetObjectTypeName (SourceDesc)));
@@ -306,7 +306,7 @@ AcpiExResolveNodeToValue (
 
     case ACPI_TYPE_INTEGER:
 
-        if (SourceDesc->Common.Type != ACPI_TYPE_INTEGER)
+        if(SourceDesc->Common.Type != ACPI_TYPE_INTEGER)
         {
             ACPI_ERROR ((AE_INFO, "Object not a Integer, type %s",
                 AcpiUtGetObjectTypeName (SourceDesc)));

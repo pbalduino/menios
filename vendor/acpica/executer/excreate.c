@@ -190,7 +190,7 @@ AcpiExCreateAlias (
     AliasNode =  (ACPI_NAMESPACE_NODE *) WalkState->Operands[0];
     TargetNode = (ACPI_NAMESPACE_NODE *) WalkState->Operands[1];
 
-    if ((TargetNode->Type == ACPI_TYPE_LOCAL_ALIAS)  ||
+    if((TargetNode->Type == ACPI_TYPE_LOCAL_ALIAS)  ||
         (TargetNode->Type == ACPI_TYPE_LOCAL_METHOD_ALIAS))
     {
         /*
@@ -204,7 +204,7 @@ AcpiExCreateAlias (
 
     /* Ensure that the target node is valid */
 
-    if (!TargetNode)
+    if(!TargetNode)
     {
         return_ACPI_STATUS (AE_NULL_OBJECT);
     }
@@ -264,7 +264,7 @@ AcpiExCreateEvent (
 
 
     ObjDesc = AcpiUtCreateInternalObject (ACPI_TYPE_EVENT);
-    if (!ObjDesc)
+    if(!ObjDesc)
     {
         Status = AE_NO_MEMORY;
         goto Cleanup;
@@ -276,7 +276,7 @@ AcpiExCreateEvent (
      */
     Status = AcpiOsCreateSemaphore (ACPI_NO_UNIT_LIMIT, 0,
         &ObjDesc->Event.OsSemaphore);
-    if (ACPI_FAILURE (Status))
+    if(ACPI_FAILURE (Status))
     {
         goto Cleanup;
     }
@@ -325,7 +325,7 @@ AcpiExCreateMutex (
     /* Create the new mutex object */
 
     ObjDesc = AcpiUtCreateInternalObject (ACPI_TYPE_MUTEX);
-    if (!ObjDesc)
+    if(!ObjDesc)
     {
         Status = AE_NO_MEMORY;
         goto Cleanup;
@@ -334,7 +334,7 @@ AcpiExCreateMutex (
     /* Create the actual OS Mutex */
 
     Status = AcpiOsCreateMutex (&ObjDesc->Mutex.OsMutex);
-    if (ACPI_FAILURE (Status))
+    if(ACPI_FAILURE (Status))
     {
         goto Cleanup;
     }
@@ -397,7 +397,7 @@ AcpiExCreateRegion (
      * If the region object is already attached to this node,
      * just return
      */
-    if (AcpiNsGetAttachedObject (Node))
+    if(AcpiNsGetAttachedObject (Node))
     {
         return_ACPI_STATUS (AE_OK);
     }
@@ -406,7 +406,7 @@ AcpiExCreateRegion (
      * Space ID must be one of the predefined IDs, or in the user-defined
      * range
      */
-    if (!AcpiIsValidSpaceId (SpaceId))
+    if(!AcpiIsValidSpaceId (SpaceId))
     {
         /*
          * Print an error message, but continue. We don't want to abort
@@ -423,7 +423,7 @@ AcpiExCreateRegion (
     /* Create the region descriptor */
 
     ObjDesc = AcpiUtCreateInternalObject (ACPI_TYPE_REGION);
-    if (!ObjDesc)
+    if(!ObjDesc)
     {
         Status = AE_NO_MEMORY;
         goto Cleanup;
@@ -437,7 +437,7 @@ AcpiExCreateRegion (
     RegionObj2->Extra.AmlStart = AmlStart;
     RegionObj2->Extra.AmlLength = AmlLength;
     RegionObj2->Extra.Method_REG = NULL;
-    if (WalkState->ScopeInfo)
+    if(WalkState->ScopeInfo)
     {
         RegionObj2->Extra.ScopeNode = WalkState->ScopeInfo->Scope.Node;
     }
@@ -501,7 +501,7 @@ AcpiExCreateProcessor (
     /* Create the processor object */
 
     ObjDesc = AcpiUtCreateInternalObject (ACPI_TYPE_PROCESSOR);
-    if (!ObjDesc)
+    if(!ObjDesc)
     {
         return_ACPI_STATUS (AE_NO_MEMORY);
     }
@@ -553,7 +553,7 @@ AcpiExCreatePowerResource (
     /* Create the power resource object */
 
     ObjDesc = AcpiUtCreateInternalObject (ACPI_TYPE_POWER);
-    if (!ObjDesc)
+    if(!ObjDesc)
     {
         return_ACPI_STATUS (AE_NO_MEMORY);
     }
@@ -607,7 +607,7 @@ AcpiExCreateMethod (
     /* Create a new method object */
 
     ObjDesc = AcpiUtCreateInternalObject (ACPI_TYPE_METHOD);
-    if (!ObjDesc)
+    if(!ObjDesc)
     {
        Status = AE_NO_MEMORY;
        goto Exit;
@@ -631,7 +631,7 @@ AcpiExCreateMethod (
      * Get the SyncLevel. If method is serialized, a mutex will be
      * created for this method when it is parsed.
      */
-    if (MethodFlags & AML_METHOD_SERIALIZED)
+    if(MethodFlags & AML_METHOD_SERIALIZED)
     {
         ObjDesc->Method.InfoFlags = ACPI_METHOD_SERIALIZED;
 

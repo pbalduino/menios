@@ -156,7 +156,7 @@
 #define _COMPONENT          ACPI_EVENTS
         ACPI_MODULE_NAME    ("evevent")
 
-#if (!ACPI_REDUCED_HARDWARE) /* Entire module */
+#if(!ACPI_REDUCED_HARDWARE) /* Entire module */
 
 /* Local prototypes */
 
@@ -193,7 +193,7 @@ AcpiEvInitializeEvents (
 
     /* If Hardware Reduced flag is set, there are no fixed events */
 
-    if (AcpiGbl_ReducedHardware)
+    if(AcpiGbl_ReducedHardware)
     {
         return_ACPI_STATUS (AE_OK);
     }
@@ -204,7 +204,7 @@ AcpiEvInitializeEvents (
      * are installed.
      */
     Status = AcpiEvFixedEventInitialize ();
-    if (ACPI_FAILURE (Status))
+    if(ACPI_FAILURE (Status))
     {
         ACPI_EXCEPTION ((AE_INFO, Status,
             "Unable to initialize fixed events"));
@@ -212,7 +212,7 @@ AcpiEvInitializeEvents (
     }
 
     Status = AcpiEvGpeInitialize ();
-    if (ACPI_FAILURE (Status))
+    if(ACPI_FAILURE (Status))
     {
         ACPI_EXCEPTION ((AE_INFO, Status,
             "Unable to initialize general purpose events"));
@@ -247,7 +247,7 @@ AcpiEvInstallXruptHandlers (
 
     /* If Hardware Reduced flag is set, there is no ACPI h/w */
 
-    if (AcpiGbl_ReducedHardware)
+    if(AcpiGbl_ReducedHardware)
     {
         return_ACPI_STATUS (AE_OK);
     }
@@ -255,7 +255,7 @@ AcpiEvInstallXruptHandlers (
     /* Install the SCI handler */
 
     Status = AcpiEvInstallSciHandler ();
-    if (ACPI_FAILURE (Status))
+    if(ACPI_FAILURE (Status))
     {
         ACPI_EXCEPTION ((AE_INFO, Status,
             "Unable to install System Control Interrupt handler"));
@@ -265,7 +265,7 @@ AcpiEvInstallXruptHandlers (
     /* Install the handler for the Global Lock */
 
     Status = AcpiEvInitGlobalLockHandler ();
-    if (ACPI_FAILURE (Status))
+    if(ACPI_FAILURE (Status))
     {
         ACPI_EXCEPTION ((AE_INFO, Status,
             "Unable to initialize Global Lock handler"));
@@ -308,12 +308,12 @@ AcpiEvFixedEventInitialize (
 
         /* Disable the fixed event */
 
-        if (AcpiGbl_FixedEventInfo[i].EnableRegisterId != 0xFF)
+        if(AcpiGbl_FixedEventInfo[i].EnableRegisterId != 0xFF)
         {
             Status = AcpiWriteBitRegister (
                 AcpiGbl_FixedEventInfo[i].EnableRegisterId,
                 ACPI_DISABLE_EVENT);
-            if (ACPI_FAILURE (Status))
+            if(ACPI_FAILURE (Status))
             {
                 return (Status);
             }
@@ -356,7 +356,7 @@ AcpiEvFixedEventDetect (
      */
     Status = AcpiHwRegisterRead (ACPI_REGISTER_PM1_STATUS, &FixedStatus);
     Status |= AcpiHwRegisterRead (ACPI_REGISTER_PM1_ENABLE, &FixedEnable);
-    if (ACPI_FAILURE (Status))
+    if(ACPI_FAILURE (Status))
     {
         return (IntStatus);
     }
@@ -372,7 +372,7 @@ AcpiEvFixedEventDetect (
     {
         /* Both the status and enable bits must be on for this event */
 
-        if ((FixedStatus & AcpiGbl_FixedEventInfo[i].StatusBitMask) &&
+        if((FixedStatus & AcpiGbl_FixedEventInfo[i].StatusBitMask) &&
             (FixedEnable & AcpiGbl_FixedEventInfo[i].EnableBitMask))
         {
             /*
@@ -380,7 +380,7 @@ AcpiEvFixedEventDetect (
              * handler if present.
              */
             AcpiFixedEventCount[i]++;
-            if (AcpiGbl_GlobalEventHandler)
+            if(AcpiGbl_GlobalEventHandler)
             {
                 AcpiGbl_GlobalEventHandler (ACPI_EVENT_TYPE_FIXED, NULL,
                      i, AcpiGbl_GlobalEventHandlerContext);
@@ -427,7 +427,7 @@ AcpiEvFixedEventDispatch (
      * Make sure that a handler exists. If not, report an error
      * and disable the event to prevent further interrupts.
      */
-    if (!AcpiGbl_FixedEventHandlers[Event].Handler)
+    if(!AcpiGbl_FixedEventHandlers[Event].Handler)
     {
         (void) AcpiWriteBitRegister (
             AcpiGbl_FixedEventInfo[Event].EnableRegisterId,

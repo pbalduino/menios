@@ -194,7 +194,7 @@ AcpiExResolveToValue (
     ACPI_FUNCTION_TRACE_PTR (ExResolveToValue, StackPtr);
 
 
-    if (!StackPtr || !*StackPtr)
+    if(!StackPtr || !*StackPtr)
     {
         ACPI_ERROR ((AE_INFO, "Internal - null pointer"));
         return_ACPI_STATUS (AE_AML_NO_OPERAND);
@@ -205,15 +205,15 @@ AcpiExResolveToValue (
      * 1) A valid ACPI_OPERAND_OBJECT, or
      * 2) A ACPI_NAMESPACE_NODE (NamedObj)
      */
-    if (ACPI_GET_DESCRIPTOR_TYPE (*StackPtr) == ACPI_DESC_TYPE_OPERAND)
+    if(ACPI_GET_DESCRIPTOR_TYPE (*StackPtr) == ACPI_DESC_TYPE_OPERAND)
     {
         Status = AcpiExResolveObjectToValue (StackPtr, WalkState);
-        if (ACPI_FAILURE (Status))
+        if(ACPI_FAILURE (Status))
         {
             return_ACPI_STATUS (Status);
         }
 
-        if (!*StackPtr)
+        if(!*StackPtr)
         {
             ACPI_ERROR ((AE_INFO, "Internal - null pointer"));
             return_ACPI_STATUS (AE_AML_NO_OPERAND);
@@ -224,12 +224,12 @@ AcpiExResolveToValue (
      * Object on the stack may have changed if AcpiExResolveObjectToValue()
      * was called (i.e., we can't use an _else_ here.)
      */
-    if (ACPI_GET_DESCRIPTOR_TYPE (*StackPtr) == ACPI_DESC_TYPE_NAMED)
+    if(ACPI_GET_DESCRIPTOR_TYPE (*StackPtr) == ACPI_DESC_TYPE_NAMED)
     {
         Status = AcpiExResolveNodeToValue (
             ACPI_CAST_INDIRECT_PTR (ACPI_NAMESPACE_NODE, StackPtr),
             WalkState);
-        if (ACPI_FAILURE (Status))
+        if(ACPI_FAILURE (Status))
         {
             return_ACPI_STATUS (Status);
         }
@@ -288,7 +288,7 @@ AcpiExResolveObjectToValue (
              */
             Status = AcpiDsMethodDataGetValue (RefType,
                 StackDesc->Reference.Value, WalkState, &ObjDesc);
-            if (ACPI_FAILURE (Status))
+            if(ACPI_FAILURE (Status))
             {
                 return_ACPI_STATUS (Status);
             }
@@ -317,7 +317,7 @@ AcpiExResolveObjectToValue (
 
                 /* If method call or CopyObject - do not dereference */
 
-                if ((WalkState->Opcode == AML_INT_METHODCALL_OP) ||
+                if((WalkState->Opcode == AML_INT_METHODCALL_OP) ||
                     (WalkState->Opcode == AML_COPY_OBJECT_OP))
                 {
                     break;
@@ -326,7 +326,7 @@ AcpiExResolveObjectToValue (
                 /* Otherwise, dereference the PackageIndex to a package element */
 
                 ObjDesc = *StackDesc->Reference.Where;
-                if (ObjDesc)
+                if(ObjDesc)
                 {
                     /*
                      * Valid object descriptor, copy pointer to return value
@@ -374,7 +374,7 @@ AcpiExResolveObjectToValue (
 
             /* Dereference the name */
 
-            if ((StackDesc->Reference.Node->Type == ACPI_TYPE_DEVICE) ||
+            if((StackDesc->Reference.Node->Type == ACPI_TYPE_DEVICE) ||
                 (StackDesc->Reference.Node->Type == ACPI_TYPE_THERMAL))
             {
                 /* These node types do not have 'real' subobjects */
@@ -486,7 +486,7 @@ AcpiExResolveMultiple (
 
         /* If we had an Alias node, use the attached object for type info */
 
-        if (Type == ACPI_TYPE_LOCAL_ALIAS)
+        if(Type == ACPI_TYPE_LOCAL_ALIAS)
         {
             Type = ((ACPI_NAMESPACE_NODE *) ObjDesc)->Type;
             ObjDesc = AcpiNsGetAttachedObject (
@@ -505,7 +505,7 @@ AcpiExResolveMultiple (
 
             /* All other types require a subobject */
 
-            if (!ObjDesc)
+            if(!ObjDesc)
             {
                 ACPI_ERROR ((AE_INFO,
                     "[%4.4s] Node is unresolved or uninitialized",
@@ -522,7 +522,7 @@ AcpiExResolveMultiple (
 
     /* If type is anything other than a reference, we are done */
 
-    if (Type != ACPI_TYPE_LOCAL_REFERENCE)
+    if(Type != ACPI_TYPE_LOCAL_REFERENCE)
     {
         goto Exit;
     }
@@ -542,7 +542,7 @@ AcpiExResolveMultiple (
 
             /* Dereference the reference pointer */
 
-            if (ObjDesc->Reference.Class == ACPI_REFCLASS_REFOF)
+            if(ObjDesc->Reference.Class == ACPI_REFCLASS_REFOF)
             {
                 Node = ObjDesc->Reference.Object;
             }
@@ -553,7 +553,7 @@ AcpiExResolveMultiple (
 
             /* All "References" point to a NS node */
 
-            if (ACPI_GET_DESCRIPTOR_TYPE (Node) != ACPI_DESC_TYPE_NAMED)
+            if(ACPI_GET_DESCRIPTOR_TYPE (Node) != ACPI_DESC_TYPE_NAMED)
             {
                 ACPI_ERROR ((AE_INFO,
                     "Not a namespace node %p [%s]",
@@ -564,7 +564,7 @@ AcpiExResolveMultiple (
             /* Get the attached object */
 
             ObjDesc = AcpiNsGetAttachedObject (Node);
-            if (!ObjDesc)
+            if(!ObjDesc)
             {
                 /* No object, use the NS node type */
 
@@ -574,7 +574,7 @@ AcpiExResolveMultiple (
 
             /* Check for circular references */
 
-            if (ObjDesc == Operand)
+            if(ObjDesc == Operand)
             {
                 return_ACPI_STATUS (AE_AML_CIRCULAR_REFERENCE);
             }
@@ -585,7 +585,7 @@ AcpiExResolveMultiple (
             /* Get the type of this reference (index into another object) */
 
             Type = ObjDesc->Reference.TargetType;
-            if (Type != ACPI_TYPE_PACKAGE)
+            if(Type != ACPI_TYPE_PACKAGE)
             {
                 goto Exit;
             }
@@ -598,7 +598,7 @@ AcpiExResolveMultiple (
              * This could of course in turn be another reference object.
              */
             ObjDesc = *(ObjDesc->Reference.Where);
-            if (!ObjDesc)
+            if(!ObjDesc)
             {
                 /* NULL package elements are allowed */
 
@@ -615,11 +615,11 @@ AcpiExResolveMultiple (
         case ACPI_REFCLASS_LOCAL:
         case ACPI_REFCLASS_ARG:
 
-            if (ReturnDesc)
+            if(ReturnDesc)
             {
                 Status = AcpiDsMethodDataGetValue (ObjDesc->Reference.Class,
                     ObjDesc->Reference.Value, WalkState, &ObjDesc);
-                if (ACPI_FAILURE (Status))
+                if(ACPI_FAILURE (Status))
                 {
                     return_ACPI_STATUS (Status);
                 }
@@ -629,13 +629,13 @@ AcpiExResolveMultiple (
             {
                 Status = AcpiDsMethodDataGetNode (ObjDesc->Reference.Class,
                     ObjDesc->Reference.Value, WalkState, &Node);
-                if (ACPI_FAILURE (Status))
+                if(ACPI_FAILURE (Status))
                 {
                     return_ACPI_STATUS (Status);
                 }
 
                 ObjDesc = AcpiNsGetAttachedObject (Node);
-                if (!ObjDesc)
+                if(!ObjDesc)
                 {
                     Type = ACPI_TYPE_ANY;
                     goto Exit;
@@ -693,7 +693,7 @@ Exit:
     }
 
     *ReturnType = Type;
-    if (ReturnDesc)
+    if(ReturnDesc)
     {
         *ReturnDesc = ObjDesc;
     }

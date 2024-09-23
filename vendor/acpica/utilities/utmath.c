@@ -222,7 +222,7 @@ AcpiUtShortMultiply (
 
     /* Return only what was requested */
 
-    if (OutProduct)
+    if(OutProduct)
     {
         *OutProduct = Product.Full;
     }
@@ -257,7 +257,7 @@ AcpiUtShortShiftLeft (
 
     OperandOvl.Full = Operand;
 
-    if ((Count & 63) >= 32)
+    if((Count & 63) >= 32)
     {
         OperandOvl.Part.Hi = OperandOvl.Part.Lo;
         OperandOvl.Part.Lo = 0;
@@ -268,7 +268,7 @@ AcpiUtShortShiftLeft (
 
     /* Return only what was requested */
 
-    if (OutResult)
+    if(OutResult)
     {
         *OutResult = OperandOvl.Full;
     }
@@ -302,7 +302,7 @@ AcpiUtShortShiftRight (
 
     OperandOvl.Full = Operand;
 
-    if ((Count & 63) >= 32)
+    if((Count & 63) >= 32)
     {
         OperandOvl.Part.Lo = OperandOvl.Part.Hi;
         OperandOvl.Part.Hi = 0;
@@ -313,7 +313,7 @@ AcpiUtShortShiftRight (
 
     /* Return only what was requested */
 
-    if (OutResult)
+    if(OutResult)
     {
         *OutResult = OperandOvl.Full;
     }
@@ -344,7 +344,7 @@ AcpiUtShortMultiply (
 
     /* Return only what was requested */
 
-    if (OutProduct)
+    if(OutProduct)
     {
         *OutProduct = Multiplicand * Multiplier;
     }
@@ -374,7 +374,7 @@ AcpiUtShortShiftLeft (
 
     /* Return only what was requested */
 
-    if (OutResult)
+    if(OutResult)
     {
         *OutResult = Operand << Count;
     }
@@ -404,7 +404,7 @@ AcpiUtShortShiftRight (
 
     /* Return only what was requested */
 
-    if (OutResult)
+    if(OutResult)
     {
         *OutResult = Operand >> Count;
     }
@@ -458,7 +458,7 @@ AcpiUtShortDivide (
 
     /* Always check for a zero divisor */
 
-    if (Divisor == 0)
+    if(Divisor == 0)
     {
         ACPI_ERROR ((AE_INFO, "Divide by zero"));
         return_ACPI_STATUS (AE_AML_DIVIDE_BY_ZERO);
@@ -478,11 +478,11 @@ AcpiUtShortDivide (
 
     /* Return only what was requested */
 
-    if (OutQuotient)
+    if(OutQuotient)
     {
         *OutQuotient = Quotient.Full;
     }
-    if (OutRemainder)
+    if(OutRemainder)
     {
         *OutRemainder = Remainder32;
     }
@@ -529,7 +529,7 @@ AcpiUtDivide (
 
     /* Always check for a zero divisor */
 
-    if (InDivisor == 0)
+    if(InDivisor == 0)
     {
         ACPI_ERROR ((AE_INFO, "Divide by zero"));
         return_ACPI_STATUS (AE_AML_DIVIDE_BY_ZERO);
@@ -537,7 +537,7 @@ AcpiUtDivide (
 
     Divisor.Full  = InDivisor;
     Dividend.Full = InDividend;
-    if (Divisor.Part.Hi == 0)
+    if(Divisor.Part.Hi == 0)
     {
         /*
          * 1) Simplest case is where the divisor is 32 bits, we can
@@ -594,13 +594,13 @@ AcpiUtDivide (
         Remainder.Part.Hi = Partial3.Part.Lo;
         Remainder.Part.Lo = Partial2.Part.Lo;
 
-        if (Partial3.Part.Hi == 0)
+        if(Partial3.Part.Hi == 0)
         {
-            if (Partial3.Part.Lo >= Dividend.Part.Hi)
+            if(Partial3.Part.Lo >= Dividend.Part.Hi)
             {
-                if (Partial3.Part.Lo == Dividend.Part.Hi)
+                if(Partial3.Part.Lo == Dividend.Part.Hi)
                 {
-                    if (Partial2.Part.Lo > Dividend.Part.Lo)
+                    if(Partial2.Part.Lo > Dividend.Part.Lo)
                     {
                         Quotient.Part.Lo--;
                         Remainder.Full -= Divisor.Full;
@@ -617,7 +617,7 @@ AcpiUtDivide (
             Remainder.Part.Hi = (UINT32) -((INT32) Remainder.Part.Hi);
             Remainder.Part.Lo = (UINT32) -((INT32) Remainder.Part.Lo);
 
-            if (Remainder.Part.Lo)
+            if(Remainder.Part.Lo)
             {
                 Remainder.Part.Hi--;
             }
@@ -626,11 +626,11 @@ AcpiUtDivide (
 
     /* Return only what was requested */
 
-    if (OutQuotient)
+    if(OutQuotient)
     {
         *OutQuotient = Quotient.Full;
     }
-    if (OutRemainder)
+    if(OutRemainder)
     {
         *OutRemainder = Remainder.Full;
     }
@@ -668,7 +668,7 @@ AcpiUtShortDivide (
 
     /* Always check for a zero divisor */
 
-    if (Divisor == 0)
+    if(Divisor == 0)
     {
         ACPI_ERROR ((AE_INFO, "Divide by zero"));
         return_ACPI_STATUS (AE_AML_DIVIDE_BY_ZERO);
@@ -676,11 +676,11 @@ AcpiUtShortDivide (
 
     /* Return only what was requested */
 
-    if (OutQuotient)
+    if(OutQuotient)
     {
         *OutQuotient = InDividend / Divisor;
     }
-    if (OutRemainder)
+    if(OutRemainder)
     {
         *OutRemainder = (UINT32) (InDividend % Divisor);
     }
@@ -700,7 +700,7 @@ AcpiUtDivide (
 
     /* Always check for a zero divisor */
 
-    if (InDivisor == 0)
+    if(InDivisor == 0)
     {
         ACPI_ERROR ((AE_INFO, "Divide by zero"));
         return_ACPI_STATUS (AE_AML_DIVIDE_BY_ZERO);
@@ -709,11 +709,11 @@ AcpiUtDivide (
 
     /* Return only what was requested */
 
-    if (OutQuotient)
+    if(OutQuotient)
     {
         *OutQuotient = InDividend / InDivisor;
     }
-    if (OutRemainder)
+    if(OutRemainder)
     {
         *OutRemainder = InDividend % InDivisor;
     }

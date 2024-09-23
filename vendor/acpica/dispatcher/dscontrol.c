@@ -197,9 +197,9 @@ AcpiDsExecBeginControlOp (
          * If this is an additional iteration of a while loop, continue.
          * There is no need to allocate a new control state.
          */
-        if (WalkState->ControlState)
+        if(WalkState->ControlState)
         {
-            if (WalkState->ControlState->Control.AmlPredicateStart ==
+            if(WalkState->ControlState->Control.AmlPredicateStart ==
                 (WalkState->ParserState.Aml - 1))
             {
                 /* Reset the state to start-of-loop */
@@ -219,7 +219,7 @@ AcpiDsExecBeginControlOp (
          * to handle nesting.
          */
         ControlState = AcpiUtCreateControlState ();
-        if (!ControlState)
+        if(!ControlState)
         {
             Status = AE_NO_MEMORY;
             break;
@@ -247,7 +247,7 @@ AcpiDsExecBeginControlOp (
         /* Predicate is in the state object */
         /* If predicate is true, the IF was executed, ignore ELSE part */
 
-        if (WalkState->LastPredicate)
+        if(WalkState->LastPredicate)
         {
             Status = AE_CTRL_TRUE;
         }
@@ -323,7 +323,7 @@ AcpiDsExecEndControlOp (
         ACPI_DEBUG_PRINT ((ACPI_DB_DISPATCH, "[WHILE_OP] Op=%p\n", Op));
 
         ControlState = WalkState->ControlState;
-        if (ControlState->Common.Value)
+        if(ControlState->Common.Value)
         {
             /* Predicate was true, the body of the loop was just executed */
 
@@ -333,7 +333,7 @@ AcpiDsExecEndControlOp (
              * written AML when the hardware does not respond within a while
              * loop and the loop does not implement a timeout.
              */
-            if (ACPI_TIME_AFTER (AcpiOsGetTimer (),
+            if(ACPI_TIME_AFTER (AcpiOsGetTimer (),
                     ControlState->Control.LoopTimeout))
             {
                 Status = AE_AML_LOOP_TIMEOUT;
@@ -371,7 +371,7 @@ AcpiDsExecEndControlOp (
          * It can be either an immediate operand or a result that
          * has been bubbled up the tree
          */
-        if (Op->Common.Value.Arg)
+        if(Op->Common.Value.Arg)
         {
             /* Since we have a real Return(), delete any implicit return */
 
@@ -380,7 +380,7 @@ AcpiDsExecEndControlOp (
             /* Return statement has an immediate operand */
 
             Status = AcpiDsCreateOperands (WalkState, Op->Common.Value.Arg);
-            if (ACPI_FAILURE (Status))
+            if(ACPI_FAILURE (Status))
             {
                 return (Status);
             }
@@ -392,7 +392,7 @@ AcpiDsExecEndControlOp (
              */
             Status = AcpiExResolveToValue (
                 &WalkState->Operands [0], WalkState);
-            if (ACPI_FAILURE (Status))
+            if(ACPI_FAILURE (Status))
             {
                 return (Status);
             }
@@ -404,7 +404,7 @@ AcpiDsExecEndControlOp (
              */
             WalkState->ReturnDesc = WalkState->Operands[0];
         }
-        else if (WalkState->ResultCount)
+        else if(WalkState->ResultCount)
         {
             /* Since we have a real Return(), delete any implicit return */
 
@@ -420,7 +420,7 @@ AcpiDsExecEndControlOp (
              * Allow references created by the Index operator to return
              * unchanged.
              */
-            if ((ACPI_GET_DESCRIPTOR_TYPE (WalkState->Results->Results.ObjDesc[0]) ==
+            if((ACPI_GET_DESCRIPTOR_TYPE (WalkState->Results->Results.ObjDesc[0]) ==
                     ACPI_DESC_TYPE_OPERAND) &&
                 ((WalkState->Results->Results.ObjDesc [0])->Common.Type ==
                     ACPI_TYPE_LOCAL_REFERENCE) &&
@@ -429,7 +429,7 @@ AcpiDsExecEndControlOp (
             {
                 Status = AcpiExResolveToValue (
                     &WalkState->Results->Results.ObjDesc [0], WalkState);
-                if (ACPI_FAILURE (Status))
+                if(ACPI_FAILURE (Status))
                 {
                     return (Status);
                 }
@@ -441,7 +441,7 @@ AcpiDsExecEndControlOp (
         {
             /* No return operand */
 
-            if (WalkState->NumOperands)
+            if(WalkState->NumOperands)
             {
                 AcpiUtRemoveReference (WalkState->Operands [0]);
             }
@@ -491,7 +491,7 @@ AcpiDsExecEndControlOp (
 
         /* No while found? */
 
-        if (!WalkState->ControlState)
+        if(!WalkState->ControlState)
         {
             return (AE_AML_NO_WHILE);
         }
@@ -503,7 +503,7 @@ AcpiDsExecEndControlOp (
 
         /* Return status depending on opcode */
 
-        if (Op->Common.AmlOpcode == AML_BREAK_OP)
+        if(Op->Common.AmlOpcode == AML_BREAK_OP)
         {
             Status = AE_CTRL_BREAK;
         }

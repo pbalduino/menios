@@ -264,7 +264,7 @@ AcpiUtInitializeInterfaces (
 
 
     Status = AcpiOsAcquireMutex (AcpiGbl_OsiMutex, ACPI_WAIT_FOREVER);
-    if (ACPI_FAILURE (Status))
+    if(ACPI_FAILURE (Status))
     {
         return (Status);
     }
@@ -308,7 +308,7 @@ AcpiUtInterfaceTerminate (
 
 
     Status = AcpiOsAcquireMutex (AcpiGbl_OsiMutex, ACPI_WAIT_FOREVER);
-    if (ACPI_FAILURE (Status))
+    if(ACPI_FAILURE (Status))
     {
         return (Status);
     }
@@ -318,7 +318,7 @@ AcpiUtInterfaceTerminate (
     {
         AcpiGbl_SupportedInterfaces = NextInterface->Next;
 
-        if (NextInterface->Flags & ACPI_OSI_DYNAMIC)
+        if(NextInterface->Flags & ACPI_OSI_DYNAMIC)
         {
             /* Only interfaces added at runtime can be freed */
 
@@ -329,7 +329,7 @@ AcpiUtInterfaceTerminate (
         {
             /* Interface is in static list. Reset it to invalid or valid. */
 
-            if (NextInterface->Flags & ACPI_OSI_DEFAULT_INVALID)
+            if(NextInterface->Flags & ACPI_OSI_DEFAULT_INVALID)
             {
                 NextInterface->Flags |= ACPI_OSI_INVALID;
             }
@@ -370,13 +370,13 @@ AcpiUtInstallInterface (
     /* Allocate info block and space for the name string */
 
     InterfaceInfo = ACPI_ALLOCATE_ZEROED (sizeof (ACPI_INTERFACE_INFO));
-    if (!InterfaceInfo)
+    if(!InterfaceInfo)
     {
         return (AE_NO_MEMORY);
     }
 
     InterfaceInfo->Name = ACPI_ALLOCATE_ZEROED (strlen (InterfaceName) + 1);
-    if (!InterfaceInfo->Name)
+    if(!InterfaceInfo->Name)
     {
         ACPI_FREE (InterfaceInfo);
         return (AE_NO_MEMORY);
@@ -417,17 +417,17 @@ AcpiUtRemoveInterface (
     PreviousInterface = NextInterface = AcpiGbl_SupportedInterfaces;
     while (NextInterface)
     {
-        if (!strcmp (InterfaceName, NextInterface->Name))
+        if(!strcmp (InterfaceName, NextInterface->Name))
         {
             /*
              * Found: name is in either the static list
              * or was added at runtime
              */
-            if (NextInterface->Flags & ACPI_OSI_DYNAMIC)
+            if(NextInterface->Flags & ACPI_OSI_DYNAMIC)
             {
                 /* Interface was added dynamically, remove and free it */
 
-                if (PreviousInterface == NextInterface)
+                if(PreviousInterface == NextInterface)
                 {
                     AcpiGbl_SupportedInterfaces = NextInterface->Next;
                 }
@@ -445,7 +445,7 @@ AcpiUtRemoveInterface (
                  * Interface is in static list. If marked invalid, then
                  * it does not actually exist. Else, mark it invalid.
                  */
-                if (NextInterface->Flags & ACPI_OSI_INVALID)
+                if(NextInterface->Flags & ACPI_OSI_INVALID)
                 {
                     return (AE_NOT_EXIST);
                 }
@@ -491,12 +491,12 @@ AcpiUtUpdateInterfaces (
     NextInterface = AcpiGbl_SupportedInterfaces;
     while (NextInterface)
     {
-        if (((NextInterface->Flags & ACPI_OSI_FEATURE) &&
+        if(((NextInterface->Flags & ACPI_OSI_FEATURE) &&
              (Action & ACPI_FEATURE_STRINGS)) ||
             (!(NextInterface->Flags & ACPI_OSI_FEATURE) &&
              (Action & ACPI_VENDOR_STRINGS)))
         {
-            if (Action & ACPI_DISABLE_INTERFACES)
+            if(Action & ACPI_DISABLE_INTERFACES)
             {
                 /* Mark the interfaces as invalid */
 
@@ -540,7 +540,7 @@ AcpiUtGetInterface (
     NextInterface = AcpiGbl_SupportedInterfaces;
     while (NextInterface)
     {
-        if (!strcmp (InterfaceName, NextInterface->Name))
+        if(!strcmp (InterfaceName, NextInterface->Name))
         {
             return (NextInterface);
         }
@@ -595,7 +595,7 @@ AcpiUtOsiImplementation (
     /* Validate the string input argument (from the AML caller) */
 
     StringDesc = WalkState->Arguments[0].Object;
-    if (!StringDesc ||
+    if(!StringDesc ||
         (StringDesc->Common.Type != ACPI_TYPE_STRING))
     {
         return_ACPI_STATUS (AE_TYPE);
@@ -604,7 +604,7 @@ AcpiUtOsiImplementation (
     /* Create a return object */
 
     ReturnDesc = AcpiUtCreateInternalObject (ACPI_TYPE_INTEGER);
-    if (!ReturnDesc)
+    if(!ReturnDesc)
     {
         return_ACPI_STATUS (AE_NO_MEMORY);
     }
@@ -613,7 +613,7 @@ AcpiUtOsiImplementation (
 
     ReturnValue = 0;
     Status = AcpiOsAcquireMutex (AcpiGbl_OsiMutex, ACPI_WAIT_FOREVER);
-    if (ACPI_FAILURE (Status))
+    if(ACPI_FAILURE (Status))
     {
         AcpiUtRemoveReference (ReturnDesc);
         return_ACPI_STATUS (Status);
@@ -622,7 +622,7 @@ AcpiUtOsiImplementation (
     /* Lookup the interface in the global _OSI list */
 
     InterfaceInfo = AcpiUtGetInterface (StringDesc->String.Pointer);
-    if (InterfaceInfo &&
+    if(InterfaceInfo &&
         !(InterfaceInfo->Flags & ACPI_OSI_INVALID))
     {
         /*
@@ -630,7 +630,7 @@ AcpiUtOsiImplementation (
          * Update the OsiData if necessary. We keep track of the latest
          * version of Windows that has been requested by the BIOS.
          */
-        if (InterfaceInfo->Value > AcpiGbl_OsiData)
+        if(InterfaceInfo->Value > AcpiGbl_OsiData)
         {
             AcpiGbl_OsiData = InterfaceInfo->Value;
         }
@@ -646,9 +646,9 @@ AcpiUtOsiImplementation (
      * certain interfaces or override the true/false support value.
      */
     InterfaceHandler = AcpiGbl_InterfaceHandler;
-    if (InterfaceHandler)
+    if(InterfaceHandler)
     {
-        if (InterfaceHandler (
+        if(InterfaceHandler (
             StringDesc->String.Pointer, (UINT32) ReturnValue))
         {
             ReturnValue = ACPI_UINT64_MAX;

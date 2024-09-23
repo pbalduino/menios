@@ -203,14 +203,14 @@ AcpiNsExecuteTable (
 
 
     Status = AcpiGetTableByIndex (TableIndex, &Table);
-    if (ACPI_FAILURE (Status))
+    if(ACPI_FAILURE (Status))
     {
         return_ACPI_STATUS (Status);
     }
 
     /* Table must consist of at least a complete header */
 
-    if (Table->Length < sizeof (ACPI_TABLE_HEADER))
+    if(Table->Length < sizeof (ACPI_TABLE_HEADER))
     {
         return_ACPI_STATUS (AE_BAD_HEADER);
     }
@@ -219,7 +219,7 @@ AcpiNsExecuteTable (
     AmlLength = Table->Length - sizeof (ACPI_TABLE_HEADER);
 
     Status = AcpiTbGetOwnerId (TableIndex, &OwnerId);
-    if (ACPI_FAILURE (Status))
+    if(ACPI_FAILURE (Status))
     {
         return_ACPI_STATUS (Status);
     }
@@ -227,7 +227,7 @@ AcpiNsExecuteTable (
     /* Create, initialize, and link a new temporary method object */
 
     MethodObj = AcpiUtCreateInternalObject (ACPI_TYPE_METHOD);
-    if (!MethodObj)
+    if(!MethodObj)
     {
         return_ACPI_STATUS (AE_NO_MEMORY);
     }
@@ -235,7 +235,7 @@ AcpiNsExecuteTable (
     /* Allocate the evaluation information block */
 
     Info = ACPI_ALLOCATE_ZEROED (sizeof (ACPI_EVALUATE_INFO));
-    if (!Info)
+    if(!Info)
     {
         Status = AE_NO_MEMORY;
         goto Cleanup;
@@ -255,7 +255,7 @@ AcpiNsExecuteTable (
     Info->ObjDesc = MethodObj;
     Info->NodeFlags = Info->Node->Flags;
     Info->FullPathname = AcpiNsGetNormalizedPathname (Info->Node, TRUE);
-    if (!Info->FullPathname)
+    if(!Info->FullPathname)
     {
         Status = AE_NO_MEMORY;
         goto Cleanup;
@@ -274,7 +274,7 @@ AcpiNsExecuteTable (
         "%-26s:  (Definition Block level)\n", "Module-level complete"));
 
 Cleanup:
-    if (Info)
+    if(Info)
     {
         ACPI_FREE (Info->FullPathname);
         Info->FullPathname = NULL;
@@ -317,14 +317,14 @@ AcpiNsOneCompleteParse (
 
 
     Status = AcpiGetTableByIndex (TableIndex, &Table);
-    if (ACPI_FAILURE (Status))
+    if(ACPI_FAILURE (Status))
     {
         return_ACPI_STATUS (Status);
     }
 
     /* Table must consist of at least a complete header */
 
-    if (Table->Length < sizeof (ACPI_TABLE_HEADER))
+    if(Table->Length < sizeof (ACPI_TABLE_HEADER))
     {
         return_ACPI_STATUS (AE_BAD_HEADER);
     }
@@ -333,7 +333,7 @@ AcpiNsOneCompleteParse (
     AmlLength = Table->Length - sizeof (ACPI_TABLE_HEADER);
 
     Status = AcpiTbGetOwnerId (TableIndex, &OwnerId);
-    if (ACPI_FAILURE (Status))
+    if(ACPI_FAILURE (Status))
     {
         return_ACPI_STATUS (Status);
     }
@@ -341,7 +341,7 @@ AcpiNsOneCompleteParse (
     /* Create and init a Root Node */
 
     ParseRoot = AcpiPsCreateScopeOp (AmlStart);
-    if (!ParseRoot)
+    if(!ParseRoot)
     {
         return_ACPI_STATUS (AE_NO_MEMORY);
     }
@@ -349,7 +349,7 @@ AcpiNsOneCompleteParse (
     /* Create and initialize a new walk state */
 
     WalkState = AcpiDsCreateWalkState (OwnerId, NULL, NULL, NULL);
-    if (!WalkState)
+    if(!WalkState)
     {
         AcpiPsFreeOp (ParseRoot);
         return_ACPI_STATUS (AE_NO_MEMORY);
@@ -357,7 +357,7 @@ AcpiNsOneCompleteParse (
 
     Status = AcpiDsInitAmlWalk (WalkState, ParseRoot, NULL,
         AmlStart, AmlLength, NULL, (UINT8) PassNumber);
-    if (ACPI_FAILURE (Status))
+    if(ACPI_FAILURE (Status))
     {
         AcpiDsDeleteWalkState (WalkState);
         goto Cleanup;
@@ -365,7 +365,7 @@ AcpiNsOneCompleteParse (
 
     /* Found OSDT table, enable the namespace override feature */
 
-    if (ACPI_COMPARE_NAMESEG (Table->Signature, ACPI_SIG_OSDT) &&
+    if(ACPI_COMPARE_NAMESEG (Table->Signature, ACPI_SIG_OSDT) &&
         PassNumber == ACPI_IMODE_LOAD_PASS1)
     {
         WalkState->NamespaceOverride = TRUE;
@@ -373,11 +373,11 @@ AcpiNsOneCompleteParse (
 
     /* StartNode is the default location to load the table  */
 
-    if (StartNode && StartNode != AcpiGbl_RootNode)
+    if(StartNode && StartNode != AcpiGbl_RootNode)
     {
         Status = AcpiDsScopeStackPush (
             StartNode, ACPI_TYPE_METHOD, WalkState);
-        if (ACPI_FAILURE (Status))
+        if(ACPI_FAILURE (Status))
         {
             AcpiDsDeleteWalkState (WalkState);
             goto Cleanup;

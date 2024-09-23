@@ -179,7 +179,7 @@ AcpiPsCreateScopeOp (
 
 
     ScopeOp = AcpiPsAllocOp (AML_SCOPE_OP, Aml);
-    if (!ScopeOp)
+    if(!ScopeOp)
     {
         return (NULL);
     }
@@ -251,22 +251,22 @@ AcpiPsAllocOp (
 
     /* Determine type of ParseOp required */
 
-    if (OpInfo->Flags & AML_DEFER)
+    if(OpInfo->Flags & AML_DEFER)
     {
         Flags = ACPI_PARSEOP_DEFERRED;
     }
-    else if (OpInfo->Flags & AML_NAMED)
+    else if(OpInfo->Flags & AML_NAMED)
     {
         Flags = ACPI_PARSEOP_NAMED_OBJECT;
     }
-    else if (Opcode == AML_INT_BYTELIST_OP)
+    else if(Opcode == AML_INT_BYTELIST_OP)
     {
         Flags = ACPI_PARSEOP_BYTELIST;
     }
 
     /* Allocate the minimum required size object */
 
-    if (Flags == ACPI_PARSEOP_GENERIC)
+    if(Flags == ACPI_PARSEOP_GENERIC)
     {
         /* The generic op (default) is by far the most common (16 to 1) */
 
@@ -281,19 +281,19 @@ AcpiPsAllocOp (
 
     /* Initialize the Op */
 
-    if (Op)
+    if(Op)
     {
         AcpiPsInitOp (Op, Opcode);
         Op->Common.Aml = Aml;
         Op->Common.Flags = Flags;
         ASL_CV_CLEAR_OP_COMMENTS(Op);
 
-        if (Opcode == AML_SCOPE_OP)
+        if(Opcode == AML_SCOPE_OP)
         {
             AcpiGbl_CurrentScope = Op;
         }
 
-        if (AcpiGbl_CaptureComments)
+        if(AcpiGbl_CaptureComments)
         {
             ASL_CV_TRANSFER_COMMENTS (Op);
         }
@@ -324,13 +324,13 @@ AcpiPsFreeOp (
 
 
     ASL_CV_CLEAR_OP_COMMENTS(Op);
-    if (Op->Common.AmlOpcode == AML_INT_RETURN_VALUE_OP)
+    if(Op->Common.AmlOpcode == AML_INT_RETURN_VALUE_OP)
     {
         ACPI_DEBUG_PRINT ((ACPI_DB_ALLOCATIONS,
             "Free retval op: %p\n", Op));
     }
 
-    if (Op->Common.Flags & ACPI_PARSEOP_GENERIC)
+    if(Op->Common.Flags & ACPI_PARSEOP_GENERIC)
     {
         (void) AcpiOsReleaseObject (AcpiGbl_PsNodeCache, Op);
     }
@@ -371,7 +371,7 @@ AcpiPsGetName (
 
     /* The "generic" object has no name associated with it */
 
-    if (Op->Common.Flags & ACPI_PARSEOP_GENERIC)
+    if(Op->Common.Flags & ACPI_PARSEOP_GENERIC)
     {
         return (0);
     }
@@ -393,7 +393,7 @@ AcpiPsSetName (
 
     /* The "generic" object has no name associated with it */
 
-    if (Op->Common.Flags & ACPI_PARSEOP_GENERIC)
+    if(Op->Common.Flags & ACPI_PARSEOP_GENERIC)
     {
         return;
     }

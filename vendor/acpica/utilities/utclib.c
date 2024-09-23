@@ -259,7 +259,7 @@ memmove (
     char                    *Old = (char *) Src;
 
 
-    if (Old > New)
+    if(Old > New)
     {
         /* Copy from the beginning */
 
@@ -271,7 +271,7 @@ memmove (
             Count--;
         }
     }
-    else if (Old < New)
+    else if(Old < New)
     {
         /* Copy from the end */
 
@@ -418,7 +418,7 @@ strpbrk (
     {
         for (Delimiter = Delimiters; *Delimiter != '\0'; Delimiter++)
         {
-            if (*String == *Delimiter)
+            if(*String == *Delimiter)
             {
                 return (ACPI_CAST_PTR (char, String));
             }
@@ -451,9 +451,9 @@ strtok (
     static char             *SavedPtr;
 
 
-    if (Begin == NULL)
+    if(Begin == NULL)
     {
-        if (SavedPtr == NULL)
+        if(SavedPtr == NULL)
         {
             return (NULL);
         }
@@ -467,7 +467,7 @@ strtok (
         SavedPtr = strpbrk (Begin, Delimiters);
     }
 
-    if (SavedPtr)
+    if(SavedPtr)
     {
         *SavedPtr++ = '\0';
         return (Begin);
@@ -582,7 +582,7 @@ strcmp (
 
     for ( ; (*String1 == *String2); String2++)
     {
-        if (!*String1++)
+        if(!*String1++)
         {
             return (0);
         }
@@ -614,7 +614,7 @@ strchr (
 
     for ( ; (*String); String++)
     {
-        if ((*String) == (char) ch)
+        if((*String) == (char) ch)
         {
             return ((char *) String);
         }
@@ -648,7 +648,7 @@ strncmp (
 
     for ( ; Count-- && (*String1 == *String2); String2++)
     {
-        if (!*String1++)
+        if(!*String1++)
         {
             return (0);
         }
@@ -718,7 +718,7 @@ strncat (
     char                    *String;
 
 
-    if (Count)
+    if(Count)
     {
         /* Find end of the destination string */
 
@@ -732,7 +732,7 @@ strncat (
 
         /* Null terminate if necessary */
 
-        if (!Count)
+        if(!Count)
         {
             *String = 0;
         }
@@ -766,14 +766,14 @@ strstr (
 
 
     Length = strlen (String2);
-    if (!Length)
+    if(!Length)
     {
         return (String1);
     }
 
     while (strlen (String1) >= Length)
     {
-        if (memcmp (String1, String2, Length) == 0)
+        if(memcmp (String1, String2, Length) == 0)
         {
             return (String1);
         }
@@ -829,12 +829,12 @@ strtoul (
      * The buffer may contain an optional plus or minus sign.
      * If it does, then skip over it but remember what is was:
      */
-    if (*String == '-')
+    if(*String == '-')
     {
         sign = ACPI_SIGN_NEGATIVE;
         ++String;
     }
-    else if (*String == '+')
+    else if(*String == '+')
     {
         ++String;
         sign = ACPI_SIGN_POSITIVE;
@@ -848,11 +848,11 @@ strtoul (
      * If the input parameter Base is zero, then we need to
      * determine if it is octal, decimal, or hexadecimal:
      */
-    if (Base == 0)
+    if(Base == 0)
     {
-        if (*String == '0')
+        if(*String == '0')
         {
-            if (tolower (*(++String)) == 'x')
+            if(tolower (*(++String)) == 'x')
             {
                 Base = 16;
                 ++String;
@@ -867,7 +867,7 @@ strtoul (
             Base = 10;
         }
     }
-    else if (Base < 2 || Base > 36)
+    else if(Base < 2 || Base > 36)
     {
         /*
          * The specified Base parameter is not in the domain of
@@ -880,12 +880,12 @@ strtoul (
      * For octal and hexadecimal bases, skip over the leading
      * 0 or 0x, if they are present.
      */
-    if (Base == 8 && *String == '0')
+    if(Base == 8 && *String == '0')
     {
         String++;
     }
 
-    if (Base == 16 &&
+    if(Base == 16 &&
         *String == '0' &&
         tolower (*(++String)) == 'x')
     {
@@ -897,14 +897,14 @@ strtoul (
      */
     while (*String)
     {
-        if (isdigit (*String))
+        if(isdigit (*String))
         {
             index = (UINT32) ((UINT8) *String - '0');
         }
         else
         {
             index = (UINT32) toupper (*String);
-            if (isupper (index))
+            if(isupper (index))
             {
                 index = index - 'A' + 10;
             }
@@ -914,7 +914,7 @@ strtoul (
             }
         }
 
-        if (index >= Base)
+        if(index >= Base)
         {
             goto done;
         }
@@ -923,7 +923,7 @@ strtoul (
          * Check to see if value is out of range:
          */
 
-        if (ReturnValue > ((ACPI_UINT32_MAX - (UINT32) index) /
+        if(ReturnValue > ((ACPI_UINT32_MAX - (UINT32) index) /
                             (UINT32) Base))
         {
             Status = AE_ERROR;
@@ -944,9 +944,9 @@ done:
      * If appropriate, update the caller's pointer to the next
      * unconverted character in the buffer.
      */
-    if (Terminator)
+    if(Terminator)
     {
-        if (converted == 0 && ReturnValue == 0 && String != NULL)
+        if(converted == 0 && ReturnValue == 0 && String != NULL)
         {
             *Terminator = (char *) StringStart;
         }
@@ -956,7 +956,7 @@ done:
         }
     }
 
-    if (Status == AE_ERROR)
+    if(Status == AE_ERROR)
     {
         ReturnValue = ACPI_UINT32_MAX;
     }
@@ -964,7 +964,7 @@ done:
     /*
      * If a minus sign was present, then "the conversion is negated":
      */
-    if (sign == ACPI_SIGN_NEGATIVE)
+    if(sign == ACPI_SIGN_NEGATIVE)
     {
         ReturnValue = (ACPI_UINT32_MAX - ReturnValue) + 1;
     }

@@ -10,22 +10,22 @@ extern "C" {
 #define HEAP_SIZE   16
 #define HEAP_FREE    0
 #define HEAP_USED    1
-#define HEAP_MAGIC  "mOS\0"
+#define HEAP_MAGIC  0x534f6d00
 
 struct heap_node_t;
 
-typedef struct __attribute__((packed)) heap_node_t {
-  char                 magic[4]; // 4 bytes
-  uint8_t              status;   // 1 byte
-  uint32_t             size;     // 4 bytes
-  struct heap_node_t*  next;     // 8 bytes
-  struct heap_node_t*  prev;     // 8 bytes
-  uint8_t*             data;             
-} heap_node_t; //          header: 25 bytes
+typedef struct heap_node_t {
+  uint32_t             magic;  // 4 bytes
+  uint8_t              status; // 1 byte
+  uint32_t             size;   // 4 bytes
+  struct heap_node_t*  next;   // 8 bytes
+  struct heap_node_t*  prev;   // 8 bytes
+  uint8_t              data[];
+} heap_node_t; 
 
 typedef struct heap_node_t* heap_node_p;
 
-#define HEAP_HEADER offsetof(heap_node_t, data)
+#define HEAP_HEADER offsetof(heap_node_t, data) //  header: 32 bytes
 
 // void* kmalloc(uint32_t size);
 // void* kcalloc(uint64_t nelem, uint64_t elsize);

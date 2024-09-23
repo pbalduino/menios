@@ -304,7 +304,7 @@ AcpiOsSignalSemaphore (
  * Mutex primitives. May be configured to use semaphores instead via
  * ACPI_MUTEX_TYPE (see platform/acenv.h)
  */
-#if (ACPI_MUTEX_TYPE != ACPI_BINARY_SEMAPHORE)
+#if(ACPI_MUTEX_TYPE != ACPI_BINARY_SEMAPHORE)
 
 #ifndef ACPI_USE_ALTERNATE_PROTOTYPE_AcpiOsCreateMutex
 ACPI_STATUS

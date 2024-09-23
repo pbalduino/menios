@@ -373,7 +373,7 @@ ACPI_GLOBAL (UINT8,                     AcpiGbl_SleepTypeBS0);
  *
  ****************************************************************************/
 
-#if (!ACPI_REDUCED_HARDWARE)
+#if(!ACPI_REDUCED_HARDWARE)
 ACPI_GLOBAL (UINT8,                     AcpiGbl_AllGpesInitialized);
 ACPI_GLOBAL (ACPI_GPE_XRUPT_INFO *,     AcpiGbl_GpeXruptListHead);
 ACPI_GLOBAL (ACPI_GPE_BLOCK_INFO *,     AcpiGbl_GpeFadtBlocks[ACPI_MAX_GPE_BLOCKS]);

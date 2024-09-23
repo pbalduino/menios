@@ -185,7 +185,7 @@ AcpiTbInstallTableWithOverride (
 
 
     Status = AcpiTbGetNextTableDescriptor (&i, NULL);
-    if (ACPI_FAILURE (Status))
+    if(ACPI_FAILURE (Status))
     {
         return;
     }
@@ -197,7 +197,7 @@ AcpiTbInstallTableWithOverride (
      * one if desired. Any table within the RSDT/XSDT can be replaced,
      * including the DSDT which is pointed to by the FADT.
      */
-    if (Override)
+    if(Override)
     {
         AcpiTbOverrideTable (NewTableDesc);
     }
@@ -213,7 +213,7 @@ AcpiTbInstallTableWithOverride (
 
     /* Set the global integer width (based upon revision of the DSDT) */
 
-    if (i == AcpiGbl_DsdtIndex)
+    if(i == AcpiGbl_DsdtIndex)
     {
         AcpiUtSetIntegerWidth (NewTableDesc->Pointer->Revision);
     }
@@ -263,7 +263,7 @@ AcpiTbInstallStandardTable (
     /* Acquire a temporary table descriptor for validation */
 
     Status = AcpiTbAcquireTempTable (&NewTableDesc, Address, Flags, Table);
-    if (ACPI_FAILURE (Status))
+    if(ACPI_FAILURE (Status))
     {
         ACPI_ERROR ((AE_INFO,
             "Could not acquire table length at %8.8X%8.8X",
@@ -275,7 +275,7 @@ AcpiTbInstallStandardTable (
      * Optionally do not load any SSDTs from the RSDT/XSDT. This can
      * be useful for debugging ACPI problems on some machines.
      */
-    if (!Reload &&
+    if(!Reload &&
         AcpiGbl_DisableSsdtTableInstall &&
         ACPI_COMPARE_NAMESEG (&NewTableDesc.Signature, ACPI_SIG_SSDT))
     {
@@ -292,9 +292,9 @@ AcpiTbInstallStandardTable (
     /* Validate and verify a table before installation */
 
     Status = AcpiTbVerifyTempTable (&NewTableDesc, NULL, &i);
-    if (ACPI_FAILURE (Status))
+    if(ACPI_FAILURE (Status))
     {
-        if (Status == AE_CTRL_TERMINATE)
+        if(Status == AE_CTRL_TERMINATE)
         {
             /*
              * Table was unloaded, allow it to be reloaded.
@@ -369,7 +369,7 @@ AcpiTbOverrideTable (
     /* (1) Attempt logical override (returns a logical address) */
 
     Status = AcpiOsTableOverride (OldTableDesc->Pointer, &Table);
-    if (ACPI_SUCCESS (Status) && Table)
+    if(ACPI_SUCCESS (Status) && Table)
     {
         AcpiTbAcquireTempTable (&NewTableDesc, ACPI_PTR_TO_PHYSADDR (Table),
             ACPI_TABLE_ORIGIN_EXTERNAL_VIRTUAL, Table);
@@ -381,7 +381,7 @@ AcpiTbOverrideTable (
 
     Status = AcpiOsPhysicalTableOverride (OldTableDesc->Pointer,
         &Address, &Length);
-    if (ACPI_SUCCESS (Status) && Address && Length)
+    if(ACPI_SUCCESS (Status) && Address && Length)
     {
         AcpiTbAcquireTempTable (&NewTableDesc, Address,
             ACPI_TABLE_ORIGIN_INTERNAL_PHYSICAL, NULL);
@@ -399,7 +399,7 @@ FinishOverride:
      * duplication check as it's too complicated and unnecessary.
      */
     Status = AcpiTbVerifyTempTable (&NewTableDesc, NULL, NULL);
-    if (ACPI_FAILURE (Status))
+    if(ACPI_FAILURE (Status))
     {
         return;
     }
@@ -450,14 +450,14 @@ AcpiTbUninstallTable (
 
     /* Table must be installed */
 
-    if (!TableDesc->Address)
+    if(!TableDesc->Address)
     {
         return_VOID;
     }
 
     AcpiTbInvalidateTable (TableDesc);
 
-    if ((TableDesc->Flags & ACPI_TABLE_ORIGIN_MASK) ==
+    if((TableDesc->Flags & ACPI_TABLE_ORIGIN_MASK) ==
         ACPI_TABLE_ORIGIN_INTERNAL_VIRTUAL)
     {
         ACPI_FREE (TableDesc->Pointer);

@@ -8,7 +8,7 @@ char* utoa(uint32_t num, char* str, int32_t base) {
   bool isNegative = false;
 
   /* Handle 0 explicitely, otherwise empty string is printed for 0 */
-  if (num == 0) {
+  if(num == 0) {
     str[i++] = '0';
     str[i] = '\0';
     return str;
@@ -21,7 +21,7 @@ char* utoa(uint32_t num, char* str, int32_t base) {
   }
 
   // If number is negative, append '-'
-  if (isNegative) {
+  if(isNegative) {
     str[i++] = '-';
    }
 
@@ -38,7 +38,7 @@ char* itoa(int32_t num, char* str, int32_t base) {
   bool isNegative = false;
 
   /* Handle 0 explicitely, otherwise empty string is printed for 0 */
-  if (num == 0) {
+  if(num == 0) {
     str[i++] = '0';
     str[i] = '\0';
     return str;
@@ -46,7 +46,7 @@ char* itoa(int32_t num, char* str, int32_t base) {
 
   // In standard itoa(), negative numbers are handled only with
   // base 10. Otherwise numbers are considered unsigned.
-  if (num < 0) {
+  if(num < 0) {
     isNegative = true;
     num = -num;
   }
@@ -59,7 +59,7 @@ char* itoa(int32_t num, char* str, int32_t base) {
   }
 
   // If number is negative, append '-'
-  if (isNegative) {
+  if(isNegative) {
     str[i++] = '-';
    }
 
@@ -75,7 +75,7 @@ char* lutoa(uint64_t num, char* str, int32_t base) {
   int i = 0;
 
   /* Handle 0 explicitely, otherwise empty string is printed for 0 */
-  if (num == 0) {
+  if(num == 0) {
     str[i++] = '0';
     str[i] = '\0';
     return str;
@@ -101,7 +101,7 @@ char* ltoa(int64_t num, char* str, int32_t base) {
   bool isNegative = false;
 
   /* Handle 0 explicitely, otherwise empty string is printed for 0 */
-  if (num == 0) {
+  if(num == 0) {
     str[i++] = '0';
     str[i] = '\0';
     return str;
@@ -109,7 +109,7 @@ char* ltoa(int64_t num, char* str, int32_t base) {
 
   // In standard itoa(), negative numbers are handled only with
   // base 10. Otherwise numbers are considered unsigned.
-  if (num < 0) {
+  if(num < 0) {
     isNegative = true;
     num = -num;
   }
@@ -122,7 +122,7 @@ char* ltoa(int64_t num, char* str, int32_t base) {
   }
 
   // If number is negative, append '-'
-  if (isNegative) {
+  if(isNegative) {
     str[i++] = '-';
    }
 

@@ -253,7 +253,7 @@ AcpiExGenerateAccess (
          *    are done. (This does not optimize for the perfectly aligned
          *    case yet).
          */
-        if (ACPI_ROUND_UP (FieldByteEndOffset, AccessByteWidth) <=
+        if(ACPI_ROUND_UP (FieldByteEndOffset, AccessByteWidth) <=
             RegionLength)
         {
             FieldStartOffset =
@@ -275,7 +275,7 @@ AcpiExGenerateAccess (
 
             /* Single access is optimal */
 
-            if (Accesses <= 1)
+            if(Accesses <= 1)
             {
                 ACPI_DEBUG_PRINT ((ACPI_DB_BFIELD,
                     "Entire field can be accessed "
@@ -288,7 +288,7 @@ AcpiExGenerateAccess (
              * Fits in the region, but requires more than one read/write.
              * try the next wider access on next iteration
              */
-            if (Accesses < MinimumAccesses)
+            if(Accesses < MinimumAccesses)
             {
                 MinimumAccesses = Accesses;
                 MinimumAccessWidth = AccessByteWidth;
@@ -299,7 +299,7 @@ AcpiExGenerateAccess (
             ACPI_DEBUG_PRINT ((ACPI_DB_BFIELD,
                 "AccessWidth %u end is NOT within region\n",
                 AccessByteWidth));
-            if (AccessByteWidth == 1)
+            if(AccessByteWidth == 1)
             {
                 ACPI_DEBUG_PRINT ((ACPI_DB_BFIELD,
                     "Field goes beyond end-of-region!\n"));
@@ -415,7 +415,7 @@ AcpiExDecodeFieldAccess (
         return_UINT32 (0);
     }
 
-    if (ObjDesc->Common.Type == ACPI_TYPE_BUFFER_FIELD)
+    if(ObjDesc->Common.Type == ACPI_TYPE_BUFFER_FIELD)
     {
         /*
          * BufferField access can be on any byte boundary, so the
@@ -493,7 +493,7 @@ AcpiExPrepCommonFieldObject (
      */
     AccessBitWidth = AcpiExDecodeFieldAccess (
         ObjDesc, FieldFlags, &ByteAlignment);
-    if (!AccessBitWidth)
+    if(!AccessBitWidth)
     {
         return_ACPI_STATUS (AE_AML_OPERAND_VALUE);
     }
@@ -558,16 +558,16 @@ AcpiExPrepFieldValue (
 
     /* Parameter validation */
 
-    if (Info->FieldType != ACPI_TYPE_LOCAL_INDEX_FIELD)
+    if(Info->FieldType != ACPI_TYPE_LOCAL_INDEX_FIELD)
     {
-        if (!Info->RegionNode)
+        if(!Info->RegionNode)
         {
             ACPI_ERROR ((AE_INFO, "Null RegionNode"));
             return_ACPI_STATUS (AE_AML_NO_OPERAND);
         }
 
         Type = AcpiNsGetType (Info->RegionNode);
-        if (Type != ACPI_TYPE_REGION)
+        if(Type != ACPI_TYPE_REGION)
         {
             ACPI_ERROR ((AE_INFO, "Needed Region, found type 0x%X (%s)",
                 Type, AcpiUtGetTypeName (Type)));
@@ -579,7 +579,7 @@ AcpiExPrepFieldValue (
     /* Allocate a new field object */
 
     ObjDesc = AcpiUtCreateInternalObject (Info->FieldType);
-    if (!ObjDesc)
+    if(!ObjDesc)
     {
         return_ACPI_STATUS (AE_NO_MEMORY);
     }
@@ -590,7 +590,7 @@ AcpiExPrepFieldValue (
     Status = AcpiExPrepCommonFieldObject (ObjDesc,
         Info->FieldFlags, Info->Attribute,
         Info->FieldBitPosition, Info->FieldBitLength);
-    if (ACPI_FAILURE (Status))
+    if(ACPI_FAILURE (Status))
     {
         AcpiUtDeleteObjectDesc (ObjDesc);
         return_ACPI_STATUS (Status);
@@ -608,17 +608,17 @@ AcpiExPrepFieldValue (
 
         ObjDesc->Field.AccessLength = Info->AccessLength;
 
-        if (Info->ConnectionNode)
+        if(Info->ConnectionNode)
         {
             SecondDesc = Info->ConnectionNode->Object;
-            if (SecondDesc == NULL)
+            if(SecondDesc == NULL)
             {
                 break;
             }
-            if (!(SecondDesc->Common.Flags & AOPOBJ_DATA_VALID))
+            if(!(SecondDesc->Common.Flags & AOPOBJ_DATA_VALID))
             {
                 Status = AcpiDsGetBufferArguments (SecondDesc);
-                if (ACPI_FAILURE (Status))
+                if(ACPI_FAILURE (Status))
                 {
                     AcpiUtDeleteObjectDesc (ObjDesc);
                     return_ACPI_STATUS (Status);
@@ -630,7 +630,7 @@ AcpiExPrepFieldValue (
             ObjDesc->Field.ResourceLength =
                 (UINT16) SecondDesc->Buffer.Length;
         }
-        else if (Info->ResourceBuffer)
+        else if(Info->ResourceBuffer)
         {
             ObjDesc->Field.ResourceBuffer = Info->ResourceBuffer;
             ObjDesc->Field.ResourceLength = Info->ResourceLength;
@@ -640,7 +640,7 @@ AcpiExPrepFieldValue (
 
         /* Allow full data read from EC address space */
 
-        if ((ObjDesc->Field.RegionObj->Region.SpaceId == ACPI_ADR_SPACE_EC) &&
+        if((ObjDesc->Field.RegionObj->Region.SpaceId == ACPI_ADR_SPACE_EC) &&
             (ObjDesc->CommonField.BitLength > 8))
         {
             AccessByteWidth = ACPI_ROUND_BITS_UP_TO_BYTES (
@@ -648,7 +648,7 @@ AcpiExPrepFieldValue (
 
             /* Maximum byte width supported is 255 */
 
-            if (AccessByteWidth < 256)
+            if(AccessByteWidth < 256)
             {
                 ObjDesc->CommonField.AccessByteWidth =
                     (UINT8) AccessByteWidth;
@@ -706,7 +706,7 @@ AcpiExPrepFieldValue (
         ObjDesc->IndexField.DataObj =
             AcpiNsGetAttachedObject (Info->DataRegisterNode);
 
-        if (!ObjDesc->IndexField.DataObj || !ObjDesc->IndexField.IndexObj)
+        if(!ObjDesc->IndexField.DataObj || !ObjDesc->IndexField.IndexObj)
         {
             ACPI_ERROR ((AE_INFO, "Null Index Object during field prep"));
             AcpiUtDeleteObjectDesc (ObjDesc);

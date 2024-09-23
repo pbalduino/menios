@@ -232,14 +232,14 @@ AcpiEvQueueNotifyRequest (
 
     /* Are Notifies allowed on this object? */
 
-    if (!AcpiEvIsNotifyObject (Node))
+    if(!AcpiEvIsNotifyObject (Node))
     {
         return (AE_TYPE);
     }
 
     /* Get the correct notify list type (System or Device) */
 
-    if (NotifyValue <= ACPI_MAX_SYS_NOTIFY)
+    if(NotifyValue <= ACPI_MAX_SYS_NOTIFY)
     {
         HandlerListId = ACPI_SYSTEM_HANDLER_LIST;
     }
@@ -251,7 +251,7 @@ AcpiEvQueueNotifyRequest (
     /* Get the notify object attached to the namespace Node */
 
     ObjDesc = AcpiNsGetAttachedObject (Node);
-    if (ObjDesc)
+    if(ObjDesc)
     {
         /* We have an attached object, Get the correct handler list */
 
@@ -262,7 +262,7 @@ AcpiEvQueueNotifyRequest (
      * If there is no notify handler (Global or Local)
      * for this object, just ignore the notify
      */
-    if (!AcpiGbl_GlobalNotify[HandlerListId].Handler && !HandlerListHead)
+    if(!AcpiGbl_GlobalNotify[HandlerListId].Handler && !HandlerListHead)
     {
         ACPI_DEBUG_PRINT ((ACPI_DB_INFO,
             "No notify handler for Notify, ignoring (%4.4s, %X) node %p\n",
@@ -274,7 +274,7 @@ AcpiEvQueueNotifyRequest (
     /* Setup notify info and schedule the notify dispatcher */
 
     Info = AcpiUtCreateGenericState ();
-    if (!Info)
+    if(!Info)
     {
         return (AE_NO_MEMORY);
     }
@@ -294,7 +294,7 @@ AcpiEvQueueNotifyRequest (
 
     Status = AcpiOsExecute (OSL_NOTIFY_HANDLER,
         AcpiEvNotifyDispatch, Info);
-    if (ACPI_FAILURE (Status))
+    if(ACPI_FAILURE (Status))
     {
         AcpiUtDeleteGenericState (Info);
     }
@@ -329,7 +329,7 @@ AcpiEvNotifyDispatch (
 
     /* Invoke a global notify handler if installed */
 
-    if (Info->Notify.Global->Handler)
+    if(Info->Notify.Global->Handler)
     {
         Info->Notify.Global->Handler (Info->Notify.Node,
             Info->Notify.Value,
@@ -354,7 +354,7 @@ AcpiEvNotifyDispatch (
 }
 
 
-#if (!ACPI_REDUCED_HARDWARE)
+#if(!ACPI_REDUCED_HARDWARE)
 /******************************************************************************
  *
  * FUNCTION:    AcpiEvTerminate
@@ -378,7 +378,7 @@ AcpiEvTerminate (
     ACPI_FUNCTION_TRACE (EvTerminate);
 
 
-    if (AcpiGbl_EventsInitialized)
+    if(AcpiGbl_EventsInitialized)
     {
         /*
          * Disable all event-related functionality. In all cases, on error,
@@ -390,7 +390,7 @@ AcpiEvTerminate (
         for (i = 0; i < ACPI_NUM_FIXED_EVENTS; i++)
         {
             Status = AcpiDisableEvent (i, 0);
-            if (ACPI_FAILURE (Status))
+            if(ACPI_FAILURE (Status))
             {
                 ACPI_ERROR ((AE_INFO,
                     "Could not disable fixed event %u", (UINT32) i));
@@ -400,14 +400,14 @@ AcpiEvTerminate (
         /* Disable all GPEs in all GPE blocks */
 
         Status = AcpiEvWalkGpeList (AcpiHwDisableGpeBlock, NULL);
-        if (ACPI_FAILURE (Status))
+        if(ACPI_FAILURE (Status))
         {
             ACPI_EXCEPTION ((AE_INFO, Status,
                 "Could not disable GPEs in GPE block"));
         }
 
         Status = AcpiEvRemoveGlobalLockHandler ();
-        if (ACPI_FAILURE (Status))
+        if(ACPI_FAILURE (Status))
         {
             ACPI_EXCEPTION ((AE_INFO, Status,
                 "Could not remove Global Lock handler"));
@@ -419,7 +419,7 @@ AcpiEvTerminate (
     /* Remove SCI handlers */
 
     Status = AcpiEvRemoveAllSciHandlers ();
-    if (ACPI_FAILURE (Status))
+    if(ACPI_FAILURE (Status))
     {
         ACPI_ERROR ((AE_INFO,
             "Could not remove SCI handler"));
@@ -428,7 +428,7 @@ AcpiEvTerminate (
     /* Deallocate all handler objects installed within GPE info structs */
 
     Status = AcpiEvWalkGpeList (AcpiEvDeleteGpeHandlers, NULL);
-    if (ACPI_FAILURE (Status))
+    if(ACPI_FAILURE (Status))
     {
         ACPI_EXCEPTION ((AE_INFO, Status,
             "Could not delete GPE handlers"));
@@ -437,10 +437,10 @@ AcpiEvTerminate (
 
     /* Return to original mode if necessary */
 
-    if (AcpiGbl_OriginalMode == ACPI_SYS_MODE_LEGACY)
+    if(AcpiGbl_OriginalMode == ACPI_SYS_MODE_LEGACY)
     {
         Status = AcpiDisable ();
-        if (ACPI_FAILURE (Status))
+        if(ACPI_FAILURE (Status))
         {
             ACPI_WARNING ((AE_INFO, "AcpiDisable failed"));
         }

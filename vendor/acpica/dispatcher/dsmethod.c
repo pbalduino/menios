@@ -218,7 +218,7 @@ AcpiDsAutoSerializeMethod (
     /* Create/Init a root op for the method parse tree */
 
     Op = AcpiPsAllocOp (AML_METHOD_OP, ObjDesc->Method.AmlStart);
-    if (!Op)
+    if(!Op)
     {
         return_ACPI_STATUS (AE_NO_MEMORY);
     }
@@ -229,7 +229,7 @@ AcpiDsAutoSerializeMethod (
     /* Create and initialize a new walk state */
 
     WalkState = AcpiDsCreateWalkState (Node->OwnerId, NULL, NULL, NULL);
-    if (!WalkState)
+    if(!WalkState)
     {
         AcpiPsFreeOp (Op);
         return_ACPI_STATUS (AE_NO_MEMORY);
@@ -237,7 +237,7 @@ AcpiDsAutoSerializeMethod (
 
     Status = AcpiDsInitAmlWalk (WalkState, Op, Node,
         ObjDesc->Method.AmlStart, ObjDesc->Method.AmlLength, NULL, 0);
-    if (ACPI_FAILURE (Status))
+    if(ACPI_FAILURE (Status))
     {
         AcpiDsDeleteWalkState (WalkState);
         AcpiPsFreeOp (Op);
@@ -281,7 +281,7 @@ AcpiDsDetectNamedOpcodes (
 
     /* We are only interested in opcodes that create a new name */
 
-    if (!(WalkState->OpInfo->Flags & (AML_NAMED | AML_CREATE | AML_FIELD)))
+    if(!(WalkState->OpInfo->Flags & (AML_NAMED | AML_CREATE | AML_FIELD)))
     {
         return (AE_OK);
     }
@@ -341,7 +341,7 @@ AcpiDsMethodError (
 
     /* Ignore AE_OK and control exception codes */
 
-    if (ACPI_SUCCESS (Status) ||
+    if(ACPI_SUCCESS (Status) ||
         (Status & AE_CODE_CONTROL))
     {
         return (Status);
@@ -349,7 +349,7 @@ AcpiDsMethodError (
 
     /* Invoke the global exception handler */
 
-    if (AcpiGbl_ExceptionHandler)
+    if(AcpiGbl_ExceptionHandler)
     {
         /* Exit the interpreter, allow handler to execute methods */
 
@@ -362,11 +362,11 @@ AcpiDsMethodError (
         AmlOffset = (UINT32) ACPI_PTR_DIFF (WalkState->Aml,
             WalkState->ParserState.AmlStart);
 
-        if (WalkState->MethodNode)
+        if(WalkState->MethodNode)
         {
             Name = WalkState->MethodNode->Name.Integer;
         }
-        else if (WalkState->DeferredNode)
+        else if(WalkState->DeferredNode)
         {
             Name = WalkState->DeferredNode->Name.Integer;
         }
@@ -378,7 +378,7 @@ AcpiDsMethodError (
 
     AcpiDsClearImplicitReturn (WalkState);
 
-    if (ACPI_FAILURE (Status))
+    if(ACPI_FAILURE (Status))
     {
         AcpiDsDumpMethodStack (Status, WalkState, WalkState->Op);
 
@@ -419,7 +419,7 @@ AcpiDsCreateMethodMutex (
     /* Create the new mutex object */
 
     MutexDesc = AcpiUtCreateInternalObject (ACPI_TYPE_MUTEX);
-    if (!MutexDesc)
+    if(!MutexDesc)
     {
         return_ACPI_STATUS (AE_NO_MEMORY);
     }
@@ -427,7 +427,7 @@ AcpiDsCreateMethodMutex (
     /* Create the actual OS Mutex */
 
     Status = AcpiOsCreateMutex (&MutexDesc->Mutex.OsMutex);
-    if (ACPI_FAILURE (Status))
+    if(ACPI_FAILURE (Status))
     {
         AcpiUtDeleteObjectDesc (MutexDesc);
         return_ACPI_STATUS (Status);
@@ -468,7 +468,7 @@ AcpiDsBeginMethodExecution (
     ACPI_FUNCTION_TRACE_PTR (DsBeginMethodExecution, MethodNode);
 
 
-    if (!MethodNode)
+    if(!MethodNode)
     {
         return_ACPI_STATUS (AE_NULL_ENTRY);
     }
@@ -477,7 +477,7 @@ AcpiDsBeginMethodExecution (
 
     /* Prevent wraparound of thread count */
 
-    if (ObjDesc->Method.ThreadCount == ACPI_UINT8_MAX)
+    if(ObjDesc->Method.ThreadCount == ACPI_UINT8_MAX)
     {
         ACPI_ERROR ((AE_INFO,
             "Method reached maximum reentrancy limit (255)"));
@@ -487,17 +487,17 @@ AcpiDsBeginMethodExecution (
     /*
      * If this method is serialized, we need to acquire the method mutex.
      */
-    if (ObjDesc->Method.InfoFlags & ACPI_METHOD_SERIALIZED)
+    if(ObjDesc->Method.InfoFlags & ACPI_METHOD_SERIALIZED)
     {
         /*
          * Create a mutex for the method if it is defined to be Serialized
          * and a mutex has not already been created. We defer the mutex creation
          * until a method is actually executed, to minimize the object count
          */
-        if (!ObjDesc->Method.Mutex)
+        if(!ObjDesc->Method.Mutex)
         {
             Status = AcpiDsCreateMethodMutex (ObjDesc);
-            if (ACPI_FAILURE (Status))
+            if(ACPI_FAILURE (Status))
             {
                 return_ACPI_STATUS (Status);
             }
@@ -514,7 +514,7 @@ AcpiDsBeginMethodExecution (
          *
          * Top-level method invocation has no walk state at this point
          */
-        if (WalkState &&
+        if(WalkState &&
             (!(ObjDesc->Method.InfoFlags & ACPI_METHOD_IGNORE_SYNC_LEVEL)) &&
             (WalkState->Thread->CurrentSyncLevel >
                 ObjDesc->Method.Mutex->Mutex.SyncLevel))
@@ -532,7 +532,7 @@ AcpiDsBeginMethodExecution (
          * Obtain the method mutex if necessary. Do not acquire mutex for a
          * recursive call.
          */
-        if (!WalkState ||
+        if(!WalkState ||
             !ObjDesc->Method.Mutex->Mutex.ThreadId ||
             (WalkState->Thread->ThreadId !=
                 ObjDesc->Method.Mutex->Mutex.ThreadId))
@@ -543,14 +543,14 @@ AcpiDsBeginMethodExecution (
              */
             Status = AcpiExSystemWaitMutex (
                 ObjDesc->Method.Mutex->Mutex.OsMutex, ACPI_WAIT_FOREVER);
-            if (ACPI_FAILURE (Status))
+            if(ACPI_FAILURE (Status))
             {
                 return_ACPI_STATUS (Status);
             }
 
             /* Update the mutex and walk info and save the original SyncLevel */
 
-            if (WalkState)
+            if(WalkState)
             {
                 ObjDesc->Method.Mutex->Mutex.OriginalSyncLevel =
                     WalkState->Thread->CurrentSyncLevel;
@@ -565,7 +565,7 @@ AcpiDsBeginMethodExecution (
                  * auto-serialization) because we have no idea of what the
                  * sync level should be. Therefore, just ignore it.
                  */
-                if (!(ObjDesc->Method.InfoFlags &
+                if(!(ObjDesc->Method.InfoFlags &
                     ACPI_METHOD_IGNORE_SYNC_LEVEL))
                 {
                     WalkState->Thread->CurrentSyncLevel =
@@ -592,10 +592,10 @@ AcpiDsBeginMethodExecution (
      * to begin concurrent execution. We only need one OwnerId, even if the
      * method is invoked recursively.
      */
-    if (!ObjDesc->Method.OwnerId)
+    if(!ObjDesc->Method.OwnerId)
     {
         Status = AcpiUtAllocateOwnerId (&ObjDesc->Method.OwnerId);
-        if (ACPI_FAILURE (Status))
+        if(ACPI_FAILURE (Status))
         {
             goto Cleanup;
         }
@@ -613,7 +613,7 @@ AcpiDsBeginMethodExecution (
 Cleanup:
     /* On error, must release the method mutex (if present) */
 
-    if (ObjDesc->Method.Mutex)
+    if(ObjDesc->Method.Mutex)
     {
         AcpiOsReleaseMutex (ObjDesc->Method.Mutex->Mutex.OsMutex);
     }
@@ -659,13 +659,13 @@ AcpiDsCallControlMethod (
      * Get the namespace entry for the control method we are about to call
      */
     MethodNode = ThisWalkState->MethodCallNode;
-    if (!MethodNode)
+    if(!MethodNode)
     {
         return_ACPI_STATUS (AE_NULL_ENTRY);
     }
 
     ObjDesc = AcpiNsGetAttachedObject (MethodNode);
-    if (!ObjDesc)
+    if(!ObjDesc)
     {
         return_ACPI_STATUS (AE_NULL_OBJECT);
     }
@@ -674,7 +674,7 @@ AcpiDsCallControlMethod (
 
     Status = AcpiDsBeginMethodExecution (
         MethodNode, ObjDesc, ThisWalkState);
-    if (ACPI_FAILURE (Status))
+    if(ACPI_FAILURE (Status))
     {
         return_ACPI_STATUS (Status);
     }
@@ -683,7 +683,7 @@ AcpiDsCallControlMethod (
 
     NextWalkState = AcpiDsCreateWalkState (
         ObjDesc->Method.OwnerId, NULL, ObjDesc, Thread);
-    if (!NextWalkState)
+    if(!NextWalkState)
     {
         Status = AE_NO_MEMORY;
         goto Cleanup;
@@ -702,7 +702,7 @@ AcpiDsCallControlMethod (
      * DsInitAmlWalk. For now, keeps this struct off the CPU stack
      */
     Info = ACPI_ALLOCATE_ZEROED (sizeof (ACPI_EVALUATE_INFO));
-    if (!Info)
+    if(!Info)
     {
         Status = AE_NO_MEMORY;
         goto PopWalkState;
@@ -715,7 +715,7 @@ AcpiDsCallControlMethod (
         Info, ACPI_IMODE_EXECUTE);
 
     ACPI_FREE (Info);
-    if (ACPI_FAILURE (Status))
+    if(ACPI_FAILURE (Status))
     {
         goto PopWalkState;
     }
@@ -752,10 +752,10 @@ AcpiDsCallControlMethod (
 
     /* Invoke an internal method if necessary */
 
-    if (ObjDesc->Method.InfoFlags & ACPI_METHOD_INTERNAL_ONLY)
+    if(ObjDesc->Method.InfoFlags & ACPI_METHOD_INTERNAL_ONLY)
     {
         Status = ObjDesc->Method.Dispatch.Implementation (NextWalkState);
-        if (Status == AE_OK)
+        if(Status == AE_OK)
         {
             Status = AE_CTRL_TERMINATE;
         }
@@ -819,7 +819,7 @@ AcpiDsRestartControlMethod (
 
     /* Did the called method return a value? */
 
-    if (ReturnDesc)
+    if(ReturnDesc)
     {
         /* Is the implicit return object the same as the return desc? */
 
@@ -827,12 +827,12 @@ AcpiDsRestartControlMethod (
 
         /* Are we actually going to use the return value? */
 
-        if (WalkState->ReturnUsed)
+        if(WalkState->ReturnUsed)
         {
             /* Save the return value from the previous method */
 
             Status = AcpiDsResultPush (ReturnDesc, WalkState);
-            if (ACPI_FAILURE (Status))
+            if(ACPI_FAILURE (Status))
             {
                 AcpiUtRemoveReference (ReturnDesc);
                 return_ACPI_STATUS (Status);
@@ -856,7 +856,7 @@ AcpiDsRestartControlMethod (
          * NOTE: this is optional because the ASL language does not actually
          * support this behavior.
          */
-        else if (!AcpiDsDoImplicitReturn (ReturnDesc, WalkState, FALSE) ||
+        else if(!AcpiDsDoImplicitReturn (ReturnDesc, WalkState, FALSE) ||
                  SameAsImplicitReturn)
         {
             /*
@@ -900,12 +900,12 @@ AcpiDsTerminateControlMethod (
 
     /* MethodDesc is required, WalkState is optional */
 
-    if (!MethodDesc)
+    if(!MethodDesc)
     {
         return_VOID;
     }
 
-    if (WalkState)
+    if(WalkState)
     {
         /* Delete all arguments and locals */
 
@@ -919,7 +919,7 @@ AcpiDsTerminateControlMethod (
          * 2) There are other threads executing the method, in which case we
          *    will wait until the last thread has completed.
          */
-        if (!(MethodDesc->Method.InfoFlags & ACPI_METHOD_MODULE_LEVEL) &&
+        if(!(MethodDesc->Method.InfoFlags & ACPI_METHOD_MODULE_LEVEL) &&
              (MethodDesc->Method.ThreadCount == 1))
         {
             /* Delete any direct children of (created by) this method */
@@ -935,7 +935,7 @@ AcpiDsTerminateControlMethod (
              * deletion such that we don't have to perform an entire
              * namespace walk for every control method execution.
              */
-            if (MethodDesc->Method.InfoFlags & ACPI_METHOD_MODIFIED_NAMESPACE)
+            if(MethodDesc->Method.InfoFlags & ACPI_METHOD_MODIFIED_NAMESPACE)
             {
                 (void) AcpiExExitInterpreter ();
                 AcpiNsDeleteNamespaceByOwner (MethodDesc->Method.OwnerId);
@@ -949,12 +949,12 @@ AcpiDsTerminateControlMethod (
          * If method is serialized, release the mutex and restore the
          * current sync level for this thread
          */
-        if (MethodDesc->Method.Mutex)
+        if(MethodDesc->Method.Mutex)
         {
             /* Acquisition Depth handles recursive calls */
 
             MethodDesc->Method.Mutex->Mutex.AcquisitionDepth--;
-            if (!MethodDesc->Method.Mutex->Mutex.AcquisitionDepth)
+            if(!MethodDesc->Method.Mutex->Mutex.AcquisitionDepth)
             {
                 WalkState->Thread->CurrentSyncLevel =
                     MethodDesc->Method.Mutex->Mutex.OriginalSyncLevel;
@@ -968,7 +968,7 @@ AcpiDsTerminateControlMethod (
 
     /* Decrement the thread count on the method */
 
-    if (MethodDesc->Method.ThreadCount)
+    if(MethodDesc->Method.ThreadCount)
     {
         MethodDesc->Method.ThreadCount--;
     }
@@ -980,7 +980,7 @@ AcpiDsTerminateControlMethod (
 
     /* Are there any other threads currently executing this method? */
 
-    if (MethodDesc->Method.ThreadCount)
+    if(MethodDesc->Method.ThreadCount)
     {
         /*
          * Additional threads. Do not release the OwnerId in this case,
@@ -1004,9 +1004,9 @@ AcpiDsTerminateControlMethod (
          * This code is here because we must wait until the last thread exits
          * before marking the method as serialized.
          */
-        if (MethodDesc->Method.InfoFlags & ACPI_METHOD_SERIALIZED_PENDING)
+        if(MethodDesc->Method.InfoFlags & ACPI_METHOD_SERIALIZED_PENDING)
         {
-            if (WalkState)
+            if(WalkState)
             {
                 ACPI_INFO ((
                     "Marking method %4.4s as Serialized "
@@ -1035,7 +1035,7 @@ AcpiDsTerminateControlMethod (
 
         /* No more threads, we can free the OwnerId */
 
-        if (!(MethodDesc->Method.InfoFlags & ACPI_METHOD_MODULE_LEVEL))
+        if(!(MethodDesc->Method.InfoFlags & ACPI_METHOD_MODULE_LEVEL))
         {
             AcpiUtReleaseOwnerId (&MethodDesc->Method.OwnerId);
         }

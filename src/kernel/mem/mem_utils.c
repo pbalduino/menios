@@ -28,10 +28,10 @@ void* memcpy(void* dest, const void* src, size_t n) {
 }
 
 void* memset(void *v, int32_t c, size_t n) {
-	if (n == 0)
+	if(n == 0)
 		return v;
 
-	if ((uintptr_t)v % 4 == 0 && n % 4 == 0) {
+	if((uintptr_t)v % 4 == 0 && n % 4 == 0) {
 		c &= 0xff;
 		c = (c << 24) | (c << 16) | (c << 8) | c;
 		asm volatile("cld; rep stosl\n"
@@ -47,10 +47,10 @@ void* memset(void *v, int32_t c, size_t n) {
 }
 
 void* memsetl(void *v, int64_t c, size_t n) {
-	if (n == 0)
+	if(n == 0)
 		return v;
 
-	if ((uintptr_t)v % 8 == 0 && n % 8 == 0) {
+	if((uintptr_t)v % 8 == 0 && n % 8 == 0) {
 		asm volatile("cld; rep stosq\n"
 			:
 			: "D" (v), "a" (c), "c" (n)
@@ -73,14 +73,14 @@ void *memmove(void *dest, const void *src, size_t n) {
   char *d = dest;
   const char *s = src;
 
-  if (d==s) return d;
-  if ((uintptr_t)s-(uintptr_t)d-n <= -2*n) return memcpy(d, s, n);
+  if(d==s) return d;
+  if((uintptr_t)s-(uintptr_t)d-n <= -2*n) return memcpy(d, s, n);
 
-  if (d<s) {
+  if(d<s) {
 #ifdef __GNUC__
-	if ((uintptr_t)s % WS == (uintptr_t)d % WS) {
+	if((uintptr_t)s % WS == (uintptr_t)d % WS) {
 		while ((uintptr_t)d % WS) {
-  		if (!n--) return dest;
+  		if(!n--) return dest;
   		*d++ = *s++;
 		}
 		for (; n>=WS; n-=WS, d+=WS, s+=WS) *(WT *)d = *(WT *)s;
@@ -89,9 +89,9 @@ void *memmove(void *dest, const void *src, size_t n) {
 		for (; n; n--) *d++ = *s++;
 	} else {
 #ifdef __GNUC__
-	if ((uintptr_t)s % WS == (uintptr_t)d % WS) {
+	if((uintptr_t)s % WS == (uintptr_t)d % WS) {
 		while ((uintptr_t)(d+n) % WS) {
-			if (!n--) return dest;
+			if(!n--) return dest;
 			d[n] = s[n];
 		}
 		while (n>=WS) n-=WS, *(WT *)(d+n) = *(WT *)(s+n);
@@ -108,7 +108,7 @@ int memcmp(const void *s1, const void *s2, size_t n) {
   const uint8_t *p2 = (const uint8_t *)s2;
 
   for (size_t i = 0; i < n; i++) {
-    if (p1[i] != p2[i]) {
+    if(p1[i] != p2[i]) {
       return p1[i] < p2[i] ? -1 : 1;
     }
   }

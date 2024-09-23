@@ -191,7 +191,7 @@ AcpiExInterpreterTraceEnabled (
 
     /* Check if tracing is enabled */
 
-    if (!(AcpiGbl_TraceFlags & ACPI_TRACE_ENABLED))
+    if(!(AcpiGbl_TraceFlags & ACPI_TRACE_ENABLED))
     {
         return (FALSE);
     }
@@ -206,19 +206,19 @@ AcpiExInterpreterTraceEnabled (
      * 3. If the tracer is oneshot style, AcpiGbl_TraceMethodName should
      *    not be cleared by the trace stopper during the first match
      */
-    if (AcpiGbl_TraceMethodObject)
+    if(AcpiGbl_TraceMethodObject)
     {
         return (TRUE);
     }
 
-    if (Name &&
+    if(Name &&
         (AcpiGbl_TraceMethodName &&
          strcmp (AcpiGbl_TraceMethodName, Name)))
     {
         return (FALSE);
     }
 
-    if ((AcpiGbl_TraceFlags & ACPI_TRACE_ONESHOT) &&
+    if((AcpiGbl_TraceFlags & ACPI_TRACE_ONESHOT) &&
         !AcpiGbl_TraceMethodName)
     {
         return (FALSE);
@@ -296,7 +296,7 @@ AcpiExTracePoint (
     ACPI_FUNCTION_NAME (ExTracePoint);
 
 
-    if (Pathname)
+    if(Pathname)
     {
         ACPI_DEBUG_PRINT ((ACPI_DB_TRACE_POINT,
             "%s %s [0x%p:%s] execution.\n",
@@ -341,13 +341,13 @@ AcpiExStartTraceMethod (
     ACPI_FUNCTION_NAME (ExStartTraceMethod);
 
 
-    if (MethodNode)
+    if(MethodNode)
     {
         Pathname = AcpiNsGetNormalizedPathname (MethodNode, TRUE);
     }
 
     Enabled = AcpiExInterpreterTraceEnabled (Pathname);
-    if (Enabled && !AcpiGbl_TraceMethodObject)
+    if(Enabled && !AcpiGbl_TraceMethodObject)
     {
         AcpiGbl_TraceMethodObject = ObjDesc;
         AcpiGbl_OriginalDbgLevel = AcpiDbgLevel;
@@ -355,24 +355,24 @@ AcpiExStartTraceMethod (
         AcpiDbgLevel = ACPI_TRACE_LEVEL_ALL;
         AcpiDbgLayer = ACPI_TRACE_LAYER_ALL;
 
-        if (AcpiGbl_TraceDbgLevel)
+        if(AcpiGbl_TraceDbgLevel)
         {
             AcpiDbgLevel = AcpiGbl_TraceDbgLevel;
         }
 
-        if (AcpiGbl_TraceDbgLayer)
+        if(AcpiGbl_TraceDbgLayer)
         {
             AcpiDbgLayer = AcpiGbl_TraceDbgLayer;
         }
     }
 
-    if (Enabled)
+    if(Enabled)
     {
         ACPI_TRACE_POINT (ACPI_TRACE_AML_METHOD, TRUE,
             ObjDesc ? ObjDesc->Method.AmlStart : NULL, Pathname);
     }
 
-    if (Pathname)
+    if(Pathname)
     {
         ACPI_FREE (Pathname);
     }
@@ -407,14 +407,14 @@ AcpiExStopTraceMethod (
     ACPI_FUNCTION_NAME (ExStopTraceMethod);
 
 
-    if (MethodNode)
+    if(MethodNode)
     {
         Pathname = AcpiNsGetNormalizedPathname (MethodNode, TRUE);
     }
 
     Enabled = AcpiExInterpreterTraceEnabled (NULL);
 
-    if (Enabled)
+    if(Enabled)
     {
         ACPI_TRACE_POINT (ACPI_TRACE_AML_METHOD, FALSE,
             ObjDesc ? ObjDesc->Method.AmlStart : NULL, Pathname);
@@ -422,11 +422,11 @@ AcpiExStopTraceMethod (
 
     /* Check whether the tracer should be stopped */
 
-    if (AcpiGbl_TraceMethodObject == ObjDesc)
+    if(AcpiGbl_TraceMethodObject == ObjDesc)
     {
         /* Disable further tracing if type is one-shot */
 
-        if (AcpiGbl_TraceFlags & ACPI_TRACE_ONESHOT)
+        if(AcpiGbl_TraceFlags & ACPI_TRACE_ONESHOT)
         {
             AcpiGbl_TraceMethodName = NULL;
         }
@@ -436,7 +436,7 @@ AcpiExStopTraceMethod (
         AcpiGbl_TraceMethodObject = NULL;
     }
 
-    if (Pathname)
+    if(Pathname)
     {
         ACPI_FREE (Pathname);
     }
@@ -466,7 +466,7 @@ AcpiExStartTraceOpcode (
     ACPI_FUNCTION_NAME (ExStartTraceOpcode);
 
 
-    if (AcpiExInterpreterTraceEnabled (NULL) &&
+    if(AcpiExInterpreterTraceEnabled (NULL) &&
         (AcpiGbl_TraceFlags & ACPI_TRACE_OPCODE))
     {
         ACPI_TRACE_POINT (ACPI_TRACE_AML_OPCODE, TRUE,
@@ -498,7 +498,7 @@ AcpiExStopTraceOpcode (
     ACPI_FUNCTION_NAME (ExStopTraceOpcode);
 
 
-    if (AcpiExInterpreterTraceEnabled (NULL) &&
+    if(AcpiExInterpreterTraceEnabled (NULL) &&
         (AcpiGbl_TraceFlags & ACPI_TRACE_OPCODE))
     {
         ACPI_TRACE_POINT (ACPI_TRACE_AML_OPCODE, FALSE,

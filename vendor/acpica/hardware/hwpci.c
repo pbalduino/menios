@@ -254,7 +254,7 @@ AcpiHwDerivePciId (
     ACPI_FUNCTION_TRACE (HwDerivePciId);
 
 
-    if (!PciId)
+    if(!PciId)
     {
         return_ACPI_STATUS (AE_BAD_PARAMETER);
     }
@@ -262,7 +262,7 @@ AcpiHwDerivePciId (
     /* Build a list of PCI devices, from PciRegion up to RootPciDevice */
 
     Status = AcpiHwBuildPciList (RootPciDevice, PciRegion, &ListHead);
-    if (ACPI_SUCCESS (Status))
+    if(ACPI_SUCCESS (Status))
     {
         /* Walk the list, updating the PCI device/function/bus numbers */
 
@@ -318,7 +318,7 @@ AcpiHwBuildPciList (
     while (1)
     {
         Status = AcpiGetParent (CurrentDevice, &ParentDevice);
-        if (ACPI_FAILURE (Status))
+        if(ACPI_FAILURE (Status))
         {
             /* Must delete the list before exit */
 
@@ -328,13 +328,13 @@ AcpiHwBuildPciList (
 
         /* Finished when we reach the PCI root device (PNP0A03 or PNP0A08) */
 
-        if (ParentDevice == RootPciDevice)
+        if(ParentDevice == RootPciDevice)
         {
             return (AE_OK);
         }
 
         ListElement = ACPI_ALLOCATE (sizeof (ACPI_PCI_DEVICE));
-        if (!ListElement)
+        if(!ListElement)
         {
             /* Must delete the list before exit */
 
@@ -402,7 +402,7 @@ AcpiHwProcessPciList (
     {
         Status = AcpiHwGetPciDeviceInfo (PciId, Info->Device,
             &BusNumber, &IsBridge);
-        if (ACPI_FAILURE (Status))
+        if(ACPI_FAILURE (Status))
         {
             return (Status);
         }
@@ -487,12 +487,12 @@ AcpiHwGetPciDeviceInfo (
     /* We only care about objects of type Device */
 
     Status = AcpiGetType (PciDevice, &ObjectType);
-    if (ACPI_FAILURE (Status))
+    if(ACPI_FAILURE (Status))
     {
         return (Status);
     }
 
-    if (ObjectType != ACPI_TYPE_DEVICE)
+    if(ObjectType != ACPI_TYPE_DEVICE)
     {
         return (AE_OK);
     }
@@ -501,7 +501,7 @@ AcpiHwGetPciDeviceInfo (
 
     Status = AcpiUtEvaluateNumericObject (METHOD_NAME__ADR,
         PciDevice, &ReturnValue);
-    if (ACPI_FAILURE (Status))
+    if(ACPI_FAILURE (Status))
     {
         return (AE_OK);
     }
@@ -517,7 +517,7 @@ AcpiHwGetPciDeviceInfo (
      * If the previous device was a bridge, use the previous
      * device bus number
      */
-    if (*IsBridge)
+    if(*IsBridge)
     {
         PciId->Bus = *BusNumber;
     }
@@ -530,7 +530,7 @@ AcpiHwGetPciDeviceInfo (
     *IsBridge = FALSE;
     Status = AcpiOsReadPciConfiguration (PciId,
         PCI_CFG_HEADER_TYPE_REG, &PciValue, 8);
-    if (ACPI_FAILURE (Status))
+    if(ACPI_FAILURE (Status))
     {
         return (Status);
     }
@@ -539,7 +539,7 @@ AcpiHwGetPciDeviceInfo (
 
     PciValue &= PCI_HEADER_TYPE_MASK;
 
-    if ((PciValue != PCI_TYPE_BRIDGE) &&
+    if((PciValue != PCI_TYPE_BRIDGE) &&
         (PciValue != PCI_TYPE_CARDBUS_BRIDGE))
     {
         return (AE_OK);
@@ -549,7 +549,7 @@ AcpiHwGetPciDeviceInfo (
 
     Status = AcpiOsReadPciConfiguration (PciId,
         PCI_CFG_PRIMARY_BUS_NUMBER_REG, &PciValue, 8);
-    if (ACPI_FAILURE (Status))
+    if(ACPI_FAILURE (Status))
     {
         return (Status);
     }
@@ -561,7 +561,7 @@ AcpiHwGetPciDeviceInfo (
 
     Status = AcpiOsReadPciConfiguration (PciId,
         PCI_CFG_SECONDARY_BUS_NUMBER_REG, &PciValue, 8);
-    if (ACPI_FAILURE (Status))
+    if(ACPI_FAILURE (Status))
     {
         return (Status);
     }

@@ -163,7 +163,7 @@
 static void AcpiUtTerminate (
     void);
 
-#if (!ACPI_REDUCED_HARDWARE)
+#if(!ACPI_REDUCED_HARDWARE)
 
 static void
 AcpiUtFreeGpeLists (
@@ -175,7 +175,7 @@ AcpiUtFreeGpeLists (
 #endif /* !ACPI_REDUCED_HARDWARE */
 
 
-#if (!ACPI_REDUCED_HARDWARE)
+#if(!ACPI_REDUCED_HARDWARE)
 /******************************************************************************
  *
  * FUNCTION:    AcpiUtFreeGpeLists
@@ -249,7 +249,7 @@ AcpiUtInitGlobals (
     /* Create all memory caches */
 
     Status = AcpiUtCreateCaches ();
-    if (ACPI_FAILURE (Status))
+    if(ACPI_FAILURE (Status))
     {
         return_ACPI_STATUS (Status);
     }
@@ -290,7 +290,7 @@ AcpiUtInitGlobals (
         AcpiFixedEventCount[i]              = 0;
     }
 
-#if (!ACPI_REDUCED_HARDWARE)
+#if(!ACPI_REDUCED_HARDWARE)
 
     /* GPE/SCI support */
 
@@ -417,7 +417,7 @@ AcpiUtSubsystemShutdown (
 
     /* Just exit if subsystem is already shutdown */
 
-    if (AcpiGbl_Shutdown)
+    if(AcpiGbl_Shutdown)
     {
         ACPI_ERROR ((AE_INFO, "ACPI Subsystem is already terminated"));
         return_VOID;

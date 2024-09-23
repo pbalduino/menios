@@ -4,6 +4,10 @@
 #include <acpi.h>
 #include <acpixf.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 typedef struct {
  char     signature[8];
  uint8_t  checksum;
@@ -48,6 +52,12 @@ typedef struct {
   uint64_t* sdt;
 } acpi_xsdt_t;
 
-void acpi_init();
+int acpi_init();
+void acpi_shutdown();
 
+#ifdef __cplusplus
+}
 #endif
+
+#endif /* MENIOS_INCLUDE_KERNEL_ACPI_H */
+

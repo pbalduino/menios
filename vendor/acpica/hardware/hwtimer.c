@@ -158,7 +158,7 @@
         ACPI_MODULE_NAME    ("hwtimer")
 
 
-#if (!ACPI_REDUCED_HARDWARE) /* Entire module */
+#if(!ACPI_REDUCED_HARDWARE) /* Entire module */
 /******************************************************************************
  *
  * FUNCTION:    AcpiGetTimerResolution
@@ -178,12 +178,12 @@ AcpiGetTimerResolution (
     ACPI_FUNCTION_TRACE (AcpiGetTimerResolution);
 
 
-    if (!Resolution)
+    if(!Resolution)
     {
         return_ACPI_STATUS (AE_BAD_PARAMETER);
     }
 
-    if ((AcpiGbl_FADT.Flags & ACPI_FADT_32BIT_TIMER) == 0)
+    if((AcpiGbl_FADT.Flags & ACPI_FADT_32BIT_TIMER) == 0)
     {
         *Resolution = 24;
     }
@@ -221,20 +221,20 @@ AcpiGetTimer (
     ACPI_FUNCTION_TRACE (AcpiGetTimer);
 
 
-    if (!Ticks)
+    if(!Ticks)
     {
         return_ACPI_STATUS (AE_BAD_PARAMETER);
     }
 
     /* ACPI 5.0A: PM Timer is optional */
 
-    if (!AcpiGbl_FADT.XPmTimerBlock.Address)
+    if(!AcpiGbl_FADT.XPmTimerBlock.Address)
     {
         return_ACPI_STATUS (AE_SUPPORT);
     }
 
     Status = AcpiHwRead (&TimerValue, &AcpiGbl_FADT.XPmTimerBlock);
-    if (ACPI_SUCCESS (Status))
+    if(ACPI_SUCCESS (Status))
     {
         /* ACPI PM Timer is defined to be 32 bits (PM_TMR_LEN) */
 
@@ -290,19 +290,19 @@ AcpiGetTimerDuration (
     ACPI_FUNCTION_TRACE (AcpiGetTimerDuration);
 
 
-    if (!TimeElapsed)
+    if(!TimeElapsed)
     {
         return_ACPI_STATUS (AE_BAD_PARAMETER);
     }
 
     /* ACPI 5.0A: PM Timer is optional */
 
-    if (!AcpiGbl_FADT.XPmTimerBlock.Address)
+    if(!AcpiGbl_FADT.XPmTimerBlock.Address)
     {
         return_ACPI_STATUS (AE_SUPPORT);
     }
 
-    if (StartTicks == EndTicks)
+    if(StartTicks == EndTicks)
     {
         *TimeElapsed = 0;
         return_ACPI_STATUS (AE_OK);
@@ -313,9 +313,9 @@ AcpiGetTimerDuration (
      * Handle (max one) timer rollovers on 24-bit versus 32-bit timers.
      */
     DeltaTicks = EndTicks;
-    if (StartTicks > EndTicks)
+    if(StartTicks > EndTicks)
     {
-        if ((AcpiGbl_FADT.Flags & ACPI_FADT_32BIT_TIMER) == 0)
+        if((AcpiGbl_FADT.Flags & ACPI_FADT_32BIT_TIMER) == 0)
         {
             /* 24-bit Timer */
 

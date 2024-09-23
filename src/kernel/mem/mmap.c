@@ -6,20 +6,39 @@
 #include <unistd.h>
 
 void init_brk() {
-  current->heap = physical_to_virtual(get_first_free_page());
+  serial_printf("init_brk: current->heap: %lx\n", current->heap);
+
+  uintptr_t value = get_first_free_page();
+  if(!value) {
+    serial_printf("init_brk: no free page\n");
+    return;
+  }
+
+  current->heap = physical_to_virtual(value);
+  
   current->brk = current->heap;
 
+  serial_printf("init_brk: free page: %lx\n", get_first_free_page());
   serial_printf("init_brk: heap_offset: %lx\n", current->heap);
 }
 
 void* mmap_anonymous(void *addr, size_t length, int prot) {
+  serial_printf("mmap_anonymous: addr: %lx, length: %lx, prot: %d\n", addr, length, prot);
+  serial_printf("mmap_anonymous: current->brk: %lx\n", current->brk);
 
   if(current->brk == 0) {
     init_brk();
+    if(current->brk == 0) {
+      return MAP_FAILED;
+    }
   }
 
   if(addr == NULL) {
-    addr = (void*)get_first_free_virtual_address(physical_to_virtual(current->brk));
+    uintptr_t value = get_first_free_virtual_address(physical_to_virtual(current->brk));
+    if(!value) {
+      return MAP_FAILED;
+    }
+    addr = (void*)value;
   }
 
   if(length == 0) {

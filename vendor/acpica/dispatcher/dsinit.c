@@ -211,7 +211,7 @@ AcpiDsInitOneObject (
      * We are only interested in NS nodes owned by the table that
      * was just loaded
      */
-    if (Node->OwnerId != Info->OwnerId)
+    if(Node->OwnerId != Info->OwnerId)
     {
         return (AE_OK);
     }
@@ -225,7 +225,7 @@ AcpiDsInitOneObject (
     case ACPI_TYPE_REGION:
 
         Status = AcpiDsInitializeRegion (ObjHandle);
-        if (ACPI_FAILURE (Status))
+        if(ACPI_FAILURE (Status))
         {
             ACPI_EXCEPTION ((AE_INFO, Status,
                 "During Region initialization %p [%4.4s]",
@@ -246,25 +246,25 @@ AcpiDsInitOneObject (
          */
         Info->MethodCount++;
         ObjDesc = AcpiNsGetAttachedObject (Node);
-        if (!ObjDesc)
+        if(!ObjDesc)
         {
             break;
         }
 
         /* Ignore if already serialized */
 
-        if (ObjDesc->Method.InfoFlags & ACPI_METHOD_SERIALIZED)
+        if(ObjDesc->Method.InfoFlags & ACPI_METHOD_SERIALIZED)
         {
             Info->SerialMethodCount++;
             break;
         }
 
-        if (AcpiGbl_AutoSerializeMethods)
+        if(AcpiGbl_AutoSerializeMethods)
         {
             /* Parse/scan method and serialize it if necessary */
 
             AcpiDsAutoSerializeMethod (Node, ObjDesc);
-            if (ObjDesc->Method.InfoFlags & ACPI_METHOD_SERIALIZED)
+            if(ObjDesc->Method.InfoFlags & ACPI_METHOD_SERIALIZED)
             {
                 /* Method was just converted to Serialized */
 
@@ -324,7 +324,7 @@ AcpiDsInitializeObjects (
 
 
     Status = AcpiTbGetOwnerId (TableIndex, &OwnerId);
-    if (ACPI_FAILURE (Status))
+    if(ACPI_FAILURE (Status))
     {
         return_ACPI_STATUS (Status);
     }
@@ -347,20 +347,20 @@ AcpiDsInitializeObjects (
      */
     Status = AcpiNsWalkNamespace (ACPI_TYPE_ANY, StartNode, ACPI_UINT32_MAX,
         ACPI_NS_WALK_NO_UNLOCK, AcpiDsInitOneObject, NULL, &Info, NULL);
-    if (ACPI_FAILURE (Status))
+    if(ACPI_FAILURE (Status))
     {
         ACPI_EXCEPTION ((AE_INFO, Status, "During WalkNamespace"));
     }
 
     Status = AcpiGetTableByIndex (TableIndex, &Table);
-    if (ACPI_FAILURE (Status))
+    if(ACPI_FAILURE (Status))
     {
         return_ACPI_STATUS (Status);
     }
 
     /* DSDT is always the first AML table */
 
-    if (ACPI_COMPARE_NAMESEG (Table->Signature, ACPI_SIG_DSDT))
+    if(ACPI_COMPARE_NAMESEG (Table->Signature, ACPI_SIG_DSDT))
     {
         ACPI_DEBUG_PRINT_RAW ((ACPI_DB_INIT,
             "\nACPI table initialization:\n"));

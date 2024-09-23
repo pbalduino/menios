@@ -190,14 +190,14 @@ AcpiPsGetOpcodeInfo (
     /*
      * Detect normal 8-bit opcode or extended 16-bit opcode
      */
-    if (!(Opcode & 0xFF00))
+    if(!(Opcode & 0xFF00))
     {
         /* Simple (8-bit) opcode: 0-255, can't index beyond table  */
 
         return (&AcpiGbl_AmlOpInfo [AcpiGbl_ShortOpIndex [(UINT8) Opcode]]);
     }
 
-    if (((Opcode & 0xFF00) == AML_EXTENDED_OPCODE) &&
+    if(((Opcode & 0xFF00) == AML_EXTENDED_OPCODE) &&
         (((UINT8) Opcode) <= MAX_EXTENDED_OPCODE))
     {
         /* Valid extended (16-bit) opcode */
@@ -312,7 +312,7 @@ AcpiPsGetArgumentCount (
     UINT32                  OpType)
 {
 
-    if (OpType <= AML_TYPE_EXEC_6A_0T_1R)
+    if(OpType <= AML_TYPE_EXEC_6A_0T_1R)
     {
         return (AcpiGbl_ArgumentCount[OpType]);
     }

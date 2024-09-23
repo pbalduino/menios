@@ -185,14 +185,14 @@ AcpiTbInitializeFacs (
 {
     ACPI_TABLE_FACS         *Facs;
 
-    if (AcpiGbl_FADT.XFacs &&
+    if(AcpiGbl_FADT.XFacs &&
          (!AcpiGbl_FADT.Facs || !AcpiGbl_Use32BitFacsAddresses))
     {
         (void) AcpiGetTableByIndex (AcpiGbl_XFacsIndex,
             ACPI_CAST_INDIRECT_PTR (ACPI_TABLE_HEADER, &Facs));
         AcpiGbl_FACS = Facs;
     }
-    else if (AcpiGbl_FADT.Facs)
+    else if(AcpiGbl_FADT.Facs)
     {
         (void) AcpiGetTableByIndex (AcpiGbl_FacsIndex,
             ACPI_CAST_INDIRECT_PTR (ACPI_TABLE_HEADER, &Facs));
@@ -226,7 +226,7 @@ AcpiTbCheckDsdtHeader (
 
     /* Compare original length and checksum to current values */
 
-    if (AcpiGbl_OriginalDsdtHeader.Length != AcpiGbl_DSDT->Length ||
+    if(AcpiGbl_OriginalDsdtHeader.Length != AcpiGbl_DSDT->Length ||
         AcpiGbl_OriginalDsdtHeader.Checksum != AcpiGbl_DSDT->Checksum)
     {
         ACPI_BIOS_ERROR ((AE_INFO,
@@ -269,7 +269,7 @@ AcpiTbCopyDsdt (
     TableDesc = &AcpiGbl_RootTableList.Tables[TableIndex];
 
     NewTable = ACPI_ALLOCATE (TableDesc->Length);
-    if (!NewTable)
+    if(!NewTable)
     {
         ACPI_ERROR ((AE_INFO, "Could not copy DSDT of length 0x%X",
             TableDesc->Length));
@@ -322,7 +322,7 @@ AcpiTbGetRootTableEntry (
      * Get the table physical address (32-bit for RSDT, 64-bit for XSDT):
      * Note: Addresses are 32-bit aligned (not 64) in both RSDT and XSDT
      */
-    if (TableEntrySize == ACPI_RSDT_ENTRY_SIZE)
+    if(TableEntrySize == ACPI_RSDT_ENTRY_SIZE)
     {
         /*
          * 32-bit platform, RSDT: Return 32-bit table entry
@@ -341,7 +341,7 @@ AcpiTbGetRootTableEntry (
         ACPI_MOVE_64_TO_64 (&Address64, TableEntry);
 
 #if ACPI_MACHINE_WIDTH == 32
-        if (Address64 > ACPI_UINT32_MAX)
+        if(Address64 > ACPI_UINT32_MAX)
         {
             /* Will truncate 64-bit address to 32 bits, issue warning */
 
@@ -395,7 +395,7 @@ AcpiTbParseRootTable (
     /* Map the entire RSDP and extract the address of the RSDT or XSDT */
 
     Rsdp = AcpiOsMapMemory (RsdpAddress, sizeof (ACPI_TABLE_RSDP));
-    if (!Rsdp)
+    if(!Rsdp)
     {
         return_ACPI_STATUS (AE_NO_MEMORY);
     }
@@ -405,7 +405,7 @@ AcpiTbParseRootTable (
 
     /* Use XSDT if present and not overridden. Otherwise, use RSDT */
 
-    if ((Rsdp->Revision > 1) &&
+    if((Rsdp->Revision > 1) &&
         Rsdp->XsdtPhysicalAddress &&
         !AcpiGbl_DoNotUseXsdt)
     {
@@ -434,7 +434,7 @@ AcpiTbParseRootTable (
     /* Map the RSDT/XSDT table header to get the full table length */
 
     Table = AcpiOsMapMemory (Address, sizeof (ACPI_TABLE_HEADER));
-    if (!Table)
+    if(!Table)
     {
         return_ACPI_STATUS (AE_NO_MEMORY);
     }
@@ -448,7 +448,7 @@ AcpiTbParseRootTable (
     Length = Table->Length;
     AcpiOsUnmapMemory (Table, sizeof (ACPI_TABLE_HEADER));
 
-    if (Length < (sizeof (ACPI_TABLE_HEADER) + TableEntrySize))
+    if(Length < (sizeof (ACPI_TABLE_HEADER) + TableEntrySize))
     {
         ACPI_BIOS_ERROR ((AE_INFO,
             "Invalid table length 0x%X in RSDT/XSDT", Length));
@@ -456,7 +456,7 @@ AcpiTbParseRootTable (
     }
 
     Table = AcpiOsMapMemory (Address, Length);
-    if (!Table)
+    if(!Table)
     {
         return_ACPI_STATUS (AE_NO_MEMORY);
     }
@@ -464,7 +464,7 @@ AcpiTbParseRootTable (
     /* Validate the root table checksum */
 
     Status = AcpiUtVerifyChecksum (Table, Length);
-    if (ACPI_FAILURE (Status))
+    if(ACPI_FAILURE (Status))
     {
         AcpiOsUnmapMemory (Table, Length);
         return_ACPI_STATUS (Status);
@@ -486,7 +486,7 @@ AcpiTbParseRootTable (
 
         /* Skip NULL entries in RSDT/XSDT */
 
-        if (!Address)
+        if(!Address)
         {
             goto NextTable;
         }
@@ -495,7 +495,7 @@ AcpiTbParseRootTable (
             ACPI_TABLE_ORIGIN_INTERNAL_PHYSICAL, NULL, FALSE, TRUE,
             &TableIndex);
 
-        if (ACPI_SUCCESS (Status) &&
+        if(ACPI_SUCCESS (Status) &&
             ACPI_COMPARE_NAMESEG (
                 &AcpiGbl_RootTableList.Tables[TableIndex].Signature,
                 ACPI_SIG_FADT))
@@ -541,18 +541,18 @@ AcpiTbGetTable (
     ACPI_FUNCTION_TRACE (AcpiTbGetTable);
 
 
-    if (TableDesc->ValidationCount == 0)
+    if(TableDesc->ValidationCount == 0)
     {
         /* Table need to be "VALIDATED" */
 
         Status = AcpiTbValidateTable (TableDesc);
-        if (ACPI_FAILURE (Status))
+        if(ACPI_FAILURE (Status))
         {
             return_ACPI_STATUS (Status);
         }
     }
 
-    if (TableDesc->ValidationCount < ACPI_MAX_TABLE_VALIDATIONS)
+    if(TableDesc->ValidationCount < ACPI_MAX_TABLE_VALIDATIONS)
     {
         TableDesc->ValidationCount++;
 
@@ -560,7 +560,7 @@ AcpiTbGetTable (
          * Detect ValidationCount overflows to ensure that the warning
          * message will only be printed once.
          */
-        if (TableDesc->ValidationCount >= ACPI_MAX_TABLE_VALIDATIONS)
+        if(TableDesc->ValidationCount >= ACPI_MAX_TABLE_VALIDATIONS)
         {
             ACPI_WARNING((AE_INFO,
                 "Table %p, Validation count overflows\n", TableDesc));
@@ -595,7 +595,7 @@ AcpiTbPutTable (
     ACPI_FUNCTION_TRACE (AcpiTbPutTable);
 
 
-    if (TableDesc->ValidationCount < ACPI_MAX_TABLE_VALIDATIONS)
+    if(TableDesc->ValidationCount < ACPI_MAX_TABLE_VALIDATIONS)
     {
         TableDesc->ValidationCount--;
 
@@ -603,7 +603,7 @@ AcpiTbPutTable (
          * Detect ValidationCount underflows to ensure that the warning
          * message will only be printed once.
          */
-        if (TableDesc->ValidationCount >= ACPI_MAX_TABLE_VALIDATIONS)
+        if(TableDesc->ValidationCount >= ACPI_MAX_TABLE_VALIDATIONS)
         {
             ACPI_WARNING ((AE_INFO,
                 "Table %p, Validation count underflows\n", TableDesc));
@@ -611,7 +611,7 @@ AcpiTbPutTable (
         }
     }
 
-    if (TableDesc->ValidationCount == 0)
+    if(TableDesc->ValidationCount == 0)
     {
         /* Table need to be "INVALIDATED" */
 

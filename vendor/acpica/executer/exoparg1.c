@@ -217,7 +217,7 @@ AcpiExOpcode_0A_0T_1R (
         /* Create a return object of type Integer */
 
         ReturnDesc = AcpiUtCreateIntegerObject (AcpiOsGetTimer ());
-        if (!ReturnDesc)
+        if(!ReturnDesc)
         {
             Status = AE_NO_MEMORY;
             goto Cleanup;
@@ -236,7 +236,7 @@ Cleanup:
 
     /* Delete return object on error */
 
-    if ((ACPI_FAILURE (Status)) || WalkState->ResultObj)
+    if((ACPI_FAILURE (Status)) || WalkState->ResultObj)
     {
         AcpiUtRemoveReference (ReturnDesc);
         WalkState->ResultObj = NULL;
@@ -423,7 +423,7 @@ AcpiExOpcode_1A_1T_1R (
         /* Create a return object of type Integer for these opcodes */
 
         ReturnDesc = AcpiUtCreateInternalObject (ACPI_TYPE_INTEGER);
-        if (!ReturnDesc)
+        if(!ReturnDesc)
         {
             Status = AE_NO_MEMORY;
             goto Cleanup;
@@ -493,7 +493,7 @@ AcpiExOpcode_1A_1T_1R (
 
                 /* Check the range of the digit */
 
-                if (Temp32 > 9)
+                if(Temp32 > 9)
                 {
                     ACPI_ERROR ((AE_INFO,
                         "BCD digit too large (not decimal): 0x%X",
@@ -522,7 +522,7 @@ AcpiExOpcode_1A_1T_1R (
 
             ReturnDesc->Integer.Value = 0;
             Status = AcpiExLoadOp (Operand[0], ReturnDesc, WalkState);
-            if (ACPI_SUCCESS (Status))
+            if(ACPI_SUCCESS (Status))
             {
                 /* Return -1 (non-zero) indicates success */
 
@@ -551,7 +551,7 @@ AcpiExOpcode_1A_1T_1R (
 
             /* Overflow if there is any data left in Digit */
 
-            if (Digit > 0)
+            if(Digit > 0)
             {
                 ACPI_ERROR ((AE_INFO,
                     "Integer too large to convert to BCD: 0x%8.8X%8.8X",
@@ -567,7 +567,7 @@ AcpiExOpcode_1A_1T_1R (
              * different than the return value stored in the result descriptor
              * (There are really two return values)
              */
-            if ((ACPI_NAMESPACE_NODE *) Operand[0] == AcpiGbl_RootNode)
+            if((ACPI_NAMESPACE_NODE *) Operand[0] == AcpiGbl_RootNode)
             {
                 /*
                  * This means that the object does not exist in the namespace,
@@ -581,7 +581,7 @@ AcpiExOpcode_1A_1T_1R (
 
             Status = AcpiExGetObjectReference (Operand[0],
                 &ReturnDesc2, WalkState);
-            if (ACPI_FAILURE (Status))
+            if(ACPI_FAILURE (Status))
             {
                 goto Cleanup;
             }
@@ -610,14 +610,14 @@ AcpiExOpcode_1A_1T_1R (
          * since the object itself may have been stored.
          */
         Status = AcpiExStore (Operand[0], Operand[1], WalkState);
-        if (ACPI_FAILURE (Status))
+        if(ACPI_FAILURE (Status))
         {
             return_ACPI_STATUS (Status);
         }
 
         /* It is possible that the Store already produced a return object */
 
-        if (!WalkState->ResultObj)
+        if(!WalkState->ResultObj)
         {
             /*
              * Normally, we would remove a reference on the Operand[0]
@@ -643,7 +643,7 @@ AcpiExOpcode_1A_1T_1R (
 
         Status = AcpiExConvertToString (
             Operand[0], &ReturnDesc, ACPI_EXPLICIT_CONVERT_DECIMAL);
-        if (ReturnDesc == Operand[0])
+        if(ReturnDesc == Operand[0])
         {
             /* No conversion performed, add ref to handle return value */
 
@@ -655,7 +655,7 @@ AcpiExOpcode_1A_1T_1R (
 
         Status = AcpiExConvertToString (
             Operand[0], &ReturnDesc, ACPI_EXPLICIT_CONVERT_HEX);
-        if (ReturnDesc == Operand[0])
+        if(ReturnDesc == Operand[0])
         {
             /* No conversion performed, add ref to handle return value */
 
@@ -666,7 +666,7 @@ AcpiExOpcode_1A_1T_1R (
     case AML_TO_BUFFER_OP:          /* ToBuffer (Data, Result) */
 
         Status = AcpiExConvertToBuffer (Operand[0], &ReturnDesc);
-        if (ReturnDesc == Operand[0])
+        if(ReturnDesc == Operand[0])
         {
             /* No conversion performed, add ref to handle return value */
 
@@ -679,7 +679,7 @@ AcpiExOpcode_1A_1T_1R (
         /* Perform "explicit" conversion */
 
         Status = AcpiExConvertToInteger (Operand[0], &ReturnDesc, 0);
-        if (ReturnDesc == Operand[0])
+        if(ReturnDesc == Operand[0])
         {
             /* No conversion performed, add ref to handle return value */
 
@@ -706,7 +706,7 @@ AcpiExOpcode_1A_1T_1R (
         goto Cleanup;
     }
 
-    if (ACPI_SUCCESS (Status))
+    if(ACPI_SUCCESS (Status))
     {
         /* Store the return value computed above into the target object */
 
@@ -718,14 +718,14 @@ Cleanup:
 
     /* Delete return object on error */
 
-    if (ACPI_FAILURE (Status))
+    if(ACPI_FAILURE (Status))
     {
         AcpiUtRemoveReference (ReturnDesc);
     }
 
     /* Save return object on success */
 
-    else if (!WalkState->ResultObj)
+    else if(!WalkState->ResultObj)
     {
         WalkState->ResultObj = ReturnDesc;
     }
@@ -769,7 +769,7 @@ AcpiExOpcode_1A_0T_1R (
     case AML_LOGICAL_NOT_OP:        /* LNot (Operand) */
 
         ReturnDesc = AcpiUtCreateIntegerObject ((UINT64) 0);
-        if (!ReturnDesc)
+        if(!ReturnDesc)
         {
             Status = AE_NO_MEMORY;
             goto Cleanup;
@@ -779,7 +779,7 @@ AcpiExOpcode_1A_0T_1R (
          * Set result to ONES (TRUE) if Value == 0. Note:
          * ReturnDesc->Integer.Value is initially == 0 (FALSE) from above.
          */
-        if (!Operand[0]->Integer.Value)
+        if(!Operand[0]->Integer.Value)
         {
             ReturnDesc->Integer.Value = ACPI_UINT64_MAX;
         }
@@ -792,7 +792,7 @@ AcpiExOpcode_1A_0T_1R (
          * increment it because it may be an Arg or Field.
          */
         ReturnDesc = AcpiUtCreateInternalObject (ACPI_TYPE_INTEGER);
-        if (!ReturnDesc)
+        if(!ReturnDesc)
         {
             Status = AE_NO_MEMORY;
             goto Cleanup;
@@ -803,7 +803,7 @@ AcpiExOpcode_1A_0T_1R (
          * NS Node or an internal object.
          */
         TempDesc = Operand[0];
-        if (ACPI_GET_DESCRIPTOR_TYPE (TempDesc) == ACPI_DESC_TYPE_OPERAND)
+        if(ACPI_GET_DESCRIPTOR_TYPE (TempDesc) == ACPI_DESC_TYPE_OPERAND)
         {
             /* Internal reference object - prevent deletion */
 
@@ -819,7 +819,7 @@ AcpiExOpcode_1A_0T_1R (
          */
         Status = AcpiExResolveOperands (AML_LOGICAL_NOT_OP,
             &TempDesc, WalkState);
-        if (ACPI_FAILURE (Status))
+        if(ACPI_FAILURE (Status))
         {
             ACPI_EXCEPTION ((AE_INFO, Status,
                 "While resolving operands for [%s]",
@@ -832,7 +832,7 @@ AcpiExOpcode_1A_0T_1R (
          * TempDesc is now guaranteed to be an Integer object --
          * Perform the actual increment or decrement
          */
-        if (WalkState->Opcode == AML_INCREMENT_OP)
+        if(WalkState->Opcode == AML_INCREMENT_OP)
         {
             ReturnDesc->Integer.Value = TempDesc->Integer.Value + 1;
         }
@@ -863,7 +863,7 @@ AcpiExOpcode_1A_0T_1R (
         /* Get the type of the base object */
 
         Status = AcpiExResolveMultiple (WalkState, Operand[0], &Type, NULL);
-        if (ACPI_FAILURE (Status))
+        if(ACPI_FAILURE (Status))
         {
             goto Cleanup;
         }
@@ -871,7 +871,7 @@ AcpiExOpcode_1A_0T_1R (
         /* Allocate a descriptor to hold the type. */
 
         ReturnDesc = AcpiUtCreateIntegerObject ((UINT64) Type);
-        if (!ReturnDesc)
+        if(!ReturnDesc)
         {
             Status = AE_NO_MEMORY;
             goto Cleanup;
@@ -888,7 +888,7 @@ AcpiExOpcode_1A_0T_1R (
 
         Status = AcpiExResolveMultiple (
             WalkState, Operand[0], &Type, &TempDesc);
-        if (ACPI_FAILURE (Status))
+        if(ACPI_FAILURE (Status))
         {
             goto Cleanup;
         }
@@ -941,7 +941,7 @@ AcpiExOpcode_1A_0T_1R (
             goto Cleanup;
         }
 
-        if (ACPI_FAILURE (Status))
+        if(ACPI_FAILURE (Status))
         {
             goto Cleanup;
         }
@@ -951,7 +951,7 @@ AcpiExOpcode_1A_0T_1R (
          * object to hold the value
          */
         ReturnDesc = AcpiUtCreateIntegerObject (Value);
-        if (!ReturnDesc)
+        if(!ReturnDesc)
         {
             Status = AE_NO_MEMORY;
             goto Cleanup;
@@ -963,7 +963,7 @@ AcpiExOpcode_1A_0T_1R (
 
         Status = AcpiExGetObjectReference (
             Operand[0], &ReturnDesc, WalkState);
-        if (ACPI_FAILURE (Status))
+        if(ACPI_FAILURE (Status))
         {
             goto Cleanup;
         }
@@ -974,11 +974,11 @@ AcpiExOpcode_1A_0T_1R (
 
         /* Check for a method local or argument, or standalone String */
 
-        if (ACPI_GET_DESCRIPTOR_TYPE (Operand[0]) == ACPI_DESC_TYPE_NAMED)
+        if(ACPI_GET_DESCRIPTOR_TYPE (Operand[0]) == ACPI_DESC_TYPE_NAMED)
         {
             TempDesc = AcpiNsGetAttachedObject (
                 (ACPI_NAMESPACE_NODE *) Operand[0]);
-            if (TempDesc &&
+            if(TempDesc &&
                  ((TempDesc->Common.Type == ACPI_TYPE_STRING) ||
                   (TempDesc->Common.Type == ACPI_TYPE_LOCAL_REFERENCE)))
             {
@@ -1012,7 +1012,7 @@ AcpiExOpcode_1A_0T_1R (
                         Operand[0]->Reference.Class,
                         Operand[0]->Reference.Value,
                         WalkState, &TempDesc);
-                    if (ACPI_FAILURE (Status))
+                    if(ACPI_FAILURE (Status))
                     {
                         goto Cleanup;
                     }
@@ -1052,9 +1052,9 @@ AcpiExOpcode_1A_0T_1R (
             }
         }
 
-        if (ACPI_GET_DESCRIPTOR_TYPE (Operand[0]) != ACPI_DESC_TYPE_NAMED)
+        if(ACPI_GET_DESCRIPTOR_TYPE (Operand[0]) != ACPI_DESC_TYPE_NAMED)
         {
-            if ((Operand[0])->Common.Type == ACPI_TYPE_STRING)
+            if((Operand[0])->Common.Type == ACPI_TYPE_STRING)
             {
                 /*
                  * This is a DerefOf (String). The string is a reference
@@ -1069,7 +1069,7 @@ AcpiExOpcode_1A_0T_1R (
                     ACPI_NS_SEARCH_PARENT,
                     ACPI_CAST_INDIRECT_PTR (
                         ACPI_NAMESPACE_NODE, &ReturnDesc));
-                if (ACPI_FAILURE (Status))
+                if(ACPI_FAILURE (Status))
                 {
                     goto Cleanup;
                 }
@@ -1084,7 +1084,7 @@ AcpiExOpcode_1A_0T_1R (
 
         /* Operand[0] may have changed from the code above */
 
-        if (ACPI_GET_DESCRIPTOR_TYPE (Operand[0]) == ACPI_DESC_TYPE_NAMED)
+        if(ACPI_GET_DESCRIPTOR_TYPE (Operand[0]) == ACPI_DESC_TYPE_NAMED)
         {
             /*
              * This is a DerefOf (ObjectReference)
@@ -1145,7 +1145,7 @@ AcpiExOpcode_1A_0T_1R (
                      */
                     ReturnDesc = AcpiUtCreateIntegerObject ((UINT64)
                         TempDesc->Buffer.Pointer[Operand[0]->Reference.Value]);
-                    if (!ReturnDesc)
+                    if(!ReturnDesc)
                     {
                         Status = AE_NO_MEMORY;
                         goto Cleanup;
@@ -1158,7 +1158,7 @@ AcpiExOpcode_1A_0T_1R (
                      * add another reference to the referenced object, however.
                      */
                     ReturnDesc = *(Operand[0]->Reference.Where);
-                    if (!ReturnDesc)
+                    if(!ReturnDesc)
                     {
                         /*
                          * Element is NULL, do not allow the dereference.
@@ -1186,12 +1186,12 @@ AcpiExOpcode_1A_0T_1R (
 
                 ReturnDesc = Operand[0]->Reference.Object;
 
-                if (ACPI_GET_DESCRIPTOR_TYPE (ReturnDesc) ==
+                if(ACPI_GET_DESCRIPTOR_TYPE (ReturnDesc) ==
                     ACPI_DESC_TYPE_NAMED)
                 {
                     ReturnDesc = AcpiNsGetAttachedObject (
                         (ACPI_NAMESPACE_NODE *) ReturnDesc);
-                    if (!ReturnDesc)
+                    if(!ReturnDesc)
                     {
                         break;
                     }
@@ -1209,7 +1209,7 @@ AcpiExOpcode_1A_0T_1R (
 
                         Status = AcpiExReadDataFromField (
                             WalkState, ReturnDesc, &TempDesc);
-                        if (ACPI_FAILURE (Status))
+                        if(ACPI_FAILURE (Status))
                         {
                             return_ACPI_STATUS (Status);
                         }
@@ -1253,7 +1253,7 @@ Cleanup:
 
     /* Delete return object on error */
 
-    if (ACPI_FAILURE (Status))
+    if(ACPI_FAILURE (Status))
     {
         AcpiUtRemoveReference (ReturnDesc);
     }

@@ -234,19 +234,19 @@ AcpiUtGetRegionName (
     UINT8                   SpaceId)
 {
 
-    if (SpaceId >= ACPI_USER_REGION_BEGIN)
+    if(SpaceId >= ACPI_USER_REGION_BEGIN)
     {
         return ("UserDefinedRegion");
     }
-    else if (SpaceId == ACPI_ADR_SPACE_DATA_TABLE)
+    else if(SpaceId == ACPI_ADR_SPACE_DATA_TABLE)
     {
         return ("DataTable");
     }
-    else if (SpaceId == ACPI_ADR_SPACE_FIXED_HARDWARE)
+    else if(SpaceId == ACPI_ADR_SPACE_FIXED_HARDWARE)
     {
         return ("FunctionalFixedHW");
     }
-    else if (SpaceId >= ACPI_NUM_PREDEFINED_REGIONS)
+    else if(SpaceId >= ACPI_NUM_PREDEFINED_REGIONS)
     {
         return ("InvalidSpaceId");
     }
@@ -284,7 +284,7 @@ AcpiUtGetEventName (
     UINT32                  EventId)
 {
 
-    if (EventId > ACPI_EVENT_MAX)
+    if(EventId > ACPI_EVENT_MAX)
     {
         return ("InvalidEventID");
     }
@@ -359,7 +359,7 @@ AcpiUtGetTypeName (
     ACPI_OBJECT_TYPE        Type)
 {
 
-    if (Type > ACPI_TYPE_INVALID)
+    if(Type > ACPI_TYPE_INVALID)
     {
         return (AcpiGbl_BadType);
     }
@@ -375,7 +375,7 @@ AcpiUtGetObjectTypeName (
     ACPI_FUNCTION_TRACE (UtGetObjectTypeName);
 
 
-    if (!ObjDesc)
+    if(!ObjDesc)
     {
         ACPI_DEBUG_PRINT ((ACPI_DB_EXEC, "Null Object Descriptor\n"));
         return_STR ("[NULL Object Descriptor]");
@@ -383,7 +383,7 @@ AcpiUtGetObjectTypeName (
 
     /* These descriptor types share a common area */
 
-    if ((ACPI_GET_DESCRIPTOR_TYPE (ObjDesc) != ACPI_DESC_TYPE_OPERAND) &&
+    if((ACPI_GET_DESCRIPTOR_TYPE (ObjDesc) != ACPI_DESC_TYPE_OPERAND) &&
         (ACPI_GET_DESCRIPTOR_TYPE (ObjDesc) != ACPI_DESC_TYPE_NAMED))
     {
         ACPI_DEBUG_PRINT ((ACPI_DB_EXEC,
@@ -419,14 +419,14 @@ AcpiUtGetNodeName (
 
     /* Must return a string of exactly 4 characters == ACPI_NAMESEG_SIZE */
 
-    if (!Object)
+    if(!Object)
     {
         return ("NULL");
     }
 
     /* Check for Root node */
 
-    if ((Object == ACPI_ROOT_OBJECT) ||
+    if((Object == ACPI_ROOT_OBJECT) ||
         (Object == AcpiGbl_RootNode))
     {
         return ("\"\\\" ");
@@ -434,7 +434,7 @@ AcpiUtGetNodeName (
 
     /* Descriptor must be a namespace node */
 
-    if (ACPI_GET_DESCRIPTOR_TYPE (Node) != ACPI_DESC_TYPE_NAMED)
+    if(ACPI_GET_DESCRIPTOR_TYPE (Node) != ACPI_DESC_TYPE_NAMED)
     {
         return ("####");
     }
@@ -491,12 +491,12 @@ AcpiUtGetDescriptorName (
     void                    *Object)
 {
 
-    if (!Object)
+    if(!Object)
     {
         return ("NULL OBJECT");
     }
 
-    if (ACPI_GET_DESCRIPTOR_TYPE (Object) > ACPI_DESC_TYPE_MAX)
+    if(ACPI_GET_DESCRIPTOR_TYPE (Object) > ACPI_DESC_TYPE_MAX)
     {
         return ("Not a Descriptor");
     }
@@ -535,22 +535,22 @@ AcpiUtGetReferenceName (
     ACPI_OPERAND_OBJECT     *Object)
 {
 
-    if (!Object)
+    if(!Object)
     {
         return ("NULL Object");
     }
 
-    if (ACPI_GET_DESCRIPTOR_TYPE (Object) != ACPI_DESC_TYPE_OPERAND)
+    if(ACPI_GET_DESCRIPTOR_TYPE (Object) != ACPI_DESC_TYPE_OPERAND)
     {
         return ("Not an Operand object");
     }
 
-    if (Object->Common.Type != ACPI_TYPE_LOCAL_REFERENCE)
+    if(Object->Common.Type != ACPI_TYPE_LOCAL_REFERENCE)
     {
         return ("Not a Reference object");
     }
 
-    if (Object->Reference.Class > ACPI_REFCLASS_MAX)
+    if(Object->Reference.Class > ACPI_REFCLASS_MAX)
     {
         return ("Unknown Reference class");
     }
@@ -588,7 +588,7 @@ AcpiUtGetMutexName (
     UINT32                  MutexId)
 {
 
-    if (MutexId > ACPI_MAX_MUTEX)
+    if(MutexId > ACPI_MAX_MUTEX)
     {
         return ("Invalid Mutex ID");
     }
@@ -673,21 +673,21 @@ AcpiUtGetNotifyName (
 
     /* 00 - 0F are "common to all object types" (from ACPI Spec) */
 
-    if (NotifyValue <= ACPI_GENERIC_NOTIFY_MAX)
+    if(NotifyValue <= ACPI_GENERIC_NOTIFY_MAX)
     {
         return (AcpiGbl_GenericNotify[NotifyValue]);
     }
 
     /* 10 - 7F are reserved */
 
-    if (NotifyValue <= ACPI_MAX_SYS_NOTIFY)
+    if(NotifyValue <= ACPI_MAX_SYS_NOTIFY)
     {
         return ("Reserved");
     }
 
     /* 80 - 84 are per-object-type */
 
-    if (NotifyValue <= ACPI_SPECIFIC_NOTIFY_MAX)
+    if(NotifyValue <= ACPI_SPECIFIC_NOTIFY_MAX)
     {
         switch (Type)
         {
@@ -708,7 +708,7 @@ AcpiUtGetNotifyName (
 
     /* 84 - BF are device-specific */
 
-    if (NotifyValue <= ACPI_MAX_DEVICE_SPECIFIC_NOTIFY)
+    if(NotifyValue <= ACPI_MAX_DEVICE_SPECIFIC_NOTIFY)
     {
         return ("Device-Specific");
     }
@@ -762,7 +762,7 @@ AcpiUtGetArgumentTypeName (
     UINT32                  ArgType)
 {
 
-    if (ArgType > ARGP_MAX)
+    if(ArgType > ARGP_MAX)
     {
         return ("Unknown ARGP");
     }
@@ -790,7 +790,7 @@ AcpiUtValidObjectType (
     ACPI_OBJECT_TYPE        Type)
 {
 
-    if (Type > ACPI_TYPE_LOCAL_MAX)
+    if(Type > ACPI_TYPE_LOCAL_MAX)
     {
         /* Note: Assumes all TYPEs are contiguous (external/local) */
 

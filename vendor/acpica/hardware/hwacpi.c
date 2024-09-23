@@ -157,7 +157,7 @@
         ACPI_MODULE_NAME    ("hwacpi")
 
 
-#if (!ACPI_REDUCED_HARDWARE) /* Entire module */
+#if(!ACPI_REDUCED_HARDWARE) /* Entire module */
 /******************************************************************************
  *
  * FUNCTION:    AcpiHwSetMode
@@ -184,7 +184,7 @@ AcpiHwSetMode (
 
     /* If the Hardware Reduced flag is set, machine is always in acpi mode */
 
-    if (AcpiGbl_ReducedHardware)
+    if(AcpiGbl_ReducedHardware)
     {
         return_ACPI_STATUS (AE_OK);
     }
@@ -193,7 +193,7 @@ AcpiHwSetMode (
      * ACPI 2.0 clarified that if SMI_CMD in FADT is zero,
      * system does not support mode transition.
      */
-    if (!AcpiGbl_FADT.SmiCommand)
+    if(!AcpiGbl_FADT.SmiCommand)
     {
         ACPI_ERROR ((AE_INFO, "No SMI_CMD in FADT, mode transition failed"));
         return_ACPI_STATUS (AE_NO_HARDWARE_RESPONSE);
@@ -206,7 +206,7 @@ AcpiHwSetMode (
      * we make sure both the numbers are zero to determine these
      * transitions are not supported.
      */
-    if (!AcpiGbl_FADT.AcpiEnable && !AcpiGbl_FADT.AcpiDisable)
+    if(!AcpiGbl_FADT.AcpiEnable && !AcpiGbl_FADT.AcpiDisable)
     {
         ACPI_ERROR ((AE_INFO,
             "No ACPI mode transition supported in this system "
@@ -241,7 +241,7 @@ AcpiHwSetMode (
         return_ACPI_STATUS (AE_BAD_PARAMETER);
     }
 
-    if (ACPI_FAILURE (Status))
+    if(ACPI_FAILURE (Status))
     {
         ACPI_EXCEPTION ((AE_INFO, Status,
             "Could not write ACPI mode change"));
@@ -255,7 +255,7 @@ AcpiHwSetMode (
     Retry = 3000;
     while (Retry)
     {
-        if (AcpiHwGetMode () == Mode)
+        if(AcpiHwGetMode () == Mode)
         {
             ACPI_DEBUG_PRINT ((ACPI_DB_INFO,
                 "Mode %X successfully enabled\n", Mode));
@@ -296,7 +296,7 @@ AcpiHwGetMode (
 
     /* If the Hardware Reduced flag is set, machine is always in acpi mode */
 
-    if (AcpiGbl_ReducedHardware)
+    if(AcpiGbl_ReducedHardware)
     {
         return_UINT32 (ACPI_SYS_MODE_ACPI);
     }
@@ -305,18 +305,18 @@ AcpiHwGetMode (
      * ACPI 2.0 clarified that if SMI_CMD in FADT is zero,
      * system does not support mode transition.
      */
-    if (!AcpiGbl_FADT.SmiCommand)
+    if(!AcpiGbl_FADT.SmiCommand)
     {
         return_UINT32 (ACPI_SYS_MODE_ACPI);
     }
 
     Status = AcpiReadBitRegister (ACPI_BITREG_SCI_ENABLE, &Value);
-    if (ACPI_FAILURE (Status))
+    if(ACPI_FAILURE (Status))
     {
         return_UINT32 (ACPI_SYS_MODE_LEGACY);
     }
 
-    if (Value)
+    if(Value)
     {
         return_UINT32 (ACPI_SYS_MODE_ACPI);
     }

@@ -181,7 +181,7 @@ AcpiUtPrintString (
     UINT32                  i;
 
 
-    if (!String)
+    if(!String)
     {
         AcpiOsPrintf ("<\"NULL STRING PTR\">");
         return;
@@ -240,7 +240,7 @@ AcpiUtPrintString (
 
             /* Check for printable character or hex escape */
 
-            if (isprint ((int) String[i]))
+            if(isprint ((int) String[i]))
             {
                 /* This is a normal character */
 
@@ -258,7 +258,7 @@ AcpiUtPrintString (
 
     AcpiOsPrintf ("\"");
 
-    if (i == MaxLength && String[i])
+    if(i == MaxLength && String[i])
     {
         AcpiOsPrintf ("...");
     }
@@ -303,7 +303,7 @@ AcpiUtRepairName (
      * Special case for the root node. This can happen if we get an
      * error during the execution of module-level code.
      */
-    if (ACPI_COMPARE_NAMESEG (Name, ACPI_ROOT_PATHNAME))
+    if(ACPI_COMPARE_NAMESEG (Name, ACPI_ROOT_PATHNAME))
     {
         return;
     }
@@ -314,7 +314,7 @@ AcpiUtRepairName (
 
     for (i = 0; i < ACPI_NAMESEG_SIZE; i++)
     {
-        if (AcpiUtValidNameChar (Name[i], i))
+        if(AcpiUtValidNameChar (Name[i], i))
         {
             continue;
         }
@@ -328,11 +328,11 @@ AcpiUtRepairName (
         FoundBadChar = TRUE;
     }
 
-    if (FoundBadChar)
+    if(FoundBadChar)
     {
         /* Report warning only if in strict mode or debug mode */
 
-        if (!AcpiGbl_EnableInterpreterSlack)
+        if(!AcpiGbl_EnableInterpreterSlack)
         {
             ACPI_WARNING ((AE_INFO,
                 "Invalid character(s) in name (0x%.8X) %p, repaired: [%4.4s]",
@@ -367,14 +367,14 @@ UtConvertBackslashes (
     char                    *Pathname)
 {
 
-    if (!Pathname)
+    if(!Pathname)
     {
         return;
     }
 
     while (*Pathname)
     {
-        if (*Pathname == '\\')
+        if(*Pathname == '\\')
         {
             *Pathname = '/';
         }

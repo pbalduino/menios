@@ -221,7 +221,7 @@ AcpiExGetProtocolBufferLength (
     UINT32                  *ReturnLength)
 {
 
-    if ((ProtocolId > ACPI_MAX_PROTOCOL_ID) ||
+    if((ProtocolId > ACPI_MAX_PROTOCOL_ID) ||
         (AcpiProtocolLengths[ProtocolId] == ACPI_INVALID_PROTOCOL_ID))
     {
         ACPI_ERROR ((AE_INFO,
@@ -268,31 +268,31 @@ AcpiExReadDataFromField (
 
     /* Parameter validation */
 
-    if (!ObjDesc)
+    if(!ObjDesc)
     {
         return_ACPI_STATUS (AE_AML_NO_OPERAND);
     }
-    if (!RetBufferDesc)
+    if(!RetBufferDesc)
     {
         return_ACPI_STATUS (AE_BAD_PARAMETER);
     }
 
-    if (ObjDesc->Common.Type == ACPI_TYPE_BUFFER_FIELD)
+    if(ObjDesc->Common.Type == ACPI_TYPE_BUFFER_FIELD)
     {
         /*
          * If the BufferField arguments have not been previously evaluated,
          * evaluate them now and save the results.
          */
-        if (!(ObjDesc->Common.Flags & AOPOBJ_DATA_VALID))
+        if(!(ObjDesc->Common.Flags & AOPOBJ_DATA_VALID))
         {
             Status = AcpiDsGetBufferFieldArguments (ObjDesc);
-            if (ACPI_FAILURE (Status))
+            if(ACPI_FAILURE (Status))
             {
                 return_ACPI_STATUS (Status);
             }
         }
     }
-    else if ((ObjDesc->Common.Type == ACPI_TYPE_LOCAL_REGION_FIELD) &&
+    else if((ObjDesc->Common.Type == ACPI_TYPE_LOCAL_REGION_FIELD) &&
         (ObjDesc->Field.RegionObj->Region.SpaceId == ACPI_ADR_SPACE_SMBUS ||
          ObjDesc->Field.RegionObj->Region.SpaceId == ACPI_ADR_SPACE_GSBUS ||
          ObjDesc->Field.RegionObj->Region.SpaceId == ACPI_ADR_SPACE_IPMI  ||
@@ -321,14 +321,14 @@ AcpiExReadDataFromField (
     BufferLength = (ACPI_SIZE) ACPI_ROUND_BITS_UP_TO_BYTES (
         ObjDesc->Field.BitLength);
 
-    if (BufferLength > AcpiGbl_IntegerByteWidth ||
+    if(BufferLength > AcpiGbl_IntegerByteWidth ||
         (ObjDesc->Common.Type == ACPI_TYPE_BUFFER_FIELD &&
         ObjDesc->BufferField.IsCreateField))
     {
         /* Field is too large for an Integer, create a Buffer instead */
 
         BufferDesc = AcpiUtCreateBufferObject (BufferLength);
-        if (!BufferDesc)
+        if(!BufferDesc)
         {
             return_ACPI_STATUS (AE_NO_MEMORY);
         }
@@ -339,7 +339,7 @@ AcpiExReadDataFromField (
         /* Field will fit within an Integer (normal case) */
 
         BufferDesc = AcpiUtCreateIntegerObject ((UINT64) 0);
-        if (!BufferDesc)
+        if(!BufferDesc)
         {
             return_ACPI_STATUS (AE_NO_MEMORY);
         }
@@ -348,7 +348,7 @@ AcpiExReadDataFromField (
         Buffer = &BufferDesc->Integer.Value;
     }
 
-    if ((ObjDesc->Common.Type == ACPI_TYPE_LOCAL_REGION_FIELD) &&
+    if((ObjDesc->Common.Type == ACPI_TYPE_LOCAL_REGION_FIELD) &&
         (ObjDesc->Field.RegionObj->Region.SpaceId == ACPI_ADR_SPACE_GPIO))
     {
         /* General Purpose I/O */
@@ -356,7 +356,7 @@ AcpiExReadDataFromField (
         Status = AcpiExReadGpio (ObjDesc, Buffer);
         goto Exit;
     }
-    else if ((ObjDesc->Common.Type == ACPI_TYPE_LOCAL_REGION_FIELD) &&
+    else if((ObjDesc->Common.Type == ACPI_TYPE_LOCAL_REGION_FIELD) &&
         (ObjDesc->Field.RegionObj->Region.SpaceId == ACPI_ADR_SPACE_PLATFORM_COMM))
     {
         /*
@@ -394,7 +394,7 @@ AcpiExReadDataFromField (
 
 
 Exit:
-    if (ACPI_FAILURE (Status))
+    if(ACPI_FAILURE (Status))
     {
         AcpiUtRemoveReference (BufferDesc);
     }
@@ -438,27 +438,27 @@ AcpiExWriteDataToField (
 
     /* Parameter validation */
 
-    if (!SourceDesc || !ObjDesc)
+    if(!SourceDesc || !ObjDesc)
     {
         return_ACPI_STATUS (AE_AML_NO_OPERAND);
     }
 
-    if (ObjDesc->Common.Type == ACPI_TYPE_BUFFER_FIELD)
+    if(ObjDesc->Common.Type == ACPI_TYPE_BUFFER_FIELD)
     {
         /*
          * If the BufferField arguments have not been previously evaluated,
          * evaluate them now and save the results.
          */
-        if (!(ObjDesc->Common.Flags & AOPOBJ_DATA_VALID))
+        if(!(ObjDesc->Common.Flags & AOPOBJ_DATA_VALID))
         {
             Status = AcpiDsGetBufferFieldArguments (ObjDesc);
-            if (ACPI_FAILURE (Status))
+            if(ACPI_FAILURE (Status))
             {
                 return_ACPI_STATUS (Status);
             }
         }
     }
-    else if ((ObjDesc->Common.Type == ACPI_TYPE_LOCAL_REGION_FIELD) &&
+    else if((ObjDesc->Common.Type == ACPI_TYPE_LOCAL_REGION_FIELD) &&
         (ObjDesc->Field.RegionObj->Region.SpaceId == ACPI_ADR_SPACE_GPIO))
     {
         /* General Purpose I/O */
@@ -466,7 +466,7 @@ AcpiExWriteDataToField (
         Status = AcpiExWriteGpio (SourceDesc, ObjDesc, ResultDesc);
         return_ACPI_STATUS (Status);
     }
-    else if ((ObjDesc->Common.Type == ACPI_TYPE_LOCAL_REGION_FIELD) &&
+    else if((ObjDesc->Common.Type == ACPI_TYPE_LOCAL_REGION_FIELD) &&
         (ObjDesc->Field.RegionObj->Region.SpaceId == ACPI_ADR_SPACE_SMBUS ||
          ObjDesc->Field.RegionObj->Region.SpaceId == ACPI_ADR_SPACE_GSBUS ||
          ObjDesc->Field.RegionObj->Region.SpaceId == ACPI_ADR_SPACE_IPMI  ||
@@ -478,7 +478,7 @@ AcpiExWriteDataToField (
         Status = AcpiExWriteSerialBus (SourceDesc, ObjDesc, ResultDesc);
         return_ACPI_STATUS (Status);
     }
-    else if ((ObjDesc->Common.Type == ACPI_TYPE_LOCAL_REGION_FIELD) &&
+    else if((ObjDesc->Common.Type == ACPI_TYPE_LOCAL_REGION_FIELD) &&
              (ObjDesc->Field.RegionObj->Region.SpaceId == ACPI_ADR_SPACE_PLATFORM_COMM))
     {
         /*
@@ -494,7 +494,7 @@ AcpiExWriteDataToField (
             ObjDesc->Field.BaseByteOffset,
             SourceDesc->Buffer.Pointer, DataLength);
 
-        if (MASTER_SUBSPACE_COMMAND (ObjDesc->Field.BaseByteOffset))
+        if(MASTER_SUBSPACE_COMMAND (ObjDesc->Field.BaseByteOffset))
         {
             /* Perform the write */
 

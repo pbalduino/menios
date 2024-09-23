@@ -157,7 +157,7 @@
 #define _COMPONENT          ACPI_EVENTS
         ACPI_MODULE_NAME    ("evglock")
 
-#if (!ACPI_REDUCED_HARDWARE) /* Entire module */
+#if(!ACPI_REDUCED_HARDWARE) /* Entire module */
 
 /* Local prototypes */
 
@@ -190,7 +190,7 @@ AcpiEvInitGlobalLockHandler (
 
     /* If Hardware Reduced flag is set, there is no global lock */
 
-    if (AcpiGbl_ReducedHardware)
+    if(AcpiGbl_ReducedHardware)
     {
         return_ACPI_STATUS (AE_OK);
     }
@@ -207,7 +207,7 @@ AcpiEvInitGlobalLockHandler (
      * actually use the global lock will be flagged with an error.
      */
     AcpiGbl_GlobalLockPresent = FALSE;
-    if (Status == AE_NO_HARDWARE_RESPONSE)
+    if(Status == AE_NO_HARDWARE_RESPONSE)
     {
         ACPI_ERROR ((AE_INFO,
             "No response from Global Lock hardware, disabling lock"));
@@ -216,7 +216,7 @@ AcpiEvInitGlobalLockHandler (
     }
 
     Status = AcpiOsCreateLock (&AcpiGbl_GlobalLockPendingLock);
-    if (ACPI_FAILURE (Status))
+    if(ACPI_FAILURE (Status))
     {
         return_ACPI_STATUS (Status);
     }
@@ -287,7 +287,7 @@ AcpiEvGlobalLockHandler (
      * we are done. This handles "spurious" global lock interrupts
      * which are possible (and have been seen) with bad BIOSs.
      */
-    if (!AcpiGbl_GlobalLockPending)
+    if(!AcpiGbl_GlobalLockPending)
     {
         goto CleanupAndExit;
     }
@@ -297,7 +297,7 @@ AcpiEvGlobalLockHandler (
      * of the global lock will be performed by the waiting thread.
      */
     Status = AcpiOsSignalSemaphore (AcpiGbl_GlobalLockSemaphore, 1);
-    if (ACPI_FAILURE (Status))
+    if(ACPI_FAILURE (Status))
     {
         ACPI_ERROR ((AE_INFO, "Could not signal Global Lock semaphore"));
     }
@@ -352,7 +352,7 @@ AcpiEvAcquireGlobalLock (
      */
     Status = AcpiExSystemWaitMutex (AcpiGbl_GlobalLockMutex->Mutex.OsMutex,
                 Timeout);
-    if (ACPI_FAILURE (Status))
+    if(ACPI_FAILURE (Status))
     {
         return_ACPI_STATUS (Status);
     }
@@ -366,7 +366,7 @@ AcpiEvAcquireGlobalLock (
      * regardless of where the acquisition request originated.
      */
     AcpiGbl_GlobalLockHandle++;
-    if (AcpiGbl_GlobalLockHandle == 0)
+    if(AcpiGbl_GlobalLockHandle == 0)
     {
         AcpiGbl_GlobalLockHandle = 1;
     }
@@ -375,7 +375,7 @@ AcpiEvAcquireGlobalLock (
      * Make sure that a global lock actually exists. If not, just
      * treat the lock as a standard mutex.
      */
-    if (!AcpiGbl_GlobalLockPresent)
+    if(!AcpiGbl_GlobalLockPresent)
     {
         AcpiGbl_GlobalLockAcquired = TRUE;
         return_ACPI_STATUS (AE_OK);
@@ -388,7 +388,7 @@ AcpiEvAcquireGlobalLock (
         /* Attempt to acquire the actual hardware lock */
 
         ACPI_ACQUIRE_GLOBAL_LOCK (AcpiGbl_FACS, Acquired);
-        if (Acquired)
+        if(Acquired)
         {
             AcpiGbl_GlobalLockAcquired = TRUE;
             ACPI_DEBUG_PRINT ((ACPI_DB_EXEC,
@@ -450,14 +450,14 @@ AcpiEvReleaseGlobalLock (
 
     /* Lock must be already acquired */
 
-    if (!AcpiGbl_GlobalLockAcquired)
+    if(!AcpiGbl_GlobalLockAcquired)
     {
         ACPI_WARNING ((AE_INFO,
             "Cannot release the ACPI Global Lock, it has not been acquired"));
         return_ACPI_STATUS (AE_NOT_ACQUIRED);
     }
 
-    if (AcpiGbl_GlobalLockPresent)
+    if(AcpiGbl_GlobalLockPresent)
     {
         /* Allow any thread to release the lock */
 
@@ -467,7 +467,7 @@ AcpiEvReleaseGlobalLock (
          * If the pending bit was set, we must write GBL_RLS to the control
          * register
          */
-        if (Pending)
+        if(Pending)
         {
             Status = AcpiWriteBitRegister (
                 ACPI_BITREG_GLOBAL_LOCK_RELEASE, ACPI_ENABLE_EVENT);

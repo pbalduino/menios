@@ -241,9 +241,9 @@ AcpiNsCheckPackage (
      * Most packages must have at least one element. The only exception
      * is the variable-length package (ACPI_PTYPE1_VAR).
      */
-    if (!Count)
+    if(!Count)
     {
-        if (Package->RetInfo.Type == ACPI_PTYPE1_VAR)
+        if(Package->RetInfo.Type == ACPI_PTYPE1_VAR)
         {
             return_ACPI_STATUS (AE_OK);
         }
@@ -275,11 +275,11 @@ AcpiNsCheckPackage (
          * If package is larger than expected, issue warning but continue
          */
         ExpectedCount = Package->RetInfo.Count1 + Package->RetInfo.Count2;
-        if (Count < ExpectedCount)
+        if(Count < ExpectedCount)
         {
             goto PackageTooSmall;
         }
-        else if (Count > ExpectedCount)
+        else if(Count > ExpectedCount)
         {
             ACPI_DEBUG_PRINT ((ACPI_DB_REPAIR,
                 "%s: Return Package is larger than needed - "
@@ -303,7 +303,7 @@ AcpiNsCheckPackage (
         {
             Status = AcpiNsCheckObjectType (Info, Elements,
                 Package->RetInfo.ObjectType1, i);
-            if (ACPI_FAILURE (Status))
+            if(ACPI_FAILURE (Status))
             {
                 return_ACPI_STATUS (Status);
             }
@@ -321,7 +321,7 @@ AcpiNsCheckPackage (
          * Check if package is at least as large as the minimum required
          */
         ExpectedCount = Package->RetInfo3.Count;
-        if (Count < ExpectedCount)
+        if(Count < ExpectedCount)
         {
             goto PackageTooSmall;
         }
@@ -330,13 +330,13 @@ AcpiNsCheckPackage (
 
         for (i = 0; i < Count; i++)
         {
-            if (i < Package->RetInfo3.Count)
+            if(i < Package->RetInfo3.Count)
             {
                 /* These are the required package elements (0, 1, or 2) */
 
                 Status = AcpiNsCheckObjectType (Info, Elements,
                     Package->RetInfo3.ObjectType[i], i);
-                if (ACPI_FAILURE (Status))
+                if(ACPI_FAILURE (Status))
                 {
                     return_ACPI_STATUS (Status);
                 }
@@ -347,7 +347,7 @@ AcpiNsCheckPackage (
 
                 Status = AcpiNsCheckObjectType (Info, Elements,
                     Package->RetInfo3.TailObjectType, i);
-                if (ACPI_FAILURE (Status))
+                if(ACPI_FAILURE (Status))
                 {
                     return_ACPI_STATUS (Status);
                 }
@@ -363,7 +363,7 @@ AcpiNsCheckPackage (
 
         Status = AcpiNsCheckObjectType (
             Info, Elements, ACPI_RTYPE_INTEGER, 0);
-        if (ACPI_FAILURE (Status))
+        if(ACPI_FAILURE (Status))
         {
             return_ACPI_STATUS (Status);
         }
@@ -382,7 +382,7 @@ AcpiNsCheckPackage (
 
         Status = AcpiNsCheckObjectType (
             Info, Elements, ACPI_RTYPE_INTEGER, 0);
-        if (ACPI_FAILURE (Status))
+        if(ACPI_FAILURE (Status))
         {
             return_ACPI_STATUS (Status);
         }
@@ -392,7 +392,7 @@ AcpiNsCheckPackage (
          * to be smaller. The >= accounts for the Integer above.
          */
         ExpectedCount = (UINT32) (*Elements)->Integer.Value;
-        if (ExpectedCount >= Count)
+        if(ExpectedCount >= Count)
         {
             goto PackageTooSmall;
         }
@@ -420,13 +420,13 @@ AcpiNsCheckPackage (
          * there is only one entry). We may be able to repair this by
          * wrapping the returned Package with a new outer Package.
          */
-        if (*Elements && ((*Elements)->Common.Type != ACPI_TYPE_PACKAGE))
+        if(*Elements && ((*Elements)->Common.Type != ACPI_TYPE_PACKAGE))
         {
             /* Create the new outer package and populate it */
 
             Status = AcpiNsWrapWithPackage (
                 Info, ReturnObject, ReturnObjectPtr);
-            if (ACPI_FAILURE (Status))
+            if(ACPI_FAILURE (Status))
             {
                 return_ACPI_STATUS (Status);
             }
@@ -454,7 +454,7 @@ AcpiNsCheckPackage (
 
         /* The package must contain pairs of (UUID + type) */
 
-        if (Count & 1)
+        if(Count & 1)
         {
             ExpectedCount = Count + 1;
             goto PackageTooSmall;
@@ -464,14 +464,14 @@ AcpiNsCheckPackage (
         {
             Status = AcpiNsCheckObjectType(Info, Elements,
                 Package->RetInfo.ObjectType1, 0);
-            if (ACPI_FAILURE(Status))
+            if(ACPI_FAILURE(Status))
             {
                 return_ACPI_STATUS (Status);
             }
 
             /* Validate length of the UUID buffer */
 
-            if ((*Elements)->Buffer.Length != 16)
+            if((*Elements)->Buffer.Length != 16)
             {
                 ACPI_WARN_PREDEFINED ((AE_INFO, Info->FullPathname,
                     Info->NodeFlags, "Invalid length for UUID Buffer"));
@@ -480,7 +480,7 @@ AcpiNsCheckPackage (
 
             Status = AcpiNsCheckObjectType(Info, Elements + 1,
                 Package->RetInfo.ObjectType2, 0);
-            if (ACPI_FAILURE(Status))
+            if(ACPI_FAILURE(Status))
             {
                 return_ACPI_STATUS (Status);
             }
@@ -564,7 +564,7 @@ AcpiNsCheckPackageList (
 
         Status = AcpiNsCheckObjectType (Info, &SubPackage,
             ACPI_RTYPE_PACKAGE, i);
-        if (ACPI_FAILURE (Status))
+        if(ACPI_FAILURE (Status))
         {
             return (Status);
         }
@@ -581,7 +581,7 @@ AcpiNsCheckPackageList (
             /* Each subpackage has a fixed number of elements */
 
             ExpectedCount = Package->RetInfo.Count1 + Package->RetInfo.Count2;
-            if (SubPackage->Package.Count < ExpectedCount)
+            if(SubPackage->Package.Count < ExpectedCount)
             {
                 goto PackageTooSmall;
             }
@@ -591,7 +591,7 @@ AcpiNsCheckPackageList (
                 Package->RetInfo.Count1,
                 Package->RetInfo.ObjectType2,
                 Package->RetInfo.Count2, 0);
-            if (ACPI_FAILURE (Status))
+            if(ACPI_FAILURE (Status))
             {
                 return (Status);
             }
@@ -603,7 +603,7 @@ AcpiNsCheckPackageList (
              * optional element
              */
             ExpectedCount = Package->RetInfo.Count1 + Package->RetInfo.Count2;
-            if (SubPackage->Package.Count < ExpectedCount)
+            if(SubPackage->Package.Count < ExpectedCount)
             {
                 goto PackageTooSmall;
             }
@@ -613,7 +613,7 @@ AcpiNsCheckPackageList (
                 Package->RetInfo.Count1,
                 Package->RetInfo.ObjectType2,
                 SubPackage->Package.Count - Package->RetInfo.Count1, 0);
-            if (ACPI_FAILURE (Status))
+            if(ACPI_FAILURE (Status))
             {
                 return (Status);
             }
@@ -630,7 +630,7 @@ AcpiNsCheckPackageList (
             /* Each subpackage has a fixed length */
 
             ExpectedCount = Package->RetInfo2.Count;
-            if (SubPackage->Package.Count < ExpectedCount)
+            if(SubPackage->Package.Count < ExpectedCount)
             {
                 goto PackageTooSmall;
             }
@@ -641,7 +641,7 @@ AcpiNsCheckPackageList (
             {
                 Status = AcpiNsCheckObjectType (Info, &SubElements[j],
                     Package->RetInfo2.ObjectType[j], j);
-                if (ACPI_FAILURE (Status))
+                if(ACPI_FAILURE (Status))
                 {
                     return (Status);
                 }
@@ -653,7 +653,7 @@ AcpiNsCheckPackageList (
             /* Each subpackage has a variable but minimum length */
 
             ExpectedCount = Package->RetInfo.Count1;
-            if (SubPackage->Package.Count < ExpectedCount)
+            if(SubPackage->Package.Count < ExpectedCount)
             {
                 goto PackageTooSmall;
             }
@@ -663,7 +663,7 @@ AcpiNsCheckPackageList (
             Status = AcpiNsCheckPackageElements (Info, SubElements,
                 Package->RetInfo.ObjectType1,
                 SubPackage->Package.Count, 0, 0, 0);
-            if (ACPI_FAILURE (Status))
+            if(ACPI_FAILURE (Status))
             {
                 return (Status);
             }
@@ -676,7 +676,7 @@ AcpiNsCheckPackageList (
              */
             Status = AcpiNsCheckObjectType (Info, SubElements,
                 ACPI_RTYPE_INTEGER, 0);
-            if (ACPI_FAILURE (Status))
+            if(ACPI_FAILURE (Status))
             {
                 return (Status);
             }
@@ -686,18 +686,18 @@ AcpiNsCheckPackageList (
              * is as large as the minimum size
              */
             ExpectedCount = (UINT32) (*SubElements)->Integer.Value;
-            if (SubPackage->Package.Count < ExpectedCount)
+            if(SubPackage->Package.Count < ExpectedCount)
             {
                 goto PackageTooSmall;
             }
 
-            if (SubPackage->Package.Count < Package->RetInfo.Count1)
+            if(SubPackage->Package.Count < Package->RetInfo.Count1)
             {
                 ExpectedCount = Package->RetInfo.Count1;
                 goto PackageTooSmall;
             }
 
-            if (ExpectedCount == 0)
+            if(ExpectedCount == 0)
             {
                 /*
                  * Either the NumEntries element was originally zero or it was
@@ -714,7 +714,7 @@ AcpiNsCheckPackageList (
             Status = AcpiNsCheckPackageElements (Info, (SubElements + 1),
                 Package->RetInfo.ObjectType1,
                 (ExpectedCount - 1), 0, 0, 1);
-            if (ACPI_FAILURE (Status))
+            if(ACPI_FAILURE (Status))
             {
                 return (Status);
             }
@@ -779,7 +779,7 @@ AcpiNsCustomPackage (
 
     /* Get version number, must be Integer */
 
-    if ((*Elements)->Common.Type != ACPI_TYPE_INTEGER)
+    if((*Elements)->Common.Type != ACPI_TYPE_INTEGER)
     {
         ACPI_WARN_PREDEFINED ((AE_INFO, Info->FullPathname, Info->NodeFlags,
             "Return Package has invalid object type for version number"));
@@ -789,19 +789,19 @@ AcpiNsCustomPackage (
     Version = (UINT32) (*Elements)->Integer.Value;
     ExpectedCount = 21;         /* Version 1 */
 
-    if (Version == 0)
+    if(Version == 0)
     {
         ExpectedCount = 20;     /* Version 0 */
     }
 
-    if (Count < ExpectedCount)
+    if(Count < ExpectedCount)
     {
         ACPI_WARN_PREDEFINED ((AE_INFO, Info->FullPathname, Info->NodeFlags,
             "Return Package is too small - found %u elements, expected %u",
             Count, ExpectedCount));
         return_ACPI_STATUS (AE_AML_OPERAND_VALUE);
     }
-    else if (Count > ExpectedCount)
+    else if(Count > ExpectedCount)
     {
         ACPI_DEBUG_PRINT ((ACPI_DB_REPAIR,
             "%s: Return Package is larger than needed - "
@@ -814,14 +814,14 @@ AcpiNsCustomPackage (
     Status = AcpiNsCheckPackageElements (Info, Elements,
         ACPI_RTYPE_INTEGER, 16,
         ACPI_RTYPE_STRING, 4, 0);
-    if (ACPI_FAILURE (Status))
+    if(ACPI_FAILURE (Status))
     {
         return_ACPI_STATUS (Status);
     }
 
     /* Version 1 has a single trailing integer */
 
-    if (Version > 0)
+    if(Version > 0)
     {
         Status = AcpiNsCheckPackageElements (Info, Elements + 20,
             ACPI_RTYPE_INTEGER, 1, 0, 0, 20);
@@ -876,7 +876,7 @@ AcpiNsCheckPackageElements (
     {
         Status = AcpiNsCheckObjectType (Info, ThisElement,
             Type1, i + StartIndex);
-        if (ACPI_FAILURE (Status))
+        if(ACPI_FAILURE (Status))
         {
             return_ACPI_STATUS (Status);
         }
@@ -888,7 +888,7 @@ AcpiNsCheckPackageElements (
     {
         Status = AcpiNsCheckObjectType (Info, ThisElement,
             Type2, (i + Count1 + StartIndex));
-        if (ACPI_FAILURE (Status))
+        if(ACPI_FAILURE (Status))
         {
             return_ACPI_STATUS (Status);
         }

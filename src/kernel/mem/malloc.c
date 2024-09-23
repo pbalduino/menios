@@ -13,12 +13,12 @@
 void init_heap() {
   heap_node_p heap = (heap_node_p)current->heap;
   serial_printf("init_heap: heap @ %lx\n", heap);
-  memcpy(heap->magic, (const void*)HEAP_MAGIC, sizeof(heap->magic));
+  heap->magic = HEAP_MAGIC;
   heap->next = NULL;
   heap->prev = NULL;
   heap->size = PAGE_SIZE - HEAP_HEADER;
   heap->status = HEAP_FREE;
-  heap->data = (void*)(((uintptr_t)heap) + HEAP_HEADER);
+  // heap->data = (void*)(((uintptr_t)heap) + HEAP_HEADER);
 
   serial_printf("init_heap: OK\n");
 }
@@ -26,7 +26,7 @@ void init_heap() {
 void check_heap() {
   if(current->heap == current->brk) {
     serial_printf("check_heap: initializing heap\n");
-    current->heap = (uintptr_t)mmap(NULL, 0, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
+    current->heap = mmap(NULL, 0, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
   }
 
   serial_printf("check_heap: current->heap @ %lx\n", current->heap);
@@ -34,7 +34,7 @@ void check_heap() {
   heap_node_p heap = (heap_node_p)current->heap;
 
   serial_printf("check_heap: checking heap magic\n");
-  if(heap->size == 0 && strncmp(heap->magic, HEAP_MAGIC, 3) != 0) {
+  if(heap->size == 0 && heap->magic == HEAP_MAGIC) {
     init_heap();
   }
   serial_printf("check_heap: OK\n");
@@ -46,11 +46,11 @@ void debug_heap() {
   serial_printf("heap debug:\n");
   while(heap) {
     serial_printf("heap @ %p - ", heap);
-    serial_printf("heap->magic: %s(%s) - ", strncmp(heap->magic, HEAP_MAGIC, 3) == 0 ? "OK " : "BAD", heap->magic);
+    serial_printf("heap->magic: %s(%s) - %lx -", heap->magic == HEAP_MAGIC ? "OK " : "BAD", heap->magic, heap->magic);
     serial_printf("heap->status: %s - ", heap->status == HEAP_FREE ? "FREE" : "USED");
     serial_printf("heap->data: %p - ", heap->data);
-    serial_printf("heap->next: %p - ", heap->next ? heap->next : NULL);
-    serial_printf("heap->prev: %p - ", heap->prev ? heap->prev : NULL);
+    serial_printf("heap->next: %p - ", heap->next ? heap->next : "NULL");
+    serial_printf("heap->prev: %p - ", heap->prev ? heap->prev : "NULL");
     serial_printf("heap->size: %u\n", heap->size);
 
     heap = (heap_node_p)heap->next;
@@ -58,12 +58,15 @@ void debug_heap() {
 }
 
 void init_next_node(heap_node_p heap, heap_node_p next, size_t size, size_t total_size, int mark_as_used) {
+  if(next == NULL) {
+    serial_printf("init_next_node: next is NULL\n");
+  }
   next->size = total_size - (size + HEAP_HEADER);
   next->status = HEAP_FREE;
   next->prev = heap;
   next->next = NULL;
-  next->data = (void*)(((uintptr_t)next) + HEAP_HEADER);
-  memcpy(next->magic, HEAP_MAGIC, sizeof(next->magic));
+  // next->data = (void*)(((uintptr_t)next) + HEAP_HEADER);
+  next->magic = HEAP_MAGIC;
   
   heap->next = next;
   heap->size = size;
@@ -155,13 +158,13 @@ void free(void* ptr) {
   }
 
   // Get the heap node from the data pointer by subtracting the HEAP_HEADER size
-  heap_node_p node = (heap_node_p)((uintptr_t)ptr - HEAP_HEADER);
+  heap_node_p node = (heap_node_p)(((uintptr_t)ptr) - HEAP_HEADER);
 
   serial_printf("free: freeing memory block @ %lx\n", ptr);
 
   // Check if the node is valid and marked as used
-  if (memcmp(node->magic, HEAP_MAGIC, sizeof(node->magic)) != 0) {
-    serial_printf("free: invalid heap node magic, memory corruption detected: %s\n", node->magic);
+  if (node->magic == HEAP_MAGIC) {
+    serial_printf("free: invalid heap node magic, memory corruption detected: %lx\n", node->magic);
     return; // Invalid memory block
   } 
 

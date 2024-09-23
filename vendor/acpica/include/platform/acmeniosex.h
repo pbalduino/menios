@@ -237,7 +237,7 @@ AcpiOsGetThreadId (
 #define AcpiOsCreateLock(__Handle) \
     ({ \
         spinlock_t *Lock = ACPI_ALLOCATE(sizeof(*Lock)); \
-        if (Lock) { \
+        if(Lock) { \
             *(__Handle) = Lock; \
             spin_lock_init(*(__Handle)); \
         } \

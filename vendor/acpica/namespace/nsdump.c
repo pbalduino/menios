@@ -218,7 +218,7 @@ AcpiNsPrintPathname (
 
     /* Check if debug output enabled */
 
-    if (!ACPI_IS_DEBUG_ENABLED (ACPI_LV_NAMES, ACPI_NAMESPACE))
+    if(!ACPI_IS_DEBUG_ENABLED (ACPI_LV_NAMES, ACPI_NAMESPACE))
     {
         return;
     }
@@ -238,7 +238,7 @@ AcpiNsPrintPathname (
 
         Pathname += ACPI_NAMESEG_SIZE;
         NumSegments--;
-        if (NumSegments)
+        if(NumSegments)
         {
             AcpiOsPrintf (".");
         }
@@ -280,7 +280,7 @@ AcpiNsDumpPathname (
 
     /* Do this only if the requested debug level and component are enabled */
 
-    if (!ACPI_IS_DEBUG_ENABLED (Level, Component))
+    if(!ACPI_IS_DEBUG_ENABLED (Level, Component))
     {
         return_VOID;
     }
@@ -332,19 +332,19 @@ AcpiNsDumpOneObject (
 
     /* Is output enabled? */
 
-    if (!(AcpiDbgLevel & Info->DebugLevel))
+    if(!(AcpiDbgLevel & Info->DebugLevel))
     {
         return (AE_OK);
     }
 
-    if (!ObjHandle)
+    if(!ObjHandle)
     {
         ACPI_DEBUG_PRINT ((ACPI_DB_INFO, "Null object handle\n"));
         return (AE_OK);
     }
 
     ThisNode = AcpiNsValidateHandle (ObjHandle);
-    if (!ThisNode)
+    if(!ThisNode)
     {
         ACPI_DEBUG_PRINT ((ACPI_DB_INFO, "Invalid object handle %p\n",
             ObjHandle));
@@ -356,13 +356,13 @@ AcpiNsDumpOneObject (
 
     /* Check if the owner matches */
 
-    if ((Info->OwnerId != ACPI_OWNER_ID_MAX) &&
+    if((Info->OwnerId != ACPI_OWNER_ID_MAX) &&
         (Info->OwnerId != ThisNode->OwnerId))
     {
         return (AE_OK);
     }
 
-    if (!(Info->DisplayType & ACPI_DISPLAY_SHORT))
+    if(!(Info->DisplayType & ACPI_DISPLAY_SHORT))
     {
         /* Indent the object according to the level */
 
@@ -370,7 +370,7 @@ AcpiNsDumpOneObject (
 
         /* Check the node type and name */
 
-        if (Type > ACPI_TYPE_LOCAL_MAX)
+        if(Type > ACPI_TYPE_LOCAL_MAX)
         {
             ACPI_WARNING ((AE_INFO,
                 "Invalid ACPI Object Type 0x%08X", Type));
@@ -391,7 +391,7 @@ AcpiNsDumpOneObject (
 
     /* Temp nodes are those nodes created by a control method */
 
-    if (ThisNode->Flags & ANOBJ_TEMPORARY)
+    if(ThisNode->Flags & ANOBJ_TEMPORARY)
     {
         AcpiOsPrintf ("(T) ");
     }
@@ -400,7 +400,7 @@ AcpiNsDumpOneObject (
     {
     case ACPI_DISPLAY_SUMMARY:
 
-        if (!ObjDesc)
+        if(!ObjDesc)
         {
             /* No attached object. Some types should always have an object */
 
@@ -453,7 +453,7 @@ AcpiNsDumpOneObject (
 
         case ACPI_TYPE_PACKAGE:
 
-            if (ObjDesc->Common.Flags & AOPOBJ_DATA_VALID)
+            if(ObjDesc->Common.Flags & AOPOBJ_DATA_VALID)
             {
                 AcpiOsPrintf ("Elements %.2X\n",
                     ObjDesc->Package.Count);
@@ -466,14 +466,14 @@ AcpiNsDumpOneObject (
 
         case ACPI_TYPE_BUFFER:
 
-            if (ObjDesc->Common.Flags & AOPOBJ_DATA_VALID)
+            if(ObjDesc->Common.Flags & AOPOBJ_DATA_VALID)
             {
                 AcpiOsPrintf ("Len %.2X",
                     ObjDesc->Buffer.Length);
 
                 /* Dump some of the buffer */
 
-                if (ObjDesc->Buffer.Length > 0)
+                if(ObjDesc->Buffer.Length > 0)
                 {
                     AcpiOsPrintf (" =");
                     for (i = 0; (i < ObjDesc->Buffer.Length && i < 12); i++)
@@ -500,7 +500,7 @@ AcpiNsDumpOneObject (
 
             AcpiOsPrintf ("[%s]",
                 AcpiUtGetRegionName (ObjDesc->Region.SpaceId));
-            if (ObjDesc->Region.Flags & AOPOBJ_DATA_VALID)
+            if(ObjDesc->Region.Flags & AOPOBJ_DATA_VALID)
             {
                 AcpiOsPrintf (" Addr %8.8X%8.8X Len %.4X\n",
                     ACPI_FORMAT_UINT64 (ObjDesc->Region.Address),
@@ -519,7 +519,7 @@ AcpiNsDumpOneObject (
 
         case ACPI_TYPE_BUFFER_FIELD:
 
-            if (ObjDesc->BufferField.BufferObj &&
+            if(ObjDesc->BufferField.BufferObj &&
                 ObjDesc->BufferField.BufferObj->Buffer.Node)
             {
                 AcpiOsPrintf ("Buf [%4.4s]",
@@ -591,7 +591,7 @@ AcpiNsDumpOneObject (
     case ACPI_DISPLAY_OBJECTS:
 
         AcpiOsPrintf ("O:%p", ObjDesc);
-        if (!ObjDesc)
+        if(!ObjDesc)
         {
             /* No attached object, we are done */
 
@@ -643,7 +643,7 @@ AcpiNsDumpOneObject (
 
     /* If debug turned off, done */
 
-    if (!(AcpiDbgLevel & ACPI_LV_VALUES))
+    if(!(AcpiDbgLevel & ACPI_LV_VALUES))
     {
         return (AE_OK);
     }
@@ -677,7 +677,7 @@ AcpiNsDumpOneObject (
 
             ObjType = ObjDesc->Common.Type;
 
-            if (ObjType > ACPI_TYPE_LOCAL_MAX)
+            if(ObjType > ACPI_TYPE_LOCAL_MAX)
             {
                 AcpiOsPrintf (
                     "(Pointer to ACPI Object type %.2X [UNKNOWN])\n",
@@ -704,7 +704,7 @@ AcpiNsDumpOneObject (
 
         /* If value is NOT an internal object, we are done */
 
-        if (ACPI_GET_DESCRIPTOR_TYPE (ObjDesc) != ACPI_DESC_TYPE_OPERAND)
+        if(ACPI_GET_DESCRIPTOR_TYPE (ObjDesc) != ACPI_DESC_TYPE_OPERAND)
         {
             goto Cleanup;
         }
@@ -809,7 +809,7 @@ AcpiNsDumpObjects (
      * them also.
      */
     Status = AcpiUtAcquireMutex (ACPI_MTX_NAMESPACE);
-    if (ACPI_FAILURE (Status))
+    if(ACPI_FAILURE (Status))
     {
         AcpiOsPrintf ("Could not acquire namespace mutex\n");
         return;
@@ -860,13 +860,13 @@ AcpiNsDumpOneObjectPath (
     int                     PathIndent;
 
 
-    if (!ObjHandle)
+    if(!ObjHandle)
     {
         return (AE_OK);
     }
 
     Node = AcpiNsValidateHandle (ObjHandle);
-    if (!Node)
+    if(!Node)
     {
         /* Ignore bad node during namespace walk */
 
@@ -876,7 +876,7 @@ AcpiNsDumpOneObjectPath (
     Pathname = AcpiNsGetNormalizedPathname (Node, TRUE);
 
     PathIndent = 1;
-    if (Level <= MaxLevel)
+    if(Level <= MaxLevel)
     {
         PathIndent = MaxLevel - Level + 1;
     }
@@ -901,7 +901,7 @@ AcpiNsGetMaxDepth (
     UINT32                  *MaxLevel = (UINT32 *) Context;
 
 
-    if (Level > *MaxLevel)
+    if(Level > *MaxLevel)
     {
         *MaxLevel = Level;
     }
@@ -950,7 +950,7 @@ AcpiNsDumpObjectPaths (
      * them also.
      */
     Status = AcpiUtAcquireMutex (ACPI_MTX_NAMESPACE);
-    if (ACPI_FAILURE (Status))
+    if(ACPI_FAILURE (Status))
     {
         AcpiOsPrintf ("Could not acquire namespace mutex\n");
         return;
@@ -1031,7 +1031,7 @@ AcpiNsDumpTables (
     ACPI_FUNCTION_TRACE (NsDumpTables);
 
 
-    if (!AcpiGbl_RootNode)
+    if(!AcpiGbl_RootNode)
     {
         /*
          * If the name space has not been initialized,
@@ -1042,7 +1042,7 @@ AcpiNsDumpTables (
         return_VOID;
     }
 
-    if (ACPI_NS_ALL == SearchBase)
+    if(ACPI_NS_ALL == SearchBase)
     {
         /* Entire namespace */
 

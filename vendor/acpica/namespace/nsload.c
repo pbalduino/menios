@@ -199,7 +199,7 @@ AcpiNsLoadTable (
 
     /* If table already loaded into namespace, just return */
 
-    if (AcpiTbIsTableLoaded (TableIndex))
+    if(AcpiTbIsTableLoaded (TableIndex))
     {
         Status = AE_ALREADY_EXISTS;
         goto Unlock;
@@ -209,7 +209,7 @@ AcpiNsLoadTable (
         "**** Loading table into namespace ****\n"));
 
     Status = AcpiTbAllocateOwnerId (TableIndex);
-    if (ACPI_FAILURE (Status))
+    if(ACPI_FAILURE (Status))
     {
         goto Unlock;
     }
@@ -224,7 +224,7 @@ AcpiNsLoadTable (
      * because we don't know how many arguments to parse next!
      */
     Status = AcpiNsParseTable (TableIndex, Node);
-    if (ACPI_SUCCESS (Status))
+    if(ACPI_SUCCESS (Status))
     {
         AcpiTbSetTableLoadedFlag (TableIndex, TRUE);
     }
@@ -247,7 +247,7 @@ AcpiNsLoadTable (
     }
 
 Unlock:
-    if (ACPI_FAILURE (Status))
+    if(ACPI_FAILURE (Status))
     {
         return_ACPI_STATUS (Status);
     }
@@ -298,7 +298,7 @@ AcpiNsLoadNamespace (
 
     /* There must be at least a DSDT installed */
 
-    if (AcpiGbl_DSDT == NULL)
+    if(AcpiGbl_DSDT == NULL)
     {
         ACPI_ERROR ((AE_INFO, "DSDT is not in memory"));
         return_ACPI_STATUS (AE_NO_ACPI_TABLES);
@@ -309,7 +309,7 @@ AcpiNsLoadNamespace (
      * but the SSDT and PSDT tables are optional.
      */
     Status = AcpiNsLoadTableByType (ACPI_TABLE_ID_DSDT);
-    if (ACPI_FAILURE (Status))
+    if(ACPI_FAILURE (Status))
     {
         return_ACPI_STATUS (Status);
     }
@@ -378,11 +378,11 @@ AcpiNsDeleteSubtree (
 
         /* Did we get a new object? */
 
-        if (ACPI_SUCCESS (Status))
+        if(ACPI_SUCCESS (Status))
         {
             /* Check if this object has any children */
 
-            if (ACPI_SUCCESS (AcpiGetNextObject (ACPI_TYPE_ANY, ChildHandle,
+            if(ACPI_SUCCESS (AcpiGetNextObject (ACPI_TYPE_ANY, ChildHandle,
                 NULL, &Dummy)))
             {
                 /*
@@ -408,7 +408,7 @@ AcpiNsDeleteSubtree (
 
             ChildHandle = ParentHandle;
             Status = AcpiGetParent (ParentHandle, &ParentHandle);
-            if (ACPI_FAILURE (Status))
+            if(ACPI_FAILURE (Status))
             {
                 return_ACPI_STATUS (Status);
             }
@@ -448,12 +448,12 @@ AcpiNsUnloadNamespace (
 
     /* Parameter validation */
 
-    if (!AcpiGbl_RootNode)
+    if(!AcpiGbl_RootNode)
     {
         return_ACPI_STATUS (AE_NO_NAMESPACE);
     }
 
-    if (!Handle)
+    if(!Handle)
     {
         return_ACPI_STATUS (AE_BAD_PARAMETER);
     }

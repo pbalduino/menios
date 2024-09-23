@@ -216,7 +216,7 @@ AcpiDsCreateExternalRegion (
     ACPI_OPERAND_OBJECT     *ObjDesc;
 
 
-    if (LookupStatus != AE_NOT_FOUND)
+    if(LookupStatus != AE_NOT_FOUND)
     {
         return (LookupStatus);
     }
@@ -230,7 +230,7 @@ AcpiDsCreateExternalRegion (
 
     Status = AcpiNsLookup (WalkState->ScopeInfo, Path, ACPI_TYPE_REGION,
        ACPI_IMODE_LOAD_PASS1, ACPI_NS_SEARCH_PARENT, WalkState, Node);
-    if (ACPI_FAILURE (Status))
+    if(ACPI_FAILURE (Status))
     {
         return (Status);
     }
@@ -238,7 +238,7 @@ AcpiDsCreateExternalRegion (
     /* Must create and install a region object for the new node */
 
     ObjDesc = AcpiUtCreateInternalObject (ACPI_TYPE_REGION);
-    if (!ObjDesc)
+    if(!ObjDesc)
     {
         return (AE_NO_MEMORY);
     }
@@ -288,7 +288,7 @@ AcpiDsCreateBufferField (
     /*
      * Get the NameString argument (name of the new BufferField)
      */
-    if (Op->Common.AmlOpcode == AML_CREATE_FIELD_OP)
+    if(Op->Common.AmlOpcode == AML_CREATE_FIELD_OP)
     {
         /* For CreateField, name is the 4th argument */
 
@@ -301,12 +301,12 @@ AcpiDsCreateBufferField (
         Arg = AcpiPsGetArg (Op, 2);
     }
 
-    if (!Arg)
+    if(!Arg)
     {
         return_ACPI_STATUS (AE_AML_NO_OPERAND);
     }
 
-    if (WalkState->DeferredNode)
+    if(WalkState->DeferredNode)
     {
         Node = WalkState->DeferredNode;
     }
@@ -314,7 +314,7 @@ AcpiDsCreateBufferField (
     {
         /* Execute flag should always be set when this function is entered */
 
-        if (!(WalkState->ParseFlags & ACPI_PARSE_EXECUTE))
+        if(!(WalkState->ParseFlags & ACPI_PARSE_EXECUTE))
         {
             ACPI_ERROR ((AE_INFO,
                 "Parse execute mode is not set"));
@@ -330,7 +330,7 @@ AcpiDsCreateBufferField (
          * Mark node temporary if we are executing a normal control
          * method. (Don't mark if this is a module-level code method)
          */
-        if (WalkState->MethodNode &&
+        if(WalkState->MethodNode &&
             !(WalkState->ParseFlags & ACPI_PARSE_MODULE_LEVEL))
         {
             Flags |= ACPI_NS_TEMPORARY;
@@ -341,12 +341,12 @@ AcpiDsCreateBufferField (
         Status = AcpiNsLookup (WalkState->ScopeInfo,
             Arg->Common.Value.String, ACPI_TYPE_ANY,
             ACPI_IMODE_LOAD_PASS1, Flags, WalkState, &Node);
-        if ((WalkState->ParseFlags & ACPI_PARSE_DISASSEMBLE) &&
+        if((WalkState->ParseFlags & ACPI_PARSE_DISASSEMBLE) &&
             Status == AE_ALREADY_EXISTS)
         {
             Status = AE_OK;
         }
-        else if (ACPI_FAILURE (Status))
+        else if(ACPI_FAILURE (Status))
         {
             ACPI_ERROR_NAMESPACE (WalkState->ScopeInfo,
                 Arg->Common.Value.String, Status);
@@ -367,7 +367,7 @@ AcpiDsCreateBufferField (
      * of an existing node and we don't want to create the field object again.
      */
     ObjDesc = AcpiNsGetAttachedObject (Node);
-    if (ObjDesc)
+    if(ObjDesc)
     {
         return_ACPI_STATUS (AE_OK);
     }
@@ -380,7 +380,7 @@ AcpiDsCreateBufferField (
     /* Create the buffer field object */
 
     ObjDesc = AcpiUtCreateInternalObject (ACPI_TYPE_BUFFER_FIELD);
-    if (!ObjDesc)
+    if(!ObjDesc)
     {
         Status = AE_NO_MEMORY;
         goto Cleanup;
@@ -398,7 +398,7 @@ AcpiDsCreateBufferField (
     /* Attach constructed field descriptors to parent node */
 
     Status = AcpiNsAttachObject (Node, ObjDesc, ACPI_TYPE_BUFFER_FIELD);
-    if (ACPI_FAILURE (Status))
+    if(ACPI_FAILURE (Status))
     {
         goto Cleanup;
     }
@@ -470,7 +470,7 @@ AcpiDsGetFieldNames (
             Position = (UINT64) Info->FieldBitPosition +
                 (UINT64) Arg->Common.Value.Size;
 
-            if (Position > ACPI_UINT32_MAX)
+            if(Position > ACPI_UINT32_MAX)
             {
                 ACPI_ERROR ((AE_INFO,
                     "Bit offset within field too large (> 0xFFFFFFFF)"));
@@ -524,7 +524,7 @@ AcpiDsGetFieldNames (
              * or a named reference to a resource template
              */
             Child = Arg->Common.Value.Arg;
-            if (Child->Common.AmlOpcode == AML_INT_BYTELIST_OP)
+            if(Child->Common.AmlOpcode == AML_INT_BYTELIST_OP)
             {
                 Info->ResourceBuffer = Child->Named.Data;
                 Info->ResourceLength = (UINT16) Child->Named.Value.Integer;
@@ -537,7 +537,7 @@ AcpiDsGetFieldNames (
                     Child->Common.Value.Name, ACPI_TYPE_ANY,
                     ACPI_IMODE_EXECUTE, ACPI_NS_DONT_OPEN_SCOPE,
                     WalkState, &Info->ConnectionNode);
-                if (ACPI_FAILURE (Status))
+                if(ACPI_FAILURE (Status))
                 {
                     ACPI_ERROR_NAMESPACE (WalkState->ScopeInfo,
                         Child->Common.Value.Name, Status);
@@ -554,7 +554,7 @@ AcpiDsGetFieldNames (
                 (char *) &Arg->Named.Name, Info->FieldType,
                 ACPI_IMODE_EXECUTE, ACPI_NS_DONT_OPEN_SCOPE,
                 WalkState, &Info->FieldNode);
-            if (ACPI_FAILURE (Status))
+            if(ACPI_FAILURE (Status))
             {
                 ACPI_ERROR_NAMESPACE (WalkState->ScopeInfo,
                     (char *) &Arg->Named.Name, Status);
@@ -571,16 +571,16 @@ AcpiDsGetFieldNames (
                  * Otherwise, this was a lookup of an existing node and we
                  * don't want to create the field object again.
                  */
-                if (!AcpiNsGetAttachedObject (Info->FieldNode))
+                if(!AcpiNsGetAttachedObject (Info->FieldNode))
                 {
                     Status = AcpiExPrepFieldValue (Info);
-                    if (ACPI_FAILURE (Status))
+                    if(ACPI_FAILURE (Status))
                     {
                         return_ACPI_STATUS (Status);
                     }
 #ifdef ACPI_EXEC_APP
                     NamePath = AcpiNsGetExternalPathname (Info->FieldNode);
-                    if (ACPI_SUCCESS (AeLookupInitFileEntry (NamePath, &ObjDesc)))
+                    if(ACPI_SUCCESS (AeLookupInitFileEntry (NamePath, &ObjDesc)))
                     {
                         AcpiExWriteDataToField (ObjDesc,
                             AcpiNsGetAttachedObject (Info->FieldNode),
@@ -597,7 +597,7 @@ AcpiDsGetFieldNames (
             Position = (UINT64) Info->FieldBitPosition +
                 (UINT64) Arg->Common.Value.Size;
 
-            if (Position > ACPI_UINT32_MAX)
+            if(Position > ACPI_UINT32_MAX)
             {
                 ACPI_ERROR ((AE_INFO,
                     "Field [%4.4s] bit offset too large (> 0xFFFFFFFF)",
@@ -656,7 +656,7 @@ AcpiDsCreateField (
 
     Arg = Op->Common.Value.Arg;
 
-    if (!RegionNode)
+    if(!RegionNode)
     {
         Status = AcpiNsLookup (WalkState->ScopeInfo, Arg->Common.Value.Name,
             ACPI_TYPE_REGION, ACPI_IMODE_EXECUTE,
@@ -665,7 +665,7 @@ AcpiDsCreateField (
         Status = AcpiDsCreateExternalRegion (Status, Arg,
             Arg->Common.Value.Name, WalkState, &RegionNode);
 #endif
-        if (ACPI_FAILURE (Status))
+        if(ACPI_FAILURE (Status))
         {
             ACPI_ERROR_NAMESPACE (WalkState->ScopeInfo,
                 Arg->Common.Value.Name, Status);
@@ -687,16 +687,16 @@ AcpiDsCreateField (
     Info.RegionNode = RegionNode;
 
     Status = AcpiDsGetFieldNames (&Info, WalkState, Arg->Common.Next);
-    if (ACPI_FAILURE (Status))
+    if(ACPI_FAILURE (Status))
     {
         return_ACPI_STATUS (Status);
     }
 
-    if (Info.RegionNode->Object->Region.SpaceId == ACPI_ADR_SPACE_PLATFORM_COMM)
+    if(Info.RegionNode->Object->Region.SpaceId == ACPI_ADR_SPACE_PLATFORM_COMM)
     {
         RegionNode->Object->Field.InternalPccBuffer =
             ACPI_ALLOCATE_ZEROED(Info.RegionNode->Object->Region.Length);
-        if (!RegionNode->Object->Field.InternalPccBuffer)
+        if(!RegionNode->Object->Field.InternalPccBuffer)
         {
             return_ACPI_STATUS (AE_NO_MEMORY);
         }
@@ -738,9 +738,9 @@ AcpiDsInitFieldObjects (
 
     /* Execute flag should always be set when this function is entered */
 
-    if (!(WalkState->ParseFlags & ACPI_PARSE_EXECUTE))
+    if(!(WalkState->ParseFlags & ACPI_PARSE_EXECUTE))
     {
-        if (WalkState->ParseFlags & ACPI_PARSE_DEFERRED_OP)
+        if(WalkState->ParseFlags & ACPI_PARSE_DEFERRED_OP)
         {
             /* BankField Op is deferred, just return OK */
 
@@ -790,7 +790,7 @@ AcpiDsInitFieldObjects (
      * Mark node(s) temporary if we are executing a normal control
      * method. (Don't mark if this is a module-level code method)
      */
-    if (WalkState->MethodNode &&
+    if(WalkState->MethodNode &&
         !(WalkState->ParseFlags & ACPI_PARSE_MODULE_LEVEL))
     {
         Flags |= ACPI_NS_TEMPORARY;
@@ -809,16 +809,16 @@ AcpiDsInitFieldObjects (
          * Ignore OFFSET/ACCESSAS/CONNECTION terms here; we are only interested
          * in the field names in order to enter them into the namespace.
          */
-        if (Arg->Common.AmlOpcode == AML_INT_NAMEDFIELD_OP)
+        if(Arg->Common.AmlOpcode == AML_INT_NAMEDFIELD_OP)
         {
             Status = AcpiNsLookup (WalkState->ScopeInfo,
                 (char *) &Arg->Named.Name, Type, ACPI_IMODE_LOAD_PASS1,
                 Flags, WalkState, &Node);
-            if (ACPI_FAILURE (Status))
+            if(ACPI_FAILURE (Status))
             {
                 ACPI_ERROR_NAMESPACE (WalkState->ScopeInfo,
                     (char *) &Arg->Named.Name, Status);
-                if (Status != AE_ALREADY_EXISTS)
+                if(Status != AE_ALREADY_EXISTS)
                 {
                     return_ACPI_STATUS (Status);
                 }
@@ -869,7 +869,7 @@ AcpiDsCreateBankField (
     /* First arg is the name of the parent OpRegion (must already exist) */
 
     Arg = Op->Common.Value.Arg;
-    if (!RegionNode)
+    if(!RegionNode)
     {
         Status = AcpiNsLookup (WalkState->ScopeInfo, Arg->Common.Value.Name,
             ACPI_TYPE_REGION, ACPI_IMODE_EXECUTE,
@@ -878,7 +878,7 @@ AcpiDsCreateBankField (
         Status = AcpiDsCreateExternalRegion (Status, Arg,
             Arg->Common.Value.Name, WalkState, &RegionNode);
 #endif
-        if (ACPI_FAILURE (Status))
+        if(ACPI_FAILURE (Status))
         {
             ACPI_ERROR_NAMESPACE (WalkState->ScopeInfo,
                 Arg->Common.Value.Name, Status);
@@ -892,7 +892,7 @@ AcpiDsCreateBankField (
     Status = AcpiNsLookup (WalkState->ScopeInfo, Arg->Common.Value.String,
         ACPI_TYPE_ANY, ACPI_IMODE_EXECUTE,
         ACPI_NS_SEARCH_PARENT, WalkState, &Info.RegisterNode);
-    if (ACPI_FAILURE (Status))
+    if(ACPI_FAILURE (Status))
     {
         ACPI_ERROR_NAMESPACE (WalkState->ScopeInfo,
             Arg->Common.Value.String, Status);
@@ -966,7 +966,7 @@ AcpiDsCreateIndexField (
     Status = AcpiNsLookup (WalkState->ScopeInfo, Arg->Common.Value.String,
         ACPI_TYPE_ANY, ACPI_IMODE_EXECUTE,
         ACPI_NS_SEARCH_PARENT, WalkState, &Info.RegisterNode);
-    if (ACPI_FAILURE (Status))
+    if(ACPI_FAILURE (Status))
     {
         ACPI_ERROR_NAMESPACE (WalkState->ScopeInfo,
             Arg->Common.Value.String, Status);
@@ -979,7 +979,7 @@ AcpiDsCreateIndexField (
     Status = AcpiNsLookup (WalkState->ScopeInfo, Arg->Common.Value.String,
         ACPI_TYPE_ANY, ACPI_IMODE_EXECUTE,
         ACPI_NS_SEARCH_PARENT, WalkState, &Info.DataRegisterNode);
-    if (ACPI_FAILURE (Status))
+    if(ACPI_FAILURE (Status))
     {
         ACPI_ERROR_NAMESPACE (WalkState->ScopeInfo,
             Arg->Common.Value.String, Status);

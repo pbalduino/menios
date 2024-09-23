@@ -159,7 +159,7 @@
 #define _COMPONENT          ACPI_EVENTS
         ACPI_MODULE_NAME    ("evsci")
 
-#if (!ACPI_REDUCED_HARDWARE) /* Entire module */
+#if(!ACPI_REDUCED_HARDWARE) /* Entire module */
 
 /* Local prototypes */
 
@@ -194,7 +194,7 @@ AcpiEvSciDispatch (
 
     /* Are there any host-installed SCI handlers? */
 
-    if (!AcpiGbl_SciHandlerList)
+    if(!AcpiGbl_SciHandlerList)
     {
         return (IntStatus);
     }
@@ -368,7 +368,7 @@ AcpiEvRemoveAllSciHandlers (
     Status = AcpiOsRemoveInterruptHandler ((UINT32) AcpiGbl_FADT.SciInterrupt,
         AcpiEvSciXruptHandler);
 
-    if (!AcpiGbl_SciHandlerList)
+    if(!AcpiGbl_SciHandlerList)
     {
         return (Status);
     }

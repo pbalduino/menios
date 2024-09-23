@@ -177,7 +177,7 @@
 
 /* Common application configuration. All single threaded except for AcpiExec. */
 
-#if (defined ACPI_ASL_COMPILER) || \
+#if(defined ACPI_ASL_COMPILER) || \
     (defined ACPI_BIN_APP)      || \
     (defined ACPI_DUMP_APP)     || \
     (defined ACPI_HELP_APP)     || \
@@ -225,7 +225,7 @@
 
 /* AcpiExec/AcpiNames/Example configuration. Native RSDP used. */
 
-#if (defined ACPI_EXEC_APP)     || \
+#if(defined ACPI_EXEC_APP)     || \
     (defined ACPI_EXAMPLE_APP)  || \
     (defined ACPI_NAMES_APP)
 #define ACPI_USE_NATIVE_RSDP_POINTER
@@ -239,7 +239,7 @@
 
 /* AcpiNames/Example configuration. Hardware disabled */
 
-#if (defined ACPI_EXAMPLE_APP)  || \
+#if(defined ACPI_EXAMPLE_APP)  || \
     (defined ACPI_NAMES_APP)
 #define ACPI_REDUCED_HARDWARE 1
 #endif

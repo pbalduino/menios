@@ -199,7 +199,7 @@ AcpiTbCompareTables (
 
     Status = AcpiTbAcquireTable (&AcpiGbl_RootTableList.Tables[TableIndex],
         &Table, &TableLength, &TableFlags);
-    if (ACPI_FAILURE (Status))
+    if(ACPI_FAILURE (Status))
     {
         return (FALSE);
     }
@@ -314,7 +314,7 @@ AcpiTbAcquireTable (
 
     /* Table is not valid yet */
 
-    if (!Table)
+    if(!Table)
     {
         return (AE_NO_MEMORY);
     }
@@ -400,10 +400,10 @@ AcpiTbAcquireTempTable (
 
         /* Get the length of the full table from the header */
 
-        if (!Table)
+        if(!Table)
         {
             Table = AcpiOsMapMemory (Address, sizeof (ACPI_TABLE_HEADER));
-            if (!Table)
+            if(!Table)
             {
                 return (AE_NO_MEMORY);
             }
@@ -416,7 +416,7 @@ AcpiTbAcquireTempTable (
     case ACPI_TABLE_ORIGIN_INTERNAL_VIRTUAL:
     case ACPI_TABLE_ORIGIN_EXTERNAL_VIRTUAL:
 
-        if (!Table)
+        if(!Table)
         {
             return (AE_BAD_PARAMETER);
         }
@@ -431,7 +431,7 @@ AcpiTbAcquireTempTable (
     }
 
     AcpiTbInitTableDescriptor (TableDesc, Address, Flags, Table);
-    if (MappedTable)
+    if(MappedTable)
     {
         AcpiOsUnmapMemory (Table, sizeof (ACPI_TABLE_HEADER));
     }
@@ -491,11 +491,11 @@ AcpiTbValidateTable (
 
     /* Validate the table if necessary */
 
-    if (!TableDesc->Pointer)
+    if(!TableDesc->Pointer)
     {
         Status = AcpiTbAcquireTable (TableDesc, &TableDesc->Pointer,
             &TableDesc->Length, &TableDesc->Flags);
-        if (!TableDesc->Pointer)
+        if(!TableDesc->Pointer)
         {
             Status = AE_NO_MEMORY;
         }
@@ -528,7 +528,7 @@ AcpiTbInvalidateTable (
 
     /* Table must be validated */
 
-    if (!TableDesc->Pointer)
+    if(!TableDesc->Pointer)
     {
         return_VOID;
     }
@@ -572,7 +572,7 @@ AcpiTbValidateTempTable (
     ACPI_TABLE_DESC         *TableDesc)
 {
 
-    if (!TableDesc->Pointer && !AcpiGbl_EnableTableValidation)
+    if(!TableDesc->Pointer && !AcpiGbl_EnableTableValidation)
     {
         /*
          * Only validates the header of the table.
@@ -623,7 +623,7 @@ AcpiTbCheckDuplication (
     {
         /* Do not compare with unverified tables */
 
-        if (!(AcpiGbl_RootTableList.Tables[i].Flags & ACPI_TABLE_IS_VERIFIED))
+        if(!(AcpiGbl_RootTableList.Tables[i].Flags & ACPI_TABLE_IS_VERIFIED))
         {
             continue;
         }
@@ -632,7 +632,7 @@ AcpiTbCheckDuplication (
          * Check for a table match on the entire table length,
          * not just the header.
          */
-        if (!AcpiTbCompareTables (TableDesc, i))
+        if(!AcpiTbCompareTables (TableDesc, i))
         {
             continue;
         }
@@ -651,7 +651,7 @@ AcpiTbCheckDuplication (
          * need to be unregistered when they are unloaded, and slots in the
          * root table list should be reused when empty.
          */
-        if (AcpiGbl_RootTableList.Tables[i].Flags &
+        if(AcpiGbl_RootTableList.Tables[i].Flags &
             ACPI_TABLE_IS_LOADED)
         {
             /* Table is still loaded, this is an error */
@@ -703,14 +703,14 @@ AcpiTbVerifyTempTable (
     /* Validate the table */
 
     Status = AcpiTbValidateTempTable (TableDesc);
-    if (ACPI_FAILURE (Status))
+    if(ACPI_FAILURE (Status))
     {
         return_ACPI_STATUS (AE_NO_MEMORY);
     }
 
     /* If a particular signature is expected (DSDT/FACS), it must match */
 
-    if (Signature &&
+    if(Signature &&
         !ACPI_COMPARE_NAMESEG (&TableDesc->Signature, Signature))
     {
         ACPI_BIOS_ERROR ((AE_INFO,
@@ -720,12 +720,12 @@ AcpiTbVerifyTempTable (
         goto InvalidateAndExit;
     }
 
-    if (AcpiGbl_EnableTableValidation)
+    if(AcpiGbl_EnableTableValidation)
     {
         /* Verify the checksum */
 
         Status = AcpiUtVerifyChecksum (TableDesc->Pointer, TableDesc->Length);
-        if (ACPI_FAILURE (Status))
+        if(ACPI_FAILURE (Status))
         {
             ACPI_EXCEPTION ((AE_INFO, AE_NO_MEMORY,
                 "%4.4s 0x%8.8X%8.8X"
@@ -739,12 +739,12 @@ AcpiTbVerifyTempTable (
 
         /* Avoid duplications */
 
-        if (TableIndex)
+        if(TableIndex)
         {
             Status = AcpiTbCheckDuplication (TableDesc, TableIndex);
-            if (ACPI_FAILURE (Status))
+            if(ACPI_FAILURE (Status))
             {
-                if (Status != AE_CTRL_TERMINATE)
+                if(Status != AE_CTRL_TERMINATE)
                 {
                     ACPI_EXCEPTION ((AE_INFO, Status,
                         "%4.4s 0x%8.8X%8.8X"
@@ -796,7 +796,7 @@ AcpiTbResizeRootTableList (
 
     /* AllowResize flag is a parameter to AcpiInitializeTables */
 
-    if (!(AcpiGbl_RootTableList.Flags & ACPI_ROOT_ALLOW_RESIZE))
+    if(!(AcpiGbl_RootTableList.Flags & ACPI_ROOT_ALLOW_RESIZE))
     {
         ACPI_ERROR ((AE_INFO, "Resize of Root Table Array is not allowed"));
         return_ACPI_STATUS (AE_SUPPORT);
@@ -804,7 +804,7 @@ AcpiTbResizeRootTableList (
 
     /* Increase the Table Array size */
 
-    if (AcpiGbl_RootTableList.Flags & ACPI_ROOT_ORIGIN_ALLOCATED)
+    if(AcpiGbl_RootTableList.Flags & ACPI_ROOT_ORIGIN_ALLOCATED)
     {
         TableCount = AcpiGbl_RootTableList.MaxTableCount;
     }
@@ -816,7 +816,7 @@ AcpiTbResizeRootTableList (
     MaxTableCount = TableCount + ACPI_ROOT_TABLE_SIZE_INCREMENT;
     Tables = ACPI_ALLOCATE_ZEROED (
         ((ACPI_SIZE) MaxTableCount) * sizeof (ACPI_TABLE_DESC));
-    if (!Tables)
+    if(!Tables)
     {
         ACPI_ERROR ((AE_INFO, "Could not allocate new root table array"));
         return_ACPI_STATUS (AE_NO_MEMORY);
@@ -825,11 +825,11 @@ AcpiTbResizeRootTableList (
     /* Copy and free the previous table array */
 
     CurrentTableCount = 0;
-    if (AcpiGbl_RootTableList.Tables)
+    if(AcpiGbl_RootTableList.Tables)
     {
         for (i = 0; i < TableCount; i++)
         {
-            if (AcpiGbl_RootTableList.Tables[i].Address)
+            if(AcpiGbl_RootTableList.Tables[i].Address)
             {
                 memcpy (Tables + CurrentTableCount,
                     AcpiGbl_RootTableList.Tables + i,
@@ -838,7 +838,7 @@ AcpiTbResizeRootTableList (
             }
         }
 
-        if (AcpiGbl_RootTableList.Flags & ACPI_ROOT_ORIGIN_ALLOCATED)
+        if(AcpiGbl_RootTableList.Flags & ACPI_ROOT_ORIGIN_ALLOCATED)
         {
             ACPI_FREE (AcpiGbl_RootTableList.Tables);
         }
@@ -877,11 +877,11 @@ AcpiTbGetNextTableDescriptor (
 
     /* Ensure that there is room for the table in the Root Table List */
 
-    if (AcpiGbl_RootTableList.CurrentTableCount >=
+    if(AcpiGbl_RootTableList.CurrentTableCount >=
         AcpiGbl_RootTableList.MaxTableCount)
     {
         Status = AcpiTbResizeRootTableList();
-        if (ACPI_FAILURE (Status))
+        if(ACPI_FAILURE (Status))
         {
             return (Status);
         }
@@ -890,11 +890,11 @@ AcpiTbGetNextTableDescriptor (
     i = AcpiGbl_RootTableList.CurrentTableCount;
     AcpiGbl_RootTableList.CurrentTableCount++;
 
-    if (TableIndex)
+    if(TableIndex)
     {
         *TableIndex = i;
     }
-    if (TableDesc)
+    if(TableDesc)
     {
         *TableDesc = &AcpiGbl_RootTableList.Tables[i];
     }
@@ -938,7 +938,7 @@ AcpiTbTerminate (
      * Delete the root table array if allocated locally. Array cannot be
      * mapped, so we don't need to check for that flag.
      */
-    if (AcpiGbl_RootTableList.Flags & ACPI_ROOT_ORIGIN_ALLOCATED)
+    if(AcpiGbl_RootTableList.Flags & ACPI_ROOT_ORIGIN_ALLOCATED)
     {
         ACPI_FREE (AcpiGbl_RootTableList.Tables);
     }
@@ -978,12 +978,12 @@ AcpiTbDeleteNamespaceByOwner (
 
 
     Status = AcpiUtAcquireMutex (ACPI_MTX_TABLES);
-    if (ACPI_FAILURE (Status))
+    if(ACPI_FAILURE (Status))
     {
         return_ACPI_STATUS (Status);
     }
 
-    if (TableIndex >= AcpiGbl_RootTableList.CurrentTableCount)
+    if(TableIndex >= AcpiGbl_RootTableList.CurrentTableCount)
     {
         /* The table index does not exist */
 
@@ -1004,7 +1004,7 @@ AcpiTbDeleteNamespaceByOwner (
      * must be allowed to use the interpreter.
      */
     Status = AcpiUtAcquireWriteLock (&AcpiGbl_NamespaceRwLock);
-    if (ACPI_FAILURE (Status))
+    if(ACPI_FAILURE (Status))
     {
         return_ACPI_STATUS (Status);
     }
@@ -1038,7 +1038,7 @@ AcpiTbAllocateOwnerId (
 
 
     (void) AcpiUtAcquireMutex (ACPI_MTX_TABLES);
-    if (TableIndex < AcpiGbl_RootTableList.CurrentTableCount)
+    if(TableIndex < AcpiGbl_RootTableList.CurrentTableCount)
     {
         Status = AcpiUtAllocateOwnerId (
             &(AcpiGbl_RootTableList.Tables[TableIndex].OwnerId));
@@ -1072,7 +1072,7 @@ AcpiTbReleaseOwnerId (
 
 
     (void) AcpiUtAcquireMutex (ACPI_MTX_TABLES);
-    if (TableIndex < AcpiGbl_RootTableList.CurrentTableCount)
+    if(TableIndex < AcpiGbl_RootTableList.CurrentTableCount)
     {
         AcpiUtReleaseOwnerId (
             &(AcpiGbl_RootTableList.Tables[TableIndex].OwnerId));
@@ -1109,7 +1109,7 @@ AcpiTbGetOwnerId (
 
 
     (void) AcpiUtAcquireMutex (ACPI_MTX_TABLES);
-    if (TableIndex < AcpiGbl_RootTableList.CurrentTableCount)
+    if(TableIndex < AcpiGbl_RootTableList.CurrentTableCount)
     {
         *OwnerId = AcpiGbl_RootTableList.Tables[TableIndex].OwnerId;
         Status = AE_OK;
@@ -1138,7 +1138,7 @@ AcpiTbIsTableLoaded (
 
 
     (void) AcpiUtAcquireMutex (ACPI_MTX_TABLES);
-    if (TableIndex < AcpiGbl_RootTableList.CurrentTableCount)
+    if(TableIndex < AcpiGbl_RootTableList.CurrentTableCount)
     {
         IsLoaded = (BOOLEAN)
             (AcpiGbl_RootTableList.Tables[TableIndex].Flags &
@@ -1170,9 +1170,9 @@ AcpiTbSetTableLoadedFlag (
 {
 
     (void) AcpiUtAcquireMutex (ACPI_MTX_TABLES);
-    if (TableIndex < AcpiGbl_RootTableList.CurrentTableCount)
+    if(TableIndex < AcpiGbl_RootTableList.CurrentTableCount)
     {
-        if (IsLoaded)
+        if(IsLoaded)
         {
             AcpiGbl_RootTableList.Tables[TableIndex].Flags |=
                 ACPI_TABLE_IS_LOADED;
@@ -1219,13 +1219,13 @@ AcpiTbLoadTable (
      * using.
      */
     Status = AcpiGetTableByIndex (TableIndex, &Table);
-    if (ACPI_FAILURE (Status))
+    if(ACPI_FAILURE (Status))
     {
         return_ACPI_STATUS (Status);
     }
 
     Status = AcpiNsLoadTable (TableIndex, ParentNode);
-    if (ACPI_FAILURE (Status))
+    if(ACPI_FAILURE (Status))
     {
         return_ACPI_STATUS (Status);
     }
@@ -1236,7 +1236,7 @@ AcpiTbLoadTable (
      * that may have been loaded by this table.
      */
     Status = AcpiTbGetOwnerId (TableIndex, &OwnerId);
-    if (ACPI_SUCCESS (Status))
+    if(ACPI_SUCCESS (Status))
     {
         AcpiEvUpdateGpes (OwnerId);
     }
@@ -1285,7 +1285,7 @@ AcpiTbInstallAndLoadTable (
 
     Status = AcpiTbInstallStandardTable (Address, Flags, Table, TRUE,
         Override, &i);
-    if (ACPI_FAILURE (Status))
+    if(ACPI_FAILURE (Status))
     {
         goto Exit;
     }
@@ -1323,7 +1323,7 @@ AcpiTbUnloadTable (
 
     /* Ensure the table is still loaded */
 
-    if (!AcpiTbIsTableLoaded (TableIndex))
+    if(!AcpiTbIsTableLoaded (TableIndex))
     {
         return_ACPI_STATUS (AE_NOT_EXIST);
     }
@@ -1331,7 +1331,7 @@ AcpiTbUnloadTable (
     /* Invoke table handler */
 
     Status = AcpiGetTableByIndex (TableIndex, &Table);
-    if (ACPI_SUCCESS (Status))
+    if(ACPI_SUCCESS (Status))
     {
         AcpiTbNotifyTable (ACPI_TABLE_EVENT_UNLOAD, Table);
     }
@@ -1339,7 +1339,7 @@ AcpiTbUnloadTable (
     /* Delete the portion of the namespace owned by this table */
 
     Status = AcpiTbDeleteNamespaceByOwner (TableIndex);
-    if (ACPI_FAILURE (Status))
+    if(ACPI_FAILURE (Status))
     {
         return_ACPI_STATUS (Status);
     }
@@ -1370,7 +1370,7 @@ AcpiTbNotifyTable (
 {
     /* Invoke table handler if present */
 
-    if (AcpiGbl_TableHandler)
+    if(AcpiGbl_TableHandler)
     {
         (void) AcpiGbl_TableHandler (Event, Table,
             AcpiGbl_TableHandlerContext);

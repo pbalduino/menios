@@ -184,12 +184,12 @@ AcpiExSystemWaitSemaphore (
 
 
     Status = AcpiOsWaitSemaphore (Semaphore, 1, ACPI_DO_NOT_WAIT);
-    if (ACPI_SUCCESS (Status))
+    if(ACPI_SUCCESS (Status))
     {
         return_ACPI_STATUS (Status);
     }
 
-    if (Status == AE_TIME)
+    if(Status == AE_TIME)
     {
         /* We must wait, so unlock the interpreter */
 
@@ -236,12 +236,12 @@ AcpiExSystemWaitMutex (
 
 
     Status = AcpiOsAcquireMutex (Mutex, ACPI_DO_NOT_WAIT);
-    if (ACPI_SUCCESS (Status))
+    if(ACPI_SUCCESS (Status))
     {
         return_ACPI_STATUS (Status);
     }
 
-    if (Status == AE_TIME)
+    if(Status == AE_TIME)
     {
         /* We must wait, so unlock the interpreter */
 
@@ -288,7 +288,7 @@ AcpiExSystemDoStall (
     ACPI_FUNCTION_ENTRY ();
 
 
-    if (HowLongUs > 255)
+    if(HowLongUs > 255)
     {
         /*
          * Longer than 255 microseconds, this is an error
@@ -302,7 +302,7 @@ AcpiExSystemDoStall (
     }
     else
     {
-        if (HowLongUs > 100)
+        if(HowLongUs > 100)
         {
             ACPI_WARNING_ONCE ((AE_INFO,
                 "Time parameter %u us > 100 us violating ACPI spec, please fix the firmware.", HowLongUs));
@@ -342,7 +342,7 @@ AcpiExSystemDoSleep (
      * For compatibility with other ACPI implementations and to prevent
      * accidental deep sleeps, limit the sleep time to something reasonable.
      */
-    if (HowLongMs > ACPI_MAX_SLEEP)
+    if(HowLongMs > ACPI_MAX_SLEEP)
     {
         HowLongMs = ACPI_MAX_SLEEP;
     }
@@ -379,7 +379,7 @@ AcpiExSystemSignalEvent (
     ACPI_FUNCTION_TRACE (ExSystemSignalEvent);
 
 
-    if (ObjDesc)
+    if(ObjDesc)
     {
         Status = AcpiOsSignalSemaphore (ObjDesc->Event.OsSemaphore, 1);
     }
@@ -414,7 +414,7 @@ AcpiExSystemWaitEvent (
     ACPI_FUNCTION_TRACE (ExSystemWaitEvent);
 
 
-    if (ObjDesc)
+    if(ObjDesc)
     {
         Status = AcpiExSystemWaitSemaphore (ObjDesc->Event.OsSemaphore,
             (UINT16) TimeDesc->Integer.Value);
@@ -452,7 +452,7 @@ AcpiExSystemResetEvent (
      * create a new one!
      */
     Status = AcpiOsCreateSemaphore (ACPI_NO_UNIT_LIMIT, 0, &TempSemaphore);
-    if (ACPI_SUCCESS (Status))
+    if(ACPI_SUCCESS (Status))
     {
         (void) AcpiOsDeleteSemaphore (ObjDesc->Event.OsSemaphore);
         ObjDesc->Event.OsSemaphore = TempSemaphore;

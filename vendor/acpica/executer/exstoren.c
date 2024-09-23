@@ -208,12 +208,12 @@ AcpiExResolveObject (
          * are all essentially the same. This case handles the
          * "interchangeable" types Integer, String, and Buffer.
          */
-        if (SourceDesc->Common.Type == ACPI_TYPE_LOCAL_REFERENCE)
+        if(SourceDesc->Common.Type == ACPI_TYPE_LOCAL_REFERENCE)
         {
             /* Resolve a reference object first */
 
             Status = AcpiExResolveToValue (SourceDescPtr, WalkState);
-            if (ACPI_FAILURE (Status))
+            if(ACPI_FAILURE (Status))
             {
                 break;
             }
@@ -221,14 +221,14 @@ AcpiExResolveObject (
 
         /* For CopyObject, no further validation necessary */
 
-        if (WalkState->Opcode == AML_COPY_OBJECT_OP)
+        if(WalkState->Opcode == AML_COPY_OBJECT_OP)
         {
             break;
         }
 
         /* Must have a Integer, Buffer, or String */
 
-        if ((SourceDesc->Common.Type != ACPI_TYPE_INTEGER)    &&
+        if((SourceDesc->Common.Type != ACPI_TYPE_INTEGER)    &&
             (SourceDesc->Common.Type != ACPI_TYPE_BUFFER)     &&
             (SourceDesc->Common.Type != ACPI_TYPE_STRING)     &&
             !((SourceDesc->Common.Type == ACPI_TYPE_LOCAL_REFERENCE) &&
@@ -318,7 +318,7 @@ AcpiExStoreObjectToObject (
 
 
     ActualSrcDesc = SourceDesc;
-    if (!DestDesc)
+    if(!DestDesc)
     {
         /*
          * There is no destination object (An uninitialized node or
@@ -329,7 +329,7 @@ AcpiExStoreObjectToObject (
         return_ACPI_STATUS (Status);
     }
 
-    if (SourceDesc->Common.Type != DestDesc->Common.Type)
+    if(SourceDesc->Common.Type != DestDesc->Common.Type)
     {
         /*
          * The source type does not match the type of the destination.
@@ -342,12 +342,12 @@ AcpiExStoreObjectToObject (
          */
         Status = AcpiExConvertToTargetType (DestDesc->Common.Type,
             SourceDesc, &ActualSrcDesc, WalkState);
-        if (ACPI_FAILURE (Status))
+        if(ACPI_FAILURE (Status))
         {
             return_ACPI_STATUS (Status);
         }
 
-        if (SourceDesc == ActualSrcDesc)
+        if(SourceDesc == ActualSrcDesc)
         {
             /*
              * No conversion was performed. Return the SourceDesc as the
@@ -400,7 +400,7 @@ AcpiExStoreObjectToObject (
         break;
     }
 
-    if (ActualSrcDesc != SourceDesc)
+    if(ActualSrcDesc != SourceDesc)
     {
         /* Delete the intermediate (temporary) source object */
 

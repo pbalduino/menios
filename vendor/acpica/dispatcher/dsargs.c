@@ -203,7 +203,7 @@ AcpiDsExecuteArguments (
     /* Allocate a new parser op to be the root of the parsed tree */
 
     Op = AcpiPsAllocOp (AML_INT_EVAL_SUBTREE_OP, AmlStart);
-    if (!Op)
+    if(!Op)
     {
         return_ACPI_STATUS (AE_NO_MEMORY);
     }
@@ -215,7 +215,7 @@ AcpiDsExecuteArguments (
     /* Create and initialize a new parser state */
 
     WalkState = AcpiDsCreateWalkState (0, NULL, NULL, NULL);
-    if (!WalkState)
+    if(!WalkState)
     {
         Status = AE_NO_MEMORY;
         goto Cleanup;
@@ -223,7 +223,7 @@ AcpiDsExecuteArguments (
 
     Status = AcpiDsInitAmlWalk (WalkState, Op, NULL, AmlStart,
         AmlLength, NULL, ACPI_IMODE_LOAD_PASS1);
-    if (ACPI_FAILURE (Status))
+    if(ACPI_FAILURE (Status))
     {
         AcpiDsDeleteWalkState (WalkState);
         goto Cleanup;
@@ -237,7 +237,7 @@ AcpiDsExecuteArguments (
     /* Pass1: Parse the entire declaration */
 
     Status = AcpiPsParseAml (WalkState);
-    if (ACPI_FAILURE (Status))
+    if(ACPI_FAILURE (Status))
     {
         goto Cleanup;
     }
@@ -250,7 +250,7 @@ AcpiDsExecuteArguments (
     /* Evaluate the deferred arguments */
 
     Op = AcpiPsAllocOp (AML_INT_EVAL_SUBTREE_OP, AmlStart);
-    if (!Op)
+    if(!Op)
     {
         return_ACPI_STATUS (AE_NO_MEMORY);
     }
@@ -260,7 +260,7 @@ AcpiDsExecuteArguments (
     /* Create and initialize a new parser state */
 
     WalkState = AcpiDsCreateWalkState (0, NULL, NULL, NULL);
-    if (!WalkState)
+    if(!WalkState)
     {
         Status = AE_NO_MEMORY;
         goto Cleanup;
@@ -270,7 +270,7 @@ AcpiDsExecuteArguments (
 
     Status = AcpiDsInitAmlWalk (WalkState, Op, NULL, AmlStart,
         AmlLength, NULL, ACPI_IMODE_EXECUTE);
-    if (ACPI_FAILURE (Status))
+    if(ACPI_FAILURE (Status))
     {
         AcpiDsDeleteWalkState (WalkState);
         goto Cleanup;
@@ -312,7 +312,7 @@ AcpiDsGetBufferFieldArguments (
     ACPI_FUNCTION_TRACE_PTR (DsGetBufferFieldArguments, ObjDesc);
 
 
-    if (ObjDesc->Common.Flags & AOPOBJ_DATA_VALID)
+    if(ObjDesc->Common.Flags & AOPOBJ_DATA_VALID)
     {
         return_ACPI_STATUS (AE_OK);
     }
@@ -361,7 +361,7 @@ AcpiDsGetBankFieldArguments (
     ACPI_FUNCTION_TRACE_PTR (DsGetBankFieldArguments, ObjDesc);
 
 
-    if (ObjDesc->Common.Flags & AOPOBJ_DATA_VALID)
+    if(ObjDesc->Common.Flags & AOPOBJ_DATA_VALID)
     {
         return_ACPI_STATUS (AE_OK);
     }
@@ -409,7 +409,7 @@ AcpiDsGetBufferArguments (
     ACPI_FUNCTION_TRACE_PTR (DsGetBufferArguments, ObjDesc);
 
 
-    if (ObjDesc->Common.Flags & AOPOBJ_DATA_VALID)
+    if(ObjDesc->Common.Flags & AOPOBJ_DATA_VALID)
     {
         return_ACPI_STATUS (AE_OK);
     }
@@ -417,7 +417,7 @@ AcpiDsGetBufferArguments (
     /* Get the Buffer node */
 
     Node = ObjDesc->Buffer.Node;
-    if (!Node)
+    if(!Node)
     {
         ACPI_ERROR ((AE_INFO,
             "No pointer back to namespace node in buffer object %p",
@@ -459,7 +459,7 @@ AcpiDsGetPackageArguments (
     ACPI_FUNCTION_TRACE_PTR (DsGetPackageArguments, ObjDesc);
 
 
-    if (ObjDesc->Common.Flags & AOPOBJ_DATA_VALID)
+    if(ObjDesc->Common.Flags & AOPOBJ_DATA_VALID)
     {
         return_ACPI_STATUS (AE_OK);
     }
@@ -467,7 +467,7 @@ AcpiDsGetPackageArguments (
     /* Get the Package node */
 
     Node = ObjDesc->Package.Node;
-    if (!Node)
+    if(!Node)
     {
         ACPI_ERROR ((AE_INFO,
             "No pointer back to namespace node in package %p", ObjDesc));
@@ -511,13 +511,13 @@ AcpiDsGetRegionArguments (
     ACPI_FUNCTION_TRACE_PTR (DsGetRegionArguments, ObjDesc);
 
 
-    if (ObjDesc->Region.Flags & AOPOBJ_DATA_VALID)
+    if(ObjDesc->Region.Flags & AOPOBJ_DATA_VALID)
     {
         return_ACPI_STATUS (AE_OK);
     }
 
     ExtraDesc = AcpiNsGetSecondaryObject (ObjDesc);
-    if (!ExtraDesc)
+    if(!ExtraDesc)
     {
         return_ACPI_STATUS (AE_NOT_EXIST);
     }
@@ -537,7 +537,7 @@ AcpiDsGetRegionArguments (
 
     Status = AcpiDsExecuteArguments (Node, ExtraDesc->Extra.ScopeNode,
         ExtraDesc->Extra.AmlLength, ExtraDesc->Extra.AmlStart);
-    if (ACPI_FAILURE (Status))
+    if(ACPI_FAILURE (Status))
     {
         return_ACPI_STATUS (Status);
     }

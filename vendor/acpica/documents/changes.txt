@@ -837,7 +837,7 @@ required that _NIH must be called with one parameter and _NIG requires
 zero parameters.
 
 iASL: Allow use of undefined externals as long as they are protected by 
-an if (CondRefOf (...)) block when compiling multiple definition blocks.
+an if(CondRefOf (...)) block when compiling multiple definition blocks.
 
 iASL: Fixed the type override behavior of named objects that are declared 
 as External. External declarations will no longer override the type of 
@@ -1947,7 +1947,7 @@ list would link together all nodes that are owned by an individual
 control method. The purpose would be to enhance control method execution 
 by speeding up cleanup during method exit (all namespace nodes created by 
 a method are deleted upon method termination.) Currently, the entire 
-namespace must be searched for matching owner IDs if (and only if) the 
+namespace must be searched for matching owner IDs if(and only if) the 
 method creates named objects outside of the local scope. However, by far 
 the most common case is that methods create objects locally, not outside 
 the method scope. There is already an ACPICA optimization in place that 
@@ -2456,7 +2456,7 @@ compatibility with other ACPI implementations and supports existing
 firmware that depends on this feature. Example:
 
     Name (ABCD, 1)
-    If (ABCD)                       /* An If() at module-level */
+    if(ABCD)                       /* An If() at module-level */
     {
         Name (PKG1, Package()
         {
@@ -3614,7 +3614,7 @@ fully supported by ACPICA.
         {
             FLD1, 1
         }
-        If (FLD1)
+        if(FLD1)
         {
             Device (\DEV1)
             {
@@ -3697,14 +3697,14 @@ closely follows the original source ASL. ACPICA BZ 1211. Example:
     Old disassembly:
         Else
         {
-            If (Arg0 == 0x02)
+            if(Arg0 == 0x02)
             {
                 Local0 = 0x05
             }
         }
 
     New disassembly:
-        ElseIf (Arg0 == 0x02)
+        Elseif(Arg0 == 0x02)
         {
             Local0 = 0x05
         }
@@ -4493,7 +4493,7 @@ X ^= Y          Xor (X, Y, X)
 -----------------
 
 Legacy ASL:
-        If (LOr (LOr (LEqual (And (R510, 0x03FB), 0x02E0), LEqual (
+        if(LOr (LOr (LEqual (And (R510, 0x03FB), 0x02E0), LEqual (
             And (R520, 0x03FB), 0x02E0)), LOr (LEqual (And (R530, 
 0x03FB), 
             0x02E0), LEqual (And (R540, 0x03FB), 0x02E0))))
@@ -4507,7 +4507,7 @@ Legacy ASL:
         }
 
 ASL+ version:
-        If (((R510 & 0x03FB) == 0x02E0) ||
+        if(((R510 & 0x03FB) == 0x02E0) ||
             ((R520 & 0x03FB) == 0x02E0) ||
             ((R530 & 0x03FB) == 0x02E0) || 
             ((R540 & 0x03FB) == 0x02E0))

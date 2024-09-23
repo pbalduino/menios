@@ -190,13 +190,13 @@ AcpiUtDumpBuffer (
 
 
     Display &= ~DB_DISPLAY_DATA_ONLY;
-    if (!Buffer)
+    if(!Buffer)
     {
         AcpiOsPrintf ("Null Buffer Pointer in DumpBuffer!\n");
         return;
     }
 
-    if ((Count < 4) || (Count & 0x01))
+    if((Count < 4) || (Count & 0x01))
     {
         Display = DB_BYTE_DISPLAY;
     }
@@ -207,7 +207,7 @@ AcpiUtDumpBuffer (
     {
         /* Print current offset */
 
-        if (!DisplayDataOnly)
+        if(!DisplayDataOnly)
         {
             AcpiOsPrintf ("%8.4X: ", (BaseOffset + i));
         }
@@ -216,7 +216,7 @@ AcpiUtDumpBuffer (
 
         for (j = 0; j < 16;)
         {
-            if (i + j >= Count)
+            if(i + j >= Count)
             {
                 /* Dump fill spaces */
 
@@ -262,12 +262,12 @@ AcpiUtDumpBuffer (
          * Print the ASCII equivalent characters but watch out for the bad
          * unprintable ones (printable chars are 0x20 through 0x7E)
          */
-        if (!DisplayDataOnly)
+        if(!DisplayDataOnly)
         {
             AcpiOsPrintf (" ");
             for (j = 0; j < 16; j++)
             {
-                if (i + j >= Count)
+                if(i + j >= Count)
                 {
                     AcpiOsPrintf ("\n");
                     return;
@@ -277,13 +277,13 @@ AcpiUtDumpBuffer (
                  * Add comment characters so rest of line is ignored when
                  * compiled
                  */
-                if (j == 0)
+                if(j == 0)
                 {
                     AcpiOsPrintf ("// ");
                 }
 
                 BufChar = Buffer[(ACPI_SIZE) i + j];
-                if (isprint (BufChar))
+                if(isprint (BufChar))
                 {
                     AcpiOsPrintf ("%c", BufChar);
                 }
@@ -333,7 +333,7 @@ AcpiUtDebugDumpBuffer (
 
     /* Only dump the buffer if tracing is enabled */
 
-    if (!((ACPI_LV_TABLES & AcpiDbgLevel) &&
+    if(!((ACPI_LV_TABLES & AcpiDbgLevel) &&
         (ComponentId & AcpiDbgLayer)))
     {
         return;
@@ -378,13 +378,13 @@ AcpiUtDumpBufferToFile (
     UINT8                   BufChar;
 
 
-    if (!Buffer)
+    if(!Buffer)
     {
         fprintf (File, "Null Buffer Pointer in DumpBuffer!\n");
         return;
     }
 
-    if ((Count < 4) || (Count & 0x01))
+    if((Count < 4) || (Count & 0x01))
     {
         Display = DB_BYTE_DISPLAY;
     }
@@ -401,7 +401,7 @@ AcpiUtDumpBufferToFile (
 
         for (j = 0; j < 16;)
         {
-            if (i + j >= Count)
+            if(i + j >= Count)
             {
                 /* Dump fill spaces */
 
@@ -450,14 +450,14 @@ AcpiUtDumpBufferToFile (
         fprintf (File, " ");
         for (j = 0; j < 16; j++)
         {
-            if (i + j >= Count)
+            if(i + j >= Count)
             {
                 fprintf (File, "\n");
                 return;
             }
 
             BufChar = Buffer[(ACPI_SIZE) i + j];
-            if (isprint (BufChar))
+            if(isprint (BufChar))
             {
                 fprintf (File, "%c", BufChar);
             }

@@ -8,12 +8,24 @@ GCC_DIR = /usr/bin
 LIB_DIR = src/libc
 CINCLUDE = \
 	-I./include \
-	-I./vendor/acpica/include
+	-I../../include \
+	-I./vendor/acpica/include \
+	-I../../vendor/acpica/include
 
 OUTPUT_DIR = bin
 KERNEL_DIR = src/kernel
 
 KERNEL = $(OUTPUT_DIR)/kernel.elf
+
+OBJDIR         = ./obj
+LIBDIR         = lib
+LIB_ACPICA_OBJ = $(OBJDIR)/acpica
+KERNEL_OBJ     = $(OBJDIR)/kernel
+
+LIB_ACPICA = $(LIBDIR)/libacpica.a
+
+SRCS = $(shell find -L src -type f -name '*.c')
+OBJS = $(patsubst src/%.c, $(OBJDIR)/%.o, $(SRCS))
 
 override CFLAGS += \
     -Wall \
@@ -26,7 +38,6 @@ override CFLAGS += \
     -fno-stack-protector \
     -fno-stack-check \
     -fno-lto \
-    -fPIE \
     -m64 \
     -march=x86-64 \
     -mno-80387 \
@@ -45,16 +56,16 @@ override CPPFLAGS := \
     -MMD \
     -MP
 
-
 override LDFLAGS += \
-    -nostdlib \
     -static \
-    -pie \
-    -z text \
-    -z max-page-size=0x1000 \
-    -m elf_x86_64 \
 		--no-dynamic-linker \
-    -T linker.ld
+		-L$(LIBDIR) \
+		-z noexecstack \
+    -T linker.ld \
+    -m elf_x86_64 \
+    -nostdlib \
+    -z max-page-size=0x1000 \
+    -z text
 
 override NASMFLAGS += \
     -Wall \
@@ -73,10 +84,6 @@ QEMU_X86 = qemu-system-amd64
 QEMU_OPTS = -smp cpus=4,cores=2,sockets=2 -hda $(BOOTLOADER) -m $(QEMU_MEMORY) -no-reboot -no-shutdown
 
 OS_NAME = $(shell uname -s | tr A-Z a-z)
-
-.PHONY: acpica
-acpica:
-	$(DOCKER) run --rm -it --mount type=bind,source=$$(pwd)/vendor/acpica,target=/mnt $(DOCKER_IMAGE) /bin/sh -c "cd /mnt && make"
 
 .PHONY: clean
 all: build
@@ -99,19 +106,53 @@ else
 	@echo "The Docker image for meniOS already exists"
 endif
 
+.PHONY: build_acpica
+build_acpica:
+	@set -eux
+
+ifneq ($(wildcard $(LIB_ACPICA)),)
+	@echo Found $(LIB_ACPICA)
+else
+ifeq ($(OS_NAME),linux)
+	@echo Building $(LIB_ACPICA)
+
+	for file in $(shell find -L vendor/acpica -type f -name '*.c'); do \
+		($(GCC) $(GCC_KERNEL_OPTS) $$file) || exit ; \
+	done;
+
+	ar rcs $(LIB_ACPICA) $(shell find -L . -type f -name 'ds*.o') $(shell find -L . -type f -name 'ev*.o') $(shell find -L . -type f -name 'ex*.o') $(shell find -L . -type f -name 'hw*.o') $(shell find -L . -type f -name 'ns*.o') $(shell find -L . -type f -name 'ps*.o') $(shell find -L . -type f -name 'tb*.o') $(shell find -L . -type f -name 'ut*.o') $(shell find -L . -type f -name 'menios.o')
+
+	mv *.o $(LIB_ACPICA_OBJ)
+	mv *.a $(LIB_ACPICA)
+
+else
+	@make docker
+	@echo "Building acpica inside Docker"
+	$(DOCKER) run --rm -it --mount type=bind,source=$$(pwd),target=/mnt $(DOCKER_IMAGE) /bin/sh -c "cd /mnt && make build_acpica"
+endif
+
+endif
+
 .PHONY: build
-build:
-	set -eux
+build: build_acpica
+	@set -eux
 
 ifeq ($(OS_NAME),linux)
 	@echo Building kernel
-	$(GCC) $(GCC_KERNEL_OPTS) $(shell find -L src vendor/acpica -type f -name '*.c')
 
-	for file in $(shell find -L . -type f -name '*.s'); do \
+	for file in $(shell find -L src -type f -name '*.c'); do \
+		($(GCC) $(GCC_KERNEL_OPTS) $$file) || exit ; \
+	done;
+
+	for file in $(shell find -L src/kernel -type f -name '*.s'); do \
 		$(NASM) -f elf64 $$file ; \
 	done;
+
+	mv *.o $(KERNEL_OBJ)
+	mv $(KERNEL_DIR)/*.o $(KERNEL_OBJ)
 	
-	$(LD) $(LDFLAGS) -o $(KERNEL) $(shell find -L . -type f -name '*.o')
+	$(LD) $(LDFLAGS) -o $(KERNEL) $(shell find -L obj/kernel -type f -name '*.o') -lacpica 
+# $(shell find -L obj/acpica -type f -name '*.o')
 	@echo Building image
 	rm -f $(IMAGE_NAME).hdd
 	dd if=/dev/zero bs=1M count=0 seek=64 of=$(IMAGE_NAME).hdd

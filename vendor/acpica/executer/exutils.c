@@ -206,12 +206,12 @@ AcpiExEnterInterpreter (
 
 
     Status = AcpiUtAcquireMutex (ACPI_MTX_INTERPRETER);
-    if (ACPI_FAILURE (Status))
+    if(ACPI_FAILURE (Status))
     {
         ACPI_ERROR ((AE_INFO, "Could not acquire AML Interpreter mutex"));
     }
     Status = AcpiUtAcquireMutex (ACPI_MTX_NAMESPACE);
-    if (ACPI_FAILURE (Status))
+    if(ACPI_FAILURE (Status))
     {
         ACPI_ERROR ((AE_INFO, "Could not acquire AML Namespace mutex"));
     }
@@ -254,12 +254,12 @@ AcpiExExitInterpreter (
 
 
     Status = AcpiUtReleaseMutex (ACPI_MTX_NAMESPACE);
-    if (ACPI_FAILURE (Status))
+    if(ACPI_FAILURE (Status))
     {
         ACPI_ERROR ((AE_INFO, "Could not release AML Namespace mutex"));
     }
     Status = AcpiUtReleaseMutex (ACPI_MTX_INTERPRETER);
-    if (ACPI_FAILURE (Status))
+    if(ACPI_FAILURE (Status))
     {
         ACPI_ERROR ((AE_INFO, "Could not release AML Interpreter mutex"));
     }
@@ -293,14 +293,14 @@ AcpiExTruncateFor32bitTable (
      * Object must be a valid number and we must be executing
      * a control method. Object could be NS node for AML_INT_NAMEPATH_OP.
      */
-    if ((!ObjDesc) ||
+    if((!ObjDesc) ||
         (ACPI_GET_DESCRIPTOR_TYPE (ObjDesc) != ACPI_DESC_TYPE_OPERAND) ||
         (ObjDesc->Common.Type != ACPI_TYPE_INTEGER))
     {
         return (FALSE);
     }
 
-    if ((AcpiGbl_IntegerByteWidth == 4) &&
+    if((AcpiGbl_IntegerByteWidth == 4) &&
         (ObjDesc->Integer.Value > (UINT64) ACPI_UINT32_MAX))
     {
         /*
@@ -341,7 +341,7 @@ AcpiExAcquireGlobalLock (
 
     /* Only use the lock if the AlwaysLock bit is set */
 
-    if (!(FieldFlags & AML_FIELD_LOCK_RULE_MASK))
+    if(!(FieldFlags & AML_FIELD_LOCK_RULE_MASK))
     {
         return_VOID;
     }
@@ -351,7 +351,7 @@ AcpiExAcquireGlobalLock (
     Status = AcpiExAcquireMutexObject (ACPI_WAIT_FOREVER,
         AcpiGbl_GlobalLockMutex, AcpiOsGetThreadId ());
 
-    if (ACPI_FAILURE (Status))
+    if(ACPI_FAILURE (Status))
     {
         ACPI_EXCEPTION ((AE_INFO, Status,
             "Could not acquire Global Lock"));
@@ -386,7 +386,7 @@ AcpiExReleaseGlobalLock (
 
     /* Only use the lock if the AlwaysLock bit is set */
 
-    if (!(FieldFlags & AML_FIELD_LOCK_RULE_MASK))
+    if(!(FieldFlags & AML_FIELD_LOCK_RULE_MASK))
     {
         return_VOID;
     }
@@ -394,7 +394,7 @@ AcpiExReleaseGlobalLock (
     /* Release the global lock */
 
     Status = AcpiExReleaseMutexObject (AcpiGbl_GlobalLockMutex);
-    if (ACPI_FAILURE (Status))
+    if(ACPI_FAILURE (Status))
     {
         /* Report the error, but there isn't much else we can do */
 
@@ -434,7 +434,7 @@ AcpiExDigitsNeeded (
 
     /* UINT64 is unsigned, so we don't worry about a '-' prefix */
 
-    if (Value == 0)
+    if(Value == 0)
     {
         return_UINT32 (1);
     }
@@ -483,7 +483,7 @@ AcpiExEisaIdToString (
 
     /* The EISAID should be a 32-bit integer */
 
-    if (CompressedId > ACPI_UINT32_MAX)
+    if(CompressedId > ACPI_UINT32_MAX)
     {
         ACPI_WARNING ((AE_INFO,
             "Expected EISAID is larger than 32 bits: "
@@ -603,7 +603,7 @@ AcpiIsValidSpaceId (
     UINT8                   SpaceId)
 {
 
-    if ((SpaceId >= ACPI_NUM_PREDEFINED_REGIONS) &&
+    if((SpaceId >= ACPI_NUM_PREDEFINED_REGIONS) &&
         (SpaceId < ACPI_USER_REGION_BEGIN) &&
         (SpaceId != ACPI_ADR_SPACE_DATA_TABLE) &&
         (SpaceId != ACPI_ADR_SPACE_FIXED_HARDWARE))

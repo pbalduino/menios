@@ -190,7 +190,7 @@ AcpiUtVerifyChecksum (
      * FACS/S3PT:
      * They are the odd tables, have no standard ACPI header and no checksum
      */
-    if (ACPI_COMPARE_NAMESEG (Table->Signature, ACPI_SIG_S3PT) ||
+    if(ACPI_COMPARE_NAMESEG (Table->Signature, ACPI_SIG_S3PT) ||
         ACPI_COMPARE_NAMESEG (Table->Signature, ACPI_SIG_FACS))
     {
         return (AE_OK);
@@ -203,7 +203,7 @@ AcpiUtVerifyChecksum (
 
     /* Computed checksum matches table? */
 
-    if (Checksum != Table->Checksum)
+    if(Checksum != Table->Checksum)
     {
         ACPI_BIOS_WARNING ((AE_INFO,
             "Incorrect checksum in table [%4.4s] - 0x%2.2X, "
@@ -211,7 +211,7 @@ AcpiUtVerifyChecksum (
             Table->Signature, Table->Checksum,
             Table->Checksum - Checksum));
 
-#if (ACPI_CHECKSUM_ABORT)
+#if(ACPI_CHECKSUM_ABORT)
         return (AE_BAD_CHECKSUM);
 #endif
     }
@@ -249,14 +249,14 @@ AcpiUtVerifyCdatChecksum (
 
     /* Computed checksum matches table? */
 
-    if (Checksum != CdatTable->Checksum)
+    if(Checksum != CdatTable->Checksum)
     {
         ACPI_BIOS_WARNING ((AE_INFO,
             "Incorrect checksum in table [%4.4s] - 0x%2.2X, "
             "should be 0x%2.2X",
             AcpiGbl_CDAT, CdatTable->Checksum, Checksum));
 
-#if (ACPI_CHECKSUM_ABORT)
+#if(ACPI_CHECKSUM_ABORT)
         return (AE_BAD_CHECKSUM);
 #endif
     }
