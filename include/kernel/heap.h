@@ -12,6 +12,12 @@ extern "C" {
 #define HEAP_USED    1
 #define HEAP_MAGIC  0x534f6d00
 
+typedef uint32_t HEAP_INSPECT_RESULT;
+
+#define HEAP_INSPECT_OK            0
+#define HEAP_INSPECT_CORRUPTED     1
+#define HEAP_INSPECT_INVALID_INDEX 2
+
 struct heap_node_t;
 
 typedef struct heap_node_t {
@@ -25,12 +31,16 @@ typedef struct heap_node_t {
 
 typedef struct heap_node_t* heap_node_p;
 
-#define HEAP_HEADER offsetof(heap_node_t, data) //  header: 32 bytes
+#define HEAP_HEADER_SIZE offsetof(heap_node_t, data) 
 
-// void* kmalloc(uint32_t size);
+HEAP_INSPECT_RESULT inspect_heap(uint32_t node_index, heap_node_p* node);
+
+void init_heap(void* addr, uint32_t size);
+
+void* kmalloc(size_t size);
 // void* kcalloc(uint64_t nelem, uint64_t elsize);
 // void* krealloc(void* ptr, uint64_t size);
-// void kfree(void* ptr);
+void kfree(void* ptr);
 // void* kmem_align(uint64_t size);
 
 #ifdef __cplusplus

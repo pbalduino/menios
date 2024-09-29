@@ -1,10 +1,23 @@
 #ifndef MENIOS_INCLUDE_KERNEL_SERIAL_H
 #define MENIOS_INCLUDE_KERNEL_SERIAL_H 1
 
+#include <stdarg.h>
+
+#ifdef MENIOS_KERNEL
 void serial_init();
 int serial_putchar(int ch);
 int serial_puts(const char* text);
 int serial_printf(const char* format, ...);
+int serial_vprintf(const char *format, va_list args);
+
+#else
+  #warning Calling printf as serial_printf
+  #define serial_init()
+  #define serial_putchar(a)          putchar(a)
+  #define serial_puts(a)             puts(a)
+  #define serial_printf(fmt, ...)    printf(fmt, ...)
+  #define serial_printf(fmt, ...)    printf(fmt, ##__VA_ARGS__)
+#endif
 
 #define serial_log(a)
 #define serial_error(a)

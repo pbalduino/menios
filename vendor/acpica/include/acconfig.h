@@ -179,6 +179,7 @@
  * below. Therefore, change this string at your own risk.
  */
 #define ACPI_OS_NAME                    "Microsoft Windows NT"
+#define ACPI_DEBUG_OUTPUT 1
 
 /* Maximum objects in the various object caches */
 

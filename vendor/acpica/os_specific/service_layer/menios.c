@@ -156,10 +156,10 @@
 #include "actypes.h"
 #include <boot/limine.h>
 #include <kernel/acpi.h>
+#include <kernel/heap.h>
 #include <kernel/proc.h>
 #include <kernel/kernel.h>
 #include <kernel/serial.h>
-#include <stdlib.h>
 
 static BOOLEAN EnDbgPrint;
 
@@ -204,13 +204,15 @@ ACPI_STATUS AcpiOsTableOverride(ACPI_TABLE_HEADER *existing_table, ACPI_TABLE_HE
 }
 
 void* AcpiOsAllocate(ACPI_SIZE size) {
-  serial_printf("AcpiOsAllocate: %d\n", size);
-  return malloc(size);
+  serial_printf("AcpiOsAllocate: requesting %d\n", size);
+  void* addr = kmalloc(size);
+  serial_printf("AcpiOsAllocate: received %p\n", addr);
+  return addr;
 }
 
 void AcpiOsFree(void *addr) {
   serial_printf("AcpiOsFree: %p\n", addr);
-  free(addr);
+  kfree(addr);
 }
 
 /******************************************************************************
@@ -243,14 +245,15 @@ void AcpiEnableDbgPrint (bool enable) {
  *****************************************************************************/
 void ACPI_INTERNAL_VAR_XFACE AcpiOsPrintf (const char *fmt, ...) {
 
-  serial_printf("AcpiOsPrintf: %s\n", fmt);
+  serial_printf("AcpiOsPrintf: ");
 
   va_list args;
   va_start(args, fmt);
 
-  if(EnDbgPrint) {
+  // if(EnDbgPrint) {
+    serial_vprintf(fmt, args);
     vprintf(fmt, args);
-  }
+  // }
 
   va_end(args);
 }

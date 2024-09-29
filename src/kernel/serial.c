@@ -61,7 +61,7 @@ int serial_puts(const char* text) {
  return 0;
 }
 
-int svprintf(const char *format, va_list args){
+int serial_vprintf(const char *format, va_list args){
   char str[256];
 
   for(int pos = 0; format[pos]; pos++) {
@@ -170,7 +170,7 @@ int serial_printf(const char* format, ...) {
 
   va_list list;
   va_start(list, format);
-  int i = svprintf(format, list);
+  int i = serial_vprintf(format, list);
   va_end(list);
   return i;
 }

@@ -17,15 +17,21 @@ KERNEL_DIR = src/kernel
 
 KERNEL = $(OUTPUT_DIR)/kernel.elf
 
-OBJDIR         = ./obj
+OBJDIR         = obj
 LIBDIR         = lib
-LIB_ACPICA_OBJ = $(OBJDIR)/acpica
+ACPICA_OBJ = $(OBJDIR)/acpica
 KERNEL_OBJ     = $(OBJDIR)/kernel
 
 LIB_ACPICA = $(LIBDIR)/libacpica.a
 
-SRCS = $(shell find -L src -type f -name '*.c')
-OBJS = $(patsubst src/%.c, $(OBJDIR)/%.o, $(SRCS))
+KERNEL_SRC = $(shell find -L src -type f -name '*.c')
+KERNEL_ASM = $(shell find -L src/kernel -type f -name '*.s')
+KERNEL_OBJS = $(patsubst %.c, %.o, $(KERNEL_SRC))
+
+ACPICA_SRC = $(shell find -L vendor/acpica -type f -name '*.c')
+ACPICA_OBJS := $(patsubst %.c, %.o, $(ACPICA_SRC))
+
+OBJS = $(KERNEL_OBJS) $(ACPICA_OBJS)
 
 override CFLAGS += \
     -Wall \
@@ -33,22 +39,22 @@ override CFLAGS += \
 		-Winline \
 		-Wfatal-errors \
 		-Wno-unused-parameter \
+		-static \
     -std=gnu11 \
+		-nostdinc \
+		-nostdlib \
     -ffreestanding \
-    -fno-stack-protector \
-    -fno-stack-check \
     -fno-lto \
+    -fno-stack-check \
+    -fno-stack-protector \
     -m64 \
     -march=x86-64 \
     -mno-80387 \
     -mno-mmx \
+    -mno-red-zone \
     -mno-sse \
     -mno-sse2 \
-    -mno-red-zone \
-		-nostdlib \
-		-nostdinc \
-		-static \
-		-c
+		-DMENIOS_KERNEL
 
 override CPPFLAGS := \
     $(CINCLUDE) \
@@ -106,53 +112,32 @@ else
 	@echo "The Docker image for meniOS already exists"
 endif
 
-.PHONY: build_acpica
-build_acpica:
-	@set -eux
-
-ifneq ($(wildcard $(LIB_ACPICA)),)
-	@echo Found $(LIB_ACPICA)
-else
+%.o: %.c
 ifeq ($(OS_NAME),linux)
-	@echo Building $(LIB_ACPICA)
-
-	for file in $(shell find -L vendor/acpica -type f -name '*.c'); do \
-		($(GCC) $(GCC_KERNEL_OPTS) $$file) || exit ; \
-	done;
-
-	ar rcs $(LIB_ACPICA) $(shell find -L . -type f -name 'ds*.o') $(shell find -L . -type f -name 'ev*.o') $(shell find -L . -type f -name 'ex*.o') $(shell find -L . -type f -name 'hw*.o') $(shell find -L . -type f -name 'ns*.o') $(shell find -L . -type f -name 'ps*.o') $(shell find -L . -type f -name 'tb*.o') $(shell find -L . -type f -name 'ut*.o') $(shell find -L . -type f -name 'menios.o')
-
-	mv *.o $(LIB_ACPICA_OBJ)
-	mv *.a $(LIB_ACPICA)
-
+	$(GCC) $(GCC_KERNEL_OPTS) -c $< -o $@
 else
-	@make docker
-	@echo "Building acpica inside Docker"
-	$(DOCKER) run --rm -it --mount type=bind,source=$$(pwd),target=/mnt $(DOCKER_IMAGE) /bin/sh -c "cd /mnt && make build_acpica"
-endif
-
+	$(DOCKER) run --rm -it --mount type=bind,source=$$(pwd),target=/mnt $(DOCKER_IMAGE) /bin/sh -c "cd /mnt && make build"
 endif
 
 .PHONY: build
-build: build_acpica
+build: $(OBJS)
+ifeq ($(OS_NAME),linux)
 	@set -eux
 
-ifeq ($(OS_NAME),linux)
-	@echo Building kernel
+	rm -rf $(KERNEL_OBJ)/*
 
-	for file in $(shell find -L src -type f -name '*.c'); do \
-		($(GCC) $(GCC_KERNEL_OPTS) $$file) || exit ; \
-	done;
+	$(NASM) -f elf64 ./src/kernel/lgdt.s
+	$(NASM) -f elf64 ./src/kernel/pit.s
+	$(NASM) -f elf64 ./src/kernel/lidt.s
 
-	for file in $(shell find -L src/kernel -type f -name '*.s'); do \
-		$(NASM) -f elf64 $$file ; \
-	done;
+	cp ./src/kernel/lgdt.o $(KERNEL_OBJ)
+	cp ./src/kernel/pit.o $(KERNEL_OBJ)
+	cp ./src/kernel/lidt.o $(KERNEL_OBJ)
 
-	mv *.o $(KERNEL_OBJ)
-	mv $(KERNEL_DIR)/*.o $(KERNEL_OBJ)
-	
-	$(LD) $(LDFLAGS) -o $(KERNEL) $(shell find -L obj/kernel -type f -name '*.o') -lacpica 
-# $(shell find -L obj/acpica -type f -name '*.o')
+	cp $(OBJS) $(KERNEL_OBJ)
+
+	$(LD) $(LDFLAGS) -o $(KERNEL) $(shell find -L $(KERNEL_OBJ) -type f -name '*.o')
+
 	@echo Building image
 	rm -f $(IMAGE_NAME).hdd
 	dd if=/dev/zero bs=1M count=0 seek=64 of=$(IMAGE_NAME).hdd
@@ -172,11 +157,30 @@ ifeq ($(OS_NAME),linux)
         ./bin -o $(IMAGE_NAME).iso
 	./bin/limine bios-install $(IMAGE_NAME).iso
 else
-	@make docker
-	@echo "Building inside Docker"
 	$(DOCKER) run --rm -it --mount type=bind,source=$$(pwd),target=/mnt $(DOCKER_IMAGE) /bin/sh -c "cd /mnt && make build"
 endif
 
 .PHONY: run
 run:
 	qemu-system-x86_64 -smp cpus=1,maxcpus=1,sockets=1,dies=1,clusters=1,cores=1 -vga std -no-reboot --no-shutdown -M q35 -m size=2G,maxmem=2G -hda menios.hdd -serial file:com1.log -monitor stdio -d int -M hpet=on -usb -machine q35
+
+.PHONY: test
+test:
+	@set -eux
+
+ifeq ($(OS_NAME),linux)
+	@echo "Testing inside Linux"
+
+	for file in $(shell find -L test -type f -name 'test_*.c'); do \
+		gcc -I./include $$file test/unity.c src/kernel/mem/kmalloc.c -o "$$file".bin ; \
+		echo "Testing $(.c:.bin=$$file)" ; \
+		"$$file".bin ; \
+		rm "$$file".bin ; \
+	done;
+else
+	@echo "Testing inside Docker"
+	$(DOCKER) run --rm -it --mount type=bind,source=$$(pwd),target=/mnt $(DOCKER_IMAGE) /bin/sh -c "cd /mnt && make test"
+endif
+
+shell:
+	$(DOCKER) run --rm -it --mount type=bind,source=$$(pwd),target=/mnt $(DOCKER_IMAGE) /bin/sh -c "cd /mnt && /bin/bash"
