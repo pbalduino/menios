@@ -156,10 +156,10 @@
 
 #define ACPI_CA_VERSION                 0x20240827
 
-#include "acconfig.h"
-#include "actypes.h"
-#include "actbl.h"
-#include "acbuffer.h"
+#include "acpica/acconfig.h"
+#include "acpica/actypes.h"
+#include "acpica/actbl.h"
+#include "acpica/acbuffer.h"
 
 
 /*****************************************************************************

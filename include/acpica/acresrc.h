@@ -155,7 +155,7 @@
 
 /* Need the AML resource descriptor structs */
 
-#include "amlresrc.h"
+#include "acpica/amlresrc.h"
 
 
 /*

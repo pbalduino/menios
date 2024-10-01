@@ -149,14 +149,14 @@
  *
  *****************************************************************************/
 
-#include "acpi.h"
-#include "accommon.h"
-#include "acparser.h"
-#include "amlcode.h"
-#include "acdispat.h"
-#include "acinterp.h"
-#include "acnamesp.h"
-#include "acdebug.h"
+#include "acpica/acpi.h"
+#include "acpica/accommon.h"
+#include "acpica/acparser.h"
+#include "acpica/amlcode.h"
+#include "acpica/acdispat.h"
+#include "acpica/acinterp.h"
+#include "acpica/acnamesp.h"
+#include "acpica/acdebug.h"
 
 #define _COMPONENT          ACPI_DISPATCHER
         ACPI_MODULE_NAME    ("dsutils")

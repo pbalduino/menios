@@ -3,6 +3,10 @@
 
 #include <types.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define FB_BLACK 0x0
 #define FB_BLUE 0x0000ff
 #define FB_DARK_BLUE 0x00007f
@@ -28,5 +32,9 @@ void fb_init();
 void fb_putpixel(uint32_t x, uint32_t y, uint32_t rgb);
 int fb_putchar(int c);
 void fb_list_modes();
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

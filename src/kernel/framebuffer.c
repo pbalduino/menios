@@ -92,6 +92,7 @@ void fb_drawline(uint32_t left, uint32_t right, uint32_t top, uint32_t bottom, u
   }
 }
 
+/*
 int fb_putchar(int c) {
   if(c == '\0') {
     return 0;
@@ -126,6 +127,7 @@ int fb_putchar(int c) {
   }
   return 0;
 }
+*/
 
 inline uint64_t fb_width() {
   return framebuffer->width;

@@ -151,9 +151,9 @@
 
 #define EXPORT_ACPI_INTERFACES
 
-#include "acpi.h"
-#include "accommon.h"
-#include "acinterp.h"
+#include "acpica/acpi.h"
+#include "acpica/accommon.h"
+#include "acpica/acinterp.h"
 
 #define _COMPONENT          ACPI_UTILITIES
         ACPI_MODULE_NAME    ("utdebug")

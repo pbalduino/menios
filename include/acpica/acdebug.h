@@ -155,7 +155,7 @@
 /* The debugger is used in conjunction with the disassembler most of time */
 
 #ifdef ACPI_DISASSEMBLER
-#include "acdisasm.h"
+#include "acpica/acdisasm.h"
 #endif
 
 

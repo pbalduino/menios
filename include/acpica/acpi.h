@@ -1,6 +1,6 @@
 /******************************************************************************
  *
- * Name: accommon.h - Common include files for generation of ACPICA source
+ * Name: acpi.h - Master public include file used to interface to ACPICA
  *
  *****************************************************************************/
 
@@ -149,27 +149,27 @@
  *
  *****************************************************************************/
 
-#ifndef __ACCOMMON_H__
-#define __ACCOMMON_H__
+#ifndef __ACPI_H__
+#define __ACPI_H__
 
 /*
- * Common set of includes for all ACPICA source files.
- * We put them here because we don't want to duplicate them
- * in the source code again and again.
+ * Public include files for use by code that will interface to ACPICA.
+ *
+ * Information includes the ACPICA data types, names, exceptions, and
+ * external interface prototypes. Also included are the definitions for
+ * all ACPI tables (FADT, MADT, etc.)
  *
  * Note: The order of these include files is important.
  */
-#include "acconfig.h"           /* Global configuration constants */
-#include "acmacros.h"           /* C macros */
-#include "aclocal.h"            /* Internal data types */
-#include "acobject.h"           /* ACPI internal object */
-#include "acstruct.h"           /* Common structures */
-#include "acglobal.h"           /* All global variables */
-#include "achware.h"            /* Hardware defines and interfaces */
-#include "acutils.h"            /* Utility interfaces */
-#ifndef ACPI_USE_SYSTEM_CLIBRARY
-#include "acclib.h"             /* C library interfaces */
-#endif /* !ACPI_USE_SYSTEM_CLIBRARY */
+#include "platform/acenv.h"     /* Environment-specific items */
+#include "acpica/actypes.h"            /* ACPICA data types and structures */
+#include "platform/acenvex.h"   /* Extra environment-specific items */
+#include "acpica/acnames.h"            /* Common ACPI names and strings */
+#include "acpica/acexcep.h"            /* ACPICA exceptions */
+#include "acpica/actbl.h"              /* ACPI table definitions */
+#include "acpica/acoutput.h"           /* Error output and Debug macros */
+#include "acpica/acrestyp.h"           /* Resource Descriptor structs */
+#include "acpica/acpiosxf.h"           /* OSL interfaces (ACPICA-to-OS) */
+#include "acpica/acpixf.h"             /* ACPI core subsystem external interfaces */
 
-
-#endif /* __ACCOMMON_H__ */
+#endif /* __ACPI_H__ */

@@ -295,15 +295,15 @@
  *****************************************************************************/
 
 #if defined(__GNUC__) && !defined(__INTEL_COMPILER)
-#include "acgcc.h"
+#include "acpica/platform/acgcc.h"
 
 #else
 /* Unknown compiler */
 #error Unknown compiler
 #endif
 
-#if defined(_LINUX) || defined(__linux__)
-#include "acmenios.h"
+#if defined(_LINUX) || defined(__linux__) || defined(MENIOS_KERNEL)
+#include "acpica/platform/acmenios.h"
 
 #else
 /* Unknown environment */

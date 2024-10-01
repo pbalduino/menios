@@ -151,10 +151,10 @@
 
 #define ACPI_CREATE_PREDEFINED_TABLE
 
-#include "acpi.h"
-#include "accommon.h"
-#include "acnamesp.h"
-#include "acpredef.h"
+#include "acpica/acpi.h"
+#include "acpica/accommon.h"
+#include "acpica/acnamesp.h"
+#include "acpica/acpredef.h"
 
 
 #define _COMPONENT          ACPI_NAMESPACE

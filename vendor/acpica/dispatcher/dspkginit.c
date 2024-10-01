@@ -149,13 +149,13 @@
  *
  *****************************************************************************/
 
-#include "acpi.h"
-#include "accommon.h"
-#include "acnamesp.h"
-#include "amlcode.h"
-#include "acdispat.h"
-#include "acinterp.h"
-#include "acparser.h"
+#include "acpica/acpi.h"
+#include "acpica/accommon.h"
+#include "acpica/acnamesp.h"
+#include "acpica/amlcode.h"
+#include "acpica/acdispat.h"
+#include "acpica/acinterp.h"
+#include "acpica/acparser.h"
 
 
 #define _COMPONENT          ACPI_NAMESPACE

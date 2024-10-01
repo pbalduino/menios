@@ -149,8 +149,8 @@
  *
  *****************************************************************************/
 
-#include "acpi.h"
-#include "accommon.h"
+#include "acpica/acpi.h"
+#include "acpica/accommon.h"
 
 #define _COMPONENT          ACPI_UTILITIES
         ACPI_MODULE_NAME    ("utstate")

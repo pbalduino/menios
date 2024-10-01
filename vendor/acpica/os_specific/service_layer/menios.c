@@ -149,11 +149,11 @@
  *
  *****************************************************************************/
 
-#include "acpi.h"
-#include "aclocal.h"
-#include "acapps.h"
-#include "accommon.h"
-#include "actypes.h"
+#include "acpica/acpi.h"
+#include "acpica/aclocal.h"
+#include "acpica/acapps.h"
+#include "acpica/accommon.h"
+#include "acpica/actypes.h"
 #include <boot/limine.h>
 #include <kernel/acpi.h>
 #include <kernel/heap.h>

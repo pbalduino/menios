@@ -149,9 +149,9 @@
  *
  *****************************************************************************/
 
-#include "acpi.h"
-#include "accommon.h"
-#include "acpredef.h"
+#include "acpica/acpi.h"
+#include "acpica/accommon.h"
+#include "acpica/acpredef.h"
 
 
 #define _COMPONENT          ACPI_UTILITIES

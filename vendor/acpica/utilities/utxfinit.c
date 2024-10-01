@@ -151,12 +151,12 @@
 
 #define EXPORT_ACPI_INTERFACES
 
-#include "acpi.h"
-#include "accommon.h"
-#include "acevents.h"
-#include "acnamesp.h"
-#include "acdebug.h"
-#include "actables.h"
+#include "acpica/acpi.h"
+#include "acpica/accommon.h"
+#include "acpica/acevents.h"
+#include "acpica/acnamesp.h"
+#include "acpica/acdebug.h"
+#include "acpica/actables.h"
 
 #define _COMPONENT          ACPI_UTILITIES
         ACPI_MODULE_NAME    ("utxfinit")

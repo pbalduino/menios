@@ -8,9 +8,9 @@
 
 #define _AcpiModuleName __FUNCTION__
 
-#include <acpi.h>
-#include <acpixf.h>
-#include <acoutput.h>
+#include <acpica/acpi.h>
+#include <acpica/acpixf.h>
+#include <acpica/acoutput.h>
 
 
 int acpi_init() {

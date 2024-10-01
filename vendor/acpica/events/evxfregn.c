@@ -152,10 +152,10 @@
 
 #define EXPORT_ACPI_INTERFACES
 
-#include "acpi.h"
-#include "accommon.h"
-#include "acnamesp.h"
-#include "acevents.h"
+#include "acpica/acpi.h"
+#include "acpica/accommon.h"
+#include "acpica/acnamesp.h"
+#include "acpica/acevents.h"
 
 #define _COMPONENT          ACPI_EVENTS
         ACPI_MODULE_NAME    ("evxfregn")

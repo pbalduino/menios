@@ -149,9 +149,9 @@
  *
  *****************************************************************************/
 
-#include "acpi.h"
-#include "accommon.h"
-#include "actables.h"
+#include "acpica/acpi.h"
+#include "acpica/accommon.h"
+#include "acpica/actables.h"
 
 #define _COMPONENT          ACPI_TABLES
         ACPI_MODULE_NAME    ("tbfadt")

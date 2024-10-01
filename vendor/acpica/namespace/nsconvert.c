@@ -150,12 +150,12 @@
  *
  *****************************************************************************/
 
-#include "acpi.h"
-#include "accommon.h"
-#include "acnamesp.h"
-#include "acinterp.h"
-#include "acpredef.h"
-#include "amlresrc.h"
+#include "acpica/acpi.h"
+#include "acpica/accommon.h"
+#include "acpica/acnamesp.h"
+#include "acpica/acinterp.h"
+#include "acpica/acpredef.h"
+#include "acpica/amlresrc.h"
 
 #define _COMPONENT          ACPI_NAMESPACE
         ACPI_MODULE_NAME    ("nsconvert")

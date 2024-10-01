@@ -149,12 +149,12 @@
  *
  *****************************************************************************/
 
-#include "acpi.h"
-#include "accommon.h"
-#include "acnamesp.h"
+#include "acpica/acpi.h"
+#include "acpica/accommon.h"
+#include "acpica/acnamesp.h"
 
 #ifdef ACPI_ASL_COMPILER
-#include "amlcode.h"
+#include "acpica/amlcode.h"
 #endif
 
 #define _COMPONENT          ACPI_NAMESPACE

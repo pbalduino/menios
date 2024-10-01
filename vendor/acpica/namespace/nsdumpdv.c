@@ -150,7 +150,7 @@
  *
  *****************************************************************************/
 
-#include "acpi.h"
+#include "acpica/acpi.h"
 
 
 /* TBD: This entire module is apparently obsolete and should be removed */
@@ -161,7 +161,7 @@
 #ifdef ACPI_OBSOLETE_FUNCTIONS
 #if defined(ACPI_DEBUG_OUTPUT) || defined(ACPI_DEBUGGER)
 
-#include "acnamesp.h"
+#include "acpica/acnamesp.h"
 
 /*******************************************************************************
  *

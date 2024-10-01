@@ -160,8 +160,8 @@
  * occurs in the body of AcpiUtFree.
  */
 
-#include "acpi.h"
-#include "accommon.h"
+#include "acpica/acpi.h"
+#include "acpica/accommon.h"
 
 #ifdef ACPI_DBG_TRACK_ALLOCATIONS
 

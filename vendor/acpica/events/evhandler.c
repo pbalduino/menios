@@ -149,11 +149,11 @@
  *
  *****************************************************************************/
 
-#include "acpi.h"
-#include "accommon.h"
-#include "acevents.h"
-#include "acnamesp.h"
-#include "acinterp.h"
+#include "acpica/acpi.h"
+#include "acpica/accommon.h"
+#include "acpica/acevents.h"
+#include "acpica/acnamesp.h"
+#include "acpica/acinterp.h"
 
 #define _COMPONENT          ACPI_EVENTS
         ACPI_MODULE_NAME    ("evhandler")

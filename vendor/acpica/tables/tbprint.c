@@ -149,11 +149,11 @@
  *
  *****************************************************************************/
 
-#include "acpi.h"
-#include "accommon.h"
-#include "actables.h"
-#include "acdisasm.h"
-#include "acutils.h"
+#include "acpica/acpi.h"
+#include "acpica/accommon.h"
+#include "acpica/actables.h"
+#include "acpica/acdisasm.h"
+#include "acpica/acutils.h"
 #include <ctype.h>
 
 #define _COMPONENT          ACPI_TABLES

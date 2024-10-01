@@ -149,11 +149,11 @@
  *
  *****************************************************************************/
 
-#include "acpi.h"
-#include "accommon.h"
-#include "acdispat.h"
-#include "acinterp.h"
-#include "acnamesp.h"
+#include "acpica/acpi.h"
+#include "acpica/accommon.h"
+#include "acpica/acdispat.h"
+#include "acpica/acinterp.h"
+#include "acpica/acnamesp.h"
 
 
 #define _COMPONENT          ACPI_EXECUTER

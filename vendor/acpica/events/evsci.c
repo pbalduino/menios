@@ -151,9 +151,9 @@
  *
  *****************************************************************************/
 
-#include "acpi.h"
-#include "accommon.h"
-#include "acevents.h"
+#include "acpica/acpi.h"
+#include "acpica/accommon.h"
+#include "acpica/acevents.h"
 
 
 #define _COMPONENT          ACPI_EVENTS

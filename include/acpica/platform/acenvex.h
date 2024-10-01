@@ -161,11 +161,11 @@
  *
  *****************************************************************************/
 
-#if defined(_LINUX) || defined(__linux__)
-#include "acmeniosex.h"
+#if defined(_LINUX) || defined(__linux__) || defined(MENIOS_KERNEL)
+#include "acpica/platform/acmeniosex.h"
 
 #elif defined(__DragonFly__)
-#include "acdragonflyex.h"
+#include "acpica/acdragonflyex.h"
 
 /*
  * EFI applications can be built with -nostdlib, in this case, it must be
@@ -173,15 +173,15 @@
  * order to override the definitions.
  */
 #elif defined(_AED_EFI) || defined(_GNU_EFI) || defined(_EDK2_EFI)
-#include "acefiex.h"
+#include "acpica/acefiex.h"
 
 #endif
 
 #if defined(__GNUC__) && !defined(__INTEL_COMPILER)
-#include "acgccex.h"
+#include "acpica/platform/acgccex.h"
 
 #elif defined(_MSC_VER)
-#include "acmsvcex.h"
+#include "acpica/acmsvcex.h"
 
 #endif
 

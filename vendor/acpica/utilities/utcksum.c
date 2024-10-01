@@ -149,10 +149,10 @@
  *
  *****************************************************************************/
 
-#include "acpi.h"
-#include "accommon.h"
-#include "acdisasm.h"
-#include "acutils.h"
+#include "acpica/acpi.h"
+#include "acpica/accommon.h"
+#include "acpica/acdisasm.h"
+#include "acpica/acutils.h"
 
 
 /* This module used for application-level code only */

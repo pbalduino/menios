@@ -151,9 +151,9 @@
 
 #define EXPORT_ACPI_INTERFACES
 
-#include "acpi.h"
-#include "accommon.h"
-#include "actables.h"
+#include "acpica/acpi.h"
+#include "acpica/accommon.h"
+#include "acpica/actables.h"
 
 #define _COMPONENT          ACPI_EVENTS
         ACPI_MODULE_NAME    ("evxfevnt")

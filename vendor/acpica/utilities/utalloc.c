@@ -149,9 +149,9 @@
  *
  *****************************************************************************/
 
-#include "acpi.h"
-#include "accommon.h"
-#include "acdebug.h"
+#include "acpica/acpi.h"
+#include "acpica/accommon.h"
+#include "acpica/acdebug.h"
 
 #define _COMPONENT          ACPI_UTILITIES
         ACPI_MODULE_NAME    ("utalloc")

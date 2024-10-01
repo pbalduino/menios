@@ -149,13 +149,13 @@
  *
  *****************************************************************************/
 
-#include "acpi.h"
-#include "accommon.h"
-#include "amlcode.h"
-#include "acdispat.h"
-#include "acinterp.h"
-#include "acnamesp.h"
-#include "acparser.h"
+#include "acpica/acpi.h"
+#include "acpica/accommon.h"
+#include "acpica/amlcode.h"
+#include "acpica/acdispat.h"
+#include "acpica/acinterp.h"
+#include "acpica/acnamesp.h"
+#include "acpica/acparser.h"
 
 #ifdef ACPI_EXEC_APP
 #include "aecommon.h"
@@ -168,7 +168,7 @@
 /* Local prototypes */
 
 #ifdef ACPI_ASL_COMPILER
-#include "acdisasm.h"
+#include "acpica/acdisasm.h"
 
 static ACPI_STATUS
 AcpiDsCreateExternalRegion (

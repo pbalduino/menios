@@ -1,5 +1,6 @@
 DOCKER = $(shell which docker)
 DOCKER_IMAGE = menios:latest
+DOCKER_RUN = run --rm -it --platform linux/amd64 --mount type=bind,source=$$(pwd),target=/mnt
 
 IMAGE_NAME = menios
 
@@ -12,10 +13,10 @@ CINCLUDE = \
 	-I./vendor/acpica/include \
 	-I../../vendor/acpica/include
 
-OUTPUT_DIR = bin
+OUTPUT_DIR = ./zig-out/bin
 KERNEL_DIR = src/kernel
 
-KERNEL = $(OUTPUT_DIR)/kernel.elf
+KERNEL = $(OUTPUT_DIR)/menios
 
 OBJDIR         = obj
 LIBDIR         = lib
@@ -94,49 +95,25 @@ OS_NAME = $(shell uname -s | tr A-Z a-z)
 .PHONY: clean
 all: build
 
-.PHONY: check
-check:
-	cppcheck  --force -q --enable=performance,information,missingInclude -I./include -I/Library/Developer/CommandLineTools/usr/lib/clang/14.0.3/include --error-exitcode=3 ./src/kernel
-
-.PHONY: clean
-clean:
-	rm -rf $(OUTPUT_DIR) || true
-	mkdir $(OUTPUT_DIR) || true
-
 .PHONY: docker
 docker:
+ifeq ($(OS_NAME),linux)
+	@echo Skipping Docker
+else
 ifeq ($(shell docker images menios -q), )
 	docker rmi -f menios && \
 	docker build --platform linux/amd64 -t menios:latest .
 else
 	@echo "The Docker image for meniOS already exists"
 endif
-
-%.o: %.c
-ifeq ($(OS_NAME),linux)
-	$(GCC) $(GCC_KERNEL_OPTS) -c $< -o $@
-else
-	$(DOCKER) run --rm -it --mount type=bind,source=$$(pwd),target=/mnt $(DOCKER_IMAGE) /bin/sh -c "cd /mnt && make build"
 endif
 
 .PHONY: build
-build: $(OBJS)
+build: docker
 ifeq ($(OS_NAME),linux)
 	@set -eux
 
-	rm -rf $(KERNEL_OBJ)/*
-
-	$(NASM) -f elf64 ./src/kernel/lgdt.s
-	$(NASM) -f elf64 ./src/kernel/pit.s
-	$(NASM) -f elf64 ./src/kernel/lidt.s
-
-	cp ./src/kernel/lgdt.o $(KERNEL_OBJ)
-	cp ./src/kernel/pit.o $(KERNEL_OBJ)
-	cp ./src/kernel/lidt.o $(KERNEL_OBJ)
-
-	cp $(OBJS) $(KERNEL_OBJ)
-
-	$(LD) $(LDFLAGS) -o $(KERNEL) $(shell find -L $(KERNEL_OBJ) -type f -name '*.o')
+	zig build
 
 	@echo Building image
 	rm -f $(IMAGE_NAME).hdd
@@ -157,7 +134,7 @@ ifeq ($(OS_NAME),linux)
         ./bin -o $(IMAGE_NAME).iso
 	./bin/limine bios-install $(IMAGE_NAME).iso
 else
-	$(DOCKER) run --rm -it --mount type=bind,source=$$(pwd),target=/mnt $(DOCKER_IMAGE) /bin/sh -c "cd /mnt && make build"
+	$(DOCKER) $(DOCKER_RUN) $(DOCKER_IMAGE) /bin/sh -c "cd /mnt && make build"
 endif
 
 .PHONY: run
@@ -179,8 +156,8 @@ ifeq ($(OS_NAME),linux)
 	done;
 else
 	@echo "Testing inside Docker"
-	$(DOCKER) run --rm -it --mount type=bind,source=$$(pwd),target=/mnt $(DOCKER_IMAGE) /bin/sh -c "cd /mnt && make test"
+	$(DOCKER) $(DOCKER_RUN) $(DOCKER_IMAGE) /bin/sh -c "cd /mnt && make test"
 endif
 
 shell:
-	$(DOCKER) run --rm -it --mount type=bind,source=$$(pwd),target=/mnt $(DOCKER_IMAGE) /bin/sh -c "cd /mnt && /bin/bash"
+	$(DOCKER) $(DOCKER_RUN) $(DOCKER_IMAGE) /bin/sh -c "cd /mnt && /bin/bash"

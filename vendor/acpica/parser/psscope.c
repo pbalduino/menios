@@ -149,9 +149,9 @@
  *
  *****************************************************************************/
 
-#include "acpi.h"
-#include "accommon.h"
-#include "acparser.h"
+#include "acpica/acpi.h"
+#include "acpica/accommon.h"
+#include "acpica/acparser.h"
 
 #define _COMPONENT          ACPI_PARSER
         ACPI_MODULE_NAME    ("psscope")

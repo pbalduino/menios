@@ -1,8 +1,8 @@
 #ifndef MENIOS_INCLUDE_KERNEL_ACPI_H
 #define MENIOS_INCLUDE_KERNEL_ACPI_H
 
-#include <acpi.h>
-#include <acpixf.h>
+#include <acpica/acpi.h>
+#include <acpica/acpixf.h>
 
 #ifdef __cplusplus
 extern "C" {
