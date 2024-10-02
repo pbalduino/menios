@@ -54,7 +54,8 @@ override CFLAGS += \
     -mno-red-zone \
     -mno-sse \
     -mno-sse2 \
-		-DMENIOS_KERNEL
+		-DMENIOS_KERNEL \
+		-DACPI_DEBUG_OUTPUT
 
 override CPPFLAGS := \
     $(CINCLUDE) \

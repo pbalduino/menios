@@ -4,6 +4,9 @@
 #include <unity.h>
 #include <errno.h>
 #include <stdlib.h>
+#include <string.h>
+
+void dump_heap(heap_node_p heap, size_t size);
 
 void* arena1;
 void* arena2;
@@ -39,10 +42,13 @@ void test_malloc_SHOULD_start_in_a_valid_heap() {
 }
 
 void test_malloc_WHEN_size_is_positive_SHOULD_return_a_valid_node() {
-  uint32_t size = 16;
+  size_t size = 16;
   heap_node_p node;
 
-  TEST_ASSERT_NOT_NULL_MESSAGE(kmalloc(size), "kmalloc returned NULL");
+  void* obj = kmalloc(size);
+  TEST_ASSERT_NOT_NULL_MESSAGE(obj, "kmalloc returned NULL");
+  memset(obj, 0xaa, size);
+  dump_heap(arena1, 1024);
 
   int ok = inspect_heap(0, &node);
 
@@ -56,8 +62,13 @@ void test_malloc_WHEN_size_is_positive_SHOULD_return_a_valid_node() {
 
   printf("Arena1: %p\n", arena1);
 
+  size = 24;
+
   for(int i = 1; i < 23; i++) {
-    printf("%2d: %p\n", i, kmalloc(16 * i));
+    obj = kmalloc(size);
+    printf("%2d: %p\n", i, obj);
+    memset(obj, 0xaa, size);
+    dump_heap(arena1, 1024);
   }
 
   debug_heap((heap_node_p)arena1);

@@ -157,6 +157,7 @@
 #include "acnamesp.h"
 #include "acdebug.h"
 #include "actables.h"
+#include <kernel/serial.h>
 
 #define _COMPONENT          ACPI_UTILITIES
         ACPI_MODULE_NAME    ("utxfinit")
@@ -186,7 +187,6 @@ AcpiInitializeSubsystem (
 {
     ACPI_STATUS             Status;
 
-
     ACPI_FUNCTION_TRACE (AcpiInitializeSubsystem);
 
 
@@ -195,6 +195,7 @@ AcpiInitializeSubsystem (
 
     /* Initialize the OS-Dependent layer */
 
+    serial_printf("AcpiInitializeSubsystem: Initializing OSL\n");
     Status = AcpiOsInitialize ();
     if(ACPI_FAILURE (Status))
     {
@@ -204,6 +205,7 @@ AcpiInitializeSubsystem (
 
     /* Initialize all globals used by the subsystem */
 
+    serial_printf("AcpiInitializeSubsystem: Initializing globals\n");
     Status = AcpiUtInitGlobals ();
     if(ACPI_FAILURE (Status))
     {
@@ -213,6 +215,7 @@ AcpiInitializeSubsystem (
 
     /* Create the default mutex objects */
 
+    serial_printf("AcpiInitializeSubsystem: Creating mutexes\n");
     Status = AcpiUtMutexInitialize ();
     if(ACPI_FAILURE (Status))
     {
@@ -224,6 +227,7 @@ AcpiInitializeSubsystem (
      * Initialize the namespace manager and
      * the root of the namespace tree
      */
+    serial_printf("AcpiInitializeSubsystem: Initializing namespace\n");
     Status = AcpiNsRootInitialize ();
     if(ACPI_FAILURE (Status))
     {
@@ -233,6 +237,7 @@ AcpiInitializeSubsystem (
 
     /* Initialize the global OSI interfaces list with the static names */
 
+    serial_printf("AcpiInitializeSubsystem: Initializing OSI interfaces\n");
     Status = AcpiUtInitializeInterfaces ();
     if(ACPI_FAILURE (Status))
     {
@@ -240,6 +245,7 @@ AcpiInitializeSubsystem (
         return_ACPI_STATUS (Status);
     }
 
+    serial_printf("AcpiInitializeSubsystem: returning\n");
     return_ACPI_STATUS (AE_OK);
 }
 

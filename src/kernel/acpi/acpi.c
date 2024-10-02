@@ -29,21 +29,21 @@ int acpi_init() {
   printf(".");
 
   // Initialize the ACPICA Table Manager and get all ACPI tables
-  serial_printf("acpi_init: Initializing Table Manager.\n");
-  status = AcpiInitializeTables(NULL, 16, FALSE);
-  if(ACPI_FAILURE(status)) {
-    ACPI_EXCEPTION((AE_INFO, status, "While initializing Table Manager"));
-    return status;
-  }
-  printf(".");
+  // serial_printf("acpi_init: Initializing Table Manager.\n");
+  // status = AcpiInitializeTables(NULL, 16, FALSE);
+  // if(ACPI_FAILURE(status)) {
+  //   ACPI_EXCEPTION((AE_INFO, status, "While initializing Table Manager"));
+  //   return status;
+  // }
+  // printf(".");
 
-  serial_printf("acpi_init: Loading ACPI tables.\n");
-  status = AcpiLoadTables();
-  if(ACPI_FAILURE(status)) {
-    ACPI_EXCEPTION((AE_INFO, status, "While loading ACPI tables"));
-    return status;
-  }
-  printf(".");
+  // serial_printf("acpi_init: Loading ACPI tables.\n");
+  // status = AcpiLoadTables();
+  // if(ACPI_FAILURE(status)) {
+  //   ACPI_EXCEPTION((AE_INFO, status, "While loading ACPI tables"));
+  //   return status;
+  // }
+  // printf(".");
 /*
   // Install local handlers
   // status = InstallHandlers();

@@ -2,12 +2,29 @@
 #include <kernel/heap.h>
 #include <kernel/serial.h>
 #include <stdio.h>
+#include <string.h>
 #include <unity.h>
 
 static heap_node_p heap;
 
+void dump_heap(heap_node_p heap, size_t size) {
+  printf("dump_heap: %p\n", heap);
+  for(size_t i = 0; i < size; i++) {
+    if(i % 16 == 0) {
+      printf("\n%lx: ", ((uintptr_t)heap) + i);
+    }
+    uint8_t* byte = (uint8_t*)heap + i;
+    if(*byte < 16) {
+      printf("0%x ", *byte);
+    } else {
+      printf("%x ", *byte);
+    }
+  }
+  printf("\n");
+}
+
 void debug_heap(heap_node_p heap) {
-  printf("heap debug: %p\n", heap);
+  serial_printf("debug_heap: %p\n", heap);
   while(heap) {
     serial_printf("heap @ %p - ", heap);
     serial_printf("heap->magic: %s(%lx) - ", heap->magic == HEAP_MAGIC ? "OK " : "BAD", heap->magic);
@@ -21,13 +38,14 @@ void debug_heap(heap_node_p heap) {
   }
 }
 
-void init_heap(void* addr, uint32_t size) {
+void init_heap(void* addr, size_t size) {
   heap = (heap_node_p)addr;
   heap->magic = HEAP_MAGIC;
   heap->size = size - HEAP_HEADER_SIZE;
   heap->prev = NULL;
   heap->next = NULL;
   heap->status = HEAP_FREE;
+  memset(heap->data, 0xee, heap->size);
 
   serial_printf("Heap initialized at %p with size %d\n", addr, size);
 }
@@ -84,8 +102,8 @@ void* kmalloc(size_t size) {
     return NULL;
   }
 
-  next = (heap_node_p)(((uintptr_t)node) + HEAP_HEADER_SIZE);
-  serial_printf("kmalloc: next @ %p\n", next);
+  next = (heap_node_p)(((uintptr_t)node) + HEAP_HEADER_SIZE + size);
+  serial_printf("kmalloc: this @ %p, next @ %p, diff: %d, size: %d, header: %d\n", node, next, (uintptr_t)next - (uintptr_t)node, size, HEAP_HEADER_SIZE);
 
   next->magic = HEAP_MAGIC;
   next->size = node->size - (size + HEAP_HEADER_SIZE);

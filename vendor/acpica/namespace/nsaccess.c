@@ -154,6 +154,7 @@
 #include "amlcode.h"
 #include "acnamesp.h"
 #include "acdispat.h"
+#include <kernel/serial.h>
 
 #ifdef ACPI_ASL_COMPILER
     #include "acdisasm.h"
@@ -191,7 +192,7 @@ AcpiNsRootInitialize (
 
     ACPI_FUNCTION_TRACE (NsRootInitialize);
 
-
+    serial_printf("AcpiNsRootInitialize\n");
     Status = AcpiUtAcquireMutex (ACPI_MTX_NAMESPACE);
     if(ACPI_FAILURE (Status))
     {
@@ -216,6 +217,7 @@ AcpiNsRootInitialize (
 
     /* Enter the predefined names in the name table */
 
+    serial_printf("AcpiNsRootInitialize: Entering predefined entries into namespace\n");
     ACPI_DEBUG_PRINT ((ACPI_DB_INFO,
         "Entering predefined entries into namespace\n"));
 
@@ -237,6 +239,7 @@ AcpiNsRootInitialize (
     for (InitVal = AcpiGbl_PreDefinedNames; InitVal->Name; InitVal++)
     {
         Status = AE_OK;
+        serial_printf("AcpiNsRootInitialize: InitVal: %p - InitVal->Name: %s\n", InitVal, InitVal->Name);
 
         /* _OSI is optional for now, will be permanent later */
 
@@ -251,6 +254,7 @@ AcpiNsRootInitialize (
          * predefined names are at the root level. It is much easier to
          * just create and link the new node(s) here.
          */
+        serial_printf("AcpiNsRootInitialize: Creating predefined entry %s\n", InitVal->Name);
         NewNode = AcpiNsCreateNode (*ACPI_CAST_PTR (UINT32, InitVal->Name));
         if(!NewNode)
         {
@@ -277,6 +281,7 @@ AcpiNsRootInitialize (
          * Name entered successfully. If entry in PreDefinedNames[] specifies
          * an initial value, create the initial value.
          */
+        serial_printf("AcpiNsRootInitialize: Checking for initial value for %s - %lx\n", InitVal->Name, InitVal->Val);
         if(InitVal->Val)
         {
             Status = AcpiOsPredefinedOverride (InitVal, &Val);
@@ -296,12 +301,16 @@ AcpiNsRootInitialize (
              * Entry requests an initial value, allocate a
              * descriptor for it.
              */
+            serial_printf("AcpiNsRootInitialize: Allocating internal object for %s\n", InitVal->Name);
             ObjDesc = AcpiUtCreateInternalObject (InitVal->Type);
+            serial_line("");
             if(!ObjDesc)
             {
                 Status = AE_NO_MEMORY;
+                serial_line("");
                 goto UnlockAndExit;
             }
+            serial_line("");
 
             /*
              * Convert value string from table entry to
@@ -311,39 +320,42 @@ AcpiNsRootInitialize (
             switch (InitVal->Type)
             {
             case ACPI_TYPE_METHOD:
-
+                serial_line("");
                 ObjDesc->Method.ParamCount = (UINT8) ACPI_TO_INTEGER (Val);
                 ObjDesc->Common.Flags |= AOPOBJ_DATA_VALID;
 
 #if defined (ACPI_ASL_COMPILER)
 
                 /* Save the parameter count for the iASL compiler */
-
+                serial_printf("AcpiNsRootInitialize: Save the parameter count for the iASL compiler\n");
                 NewNode->Value = ObjDesc->Method.ParamCount;
 #else
                 /* Mark this as a very SPECIAL method (_OSI) */
-
+                serial_printf("AcpiNsRootInitialize: Mark this as a very SPECIAL method (_OSI)\n");
                 ObjDesc->Method.InfoFlags = ACPI_METHOD_INTERNAL_ONLY;
                 ObjDesc->Method.Dispatch.Implementation = AcpiUtOsiImplementation;
 #endif
                 break;
 
             case ACPI_TYPE_INTEGER:
-
+                serial_line("");
                 ObjDesc->Integer.Value = ACPI_TO_INTEGER (Val);
                 break;
 
             case ACPI_TYPE_STRING:
-
+                serial_line("");
                 /* Build an object around the static string */
-
+                serial_printf("AcpiNsRootInitialize: Obj: %p\n", ObjDesc);
+                serial_printf("AcpiNsRootInitialize: Obj->Str: %s\n", ObjDesc->String);
+                serial_printf("AcpiNsRootInitialize: Build an object around the static string obj: %p, str: %p, len: %d, Val: %s, len(Val)\n", ObjDesc, ObjDesc->String, Val, strlen(Val));
                 ObjDesc->String.Length = (UINT32) strlen (Val);
                 ObjDesc->String.Pointer = Val;
                 ObjDesc->Common.Flags |= AOPOBJ_STATIC_POINTER;
+                serial_line("");
                 break;
 
             case ACPI_TYPE_MUTEX:
-
+                serial_line("");
                 ObjDesc->Mutex.Node = NewNode;
                 ObjDesc->Mutex.SyncLevel = (UINT8) (ACPI_TO_INTEGER (Val) - 1);
 
@@ -375,7 +387,7 @@ AcpiNsRootInitialize (
                 break;
 
             default:
-
+                serial_printf("AcpiNsRootInitialize: Unsupported initial type value 0x%X\n", InitVal->Type);
                 ACPI_ERROR ((AE_INFO, "Unsupported initial type value 0x%X",
                     InitVal->Type));
                 AcpiUtRemoveReference (ObjDesc);
@@ -384,17 +396,20 @@ AcpiNsRootInitialize (
             }
 
             /* Store pointer to value descriptor in the Node */
-
+            serial_line("");
             Status = AcpiNsAttachObject (NewNode, ObjDesc,
                 ObjDesc->Common.Type);
-
+            serial_line("");
             /* Remove local reference to the object */
 
             AcpiUtRemoveReference (ObjDesc);
+            serial_line("");
         }
     }
+    serial_printf("AcpiNsRootInitialize: Left for-loop\n");
 
 UnlockAndExit:
+    serial_printf("AcpiNsRootInitialize: Unlocking namespace\n");
     (void) AcpiUtReleaseMutex (ACPI_MTX_NAMESPACE);
 
     /* Save a handle to "_GPE", it is always present */

@@ -27,7 +27,7 @@ typedef struct heap_node_t {
   struct heap_node_t*  next;   // 8 bytes
   struct heap_node_t*  prev;   // 8 bytes
   uint8_t              data[];
-} heap_node_t; 
+} /*__attribute__((packed))*/ heap_node_t; 
 
 typedef struct heap_node_t* heap_node_p;
 
@@ -35,7 +35,7 @@ typedef struct heap_node_t* heap_node_p;
 
 HEAP_INSPECT_RESULT inspect_heap(uint32_t node_index, heap_node_p* node);
 
-void init_heap(void* addr, uint32_t size);
+void init_heap(void* addr, size_t size);
 
 void* kmalloc(size_t size);
 // void* kcalloc(uint64_t nelem, uint64_t elsize);

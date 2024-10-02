@@ -1,6 +1,7 @@
 # bochsrc
 #
-megs: 8
+display_library: sdl2
+megs: 64
 #
 mouse: enabled=0
 #

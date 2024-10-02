@@ -152,6 +152,7 @@
 #include "acpi.h"
 #include "accommon.h"
 #include "acnamesp.h"
+#include <kernel/serial.h>
 
 
 #define _COMPONENT          ACPI_UTILITIES
@@ -208,20 +209,22 @@ AcpiUtCreateInternalObjectDbg (
     ACPI_OPERAND_OBJECT     *Object;
     ACPI_OPERAND_OBJECT     *SecondObject;
 
-
+    serial_log("");
     ACPI_FUNCTION_TRACE_STR (UtCreateInternalObjectDbg,
         AcpiUtGetTypeName (Type));
-
+    serial_line("");
 
     /* Allocate the raw object descriptor */
-
+    serial_line("");
     Object = AcpiUtAllocateObjectDescDbg (
         ModuleName, LineNumber, ComponentId);
+    serial_line("");
     if(!Object)
     {
+        serial_log("");
         return_PTR (NULL);
     }
-
+    serial_line("");
     switch (Type)
     {
     case ACPI_TYPE_REGION:
@@ -229,26 +232,32 @@ AcpiUtCreateInternalObjectDbg (
     case ACPI_TYPE_LOCAL_BANK_FIELD:
 
         /* These types require a secondary object */
-
+        serial_line("");
         SecondObject = AcpiUtAllocateObjectDescDbg (
             ModuleName, LineNumber, ComponentId);
+            serial_line("");
         if(!SecondObject)
         {
+            serial_line("");
             AcpiUtDeleteObjectDesc (Object);
+            serial_line("");
             return_PTR (NULL);
         }
 
+        serial_line("");
         SecondObject->Common.Type = ACPI_TYPE_LOCAL_EXTRA;
         SecondObject->Common.ReferenceCount = 1;
-
+        
         /* Link the second object to the first */
-
+        serial_line("");
         Object->Common.NextObject = SecondObject;
+        serial_line("");
         break;
 
     default:
 
         /* All others have no secondary object */
+        serial_line("");
         break;
     }
 
@@ -261,7 +270,10 @@ AcpiUtCreateInternalObjectDbg (
     Object->Common.ReferenceCount = 1;
 
     /* Any per-type initialization should go here */
+    serial_printf("AcpiUtCreateInternalObjectDbf: %p\n", Object);
+    serial_printf("AcpiUtCreateInternalObjectDbf: str: %p\n", Object->String);
 
+    serial_line("");
     return_PTR (Object);
 }
 
