@@ -1,6 +1,6 @@
 # MeniOS
 
-![image](https://github.com/pbalduino/menios/assets/32979/ea081272-ecb0-44ba-9b50-bf73e5052cc0)
+![image](https://github.com/user-attachments/assets/e5f1d2a0-3e5c-41ba-901c-068b6e7768e7)
 
 I'm trying again again. Let's see how far I can go.
 
