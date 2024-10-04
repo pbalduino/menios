@@ -13,7 +13,9 @@
 #include <kernel/idt.h>
 #include <kernel/kernel.h>
 #include <kernel/mem.h>
+#include <kernel/rtc.h>
 #include <kernel/serial.h>
+#include <kernel/timer.h>
 
 void boot_graphics_init() {
   fb_init();
@@ -59,16 +61,27 @@ void _start() {
   // TODO: CPUs
   // smp_init();
   // TODO: APIC / LAPIC
-  // apic_init();
+  apic_init();
+
+  timer_init();
   // TODO: Show hardware
   // TODO: Filesystem
 
-  puts("- Bye\n");
-  serial_log("Bye\n");
+  // puts("- Bye\n");
+  // serial_log("Bye\n");
+  rtc_time_t time;
+  rtc_time(&time);
 
-  // char* x = (char*)0xffff800000000000;
-  // serial_puts(x);
+  printf("- Now: %d-%d-%d %d:%d:%d UTC\n", time.full_year, time.month, time.day, time.hours, time.minutes, time.seconds);
+  printf(" - UNIX timestamp: %d\n", unix_time());
+  serial_printf(" - UNIX timestamp: %ld\n", unix_time());
+
+  sti();
+
+  while(true) {
+
+  }
 
   // hcf();
-  turn_off();
+  // turn_off();
 }

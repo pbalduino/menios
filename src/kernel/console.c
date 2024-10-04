@@ -7,7 +7,6 @@
 #include <kernel/serial.h>
 
 int fputchar(int ch, FILE* file) {
-  serial_log("Entering fputchar");
   if(file == NULL) {
     printf("file is null ");
     serial_error("file is null\n");
@@ -19,7 +18,6 @@ int fputchar(int ch, FILE* file) {
     return -1;
   }
 
-  serial_log("Leaving fputchar");
   return fd->write(ch);
 }
 

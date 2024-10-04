@@ -40,6 +40,16 @@ inline uint64_t fb_mode_count() {
   return framebuffer->mode_count;
 }
 
+void gotoxy(uint32_t x, uint32_t y) {
+  current_col = x;
+  current_row = y;
+}
+
+void get_cursor_pos(screen_pos_t* pos) {
+  pos->x = current_col;
+  pos->y = current_row;
+}
+
 void fb_init() {
   // Ensure we got a framebuffer.
   if(framebuffer_request.response == NULL || framebuffer_request.response->framebuffer_count < 1) {
@@ -113,6 +123,7 @@ int fb_putchar(int c) {
 
   for(int gx = 0; gx < 8; gx++) {
     for(int gy = 0; gy < 16; gy++) {
+      fb_putpixel(x + gx, y + gy, FB_BLACK);
       if((glyph.points[gy] >> (7 - gx)) & 0x01) {
         fb_putpixel(x + gx, y + gy, FB_WHITE);
       }

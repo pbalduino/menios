@@ -62,3 +62,23 @@ uint16_t inw(uint16_t port) {
   );
   return result;
 }
+
+// Function to write a 32-bit value to a port
+void outl(uint16_t port, uint32_t value) {
+  asm volatile (
+    "outl %0, %1"
+    :
+    : "a"(value), "Nd"(port)
+  );
+}
+
+// Function to read a 16-bit value from a port
+uint32_t inl(uint16_t port) {
+  uint32_t result;
+  asm volatile (
+    "inl %1, %0"
+    : "=a"(result)
+    : "Nd"(port)
+  );
+  return result;
+}

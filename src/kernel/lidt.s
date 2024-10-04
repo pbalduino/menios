@@ -3,11 +3,13 @@ global idt_generic_isr_asm_handler
 global idt_df_isr_asm_handler
 global idt_gpf_isr_asm_handler
 global idt_pf_isr_asm_handler
+global idt_period_timer_isr_asm_handler
 
 extern idt_generic_isr_handler
 extern idt_df_isr_handler
 extern idt_gpf_isr_handler
 extern page_fault_handler
+extern timer_handler
 
 idt_load:
   lidt [rdi]   ; Load the IDT from the memory location pointed to by rdi
@@ -110,3 +112,23 @@ idt_pf_isr_asm_handler:
   ; Return from interrupt
   iretq
   
+
+  idt_period_timer_isr_asm_handler
+  ; Push the stack segment (SS)
+  push qword [rsp]
+
+  ; Push the instruction pointer (RIP), code segment (CS), RFLAGS, stack pointer (RSP), and stack segment (SS)
+  push qword [rsp + 8]  ; RIP (was automatically saved by the CPU)
+  push qword [rsp + 16] ; CS (was automatically saved by the CPU)
+  push qword [rsp + 24] ; RFLAGS (was automatically saved by the CPU)
+  push qword [rsp + 32] ; RSP (was automatically saved by the CPU)
+  push qword [rsp + 40] ; SS (was automatically saved by the CPU)
+
+  ; Call the C handler
+  call timer_handler
+  
+  ; Clean up the stack (6 pushes * 8 bytes each = 48 bytes)
+  add rsp, 48
+  
+  ; Return from interrupt
+  iretq

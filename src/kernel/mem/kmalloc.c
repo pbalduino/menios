@@ -6,6 +6,7 @@
 #include <unity.h>
 
 static heap_node_p heap;
+static size_t free_mem;
 
 void dump_heap(heap_node_p heap, size_t size) {
   printf("dump_heap: %p\n", heap);
@@ -21,9 +22,11 @@ void dump_heap(heap_node_p heap, size_t size) {
     }
   }
   printf("\n");
+
 }
 
 void debug_heap(heap_node_p heap) {
+#ifndef MENIOS_NO_DEBUG
   serial_printf("debug_heap: %p\n", heap);
   while(heap) {
     serial_printf("heap @ %p - ", heap);
@@ -36,6 +39,7 @@ void debug_heap(heap_node_p heap) {
 
     heap = (heap_node_p)heap->next;
   }
+#endif
 }
 
 void init_heap(void* addr, size_t size) {
@@ -46,6 +50,8 @@ void init_heap(void* addr, size_t size) {
   heap->next = NULL;
   heap->status = HEAP_FREE;
   memset(heap->data, 0xee, heap->size);
+
+  free_mem = heap->size;
 
   serial_printf("Heap initialized at %p with size %d\n", addr, size);
 }
@@ -75,11 +81,11 @@ HEAP_INSPECT_RESULT inspect_heap(uint32_t node_index, heap_node_p* node) {
 int find_first_free_node(size_t size, heap_node_p* node) {
   *node = (heap_node_p)heap;
 
-  serial_printf("find_first_free_node: node @ %p\n", *node);
+  // serial_printf("find_first_free_node: node @ %p\n", *node);
 
   while(*node) {
-    serial_printf("find_first_free_node: node->magic: %lx - node->status = %s(%d) - node->size: %d - requested: %d\n", (*node)->magic, (*node)->status == HEAP_FREE ? "FREE" : "USED", (*node)->status, (*node)->size, (size + HEAP_HEADER_SIZE));
-    if((*node)->status == HEAP_FREE && (*node)->size >= (size + HEAP_HEADER_SIZE)) {
+    // serial_printf("find_first_free_node: node->magic: %lx - node->status = %s(%d) - node->size: %d - requested: %d, required: %d\n", (*node)->magic, (*node)->status == HEAP_FREE ? "FREE" : "USED", (*node)->status, (*node)->size, size, (size + HEAP_HEADER_SIZE));
+    if((*node)->status == HEAP_FREE && ((*node)->size == size || (*node)->size >= size + HEAP_HEADER_SIZE)) {
       return 0;
     }
     *node = (*node)->next;
@@ -102,26 +108,43 @@ void* kmalloc(size_t size) {
     return NULL;
   }
 
+  if(node->size == size) {
+    node->status = HEAP_USED;
+    free_mem -= node->size;
+
+    // serial_printf("kmalloc: node @ %p, free_mem: %d\n", node, free_mem);
+
+    return (void*)node->data;
+  }
+
   next = (heap_node_p)(((uintptr_t)node) + HEAP_HEADER_SIZE + size);
-  serial_printf("kmalloc: this @ %p, next @ %p, diff: %d, size: %d, header: %d\n", node, next, (uintptr_t)next - (uintptr_t)node, size, HEAP_HEADER_SIZE);
+  // serial_printf("kmalloc: this @ %p, next @ %p, diff: %d, size: %d, header: %d\n", node, next, (uintptr_t)next - (uintptr_t)node, size, HEAP_HEADER_SIZE);
 
   next->magic = HEAP_MAGIC;
   next->size = node->size - (size + HEAP_HEADER_SIZE);
   next->prev = node;
   next->next = node->next;
   next->status = HEAP_FREE;
+  
+  free_mem -= (size + HEAP_HEADER_SIZE);
 
   node->status = HEAP_USED;
   node->size = size;
   node->next = next;
 
-  debug_heap(heap);
+  // debug_heap(heap);
+  // serial_printf("kmalloc: node @ %p, free_mem: %d\n", node, free_mem);
 
   return (void*)node->data;
 }
 
 void kfree(void* ptr) {
+  // serial_printf("kfree: %p\n", ptr);
   if (ptr == NULL) {
     return;
   }
+  heap_node_p node = (heap_node_p)((uintptr_t)ptr - HEAP_HEADER_SIZE);
+  // serial_printf("kfree: node @ %p, free_mem: %d\n", node, free_mem);
+  node->status = HEAP_FREE;
+  free_mem += node->size;
 }

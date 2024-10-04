@@ -7,7 +7,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <sys/mman.h>
+// #include <kernel/mman.h>
 
 static uint64_t page_bitmap[PAGE_BITMAP_SIZE];
 static uintptr_t kernel_offset;
@@ -35,12 +35,10 @@ static char* mem_type[8] = {
 };
 
 uintptr_t physical_to_virtual(uintptr_t physical_address) {
-  serial_printf("p2v: %lx + %lx = %lx\n", physical_address, kernel_offset, physical_address - kernel_offset);
   return physical_address + kernel_offset;
 }
 
 uintptr_t virtual_to_physical(uintptr_t virtual_address) {
-  // serial_printf("v2p: %lx - %lx = %lx\n", virtual_address, kernel_offset, virtual_address - kernel_offset);
   return virtual_address - kernel_offset;
 }
 
@@ -118,12 +116,6 @@ void list_memory_areas() {
    memmap_response = memmap_request.response;
   
   for(uint64_t e = 0; e < memmap_response->entry_count; e++) {
-    printf("  Entry %lu:  base: %lx - size: %lu (%lx) - type: %s\n", e, 
-      memmap_response->entries[e]->base, 
-      memmap_response->entries[e]->length, 
-      memmap_response->entries[e]->length, 
-      mem_type[memmap_response->entries[e]->type]);
-
     serial_printf("  Entry %lu:  base: %lx - size: %lu (%lx) - type: %s\n", e, memmap_response->entries[e]->base, 
       memmap_response->entries[e]->length, 
       memmap_response->entries[e]->length, 
@@ -296,13 +288,14 @@ uintptr_t get_first_free_virtual_address(uintptr_t offset) {
   - read the value in the request address
 */
 void pmm_init() {
-  printf("- Initing Physical memory manager:");
+  printf("- Initing Physical memory manager");
   serial_puts("\n- Initing Physical memory manager:");
 
   init_page_bitmap();
   puts(".");
 
   list_memory_areas();
+  puts(".");
   
   init_kernel_offset();
   puts(".");

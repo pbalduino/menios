@@ -1,16 +1,14 @@
-DOCKER = $(shell which docker)
-DOCKER_IMAGE = menios:latest
-
+GIT_BRANCH = $(shell git branch --show-current)
 IMAGE_NAME = menios
+
+DOCKER = $(shell which docker)
+DOCKER_IMAGE = $(IMAGE_NAME):$(GIT_BRANCH)
 
 ARCH ?= x86-64
 GCC_DIR = /usr/bin
 LIB_DIR = src/libc
 CINCLUDE = \
-	-I./include \
-	-I../../include \
-	-I./vendor/acpica/include \
-	-I../../vendor/acpica/include
+	-I./include
 
 OUTPUT_DIR = bin
 KERNEL_DIR = src/kernel
@@ -19,19 +17,17 @@ KERNEL = $(OUTPUT_DIR)/kernel.elf
 
 OBJDIR         = obj
 LIBDIR         = lib
-ACPICA_OBJ = $(OBJDIR)/acpica
+UACPI_OBJ      = $(OBJDIR)/uacpi
 KERNEL_OBJ     = $(OBJDIR)/kernel
-
-LIB_ACPICA = $(LIBDIR)/libacpica.a
 
 KERNEL_SRC = $(shell find -L src -type f -name '*.c')
 KERNEL_ASM = $(shell find -L src/kernel -type f -name '*.s')
 KERNEL_OBJS = $(patsubst %.c, %.o, $(KERNEL_SRC))
 
-ACPICA_SRC = $(shell find -L vendor/acpica -type f -name '*.c')
-ACPICA_OBJS := $(patsubst %.c, %.o, $(ACPICA_SRC))
+UACPI_SRC = $(shell find -L vendor/uacpi -type f -name '*.c')
+UACPI_OBJS := $(patsubst %.c, %.o, $(UACPI_SRC))
 
-OBJS = $(KERNEL_OBJS) $(ACPICA_OBJS)
+OBJS = $(KERNEL_OBJS) $(UACPI_OBJS)
 
 override CFLAGS += \
     -Wall \
@@ -55,7 +51,8 @@ override CFLAGS += \
     -mno-sse \
     -mno-sse2 \
 		-DMENIOS_KERNEL \
-		-DACPI_DEBUG_OUTPUT
+		-DACPI_DEBUG_OUTPUT \
+		-DUACPI_KERNEL_INITIALIZATION
 
 override CPPFLAGS := \
     $(CINCLUDE) \
@@ -106,11 +103,15 @@ clean:
 
 .PHONY: docker
 docker:
-ifeq ($(shell docker images menios -q), )
-	docker rmi -f menios && \
-	docker build --platform linux/amd64 -t menios:latest .
+ifeq ($(OS_NAME),linux)
+	@echo Skipping Docker
+else
+ifeq ($(shell docker images $(DOCKER_IMAGE) -q), )
+	docker rmi -f $(DOCKER_IMAGE) && \
+	docker build --platform linux/amd64 -t $(DOCKER_IMAGE) .
 else
 	@echo "The Docker image for meniOS already exists"
+endif
 endif
 
 %.o: %.c
@@ -121,7 +122,7 @@ else
 endif
 
 .PHONY: build
-build: $(OBJS)
+build: docker $(OBJS)
 ifeq ($(OS_NAME),linux)
 	@set -eux
 
@@ -163,7 +164,7 @@ endif
 
 .PHONY: run
 run:
-	qemu-system-x86_64 -smp cpus=1,maxcpus=1,sockets=1,dies=1,clusters=1,cores=1 -vga std -no-reboot --no-shutdown -M q35 -m size=2G,maxmem=2G -hda menios.hdd -serial file:com1.log -monitor stdio -d int -M hpet=on -usb -machine q35
+	qemu-system-x86_64 -smp cpus=1,maxcpus=2,sockets=1,dies=1,clusters=1,cores=2 -vga std -no-reboot --no-shutdown -M q35 -m size=2G,maxmem=2G -hda menios.hdd -serial file:com1.log -monitor stdio -d int -M hpet=on -usb -machine q35 -rtc base=utc,clock=host
 
 .PHONY: test
 test:
@@ -173,7 +174,7 @@ ifeq ($(OS_NAME),linux)
 	@echo "Testing inside Linux"
 
 	for file in $(shell find -L test -type f -name 'test_*.c'); do \
-		gcc -I./include $$file test/unity.c src/kernel/mem/kmalloc.c -o "$$file".bin ; \
+		gcc -DMENIOS_NO_DEBUG -I./include $$file test/unity.c src/kernel/mem/kmalloc.c -o "$$file".bin ; \
 		echo "Testing $(.c:.bin=$$file)" ; \
 		"$$file".bin ; \
 		rm "$$file".bin ; \

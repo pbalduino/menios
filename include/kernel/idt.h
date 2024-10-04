@@ -20,6 +20,7 @@
 #define ISR_FLOAT_POINT_EXCEPTION    0x10
 #define ISR_ALIGNMENT_CHECK          0x11
 #define ISR_MACHINE_CHECK            0x12
+#define ISR_PERIODIC_TIMER           0x20
 
 typedef struct {
   uint16_t base_low;      // Lower 16 bits of ISR address
@@ -66,7 +67,9 @@ extern void idt_generic_isr_asm_handler();
 extern void idt_gpf_isr_asm_handler();
 extern void idt_load(idt_pointer_t *idt_ptr);
 extern void idt_pf_isr_asm_handler();
+extern void idt_period_timer_isr_asm_handler();
 
+void idt_add_isr(int interruption, void* handler);
 void idt_init();
 
 #endif

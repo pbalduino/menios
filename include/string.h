@@ -29,8 +29,9 @@ char*	strncat(char *dst, const char *src, size_t size);
 size_t strlcpy(char *dst, const char *src, size_t size);
 int32_t	strcmp(const char *s1, const char *s2);
 int32_t	strncmp(const char *s1, const char *s2, size_t size);
-char*	strchr(const char *s, char c);
+char* strchr(const char *s, int c);
 char*	strfind(const char *s, char c);
+char *strstr (const char *str_1, const char *str_2);
 
 long strtol(const char *s, char **endptr, int32_t base);
 

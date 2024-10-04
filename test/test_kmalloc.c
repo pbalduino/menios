@@ -1,12 +1,11 @@
 #include <kernel/pmm.h>
 #include <kernel/heap.h>
+#include <kernel/serial.h>
 #include <stdio.h>
 #include <unity.h>
 #include <errno.h>
 #include <stdlib.h>
 #include <string.h>
-
-void dump_heap(heap_node_p heap, size_t size);
 
 void* arena1;
 void* arena2;
@@ -48,7 +47,6 @@ void test_malloc_WHEN_size_is_positive_SHOULD_return_a_valid_node() {
   void* obj = kmalloc(size);
   TEST_ASSERT_NOT_NULL_MESSAGE(obj, "kmalloc returned NULL");
   memset(obj, 0xaa, size);
-  dump_heap(arena1, 1024);
 
   int ok = inspect_heap(0, &node);
 
@@ -60,19 +58,17 @@ void test_malloc_WHEN_size_is_positive_SHOULD_return_a_valid_node() {
   TEST_ASSERT_NOT_NULL_MESSAGE(node->data, "The heap node data should not be null");
   TEST_ASSERT_EQUAL_UINT32_MESSAGE(HEAP_MAGIC, node->magic, "The magic value doesn't match");
 
-  printf("Arena1: %p\n", arena1);
-
   size = 24;
 
   for(int i = 1; i < 23; i++) {
     obj = kmalloc(size);
-    printf("%2d: %p\n", i, obj);
     memset(obj, 0xaa, size);
-    dump_heap(arena1, 1024);
   }
-
-  debug_heap((heap_node_p)arena1);
 }
+
+// TODO: test if the content of node->data is being overwritten
+// TODO: test what happens when arena1 runs out of space
+// TODO: test when a node position is not contiguous to the next/previous
 
 int main() {
   UNITY_BEGIN();

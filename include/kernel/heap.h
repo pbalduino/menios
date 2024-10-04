@@ -43,6 +43,8 @@ void* kmalloc(size_t size);
 void kfree(void* ptr);
 // void* kmem_align(uint64_t size);
 
+void dump_heap(heap_node_p heap, size_t size);
+
 #ifdef __cplusplus
 }
 #endif

@@ -12,6 +12,17 @@
 #define PIC2_COMMAND_PORT 0xa0
 #define PIC2_DATA_PORT    0xa1
 
+#define IOAPIC_REG_ENTRYCOUNT 1
+
+#define LAPIC_SVR           0x0f0
+#define LAPIC_EOI           0x0b0
+#define LAPIC_TIMER_DIV     0x3e0
+#define LAPIC_TIMER_INIT    0x380
+#define LAPIC_TIMER_CURR    0x390
+#define LAPIC_TIMER_LVT     0x320
+
 void apic_init();
+void write_lapic(uintptr_t reg, uint32_t value);
+uint32_t read_lapic(uintptr_t reg);
 
 #endif

@@ -7,9 +7,7 @@ extern "C" {
 
 #include <stddef.h>
 #include <stdint.h>
-
-typedef _Bool bool;
-enum { false, true };
+#include <stdbool.h>
 
 typedef long long off_t;
 

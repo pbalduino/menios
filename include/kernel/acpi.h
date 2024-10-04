@@ -1,8 +1,7 @@
 #ifndef MENIOS_INCLUDE_KERNEL_ACPI_H
 #define MENIOS_INCLUDE_KERNEL_ACPI_H
 
-#include <acpi.h>
-#include <acpixf.h>
+#include <types.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -40,8 +39,6 @@ typedef struct {
   uint32_t creator_revision;
 } acpi_sdt_header_t;
 
-#define ACPI_SDT_HEADER_SIZE 36
-
 typedef struct {
   acpi_sdt_header_t header;
   uint32_t* sdt;
@@ -53,7 +50,7 @@ typedef struct {
 } acpi_xsdt_t;
 
 int acpi_init();
-void acpi_shutdown();
+int acpi_shutdown();
 
 #ifdef __cplusplus
 }

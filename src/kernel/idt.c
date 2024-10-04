@@ -23,7 +23,7 @@ void idt_add_isr(int interruption, void* handler) {
 }
 
 void idt_init() {
-  puts("- Setting IDT:");
+  puts("- Setting IDT");
   idt_p.size = sizeof(idt) - 1;
   idt_p.offset = (uint64_t)&idt;
   idt_add_isr(ISR_DIVISION_BY_ZERO, &idt_generic_isr_asm_handler);
@@ -32,6 +32,7 @@ void idt_init() {
   idt_add_isr(ISR_DOUBLE_FAULT, &idt_df_isr_asm_handler);
   idt_add_isr(ISR_GENERAL_PROTECTION_FAULT, &idt_gpf_isr_asm_handler);
   idt_add_isr(ISR_PAGE_FAULT, &idt_pf_isr_asm_handler);
+  idt_add_isr(ISR_PERIODIC_TIMER, &idt_period_timer_isr_asm_handler);
 
   idt_load(&idt_p);
 
