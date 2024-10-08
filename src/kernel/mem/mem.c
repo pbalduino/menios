@@ -10,9 +10,9 @@
 uint8_t arena[PAGE_SIZE * HEAP_SIZE];
 
 void mem_init() {
-    serial_puts("\n- Initing memory management:\n");
-    // init the physical memory management
-    pmm_init();
+  serial_puts("\n- Initing memory management:\n");
+  // init the physical memory management
+  pmm_init();
 
-    init_heap((void*)arena, PAGE_SIZE * HEAP_SIZE);
+  init_heap((void*)arena, PAGE_SIZE * HEAP_SIZE);
 }

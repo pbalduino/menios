@@ -10,7 +10,7 @@ uint8_t rtc_read(uint8_t reg) {
 }
 
 uint8_t bcd_to_binary(uint8_t bcd) {
-  return (bcd >> 4) * 10 + (bcd & 0x0F);
+  return (bcd >> 4) * 10 + (bcd & 0x0f);
 }
 
 void rtc_time(rtc_time_t* time) {
@@ -18,14 +18,14 @@ void rtc_time(rtc_time_t* time) {
   
   bool bcd = !(time->register_b & 0x04);
 
-  uint8_t seconds = rtc_read(0x00); // Read seconds
-  uint8_t minutes = rtc_read(0x02); // Read minutes
-  uint8_t weekday = rtc_read(0x06);
-  uint8_t hours = rtc_read(0x04);   // Read hours
-  uint8_t day = rtc_read(0x07);     // Read day of the month
-  uint8_t month = rtc_read(0x08);   // Read month
-  uint8_t year = rtc_read(0x09);    // Read year (offset from 1900)
-  uint8_t century = rtc_read(0x32);
+  uint8_t seconds = rtc_read(RTC_SECONDS);
+  uint8_t minutes = rtc_read(RTC_MINUTES);
+  uint8_t weekday = rtc_read(RTC_WEEKDAY);
+  uint8_t hours   = rtc_read(RTC_HOURS);
+  uint8_t day     = rtc_read(RTC_DAY);
+  uint8_t month   = rtc_read(RTC_MONTH);
+  uint8_t year    = rtc_read(RTC_YEAR);
+  uint8_t century = rtc_read(RTC_CENTURY);
 
   time->seconds = bcd ? bcd_to_binary(seconds) : seconds;
   time->minutes = bcd ? bcd_to_binary(minutes) : minutes;

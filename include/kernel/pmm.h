@@ -1,7 +1,7 @@
 #ifndef MENIOS_INCLUDE_KERNEL_PMM_H
 #define MENIOS_INCLUDE_KERNEL_PMM_H
 
-#include <stdint.h>
+#include <types.h>
 
 // good enough for 16GB - it can be increased later
 #define PAGE_BITMAP_SIZE 0x10000
@@ -15,6 +15,15 @@
 #define PAGE_ROW_SIZE    (64 * PAGE_SIZE)
 
 #define VADDR_UNUSED (0xffff000000000000)
+
+typedef struct {
+  uint64_t error_code;       // Error code pushed by the CPU
+  uint64_t rip;              // Instruction pointer at the time of the fault
+  uint64_t cs;               // Code segment at the time of the fault
+  uint64_t rflags;           // Flags register at the time of the fault
+  uint64_t rsp;              // Stack pointer at the time of the fault
+  uint64_t faulting_address; // The address that caused the page fault (from CR2)
+} page_fault_info_t;
 
 // Page Map Level 4 (PML4) Entry
 typedef struct {
@@ -113,17 +122,17 @@ uintptr_t read_cr3();
 
 void debug_heap();
 void pmm_init();
-void write_cr3(uint64_t value);
+void write_cr3(phys_addr_t value);
 
 uint64_t get_first_free_page();
 
-void pml4_map(uintptr_t vaddr, pml4_map_t* map);
+void pml4_map(virt_addr_t vaddr, pml4_map_t* map);
 
-uintptr_t get_first_free_virtual_address(uintptr_t offset);
+virt_addr_t get_first_free_virtual_address(virt_addr_t offset);
 
-uintptr_t physical_to_virtual(uintptr_t physical_address);
-uintptr_t virtual_to_physical(uintptr_t virtual_to_physical);
+virt_addr_t physical_to_virtual(phys_addr_t physical_address);
+phys_addr_t virtual_to_physical(virt_addr_t virtual_address);
 
-void set_page_used(uintptr_t physical_address);
+void set_page_used(phys_addr_t physical_address);
 
 #endif

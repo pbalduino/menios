@@ -23,6 +23,9 @@ typedef long long off_t;
 	(typeof(a)) (ROUNDDOWN((uint32_t) (a) + __n - 1, __n));	\
 })
 
+typedef uintptr_t phys_addr_t;
+typedef uintptr_t virt_addr_t;
+
 #ifdef __cplusplus
 }
 #endif

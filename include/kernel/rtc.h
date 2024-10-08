@@ -10,6 +10,16 @@ extern "C" {
 #define RTC_INDEX_PORT 0x70
 #define RTC_DATA_PORT  0x71
 
+#define RTC_SECONDS    0x00
+#define RTC_MINUTES    0x02
+#define RTC_HOURS      0x04
+#define RTC_DAY        0x07
+#define RTC_MONTH      0x08
+#define RTC_YEAR       0x09
+#define RTC_CENTURY    0x32
+#define RTC_REGISTER_B 0x0b
+#define RTC_WEEKDAY    0x06
+
 typedef struct rtc_time_t {
   uint8_t seconds;
   uint8_t minutes;

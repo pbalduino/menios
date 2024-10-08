@@ -2,6 +2,7 @@
 #include <kernel/console.h>
 #include <kernel/pmm.h>
 #include <kernel/rtc.h>
+#include <kernel/hpet.h>
 #include <kernel/serial.h>
 #include <kernel/timer.h>
 
@@ -11,23 +12,13 @@
 extern void reset_timer();
 
 static uint64_t tick = 0;
-static uint64_t timer_freq = 126582;
-static uintptr_t addr;
 
-void timer_frequency(uint32_t freq) {
-  timer_freq = freq;
-  serial_printf("timer frequency: %d\n", timer_freq);
-  write_lapic(addr + LAPIC_TIMER_INIT, timer_freq);
-}
+typedef struct param_t {
+  uint64_t par0;
+  uint64_t par1;
+} param_t;
 
-void timer_enable() {
-  write_lapic(addr + LAPIC_SVR, read_lapic(addr + LAPIC_SVR) | 0x100);
-  write_lapic(addr + LAPIC_TIMER_DIV, DIV_BY_128);
-  timer_frequency(timer_freq);
-  write_lapic(addr + LAPIC_TIMER_LVT, 0x20020);
-}
-
-void timer_handler() {
+void timer_handler(param_t* par) {
   tick++;
 
   rtc_time_t time;
@@ -39,13 +30,18 @@ void timer_handler() {
   printf("%d-%d-%d %d:%d:%d UTC\n", time.full_year, time.month, time.day, time.hours, time.minutes, time.seconds);
   gotoxy(pos.x, pos.y);
 
-  write_lapic(addr + LAPIC_EOI, 0);  // End Of Interrupt (EOI) to acknowledge
+  timer_eoi();
 }
 
 void timer_init() {
   printf("- Initing timer");
-  addr = physical_to_virtual(0xFEE00000);
-  timer_enable();
+  serial_printf("timer_init: Initing HPET\n");
+
+  if(hpet_timer_init() != HPET_OK) {
+    serial_printf("timer_init: Falling back to RTC\n");
+    lapic_timer_init();
+  };
+
   puts(".");
 
   printf(".OK\n");

@@ -21,8 +21,22 @@
 #define LAPIC_TIMER_CURR    0x390
 #define LAPIC_TIMER_LVT     0x320
 
+#define DEFAULT_LAPIC_ADDRESS 0xfee00000
+
+#define DIV_BY_2    0x00
+#define DIV_BY_4    0x01
+#define DIV_BY_8    0x02
+#define DIV_BY_16   0x03
+#define DIV_BY_32   0x08
+#define DIV_BY_64   0x09
+#define DIV_BY_128  0x0a
+#define DIV_BY_1    0x0b
+
 void apic_init();
+void lapic_timer_init();
+void timer_frequency(uint32_t freq);
 void write_lapic(uintptr_t reg, uint32_t value);
+
 uint32_t read_lapic(uintptr_t reg);
 
 #endif
