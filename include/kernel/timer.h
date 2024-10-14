@@ -12,6 +12,10 @@ void timer_eoi();
 
 uint64_t unix_time();
 
+void show_clock(void*);
+
+void register_timer_callback(void (*cb)(void*));
+
 #ifdef __cplusplus
 }
 #endif

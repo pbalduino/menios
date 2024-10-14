@@ -21,6 +21,10 @@ extern "C"
 
 #include "unity_internals.h"
 
+#define UNITY_EXCLUDE_FLOAT
+#define UNITY_EXCLUDE_DOUBLE
+#define UNITY_EXCLUDE_FLOAT_PRINT
+
 /*-------------------------------------------------------
  * Test Setup / Teardown
  *-------------------------------------------------------*/

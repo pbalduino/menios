@@ -13,8 +13,10 @@
 #include <kernel/idt.h>
 #include <kernel/kernel.h>
 #include <kernel/mem.h>
+#include <kernel/proc.h>
 #include <kernel/rtc.h>
 #include <kernel/serial.h>
+#include <kernel/thread.h>
 #include <kernel/timer.h>
 
 void boot_graphics_init() {
@@ -43,6 +45,11 @@ void turn_off() {
   hcf();
 }
 
+void thread_code(void* arg) {
+  printf("  Hello from thread!\n");
+  serial_printf("  Hello from thread!\n");
+}
+
 void _start() {
   file_init();
 
@@ -64,6 +71,7 @@ void _start() {
   apic_init();
 
   timer_init();
+  
   // TODO: Show hardware
   // TODO: Filesystem
 
@@ -73,9 +81,14 @@ void _start() {
   rtc_time(&time);
 
   printf("- Now: %d-%d-%d %d:%d:%d UTC\n", time.full_year, time.month, time.day, time.hours, time.minutes, time.seconds);
-  printf(" - UNIX timestamp: %d\n", unix_time());
+  printf("- UNIX timestamp: %d\n", unix_time());
   serial_printf(" - UNIX timestamp: %ld\n", unix_time());
 
+  init_scheduler();
+
+  // kthread_t* thread;
+  // kthread_create(thread, thread_code, NULL);
+  
   sti();
 
   while(true) {

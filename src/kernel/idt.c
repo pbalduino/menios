@@ -1,6 +1,7 @@
 #include <kernel/gdt.h>
 #include <kernel/idt.h>
 #include <kernel/kernel.h>
+#include <kernel/heap.h>
 #include <kernel/serial.h>
 
 #include <stdio.h>
@@ -53,7 +54,9 @@ void idt_df_isr_handler() {
 
 void idt_gpf_isr_handler(idt_exception_p cpu_state) {
   puts("= General protection fault caught.\n");
-  serial_printf("== General protection fault: %lx ==\n", cpu_state);
+  serial_printf("== General protection fault: %p ==\n", cpu_state);
+  serial_printf("  R15: %lx error: %lx\n", cpu_state->r15, cpu_state->error_code);
+  dump_heap((heap_node_p)(void*)cpu_state, sizeof(idt_exception_t));
   hcf();
 }
 

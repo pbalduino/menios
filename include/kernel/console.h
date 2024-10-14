@@ -2,7 +2,7 @@
 #define MENIOS_INCLUDE_KERNEL_CONSOLE_H
 
 #include <stdarg.h>
-#include <stdint.h>
+#include <types.h>
 
 #define FLAG_LEFT  0x01 // The '-' flag
 #define FLAG_SIGN  0x02 // The '+' flag
@@ -21,5 +21,9 @@ uint16_t get_cursor_position();
 
 void gotoxy(uint32_t x, uint32_t y);
 void get_cursor_pos(screen_pos_t* pos);
+
+int vprintk(char *str, const char *format, ...);
+int vsprintk(char* str, const char* format, va_list args);
+int vsnprintk(char *str, size_t, const char* format, va_list args);
 
 #endif

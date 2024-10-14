@@ -7,6 +7,8 @@ extern "C" {
 
 #include <types.h>
 
+#include <kernel/acpi.h>
+
 #define HPET_BASE_ADDRESS 0xF1000000
 #define HPET_REG_CAPABILITIES 0x00
 #define HPET_REG_CONFIGURATION 0x10
@@ -31,9 +33,21 @@ extern "C" {
 #define HPET_REG_TIMER5_COMPARATOR 0x1A8
 #define HPET_REG_TIMER5_COUNTER 0x1B0
 
-#define HPET_OK 0
+#define HPET_OK     0
 #define HPET_ERROR -1
+
+#define HPET_GCR_OFFSET 0x10
+
 typedef int hpet_status_t;
+
+typedef struct hpet_table_t {
+  acpi_sdt_header_t header;  // Standard ACPI header
+  uint32_t          event_timer_block_id;
+  acpi_address_t    address;  // Contains the base address of HPET
+  uint8_t           hpet_number;
+  uint16_t          minimum_tick;
+  uint8_t           page_protection;
+} __attribute__((packed)) hpet_table_t;
 
 hpet_status_t hpet_timer_init();
 

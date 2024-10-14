@@ -69,10 +69,9 @@ idt_gpf_isr_asm_handler:
   push r14                   ; Save R14
   push r15                   ; Save R15
 
-  ; Call your C exception handler (division_by_zero_handler) in C code
+  lea rdi, [rsp]
   call idt_gpf_isr_handler
 
-  ; Restore registers in reverse order
   pop r15                    ; Restore R15
   pop r14                    ; Restore R14
   pop r13                    ; Restore R13
@@ -111,24 +110,44 @@ idt_pf_isr_asm_handler:
   
   ; Return from interrupt
   iretq
-  
 
-  idt_period_timer_isr_asm_handler
-  ; Push the stack segment (SS)
-  push qword [rsp]
+idt_period_timer_isr_asm_handler:
+  push rax
+  push rbx
+  push rcx
+  push rdx
+  push rbp
+  push rsi
+  push rdi
+  push r8
+  push r9
+  push r10
+  push r11
+  push r12
+  push r13
+  push r14
+  push r15
 
-  ; Push the instruction pointer (RIP), code segment (CS), RFLAGS, stack pointer (RSP), and stack segment (SS)
-  push qword [rsp + 8]  ; RIP (was automatically saved by the CPU)
-  push qword [rsp + 16] ; CS (was automatically saved by the CPU)
-  push qword [rsp + 24] ; RFLAGS (was automatically saved by the CPU)
-  push qword [rsp + 32] ; RSP (was automatically saved by the CPU)
-  push qword [rsp + 40] ; SS (was automatically saved by the CPU)
+  cld
 
-  ; Call the C handler
+  lea rdi, [rsp]
   call timer_handler
-  
-  ; Clean up the stack (6 pushes * 8 bytes each = 48 bytes)
-  add rsp, 48
-  
+
+  pop r15
+  pop r14
+  pop r13
+  pop r12
+  pop r11
+  pop r10
+  pop r9
+  pop r8
+  pop rdi
+  pop rsi
+  pop rbp
+  pop rdx
+  pop rcx
+  pop rbx
+  pop rax
+
   ; Return from interrupt
   iretq

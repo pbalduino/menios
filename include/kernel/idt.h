@@ -38,7 +38,7 @@ typedef struct  __attribute__((packed)) {
   uint64_t offset;       // Base address of the IDT
 } idt_pointer_t;
 
-typedef struct {
+typedef struct idt_exception_t {
     uint64_t r15;
     uint64_t r14;
     uint64_t r13;

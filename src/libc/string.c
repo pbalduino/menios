@@ -62,9 +62,7 @@ char*	strncat(char *dst, const char *src, size_t size) {
 		} while (--size != 0);
 		*d = 0;
 	}
-
-  assert(dst[strlen(dst) - 1] == 0);
-
+  
 	return dst;
 }
 

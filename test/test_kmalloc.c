@@ -22,11 +22,11 @@ void tearDown() {
   free(arena1);
 }
 
-void test_malloc_WHEN_size_is_zero_SHOULD_return_null() {
+void test_kmalloc_WHEN_size_is_zero_SHOULD_return_null() {
   TEST_ASSERT_NULL_MESSAGE(kmalloc(0), "kmalloc doesn't returned NULL");
 }
 
-void test_malloc_SHOULD_start_in_a_valid_heap() {
+void test_kmalloc_SHOULD_start_in_a_valid_heap() {
   heap_node_p node;
   uint32_t size = PAGE_SIZE - HEAP_HEADER_SIZE;
   int ok = inspect_heap(0, &node);
@@ -40,7 +40,7 @@ void test_malloc_SHOULD_start_in_a_valid_heap() {
   TEST_ASSERT_EQUAL_UINT32_MESSAGE(HEAP_MAGIC, node->magic, "The magic value doesn't match");
 }
 
-void test_malloc_WHEN_size_is_positive_SHOULD_return_a_valid_node() {
+void test_kmalloc_WHEN_size_is_positive_SHOULD_return_a_valid_node() {
   size_t size = 16;
   heap_node_p node;
 
@@ -73,9 +73,9 @@ void test_malloc_WHEN_size_is_positive_SHOULD_return_a_valid_node() {
 int main() {
   UNITY_BEGIN();
 
-  RUN_TEST(test_malloc_WHEN_size_is_zero_SHOULD_return_null);
-  RUN_TEST(test_malloc_SHOULD_start_in_a_valid_heap);
-  RUN_TEST(test_malloc_WHEN_size_is_positive_SHOULD_return_a_valid_node);
+  RUN_TEST(test_kmalloc_WHEN_size_is_zero_SHOULD_return_null);
+  RUN_TEST(test_kmalloc_SHOULD_start_in_a_valid_heap);
+  RUN_TEST(test_kmalloc_WHEN_size_is_positive_SHOULD_return_a_valid_node);
 
   return UNITY_END();
 }

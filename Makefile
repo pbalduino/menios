@@ -167,14 +167,21 @@ run:
 	qemu-system-x86_64 -smp cpus=1,maxcpus=2,sockets=1,dies=1,clusters=1,cores=2 -vga std -no-reboot --no-shutdown -M q35 -m size=2G,maxmem=2G -hda menios.hdd -serial file:com1.log -monitor stdio -d int -M hpet=on -usb -machine q35 -rtc base=utc,clock=host
 
 .PHONY: test
-test:
+test: docker
 	@set -eux
 
 ifeq ($(OS_NAME),linux)
 	@echo "Testing inside Linux"
 
 	for file in $(shell find -L test -type f -name 'test_*.c'); do \
-		gcc -DMENIOS_NO_DEBUG -I./include $$file test/unity.c src/kernel/mem/kmalloc.c -o "$$file".bin ; \
+		gcc -DMENIOS_NO_DEBUG -I./include \
+			$$file \
+			test/unity.c \
+			src/kernel/console/vprintk.c \
+			src/kernel/mem/kmalloc.c \
+			src/libc/itoa.c \
+			src/libc/string.c \
+			-o "$$file".bin ; \
 		echo "Testing $(.c:.bin=$$file)" ; \
 		"$$file".bin ; \
 		rm "$$file".bin ; \

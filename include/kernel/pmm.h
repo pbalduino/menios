@@ -117,8 +117,8 @@ typedef struct pml4_map_t {
 
 typedef pml4_map_t* pml4_map_p;
 
-uintptr_t read_cr2();
-uintptr_t read_cr3();
+uintptr_t   read_cr2();
+phys_addr_t read_cr3();
 
 void debug_heap();
 void pmm_init();
@@ -134,5 +134,7 @@ virt_addr_t physical_to_virtual(phys_addr_t physical_address);
 phys_addr_t virtual_to_physical(virt_addr_t virtual_address);
 
 void set_page_used(phys_addr_t physical_address);
+
+virt_addr_t get_kernel_offset();
 
 #endif

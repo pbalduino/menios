@@ -148,7 +148,7 @@ void init_kernel_offset() {
   serial_printf("  Kernel offset %lx:\n", kernel_offset);
 }
 
-uintptr_t get_kernel_offset() {
+virt_addr_t get_kernel_offset() {
   return kernel_offset;
 }
 
@@ -180,8 +180,8 @@ uint64_t get_first_free_page() {
   return 0L;
 }
 
-uintptr_t read_cr3() {
-  uintptr_t value;
+phys_addr_t read_cr3() {
+  phys_addr_t value;
   asm volatile("movq %%cr3, %0" : "=r" (value));
   return value;
 }

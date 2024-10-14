@@ -1,10 +1,12 @@
 #include <kernel/apic.h>
 #include <kernel/console.h>
 #include <kernel/pmm.h>
+#include <kernel/proc.h>
 #include <kernel/rtc.h>
 #include <kernel/hpet.h>
 #include <kernel/serial.h>
 #include <kernel/timer.h>
+#include <kernel/tsc.h>
 
 #include <stdio.h>
 #include <types.h>
@@ -13,14 +15,10 @@ extern void reset_timer();
 
 static uint64_t tick = 0;
 
-typedef struct param_t {
-  uint64_t par0;
-  uint64_t par1;
-} param_t;
+void (*callback[16])(void*);
+int last_callback = 0;
 
-void timer_handler(param_t* par) {
-  tick++;
-
+void show_clock(void*) {
   rtc_time_t time;
   rtc_time(&time);
 
@@ -29,22 +27,46 @@ void timer_handler(param_t* par) {
   gotoxy(118, 0);
   printf("%d-%d-%d %d:%d:%d UTC\n", time.full_year, time.month, time.day, time.hours, time.minutes, time.seconds);
   gotoxy(pos.x, pos.y);
+}
+
+void timer_handler(void* state) {
+  tick++;
+
+  for(int i = 0; i < last_callback; i++) {
+    if(callback[i] != NULL) {
+      callback[i](state);
+    }
+  }
 
   timer_eoi();
 }
 
+void register_timer_callback(void (*cb)(void*)) {
+  callback[last_callback++] = cb;
+}
+
 void timer_init() {
   printf("- Initing timer");
-  serial_printf("timer_init: Initing HPET\n");
-
-  if(hpet_timer_init() != HPET_OK) {
-    serial_printf("timer_init: Falling back to RTC\n");
-    lapic_timer_init();
+  for(int i = 0; i < 16; i++) {
+    callback[i] = NULL;
   };
+
+  puts(".");
+  // serial_printf("timer_init: Initing HPET\n");
+  // if(hpet_timer_init() != HPET_OK) {
+    // puts(",");
+    // serial_printf("timer_init: Falling back to RTC\n");
+  lapic_timer_init();
+    // puts(".");
+  // };
+
+  register_timer_callback(&show_clock);
 
   puts(".");
 
   printf(".OK\n");
+
+  init_tsc();
 }
 
 uint64_t unix_time() {
