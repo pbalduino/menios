@@ -48,12 +48,12 @@ void init_tsc() {
   }
   puts(".");
 
-  serial_printf("init_tsc: starttime %d\n", start_time);
-  serial_printf("init_tsc: starttsc  %d\n", start_tsc);
+  serial_printf("init_tsc: starttime %ld\n", start_time);
+  serial_printf("init_tsc: starttsc  %ld\n", start_tsc);
 
   start_time = unix_time();
 
-  serial_printf("init_tsc: starttime %d\n", start_time);
+  serial_printf("init_tsc: starttime %ld\n", start_time);
   
   uint64_t last_sec = start_time;
 
@@ -67,12 +67,12 @@ void init_tsc() {
 
   uint64_t frequency = (end_tsc - start_tsc) / 5;
 
-  serial_printf("init_tsc: endtime  %d\n", end_time);
-  serial_printf("init_tsc: endtsc   %d\n", end_tsc);
-  serial_printf("init_tsc: tscdiff  %d\n", end_tsc - start_tsc);
-  serial_printf("init_tsc: timediff %d\n", end_time - start_time);
-  serial_printf("init_tsc: per sec  %d\n", frequency);
-  printf(".OK\n  Frequency: %dfs\n", frequency);
+  serial_printf("init_tsc: endtime  %ld\n", end_time);
+  serial_printf("init_tsc: endtsc   %ld\n", end_tsc);
+  serial_printf("init_tsc: tscdiff  %ld\n", end_tsc - start_tsc);
+  serial_printf("init_tsc: timediff %ld\n", end_time - start_time);
+  serial_printf("init_tsc: per sec  %ld\n", frequency);
+  printf(".OK\n  Frequency: %ldfs\n", frequency);
 
 }
 

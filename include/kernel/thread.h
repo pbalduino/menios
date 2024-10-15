@@ -6,7 +6,7 @@ extern "C" {
 #endif
 
 typedef struct kthread_t {
-
+  char* name;
 } kthread_t;
 
 // typedef void *(*entrypoint)(void *) kthread_handler_t;

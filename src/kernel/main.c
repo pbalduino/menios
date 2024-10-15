@@ -86,10 +86,13 @@ void _start() {
 
   init_scheduler();
 
-  // kthread_t* thread;
-  // kthread_create(thread, thread_code, NULL);
-  
   sti();
+
+  kthread_t thread = {
+    .name = "thread0\0",
+  };
+  kthread_create(&thread, thread_code, NULL);
+  printf("- Created thread\n");
 
   while(true) {
 

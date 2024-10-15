@@ -37,7 +37,6 @@ void timer_handler(void* state) {
       callback[i](state);
     }
   }
-
   timer_eoi();
 }
 

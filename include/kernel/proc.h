@@ -77,7 +77,6 @@ typedef struct proc_info_t {
   proc_info_p* children;
   uint32_t     children_count;
   uint32_t     pid;
-  char         name[32];
   uintptr_t    brk;
   uintptr_t    heap;
   uintptr_t*   stack;
@@ -87,6 +86,7 @@ typedef struct proc_info_t {
   void(*entrypoint)(void*);
   void*        arguments;
   proc_info_p  next;
+  char         name[32];
 } proc_info_t;
 
 typedef proc_info_t* proc_info_p;
@@ -95,7 +95,7 @@ extern proc_info_p procs[PROC_MAX];
 extern proc_info_p current;
 
 void init_scheduler();
-void proc_create(proc_info_p proc, void (*entrypoint)(void *), void* arg);
+void proc_create(proc_info_p proc, const char* name, void (*entrypoint)(void *), void* arg);
 void proc_execute(proc_info_p proc);
 
 #ifdef __cplusplus

@@ -7,7 +7,7 @@ extern "C" {
 
 #include <types.h>
 
-#define HEAP_SIZE   16
+#define HEAP_SIZE   256
 #define HEAP_FREE    0
 #define HEAP_USED    1
 #define HEAP_MAGIC  0x534f6d00
@@ -27,7 +27,7 @@ typedef struct heap_node_t {
   struct heap_node_t*  next;   // 8 bytes
   struct heap_node_t*  prev;   // 8 bytes
   uint8_t              data[];
-} /*__attribute__((packed))*/ heap_node_t; 
+} heap_node_t; 
 
 typedef struct heap_node_t* heap_node_p;
 

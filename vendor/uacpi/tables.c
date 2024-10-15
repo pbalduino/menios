@@ -3,6 +3,8 @@
 #include <uacpi/internal/stdlib.h>
 #include <uacpi/internal/interpreter.h>
 
+#include <kernel/serial.h>
+
 #ifndef UACPI_STATIC_TABLE_ARRAY_LEN
     #define UACPI_STATIC_TABLE_ARRAY_LEN 16
 #endif
@@ -1044,8 +1046,9 @@ uacpi_status uacpi_table_load_with_cause(
         .set = UACPI_TABLE_LOADED,
         .expect_clear = UACPI_TABLE_LOADED,
     };
-
+    serial_line("");
     ret = table_ctl(idx, &req);
+    serial_line("");
     if (uacpi_unlikely_error(ret))
         return ret;
 
