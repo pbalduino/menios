@@ -5,6 +5,7 @@
 #include <kernel/rtc.h>
 #include <kernel/hpet.h>
 #include <kernel/serial.h>
+#include <kernel/thread.h>
 #include <kernel/timer.h>
 #include <kernel/tsc.h>
 
@@ -18,26 +19,19 @@ static uint64_t tick = 0;
 void (*callback[16])(void*);
 int last_callback = 0;
 
-void show_clock(void*) {
-  rtc_time_t time;
-  rtc_time(&time);
-
-  screen_pos_t pos;
-  get_cursor_pos(&pos);
-  gotoxy(118, 0);
-  printf("%d-%d-%d %d:%d:%d UTC\n", time.full_year, time.month, time.day, time.hours, time.minutes, time.seconds);
-  gotoxy(pos.x, pos.y);
-}
-
-void timer_handler(void* state) {
+void timer_handler(void* arg) {
   tick++;
-
   for(int i = 0; i < last_callback; i++) {
     if(callback[i] != NULL) {
-      callback[i](state);
+      serial_line("tick");
+      callback[i](arg);
+      serial_line("tick");
     }
+    serial_line("tick");
   }
+  serial_line("tick");
   timer_eoi();
+  serial_line("tick");
 }
 
 void register_timer_callback(void (*cb)(void*)) {
@@ -51,15 +45,7 @@ void timer_init() {
   };
 
   puts(".");
-  // serial_printf("timer_init: Initing HPET\n");
-  // if(hpet_timer_init() != HPET_OK) {
-    // puts(",");
-    // serial_printf("timer_init: Falling back to RTC\n");
   lapic_timer_init();
-    // puts(".");
-  // };
-
-  register_timer_callback(&show_clock);
 
   puts(".");
 
@@ -68,7 +54,7 @@ void timer_init() {
   init_tsc();
 }
 
-uint64_t unix_time() {
+uint64_t boot_time() {
   rtc_time_t time;
   rtc_time(&time);
 

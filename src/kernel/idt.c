@@ -57,6 +57,7 @@ void idt_gpf_isr_handler(idt_exception_p cpu_state) {
   serial_printf("== General protection fault: %p ==\n", cpu_state);
   serial_printf("  R15: %lx error: %lx\n", cpu_state->r15, cpu_state->error_code);
   dump_heap((heap_node_p)(void*)cpu_state, sizeof(idt_exception_t));
+
   hcf();
 }
 

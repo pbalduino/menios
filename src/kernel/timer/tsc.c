@@ -1,7 +1,9 @@
 #include <kernel/serial.h>
 #include <kernel/timer.h>
 #include <kernel/tsc.h>
+#include <stdbool.h>
 #include <stdio.h>
+#include <time.h>
 #include <types.h>
 
 static inline void _cpuid(uint32_t eax, uint32_t ecx, uint32_t* regs) {
@@ -9,6 +11,11 @@ static inline void _cpuid(uint32_t eax, uint32_t ecx, uint32_t* regs) {
                   : "=a"(regs[0]), "=b"(regs[1]), "=c"(regs[2]), "=d"(regs[3])
                   : "a"(eax), "c"(ecx));
 }
+
+static uint64_t boot_time_sec;
+static uint64_t tick_start;
+
+uint64_t frequency_ns = 0;
 
 bool has_invariant_tsc() {
   uint32_t regs[4];
@@ -35,15 +42,18 @@ void init_tsc() {
 
   serial_line("");
 
-  uint64_t start_time = unix_time();
+  boot_time_sec = boot_time();
+  tick_start = read_tsc();
+
+  uint64_t start_time = boot_time_sec;
   serial_line("");
-  uint64_t start_tsc = read_tsc();
+  uint64_t start_tsc = tick_start;
   serial_line("");
   uint64_t end_time;
   uint64_t end_tsc;
 
   puts(".");
-  while(start_time == unix_time()) {
+  while(start_time == boot_time()) {
     start_tsc = read_tsc();
   }
   puts(".");
@@ -51,13 +61,13 @@ void init_tsc() {
   serial_printf("init_tsc: starttime %ld\n", start_time);
   serial_printf("init_tsc: starttsc  %ld\n", start_tsc);
 
-  start_time = unix_time();
+  start_time = boot_time();
 
   serial_printf("init_tsc: starttime %ld\n", start_time);
   
   uint64_t last_sec = start_time;
 
-  while((end_time = unix_time()) < (start_time + 5)) {
+  while((end_time = boot_time()) < (start_time + 5)) {
     if(last_sec != end_time) {
       puts(".");
       last_sec = end_time;
@@ -72,7 +82,11 @@ void init_tsc() {
   serial_printf("init_tsc: tscdiff  %ld\n", end_tsc - start_tsc);
   serial_printf("init_tsc: timediff %ld\n", end_time - start_time);
   serial_printf("init_tsc: per sec  %ld\n", frequency);
-  printf(".OK\n  Frequency: %ldfs\n", frequency);
-
+  printf(".OK\n  Frequency: %ldns\n", frequency);
+  serial_printf("Frequency: %ld/sec\n", frequency);
 }
 
+useconds_t unix_time_us() {
+  uint64_t tsc = read_tsc() - tick_start;
+  return ((boot_time_sec * 1000000000) + tsc) / 1000;
+}

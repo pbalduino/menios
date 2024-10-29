@@ -2,6 +2,7 @@
 #define MENIOS_INCLUDE_KERNEL_SERIAL_H
 
 #include <stdarg.h>
+#include <stdbool.h>
 
 #ifdef MENIOS_KERNEL
 void serial_init();
@@ -39,6 +40,7 @@ int serial_vprintf(const char *format, va_list args);
 #endif // MENIOS_NO_DEBUG
 #endif // MENIOS_KERNEL
 
+extern bool serial_debug;
 // #define serial_line(a
 // #define serial_log(a) serial_printf("[INFO] %s[%d]: %s\n", __FILE__, __LINE__, a)
 // #define serial_error(a) serial_printf("[ERRO] %s[%d]: %s\n", __FILE__, __LINE__, a)

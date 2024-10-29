@@ -3,12 +3,10 @@
 #include <kernel/serial.h>
 
 void cli() {
-  puts("- Stopping interruptions.\n");
   asm("cli");
 }
 
 void sti() {
-  puts("- Resuming interruptions.\n");
   asm("sti");
 }
 
@@ -81,4 +79,8 @@ uint32_t inl(uint16_t port) {
     : "Nd"(port)
   );
   return result;
+}
+
+void noop() {
+  __asm__("nop");
 }

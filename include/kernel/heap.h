@@ -7,10 +7,10 @@ extern "C" {
 
 #include <types.h>
 
-#define HEAP_SIZE   256
+#define HEAP_SIZE   0x400
 #define HEAP_FREE    0
 #define HEAP_USED    1
-#define HEAP_MAGIC  0x534f6d00
+#define HEAP_MAGIC  0x534f6d00 // mOS
 
 typedef uint32_t HEAP_INSPECT_RESULT;
 
@@ -25,7 +25,6 @@ typedef struct heap_node_t {
   uint8_t              status; // 1 byte
   uint32_t             size;   // 4 bytes
   struct heap_node_t*  next;   // 8 bytes
-  struct heap_node_t*  prev;   // 8 bytes
   uint8_t              data[];
 } heap_node_t; 
 
@@ -44,6 +43,8 @@ void kfree(void* ptr);
 // void* kmem_align(uint64_t size);
 
 void dump_heap(heap_node_p heap, size_t size);
+
+void heap_compactor();
 
 #ifdef __cplusplus
 }

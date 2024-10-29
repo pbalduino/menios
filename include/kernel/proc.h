@@ -42,27 +42,26 @@ extern "C" {
 #define PROC_STACK_SIZE 1024
 
 typedef struct cpu_state_t {
-  uint64_t rax;
-  uint64_t rbx;
-  uint64_t rcx;
-  uint64_t rdx;
-  uint64_t rsi;
-  uint64_t rdi;
-  uint64_t rbp;
-  uint64_t rsp;
-  uint64_t r8;
-  uint64_t r9;
-  uint64_t r10;
-  uint64_t r11;
-  uint64_t r12;
-  uint64_t r13;
-  uint64_t r14;
   uint64_t r15;
-  // phys_addr_t cr3;
+  uint64_t r14;
+  uint64_t r13;
+  uint64_t r12;
+  uint64_t r11;
+  uint64_t r10;
+  uint64_t r9;
+  uint64_t r8;
+  uint64_t rdi;
+  uint64_t rsi;
+  uint64_t rbp;
+  uint64_t rdx;
+  uint64_t rcx;
+  uint64_t rbx;
+  uint64_t rax;
   uint64_t rip;   
-  uint64_t cs;    
+  uint64_t cs;
   uint64_t rflags;
-  uint64_t ss;    
+  uint64_t rsp;
+  uint64_t ss;
 } __attribute__((packed)) cpu_state_t;
 
 typedef cpu_state_t* cpu_state_p;
@@ -79,13 +78,15 @@ typedef struct proc_info_t {
   uint32_t     pid;
   uintptr_t    brk;
   uintptr_t    heap;
-  uintptr_t*   stack;
+  void*        stack_pointer;
+  uintptr_t*   stack_base;
   proc_state_t state;
   uint8_t      priority;
   cpu_state_t* cpu_state;
   void(*entrypoint)(void*);
   void*        arguments;
   proc_info_p  next;
+  int          exit_code;
   char         name[32];
 } proc_info_t;
 
@@ -97,6 +98,7 @@ extern proc_info_p current;
 void init_scheduler();
 void proc_create(proc_info_p proc, const char* name, void (*entrypoint)(void *), void* arg);
 void proc_execute(proc_info_p proc);
+void proc_exit(int code);
 
 #ifdef __cplusplus
 }

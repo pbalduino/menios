@@ -2,6 +2,7 @@
 #include <kernel/heap.h>
 #include <kernel/kernel.h>
 #include <kernel/mman.h>
+#include <kernel/mutex.h>
 #include <kernel/pmm.h>
 #include <kernel/proc.h>
 #include <kernel/serial.h>
@@ -13,10 +14,6 @@
 #include <stdio.h>
 #include <string.h>
 
-typedef struct uacpi_kmutex {
-  bool locked;
-} uacpi_kmutex;
-
 typedef struct uacpi_kevent {
   bool signaled;
 } uacpi_kevent;
@@ -25,10 +22,6 @@ static volatile struct limine_rsdp_request rsdp_request = {
   .id = LIMINE_RSDP_REQUEST,
   .revision = 0
 };
-
-static void noop() {
-  __asm__("nop");
-}
 
 uint64_t __popcountdi2(uint64_t x) {
   uint64_t count = 0;
@@ -112,6 +105,7 @@ void *uacpi_kernel_calloc(uacpi_size count, uacpi_size size) {
 }
 
 void uacpi_kernel_free(void *mem) {
+  serial_printf("uacpi_kernel_free: %p\n", mem);
   kfree(mem);
 }
 
@@ -120,25 +114,21 @@ void *uacpi_kernel_alloc(uacpi_size size) {
 }
 
 uacpi_bool uacpi_kernel_acquire_mutex(uacpi_handle handle, uacpi_u16) {
-  uacpi_kmutex* mutex = (uacpi_kmutex*)handle;
+  kmutex_t* mutex = (kmutex_t*)handle;
 
-  serial_printf("uacpi_kernel_acquire_mutex: %p - %d\n", mutex, mutex->locked);
+  serial_printf("uacpi_kernel_acquire_mutex: %p - %d\n", mutex, mutex->lock);
 
-  if(mutex->locked) {
-    return false;
-  }
-
-  mutex->locked = true;
+  kmutex_lock(mutex);
 
   return true;
 }
 
 void uacpi_kernel_release_mutex(uacpi_handle handle) {
-  uacpi_kmutex* mutex = (uacpi_kmutex*)handle;
+  kmutex_t* mutex = (kmutex_t*)handle;
 
-  mutex->locked = false;
+  kmutex_unlock(mutex);
 
-  serial_printf("uacpi_kernel_release_mutex: %p - %d\n", mutex, mutex->locked);
+  serial_printf("uacpi_kernel_release_mutex: %p - %d\n", mutex, mutex->lock);
 }
 
 void* uacpi_kernel_map(uacpi_phys_addr addr, uacpi_size len) {
@@ -178,14 +168,15 @@ uacpi_status uacpi_kernel_uninstall_interrupt_handler(
 }
 
 uacpi_cpu_flags uacpi_kernel_lock_spinlock(uacpi_handle handle) {
-  uacpi_kmutex* mutex = (uacpi_kmutex*)handle;
-  mutex->locked = true;
+  kmutex_t* mutex = (kmutex_t*)handle;
+  kmutex_lock(mutex);
+
   return 0;
 }
 
 void uacpi_kernel_unlock_spinlock(uacpi_handle handle, uacpi_cpu_flags) {
-  uacpi_kmutex* mutex = (uacpi_kmutex*)handle;
-  mutex->locked = false;
+  kmutex_t* mutex = (kmutex_t*)handle;
+  kmutex_unlock(mutex);
 }
 
 void uacpi_kernel_signal_event(uacpi_handle handle) {
@@ -213,19 +204,20 @@ void uacpi_kernel_free_event(uacpi_handle handle) {
 }
 
 uacpi_handle uacpi_kernel_create_spinlock(void) {
-  uacpi_kmutex* event = kmalloc(sizeof(uacpi_kevent));
-  event->locked = false;
-  serial_printf("uacpi_kernel_create_spinlock: %p - %d\n", event, event->locked);
+  kmutex_t* event = kmalloc(sizeof(kmutex_t));
+  event->lock = false;
+  serial_printf("uacpi_kernel_create_spinlock: %p - %d\n", event, event->lock);
   return event;
 }
 
 void uacpi_kernel_free_spinlock(uacpi_handle handle) {
+  serial_printf("uacpi_kernel_free_spinlock: %p\n", handle);
   kfree(handle);
 }
 
 uacpi_handle uacpi_kernel_create_mutex(void) {
-  uacpi_kmutex* mutex = kmalloc(sizeof(uacpi_kmutex));
-  mutex->locked = false;
+  kmutex_t* mutex = kmalloc(sizeof(kmutex_t));
+  mutex->lock = 0;
   serial_printf("uacpi_kernel_create_mutex: %p\n", mutex);
   return mutex;
 }

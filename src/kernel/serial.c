@@ -1,9 +1,11 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <kernel/kernel.h>
+#include <kernel/mutex.h>
 #include <kernel/serial.h>
 
 // static FILE* com1 = NULL;
+bool serial_debug = false;
 
 void serial_init() {
   printf("- Initing serial communication");
@@ -91,16 +93,16 @@ int serial_vprintf(const char *format, va_list args){
         }
         case 'l': {
           switch(format[pos + 1]) {
-            case 'u': {
-              uint64_t val = va_arg(args, uint64_t);
-              lutoa(val, str, 10);
+            case 'd':{
+              int64_t val = va_arg(args, int64_t);
+              ltoa(val, str, 10);
               serial_puts(str);
               pos++;
               break;
             }
-            case 'l':{
-              int64_t val = va_arg(args, int64_t);
-              ltoa(val, str, 10);
+            case 'u': {
+              uint64_t val = va_arg(args, uint64_t);
+              lutoa(val, str, 10);
               serial_puts(str);
               pos++;
               break;
@@ -166,11 +168,13 @@ int serial_vprintf(const char *format, va_list args){
 }
 
 int serial_printf(const char* format, ...) {
-  // printf("serial fd: %p", com1);
-
-  va_list list;
-  va_start(list, format);
-  int i = serial_vprintf(format, list);
-  va_end(list);
-  return i;
+  if(serial_debug) {
+    va_list list;
+    va_start(list, format);
+    int i = serial_vprintf(format, list);
+    va_end(list);
+    return i;
+  }
+  
+  return 0;
 }

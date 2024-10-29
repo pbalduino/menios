@@ -69,7 +69,7 @@ typedef __attribute__((__may_alias__)) size_t WT;
 #define WS (sizeof(WT))
 #endif
 
-void *memmove(void *dest, const void *src, size_t n) {
+void* memmove(void *dest, const void *src, size_t n) {
   char *d = dest;
   const char *s = src;
 
@@ -117,5 +117,5 @@ int memcmp(const void *s1, const void *s2, size_t n) {
 }
 
 void memzero(void* s, uint64_t n) {
-  for (int i = n; i > 0; i--) ((uint8_t*)s)[i - 1] = 0;
+	memset(s, 0, n);
 }

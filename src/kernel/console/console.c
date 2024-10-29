@@ -5,6 +5,7 @@
 #include <kernel/console.h>
 #include <kernel/file.h>
 #include <kernel/serial.h>
+#include <kernel/thread.h>
 
 int fputchar(int ch, FILE* file) {
   if(file == NULL) {
@@ -41,6 +42,8 @@ int vprintf(const char* format, va_list args) {
 }
 
 int fvprintf(FILE *file, const char *format, va_list args){
+  // kthread_mutex_lock(&printf_mutex);
+
   for(int pos = 0; format[pos]; pos++) {
     if(format[pos] == '%') {
       switch(format[++pos]) {
@@ -161,10 +164,13 @@ int fvprintf(FILE *file, const char *format, va_list args){
       fputchar(format[pos], file);
     }
   }
+  
+  // kthread_mutex_unlock(&printf_mutex);
   return 0;
 }
 
 int printf(const char* format, ...) {
+
   va_list list;
   va_start(list, format);
   int i = vprintf(format, list);

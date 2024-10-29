@@ -26,7 +26,7 @@ static struct limine_framebuffer *framebuffer;
 
 static FILE* fb_d;
 #define ROWS 50
-#define COLS 140
+#define COLS 157
 
 inline uint64_t fb_count() {
   return framebuffer_request.response->framebuffer_count;

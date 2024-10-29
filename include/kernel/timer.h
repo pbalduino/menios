@@ -10,7 +10,7 @@ extern "C" {
 void timer_init();
 void timer_eoi();
 
-uint64_t unix_time();
+uint64_t boot_time();
 
 void show_clock(void*);
 

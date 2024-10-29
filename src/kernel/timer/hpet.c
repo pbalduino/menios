@@ -16,10 +16,10 @@ hpet_status_t hpet_timer_init() {
     return HPET_ERROR;
   }
 
-  hpet_table_t *hpet = (hpet_table_t *)tbl.virt_addr;
-  uint64_t hpet_base = hpet->address.address;
+  // hpet_table_t *hpet = (hpet_table_t *)tbl.virt_addr;
+  // uint64_t hpet_base = hpet->address.address;
 
-  serial_printf("Found HPET @ %lx\n", tbl.ptr);
+  // serial_printf("Found HPET @ %lx\n", tbl.ptr);
 
   return HPET_ERROR;
 }

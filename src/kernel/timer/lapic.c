@@ -14,7 +14,7 @@ void lapic_timer_init() {
   addr = physical_to_virtual(DEFAULT_LAPIC_ADDRESS);
   serial_printf("lapic address: %lx - virt: %lx\n", DEFAULT_LAPIC_ADDRESS, addr);
   write_lapic(addr + LAPIC_SVR, read_lapic(addr + LAPIC_SVR) | 0x100);
-  write_lapic(addr + LAPIC_TIMER_DIV, DIV_BY_128);
+  write_lapic(addr + LAPIC_TIMER_DIV, DIV_BY_16);
   timer_frequency(timer_freq);
   write_lapic(addr + LAPIC_TIMER_LVT, 0x20020);
   puts(".");

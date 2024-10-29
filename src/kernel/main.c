@@ -5,6 +5,7 @@
 
 #include <kernel/acpi.h>
 #include <kernel/apic.h>
+#include <kernel/console.h>
 #include <kernel/file.h>
 #include <kernel/fonts.h>
 #include <kernel/framebuffer.h>
@@ -16,8 +17,10 @@
 #include <kernel/proc.h>
 #include <kernel/rtc.h>
 #include <kernel/serial.h>
+#include <kernel/services.h>
 #include <kernel/thread.h>
 #include <kernel/timer.h>
+#include <kernel/tsc.h>
 
 void boot_graphics_init() {
   fb_init();
@@ -46,11 +49,33 @@ void turn_off() {
 }
 
 void thread_code(void* arg) {
-  printf("  Hello from thread!\n");
-  serial_printf("  Hello from thread!\n");
+  serial_printf("thread_code: Hello from thread %s!\n", current->name);
+  char* text = (char*)arg;
+  serial_printf("thread_code: Hello from thread %s!\n", text);
+  printf("- Hello from thread %s!\n", text);
+  ksleep(1000);
+  printf("- Bye from thread %s!\n", text);
+}
+
+void show_clock(void* arg) {
+  serial_line("");
+  while(true){
+    serial_line("");
+    rtc_time_t time;
+    rtc_time(&time);
+
+    screen_pos_t pos;
+    get_cursor_pos(&pos);
+    gotoxy(118, 0);
+    printf("%d-%d-%d %d:%d:%d UTC  \n", time.full_year, time.month, time.day, time.hours, time.minutes, time.seconds);
+    ksleep(500);
+    gotoxy(pos.x, pos.y);
+  }
 }
 
 void _start() {
+  serial_debug = true;
+
   file_init();
 
   serial_init();
@@ -65,39 +90,40 @@ void _start() {
 
   acpi_init();
 
-  // TODO: CPUs
-  // smp_init();
-  // TODO: APIC / LAPIC
   apic_init();
 
   timer_init();
   
-  // TODO: Show hardware
-  // TODO: Filesystem
-
-  // puts("- Bye\n");
-  // serial_log("Bye\n");
-  rtc_time_t time;
-  rtc_time(&time);
-
-  printf("- Now: %d-%d-%d %d:%d:%d UTC\n", time.full_year, time.month, time.day, time.hours, time.minutes, time.seconds);
-  printf("- UNIX timestamp: %d\n", unix_time());
-  serial_printf(" - UNIX timestamp: %ld\n", unix_time());
-
   init_scheduler();
+
+  init_services();
 
   sti();
 
-  kthread_t thread = {
-    .name = "thread0\0",
-  };
-  kthread_create(&thread, thread_code, NULL);
-  printf("- Created thread\n");
+  rtc_time_t time;
+  rtc_time(&time);
+
+  // TODO: CPUs
+  // smp_init();
+  // TODO: Show hardware
+  // TODO: Filesystem
+
+  // kthread_t thread0;
+  // kthread_t thread1;
+  kthread_t clock;
+
+  // kthread_create(&thread0, "thread0", thread_code, (void*)"0");
+  // kthread_create(&thread1, "thread1", thread_code, (void*)"1");
+  kthread_create(&clock, "clock", show_clock, NULL);
+
+  printf("- Created threads\n");
+
+  puts("- Bye\n");
+  serial_log("Bye\n");
 
   while(true) {
 
   }
-
   // hcf();
   // turn_off();
 }
