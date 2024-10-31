@@ -3,6 +3,15 @@
 
 #include <kernel/serial.h>
 
+/**
+ * Converts an unsigned 32-bit integer to a string representation
+ * @param num The unsigned integer to convert
+ * @param str Pointer to the buffer that will hold the resulting string
+ * @param base The base for conversion (2 to 36)
+ * @return Pointer to the resulting string
+ * @note The buffer must be large enough to hold the resulting string
+ * @note For bases > 10, digits after 9 are represented by lowercase letters a-z
+ */
 char* utoa(uint32_t num, char* str, int32_t base) {
   int i = 0;
   bool isNegative = false;
@@ -33,6 +42,16 @@ char* utoa(uint32_t num, char* str, int32_t base) {
   return str;
 }
 
+/**
+ * Converts a signed 32-bit integer to a string representation
+ * @param num The signed integer to convert
+ * @param str Pointer to the buffer that will hold the resulting string
+ * @param base The base for conversion (2 to 36)
+ * @return Pointer to the resulting string
+ * @note The buffer must be large enough to hold the resulting string
+ * @note Negative numbers are handled only with base 10
+ * @note For bases > 10, digits after 9 are represented by lowercase letters a-z
+ */
 char* itoa(int32_t num, char* str, int32_t base) {
   int i = 0;
   bool isNegative = false;
@@ -71,6 +90,15 @@ char* itoa(int32_t num, char* str, int32_t base) {
   return str;
 }
 
+/**
+ * Converts an unsigned 64-bit integer to a string representation
+ * @param num The unsigned long integer to convert
+ * @param str Pointer to the buffer that will hold the resulting string
+ * @param base The base for conversion (2 to 36)
+ * @return Pointer to the resulting string
+ * @note The buffer must be large enough to hold the resulting string
+ * @note For bases > 10, digits after 9 are represented by lowercase letters a-z
+ */
 char* lutoa(uint64_t num, char* str, int32_t base) {
   int i = 0;
 
@@ -96,6 +124,16 @@ char* lutoa(uint64_t num, char* str, int32_t base) {
   return str;
 }
 
+/**
+ * Converts a signed 64-bit integer to a string representation
+ * @param num The signed long integer to convert
+ * @param str Pointer to the buffer that will hold the resulting string
+ * @param base The base for conversion (2 to 36)
+ * @return Pointer to the resulting string
+ * @note The buffer must be large enough to hold the resulting string
+ * @note Negative numbers are handled only with base 10
+ * @note For bases > 10, digits after 9 are represented by lowercase letters a-z
+ */
 char* ltoa(int64_t num, char* str, int32_t base) {
   int i = 0;
   bool isNegative = false;

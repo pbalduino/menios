@@ -2,6 +2,12 @@
 #include <string.h>
 #include <types.h>
 
+/**
+ * Calculates the length of a null-terminated string
+ * @param s Pointer to the null-terminated string
+ * @return The number of characters in the string, excluding the null terminator
+ * @note The behavior is undefined if s is NULL or not null-terminated
+ */
 size_t strlen(const char *s) {
   uint16_t len = 0;
 
@@ -10,6 +16,12 @@ size_t strlen(const char *s) {
   return len;
 }
 
+/**
+ * Swaps the values of two characters
+ * @param a Pointer to the first character
+ * @param b Pointer to the second character
+ * @return true if swap was successful, false if either pointer is NULL
+ */
 bool swap(char* a, char* b) {
   if(a == NULL || b == NULL) {
     return false;
@@ -22,11 +34,28 @@ bool swap(char* a, char* b) {
   return true;
 }
 
+/**
+ * Compares two strings lexicographically
+ * @param s1 Pointer to the first string
+ * @param s2 Pointer to the second string
+ * @return Integer less than, equal to, or greater than zero if s1 is found,
+ *         respectively, to be less than, to match, or be greater than s2
+ * @note The behavior is undefined if either s1 or s2 is NULL
+ */
 int	strcmp(const char *s1, const char *s2) {
   for(; *s1==*s2 && *s1; s1++, s2++){ };
 	return *(unsigned char *)s1 - *(unsigned char *)s2;
 }
 
+/**
+ * Compares up to num characters of two strings lexicographically
+ * @param s1 Pointer to the first string
+ * @param s2 Pointer to the second string
+ * @param num Maximum number of characters to compare
+ * @return Integer less than, equal to, or greater than zero if s1 is found,
+ *         respectively, to be less than, to match, or be greater than s2
+ * @note The behavior is undefined if either s1 or s2 is NULL
+ */
 int	strncmp(const char *s1, const char *s2, size_t num) {
   for(; num && *s1==*s2 && *s1; s1++, s2++, num--){ 
     if(*s1 == '\0') {
@@ -41,6 +70,12 @@ int	strncmp(const char *s1, const char *s2, size_t num) {
 	return *(uint8_t*)s1 - *(uint8_t*)s2;
 }
 
+/**
+ * Reverses a string in place
+ * @param str Array containing the string to be reversed
+ * @param length Length of the string
+ * @note The behavior is undefined if str is NULL or length is incorrect
+ */
 void strrev(char str[], int32_t length) {
   int32_t start = 0;
   int32_t end = length -1;
@@ -51,6 +86,15 @@ void strrev(char str[], int32_t length) {
   }
 }
 
+/**
+ * Concatenates n characters from source string to destination string
+ * @param dst Pointer to the destination string
+ * @param src Pointer to the source string
+ * @param size Maximum number of characters to concatenate
+ * @return Pointer to the destination string
+ * @note The behavior is undefined if either dst or src is NULL
+ * @note Ensures null-termination of the resulting string
+ */
 char*	strncat(char *dst, const char *src, size_t size) {
 	if(size != 0) {
 		char *d = dst;
@@ -66,6 +110,14 @@ char*	strncat(char *dst, const char *src, size_t size) {
 	return dst;
 }
 
+/**
+ * Concatenates source string to destination string
+ * @param dst Pointer to the destination string
+ * @param src Pointer to the source string
+ * @return Pointer to the destination string
+ * @note The behavior is undefined if either dst or src is NULL
+ * @note Ensures null-termination of the resulting string
+ */
 char* strcat(char* dst, const char* src) {
   char* ptr = dst;
   while (*ptr != '\0') {
@@ -84,6 +136,14 @@ char* strcat(char* dst, const char* src) {
   return dst;
 }
 
+/**
+ * Copies source string to destination string
+ * @param dst Pointer to the destination buffer
+ * @param src Pointer to the source string
+ * @return Pointer to the destination string
+ * @note The behavior is undefined if either dst or src is NULL
+ * @note The destination buffer must be large enough to contain the source string
+ */
 char*	strcpy(char *dst, const char *src) {
   char* original = dst;
 
@@ -98,6 +158,15 @@ char*	strcpy(char *dst, const char *src) {
   return original;
 }
 
+/**
+ * Copies up to size characters from source string to destination buffer
+ * @param dst Pointer to the destination buffer
+ * @param src Pointer to the source string
+ * @param size Maximum number of characters to copy
+ * @return Pointer to the destination string
+ * @note The behavior is undefined if either dst or src is NULL
+ * @note If src is less than size characters, remaining space is filled with nulls
+ */
 char*	strncpy(char *dst, const char *src, size_t size) {
   size_t i;
 
