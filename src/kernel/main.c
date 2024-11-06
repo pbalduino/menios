@@ -11,6 +11,7 @@
 #include <kernel/framebuffer.h>
 #include <kernel/gdt.h>
 #include <kernel/heap.h>
+#include <kernel/hw.h>
 #include <kernel/idt.h>
 #include <kernel/kernel.h>
 #include <kernel/mem.h>
@@ -22,9 +23,13 @@
 #include <kernel/timer.h>
 #include <kernel/tsc.h>
 
+void print_logo();
+
 void boot_graphics_init() {
   fb_init();
   font_init();
+
+  print_logo();
 
   puts("Welcome to meniOS 0.0.3 64bits\n\n- Typeset test:");
   for(int c = ' '; c < 128; c++) {
@@ -92,16 +97,16 @@ void _start() {
 
   apic_init();
 
-  timer_init();
+  // timer_init();
   
-  init_scheduler();
+  // init_scheduler();
 
-  init_services();
+  // init_services();
 
-  sti();
+  // sti();
 
-  rtc_time_t time;
-  rtc_time(&time);
+  // rtc_time_t time;
+  // rtc_time(&time);
 
   // TODO: CPUs
   // smp_init();
@@ -110,20 +115,21 @@ void _start() {
 
   // kthread_t thread0;
   // kthread_t thread1;
-  kthread_t clock;
+  // kthread_t clock;
 
   // kthread_create(&thread0, "thread0", thread_code, (void*)"0");
   // kthread_create(&thread1, "thread1", thread_code, (void*)"1");
-  kthread_create(&clock, "clock", show_clock, NULL);
+  // kthread_create(&clock, "clock", show_clock, NULL);
 
-  printf("- Created threads\n");
+  // printf("- Created threads\n");
+
+  init_hardware();
 
   puts("- Bye\n");
   serial_log("Bye\n");
 
-  while(true) {
-
-  }
-  // hcf();
+  // ktread_join(&clock);
+  
+  hcf();
   // turn_off();
 }

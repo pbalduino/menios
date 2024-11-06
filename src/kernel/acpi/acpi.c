@@ -39,9 +39,9 @@ int power_button_init(void) {
       UACPI_FIXED_EVENT_POWER_BUTTON,
       handle_power_button, UACPI_NULL);
 
-  if (uacpi_unlikely_error(ret)) {
-      serial_printf("failed to install power button event callback: %s", uacpi_status_to_string(ret));
-      return -ENODEV;
+  if(uacpi_unlikely_error(ret)) {
+    serial_printf("failed to install power button event callback: %s", uacpi_status_to_string(ret));
+    return -ENODEV;
   }
 
   serial_printf("power_button_init: Done.\n");

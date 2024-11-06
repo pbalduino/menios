@@ -83,9 +83,25 @@ GCC = $(GCC_DIR)/gcc
 LD = $(GCC_DIR)/ld
 NASM = $(GCC_DIR)/nasm
 
-QEMU_MEMORY = 8
-QEMU_X86 = qemu-system-amd64
-QEMU_OPTS = -smp cpus=4,cores=2,sockets=2 -hda $(BOOTLOADER) -m $(QEMU_MEMORY) -no-reboot -no-shutdown
+QEMU_MEMORY = size=2G,maxmem=2G
+QEMU_X86_64 = qemu-system-x86_64
+QEMU_LOG_FILE=com1.log
+QEMU_OPTS = -smp cpus=2,maxcpus=4,sockets=1,dies=1,clusters=1,cores=2 \
+	-vga std \
+	-no-reboot \
+	--no-shutdown \
+	-M q35 \
+	-m $(QEMU_MEMORY) \
+	-hda $(IMAGE_NAME).hdd \
+	-serial file:$(QEMU_LOG_FILE) \
+	-monitor stdio \
+	-d int \
+	-M hpet=on \
+	-usb \
+	-device usb-ehci,id=ehci \
+	-device usb-mouse \
+	-device usb-kbd \
+	-rtc base=utc,clock=host
 
 OS_NAME = $(shell uname -s | tr A-Z a-z)
 
@@ -145,10 +161,10 @@ ifeq ($(OS_NAME),linux)
 	dd if=/dev/zero bs=1M count=0 seek=64 of=$(IMAGE_NAME).hdd
 	sgdisk $(IMAGE_NAME).hdd -n 1:2048 -t 1:ef00
 	./bin/limine bios-install $(IMAGE_NAME).hdd
-	mformat -i $(IMAGE_NAME).hdd@@1M
+	mformat -F -i $(IMAGE_NAME).hdd@@1M
 	mmd -i $(IMAGE_NAME).hdd@@1M ::/EFI ::/EFI/BOOT
 	mcopy -i $(IMAGE_NAME).hdd@@1M $(KERNEL) limine.conf ./bin/limine-bios.sys ::/
-	mcopy -i $(IMAGE_NAME).hdd@@1M ./bin/BOOTX64.EFI ::/EFI/BOOT
+	mcopy -i $(IMAGE_NAME).hdd@@1M ./bin/EFI/BOOT/BOOTX64.EFI ::/EFI/BOOT
 
 	@echo Building ISO
 	# cp /limine/bin/*.bin bin/
@@ -164,7 +180,7 @@ endif
 
 .PHONY: run
 run:
-	qemu-system-x86_64 -smp cpus=1,maxcpus=2,sockets=1,dies=1,clusters=1,cores=2 -vga std -no-reboot --no-shutdown -M q35 -m size=2G,maxmem=2G -hda menios.hdd -serial file:com1.log -monitor stdio -d int -M hpet=on -usb -machine q35 -rtc base=utc,clock=host
+	$(QEMU_X86_64) $(QEMU_OPTS)
 
 .PHONY: test
 test: docker

@@ -5,10 +5,14 @@
 extern "C" {
 #endif
 
+#define THREAD_RUNNING    0
+#define THREAD_TERMINATED 1
+
 typedef struct kthread_t {
   const char* name;
   void        (*entrypoint)(void*);
   void*       arguments;
+  int         status;
 } kthread_t;
 
 typedef kthread_t* kthread_p;

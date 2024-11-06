@@ -96,12 +96,9 @@ HEAP_INSPECT_RESULT inspect_heap(uint32_t node_index, heap_node_p* node) {
 }
 
 static int find_first_free_node(size_t size, heap_node_p* node) {
-  serial_line("");
   *node = (heap_node_p)heap;
-  // serial_printf("find_first_free_node: node @ %p\n", *node);
 
   while(*node) {
-    // serial_printf("find_first_free_node: node->magic: %lx - node->status = %s(%d) - node->size: %d - requested: %d, required: %d\n", (*node)->magic, (*node)->status == HEAP_FREE ? "FREE" : "USED", (*node)->status, (*node)->size, size, (size + HEAP_HEADER_SIZE));
     if((*node)->status > 1) {
       serial_printf("find_first_free_node: invalid node status: %d\n", (*node)->status);
       cli();

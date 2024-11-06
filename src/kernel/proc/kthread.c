@@ -60,3 +60,9 @@ void kexit(int code) {
   serial_printf("kexit: process '%s' is terminated and waiting to be finished\n", current->name);
   while(true) { }
 }
+
+void ktread_join(kthread_t* t1) {
+  while(t1->status != THREAD_TERMINATED) {
+    noop();
+  }
+}

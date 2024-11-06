@@ -34,11 +34,11 @@ static char* mem_type[8] = {
   "Framebuffer"
 };
 
-uintptr_t physical_to_virtual(uintptr_t physical_address) {
+virt_addr_t physical_to_virtual(phys_addr_t physical_address) {
   return physical_address + kernel_offset;
 }
 
-uintptr_t virtual_to_physical(uintptr_t virtual_address) {
+phys_addr_t virtual_to_physical(virt_addr_t virtual_address) {
   return virtual_address - kernel_offset;
 }
 

@@ -105,7 +105,6 @@ void *uacpi_kernel_calloc(uacpi_size count, uacpi_size size) {
 }
 
 void uacpi_kernel_free(void *mem) {
-  serial_printf("uacpi_kernel_free: %p\n", mem);
   kfree(mem);
 }
 
@@ -303,7 +302,7 @@ uacpi_status uacpi_kernel_pci_read(
     uacpi_pci_address *address, uacpi_size offset,
     uacpi_u8 byte_width, uacpi_u64 *value
 ) {
-  serial_printf("uacpi_kernel_pci_read not implemented\n");
+  serial_printf("uacpi_kernel_pci_read not implemented - addr: %lx - off %lx - width: %lx - value: %lx\n", *address, offset, byte_width, value);
   return UACPI_STATUS_OK;
 }
 

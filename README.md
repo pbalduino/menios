@@ -25,9 +25,17 @@ To do:
 
 [X] Map physical memory
 
-[ ] Request a page from physical memory
+[X] Request a page from physical memory
 
-[ ] Implement a malloc to provide virtual memory to the process
+[X] Implement a malloc to provide virtual memory to the process
+
+[ ] Fix the PF and GPF handlers to show the right data
+
+[ ] fix kmalloc to get memory from the virtual memory
+
+[ ] fix virtual_to_physical calculation
+
+[ ] add ANSI and scrolling to the console
 
 Reference
   - Intel® 64 and IA-32 Architectures Software Developer’s Manual Combined Volumes: 1, 2A, 2B, 2C, 2D, 3A, 3B, 3C, 3D, and 4: https://www.intel.com/content/www/us/en/developer/articles/technical/intel-sdm.html
