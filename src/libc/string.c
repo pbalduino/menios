@@ -8,10 +8,33 @@
  * @return The number of characters in the string, excluding the null terminator
  * @note The behavior is undefined if s is NULL or not null-terminated
  */
-size_t strlen(const char *s) {
+size_t strlen(const char* s) {
   uint16_t len = 0;
 
   while(s[len++]);
+
+  return len;
+}
+
+/**
+ * Calculates the length of a string up to a maximum number of characters.
+ *
+ * This function computes the length of the given string 's', examining at most
+ * 'maxlen' characters. It stops counting when either the null terminator is 
+ * encountered or 'maxlen' characters have been examined, whichever comes first.
+ *
+ * @param s      Pointer to the null-terminated string to be measured.
+ * @param maxlen Maximum number of characters to examine.
+ * @return       The number of characters in the string, not including the 
+ *               terminating null character, but at most maxlen.
+ *
+ * Note: If the null terminator is not found within the first 'maxlen' 
+ * characters, the function will return 'maxlen'.
+ */
+size_t strnlen(const char* s, size_t maxlen) {
+  uint16_t len = 0;
+
+  while(s[len] && len++ < maxlen);
 
   return len;
 }

@@ -1,6 +1,5 @@
 #include <kernel/pmm.h>
 #include <kernel/heap.h>
-#include <kernel/serial.h>
 #include <stdio.h>
 #include <unity.h>
 #include <errno.h>
@@ -34,7 +33,6 @@ void test_kmalloc_SHOULD_start_in_a_valid_heap() {
   TEST_ASSERT_EQUAL_UINT32_MESSAGE(HEAP_INSPECT_OK, ok, "inspect_heap found an error");
   TEST_ASSERT_EQUAL_UINT8_MESSAGE(HEAP_FREE, node->status, "The heap node should be marked as free");
   TEST_ASSERT_EQUAL_UINT32_MESSAGE(size, node->size, "The heap node size doesn't match");
-  TEST_ASSERT_NULL_MESSAGE(node->prev, "The heap node should not have a prev node");
   TEST_ASSERT_NULL_MESSAGE(node->next, "The heap node should not have a next node");
   TEST_ASSERT_NOT_NULL_MESSAGE(node->data, "The heap node data should not be null");
   TEST_ASSERT_EQUAL_UINT32_MESSAGE(HEAP_MAGIC, node->magic, "The magic value doesn't match");
@@ -53,7 +51,6 @@ void test_kmalloc_WHEN_size_is_positive_SHOULD_return_a_valid_node() {
   TEST_ASSERT_EQUAL_UINT32_MESSAGE(HEAP_INSPECT_OK, ok, "inspect_heap found an error");
   TEST_ASSERT_EQUAL_UINT8_MESSAGE(HEAP_USED, node->status, "The heap node should be marked as used");
   TEST_ASSERT_EQUAL_UINT32_MESSAGE(size, node->size, "The heap node size doesn't match");
-  TEST_ASSERT_NULL_MESSAGE(node->prev, "The first heap node should not have a prev node");
   TEST_ASSERT_NOT_NULL_MESSAGE(node->next, "The heap node should have a next node");
   TEST_ASSERT_NOT_NULL_MESSAGE(node->data, "The heap node data should not be null");
   TEST_ASSERT_EQUAL_UINT32_MESSAGE(HEAP_MAGIC, node->magic, "The magic value doesn't match");

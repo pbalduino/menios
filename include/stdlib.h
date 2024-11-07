@@ -7,6 +7,8 @@
 extern "C" {
 #endif
 
+#define __dead2 __attribute__((__noreturn__))
+
 char* itoa(int32_t num, char* str, int32_t base);
 char* utoa(uint32_t num, char* str, int32_t base);
 
@@ -17,6 +19,8 @@ void* malloc(size_t size);
 void  free(void* ptr);
 
 void *aligned_alloc( size_t alignment, size_t size );
+
+void exit(int) __dead2;
 
 #ifdef __cplusplus
 }

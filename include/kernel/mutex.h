@@ -5,6 +5,8 @@
 extern "C" {
 #endif
 
+#include <types.h>
+
 typedef struct kthread_mutex_t {
   int      lock;
   uint32_t pid;

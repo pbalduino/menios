@@ -193,6 +193,7 @@ ifeq ($(OS_NAME),linux)
 		gcc -DMENIOS_NO_DEBUG -I./include \
 			$$file \
 			test/unity.c \
+			test/stubs.c \
 			src/kernel/console/vprintk.c \
 			src/kernel/mem/kmalloc.c \
 			src/libc/itoa.c \

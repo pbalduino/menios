@@ -56,7 +56,6 @@ void test_vprintk_WHEN_percent_c_SHOULD_return_a_character() {
 // TODO: test simple %d
 void test_vprintk_WHEN_percent_d_SHOULD_return_a_positive_number() {
   char buffer[256];
-
   vprintk(buffer, "%d", 123);
 
   TEST_ASSERT_EQUAL_STRING("123", buffer);
@@ -65,7 +64,6 @@ void test_vprintk_WHEN_percent_d_SHOULD_return_a_positive_number() {
 // TODO: test simple %d
 void test_vprintk_WHEN_percent_d_SHOULD_return_a_negative_number() {
   char buffer[256];
-
   vprintk(buffer, "%d", -123);
 
   TEST_ASSERT_EQUAL_STRING("-123", buffer);
@@ -77,6 +75,46 @@ void test_vprintk_WHEN_percent_d_SHOULD_return_a_negative_number() {
 // TODO: test simple %s
 // TODO: test simple %p
 // TODO: test simple %%
+// TODO: test left padded number with spaces
+void test_vprintk_WHEN_percent_5d_SHOULD_return_a_space_padded_number() {
+  char buffer[256];
+  vprintk(buffer, "%5d", 123);
+  TEST_ASSERT_EQUAL_STRING("  123", buffer);
+
+  vprintk(buffer, "%5d", 12345);
+  TEST_ASSERT_EQUAL_STRING("12345", buffer);
+
+  vprintk(buffer, "%5d", 123456);
+  TEST_ASSERT_EQUAL_STRING("123456", buffer);
+}
+
+// TODO: test left padded character with spaces
+void test_vprintk_WHEN_percent_5c_SHOULD_return_a_space_padded_character() {
+  char buffer[256];
+
+  vprintk(buffer, "%5c", 'A');
+  TEST_ASSERT_EQUAL_STRING("    A", buffer);
+}
+
+void test_vprintk_WHEN_percent_05c_SHOULD_return_a_space_padded_character() {
+  char buffer[256];
+
+  vprintk(buffer, "%05c", 'A');
+  TEST_ASSERT_EQUAL_STRING("0000A", buffer);
+}
+
+// TODO: test left padded number with zero
+void test_vprintk_WHEN_percent_05d_SHOULD_return_a_zero_padded_number() {
+  char buffer[256];
+  vprintk(buffer, "%05d", 123);
+  TEST_ASSERT_EQUAL_STRING("00123", buffer);
+
+  vprintk(buffer, "%05d", 12345);
+  TEST_ASSERT_EQUAL_STRING("12345", buffer);
+
+  vprintk(buffer, "%05d", 123456);
+  TEST_ASSERT_EQUAL_STRING("123456", buffer);
+}
 
 int main() {
   UNITY_BEGIN();
@@ -85,6 +123,12 @@ int main() {
   RUN_TEST(test_vprintk_WHEN_percent_c_SHOULD_return_a_character);
   RUN_TEST(test_vprintk_WHEN_percent_d_SHOULD_return_a_positive_number);
   RUN_TEST(test_vprintk_WHEN_percent_d_SHOULD_return_a_negative_number);
+  RUN_TEST(test_vprintk_WHEN_percent_5d_SHOULD_return_a_space_padded_number);
+  
+  RUN_TEST(test_vprintk_WHEN_percent_5c_SHOULD_return_a_space_padded_character);
+  RUN_TEST(test_vprintk_WHEN_percent_05c_SHOULD_return_a_space_padded_character);
+  
+  RUN_TEST(test_vprintk_WHEN_percent_05d_SHOULD_return_a_zero_padded_number);
 
   return UNITY_END();
 }
