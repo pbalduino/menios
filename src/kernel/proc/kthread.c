@@ -30,7 +30,7 @@ int kthread_create(kthread_t* thread, const char* name, void (*entrypoint)(void 
   serial_line("");
   void* foo = kmalloc(sizeof(proc_info_t));
   serial_line("");
-  if(errno == ENOMEM) {
+  if(current->errno == ENOMEM) {
     serial_error("kthread_create: Out of memory\n");
     hcf();
   }

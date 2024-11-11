@@ -88,6 +88,7 @@ typedef struct proc_info_t {
   proc_info_p  next;
   int          exit_code;
   char         name[32];
+  int          errno;
 } proc_info_t;
 
 typedef proc_info_t* proc_info_p;

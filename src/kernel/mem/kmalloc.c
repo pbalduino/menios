@@ -134,7 +134,7 @@ void* kmalloc(size_t size) {
   if(find_first_free_node(size + HEAP_HEADER_SIZE, &node) != 0) {
     serial_printf("kmalloc: no free node found. free: %d - needed: %d\n", free_mem, size);
     printf("\n-- OUT OF MEMORY --\n");
-    errno = ENOMEM;
+    current->errno = ENOMEM;
     debug_heap(heap);
 
     kmutex_unlock(&heap_mutex);
