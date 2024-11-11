@@ -7,7 +7,7 @@ extern "C" {
 
 #include <types.h>
 
-typedef struct kthread_mutex_t {
+typedef struct kmutex_t {
   int      lock;
   uint32_t pid;
 } kmutex_t;
