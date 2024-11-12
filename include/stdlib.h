@@ -14,6 +14,7 @@ char* utoa(uint32_t num, char* str, int32_t base);
 
 char* ltoa(int64_t num, char* str, int32_t base);
 char* lutoa(uint64_t num, char* str, int32_t base);
+char* lutoca(uint64_t num, char* str, int32_t base);
 
 void* malloc(size_t size);
 void  free(void* ptr);

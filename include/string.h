@@ -1,11 +1,12 @@
 #ifndef INCLUDE_STRING_H
 #define INCLUDE_STRING_H
 
-#include <stddef.h>
-
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+#include <stddef.h>
+#include <types.h>
 
 void*	memcpy(void *dst, const void *src, size_t len);
 void memzero(void * s, uint64_t n);
