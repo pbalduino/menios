@@ -1,6 +1,6 @@
 # MeniOS
 
-![image](https://github.com/user-attachments/assets/e5f1d2a0-3e5c-41ba-901c-068b6e7768e7)
+<img alt="image" src="https://github.com/user-attachments/assets/935c9cf2-ab4f-477d-88d7-01c80a80a280">
 
 I'm trying again again. Let's see how far I can go.
 
