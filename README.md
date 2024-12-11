@@ -2,6 +2,8 @@
 
 <img alt="image" src="https://github.com/user-attachments/assets/90634816-da18-4e3c-8132-bba2ea291940">
 
+<a rel="me" href="https://bolha.us/@p_balduino">Mastodon</a>
+
 I'm trying again again. Let's see how far I can go.
 
 Prerequisites:
