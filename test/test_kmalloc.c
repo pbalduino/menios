@@ -1,8 +1,8 @@
 #include <kernel/pmm.h>
 #include <kernel/heap.h>
+#include <kernel/proc.h>
 #include <stdio.h>
 #include <unity.h>
-#include <errno.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -10,6 +10,8 @@ void* arena1;
 void* arena2;
 
 void setUp() {
+  current = (proc_info_p)malloc(sizeof(proc_info_t));
+  
   arena1 = aligned_alloc(PAGE_SIZE, PAGE_SIZE);
   if(arena1 == NULL) {
     TEST_FAIL_MESSAGE("malloc failed");

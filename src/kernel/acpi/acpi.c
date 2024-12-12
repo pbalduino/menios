@@ -1,8 +1,11 @@
-#include <boot/limine.h>
 #include <errno.h>
 #include <stdio.h>
 #include <types.h>
+
+#include <boot/limine.h>
+
 #include <kernel/acpi.h>
+#include <kernel/console.h>
 #include <kernel/kernel.h>
 #include <kernel/pmm.h>
 #include <kernel/serial.h>
@@ -49,21 +52,21 @@ int power_button_init(void) {
 }
 
 int acpi_init() {
-  printf("- Initializing ACPI.");
+  logk("Initializing ACPI.");
   serial_printf("acpi_init: Initializing ACPI.\n");
 
   uacpi_setup_early_table_access((void*)uacpi_arena, UACPI_ARENA_SIZE);
   printf(".");
 
   uacpi_status ret = uacpi_initialize(0);
-  if (uacpi_unlikely_error(ret)) {
+  if(uacpi_unlikely_error(ret)) {
     serial_printf("uacpi_initialize error: %s", uacpi_status_to_string(ret));
     return -ENODEV;
   }
   printf(".");
 
   ret = uacpi_namespace_load();
-  if (uacpi_unlikely_error(ret)) {
+  if(uacpi_unlikely_error(ret)) {
     serial_printf("uacpi_namespace_load error: %s\n", uacpi_status_to_string(ret));
     return -ENODEV;
   }
@@ -77,13 +80,13 @@ int acpi_init() {
   printf(".");
 
   ret = uacpi_finalize_gpe_initialization();
-  if (uacpi_unlikely_error(ret)) {
+  if(uacpi_unlikely_error(ret)) {
     serial_printf("uACPI GPE initialization error: %s", uacpi_status_to_string(ret));
     return -ENODEV;
   }
 
   ret = power_button_init();
-  if (uacpi_unlikely_error(ret)) {
+  if(uacpi_unlikely_error(ret)) {
     serial_printf("power_button_init error: %s", uacpi_status_to_string(ret));
     return -ENODEV;
   }
@@ -99,7 +102,7 @@ int acpi_shutdown() {
   serial_printf("acpi_shutdown: Shutting down.\n");
 
   uacpi_status ret = uacpi_prepare_for_sleep_state(UACPI_SLEEP_STATE_S5);
-  if (uacpi_unlikely_error(ret)) {
+  if(uacpi_unlikely_error(ret)) {
     printf("failed to prepare for sleep: %s", uacpi_status_to_string(ret));
     return -EIO;
   }
@@ -107,7 +110,7 @@ int acpi_shutdown() {
   cli();
 
   ret = uacpi_enter_sleep_state(UACPI_SLEEP_STATE_S5);
-  if (uacpi_unlikely_error(ret)) {
+  if(uacpi_unlikely_error(ret)) {
     printf("failed to enter sleep: %s", uacpi_status_to_string(ret));
     return -EIO;
   }

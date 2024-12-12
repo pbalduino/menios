@@ -50,7 +50,7 @@ int kthread_create(kthread_t* thread, const char* name, void (*entrypoint)(void 
 void ksleep(uint64_t milliseconds) {
   uint64_t start = read_tsc();
   uint64_t end = start + (milliseconds * 1000000);
-  while (read_tsc() < end) {
+  while(read_tsc() < end) {
     noop();
   }
 }

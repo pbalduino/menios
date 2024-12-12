@@ -57,7 +57,7 @@ uacpi_status uacpi_kernel_get_rsdp(uacpi_phys_addr *out_rdsp_address) {
 uacpi_status uacpi_kernel_raw_io_read(
     uacpi_io_addr address, uacpi_u8 byte_width, uacpi_u64 *out_value
 ) {
-  switch (byte_width) {
+  switch(byte_width) {
     case 1:
       *out_value = inb(address);
       break;
@@ -76,7 +76,7 @@ uacpi_status uacpi_kernel_raw_io_read(
 }
 
 uacpi_status uacpi_kernel_raw_io_write(uacpi_io_addr address, uacpi_u8 byte_width, uacpi_u64 in_value) {
-	switch (byte_width) {
+	switch(byte_width) {
 		case 1:
 			outb(address, in_value);
 			break;
@@ -114,9 +114,6 @@ void *uacpi_kernel_alloc(uacpi_size size) {
 
 uacpi_bool uacpi_kernel_acquire_mutex(uacpi_handle handle, uacpi_u16) {
   kmutex_t* mutex = (kmutex_t*)handle;
-
-  serial_printf("uacpi_kernel_acquire_mutex: %p - %d\n", mutex, mutex->lock);
-
   kmutex_lock(mutex);
 
   return true;
@@ -124,10 +121,7 @@ uacpi_bool uacpi_kernel_acquire_mutex(uacpi_handle handle, uacpi_u16) {
 
 void uacpi_kernel_release_mutex(uacpi_handle handle) {
   kmutex_t* mutex = (kmutex_t*)handle;
-
   kmutex_unlock(mutex);
-
-  serial_printf("uacpi_kernel_release_mutex: %p - %d\n", mutex, mutex->lock);
 }
 
 void* uacpi_kernel_map(uacpi_phys_addr addr, uacpi_size len) {
@@ -217,17 +211,14 @@ void uacpi_kernel_free_spinlock(uacpi_handle handle) {
 uacpi_handle uacpi_kernel_create_mutex(void) {
   kmutex_t* mutex = kmalloc(sizeof(kmutex_t));
   mutex->lock = 0;
-  serial_printf("uacpi_kernel_create_mutex: %p\n", mutex);
   return mutex;
 }
 
 void uacpi_kernel_free_mutex(uacpi_handle mutex) {
-  serial_printf("uacpi_kernel_free_mutex: %p\n", mutex);
   kfree(mutex);
 }
 
 uacpi_u64 uacpi_kernel_get_ticks(void) {
-  serial_printf("uacpi_kernel_get_ticks not implemented\n");
   return 0;
 }
 
@@ -248,7 +239,7 @@ uacpi_status uacpi_kernel_handle_firmware_request(uacpi_firmware_request*) {
 uacpi_status uacpi_kernel_raw_memory_read(
     uacpi_phys_addr address, uacpi_u8 byte_width, uacpi_u64 *out_value
 ) {
-  switch (byte_width) {
+  switch(byte_width) {
     case 1:
       *out_value = *(uacpi_u8*)address;
       break;
@@ -272,7 +263,7 @@ uacpi_status uacpi_kernel_raw_memory_read(
 uacpi_status uacpi_kernel_raw_memory_write(
     uacpi_phys_addr address, uacpi_u8 byte_width, uacpi_u64 in_value
 ) {
-  switch (byte_width) {
+  switch(byte_width) {
     case 1:
       *(uacpi_u8*)address = in_value;
       break;
@@ -294,15 +285,21 @@ uacpi_status uacpi_kernel_raw_memory_write(
 }
 
 uacpi_thread_id uacpi_kernel_get_thread_id(void) {
-  serial_printf("uacpi_kernel_get_thread_id not implemented\n");
-  return NULL;
+  return (uacpi_thread_id)&current->pid;
 }
 
 uacpi_status uacpi_kernel_pci_read(
-    uacpi_pci_address *address, uacpi_size offset,
-    uacpi_u8 byte_width, uacpi_u64 *value
+    uacpi_pci_address *address, 
+    uacpi_size offset,
+    uacpi_u8 byte_width, 
+    uacpi_u64 *value
 ) {
-  serial_printf("uacpi_kernel_pci_read not implemented - addr: %lx - off %lx - width: %lx - value: %lx\n", *address, offset, byte_width, value);
+  if(address == NULL) {
+    serial_printf("uacpi_kernel_pci_read: Invalid address\n");
+    return UACPI_STATUS_INVALID_ARGUMENT;
+  }
+
+  serial_printf("uacpi_kernel_pci_read not implemented - bus: %lx device: %lx function: %lx segment: %lx - off %lx - width: %lx - value: %lx\n", address->bus, address->device, address->function, address->segment, offset, byte_width, value);
   return UACPI_STATUS_OK;
 }
 
@@ -337,7 +334,7 @@ uacpi_status uacpi_kernel_io_write(
     uacpi_handle, uacpi_size offset,
     uacpi_u8 byte_width, uacpi_u64 value
 ) {
-  serial_printf("uacpi_kernel_io_write not implemented\n");
+  serial_printf("uacpi_kernel_io_write not implemented - offset: %lx - width: %lx - value: %lx\n", offset, byte_width, value);
   return UACPI_STATUS_OK;
 }
 

@@ -10,22 +10,31 @@
 #include <string.h>
 #include <types.h>
 
+#define ANSI_NONE        0;
+#define ANSI_SET_COLOR   1;
+
 static volatile struct limine_framebuffer_request framebuffer_request = {
   .id = LIMINE_FRAMEBUFFER_REQUEST,
   .revision = 0
 };
 
 static bool active;
+static bool ansi_code;
+static int ansi_command;
+static int ansi_color;
 static int char_line_height;
 static int char_line_width;
 static int current_col;
 static int current_row;
 static int viewpoint_x;
 static int viewpoint_y;
+static uint32_t color_bg = FB_BLACK;
+static uint32_t color_fg = FB_LIGHT_WHITE;
+
 static struct limine_framebuffer *framebuffer;
 
 static FILE* fb_d;
-#define ROWS 50
+#define ROWS 48
 #define COLS 157
 
 inline uint64_t fb_count() {
@@ -69,10 +78,10 @@ void fb_init() {
   char_line_width = 8; //viewpoint_x / COLS;
   char_line_height = 16; // viewpoint_y / ROWS;
 
-  fb_d = freopen("/dev/fb", "w", stdout);
+  fb_d = freopen("/dev/fb/0", "w", stdout);
 
   if(fb_d == NULL) {
-    serial_error("freopen(/dev/fb) -> NULL");
+    serial_error("freopen(/dev/fb/0) -> NULL");
     hcf();
   }
 }
@@ -83,7 +92,7 @@ inline bool fb_active() {
 
 void fb_draw() {
   // Note: we assume the framebuffer model is RGB with 32-bit pixels.
-  for (size_t i = 0; i < 100; i++) {
+  for(size_t i = 0; i < 100; i++) {
     uint32_t *fb_ptr = framebuffer->address;
     fb_ptr[i * (framebuffer->pitch / 4) + i] = 0xffffff;
   }
@@ -102,14 +111,79 @@ void fb_drawline(uint32_t left, uint32_t right, uint32_t top, uint32_t bottom, u
   }
 }
 
-int fb_putchar(int c) {
-  if(c == '\0') {
-    return 0;
+void fb_scroll_up(int lines) {
+  uint32_t *fb_ptr = framebuffer->address;
+  uint32_t *fb_ptr2 = framebuffer->address;
+
+  for(int y = 0; y < (framebuffer->height - (lines * char_line_height)); y++) {
+    for(int x = 0; x < (framebuffer->width - 20); x++) {
+      fb_ptr[y * (framebuffer->pitch / 4) + x] = fb_ptr2[(y + (lines * char_line_height)) * (framebuffer->pitch / 4) + x];
+    }
   }
 
-  if(c == '\n') {
-    current_col = 0;
-    current_row++;
+  for(int y = (framebuffer->height - (lines * char_line_height)); y < framebuffer->height; y++) {
+    for(int x = 0; x < (framebuffer->width - 20); x++) {
+      fb_putpixel(x, y, color_bg);
+    }
+  }
+}
+
+int fb_putchar(int c) {
+  bool stay = false;
+
+  switch(c) {
+    case '\0': {
+      ansi_code = false;
+      return 0;
+    }
+    case '\b': {
+      ansi_code = false;
+      stay = true;
+      if(current_col > 0) {
+        current_col--;
+        c = ' ';
+      }
+      break;
+    }
+    case '\x1b': {
+      ansi_code = true;
+      ansi_color = 0;
+      return 0;
+    }
+    case '\n': {
+      ansi_code = false;
+      current_col = 0;
+      current_row++;
+      if(current_row >= ROWS) {
+        current_row = ROWS - 1;
+        fb_scroll_up(1);
+      }
+      return 0;
+    }
+  }
+
+  if(ansi_code) {
+    switch (c) {
+      case '0':
+      case '1':
+      case '2':
+      case '3':
+      case '4':
+      case '5':
+      case '6':
+      case '7':
+      case '8':
+      case '9': {
+        ansi_color = (ansi_color * 10) + (c - '0');
+        break;
+      }
+      case ';': {
+        break;
+      }
+      case 'm':
+        ansi_code = false;
+        break;
+      }
     return 0;
   }
 
@@ -123,18 +197,25 @@ int fb_putchar(int c) {
 
   for(int gx = 0; gx < 8; gx++) {
     for(int gy = 0; gy < 16; gy++) {
-      fb_putpixel(x + gx, y + gy, FB_BLACK);
+      fb_putpixel(x + gx, y + gy, color_bg);
       if((glyph.points[gy] >> (7 - gx)) & 0x01) {
-        fb_putpixel(x + gx, y + gy, FB_WHITE);
+        fb_putpixel(x + gx, y + gy, color_fg);
       }
     }
   }
   if(current_col < COLS){
-    current_col++;
+    if(!stay) {
+      current_col++;
+    }
   } else {
     current_col = 0;
     current_row++;
+    if(current_row >= ROWS) {
+      current_row = ROWS - 1;
+      fb_scroll_up(1);
+    }
   }
+
   return 0;
 }
 
@@ -164,4 +245,12 @@ void fb_list_modes() {
       putchar('|');
     }
   }
+}
+
+void set_foreground_color(uint32_t color) {
+  color_fg = color;
+}
+
+void set_background_color(uint32_t color) {
+  color_bg = color;
 }

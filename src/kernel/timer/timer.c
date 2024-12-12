@@ -1,5 +1,8 @@
+#include <boot/limine.h>
+
 #include <kernel/apic.h>
 #include <kernel/console.h>
+#include <kernel/kernel.h>
 #include <kernel/pmm.h>
 #include <kernel/proc.h>
 #include <kernel/rtc.h>
@@ -14,6 +17,11 @@
 
 extern void reset_timer();
 
+static volatile struct limine_boot_time_request boot_time_request = {
+  .id = LIMINE_BOOT_TIME_REQUEST,
+  .revision = 3
+};
+
 static uint64_t tick = 0;
 
 void (*callback[16])(void*);
@@ -23,15 +31,10 @@ void timer_handler(void* arg) {
   tick++;
   for(int i = 0; i < last_callback; i++) {
     if(callback[i] != NULL) {
-      serial_line("tick");
       callback[i](arg);
-      serial_line("tick");
     }
-    serial_line("tick");
   }
-  serial_line("tick");
   timer_eoi();
-  serial_line("tick");
 }
 
 void register_timer_callback(void (*cb)(void*)) {
@@ -39,57 +42,36 @@ void register_timer_callback(void (*cb)(void*)) {
 }
 
 void timer_init() {
-  printf("- Initing timer");
+  logk("Initing timer\n");
   for(int i = 0; i < 16; i++) {
     callback[i] = NULL;
   };
 
-  puts(".");
+  logk("  Initing LAPIC timer\n");
   lapic_timer_init();
 
-  puts(".");
+  logk("  Initing TSC\n");
+  tsc_init();
 
-  printf(".OK\n");
+  if(!has_invariant_tsc()) {
+    errk("  Invariant TSC not supported.\n");
+  } else {
+    logk("  Invariant TSC supported, but ignored.\n");
+  }
 
-  init_tsc();
+  if(hpet_timer_init() == HPET_OK) {
+    errk("  HPET timer supported, but ignored.\n");
+  } else {
+    errk("  HPET timer not supported.\n");
+  }
 }
 
 uint64_t boot_time() {
-  rtc_time_t time;
-  rtc_time(&time);
-
-  uint32_t year = time.full_year; // e.g., 2023
-  uint32_t month = time.month; // 1-12
-  uint32_t day = time.day; // 1-31
-  uint32_t hour = time.hours; // 0-23
-  uint32_t minute = time.minutes; // 0-59
-  uint32_t second = time.seconds; // 0-59
-  uint32_t total_days = 0;
-
-  static const uint32_t days_in_month[] = {0, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
-
-  for (uint32_t y = 1970; y < year; y++) {
-    total_days += 365;
-    // Check for leap year
-    if ((y % 4 == 0 && y % 100 != 0) || (y % 400 == 0)) {
-      total_days++;
-    }
+  if(boot_time_request.response == NULL || boot_time_request.response->boot_time == 0) {
+    printf("Boot time not available, halting\n");
+    hcf();
+    return 0;
+  } else {
+    return boot_time_request.response->boot_time;
   }
-
-  for (uint32_t m = 1; m < month; m++) {
-    total_days += days_in_month[m];
-  }
-
-  total_days += day - 1;
-
-  if (month > 2 && ((year % 4 == 0 && year % 100 != 0) || (year % 400 == 0))) {
-    total_days++;
-  }
-
-  uint64_t total_seconds = total_days * 86400;
-  total_seconds += hour * 3600;
-  total_seconds += minute * 60;
-  total_seconds += second;
-
-  return total_seconds;
 }

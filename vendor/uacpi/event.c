@@ -1786,32 +1786,26 @@ uacpi_status uacpi_initialize_events(void)
 {
     uacpi_status ret;
 
-    serial_line("");
     if (uacpi_is_hardware_reduced()) {
-        serial_line("");
         return UACPI_STATUS_OK;
     }
 
-    serial_line("");
     ret = initialize_fixed_events();
-    serial_line("");
+
     if (uacpi_unlikely_error(ret))
         return ret;
 
-    serial_line("");
     ret = initialize_gpes();
-    serial_line("");
+
     if (uacpi_unlikely_error(ret)) {
-        serial_line("");
         return ret;
     }
 
-    serial_line("");
     ret = uacpi_kernel_install_interrupt_handler(
         g_uacpi_rt_ctx.fadt.sci_int, handle_sci, gpe_interrupt_head,
         &g_uacpi_rt_ctx.sci_handle
     );
-    serial_line("");
+
     if (uacpi_unlikely_error(ret)) {
         uacpi_error(
             "unable to install SCI interrupt handler: %s\n",
@@ -1820,23 +1814,19 @@ uacpi_status uacpi_initialize_events(void)
         return ret;
     }
 
-    serial_line("");
     g_uacpi_rt_ctx.global_lock_event = uacpi_kernel_create_event();
-    serial_line("");
     if (uacpi_unlikely(g_uacpi_rt_ctx.global_lock_event == UACPI_NULL))
         return UACPI_STATUS_OUT_OF_MEMORY;
 
-    serial_line("");
     g_uacpi_rt_ctx.global_lock_spinlock = uacpi_kernel_create_spinlock();
-    serial_line("");
+
     if (uacpi_unlikely(g_uacpi_rt_ctx.global_lock_spinlock == UACPI_NULL))
         return UACPI_STATUS_OUT_OF_MEMORY;
 
-    serial_line("");
     ret = uacpi_install_fixed_event_handler(
         UACPI_FIXED_EVENT_GLOBAL_LOCK, handle_global_lock, UACPI_NULL
     );
-    serial_line("");
+
     if (uacpi_likely_success(ret)) {
         if (uacpi_unlikely(g_uacpi_rt_ctx.facs == UACPI_NULL)) {
             uacpi_uninstall_fixed_event_handler(UACPI_FIXED_EVENT_GLOBAL_LOCK);
@@ -1850,7 +1840,6 @@ uacpi_status uacpi_initialize_events(void)
         ret = UACPI_STATUS_OK;
     }
 
-    serial_line("");
     return ret;
 }
 

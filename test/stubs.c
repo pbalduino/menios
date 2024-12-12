@@ -1,6 +1,9 @@
 #include <kernel/mutex.h>
+#include <kernel/proc.h>
 #include <stdlib.h>
 #include <string.h>
+
+proc_info_p current;
 
 void cli() {}
 

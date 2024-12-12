@@ -1,12 +1,13 @@
-#include <kernel/heap.h>
-#include <kernel/kernel.h>
-#include <kernel/mutex.h>
-#include <kernel/serial.h>
 #include <errno.h>
 #include <stdio.h>
 #include <string.h>
 #include <types.h>
-#include <unity.h>
+
+#include <kernel/heap.h>
+#include <kernel/kernel.h>
+#include <kernel/mutex.h>
+#include <kernel/proc.h>
+#include <kernel/serial.h>
 
 static bool heap_freed = false;
 static heap_node_p heap;
@@ -70,7 +71,7 @@ void init_heap(void* addr, size_t size) {
   heap->status = HEAP_FREE;
   free_mem = heap->size;
 
-  serial_printf("Heap initialized at %p with size %d\n", addr, size);
+  serial_printf("Heap initialized at %p with size %ld\n", addr, size);
 }
 
 HEAP_INSPECT_RESULT inspect_heap(uint32_t node_index, heap_node_p* node) {
@@ -167,7 +168,7 @@ void* kmalloc(size_t size) {
 
 void kfree(void* ptr) {
   // serial_printf("kfree: %p\n", ptr);
-  if (ptr == NULL) {
+  if(ptr == NULL) {
     return;
   }
   kmutex_lock(&heap_mutex);

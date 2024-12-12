@@ -4,12 +4,14 @@ global idt_df_isr_asm_handler
 global idt_gpf_isr_asm_handler
 global idt_pf_isr_asm_handler
 global idt_period_timer_isr_asm_handler
+global ps2kb_isr_handler
 
 extern idt_generic_isr_handler
 extern idt_df_isr_handler
 extern idt_gpf_isr_handler
 extern page_fault_handler
 extern timer_handler
+extern ps2kb_handler
 
 idt_load:
   lidt [rdi]   ; Load the IDT from the memory location pointed to by rdi
@@ -151,3 +153,18 @@ idt_period_timer_isr_asm_handler:
 
   ; Return from interrupt
   iretq
+
+ps2kb_isr_handler:
+  pushfq                     ; Push the flags register (RFLAGS)
+  push rax                   ; Push the accumulator register (RAX)
+  push rcx                   ; Push a general-purpose register (RCX) for backup
+
+  ; sub rsp, 8                 ; Align stack to 16 bytes
+  call ps2kb_handler
+
+  ; add rsp, 8                 ; Restore stack alignment
+  pop rcx                    ; Restore the backup of RCX
+  pop rax                    ; Restore RAX
+  popfq                      ; Restore RFLAGS
+
+  iretq                      ; Return from the interrupt

@@ -1,14 +1,16 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <kernel/console.h>
 #include <kernel/kernel.h>
 #include <kernel/mutex.h>
 #include <kernel/serial.h>
 
 // static FILE* com1 = NULL;
 bool serial_debug = false;
+kmutex_t serial_printf_mutex;
 
 void serial_init() {
-  printf("- Initing serial communication");
+  logk("- Initing serial communication");
   // Disable interrupts
   outb(0x3f8 + 1, 0x00);
 
@@ -40,7 +42,7 @@ void serial_init() {
 
 int serial_putchar(int ch) {
   // Wait for the serial port to be ready
-  while ((inb(0x3f8 + 5) & 0x20) == 0);
+  while((inb(0x3f8 + 5) & 0x20) == 0);
 
   // Send the character to the serial port
   outb(0x3F8, ch & 0xff);
@@ -64,107 +66,14 @@ int serial_puts(const char* text) {
 }
 
 int serial_vprintf(const char *format, va_list args){
-  char str[256];
+  char buffer[1024];
+  int len = vsprintk(buffer, format, args);
 
-  for(int pos = 0; format[pos]; pos++) {
-    if(format[pos] == '%') {
-      switch(format[++pos]) {
-        case '%': {
-          serial_putchar('%');
-          break;
-        }
-        case 'b': {
-          int val = va_arg(args, uint32_t);
-          utoa(val, str, 2);
-          serial_puts(str);
-          break;
-        }
-        case 'c': {
-          const int val = va_arg(args, int32_t);
-          serial_putchar(val);
-          break;
-        }
-        case 'i':
-        case 'd': {
-          int val = va_arg(args, int32_t);
-          itoa(val, str, 10);
-          serial_puts(str);
-          break;
-        }
-        case 'l': {
-          switch(format[pos + 1]) {
-            case 'd':{
-              int64_t val = va_arg(args, int64_t);
-              ltoa(val, str, 10);
-              serial_puts(str);
-              pos++;
-              break;
-            }
-            case 'u': {
-              uint64_t val = va_arg(args, uint64_t);
-              lutoa(val, str, 10);
-              serial_puts(str);
-              pos++;
-              break;
-            }
-            case 'x': {
-              uint64_t val = va_arg(args, uint64_t);
-              lutoa(val, str, 16);
-              serial_puts("0x");
-              serial_puts(str);
-              pos++;
-              break;
-            }
-            default: {
-              int64_t val = va_arg(args, int64_t);
-              itoa(val, str, 10);
-              serial_puts(str);
-              break;
-            }
-          }
-          break;
-        }
-        case 'o': {
-          int val = va_arg(args, uint32_t);
-          utoa(val, str, 8);
-          serial_puts(str);
-          break;
-        }
-        case 'p': {
-          void* val = va_arg(args, void*);
-          lutoa((uintptr_t)val, str, 16);
-          serial_printf("0x%s", str);
-          break;
-        }
-        case 's': {
-          const char* val = (const char*)va_arg(args, char*);
-          serial_puts(val == NULL ? "<null>" : val);
-          break;
-        }
-        case 'u': {
-          uint32_t val = va_arg(args, uint32_t);
-          utoa(val, str, 10);
-          serial_puts(str);
-          break;
-        }
-        case 'X':
-        case 'x': {
-          uint64_t val = va_arg(args, uint64_t);
-          lutoa(val, str, 16);
-          serial_puts(str);
-          break;
-        }
-        default: {
-         serial_putchar('?');
-         serial_putchar(format[pos]);
-         serial_putchar('?');
-        }
-      }
-    } else {
-      serial_putchar(format[pos]);
-    }
-  }
-  return 0;
+  kmutex_lock(&serial_printf_mutex);
+  serial_puts(buffer);
+  kmutex_unlock(&serial_printf_mutex);
+
+  return len;
 }
 
 int serial_printf(const char* format, ...) {

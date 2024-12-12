@@ -59,7 +59,7 @@ void* kmmap_anonymous(void *addr, size_t length, int prot) {
 }
 
 void* kmmap(void *addr, size_t length, int prot, int flags, int fd, off_t offset) {
-  switch (flags) {
+  switch(flags) {
   case MAP_ANONYMOUS:
   case MAP_ANONYMOUS | MAP_PRIVATE:
     return kmmap_anonymous(addr, length, prot);

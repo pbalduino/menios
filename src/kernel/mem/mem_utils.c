@@ -13,14 +13,14 @@ void* memcpy(void* dest, const void* src, size_t n) {
   size_t remaining_bytes = n % sizeof(uint64_t);
 
   // Copy as many 64-bit chunks as possible
-  for (size_t i = 0; i < num_qwords; i++) {
+  for(size_t i = 0; i < num_qwords; i++) {
     dest64[i] = src64[i];
   }
 
   // Copy the remaining bytes (if any)
   uint8_t* dest8 = (uint8_t*)&dest64[num_qwords];
   const uint8_t* src8 = (const uint8_t*)&src64[num_qwords];
-  for (size_t i = 0; i < remaining_bytes; i++) {
+  for(size_t i = 0; i < remaining_bytes; i++) {
     dest8[i] = src8[i];
   }
 
@@ -79,25 +79,25 @@ void* memmove(void *dest, const void *src, size_t n) {
   if(d<s) {
 #ifdef __GNUC__
 	if((uintptr_t)s % WS == (uintptr_t)d % WS) {
-		while ((uintptr_t)d % WS) {
+		while((uintptr_t)d % WS) {
   		if(!n--) return dest;
   		*d++ = *s++;
 		}
-		for (; n>=WS; n-=WS, d+=WS, s+=WS) *(WT *)d = *(WT *)s;
+		for(; n>=WS; n-=WS, d+=WS, s+=WS) *(WT *)d = *(WT *)s;
 	}
 #endif
-		for (; n; n--) *d++ = *s++;
+		for(; n; n--) *d++ = *s++;
 	} else {
 #ifdef __GNUC__
 	if((uintptr_t)s % WS == (uintptr_t)d % WS) {
-		while ((uintptr_t)(d+n) % WS) {
+		while((uintptr_t)(d+n) % WS) {
 			if(!n--) return dest;
 			d[n] = s[n];
 		}
-		while (n>=WS) n-=WS, *(WT *)(d+n) = *(WT *)(s+n);
+		while(n>=WS) n-=WS, *(WT *)(d+n) = *(WT *)(s+n);
 	}
 #endif
-		while (n) n--, d[n] = s[n];
+		while(n) n--, d[n] = s[n];
 	}
 
 	return dest;
@@ -107,7 +107,7 @@ int memcmp(const void *s1, const void *s2, size_t n) {
   const uint8_t *p1 = (const uint8_t *)s1;
   const uint8_t *p2 = (const uint8_t *)s2;
 
-  for (size_t i = 0; i < n; i++) {
+  for(size_t i = 0; i < n; i++) {
     if(p1[i] != p2[i]) {
       return p1[i] < p2[i] ? -1 : 1;
     }

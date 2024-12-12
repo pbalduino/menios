@@ -1,4 +1,5 @@
 #include <kernel/apic.h>
+#include <kernel/console.h>
 #include <kernel/heap.h>
 #include <kernel/idt.h>
 #include <kernel/pmm.h>
@@ -59,7 +60,7 @@ static uacpi_ns_iteration_decision acpi_init_one_device(void *ctx, uacpi_namespa
   uacpi_namespace_node_info *info;
 
   uacpi_status ret = uacpi_get_namespace_node_info(node, &info);
-  if (uacpi_unlikely_error(ret)) {
+  if(uacpi_unlikely_error(ret)) {
     const char *path = uacpi_namespace_node_generate_absolute_path(node);
     serial_printf("unable to retrieve node %s information: %s",
               path, uacpi_status_to_string(ret));
@@ -85,8 +86,8 @@ static int getcount(int type) {
 	struct acpi_entry_hdr *entry = liststart;
 	int count = 0;
 
-	while (entry < listend) {
-		if (entry->type == type)
+	while(entry < listend) {
+		if(entry->type == type)
 			++count;
 		entry = getnext(entry);
 	}
@@ -97,9 +98,9 @@ static int getcount(int type) {
 static inline void *getentry(int type, int n) {
 	struct acpi_entry_hdr *entry = liststart;
 
-	while (entry < listend) {
-		if (entry->type == type) {
-			if (n-- == 0)
+	while(entry < listend) {
+		if(entry->type == type) {
+			if(n-- == 0)
 				return entry;
 		}
 		entry = getnext(entry);
@@ -109,12 +110,12 @@ static inline void *getentry(int type, int n) {
 }
 
 void apic_init() {
-  printf("- Enabling APIC");
+  logk("Enabling APIC");
 
   uacpi_table tbl;
 
   uacpi_status ret = uacpi_table_find_by_signature("APIC", &tbl);
-  if (uacpi_unlikely_error(ret)) {
+  if(uacpi_unlikely_error(ret)) {
     serial_printf("unable to find ACPI table: %s\n", uacpi_status_to_string(ret));
     return;
   }
@@ -134,7 +135,7 @@ void apic_init() {
 
 	void *paddr = lapic64 ? (void *)lapic64->address : (void *)(uint64_t)madt->local_interrupt_controller_address;
 
-	if (lapic64) {
+	if(lapic64) {
 		serial_printf("\e[94mUsing 64 bit override for the local APIC address\n\e[0m");
   }
 
@@ -146,13 +147,13 @@ void apic_init() {
 
   serial_printf("acpi_init: iocount: %d\n", iocount);
 
-  for (size_t i = 0; i < iocount; ++i) {
+  for(size_t i = 0; i < iocount; ++i) {
 		struct acpi_madt_ioapic *entry = getentry(ACPI_MADT_ENTRY_TYPE_IOAPIC, i);
 
     ioapics[i].addr = (void*)physical_to_virtual((uintptr_t)entry->address);
     ioapics[i].top = ioapics[i].base + ((readioapic(ioapics[i].addr, IOAPIC_REG_ENTRYCOUNT) >> 16) & 0xff) + 1;
 		serial_printf("ioapic%lu: addr %p base %lu top %lu\n", i, entry->address, entry->gsi_base, ioapics[i].top);
-    for (int j = ioapics[i].base; j < ioapics[i].top; ++j) {
+    for(int j = ioapics[i].base; j < ioapics[i].top; ++j) {
 			writeiored(ioapics[i].addr, j - ioapics[i].base, 0xfe, 0, 0, 0, 0, 1, 0);
       puts(".");
     }

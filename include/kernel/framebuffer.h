@@ -3,14 +3,16 @@
 
 #include <types.h>
 
-#define FB_BLACK 0x0
-#define FB_BLUE 0x0000ff
-#define FB_DARK_BLUE 0x00007f
-#define FB_DARK_GREEN 0x007f00
-#define FB_GREEN 0x00ff00
+#define FB_BLACK       0x0
+#define FB_BLUE        0x0000ff
+#define FB_DARK_BLUE   0x00007f
+#define FB_DARK_GREEN  0x007f00
+#define FB_DARK_RED    0x7f0000
+#define FB_GREEN       0x00ff00
 #define FB_LIGHT_WHITE 0xffffff
-#define FB_RED 0xff0000
-#define FB_WHITE 0x7f7f7f
+#define FB_RED         0xff0000
+#define FB_WHITE       0x7f7f7f
+#define FB_ORANGE      0xff7f00
 
 typedef struct limine_video_mode** limine_video_mode_list_t;
 typedef struct limine_video_mode* limine_video_mode_t;

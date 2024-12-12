@@ -89,6 +89,7 @@ typedef struct proc_info_t {
   int          exit_code;
   char         name[32];
   int          errno;
+  uint64_t     exec_time;
 } proc_info_t;
 
 typedef proc_info_t* proc_info_p;
@@ -96,7 +97,7 @@ typedef proc_info_t* proc_info_p;
 extern proc_info_p procs[PROC_MAX];
 extern proc_info_p current;
 
-void init_scheduler();
+void scheduler_init();
 void proc_create(proc_info_p proc, const char* name, void (*entrypoint)(void *), void* arg);
 void proc_execute(proc_info_p proc);
 void proc_exit(int code);

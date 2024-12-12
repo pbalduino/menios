@@ -10,11 +10,15 @@ extern "C" {
 
 #define TICKS_PER_SECOND 1000000000
 
-void init_tsc();
+void tsc_init();
 
 uint64_t read_tsc(void);
 
 useconds_t unix_time_us();
+
+useconds_t ns_from_boot();
+
+bool has_invariant_tsc();
 
 #ifdef __cplusplus
 }

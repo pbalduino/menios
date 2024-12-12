@@ -12,15 +12,16 @@
 #define ISR_INVALID_OPCODE           0x06
 #define ISR_DEVICE_NOT_AVAILABLE     0x07
 #define ISR_DOUBLE_FAULT             0x08
-#define ISR_INVALID_TSS              0x0A
-#define ISR_SEGMENT_NOT_PRESENT      0x0B
-#define ISR_STACK_SEGMENT_FAULT      0x0C
-#define ISR_GENERAL_PROTECTION_FAULT 0x0D
-#define ISR_PAGE_FAULT               0x0E
+#define ISR_INVALID_TSS              0x0a
+#define ISR_SEGMENT_NOT_PRESENT      0x0b
+#define ISR_STACK_SEGMENT_FAULT      0x0c
+#define ISR_GENERAL_PROTECTION_FAULT 0x0d
+#define ISR_PAGE_FAULT               0x0e
 #define ISR_FLOAT_POINT_EXCEPTION    0x10
 #define ISR_ALIGNMENT_CHECK          0x11
 #define ISR_MACHINE_CHECK            0x12
 #define ISR_PERIODIC_TIMER           0x20
+#define ISR_KEYBOARD                 0x21
 
 typedef struct {
   uint16_t base_low;      // Lower 16 bits of ISR address
@@ -33,10 +34,10 @@ typedef struct {
 } idt_entry_t;
 
 // Define the IDT pointer structure
-typedef struct  __attribute__((packed)) {
-  uint16_t size;         // Size of the IDT - 1
-  uint64_t offset;       // Base address of the IDT
-} idt_pointer_t;
+typedef struct idt_pointer_t {
+  uint16_t  size;         // Size of the IDT - 1
+  uintptr_t offset;       // Base address of the IDT
+} __attribute__((packed)) idt_pointer_t;
 
 typedef struct idt_exception_t {
     uint64_t r15;
@@ -68,6 +69,7 @@ extern void idt_gpf_isr_asm_handler();
 extern void idt_load(idt_pointer_t *idt_ptr);
 extern void idt_pf_isr_asm_handler();
 extern void idt_period_timer_isr_asm_handler();
+extern void ps2kb_isr_handler();
 
 void idt_add_isr(int interruption, void* handler);
 void idt_init();

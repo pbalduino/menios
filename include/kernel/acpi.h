@@ -49,6 +49,12 @@ typedef struct acpi_xsdt_t {
   uint64_t* sdt;
 } acpi_xsdt_t;
 
+typedef struct acpi_mcfg_t {
+  acpi_sdt_header_t header;
+  uint64_t reserved;
+  void* entries;
+} acpi_mcfg_t;
+
 typedef uint8_t acpi_address_space_t;
 
 #define ACPI_SYSTEM_MEMORY 0

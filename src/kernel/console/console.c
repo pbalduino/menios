@@ -1,11 +1,15 @@
-#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <types.h>
 
 #include <kernel/console.h>
+#include <kernel/framebuffer.h>
 #include <kernel/file.h>
+#include <kernel/mutex.h>
 #include <kernel/serial.h>
-#include <kernel/thread.h>
+#include <kernel/tsc.h>
+
+kmutex_t fvprintf_mutex;
 
 int fputchar(int ch, FILE* file) {
   if(file == NULL) {
@@ -42,135 +46,17 @@ int vprintf(const char* format, va_list args) {
 }
 
 int fvprintf(FILE *file, const char *format, va_list args){
-  // kthread_mutex_lock(&printf_mutex);
+  char buffer[1024];
+  int len = vsprintk(buffer, format, args);
 
-  for(int pos = 0; format[pos]; pos++) {
-    if(format[pos] == '%') {
-      switch(format[++pos]) {
-        case '%': {
-          fputchar('%', file);
-          break;
-        }
-        case 'b': {
-          int val = va_arg(args, uint32_t);
-          char str[256];
-          utoa(val, str, 2);
-          fputs(str, file);
-          break;
-        }
-        case 'c': {
-          const int val = va_arg(args, int32_t);
-          fputchar(val, file);
-          break;
-        }
-        case 'i':
-        case 'd': {
-          int val = va_arg(args, int32_t);
-          char str[256];
-          itoa(val, str, 10);
-          fputs(str, file);
-          break;
-        }
-        case 'l': {
-          switch(format[pos + 1]) {
-            case 'u': {
-              uint64_t val = va_arg(args, uint64_t);
-              char str[256];
-              lutoa(val, str, 10);
-              fputs(str, file);
-              pos++;
-              break;
-            }
-            case 'l':{
-              switch(format[pos + 2]) {
-              case 'x': {
-                  uint64_t val = va_arg(args, uint64_t);
-                  char str[256];
-                  ltoa(val, str, 16);
-                  fputs(str, file);
-                  pos++;
-                  break;
-                }
-              default:{
-                  int64_t val = va_arg(args, int64_t);
-                  char str[256];
-                  ltoa(val, str, 10);
-                  fputs(str, file);
-                  break;
-                }
-              }
-              break;
-            }
-            case 'x': {
-              uint64_t val = va_arg(args, uint64_t);
-              char str[256];
-              lutoa(val, str, 16);
-              fputs("0x", file);
-              fputs(str, file);
-              pos++;
-              break;
-            }
-            default: {
-              int64_t val = va_arg(args, int64_t);
-              char str[256];
-              itoa(val, str, 10);
-              fputs(str, file);
-              break;
-            }
-          }
-          break;
-        }
-        case 'o': {
-          int val = va_arg(args, uint32_t);
-          char str[256];
-          utoa(val, str, 8);
-          fputs(str, file);
-          break;
-        }
-        case 'p': {
-          void* val = va_arg(args, void*);
-          char str[256];
-          lutoa((uintptr_t)&val, str, 16);
-          fprintf(file, "0x%s", str);
-          break;
-        }
-        case 's': {
-          const char* val = (const char*)va_arg(args, char*);
-          fputs(val, file);
-          break;
-        }
-        case 'u': {
-          int val = va_arg(args, uint32_t);
-          char str[256];
-          utoa(val, str, 10);
-          fputs(str, file);
-          break;
-        }
-        case 'X':
-        case 'x': {
-          uint64_t val = va_arg(args, uint64_t);
-          char str[256];
-          lutoa(val, str, 16);
-          fputs(str, file);
-          break;
-        }
-        default: {
-         fputchar('?', file);
-         fputchar(format[pos], file);
-         fputchar('?', file);
-        }
-      }
-    } else {
-      fputchar(format[pos], file);
-    }
-  }
-  
-  // kthread_mutex_unlock(&printf_mutex);
-  return 0;
+  kmutex_lock(&fvprintf_mutex);
+  fputs(buffer, file);
+  kmutex_unlock(&fvprintf_mutex);
+
+  return len;
 }
 
 int printf(const char* format, ...) {
-
   va_list list;
   va_start(list, format);
   int i = vprintf(format, list);
@@ -184,4 +70,32 @@ int fprintf(FILE* file, const char* format, ...) {
   int i = fvprintf(file, format, list);
   va_end(list);
   return i;
+}
+
+void logk(const char* format, ...) {
+  uint64_t time = ns_from_boot() / 1000;
+  puts("[");
+  set_foreground_color(FB_GREEN);
+  printf("%3lu.%06lu", time / 1000000, time % 1000000);
+  set_foreground_color(FB_LIGHT_WHITE);
+  puts("] ");
+
+  va_list list;
+  va_start(list, format);
+  vprintf(format, list);
+  va_end(list);
+}
+
+void errk(const char* format, ...) {
+  uint64_t time = ns_from_boot() / 1000;
+  puts("[");
+  set_foreground_color(FB_ORANGE);
+  printf("%3lu.%06lu", time / 1000000, time % 1000000);
+  set_foreground_color(FB_LIGHT_WHITE);
+  puts("] ");
+
+  va_list list;
+  va_start(list, format);
+  vprintf(format, list);
+  va_end(list);
 }

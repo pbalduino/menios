@@ -489,7 +489,7 @@ const glypht_t GL_TILDE = {
 extern uint8_t font_terminus[];
 
 void font_init() {
-  for (int c = 0; c < 0x100; c++) {
+  for(int c = 0; c < 0x100; c++) {
     font_list.glyphs[c] = GL_NULL;
   }
 

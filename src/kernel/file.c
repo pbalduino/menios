@@ -3,6 +3,7 @@
 #include <string.h>
 
 
+#include <kernel/console.h>
 #include <kernel/file.h>
 #include <kernel/framebuffer.h>
 #include <kernel/serial.h>
@@ -21,6 +22,7 @@ FILE* stdin;
 FILE* stdout;
 FILE* stderr;
 
+// FIXME: this list should be attached to the process
 static file_descriptor_t descriptors[FD_LIMIT + 1];
 static struct __fd_t fd;
 static struct __sFile ff;
@@ -38,6 +40,10 @@ static struct __fd_t fdserial0 = {
   .close = noop_close,
   .read = noop_read,
   .write = serial_putchar
+};
+
+static struct __sFile ffstdin = {
+  .reserved = FD_STDIN
 };
 
 static struct __sFile ffstdout = {
@@ -70,12 +76,15 @@ int noop_write(int ch) {
 void file_init() {
   serial_log("Entering file_init");
 
-  ffstdout.reserved = FD_STDOUT;
+  // ffstdin.reserved = FD_STDIN;
+  // stdin = &ffstdin;
+  // descriptors[FD_STDIN] = &ffstdin;
 
+  ffstdout.reserved = FD_STDOUT;
   stdout = &ffstdout;
   descriptors[FD_STDOUT] = &fdserial0;
 
-  printf("- Setting file descriptor...OK\n");
+  logk("Setting file descriptor...OK\n");
   serial_log("Leaving file_init");
 }
 
@@ -136,7 +145,7 @@ FILE* fopen(const char* filename, const char* mode) {
     return file;
   }
 
-  if(strcmp(filename, "/dev/fb") == 0 && strncmp(mode, "w", 1) == 0) {
+  if(strcmp(filename, "/dev/fb/0") == 0 && strncmp(mode, "w", 1) == 0) {
     serial_log("Opening framebuffer");
     fd.used = true;
     fd.write = fb_putchar;

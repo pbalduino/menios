@@ -96,12 +96,13 @@ QEMU_OPTS = -smp cpus=2,maxcpus=4,sockets=1,dies=1,clusters=1,cores=2 \
 	-serial file:$(QEMU_LOG_FILE) \
 	-monitor stdio \
 	-d int \
-	-M hpet=on \
-	-usb \
-	-device usb-ehci,id=ehci \
-	-device usb-mouse \
-	-device usb-kbd \
 	-rtc base=utc,clock=host
+# -M hpet=on \
+# -usb \
+# -device usb-ehci,id=ehci \
+# -device usb-mouse \
+# -device usb-kbd \
+
 
 OS_NAME = $(shell uname -s | tr A-Z a-z)
 
@@ -147,10 +148,12 @@ ifeq ($(OS_NAME),linux)
 	$(NASM) -f elf64 ./src/kernel/lgdt.s
 	$(NASM) -f elf64 ./src/kernel/pit.s
 	$(NASM) -f elf64 ./src/kernel/lidt.s
+	# $(NASM) -f elf64 ./src/kernel/driver/ps2kb/ps2kb_handler.s
 
 	cp ./src/kernel/lgdt.o $(KERNEL_OBJ)
 	cp ./src/kernel/pit.o $(KERNEL_OBJ)
 	cp ./src/kernel/lidt.o $(KERNEL_OBJ)
+	# cp ./src/kernel/driver/ps2kb/ps2kb_handler.o  $(KERNEL_OBJ)
 
 	cp $(OBJS) $(KERNEL_OBJ)
 

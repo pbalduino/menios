@@ -1,9 +1,12 @@
 #include <boot/limine.h>
+
+#include <kernel/console.h>
 #include <kernel/heap.h>
 #include <kernel/kernel.h>
 #include <kernel/pmm.h>
 #include <kernel/proc.h>
 #include <kernel/serial.h>
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -113,23 +116,25 @@ void list_memory_areas() {
     hcf();
   }
 
-   memmap_response = memmap_request.response;
+  memmap_response = memmap_request.response;
   
   for(uint64_t e = 0; e < memmap_response->entry_count; e++) {
+    logk("  %2lu: base: %016lx - size: %10lu - type: %s\n", e, memmap_response->entries[e]->base, 
+      memmap_response->entries[e]->length,
+      mem_type[memmap_response->entries[e]->type]);
+
     serial_printf("  Entry %lu:  base: %lx - size: %lu (%lx) - type: %s\n", e, memmap_response->entries[e]->base, 
       memmap_response->entries[e]->length, 
       memmap_response->entries[e]->length, 
       mem_type[memmap_response->entries[e]->type]);
 
-    switch (memmap_response->entries[e]->type) {
+    switch(memmap_response->entries[e]->type) {
     case LIMINE_MEMMAP_USABLE:
       mem_available += memmap_response->entries[e]->length;
       bulk_page_bitmap_as_free(memmap_response->entries[e]->base, memmap_response->entries[e]->length);
       break;
     case LIMINE_MEMMAP_FRAMEBUFFER:
       mem_framebuffer += memmap_response->entries[e]->length;
-      break;
-    default:
       break;
     }
 
@@ -140,9 +145,16 @@ void list_memory_areas() {
     mem_total / (1024 * 1024), 
     mem_available / (1024 * 1024), 
     mem_framebuffer / (1024 * 1024));
+
+  logk("  Total: %luMB - available: %luMB - video: %luMB\n", 
+    mem_total / (1024 * 1024), 
+    mem_available / (1024 * 1024), 
+    mem_framebuffer / (1024 * 1024));
+
 }
 
 void init_kernel_offset() {
+  logk("Getting kernel offset.\n");
   serial_printf("> init_kernel_offset\n");
   kernel_offset = hhdm_request.response->offset;
   serial_printf("  Kernel offset %lx:\n", kernel_offset);
@@ -153,6 +165,7 @@ virt_addr_t get_kernel_offset() {
 }
 
 void init_page_bitmap() {
+  logk("Initing page bitmap.\n");
   memsetl(&page_bitmap, PAGE_BITMAP_FULL, PAGE_BITMAP_SIZE);
 }
 
@@ -188,6 +201,7 @@ phys_addr_t read_cr3() {
 
 void init_cr3() {
   cr3_vaddr = physical_to_virtual(read_cr3());
+  logk("CR3 is @ %p\n", cr3_vaddr);
 }
 
 void pml4_map(uintptr_t vaddr, pml4_map_t* map) {
@@ -288,22 +302,16 @@ uintptr_t get_first_free_virtual_address(uintptr_t offset) {
   - read the value in the request address
 */
 void pmm_init() {
-  printf("- Initing Physical memory manager");
-  serial_puts("\n- Initing Physical memory manager:");
+  logk("Initing Physical memory manager\n");
+  serial_puts("\n- Initing Physical memory manager:\n");
 
   init_page_bitmap();
-  puts(".");
 
   list_memory_areas();
-  puts(".");
   
   init_kernel_offset();
-  puts(".");
 
   init_cr3();
-  puts(".");
-
-  printf("OK\n");
 }
 
 

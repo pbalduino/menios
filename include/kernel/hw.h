@@ -5,7 +5,7 @@
 extern "C" {
 #endif
 
-void init_hardware();
+void hardware_init();
 
 #ifdef __cplusplus
 }

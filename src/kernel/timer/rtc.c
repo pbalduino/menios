@@ -31,7 +31,7 @@ void rtc_time(rtc_time_t* time) {
   time->minutes = bcd ? bcd_to_binary(minutes) : minutes;
   time->hours = bcd ? bcd_to_binary(hours) : hours;
 
-  if (!(time->register_b & 0x02) && (time->hours & 0x80)) {
+  if(!(time->register_b & 0x02) && (time->hours & 0x80)) {
     time->hours = ((time->hours & 0x7F) + 12) % 24;
   }
 

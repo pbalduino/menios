@@ -1,3 +1,4 @@
+#include <kernel/console.h>
 #include <kernel/gdt.h>
 #include <kernel/heap.h>
 #include <kernel/kernel.h>
@@ -5,12 +6,14 @@
 #include <kernel/proc.h>
 #include <kernel/serial.h>
 #include <kernel/thread.h>
+#include <kernel/tsc.h>
 #include <kernel/timer.h>
 #include <stdio.h>
 #include <string.h>
 #include <types.h>
 
 uint64_t last_pid = 0;
+static uint64_t last_exec = 0;
 
 proc_info_t kernel_process_info = {
   .children = NULL,
@@ -29,7 +32,7 @@ proc_info_p procs[PROC_MAX] = {
 proc_info_p current = &kernel_process_info;
 
 static char* proc_state(proc_state_t state) {
-  switch (state)
+  switch(state)
   {
   case PROC_STATE_NEW:
     return "NEW";
@@ -62,9 +65,23 @@ void proc_debug(cpu_state_p state) {
 }
 
 void proc_switch(void* arg) {
+  if(last_exec == 0) {
+    last_exec = unix_time_us();
+  } else {
+    uint64_t now = unix_time_us();
+    uint64_t diff = now - last_exec;
+    last_exec = now;
+    current->exec_time += diff;
+    serial_printf("proc_switch: Process %s executed for %lu.%lu\n", current->name, diff / 1000000000, diff % 1000000000);
+  }
+
+  if(current->pid == current->next->pid) {
+    serial_printf("Next process is the same. Skipping switch.\n");
+    return;
+  }
+
   cpu_state_p state = (cpu_state_p)arg;
-  serial_line("");
-  proc_debug(state);
+  // proc_debug(state);
   memcpy(current->cpu_state, state, sizeof(cpu_state_t));
 
   serial_puts("proc_switch: Entering with ");
@@ -78,10 +95,7 @@ void proc_switch(void* arg) {
 
   proc_info_p next = current->next;
 
-  serial_line("");
-
-  while (next->state == PROC_STATE_TERMINATED) {
-    serial_line("");
+  while(next->state == PROC_STATE_TERMINATED) {
     current->next = next->next;
     serial_printf("proc_switch: Removing terminated process %s\n", next->name);
 
@@ -90,14 +104,8 @@ void proc_switch(void* arg) {
     kfree(next->cpu_state);
     kfree(next);
 
-    serial_line("");
-
     next = current->next; // Move to the next process
-
-    serial_line("");
   }
-
-  serial_line("");
 
   if(current->state != PROC_STATE_TERMINATED) {
     current->state = PROC_STATE_READY;
@@ -106,9 +114,6 @@ void proc_switch(void* arg) {
   current = current->next;
   memcpy(arg, current->cpu_state, sizeof(cpu_state_t));
   current->state = PROC_STATE_RUNNING;
-
-  serial_line("");
-  proc_debug((cpu_state_p)arg);
 
   serial_printf("proc_switch: Switching to process %s\n", current->name);
 
@@ -167,8 +172,8 @@ void proc_execute(proc_info_p proc) {
   serial_printf("proc_execute: Executing process %s\n", proc->name);
 }
 
-void init_scheduler() {
-  printf("- Initing scheduller");
+void scheduler_init() {
+  logk("Initing scheduler");
   current = &kernel_process_info;
   current->next = current;
   current->cpu_state = (cpu_state_t*)kmalloc(sizeof(cpu_state_t));

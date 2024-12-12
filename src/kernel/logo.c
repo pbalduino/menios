@@ -124,7 +124,7 @@ void print_logo() {
   for(int i = 0; i < 16 * 113; i++) {
     for(int b = 0; b < 8; b++) {
       if((logo[i] >> (7 - b)) & 0x01) {
-        fb_putpixel(column, line, FB_WHITE);
+        fb_putpixel(column, line, FB_LIGHT_WHITE);
       }
       column++;
     };

@@ -17,6 +17,9 @@ typedef struct screen_pos_t {
 
 void set_cursor_position(uint16_t pos);
 
+void set_foreground_color(uint32_t color);
+void set_background_color(uint32_t color);
+
 uint16_t get_cursor_position();
 
 void gotoxy(uint32_t x, uint32_t y);
@@ -25,5 +28,8 @@ void get_cursor_pos(screen_pos_t* pos);
 int vprintk(char *str, const char *format, ...);
 int vsprintk(char* str, const char* format, va_list args);
 int vsnprintk(char *str, size_t, const char* format, va_list args);
+
+void logk(const char* format, ...);
+void errk(const char* format, ...);
 
 #endif

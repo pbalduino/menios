@@ -1,3 +1,4 @@
+#include <kernel/console.h>
 #include <kernel/gdt.h>
 #include <kernel/serial.h>
 #include <stdio.h>
@@ -10,15 +11,15 @@ gdt_t gdt = {
   {0xffff, 0, 0, 0x92, 0xcf, 0},    // 32bits data - 0x20
   {0, 0, 0, 0x9a, 0xa2, 0},         // 64bits kernel code - 0x28
   {0, 0, 0, 0x92, 0xa0, 0},         // 64bits kernel data - 0x30
-  {0, 0, 0, 0xF2, 0, 0},            // 64bits user code - 0x38
-  {0, 0, 0, 0xFA, 0x20, 0}          // 64bits user data - 0x40
+  {0, 0, 0, 0xf2, 0, 0},            // 64bits user code - 0x38
+  {0, 0, 0, 0xfa, 0x20, 0}          // 64bits user data - 0x40
 };
 
 gdt_pointer_t gdt_p;
 
 void gdt_init() {
   serial_log("Entering gdt_init");
-  puts("- Setting GDT");
+  logk("Setting GDT");
 
   // Create a GDT pointer
   gdt_p.size = sizeof(gdt) - 1;

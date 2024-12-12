@@ -1,3 +1,4 @@
+#include <kernel/console.h>
 #include <kernel/devicetree.h>
 #include <kernel/kernel.h>
 #include <kernel/serial.h>
@@ -10,6 +11,7 @@ static volatile struct limine_dtb_request dtb_request = {
 
 void read_device_tree() {
   if(dtb_request.response == NULL || dtb_request.response->dtb_ptr == NULL) {
+    errk("  No device tree available\n");
     serial_error("read_device_tree: No device tree available\n");
     return;
   }
