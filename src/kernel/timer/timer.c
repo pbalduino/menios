@@ -69,7 +69,7 @@ void timer_init() {
 uint64_t boot_time() {
   if(boot_time_request.response == NULL || boot_time_request.response->boot_time == 0) {
     printf("Boot time not available, halting\n");
-    hcf();
+    halt();
     return 0;
   } else {
     return boot_time_request.response->boot_time;

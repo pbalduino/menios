@@ -4,5 +4,5 @@
 
 void _panic(const char* a, int b, const char* c, ... ) {
   printf("%s: %d - %s", a, b, c);
-  hcf();
+  halt();
 }

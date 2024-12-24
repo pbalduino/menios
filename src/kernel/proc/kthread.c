@@ -12,16 +12,16 @@ void kthread_execute(void* arg) {
   kthread_t* thread = (kthread_t*)arg;
   serial_printf("thread_execute: argument for %s is null? %s\n", thread->name, thread->arguments == NULL ? "YES" : "NO");
   serial_line("");
-  (thread->entrypoint)(thread->arguments);
+  int res = (thread->entrypoint)(thread->arguments);
   serial_line("");
-  kexit(0);
+  kexit(res);
   serial_line("");
   while(true) {
   }
   serial_line("");
 }
 
-int kthread_create(kthread_t* thread, const char* name, void (*entrypoint)(void *), void* arg) {
+int kthread_create(kthread_t* thread, const char* name, int (*entrypoint)(void *), void* arg) {
   thread->name = name;
   thread->entrypoint = entrypoint;
   thread->arguments = arg;
@@ -32,7 +32,7 @@ int kthread_create(kthread_t* thread, const char* name, void (*entrypoint)(void 
   serial_line("");
   if(current->errno == ENOMEM) {
     serial_error("kthread_create: Out of memory\n");
-    hcf();
+    halt();
   }
   serial_line("");
   proc_info_p proc = (proc_info_p)foo;
@@ -50,6 +50,8 @@ int kthread_create(kthread_t* thread, const char* name, void (*entrypoint)(void 
 void ksleep(uint64_t milliseconds) {
   uint64_t start = read_tsc();
   uint64_t end = start + (milliseconds * 1000000);
+  current->sleep_until = end;
+  current->state = THREAD_SLEEPING;
   while(read_tsc() < end) {
     noop();
   }
@@ -57,8 +59,10 @@ void ksleep(uint64_t milliseconds) {
 
 void kexit(int code) {
   proc_exit(code);
-  serial_printf("kexit: process '%s' is terminated and waiting to be finished\n", current->name);
-  while(true) { }
+  serial_printf("kexit: process '%s' is terminated with code '%d' and waiting to be finished\n", current->name, current->exit_code);
+  while(true) {
+    noop();
+   }
 }
 
 void ktread_join(kthread_t* t1) {

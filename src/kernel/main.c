@@ -71,7 +71,7 @@ void turn_off() {
   printf("  Preparing shutdown...\n");
   acpi_shutdown();
   printf("  OH NOES!\n");
-  hcf();
+  halt();
 }
 
 void thread_code(void* arg) {
@@ -99,13 +99,14 @@ void show_clock(void* arg) {
   }
 }
 
-void show_caret() {
+int show_caret() {
   while(true){
     puts("_");
     ksleep(500);
     puts("\b");
     ksleep(500);
   }
+  return 0;
 }
 
 void _start() {
@@ -134,7 +135,7 @@ void _start() {
 
   // init_services();
 
-  // sti();
+  // enable_interrupts();
 
   // rtc_time_t time;
   // rtc_time(&time);
@@ -162,7 +163,7 @@ void _start() {
   // logk("Created clock thread\n");
 
   logk("Enabling interruptions\n");
-  sti();
+  enable_interrupts();
 
   printf("menios# ");
 
@@ -178,6 +179,6 @@ void _start() {
 
   // ktread_join(&clock);
   
-  hcf();
+  halt();
   // turn_off();
 }

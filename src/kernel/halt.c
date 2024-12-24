@@ -7,7 +7,7 @@
  * Disables interrupts by executing the CLI (Clear Interrupt Flag) instruction.
  * This prevents the CPU from responding to maskable hardware interrupts.
  */
-void cli() {
+void disable_interrupts() {
   asm("cli");
 }
 
@@ -15,7 +15,7 @@ void cli() {
  * Enables interrupts by executing the STI (Set Interrupt Flag) instruction.
  * This allows the CPU to respond to maskable hardware interrupts.
  */
-void sti() {
+void enable_interrupts() {
   serial_line("Enabling interruptions");
   asm("sti");
   serial_line("Enabled interruptions");
@@ -27,8 +27,8 @@ void sti() {
  * 
  * @note Prints "System halted" to both standard output and serial log before halting
  */
-void hcf() {
-  cli();
+void halt() {
+  disable_interrupts();
 
   logk("System halted.\n");
   serial_log("System halted.");

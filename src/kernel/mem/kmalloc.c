@@ -47,7 +47,7 @@ void dump_heap(heap_node_p heap, size_t size) {
 
 void debug_heap(heap_node_p heap) {
 #ifndef MENIOS_NO_DEBUG
-  cli();
+  disable_interrupts();
   serial_printf("debug_heap: %p\n", heap);
   while(heap) {
     serial_printf("heap @ %p - ", heap);
@@ -59,7 +59,7 @@ void debug_heap(heap_node_p heap) {
 
     heap = (heap_node_p)heap->next;
   }
-  sti();
+  enable_interrupts();
 #endif
 }
 
@@ -102,10 +102,10 @@ static int find_first_free_node(size_t size, heap_node_p* node) {
   while(*node) {
     if((*node)->status > 1) {
       serial_printf("find_first_free_node: invalid node status: %d\n", (*node)->status);
-      cli();
+      disable_interrupts();
       debug_heap(heap);
       dump_heap(heap, 0x1000);
-      hcf();
+      halt();
     }
     if((*node)->status == HEAP_FREE && (*node)->size > size + HEAP_HEADER_SIZE) {
       return 0;
@@ -140,7 +140,7 @@ void* kmalloc(size_t size) {
 
     kmutex_unlock(&heap_mutex);
 
-    hcf();
+    halt();
     return NULL;
   }
 
@@ -160,7 +160,7 @@ void* kmalloc(size_t size) {
   if(next->size == 0) {
     serial_printf("kmalloc: next->size is 0\n");
     debug_heap(heap);
-    hcf();
+    halt();
   }
 
   return (void*)node->data;

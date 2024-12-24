@@ -31,6 +31,7 @@ extern "C" {
 #define PROC_STATE_READY      1
 #define PROC_STATE_RUNNING    2
 #define PROC_STATE_WAITING    3
+#define PROC_STATE_SLEEPING   4
 #define PROC_STATE_TERMINATED 7
 
 #define PROC_PRIO_NORMAL 3
@@ -73,23 +74,24 @@ typedef proc_info_t* proc_info_p;
 
 typedef struct proc_info_t {
   proc_info_p  parent;
-  proc_info_p* children;
   uint32_t     children_count;
   uint32_t     pid;
   uintptr_t    brk;
   uintptr_t    heap;
-  void*        stack_pointer;
-  uintptr_t*   stack_base;
   proc_state_t state;
   uint8_t      priority;
-  cpu_state_t* cpu_state;
-  void(*entrypoint)(void*);
-  void*        arguments;
+  uint64_t     sleep_until;
   proc_info_p  next;
   int          exit_code;
-  char         name[32];
   int          errno;
   uint64_t     exec_time;
+  char         name[32];
+  proc_info_p* children;
+  cpu_state_t* cpu_state;
+  void*        stack_pointer;
+  uintptr_t*   stack_base;
+  void(*entrypoint)(void*);
+  void*        arguments;
 } proc_info_t;
 
 typedef proc_info_t* proc_info_p;

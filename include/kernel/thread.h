@@ -10,7 +10,7 @@ extern "C" {
 
 typedef struct kthread_t {
   const char* name;
-  void        (*entrypoint)(void*);
+  int         (*entrypoint)(void*);
   void*       arguments;
   int         status;
 } kthread_t;
@@ -19,7 +19,7 @@ typedef kthread_t* kthread_p;
 
 // typedef void *(*entrypoint)(void *) kthread_handler_t;
 
-int kthread_create(kthread_t* thread, const char* name, void (*entrypoint)(void *), void* arg);
+int kthread_create(kthread_t* thread, const char* name, int (*entrypoint)(void *), void* arg);
 
 void ksleep(uint64_t milliseconds);
 void kexit(int code);

@@ -211,5 +211,9 @@ else
 	$(DOCKER) run --rm -it --mount type=bind,source=$$(pwd),target=/mnt $(DOCKER_IMAGE) /bin/sh -c "cd /mnt && make test"
 endif
 
+.PHONY: shell
 shell:
 	$(DOCKER) run --rm -it --mount type=bind,source=$$(pwd),target=/mnt $(DOCKER_IMAGE) /bin/sh -c "cd /mnt && /bin/bash"
+
+.PHONY: build-apps
+build-apps:

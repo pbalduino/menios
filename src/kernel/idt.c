@@ -45,13 +45,13 @@ void idt_init() {
 void idt_generic_isr_handler() {
   puts("= Exception caught.");
   serial_printf("== Exception caught ==\n");
-  hcf();
+  halt();
 }
 
 void idt_df_isr_handler() {
   puts("= Double fault caught.\n");
   serial_printf("== Double fault raised ==\n");
-  hcf();
+  halt();
 }
 
 void idt_gpf_isr_handler(idt_exception_p cpu_state) {
@@ -60,7 +60,7 @@ void idt_gpf_isr_handler(idt_exception_p cpu_state) {
   serial_printf("  R15: %lx error: %lx\n", cpu_state->r15, cpu_state->error_code);
   dump_heap((heap_node_p)(void*)cpu_state, sizeof(idt_exception_t));
 
-  hcf();
+  halt();
 }
 
 void idt_pf_isr_handler(uint64_t error_code) {
@@ -84,5 +84,5 @@ void idt_pf_isr_handler(uint64_t error_code) {
   printf("  Present: %d, Write: %d, User Mode: %d, Reserved: %d\n", present, write, user_mode, reserved);
   serial_printf("  Present: %d, Write: %d, User Mode: %d, Reserved: %d\n", present, write, user_mode, reserved);
 
-  hcf();
+  halt();
 }

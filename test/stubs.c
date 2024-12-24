@@ -5,11 +5,11 @@
 
 proc_info_p current;
 
-void cli() {}
+void disable_interrupts() {}
 
-void sti() {}
+void enable_interrupts() {}
 
-void hcf() {
+void halt() {
   exit(1);
 }
 

@@ -10,7 +10,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-// #include <kernel/mman.h>
 
 static uint64_t page_bitmap[PAGE_BITMAP_SIZE];
 static uintptr_t kernel_offset;
@@ -113,7 +112,7 @@ void list_memory_areas() {
   if(memmap_request.response == NULL) {
     printf("== error reading limine_memmap_response ==\n");
     serial_error("== error reading limine_memmap_response ==\n");
-    hcf();
+    halt();
   }
 
   memmap_response = memmap_request.response;
@@ -314,23 +313,22 @@ void pmm_init() {
   init_cr3();
 }
 
-
 // Page Fault handler stub
-void page_fault_handler(uint64_t error_code, uint64_t rip, uint64_t cs, uint64_t rflags, uint64_t rsp, uint64_t ss) {
+void page_fault_handler(stack_frame_t* stack_frame) {
     uint64_t cr2 = read_cr2();
 
     // Log the fault information
     serial_printf("Page Fault occurred!\n");
-    serial_printf("  Error code: %lx\n", error_code);
+    serial_printf("  Error code: %lx\n", stack_frame->error_code);
     serial_printf("  Address:    %lx\n", cr2);
     
     printf("Page Fault occurred!\n");
-    printf("  Error code: %lx\n", error_code);
-    printf("  Instruction pointer (RIP): %lx\n", rip);
-    printf("  Code segment (CS): %lx\n", cs);
-    printf("  RFLAGS: %lx\n", rflags);
-    printf("  Stack pointer (RSP): %lx\n", rsp);
-    printf("  Stack segment (SS): %lx\n", ss);
+    printf("  Error code: %lx\n", stack_frame->error_code);
+    printf("  Instruction pointer (RIP): %lx\n", stack_frame->rip);
+    printf("  Code segment (CS): %lx\n", stack_frame->cs);
+    printf("  RFLAGS: %lx\n", stack_frame->rflags);
+    printf("  Stack pointer (RSP): %lx\n", stack_frame->rsp);
+    printf("  Stack segment (SS): %lx\n", stack_frame->ss);
     printf("  Faulty address (CR2): %lx", cr2);
 
     // Handle the page fault (This is where you would add your logic)

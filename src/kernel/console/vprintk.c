@@ -58,14 +58,6 @@ int vsprintk(char* str, const char* format, va_list args) {
           pad_len = pad_len * 10 + (format[pos] - '0');
           break;
         }
-        case '.': {
-          if(pad_type == PADDING_NONE) {
-            pad_type = PADDING_PRECISION;
-            break;
-          }
-          str[result_len++] = '.';
-          break;
-        }
         case 'c': {
           const int val = va_arg(args, int32_t);
           if(pad_type == PADDING_NONE) {
@@ -251,6 +243,14 @@ int vsprintk(char* str, const char* format, va_list args) {
 
           break;
         }
+        // case '.': {
+        //   if(pad_type == PADDING_NONE) {
+        //     pad_type = PADDING_PRECISION;
+        //     break;
+        //   }
+        //   str[result_len++] = '.';
+        //   break;
+        // }
         default:
           parsing = false;
           str[result_len++] = format[pos];

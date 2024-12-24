@@ -42,7 +42,7 @@ uacpi_status uacpi_kernel_get_rsdp(uacpi_phys_addr *out_rdsp_address) {
   if(rsdp_request.response == NULL) {
     printf(">>> Error loading device table.\n");
     serial_printf("acpi_init: Error loading device table.\n");
-    hcf();
+    halt();
   }
 
   uintptr_t addr = virtual_to_physical((uintptr_t)rsdp_request.response->address);

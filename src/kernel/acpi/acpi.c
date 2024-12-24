@@ -107,7 +107,7 @@ int acpi_shutdown() {
     return -EIO;
   }
 
-  cli();
+  disable_interrupts();
 
   ret = uacpi_enter_sleep_state(UACPI_SLEEP_STATE_S5);
   if(uacpi_unlikely_error(ret)) {

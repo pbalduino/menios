@@ -46,6 +46,9 @@ static char* proc_state(proc_state_t state) {
   case PROC_STATE_WAITING:
     return "WAITING";
     break;
+  case PROC_STATE_SLEEPING:
+    return "SLEEPING";
+    break;
   case PROC_STATE_TERMINATED:
     return "TERMINATED";
     break;
@@ -151,7 +154,7 @@ void proc_create(proc_info_p proc, const char* name, void (*entrypoint)(void *),
   proc->cpu_state = kmalloc(sizeof(cpu_state_t));
   if(proc->cpu_state == NULL) {
     serial_printf("proc_create: Failed to allocate cpu state for process %s\n", name);
-    hcf();
+    halt();
   }
   memset(proc->cpu_state, 0, sizeof(cpu_state_t));
   proc->cpu_state->rip = (uint64_t)entrypoint;

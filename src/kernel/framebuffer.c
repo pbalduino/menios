@@ -63,7 +63,7 @@ void fb_init() {
   // Ensure we got a framebuffer.
   if(framebuffer_request.response == NULL || framebuffer_request.response->framebuffer_count < 1) {
     serial_error("Panic in framebuffer.c:46");
-    hcf();
+    halt();
   }
 
   // Fetch the first framebuffer.
@@ -82,7 +82,7 @@ void fb_init() {
 
   if(fb_d == NULL) {
     serial_error("freopen(/dev/fb/0) -> NULL");
-    hcf();
+    halt();
   }
 }
 
