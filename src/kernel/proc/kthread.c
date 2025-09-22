@@ -51,7 +51,7 @@ void ksleep(uint64_t milliseconds) {
   uint64_t start = read_tsc();
   uint64_t end = start + (milliseconds * 1000000);
   current->sleep_until = end;
-  current->state = THREAD_SLEEPING;
+  current->state = PROC_STATE_SLEEPING;
   while(read_tsc() < end) {
     noop();
   }
