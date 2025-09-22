@@ -79,17 +79,36 @@
       "title": "Complete ANSI console support (#8)",
       "draft": true
     },
+    "test_results": [
+      {
+        "name": "make test",
+        "status": "blocked",
+        "details": "make test now links src/kernel/console/ansi.c and defines UNITY_EXCLUDE_SETJMP_H; run locally (requires Docker on macOS)"
+      }
+    ],
     "github_issue": {
       "number": 8,
       "url": "https://github.com/pbalduino/menios/issues/8",
-      "state": "OPEN",
-      "assignee": "pbalduino"
+      "state": "OPEN"
     }
   },
   {
     "title": "Complete the vsprintk function and add tests",
     "body": "## Goal\nComplete the missing format specifiers in vsprintk and ensure all existing tests pass.\n\n## Context\nThe vsprintk function in `vprintk.c` is quite complete with support for basic format specifiers (`%c`, `%d`, `%u`, `%x`, `%X`, `%s`, `%p`, `%ld`, `%lx`) and padding/width features. However, several format specifiers have tests written in `test_vsprintk.c` but are not implemented: `%llu`, `%-` (left align), precision support (`.`), `%*` (dynamic width), `%#` (alternate form), and `%%` (literal percent).\n\n## Definition of Done\n- Implement `%llu` (unsigned long long) support to handle 64-bit unsigned integers\n- Add `%-` (left align) support for left-justified output formatting\n- Uncomment and complete precision support (`.` specifier) that is currently disabled in lines 246-253\n- Implement `%*` (dynamic width) support for runtime width specification\n- Add `%#` (alternate form) support for hex formatting with 0x prefix\n- Implement `%%` (literal percent) support to output a single percent character\n- Ensure all existing tests in `test_vsprintk.c` pass without modification\n- Add additional edge case tests for the newly implemented features\n- Verify compatibility with standard printf behavior for the implemented specifiers",
     "labels": ["enhancement"],
+    "status": "Awaiting Merge",
+    "branch": "issue-9-vsprintk",
+    "pull_request": {
+      "title": "Complete vsprintk format coverage (#9)",
+      "draft": true
+    },
+    "test_results": [
+      {
+        "name": "test_vsprintk",
+        "status": "passed",
+        "details": "Unity formatter suite passes locally after rewrite and additional edge cases"
+      }
+    ],
     "github_issue": {
       "number": 9,
       "url": "https://github.com/pbalduino/menios/issues/9",
