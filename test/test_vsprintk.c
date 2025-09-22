@@ -177,6 +177,12 @@ void test_vprintk_WHEN_percent_percent_SHOULD_return_percent_sign() {
   TEST_ASSERT_EQUAL_STRING("100%", buffer);
 }
 
+void test_vprintk_WHEN_percent_with_width_SHOULD_apply_padding() {
+  char buffer[256];
+  vprintk(buffer, "%05%", 0);
+  TEST_ASSERT_EQUAL_STRING("0000%", buffer);
+}
+
 void test_vprintk_WHEN_percent_minus_SHOULD_left_align() {
   char buffer[256];
   vprintk(buffer, "%-5d", 123);
@@ -197,8 +203,8 @@ void test_vprintk_WHEN_multiple_specifiers_SHOULD_format_correctly() {
 
 void test_vprintk_WHEN_width_and_precision_SHOULD_format_correctly() {
   char buffer[256];
-  vprintk(buffer, "%8.3d", 12345);
-  TEST_ASSERT_EQUAL_STRING("    123", buffer);
+  vprintk(buffer, "%8.3d", 123);
+  TEST_ASSERT_EQUAL_STRING("     123", buffer);
 }
 
 void test_vprintk_WHEN_large_number_SHOULD_print_correctly() {
@@ -223,6 +229,12 @@ void test_vprintk_WHEN_long_long_SHOULD_print_correctly() {
   char buffer[256];
   vprintk(buffer, "%lld", 9223372036854775807LL);  // LLONG_MAX
   TEST_ASSERT_EQUAL_STRING("9223372036854775807", buffer);
+}
+
+void test_vprintk_WHEN_unsigned_long_long_SHOULD_print_correctly() {
+  char buffer[256];
+  vprintk(buffer, "%llu", 18446744073709551615ULL);
+  TEST_ASSERT_EQUAL_STRING("18446744073709551615", buffer);
 }
 
 void test_vprintk_WHEN_multiple_args_SHOULD_print_correctly() {
@@ -267,6 +279,12 @@ void test_vprintk_WHEN_hash_with_hex_SHOULD_add_prefix() {
   TEST_ASSERT_EQUAL_STRING("0xff", buffer);
 }
 
+void test_vprintk_WHEN_hash_with_uppercase_hex_SHOULD_add_prefix() {
+  char buffer[256];
+  vprintk(buffer, "%#X", 255);
+  TEST_ASSERT_EQUAL_STRING("0XFF", buffer);
+}
+
 void test_vprintk_WHEN_percent_ld_SHOULD_print_long_decimal() {
     char buffer[256];
     vprintk(buffer, "%ld", 2147483648L);
@@ -297,7 +315,7 @@ void test_vprintk_WHEN_percent_lx_SHOULD_print_long_hex() {
 void test_vprintk_WHEN_long_with_padding_SHOULD_format_correctly() {
     char buffer[256];
     vprintk(buffer, "%10ld", 123456L);
-    TEST_ASSERT_EQUAL_STRING("   123456", buffer);
+    TEST_ASSERT_EQUAL_STRING("    123456", buffer);
 
     vprintk(buffer, "%010lu", 123456UL);
     TEST_ASSERT_EQUAL_STRING("0000123456", buffer);
@@ -326,6 +344,7 @@ int main() {
   RUN_TEST(test_vprintk_WHEN_percent_s_SHOULD_return_string);
   RUN_TEST(test_vprintk_WHEN_percent_p_SHOULD_return_pointer_address);
   RUN_TEST(test_vprintk_WHEN_percent_percent_SHOULD_return_percent_sign);
+  RUN_TEST(test_vprintk_WHEN_percent_with_width_SHOULD_apply_padding);
   RUN_TEST(test_vprintk_WHEN_percent_minus_SHOULD_left_align);
   RUN_TEST(test_vprintk_WHEN_precision_SHOULD_limit_string_length);
   RUN_TEST(test_vprintk_WHEN_multiple_specifiers_SHOULD_format_correctly);
@@ -341,11 +360,13 @@ int main() {
   RUN_TEST(test_vprintk_WHEN_asterisk_for_width_SHOULD_use_argument);
   RUN_TEST(test_vprintk_WHEN_asterisk_for_precision_SHOULD_use_argument);
   RUN_TEST(test_vprintk_WHEN_hash_with_hex_SHOULD_add_prefix);
+  RUN_TEST(test_vprintk_WHEN_hash_with_uppercase_hex_SHOULD_add_prefix);
 
   RUN_TEST(test_vprintk_WHEN_percent_ld_SHOULD_print_long_decimal);
   RUN_TEST(test_vprintk_WHEN_percent_lu_SHOULD_print_unsigned_long);
   RUN_TEST(test_vprintk_WHEN_percent_lx_SHOULD_print_long_hex);
   RUN_TEST(test_vprintk_WHEN_long_with_padding_SHOULD_format_correctly);
+  RUN_TEST(test_vprintk_WHEN_unsigned_long_long_SHOULD_print_correctly);
 
   return UNITY_END();
 }
