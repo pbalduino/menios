@@ -63,6 +63,21 @@
     "title": "Fix virtual_to_physical calculation",
     "body": "## Goal\nReplace the overly simplistic virtual_to_physical calculation with a proper page table walking implementation.\n\n## Context\nThe current `virtual_to_physical` function in `pmm.c:43-45` uses a basic calculation `return virtual_address - kernel_offset` which only works for kernel direct-mapped memory (HHDM - Higher Half Direct Map). This approach doesn't handle user space virtual addresses, doesn't walk the actual page tables, and assumes linear mapping which may not be true for all memory regions.\n\n## Definition of Done\n- Implement proper page table hierarchy walking (PML4 → PDPT → PD → PT) to find actual physical mappings\n- Handle different memory regions correctly (kernel space, user space, device memory)\n- Return appropriate error codes for unmapped virtual addresses or invalid page table entries\n- Integrate with the existing paging structures already defined in the codebase\n- Ensure the function works correctly for both kernel and user virtual addresses\n- Add proper bounds checking and validation of page table entries\n- Maintain performance while providing accurate virtual-to-physical translation\n- Add documentation explaining the page table walking process",
     "labels": ["bug"],
+    "status": "Completed",
+    "branch": "issue-7-fix-virtual-to-physical",
+    "commit": "550aac4d39305bc221289230a34a129648a5419c",
+    "test_results": [
+      {
+        "name": "test_virtual_to_physical",
+        "status": "passed",
+        "details": "Unity suite validating 4KiB, 2MiB mappings and unmapped address handling"
+      },
+      {
+        "name": "test_kmalloc",
+        "status": "passed",
+        "details": "Regression loop confirms existing heap allocation tests continue to pass"
+      }
+    ],
     "github_issue": {
       "number": 7,
       "url": "https://github.com/pbalduino/menios/issues/7",
