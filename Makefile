@@ -193,10 +193,11 @@ ifeq ($(OS_NAME),linux)
 	@echo "Testing inside Linux"
 
 	for file in $(shell find -L test -type f -name 'test_*.c'); do \
-		gcc -DMENIOS_NO_DEBUG -DUNITY_EXCLUDE_SETJMP_H -I./include \
+		gcc -std=gnu11 -DMENIOS_NO_DEBUG -DUNITY_EXCLUDE_SETJMP_H -I./include \
 			$$file \
 			test/unity.c \
 			test/stubs.c \
+			src/kernel/mem/pmm.c \
 			src/kernel/console/vprintk.c \
 			src/kernel/console/ansi.c \
 			src/kernel/mem/kmalloc.c \

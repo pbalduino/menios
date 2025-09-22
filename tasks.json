@@ -63,10 +63,25 @@
     "title": "Fix virtual_to_physical calculation",
     "body": "## Goal\nReplace the overly simplistic virtual_to_physical calculation with a proper page table walking implementation.\n\n## Context\nThe current `virtual_to_physical` function in `pmm.c:43-45` uses a basic calculation `return virtual_address - kernel_offset` which only works for kernel direct-mapped memory (HHDM - Higher Half Direct Map). This approach doesn't handle user space virtual addresses, doesn't walk the actual page tables, and assumes linear mapping which may not be true for all memory regions.\n\n## Definition of Done\n- Implement proper page table hierarchy walking (PML4 → PDPT → PD → PT) to find actual physical mappings\n- Handle different memory regions correctly (kernel space, user space, device memory)\n- Return appropriate error codes for unmapped virtual addresses or invalid page table entries\n- Integrate with the existing paging structures already defined in the codebase\n- Ensure the function works correctly for both kernel and user virtual addresses\n- Add proper bounds checking and validation of page table entries\n- Maintain performance while providing accurate virtual-to-physical translation\n- Add documentation explaining the page table walking process",
     "labels": ["bug"],
+    "status": "Completed",
+    "branch": "issue-7-fix-virtual-to-physical",
+    "commit": "550aac4d39305bc221289230a34a129648a5419c",
+    "test_results": [
+      {
+        "name": "test_virtual_to_physical",
+        "status": "passed",
+        "details": "Unity suite validating 4KiB, 2MiB mappings and unmapped address handling"
+      },
+      {
+        "name": "test_kmalloc",
+        "status": "passed",
+        "details": "Regression loop confirms existing heap allocation tests continue to pass"
+      }
+    ],
     "github_issue": {
       "number": 7,
       "url": "https://github.com/pbalduino/menios/issues/7",
-      "state": "OPEN"
+      "state": "CLOSED"
     }
   },
   {
@@ -74,22 +89,22 @@
     "body": "## Goal\nImplement comprehensive ANSI escape sequence support and enhanced scrolling functionality for the console.\n\n## Context\nThe current console implementation in `framebuffer.c:148-188` has basic ANSI escape sequence detection that handles color codes but is incomplete. It only processes ESC, digits, semicolons, and 'm' commands without actual color setting. The scrolling implementation in `fb_scroll_up()` only scrolls up one line at a time with no scrollback buffer or smooth scrolling capabilities.\n\n## Definition of Done\n- Implement full ANSI escape sequence support for cursor movement commands (`\\x1b[H` for home, `\\x1b[2J` for clear screen, etc.)\n- Add comprehensive color palette support (minimum 16 colors) with proper color setting functionality\n- Implement text attributes support (bold, dim, underline, reverse video)\n- Add cursor positioning commands and screen clearing functionality\n- Implement scrollback buffer to allow viewing previous screen content\n- Add smooth scrolling capabilities beyond the current single-line scrolling\n- Ensure ANSI processing is complete and handles edge cases properly\n- Test with various ANSI escape sequences to verify compatibility\n- Document the supported ANSI codes and their implementation",
     "labels": ["enhancement"],
     "status": "In Review",
-    "branch": "issue-8-ansi-scrolling",
+    "branch": "fix-ansi-tests",
     "pull_request": {
-      "title": "Complete ANSI console support (#8)",
-      "draft": true
+      "title": "Fix ANSI unit compilation and expectations",
+      "draft": false
     },
     "test_results": [
       {
         "name": "make test",
-        "status": "blocked",
-        "details": "make test now links src/kernel/console/ansi.c and defines UNITY_EXCLUDE_SETJMP_H; run locally (requires Docker on macOS)"
+        "status": "passed",
+        "details": "Links ansi.c and defines UNITY_EXCLUDE_SETJMP_H; test_vsprintk, test_kmalloc, and test_ansi all pass"
       }
     ],
     "github_issue": {
       "number": 8,
       "url": "https://github.com/pbalduino/menios/issues/8",
-      "state": "OPEN"
+      "state": "CLOSED"
     }
   },
   {
@@ -112,7 +127,7 @@
     "github_issue": {
       "number": 9,
       "url": "https://github.com/pbalduino/menios/issues/9",
-      "state": "OPEN"
+      "state": "CLOSED"
     }
   }
 ]
