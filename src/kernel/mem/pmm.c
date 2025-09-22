@@ -40,14 +40,81 @@ virt_addr_t physical_to_virtual(phys_addr_t physical_address) {
   return physical_address + kernel_offset;
 }
 
+static inline phys_addr_t page_base_address(uint64_t entry_field) {
+  return (phys_addr_t)(entry_field << 12);
+}
+
 phys_addr_t virtual_to_physical(virt_addr_t virtual_address) {
-  return virtual_address - kernel_offset;
+  const phys_addr_t one_gig = (phys_addr_t)1 << 30;
+  const phys_addr_t two_meg = (phys_addr_t)1 << 21;
+
+  if(cr3_vaddr == 0) {
+    if(kernel_offset && virtual_address >= kernel_offset) {
+      return virtual_address - kernel_offset;
+    }
+    return PHYS_ADDR_INVALID;
+  }
+
+  pml4_t* pml4 = (pml4_t*)cr3_vaddr;
+  uint16_t pml4_index = (virtual_address >> 39) & 0x1ff;
+  page_map_l4_entry_t pml4_entry = pml4->entries[pml4_index];
+
+  if(!pml4_entry.present || pml4_entry.large_page) {
+    return PHYS_ADDR_INVALID;
+  }
+
+  page_directory_pointer_t* pdpt =
+    (page_directory_pointer_t*)physical_to_virtual(page_base_address(pml4_entry.page_directory_base));
+
+  uint16_t pdpt_index = (virtual_address >> 30) & 0x1ff;
+  page_directory_pointer_entry_t pdpt_entry = pdpt->entries[pdpt_index];
+
+  if(!pdpt_entry.present) {
+    return PHYS_ADDR_INVALID;
+  }
+
+  if(pdpt_entry.large_page) {
+    phys_addr_t base = page_base_address(pdpt_entry.page_directory_base);
+    return (base & ~(one_gig - 1)) | (virtual_address & (one_gig - 1));
+  }
+
+  page_directory_t* pd =
+    (page_directory_t*)physical_to_virtual(page_base_address(pdpt_entry.page_directory_base));
+
+  uint16_t pd_index = (virtual_address >> 21) & 0x1ff;
+  page_directory_entry_t pd_entry = pd->entries[pd_index];
+
+  if(!pd_entry.present) {
+    return PHYS_ADDR_INVALID;
+  }
+
+  if(pd_entry.large_page) {
+    phys_addr_t base = page_base_address(pd_entry.page_table_base);
+    return (base & ~(two_meg - 1)) | (virtual_address & (two_meg - 1));
+  }
+
+  page_table_t* pt =
+    (page_table_t*)physical_to_virtual(page_base_address(pd_entry.page_table_base));
+
+  uint16_t pt_index = (virtual_address >> 12) & 0x1ff;
+  page_table_entry_t pt_entry = pt->entries[pt_index];
+
+  if(!pt_entry.present) {
+    return PHYS_ADDR_INVALID;
+  }
+
+  phys_addr_t base = page_base_address(pt_entry.frame);
+  return (base & ~((phys_addr_t)PAGE_SIZE - 1)) | (virtual_address & (PAGE_SIZE - 1));
 }
 
 uintptr_t read_cr2() {
+#ifdef __x86_64__
   uintptr_t value;
   asm volatile("movq %%cr2, %0" : "=r" (value));
   return value;
+#else
+  return 0;
+#endif
 }
 
 void set_page_free(uintptr_t physical_address) {
@@ -159,6 +226,10 @@ void init_kernel_offset() {
   serial_printf("  Kernel offset %lx:\n", kernel_offset);
 }
 
+void pmm_set_kernel_offset(virt_addr_t offset) {
+  kernel_offset = offset;
+}
+
 virt_addr_t get_kernel_offset() {
   return kernel_offset;
 }
@@ -193,14 +264,22 @@ uint64_t get_first_free_page() {
 }
 
 phys_addr_t read_cr3() {
+#ifdef __x86_64__
   phys_addr_t value;
   asm volatile("movq %%cr3, %0" : "=r" (value));
   return value;
+#else
+  return 0;
+#endif
 }
 
 void init_cr3() {
   cr3_vaddr = physical_to_virtual(read_cr3());
   logk("CR3 is @ %p\n", cr3_vaddr);
+}
+
+void pmm_set_pagetable_root(virt_addr_t root_vaddr) {
+  cr3_vaddr = root_vaddr;
 }
 
 void pml4_map(uintptr_t vaddr, pml4_map_t* map) {
@@ -332,8 +411,10 @@ void page_fault_handler(stack_frame_t* stack_frame) {
     printf("  Faulty address (CR2): %lx", cr2);
 
     // Handle the page fault (This is where you would add your logic)
-    // For now, we'll just halt the CPU
+    // For now, we'll just halt the CPU on real hardware
+#ifdef __x86_64__
     while(1) {
         __asm__("hlt");
-    }    
+    }
+#endif
 }

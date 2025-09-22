@@ -131,7 +131,13 @@ void pml4_map(virt_addr_t vaddr, pml4_map_t* map);
 virt_addr_t get_first_free_virtual_address(virt_addr_t offset);
 
 virt_addr_t physical_to_virtual(phys_addr_t physical_address);
+
+#define PHYS_ADDR_INVALID ((phys_addr_t)(-1))
+
 phys_addr_t virtual_to_physical(virt_addr_t virtual_address);
+
+void pmm_set_kernel_offset(virt_addr_t offset);
+void pmm_set_pagetable_root(virt_addr_t root_vaddr);
 
 void set_page_used(phys_addr_t physical_address);
 
