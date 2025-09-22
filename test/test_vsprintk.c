@@ -1,5 +1,6 @@
 #include <kernel/console.h>
 
+#include <stddef.h>
 #include <string.h>
 #include <unity.h>
 
@@ -164,6 +165,12 @@ void test_vprintk_WHEN_percent_s_SHOULD_return_string() {
   TEST_ASSERT_EQUAL_STRING("Hello, World!", buffer);
 }
 
+void test_vprintk_WHEN_percent_s_receives_null_SHOULD_print_null_literal() {
+  char buffer[256];
+  vprintk(buffer, "%s", NULL);
+  TEST_ASSERT_EQUAL_STRING("(null)", buffer);
+}
+
 void test_vprintk_WHEN_percent_p_SHOULD_return_pointer_address() {
   char buffer[256];
   int *x = (int*)0x1000;
@@ -181,6 +188,18 @@ void test_vprintk_WHEN_percent_with_width_SHOULD_apply_padding() {
   char buffer[256];
   vprintk(buffer, "%05%", 0);
   TEST_ASSERT_EQUAL_STRING("0000%", buffer);
+}
+
+void test_vprintk_WHEN_precision_zero_and_value_zero_SHOULD_render_empty() {
+  char buffer[256];
+  vprintk(buffer, "%.0d", 0);
+  TEST_ASSERT_EQUAL_STRING("", buffer);
+}
+
+void test_vprintk_WHEN_width_and_zero_precision_SHOULD_render_spaces() {
+  char buffer[256];
+  vprintk(buffer, "%5.0d", 0);
+  TEST_ASSERT_EQUAL_STRING("     ", buffer);
 }
 
 void test_vprintk_WHEN_percent_minus_SHOULD_left_align() {
@@ -267,6 +286,12 @@ void test_vprintk_WHEN_asterisk_for_width_SHOULD_use_argument() {
   TEST_ASSERT_EQUAL_STRING("  123", buffer);
 }
 
+void test_vprintk_WHEN_negative_width_via_asterisk_SHOULD_left_align() {
+  char buffer[256];
+  vprintk(buffer, "%*d", -5, 123);
+  TEST_ASSERT_EQUAL_STRING("123  ", buffer);
+}
+
 void test_vprintk_WHEN_asterisk_for_precision_SHOULD_use_argument() {
   char buffer[256];
   vprintk(buffer, "%.*s", 3, "hello");
@@ -283,6 +308,21 @@ void test_vprintk_WHEN_hash_with_uppercase_hex_SHOULD_add_prefix() {
   char buffer[256];
   vprintk(buffer, "%#X", 255);
   TEST_ASSERT_EQUAL_STRING("0XFF", buffer);
+}
+
+void test_vprintk_WHEN_hash_with_octal_SHOULD_add_leading_zero() {
+  char buffer[256];
+  vprintk(buffer, "%#o", 064);
+  TEST_ASSERT_EQUAL_STRING("064", buffer);
+
+  vprintk(buffer, "%#o", 0);
+  TEST_ASSERT_EQUAL_STRING("0", buffer);
+}
+
+void test_vprintk_WHEN_pointer_with_width_SHOULD_pad_left() {
+  char buffer[256];
+  vprintk(buffer, "%20p", (void*)0x1234);
+  TEST_ASSERT_EQUAL_STRING("              0x1234", buffer);
 }
 
 void test_vprintk_WHEN_percent_ld_SHOULD_print_long_decimal() {
@@ -342,9 +382,12 @@ int main() {
   RUN_TEST(test_vprintk_WHEN_percent_x_SHOULD_return_lowercase_hex);
   RUN_TEST(test_vprintk_WHEN_percent_X_SHOULD_return_uppercase_hex);
   RUN_TEST(test_vprintk_WHEN_percent_s_SHOULD_return_string);
+  RUN_TEST(test_vprintk_WHEN_percent_s_receives_null_SHOULD_print_null_literal);
   RUN_TEST(test_vprintk_WHEN_percent_p_SHOULD_return_pointer_address);
   RUN_TEST(test_vprintk_WHEN_percent_percent_SHOULD_return_percent_sign);
   RUN_TEST(test_vprintk_WHEN_percent_with_width_SHOULD_apply_padding);
+  RUN_TEST(test_vprintk_WHEN_precision_zero_and_value_zero_SHOULD_render_empty);
+  RUN_TEST(test_vprintk_WHEN_width_and_zero_precision_SHOULD_render_spaces);
   RUN_TEST(test_vprintk_WHEN_percent_minus_SHOULD_left_align);
   RUN_TEST(test_vprintk_WHEN_precision_SHOULD_limit_string_length);
   RUN_TEST(test_vprintk_WHEN_multiple_specifiers_SHOULD_format_correctly);
@@ -358,9 +401,12 @@ int main() {
   RUN_TEST(test_vprintk_WHEN_precision_with_int_SHOULD_pad_correctly);
   RUN_TEST(test_vprintk_WHEN_width_and_precision_with_string_SHOULD_format_correctly);
   RUN_TEST(test_vprintk_WHEN_asterisk_for_width_SHOULD_use_argument);
+  RUN_TEST(test_vprintk_WHEN_negative_width_via_asterisk_SHOULD_left_align);
   RUN_TEST(test_vprintk_WHEN_asterisk_for_precision_SHOULD_use_argument);
   RUN_TEST(test_vprintk_WHEN_hash_with_hex_SHOULD_add_prefix);
   RUN_TEST(test_vprintk_WHEN_hash_with_uppercase_hex_SHOULD_add_prefix);
+  RUN_TEST(test_vprintk_WHEN_hash_with_octal_SHOULD_add_leading_zero);
+  RUN_TEST(test_vprintk_WHEN_pointer_with_width_SHOULD_pad_left);
 
   RUN_TEST(test_vprintk_WHEN_percent_ld_SHOULD_print_long_decimal);
   RUN_TEST(test_vprintk_WHEN_percent_lu_SHOULD_print_unsigned_long);
