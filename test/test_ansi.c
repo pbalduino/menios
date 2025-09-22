@@ -27,9 +27,15 @@ void test_ansi_bold_promotes_to_bright_variant(void) {
   ansi_style_reset(&style);
   int params[] = {31, 1};
   ansi_style_apply_sgr(&style, params, 2);
-  TEST_ASSERT_EQUAL_UINT8(9, style.fg);
+  TEST_ASSERT_EQUAL_UINT8(1, style.fg);
   TEST_ASSERT_EQUAL_UINT8(0, style.bg);
   TEST_ASSERT_TRUE(style.attrs & ANSI_ATTR_BOLD);
+
+  uint32_t fg;
+  uint32_t bg;
+  ansi_style_effective_colors(&style, &fg, &bg);
+  TEST_ASSERT_EQUAL_HEX32(ansi_palette_color(9), fg);
+  TEST_ASSERT_EQUAL_HEX32(ansi_palette_color(0), bg);
 }
 
 void test_ansi_dim_clears_bold_and_darksen_color(void) {
@@ -41,7 +47,7 @@ void test_ansi_dim_clears_bold_and_darksen_color(void) {
   uint32_t bg;
   ansi_style_effective_colors(&style, &fg, &bg);
   TEST_ASSERT_EQUAL_UINT8(2, style.fg);
-  TEST_ASSERT_EQUAL_HEX32(ansi_dim_color(ansi_palette_color(10)), fg);
+  TEST_ASSERT_EQUAL_HEX32(ansi_dim_color(ansi_palette_color(2)), fg);
   TEST_ASSERT_EQUAL_HEX32(ansi_palette_color(0), bg);
   TEST_ASSERT_TRUE(style.attrs & ANSI_ATTR_DIM);
   TEST_ASSERT_FALSE(style.attrs & ANSI_ATTR_BOLD);
