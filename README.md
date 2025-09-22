@@ -31,13 +31,21 @@ To do:
 
 [X] Implement a malloc to provide virtual memory to the process
 
+[X] Add ANSI and scrolling to the console
+
+[X] Complete the vsprintk function with all format specifiers
+
 [ ] Fix the PF and GPF handlers to show the right data
 
-[ ] fix kmalloc to get memory from the virtual memory
+[ ] Fix kmalloc to get memory from the virtual memory
 
-[ ] fix virtual_to_physical calculation
+[ ] Fix virtual_to_physical calculation
 
-[ ] add ANSI and scrolling to the console
+[ ] Align kernel thread sleep state with scheduler enums
+
+[ ] Propagate kernel thread termination status for joins
+
+[ ] Calibrate TSC timekeeping and initialise boot time
 
 Reference
   - Intel® 64 and IA-32 Architectures Software Developer’s Manual Combined Volumes: 1, 2A, 2B, 2C, 2D, 3A, 3B, 3C, 3D, and 4: https://www.intel.com/content/www/us/en/developer/articles/technical/intel-sdm.html
