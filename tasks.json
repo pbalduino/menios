@@ -1,0 +1,99 @@
+[
+  {
+    "title": "Align kernel thread sleep state with scheduler enums",
+    "body": "## Goal\nEnsure `ksleep` marks threads with a valid scheduler state so the kernel builds and the scheduler can detect sleeping threads.\n\n## Context\n`kthread.c` uses `THREAD_SLEEPING`, but no such constant exists. The process scheduler expects `PROC_STATE_SLEEPING`. The mismatch currently prevents compilation and keeps the scheduler from tracking sleep state correctly.\n\n## Definition of Done\n- Replace the undefined `THREAD_SLEEPING` in `kthread.c` with the appropriate scheduler state constant (e.g., `PROC_STATE_SLEEPING`).\n- Verify that the kernel compiles without introducing new warnings.\n- Confirm that sleeping threads transition to the correct state in scheduler diagnostics/logs.\n",
+    "labels": ["bug"],
+    "github_issue": {
+      "number": 10,
+      "url": "https://github.com/pbalduino/menios/issues/10",
+      "state": "OPEN"
+    }
+  },
+  {
+    "title": "Propagate kernel thread termination status for joins",
+    "body": "## Goal\nAllow `ktread_join` to detect when a thread has exited so callers can synchronise correctly.\n\n## Context\n`kthread_t.status` is never initialised or updated. `ktread_join` busy-waits on `THREAD_TERMINATED`, but that flag never changes, causing joins to spin forever on uninitialised memory.\n\n## Definition of Done\n- Initialise `kthread_t.status` to a running state when creating a thread.\n- Set the status to `THREAD_TERMINATED` when the entrypoint returns or `kexit` completes.\n- Ensure `ktread_join` exits once the status flips, and document/update any state transitions touched.\n- Add or update logging/tests as needed to show the status change occurs.\n",
+    "labels": ["bug"],
+    "github_issue": {
+      "number": 11,
+      "url": "https://github.com/pbalduino/menios/issues/11",
+      "state": "OPEN"
+    }
+  },
+  {
+    "title": "Calibrate TSC timekeeping and initialise boot time",
+    "body": "## Goal\nProduce accurate microsecond timestamps from `unix_time_us` by initialising boot time and converting TSC ticks using a measured frequency.\n\n## Context\n`unix_time_us` currently divides raw TSC ticks by 1000 and adds `boot_time_sec`, but the frequency is never calibrated and `boot_time_sec` stays zero. Timers, scheduler accounting, and sleep logic therefore run with incorrect timings.\n\n## Definition of Done\n- Determine TSC frequency (via calibration against LAPIC/HPET/PIT or CPUID invariant data) and use it to convert cycles to real time.\n- Initialise `boot_time_sec` (e.g., from Limine boot time request) before `unix_time_us` is first called.\n- Update `ksleep`, scheduler accounting, and related code if they assume nanoseconds-per-cycle is 1.\n- Validate with logs or tests that reported durations roughly match wall-clock expectations.\n",
+    "labels": ["bug"],
+    "github_issue": {
+      "number": 12,
+      "url": "https://github.com/pbalduino/menios/issues/12",
+      "state": "OPEN"
+    }
+  },
+  {
+    "title": "Fix the PF handler to show the right data",
+    "body": "## Goal\nFix the page fault handler to display complete and accurate CPU state information when a page fault occurs.\n\n## Context\nThere's a mismatch in the page fault handler implementation between the assembly code and C handlers. The ASM handler in `lidt.s:116` calls `page_fault_handler(stack_frame_t* stack_frame)`, but there's also a separate `idt_pf_isr_handler(uint64_t error_code)` in `idt.c:66`. The current handler shows basic information (error code, CR2 register) but may be missing comprehensive CPU state due to this handler mismatch.\n\n## Definition of Done\n- Resolve the function signature mismatch between assembly and C page fault handlers\n- Display complete CPU register state (RAX, RBX, RCX, RDX, RSI, RDI, etc.) \n- Show proper page fault analysis (present bit, write/read access, user/kernel mode)\n- Provide accurate virtual address (CR2) and detailed error code breakdown\n- Ensure the handler receives and displays correct stack frame information\n- Verify page fault debugging information is comprehensive and accurate",
+    "labels": ["bug"],
+    "github_issue": {
+      "number": 4,
+      "url": "https://github.com/pbalduino/menios/issues/4",
+      "state": "OPEN"
+    }
+  },
+  {
+    "title": "Fix the GPF handler to show the right data",
+    "body": "## Goal\nEnhance the General Protection Fault (GPF) handler to display comprehensive CPU state and error analysis when a GPF occurs.\n\n## Context\nThe current GPF handler in `idt.c:57-64` and `lidt.s:56-94` properly saves all registers but only displays limited information (R15 register and error code). The handler uses `dump_heap()` to show memory state but lacks comprehensive register display and error code analysis to help diagnose what caused the GPF.\n\n## Definition of Done\n- Display complete CPU register state (RAX, RBX, RCX, RDX, RSI, RDI, RSP, RBP, etc.) instead of just R15\n- Analyze and decode the error code to explain the GPF cause (invalid segment, privilege violation, etc.)\n- Show instruction pointer (RIP) and segment information (CS, DS, SS, etc.)\n- Provide meaningful error messages explaining the type of protection violation\n- Maintain the existing register preservation but improve the diagnostic output\n- Ensure the handler provides actionable debugging information for GPF diagnosis",
+    "labels": ["bug"],
+    "github_issue": {
+      "number": 5,
+      "url": "https://github.com/pbalduino/menios/issues/5",
+      "state": "OPEN"
+    }
+  },
+  {
+    "title": "Fix kmalloc to get memory from the virtual memory",
+    "body": "## Goal\nIntegrate kmalloc with the virtual memory management system instead of using direct physical memory allocation.\n\n## Context\nThe current kmalloc implementation in `kmalloc.c` uses a simple heap allocator with a linked list of nodes, operating directly on physical memory addresses. The heap is initialized with a fixed address and size via `init_heap(void* addr, size_t size)` but doesn't integrate with the virtual memory manager. The existing `get_first_free_page()` function is available but not used by kmalloc.\n\n## Definition of Done\n- Modify kmalloc to allocate pages from the virtual memory manager instead of direct physical memory\n- Integrate with the existing page allocation system (`get_first_free_page()` function)\n- Implement proper virtual-to-physical address mapping for allocated memory\n- Ensure kmalloc works with the page fault handler for demand paging scenarios\n- Update heap initialization to use virtual memory addresses rather than physical addresses\n- Maintain backwards compatibility with existing kmalloc users while improving the underlying memory management\n- Verify that freed memory is properly returned to the virtual memory system",
+    "labels": ["enhancement"],
+    "github_issue": {
+      "number": 6,
+      "url": "https://github.com/pbalduino/menios/issues/6",
+      "state": "OPEN"
+    }
+  },
+  {
+    "title": "Fix virtual_to_physical calculation",
+    "body": "## Goal\nReplace the overly simplistic virtual_to_physical calculation with a proper page table walking implementation.\n\n## Context\nThe current `virtual_to_physical` function in `pmm.c:43-45` uses a basic calculation `return virtual_address - kernel_offset` which only works for kernel direct-mapped memory (HHDM - Higher Half Direct Map). This approach doesn't handle user space virtual addresses, doesn't walk the actual page tables, and assumes linear mapping which may not be true for all memory regions.\n\n## Definition of Done\n- Implement proper page table hierarchy walking (PML4 → PDPT → PD → PT) to find actual physical mappings\n- Handle different memory regions correctly (kernel space, user space, device memory)\n- Return appropriate error codes for unmapped virtual addresses or invalid page table entries\n- Integrate with the existing paging structures already defined in the codebase\n- Ensure the function works correctly for both kernel and user virtual addresses\n- Add proper bounds checking and validation of page table entries\n- Maintain performance while providing accurate virtual-to-physical translation\n- Add documentation explaining the page table walking process",
+    "labels": ["bug"],
+    "github_issue": {
+      "number": 7,
+      "url": "https://github.com/pbalduino/menios/issues/7",
+      "state": "OPEN"
+    }
+  },
+  {
+    "title": "Add ANSI and scrolling to the console",
+    "body": "## Goal\nImplement comprehensive ANSI escape sequence support and enhanced scrolling functionality for the console.\n\n## Context\nThe current console implementation in `framebuffer.c:148-188` has basic ANSI escape sequence detection that handles color codes but is incomplete. It only processes ESC, digits, semicolons, and 'm' commands without actual color setting. The scrolling implementation in `fb_scroll_up()` only scrolls up one line at a time with no scrollback buffer or smooth scrolling capabilities.\n\n## Definition of Done\n- Implement full ANSI escape sequence support for cursor movement commands (`\\x1b[H` for home, `\\x1b[2J` for clear screen, etc.)\n- Add comprehensive color palette support (minimum 16 colors) with proper color setting functionality\n- Implement text attributes support (bold, dim, underline, reverse video)\n- Add cursor positioning commands and screen clearing functionality\n- Implement scrollback buffer to allow viewing previous screen content\n- Add smooth scrolling capabilities beyond the current single-line scrolling\n- Ensure ANSI processing is complete and handles edge cases properly\n- Test with various ANSI escape sequences to verify compatibility\n- Document the supported ANSI codes and their implementation",
+    "labels": ["enhancement"],
+    "status": "In Review",
+    "branch": "issue-8-ansi-scrolling",
+    "pull_request": {
+      "title": "Complete ANSI console support (#8)",
+      "draft": true
+    },
+    "github_issue": {
+      "number": 8,
+      "url": "https://github.com/pbalduino/menios/issues/8",
+      "state": "OPEN",
+      "assignee": "pbalduino"
+    }
+  },
+  {
+    "title": "Complete the vsprintk function and add tests",
+    "body": "## Goal\nComplete the missing format specifiers in vsprintk and ensure all existing tests pass.\n\n## Context\nThe vsprintk function in `vprintk.c` is quite complete with support for basic format specifiers (`%c`, `%d`, `%u`, `%x`, `%X`, `%s`, `%p`, `%ld`, `%lx`) and padding/width features. However, several format specifiers have tests written in `test_vsprintk.c` but are not implemented: `%llu`, `%-` (left align), precision support (`.`), `%*` (dynamic width), `%#` (alternate form), and `%%` (literal percent).\n\n## Definition of Done\n- Implement `%llu` (unsigned long long) support to handle 64-bit unsigned integers\n- Add `%-` (left align) support for left-justified output formatting\n- Uncomment and complete precision support (`.` specifier) that is currently disabled in lines 246-253\n- Implement `%*` (dynamic width) support for runtime width specification\n- Add `%#` (alternate form) support for hex formatting with 0x prefix\n- Implement `%%` (literal percent) support to output a single percent character\n- Ensure all existing tests in `test_vsprintk.c` pass without modification\n- Add additional edge case tests for the newly implemented features\n- Verify compatibility with standard printf behavior for the implemented specifiers",
+    "labels": ["enhancement"],
+    "github_issue": {
+      "number": 9,
+      "url": "https://github.com/pbalduino/menios/issues/9",
+      "state": "OPEN"
+    }
+  }
+]
