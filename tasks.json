@@ -147,5 +147,18 @@
         "details": "Limine boots from menios.hdd and loads the kernel without stage 3 panic"
       }
     ]
+  },
+  {
+    "title": "Stabilise kernel thread scheduling stack",
+    "body": "## Goal\nPrevent new kernel threads from crashing the scheduler with stack corruption and provide reliable diagnostics during GPFs.\n\n## Context\n`kthread_create` allocated just a 1 KiB stack and copied process names verbatim, leading to corrupt state when threads like `show_caret` ran. The GPF handler also lacked detailed output, making it hard to diagnose the resulting faults.\n\n## Definition of Done\n- Increase kernel thread stack size and align/clear the allocation to avoid overruns.\n- Copy process names safely to maintain scheduler metadata.\n- Emit richer GPF diagnostics for easier debugging.\n- Validate that `show_caret` can run without triggering GPFs during context switches.",
+    "labels": ["bug"],
+    "status": "Done",
+    "test_results": [
+      {
+        "name": "make build",
+        "status": "passed",
+        "details": "Kernel compiles after stack/GPF updates"
+      }
+    ]
   }
 ]

@@ -130,7 +130,8 @@ void proc_switch(void* arg) {
 }
 
 void proc_create(proc_info_p proc, const char* name, void (*entrypoint)(void *), void* arg) {
-  memcpy(proc->name, name, 32);
+  memset(proc->name, 0, sizeof(proc->name));
+  strncpy(proc->name, name, sizeof(proc->name) - 1);
   proc->children = NULL;
   proc->children_count = 0;
   proc->parent = current;
@@ -140,12 +141,14 @@ void proc_create(proc_info_p proc, const char* name, void (*entrypoint)(void *),
   serial_printf("proc_create: Creating process %s - %s with arg %lx\n", name, proc->name, arg);
 
   // ensure the stack is aligned to a 16-byte boundary
-  proc->stack_pointer = kmalloc(PROC_STACK_SIZE + 15);
-  if((uint64_t)(proc->stack_pointer) % 0x10 != 0) {
-    proc->stack_base = (uintptr_t*)(((((uint64_t)proc->stack_pointer) / 16) + 1) * 16);
-  } else {
-    proc->stack_base = (uintptr_t*)proc->stack_pointer;
+  proc->stack_pointer = kmalloc(PROC_STACK_SIZE + 0xF);
+  if(proc->stack_pointer == NULL) {
+    serial_printf("proc_create: Failed to allocate stack for process %s\n", name);
+    halt();
   }
+  uintptr_t aligned = ((uintptr_t)proc->stack_pointer + 0xF) & ~((uintptr_t)0xF);
+  proc->stack_base = (uintptr_t*)aligned;
+  memset(proc->stack_base, 0, PROC_STACK_SIZE);
   serial_printf("proc_create: entrypoint @ %p, args @ %p\n", entrypoint, arg);
   proc->state = PROC_STATE_NEW;
   proc->entrypoint = entrypoint;

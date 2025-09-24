@@ -19,7 +19,7 @@ void mem_init() {
   init_heap((void*)arena, PAGE_SIZE * HEAP_SIZE);
 }
 
-void mem_compactor(void*) {
+int mem_compactor(void *unused) {
   serial_line("");
   while(true) {
     serial_line("");
@@ -29,6 +29,8 @@ void mem_compactor(void*) {
     serial_line("");
   }
   serial_line("");
+  (void)unused;
+  return 0;
 }
 
 void init_memory_compactor() {

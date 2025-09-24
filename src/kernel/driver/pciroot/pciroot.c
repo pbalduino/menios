@@ -4,9 +4,10 @@
 #include <kernel/serial.h>
 
 #include <uacpi/uacpi.h>
+#include <uacpi/acpi.h>
 #include <uacpi/tables.h>
 
-void pciroot_start() {
+void pciroot_start(void) {
 
   serial_printf("pciroot_start: Finding ACPI table (MCFG");
   uacpi_table tbl;
@@ -25,16 +26,18 @@ void pciroot_start() {
   serial_printf("pciroot_start: sign: %.4s - len: %d\n", mcfg->header.signature, mcfg->header.length);
 }
 
-void pciroot_read() { 
+uint8_t pciroot_read(void) {
+  // No byte-oriented interface yet; report nothing available.
+  return 0;
 }
 
-void pciroot_write() {
+void pciroot_write(void) {
 }
 
-void pciroot_ioctl() {
+void pciroot_ioctl(void) {
 }
 
-void pciroot_shutdown() {
+void pciroot_shutdown(void) {
 }
 
 static struct driver_t pciroot_driver = {
@@ -47,7 +50,7 @@ static struct driver_t pciroot_driver = {
   .shutdown = &pciroot_shutdown
 };
 
-void pciroot_init() {
+void pciroot_init(void) {
   serial_printf("ps2kb_init: Registering driver '%s' for HID '%s'\n", pciroot_driver.name, pciroot_driver.hid);
   driver_register(&pciroot_driver);
 }

@@ -40,7 +40,7 @@ extern "C" {
 
 #define RLIMIT_DATA (4 * 1024 * 1024)
 
-#define PROC_STACK_SIZE 1024
+#define PROC_STACK_SIZE (16 * 1024)
 
 typedef struct cpu_state_t {
   uint64_t r15;

@@ -1,3 +1,4 @@
+#include <kernel/console.h>
 #include <kernel/driver.h>
 #include <kernel/driver/ps2kb.h>
 #include <kernel/driver/ps2.h>
@@ -104,7 +105,7 @@ void ps2kb_handler() {
   irq_eoi();
 }
 
-void ps2kb_start() {
+void ps2kb_start(void) {
   serial_line("");
   serial_printf("ps2kb_start: Initializing PS/2 keyboard\n");
   errk("    Ignoring PS/2 keyboard.\n");
@@ -136,11 +137,11 @@ void ps2kb_start() {
   // serial_printf("ps2kb_start: PS/2 keyboard initialized successfully: %x\n", response);
 }
 
-void ps2kb_shutdown() {
+void ps2kb_shutdown(void) {
   serial_line("");
 }
 
-uint8_t ps2kb_read() {
+uint8_t ps2kb_read(void) {
   uint8_t scancode = ps2_read_data();
   if(scancode != 0xfa) {
     serial_printf("ps2kb_read: scancode: %x\n", scancode);
@@ -153,11 +154,11 @@ uint8_t ps2kb_read() {
   return scancode;
 }
 
-void ps2kb_write() {
+void ps2kb_write(void) {
   serial_line("");
 }
 
-void ps2kb_ioctl() {
+void ps2kb_ioctl(void) {
   serial_line("");
 }
 
@@ -171,7 +172,7 @@ static struct driver_t ps2kb_driver = {
   .write = ps2kb_write,
 };
 
-void ps2kb_init() {
+void ps2kb_init(void) {
   serial_printf("ps2kb_init: Registering driver '%s' for HID '%s'\n", ps2kb_driver.name, ps2kb_driver.hid);
   driver_register(&ps2kb_driver);
 }

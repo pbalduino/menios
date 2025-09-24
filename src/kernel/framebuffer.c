@@ -444,7 +444,7 @@ static void cursor_move_horizontal(int delta) {
   }
 }
 
-static void set_cursor_position(uint64_t row, uint32_t col) {
+static void framebuffer_set_cursor(uint64_t row, uint32_t col) {
   cursor_row = row;
   cursor_col = col < visible_cols ? col : (visible_cols - 1);
 
@@ -568,7 +568,7 @@ static void handle_csi_command(char final_byte) {
       if(col < 1) {
         col = 1;
       }
-      set_cursor_position(viewport_row + (uint64_t)(row - 1), (uint32_t)(col - 1));
+      framebuffer_set_cursor(viewport_row + (uint64_t)(row - 1), (uint32_t)(col - 1));
       break;
     }
     case 'J': {
