@@ -5,9 +5,16 @@
 #include <kernel/kernel.h>
 #include <kernel/serial.h>
 #include <kernel/idt.h>
-#include <stdio.h>
 
-#define KB_BUFFER_SIZE 32
+#include <uacpi/acpi.h>
+#include <uacpi/tables.h>
+#include <uacpi/status.h>
+
+#include <stdbool.h>
+#include <stdio.h>
+#include <string.h>
+
+#define KB_BUFFER_SIZE 64
 
 #define PIC1_COMM 0x20
 #define PIC1_DATA (PIC1_COMM + 1)
@@ -17,12 +24,16 @@
 
 extern void ps2kb_isr_handler();
 
-static char buffer[KB_BUFFER_SIZE];
-static int read = 0;
-static int write = 0;
+static volatile uint8_t key_buffer[KB_BUFFER_SIZE];
+static volatile uint8_t buffer_head;
+static volatile uint8_t buffer_tail;
 
+static bool left_shift;
+static bool right_shift;
+static bool caps_lock;
+static bool extended_code;
 
-uint8_t keyboard_map[128] = {
+static const char scancode_unshift[128] = {
   0,  27, '1', '2', '3', '4', '5', '6', '7', '8',     /* 9 */
   '9', '0', '-', '=', '\b',     /* Backspace */
   '\t',                 /* Tab */
@@ -61,8 +72,73 @@ uint8_t keyboard_map[128] = {
   0,  /* All other keys are undefined */
 };
 
-uint8_t ps2_read_data() {
-  return inb(PS2_DATA_PORT);
+static const char scancode_shift[128] = {
+  [0x02] = '!', [0x03] = '@', [0x04] = '#', [0x05] = '$', [0x06] = '%',
+  [0x07] = '^', [0x08] = '&', [0x09] = '*', [0x0A] = '(', [0x0B] = ')',
+  [0x0C] = '_', [0x0D] = '+', [0x10] = 'Q', [0x11] = 'W', [0x12] = 'E',
+  [0x13] = 'R', [0x14] = 'T', [0x15] = 'Y', [0x16] = 'U', [0x17] = 'I',
+  [0x18] = 'O', [0x19] = 'P', [0x1A] = '{', [0x1B] = '}', [0x1E] = 'A',
+  [0x1F] = 'S', [0x20] = 'D', [0x21] = 'F', [0x22] = 'G', [0x23] = 'H',
+  [0x24] = 'J', [0x25] = 'K', [0x26] = 'L', [0x27] = ':', [0x28] = '"',
+  [0x29] = '~', [0x2B] = '|', [0x2C] = 'Z', [0x2D] = 'X', [0x2E] = 'C',
+  [0x2F] = 'V', [0x30] = 'B', [0x31] = 'N', [0x32] = 'M', [0x33] = '<',
+  [0x34] = '>', [0x35] = '?'
+};
+
+static inline bool buffer_empty(void) {
+  return buffer_head == buffer_tail;
+}
+
+static void buffer_push(uint8_t ch) {
+  uint8_t next = (buffer_head + 1) % KB_BUFFER_SIZE;
+  if(next == buffer_tail) {
+    buffer_tail = (buffer_tail + 1) % KB_BUFFER_SIZE;
+  }
+  key_buffer[buffer_head] = ch;
+  buffer_head = next;
+}
+
+static uint8_t buffer_pop(void) {
+  uint8_t value = 0;
+  if(!buffer_empty()) {
+    value = key_buffer[buffer_tail];
+    buffer_tail = (buffer_tail + 1) % KB_BUFFER_SIZE;
+  }
+  return value;
+}
+
+static bool is_alpha(char ch) {
+  return (ch >= 'a' && ch <= 'z');
+}
+
+static char translate_scancode(uint8_t code) {
+  char base = scancode_unshift[code];
+  if(base == 0) {
+    return 0;
+  }
+
+  bool shift = left_shift || right_shift;
+
+  if(is_alpha(base)) {
+    bool upper = shift ^ caps_lock;
+    if(upper) {
+      base = (char)(base - ('a' - 'A'));
+    }
+    return base;
+  }
+
+  if(shift) {
+    char shifted = scancode_shift[code];
+    if(shifted != 0) {
+      return shifted;
+    }
+  }
+
+  if(caps_lock && (base == ' ')) {
+    return base;
+  }
+
+  return base;
 }
 
 void ps2_write_data(uint8_t data) {
@@ -77,89 +153,169 @@ void ps2_wait_write() {
   while (inb(PS2_COMMAND_PORT) & 0x02);
 }
 
-void irq_eoi() {
-	// OCW2: rse00xxx
-	//   r: rotate
-	//   s: specific
-	//   e: end-of-interrupt
-	// xxx: specific interrupt line
-	outb(PIC1_COMM, 0x20);
-	outb(PIC2_COMM, 0x20);
+static void irq_eoi(void) {
+  outb(PIC1_COMM, 0x20);
 }
 
 void ps2kb_handler() {
-  serial_line("");
-  serial_printf("ps2kb_handler: Keyboard interrupt\n");
+  uint8_t scancode = inb(PS2_DATA_PORT);
 
-  // uint8_t scancode = ps2_read_data();
+  if(scancode == 0xE0) {
+    extended_code = true;
+    irq_eoi();
+    return;
+  }
 
-  // // Check if it’s a key press (not a release code)
-  // if (!(scancode & 0x80)) {
-  //   // char key = scancode_to_ascii[scancode];
-  //   printf("ps2kb_isr: Key pressed: %c\n", scancode);
-  //   buffer[write++] = scancode;
-  //   write %= KB_BUFFER_SIZE;
-  // }
-  puts("&");
+  if(scancode == 0xE1) {
+    // Pause/Break sequence, ignore for now
+    extended_code = false;
+    irq_eoi();
+    return;
+  }
+
+  if(scancode == 0xFA || scancode == 0xFE) {
+    // ACK or RESEND - ignore
+    irq_eoi();
+    return;
+  }
+
+  bool release = (scancode & 0x80) != 0;
+  uint8_t code = scancode & 0x7F;
+
+  if(extended_code) {
+    extended_code = false;
+    if(!release) {
+      switch(code) {
+        case 0x48: // Up
+          buffer_push('\x1b'); buffer_push('['); buffer_push('A'); break;
+        case 0x50: // Down
+          buffer_push('\x1b'); buffer_push('['); buffer_push('B'); break;
+        case 0x4B: // Left
+          buffer_push('\x1b'); buffer_push('['); buffer_push('D'); break;
+        case 0x4D: // Right
+          buffer_push('\x1b'); buffer_push('['); buffer_push('C'); break;
+        default:
+          break;
+      }
+    }
+    irq_eoi();
+    return;
+  }
+
+  switch(code) {
+    case 0x2A: // Left Shift
+      left_shift = !release;
+      irq_eoi();
+      return;
+    case 0x36: // Right Shift
+      right_shift = !release;
+      irq_eoi();
+      return;
+    case 0x3A: // Caps Lock
+      if(!release) {
+        caps_lock = !caps_lock;
+      }
+      irq_eoi();
+      return;
+    default:
+      break;
+  }
+
+  if(!release) {
+    char ch = translate_scancode(code);
+    if(ch != 0) {
+      buffer_push((uint8_t)ch);
+    }
+  }
 
   irq_eoi();
 }
 
+static bool ps2_read_byte(uint8_t *out) {
+  for(int timeout = 0; timeout < 100000; ++timeout) {
+    if(inb(PS2_COMMAND_PORT) & 0x01) {
+      *out = inb(PS2_DATA_PORT);
+      return true;
+    }
+  }
+  return false;
+}
+
 void ps2kb_start(void) {
-  serial_line("");
-  serial_printf("ps2kb_start: Initializing PS/2 keyboard\n");
-  errk("    Ignoring PS/2 keyboard.\n");
+  buffer_head = buffer_tail = 0;
+  left_shift = right_shift = caps_lock = false;
+  extended_code = false;
 
-  // while(inb(0x64) & 0x02) {
-  //   puts("-");
-  // };
+  struct acpi_fadt *fadt = NULL;
+  uacpi_status status = uacpi_table_fadt(&fadt);
+  if(uacpi_unlikely_error(status)) {
+    serial_printf("ps2kb_start: failed to retrieve FADT (%s)\n", uacpi_status_to_string(status));
+    return;
+  }
 
-  // outb(0x64, 0xad); // Disable PS/2 keyboard
-  // while (inb(0x64) & 0x01) {
-  //   puts("*");
-  // };
+  if((fadt->iapc_boot_arch & ACPI_IA_PC_8042) == 0) {
+    serial_printf("ps2kb_start: system does not advertise an 8042 controller\n");
+    return;
+  }
 
-  // uint8_t mask = inb(PIC1_DATA);
-  // mask &= ~(1 << 1); // Clear bit 1
-  // outb(PIC1_DATA, mask);
-  // // // idt_add_isr(ISR_KEYBOARD, &ps2kb_isr_handler);
-  // // // idt_refresh();
+  // Flush any pending data
+  while(inb(PS2_COMMAND_PORT) & 0x01) {
+    (void)inb(PS2_DATA_PORT);
+  }
 
-  // outb(0x64, 0xae); // Enable PS/2 keyboard
-  // // outb(0x60, 0xf4); // Send enable scanning command to the keyboard
+  ps2_wait_write();
+  ps2_write_command(PS2_DISABLE_FIRST_PORT);
 
-  // uint8_t response = inb(0x60);
-  // if (response != 0xfa) {
-  //   serial_printf("ps2kb_start: Failed to enable scanning (response: 0x%x)\n", response);
-  //   return;
-  // }
+  ps2_wait_write();
+  ps2_write_command(0x20); // Read controller configuration byte
+  uint8_t config = 0;
+  if(!ps2_read_byte(&config)) {
+    serial_printf("ps2kb_start: timed out reading controller configuration\n");
+    return;
+  }
 
-  // serial_printf("ps2kb_start: PS/2 keyboard initialized successfully: %x\n", response);
+  config |= 0x01;   // Enable first port interrupt
+  config &= ~(1 << 4); // Ensure first port clock enabled
+
+  ps2_wait_write();
+  ps2_write_command(PS2_WRITE_MODE);
+  ps2_wait_write();
+  ps2_write_data(config);
+
+  ps2_wait_write();
+  ps2_write_command(PS2_ENABLE_FIRST_PORT);
+
+  ps2_wait_write();
+  ps2_write_data(PS2_ENABLE_SCANNING);
+  uint8_t response;
+  if(ps2_read_byte(&response) && response != 0xFA) {
+    serial_printf("ps2kb_start: unexpected response 0x%x enabling scanning\n", response);
+  }
+
+  uint8_t mask = inb(PIC1_DATA);
+  mask &= ~(1 << 1);
+  outb(PIC1_DATA, mask);
+
+  serial_printf("ps2kb_start: PS/2 keyboard initialised\n");
 }
 
 void ps2kb_shutdown(void) {
-  serial_line("");
+  ps2_wait_write();
+  ps2_write_command(PS2_DISABLE_FIRST_PORT);
 }
 
 uint8_t ps2kb_read(void) {
-  uint8_t scancode = ps2_read_data();
-  if(scancode != 0xfa) {
-    serial_printf("ps2kb_read: scancode: %x\n", scancode);
-    return 0;
-  }
-
-  if (!(scancode & 0x80)) {
-    serial_printf("ps2kb_read: Key pressed: %d\n", scancode);
-  }
-  return scancode;
+  uint8_t ch = 0;
+  disable_interrupts();
+  ch = buffer_pop();
+  enable_interrupts();
+  return ch;
 }
 
 void ps2kb_write(void) {
-  serial_line("");
 }
 
 void ps2kb_ioctl(void) {
-  serial_line("");
 }
 
 static struct driver_t ps2kb_driver = {
@@ -178,25 +334,11 @@ void ps2kb_init(void) {
 }
 
 int getchar() {
-  int scancode;
-
-  while(1) {
-    while(!(inb(0x64) & 0x01)) {};
-
-    scancode = inb(0x60);
-
-    irq_eoi();
-
-    if(scancode & 0x80) {
-      continue;
-    } else {
-      if(keyboard_map[scancode]) {
-        break;
-      } else {
-        serial_printf("Key not found for scancode %x\n", scancode);
-      }
+  while(true) {
+    uint8_t ch = ps2kb_read();
+    if(ch != 0) {
+      return (int)ch;
     }
+    asm volatile("hlt");
   }
-
-  return keyboard_map[scancode];
 }

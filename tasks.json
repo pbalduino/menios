@@ -179,7 +179,14 @@
     "title": "Decode PS/2 keyboard input correctly",
     "body": "## Goal\nReturn real key events from the PS/2 driver instead of filtering everything out.\n\n## Context\n`ps2kb_read` currently ignores every scancode except the `0xFA` ACK byte, meaning the driver never forwards actual key presses. Higher-level input therefore relies on the fallback port-polling `getchar`.\n\n## Definition of Done\n- Parse make/break scancodes and translate them using `keyboard_map`.\n- Buffer key events so `ps2kb_read` returns characters without busy waiting.\n- Track modifier keys (shift/control) or document the limitations.\n- Demonstrate typing via the driver (e.g., exercising the console).",
     "labels": ["bug"],
-    "status": "Backlog",
+    "status": "Done",
+    "test_results": [
+      {
+        "name": "docker run … make build",
+        "status": "passed",
+        "details": "Build succeeds with ACPI-backed PS/2 initialisation and buffered input"
+      }
+    ],
     "github_issue": {
       "number": 21,
       "url": "https://github.com/pbalduino/menios/issues/21",
@@ -194,6 +201,17 @@
     "github_issue": {
       "number": 22,
       "url": "https://github.com/pbalduino/menios/issues/22",
+      "state": "OPEN"
+    }
+  },
+  {
+    "title": "Refactor code structure to make it more organized",
+    "body": "## Goal\nRefactor the codebase structure to improve organization, maintainability, and development workflow.\n\n## Context\nThe current code structure could benefit from better organization to make it easier for developers to navigate, understand, and contribute to the project. A well-organized codebase improves maintainability, reduces technical debt, and makes it easier to locate and modify specific functionality.\n\n## Definition of Done\n- Analyze current code structure and identify areas for improvement\n- Create a logical directory structure that groups related functionality\n- Separate concerns properly (kernel core, drivers, memory management, etc.)\n- Establish consistent naming conventions across the codebase\n- Refactor header file organization and includes\n- Update build system (Makefile) to reflect new structure\n- Ensure all existing functionality continues to work after refactoring\n- Document the new code organization and contribution guidelines\n- Update any documentation that references old file paths or structure",
+    "labels": ["enhancement"],
+    "status": "Backlog",
+    "github_issue": {
+      "number": 23,
+      "url": "https://github.com/pbalduino/menios/issues/23",
       "state": "OPEN"
     }
   }
