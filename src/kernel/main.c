@@ -83,7 +83,7 @@ void thread_code(void* arg) {
   logk("Bye from thread %s!\n", text);
 }
 
-void show_clock(void* arg) {
+int show_clock(void *unused) {
   serial_line("");
   while(true){
     serial_line("");
@@ -97,15 +97,18 @@ void show_clock(void* arg) {
     ksleep(500);
     gotoxy(pos.x, pos.y);
   }
+  (void)unused;
+  return 0;
 }
 
-int show_caret() {
+static int show_caret(void *unused) {
   while(true){
     puts("_");
     ksleep(500);
     puts("\b");
     ksleep(500);
   }
+  (void)unused;
   return 0;
 }
 
@@ -147,7 +150,7 @@ void _start() {
 
   // kthread_t thread0;
   // kthread_t thread1;
-  // kthread_t clock;
+  kthread_t clock;
   kthread_t caret;
 
   // kthread_create(&thread0, "thread0", thread_code, (void*)"0");
@@ -159,8 +162,8 @@ void _start() {
   // ksleep(5000);
   // logk("Back\n");
 
-  // kthread_create(&clock, "clock", show_clock, NULL);
-  // logk("Created clock thread\n");
+  kthread_create(&clock, "clock", show_clock, NULL);
+  logk("Created clock thread\n");
 
   logk("Enabling interruptions\n");
   enable_interrupts();

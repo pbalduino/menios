@@ -12,7 +12,7 @@ void timer_eoi();
 
 uint64_t boot_time();
 
-void show_clock(void*);
+int show_clock(void*);
 
 void register_timer_callback(void (*cb)(void*));
 
