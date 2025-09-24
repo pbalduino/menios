@@ -146,19 +146,55 @@
         "status": "passed",
         "details": "Limine boots from menios.hdd and loads the kernel without stage 3 panic"
       }
-    ]
+    ],
+    "github_issue": {
+      "number": 17,
+      "url": "https://github.com/pbalduino/menios/issues/17",
+      "state": "CLOSED"
+    }
   },
   {
-    "title": "Stabilise kernel thread scheduling stack",
-    "body": "## Goal\nPrevent new kernel threads from crashing the scheduler with stack corruption and provide reliable diagnostics during GPFs.\n\n## Context\n`kthread_create` allocated just a 1 KiB stack and copied process names verbatim, leading to corrupt state when threads like `show_caret` ran. The GPF handler also lacked detailed output, making it hard to diagnose the resulting faults.\n\n## Definition of Done\n- Increase kernel thread stack size and align/clear the allocation to avoid overruns.\n- Copy process names safely to maintain scheduler metadata.\n- Emit richer GPF diagnostics for easier debugging.\n- Validate that `show_caret` can run without triggering GPFs during context switches.",
+    "title": "Publish and refresh Docker build image",
+    "body": "## Goal\nMake the `menios:trunk` Docker image reproducible for developers and CI.\n\n## Context\nLocal commands such as `docker run --rm … menios:trunk` fail because the image is missing or stale. Without a published image or documented build recipe, contributors cannot invoke `make build` inside the container.\n\n## Definition of Done\n- Provide a documented script or Make target that builds the Docker image locally.\n- Optionally publish the image (or artifact) and document how to load it.\n- Update setup instructions so macOS users know how to bootstrap Docker support.\n- Confirm `docker run --rm --platform linux/amd64 --mount type=bind,source=$(pwd),target=/mnt menios:trunk /bin/sh -c \"cd /mnt && make build\"` completes successfully.",
+    "labels": ["maintenance"],
+    "status": "Backlog",
+    "github_issue": {
+      "number": 19,
+      "url": "https://github.com/pbalduino/menios/issues/19",
+      "state": "OPEN"
+    }
+  },
+  {
+    "title": "Refine kthread termination flow",
+    "body": "## Goal\nAllow kernel threads to exit cleanly once their entrypoint returns.\n\n## Context\n`kthread_execute` currently calls `kexit` and then spins forever, so even a thread that finishes continues consuming CPU and never signals the scheduler that it is done. This complicates join logic and wastes cycles.\n\n## Definition of Done\n- Remove the post-`kexit` spin in `kthread_execute`.\n- Ensure `kexit` updates the owning `kthread_t` status (in conjunction with issue #11).\n- Verify that finished threads are removed from the scheduler queue and no longer run.\n- Add tests or logging to demonstrate that the exit path triggers exactly once.",
+    "labels": ["enhancement"],
+    "status": "Backlog",
+    "github_issue": {
+      "number": 20,
+      "url": "https://github.com/pbalduino/menios/issues/20",
+      "state": "OPEN"
+    }
+  },
+  {
+    "title": "Decode PS/2 keyboard input correctly",
+    "body": "## Goal\nReturn real key events from the PS/2 driver instead of filtering everything out.\n\n## Context\n`ps2kb_read` currently ignores every scancode except the `0xFA` ACK byte, meaning the driver never forwards actual key presses. Higher-level input therefore relies on the fallback port-polling `getchar`.\n\n## Definition of Done\n- Parse make/break scancodes and translate them using `keyboard_map`.\n- Buffer key events so `ps2kb_read` returns characters without busy waiting.\n- Track modifier keys (shift/control) or document the limitations.\n- Demonstrate typing via the driver (e.g., exercising the console).",
     "labels": ["bug"],
-    "status": "Done",
-    "test_results": [
-      {
-        "name": "make build",
-        "status": "passed",
-        "details": "Kernel compiles after stack/GPF updates"
-      }
-    ]
+    "status": "Backlog",
+    "github_issue": {
+      "number": 21,
+      "url": "https://github.com/pbalduino/menios/issues/21",
+      "state": "OPEN"
+    }
+  },
+  {
+    "title": "Implement proper hardware probing and driver connection",
+    "body": "## Goal\nDetect hardware properly and connect to the respective drivers for further development.\n\n## Context\nThe current hardware probing implementation doesn't do much beyond basic initialization. The system needs a proper hardware detection mechanism that can identify available hardware components and automatically connect them to their appropriate drivers.\n\n## Definition of Done\n- Implement comprehensive hardware detection during system initialization\n- Create a driver registry system that maps hardware IDs to driver implementations\n- Automatically probe and enumerate available hardware (PCI devices, USB controllers, network cards, etc.)\n- Establish proper driver loading and connection mechanisms\n- Add logging/debugging output to show detected hardware and loaded drivers\n- Provide a foundation for future driver development and hardware support expansion\n- Document the hardware probing process and driver architecture",
+    "labels": ["enhancement"],
+    "status": "Backlog",
+    "github_issue": {
+      "number": 22,
+      "url": "https://github.com/pbalduino/menios/issues/22",
+      "state": "OPEN"
+    }
   }
 ]

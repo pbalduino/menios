@@ -12,7 +12,8 @@ typedef struct kthread_t {
   const char* name;
   int         (*entrypoint)(void*);
   void*       arguments;
-  int         status;
+  volatile int status;
+  volatile int exit_code;
 } kthread_t;
 
 typedef kthread_t* kthread_p;
@@ -23,6 +24,7 @@ int kthread_create(kthread_t* thread, const char* name, int (*entrypoint)(void *
 
 void ksleep(uint64_t milliseconds);
 void kexit(int code);
+int ktread_join(kthread_t* thread);
 
 #ifdef __cplusplus
 }

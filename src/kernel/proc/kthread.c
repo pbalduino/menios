@@ -12,19 +12,25 @@ void kthread_execute(void* arg) {
   kthread_t* thread = (kthread_t*)arg;
   serial_printf("thread_execute: argument for %s is null? %s\n", thread->name, thread->arguments == NULL ? "YES" : "NO");
   serial_line("");
-  int res = (thread->entrypoint)(thread->arguments);
+  int res = 0;
+  if(thread->entrypoint != NULL) {
+    res = (thread->entrypoint)(thread->arguments);
+  } else {
+    serial_error("kthread_execute: entrypoint is NULL\n");
+    res = -EINVAL;
+  }
+  thread->exit_code = res;
+  thread->status = THREAD_TERMINATED;
   serial_line("");
   kexit(res);
-  serial_line("");
-  while(true) {
-  }
-  serial_line("");
 }
 
 int kthread_create(kthread_t* thread, const char* name, int (*entrypoint)(void *), void* arg) {
   thread->name = name;
   thread->entrypoint = entrypoint;
   thread->arguments = arg;
+  thread->status = THREAD_RUNNING;
+  thread->exit_code = 0;
   serial_printf("kthread_create: argument for %s is null? %s\n", thread->name, thread->arguments == NULL ? "YES" : "NO");
 
   serial_line("");
@@ -59,14 +65,16 @@ void ksleep(uint64_t milliseconds) {
 
 void kexit(int code) {
   proc_exit(code);
-  serial_printf("kexit: process '%s' is terminated with code '%d' and waiting to be finished\n", current->name, current->exit_code);
-  while(true) {
-    noop();
-   }
+  serial_printf("kexit: process '%s' terminated with code %d\n", current->name, current->exit_code);
+  enable_interrupts();
+  for(;;) {
+    asm volatile("hlt");
+  }
 }
 
-void ktread_join(kthread_t* t1) {
-  while(t1->status != THREAD_TERMINATED) {
-    noop();
+int ktread_join(kthread_t* thread) {
+  while(thread->status != THREAD_TERMINATED) {
+    asm volatile("pause");
   }
+  return thread->exit_code;
 }
