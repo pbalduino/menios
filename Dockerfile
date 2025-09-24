@@ -1,5 +1,5 @@
 
-FROM --platform=amd64 debian as base
+FROM --platform=amd64 debian AS base
 RUN apt-get update && \
     apt-get install \
       apt-utils \
@@ -30,12 +30,16 @@ RUN apt-get update && \
       xorriso \
       -y
 
-FROM base as limine
-# WORKDIR /limine
-# RUN git clone https://github.com/limine-bootloader/limine.git --branch=v8.x . && \
-#     ./bootstrap  && \
-#     ./configure --enable-bios --enable-bios-cd --enable-uefi-x86-64 --enable-uefi-cd  && \
-#     make  && \
-#     curl -Lo bin/limine.h https://github.com/limine-bootloader/limine/raw/trunk/limine.h
-# RUN git clone https://github.com/limine-bootloader/limine.git --branch=v8.x-binary limine/bin
+FROM base AS limine
+WORKDIR /opt
+ARG LIMINE_REPO="https://codeberg.org/Limine/Limine.git"
+ARG LIMINE_BRANCH="v10.x-binary"
+RUN set -eux; \
+    git clone "${LIMINE_REPO}" --branch "${LIMINE_BRANCH}" --depth=1 limine || { \
+      rm -rf limine; \
+      git clone https://github.com/limine-bootloader/limine.git --branch=v8.x-binary --depth=1 limine; \
+    }
+WORKDIR /opt/limine
+RUN make
+ENV PATH="/opt/limine:${PATH}"
 ADD . /mnt

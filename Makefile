@@ -104,6 +104,38 @@ QEMU_OPTS = -smp cpus=2,maxcpus=4,sockets=1,dies=1,clusters=1,cores=2 \
 # -device usb-kbd \
 
 
+define assert_tools
+	@for tool in $(1); do \
+		if ! command -v $$tool >/dev/null 2>&1; then \
+			echo "Missing required tool: $$tool"; \
+			exit 1; \
+		fi; \
+	done
+endef
+
+BUILD_REQUIRED_TOOLS := sgdisk mformat mmd mcopy xorriso
+
+
+LIMINE_PATH ?= $(shell command -v limine 2>/dev/null)
+ifeq ($(LIMINE_PATH),)
+LIMINE_PATH := $(OUTPUT_DIR)/limine
+endif
+LIMINE_DIR := $(dir $(LIMINE_PATH))
+LIMINE_ASSETS := \
+	limine-bios.sys \
+	limine-bios-cd.bin \
+	limine-uefi-cd.bin \
+	limine-bios-pxe.bin \
+	limine-bios-hdd.h \
+	limine.h
+LIMINE_EFI := \
+	BOOTX64.EFI \
+	BOOTIA32.EFI \
+	BOOTAA64.EFI \
+	BOOTRISCV64.EFI \
+	BOOTLOONGARCH64.EFI
+
+
 OS_NAME = $(shell uname -s | tr A-Z a-z)
 
 .PHONY: clean
@@ -143,6 +175,10 @@ build: docker $(OBJS)
 ifeq ($(OS_NAME),linux)
 	@set -eux
 
+	if [ ! -x "$(NASM)" ]; then echo "Missing required tool: $(NASM)"; exit 1; fi
+	if [ ! -x "$(LD)" ]; then echo "Missing required tool: $(LD)"; exit 1; fi
+	$(call assert_tools,$(BUILD_REQUIRED_TOOLS))
+
 	rm -rf $(KERNEL_OBJ)/*
 
 	$(NASM) -f elf64 ./src/kernel/lgdt.s
@@ -157,17 +193,51 @@ ifeq ($(OS_NAME),linux)
 
 	cp $(OBJS) $(KERNEL_OBJ)
 
-	$(LD) $(LDFLAGS) -o $(KERNEL) $(shell find -L $(KERNEL_OBJ) -type f -name '*.o')
+	$(LD) $(LDFLAGS) -o $(KERNEL) $$(find -L $(KERNEL_OBJ) -type f -name '*.o')
+
+	@echo Syncing Limine assets
+	@set -eu; \
+	limine_path="$(LIMINE_PATH)"; \
+	if [ ! -x "$$limine_path" ]; then \
+		echo "Limine binary not found at $$limine_path"; \
+		exit 1; \
+	fi; \
+	limine_dir="$(LIMINE_DIR)"; \
+	mkdir -p $(OUTPUT_DIR)/EFI/BOOT; \
+	if [ "$$limine_path" != "$(OUTPUT_DIR)/limine" ]; then \
+		cp "$$limine_path" $(OUTPUT_DIR)/limine; \
+	fi; \
+	chmod +x $(OUTPUT_DIR)/limine; \
+	for file in $(LIMINE_ASSETS); do \
+		if [ -f "$$limine_dir/$$file" ]; then \
+			cp "$$limine_dir/$$file" $(OUTPUT_DIR)/; \
+		fi; \
+	done; \
+	for file in $(LIMINE_EFI); do \
+		if [ -f "$$limine_dir/$$file" ]; then \
+			cp "$$limine_dir/$$file" $(OUTPUT_DIR)/EFI/BOOT/; \
+		fi; \
+	done; \
+	for file in limine limine-bios.sys limine-bios-cd.bin limine-uefi-cd.bin BOOTX64.EFI; do \
+		if [ ! -f "$(OUTPUT_DIR)/$$file" ] && [ ! -f "$(OUTPUT_DIR)/EFI/BOOT/$$file" ]; then \
+			echo "Required Limine asset $$file is missing"; \
+			exit 1; \
+		fi; \
+	done
 
 	@echo Building image
 	rm -f $(IMAGE_NAME).hdd
 	dd if=/dev/zero bs=1M count=0 seek=64 of=$(IMAGE_NAME).hdd
-	sgdisk $(IMAGE_NAME).hdd -n 1:2048 -t 1:ef00
-	./bin/limine bios-install $(IMAGE_NAME).hdd
-	mformat -F -i $(IMAGE_NAME).hdd@@1M
-	mmd -i $(IMAGE_NAME).hdd@@1M ::/EFI ::/EFI/BOOT
-	mcopy -i $(IMAGE_NAME).hdd@@1M $(KERNEL) limine.conf ./bin/limine-bios.sys ::/
-	mcopy -i $(IMAGE_NAME).hdd@@1M ./bin/EFI/BOOT/BOOTX64.EFI ::/EFI/BOOT
+	sgdisk $(IMAGE_NAME).hdd -n 1:2048:4095 -t 1:ef02
+	sgdisk $(IMAGE_NAME).hdd -n 2:4096 -t 2:ef00
+	mformat -F -i $(IMAGE_NAME).hdd@@2M
+	mmd -i $(IMAGE_NAME).hdd@@2M ::/EFI ::/EFI/BOOT ::/limine ::/boot ::/boot/limine
+	mcopy -i $(IMAGE_NAME).hdd@@2M $(KERNEL) limine.conf $(OUTPUT_DIR)/limine-bios.sys ::/
+	mcopy -i $(IMAGE_NAME).hdd@@2M $(OUTPUT_DIR)/limine-bios.sys ::/limine/
+	mcopy -i $(IMAGE_NAME).hdd@@2M $(OUTPUT_DIR)/limine-bios.sys ::/boot/
+	mcopy -i $(IMAGE_NAME).hdd@@2M $(OUTPUT_DIR)/limine-bios.sys ::/boot/limine/
+	mcopy -i $(IMAGE_NAME).hdd@@2M $(OUTPUT_DIR)/EFI/BOOT/BOOTX64.EFI ::/EFI/BOOT
+	$(OUTPUT_DIR)/limine bios-install $(IMAGE_NAME).hdd 1
 
 	@echo Building ISO
 	# cp /limine/bin/*.bin bin/
@@ -183,6 +253,7 @@ endif
 
 .PHONY: run
 run:
+	$(call assert_tools,$(QEMU_X86_64))
 	$(QEMU_X86_64) $(QEMU_OPTS)
 
 .PHONY: test

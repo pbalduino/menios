@@ -129,5 +129,23 @@
       "url": "https://github.com/pbalduino/menios/issues/9",
       "state": "CLOSED"
     }
+  },
+  {
+    "title": "Update Limine bootloader to v10 binary release",
+    "body": "## Goal\nRefresh the Limine bootloader assets used by the Docker build so the kernel boots with the current v10 binary release.\n\n## Context\nThe existing Dockerfile bootstrapped Limine 8.x from source and produced BIOS binaries that no longer match the published v10 API. This mismatch caused Limine to panic while loading stage 3 once the kernel started using the newer headers.\n\n## Definition of Done\n- Fetch the v10.x-binary branch during the Docker build with a fallback to v8.x-binary if necessary.\n- Expose the prebuilt Limine binaries and headers to the project build and ensure they are copied into `bin/`.\n- Adjust the Makefile so Limine assets are synchronised before image creation and added to every search path Limine expects.\n- Verify `make build` and `make run` succeed with the refreshed bootloader.",
+    "labels": ["maintenance"],
+    "status": "Done",
+    "test_results": [
+      {
+        "name": "docker run … make build",
+        "status": "passed",
+        "details": "Builds kernel, installs Limine v10 assets, and produces HDD/ISO images"
+      },
+      {
+        "name": "make run",
+        "status": "passed",
+        "details": "Limine boots from menios.hdd and loads the kernel without stage 3 panic"
+      }
+    ]
   }
 ]
