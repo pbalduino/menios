@@ -337,7 +337,7 @@ void ps2kb_shutdown(void) {
   ps2_write_command(PS2_DISABLE_FIRST_PORT);
 }
 
-uint8_t ps2kb_read(void) {
+static uint8_t ps2kb_read(void) {
   uint8_t ch = 0;
   disable_interrupts();
   ch = buffer_pop();
@@ -366,7 +366,7 @@ void ps2kb_init(void) {
   driver_register(&ps2kb_driver);
 }
 
-int getchar() {
+int kgetchar(void) {
   while(true) {
     uint8_t ch = ps2kb_read();
     if(ch != 0) {
@@ -374,4 +374,8 @@ int getchar() {
     }
     asm volatile("hlt");
   }
+}
+
+int getchar(void) {
+  return kgetchar();
 }

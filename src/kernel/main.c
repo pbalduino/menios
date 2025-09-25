@@ -51,6 +51,7 @@
 #include <kernel/thread.h>
 #include <kernel/timer.h>
 #include <kernel/tsc.h>
+#include <kernel/driver/ps2kb.h>
 
 void print_logo();
 
@@ -142,8 +143,8 @@ void _start() {
   kthread_create(&caret, "caret", show_caret, NULL);
 
   while(true){
-    // int ch = getchar();
-    // putchar(ch);
+    int ch = kgetchar();
+    kputchar(ch);
   }
 
   logk("Bye\n");

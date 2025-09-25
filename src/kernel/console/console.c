@@ -30,6 +30,10 @@ int putchar(int ch) {
   return fputchar(ch, stdout);
 }
 
+int kputchar(int ch) {
+  return putchar(ch);
+}
+
 int puts(const char* text) {
   return fputs(text, stdout);
 }

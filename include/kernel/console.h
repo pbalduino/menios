@@ -32,4 +32,6 @@ int vsnprintk(char *str, size_t, const char* format, va_list args);
 void logk(const char* format, ...);
 void errk(const char* format, ...);
 
+int kputchar(int ch);
+
 #endif
