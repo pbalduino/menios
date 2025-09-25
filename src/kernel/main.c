@@ -83,24 +83,6 @@ void thread_code(void* arg) {
   logk("Bye from thread %s!\n", text);
 }
 
-int show_clock(void *unused) {
-  serial_line("");
-  while(true){
-    serial_line("");
-    rtc_time_t time;
-    rtc_time(&time);
-
-    screen_pos_t pos;
-    get_cursor_pos(&pos);
-    gotoxy(118, 0);
-    printf("%4d-%02d-%02d %02d:%02d:%02d UTC  \n", time.full_year, time.month, time.day, time.hours, time.minutes, time.seconds);
-    ksleep(500);
-    gotoxy(pos.x, pos.y);
-  }
-  (void)unused;
-  return 0;
-}
-
 static int show_caret(void *unused) {
   while(true){
     puts("_");
@@ -148,22 +130,9 @@ void _start() {
   // TODO: Show hardware
   // TODO: Filesystem
 
-  // kthread_t thread0;
-  // kthread_t thread1;
-  kthread_t clock;
   kthread_t caret;
 
-  // kthread_create(&thread0, "thread0", thread_code, (void*)"0");
-  // kthread_create(&thread1, "thread1", thread_code, (void*)"1");
-
   hardware_init();
-
-  // logk("Sleeping for five seconds\n");
-  // ksleep(5000);
-  // logk("Back\n");
-
-  kthread_create(&clock, "clock", show_clock, NULL);
-  logk("Created clock thread\n");
 
   logk("Enabling interruptions\n");
   enable_interrupts();

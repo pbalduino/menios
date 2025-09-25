@@ -16,9 +16,7 @@ void disable_interrupts() {
  * This allows the CPU to respond to maskable hardware interrupts.
  */
 void enable_interrupts() {
-  serial_line("Enabling interruptions");
   asm("sti");
-  serial_line("Enabled interruptions");
 }
 
 /**
