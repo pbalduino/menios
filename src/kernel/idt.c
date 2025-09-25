@@ -11,7 +11,7 @@
 static idt_pointer_t idt_p; // __attribute__((aligned(8)));
 static idt_entry_t idt[0x100]; // __attribute__((aligned(4096)));
 
-static void gpf_log(const char *fmt, ...) {
+static void exception_log(const char *fmt, ...) {
   va_list args;
 
   va_start(args, fmt);
@@ -103,59 +103,100 @@ void idt_gpf_isr_handler(idt_exception_p cpu_state) {
   asm volatile ("mov %%gs, %0" : "=r"(gs));
   asm volatile ("mov %%ss, %0" : "=r"(ss));
 
-  gpf_log("= General protection fault caught =\n");
-  gpf_log("  cpu_state @ %p\n", cpu_state);
+  exception_log("= General protection fault caught =\n");
+  exception_log("  cpu_state @ %p\n", cpu_state);
 
-  gpf_log("  Error code: 0x%016lx (%sselector, external=%s, table=%s, index=0x%x)\n",
+  exception_log("  Error code: 0x%016lx (%sselector, external=%s, table=%s, index=0x%x)\n",
           error_code,
           has_selector ? "" : "no ",
           external ? "yes" : "no",
           gpf_table_name(table_bits),
           descriptor_index);
 
-  gpf_log("  Fault RIP: 0x%016lx  CS:0x%04lx  RFLAGS:0x%016lx\n", fault_rip, fault_cs, fault_rflags);
+  exception_log("  Fault RIP: 0x%016lx  CS:0x%04lx  RFLAGS:0x%016lx\n", fault_rip, fault_cs, fault_rflags);
   if (privilege_transition) {
-    gpf_log("  Fault RSP: 0x%016lx  SS:0x%04lx\n", fault_rsp, fault_ss);
+    exception_log("  Fault RSP: 0x%016lx  SS:0x%04lx\n", fault_rsp, fault_ss);
   } else {
-    gpf_log("  Stack pointer at fault: 0x%016lx\n", fault_rsp);
+    exception_log("  Stack pointer at fault: 0x%016lx\n", fault_rsp);
   }
-  gpf_log("  Segment registers: DS=0x%04x ES=0x%04x FS=0x%04x GS=0x%04x SS=0x%04x\n",
+  exception_log("  Segment registers: DS=0x%04x ES=0x%04x FS=0x%04x GS=0x%04x SS=0x%04x\n",
           ds, es, fs, gs, ss);
 
-  gpf_log("  General purpose registers:\n");
-  gpf_log("    RAX=%016lx RBX=%016lx RCX=%016lx RDX=%016lx\n",
+  exception_log("  General purpose registers:\n");
+  exception_log("    RAX=%016lx RBX=%016lx RCX=%016lx RDX=%016lx\n",
           cpu_state->rax, cpu_state->rbx, cpu_state->rcx, cpu_state->rdx);
-  gpf_log("    RSI=%016lx RDI=%016lx RBP=%016lx RSP=%016lx\n",
+  exception_log("    RSI=%016lx RDI=%016lx RBP=%016lx RSP=%016lx\n",
           cpu_state->rsi, cpu_state->rdi, cpu_state->rbp, fault_rsp);
-  gpf_log("    R8 =%016lx R9 =%016lx R10=%016lx R11=%016lx\n",
+  exception_log("    R8 =%016lx R9 =%016lx R10=%016lx R11=%016lx\n",
           cpu_state->r8, cpu_state->r9, cpu_state->r10, cpu_state->r11);
-  gpf_log("    R12=%016lx R13=%016lx R14=%016lx R15=%016lx\n",
+  exception_log("    R12=%016lx R13=%016lx R14=%016lx R15=%016lx\n",
           cpu_state->r12, cpu_state->r13, cpu_state->r14, cpu_state->r15);
-  gpf_log("    Saved RFLAGS snapshot: 0x%016lx\n", cpu_state->rflags);
+  exception_log("    Saved RFLAGS snapshot: 0x%016lx\n", cpu_state->rflags);
 
   halt();
 }
 
-void idt_pf_isr_handler(uint64_t error_code) {
-  puts("= Page fault caught.\n");
-  uint64_t faulting_address;
-  int present    = (error_code & 0x01);
-  int write      = (error_code & 0x02) >> 1;
-  int user_mode  = (error_code & 0x04) >> 2;
-  int reserved   = (error_code & 0x08) >> 3;
-  // int fetch      = (error_code & 0x10) >> 4;
-  // int protection = (error_code & 0x20) >> 5;
-  // int shadow     = (error_code & 0x40) >> 6;
-  int index      = (error_code & 0xff0) >> 4;
+void idt_pf_isr_handler(idt_exception_p cpu_state) {
+  uint64_t *frame = &cpu_state->error_code;
+  const uint64_t error_code = frame[0];
+  const uint64_t fault_rip = frame[1];
+  const uint64_t fault_cs  = frame[2];
+  const uint64_t fault_rflags = frame[3];
+  const bool privilege_transition = (fault_cs & 0x3u) != 0;
 
-  asm volatile ("movq %%cr2, %0" : "=r" (faulting_address));
+  uint64_t fault_rsp = (uint64_t)(frame + 4);
+  uint64_t fault_ss = 0;
+  if (privilege_transition) {
+    fault_rsp = frame[4];
+    fault_ss = frame[5];
+  }
 
-  serial_puts("Page fault caught trying to access address:\n");
+  uint16_t ds, es, fs, gs, ss;
+  asm volatile ("mov %%ds, %0" : "=r"(ds));
+  asm volatile ("mov %%es, %0" : "=r"(es));
+  asm volatile ("mov %%fs, %0" : "=r"(fs));
+  asm volatile ("mov %%gs, %0" : "=r"(gs));
+  asm volatile ("mov %%ss, %0" : "=r"(ss));
 
-  printf("- Page fault caught trying to access address %lx. Error code: %ld\n", faulting_address, error_code);
-  printf("  Index %d\n", index);
-  printf("  Present: %d, Write: %d, User Mode: %d, Reserved: %d\n", present, write, user_mode, reserved);
-  serial_printf("  Present: %d, Write: %d, User Mode: %d, Reserved: %d\n", present, write, user_mode, reserved);
+  uint64_t cr2;
+  asm volatile ("mov %%cr2, %0" : "=r"(cr2));
+
+  idt_pf_error_info_t info;
+  idt_decode_page_fault(error_code, &info);
+
+  exception_log("= Page fault caught =\n");
+  exception_log("  cpu_state @ %p\n", cpu_state);
+  exception_log("  Faulting address: 0x%016lx\n", cr2);
+  exception_log("  Error code: 0x%016lx (present=%s, write=%s, user=%s, reserved=%s, instruction=%s, protection=%s, shadow=%s, sgx=%s)\n",
+                error_code,
+                info.present ? "yes" : "no",
+                info.write ? "yes" : "no",
+                info.user ? "yes" : "no",
+                info.reserved ? "yes" : "no",
+                info.instruction_fetch ? "yes" : "no",
+                info.protection_key ? "yes" : "no",
+                info.shadow_stack ? "yes" : "no",
+                info.sgx_violation ? "yes" : "no");
+
+  exception_log("  Fault RIP: 0x%016lx  CS:0x%04lx  RFLAGS:0x%016lx\n", fault_rip, fault_cs, fault_rflags);
+  if (privilege_transition) {
+    exception_log("  Fault RSP: 0x%016lx  SS:0x%04lx\n", fault_rsp, fault_ss);
+  } else {
+    exception_log("  Stack pointer at fault: 0x%016lx\n", fault_rsp);
+  }
+  exception_log("  Segment registers: DS=0x%04x ES=0x%04x FS=0x%04x GS=0x%04x SS=0x%04x\n",
+                ds, es, fs, gs, ss);
+
+  exception_log("  General purpose registers:\n");
+  exception_log("    RAX=%016lx RBX=%016lx RCX=%016lx RDX=%016lx\n",
+                cpu_state->rax, cpu_state->rbx, cpu_state->rcx, cpu_state->rdx);
+  exception_log("    RSI=%016lx RDI=%016lx RBP=%016lx RSP=%016lx\n",
+                cpu_state->rsi, cpu_state->rdi, cpu_state->rbp, fault_rsp);
+  exception_log("    R8 =%016lx R9 =%016lx R10=%016lx R11=%016lx\n",
+                cpu_state->r8, cpu_state->r9, cpu_state->r10, cpu_state->r11);
+  exception_log("    R12=%016lx R13=%016lx R14=%016lx R15=%016lx\n",
+                cpu_state->r12, cpu_state->r13, cpu_state->r14, cpu_state->r15);
+  exception_log("    Saved RFLAGS snapshot: 0x%016lx\n", cpu_state->rflags);
 
   halt();
 }

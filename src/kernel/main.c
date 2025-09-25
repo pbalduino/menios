@@ -48,6 +48,7 @@
 #include <kernel/rtc.h>
 #include <kernel/serial.h>
 #include <kernel/services.h>
+#include <kernel/thread.h>
 #include <kernel/timer.h>
 #include <kernel/tsc.h>
 #include <kernel/driver/ps2kb.h>

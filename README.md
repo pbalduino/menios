@@ -151,7 +151,7 @@ Feel free to explore the codebase, report issues, or contribute improvements! Ch
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-**Copyright (c) 2020-2024 Plínio Balduino**
+**Copyright (c) 2020-2025 Plínio Balduino**
 
 ## References
   - Intel® 64 and IA-32 Architectures Software Developer’s Manual Combined Volumes: 1, 2A, 2B, 2C, 2D, 3A, 3B, 3C, 3D, and 4: https://www.intel.com/content/www/us/en/developer/articles/technical/intel-sdm.html

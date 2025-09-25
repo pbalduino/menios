@@ -391,30 +391,3 @@ void pmm_init() {
 
   init_cr3();
 }
-
-// Page Fault handler stub
-void page_fault_handler(stack_frame_t* stack_frame) {
-    uint64_t cr2 = read_cr2();
-
-    // Log the fault information
-    serial_printf("Page Fault occurred!\n");
-    serial_printf("  Error code: %lx\n", stack_frame->error_code);
-    serial_printf("  Address:    %lx\n", cr2);
-    
-    printf("Page Fault occurred!\n");
-    printf("  Error code: %lx\n", stack_frame->error_code);
-    printf("  Instruction pointer (RIP): %lx\n", stack_frame->rip);
-    printf("  Code segment (CS): %lx\n", stack_frame->cs);
-    printf("  RFLAGS: %lx\n", stack_frame->rflags);
-    printf("  Stack pointer (RSP): %lx\n", stack_frame->rsp);
-    printf("  Stack segment (SS): %lx\n", stack_frame->ss);
-    printf("  Faulty address (CR2): %lx", cr2);
-
-    // Handle the page fault (This is where you would add your logic)
-    // For now, we'll just halt the CPU on real hardware
-#ifdef __x86_64__
-    while(1) {
-        __asm__("hlt");
-    }
-#endif
-}

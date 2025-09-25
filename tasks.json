@@ -33,6 +33,19 @@
     "title": "Fix the PF handler to show the right data",
     "body": "## Goal\nFix the page fault handler to display complete and accurate CPU state information when a page fault occurs.\n\n## Context\nThere's a mismatch in the page fault handler implementation between the assembly code and C handlers. The ASM handler in `lidt.s:116` calls `page_fault_handler(stack_frame_t* stack_frame)`, but there's also a separate `idt_pf_isr_handler(uint64_t error_code)` in `idt.c:66`. The current handler shows basic information (error code, CR2 register) but may be missing comprehensive CPU state due to this handler mismatch.\n\n## Definition of Done\n- Resolve the function signature mismatch between assembly and C page fault handlers\n- Display complete CPU register state (RAX, RBX, RCX, RDX, RSI, RDI, etc.) \n- Show proper page fault analysis (present bit, write/read access, user/kernel mode)\n- Provide accurate virtual address (CR2) and detailed error code breakdown\n- Ensure the handler receives and displays correct stack frame information\n- Verify page fault debugging information is comprehensive and accurate",
     "labels": ["bug"],
+    "status": "Done",
+    "test_results": [
+      {
+        "name": "Test suite",
+        "status": "passed",
+        "details": "Unity tests including pf_error decode helper"
+      },
+      {
+        "name": "make build",
+        "status": "passed",
+        "details": "Kernel rebuild succeeds with enhanced PF diagnostics"
+      }
+    ],
     "github_issue": {
       "number": 4,
       "url": "https://github.com/pbalduino/menios/issues/4",
@@ -230,6 +243,105 @@
     "github_issue": {
       "number": 25,
       "url": "https://github.com/pbalduino/menios/issues/25",
+      "state": "OPEN"
+    }
+  },
+  {
+    "title": "Implement ELF loader for userland programs",
+    "body": "## Goal\nImplement an ELF loader that can load and execute user programs in userland.\n\n## Context\nPart of the Road to Doom infrastructure. We need to load static ELF64 executables from the kernel into user processes. This is fundamental for running any userland applications including Doom.\n\n## Definition of Done\n- Parse ELF64 headers and validate executable format\n- Load program segments (code, data, bss) into appropriate memory regions\n- Set up initial process memory layout with proper permissions\n- Handle entry point and initial register state for user process\n- Support static linking (dynamic linking can come later)\n- Integrate with virtual memory management system\n- Add proper error handling for malformed ELF files\n- Test with simple userland programs before attempting Doom\n\n## Dependencies\n- User/kernel space separation\n- Per-process virtual memory management\n- Syscall interface implementation",
+    "labels": ["enhancement"],
+    "status": "Backlog",
+    "github_issue": {
+      "number": 26,
+      "url": "https://github.com/pbalduino/menios/issues/26",
+      "state": "OPEN"
+    }
+  },
+  {
+    "title": "Implement syscall ABI and dispatcher",
+    "body": "## Goal\nCreate a system call interface and dispatcher for user/kernel communication.\n\n## Context\nPart of the Road to Doom infrastructure. User processes need a way to request kernel services like memory allocation, file I/O, and graphics operations.\n\n## Definition of Done\n- Define syscall numbers and ABI (register usage, calling conventions)\n- Implement syscall entry point in assembly (INT 0x80 or SYSCALL instruction)\n- Create dispatcher that routes syscall numbers to handler functions\n- Handle context switching between user and kernel mode\n- Implement proper error reporting and return value mechanism\n- Add syscall argument validation and bounds checking\n- Document syscall interface for userland developers\n- Create initial set of basic syscalls (exit, write, etc.)\n\n## Dependencies\n- User/kernel space separation\n- Process management infrastructure",
+    "labels": ["enhancement"],
+    "status": "Backlog",
+    "github_issue": {
+      "number": 27,
+      "url": "https://github.com/pbalduino/menios/issues/27",
+      "state": "OPEN"
+    }
+  },
+  {
+    "title": "Implement per-process virtual memory management",
+    "body": "## Goal\nCreate isolated virtual memory spaces for user processes with proper memory layout.\n\n## Context\nPart of the Road to Doom infrastructure. Each user process needs its own virtual address space with code/data/heap/stack regions properly isolated from other processes and the kernel.\n\n## Definition of Done\n- Design user process memory layout (code, data, bss, heap, stack regions)\n- Implement per-process page tables and address space management\n- Add memory isolation between processes and kernel/user space\n- Support memory allocation/deallocation for user processes\n- Implement demand paging and lazy allocation for large programs like Doom\n- Add proper memory permissions (read/write/execute) enforcement\n- Handle page faults in user space appropriately\n- Support memory regions up to 16MB for Doom's requirements\n\n## Dependencies\n- Existing virtual memory management improvements\n- Page fault handler fixes",
+    "labels": ["enhancement"],
+    "status": "Backlog",
+    "github_issue": {
+      "number": 28,
+      "url": "https://github.com/pbalduino/menios/issues/28",
+      "state": "OPEN"
+    }
+  },
+  {
+    "title": "Create cross-compiler toolchain for userland",
+    "body": "## Goal\nSet up a cross-compiler toolchain that targets meniOS userland ABI.\n\n## Context\nPart of the Road to Doom infrastructure. We need a complete toolchain (binutils + GCC/Clang) that can compile user programs for meniOS, including Doom.\n\n## Definition of Done\n- Configure and build cross-binutils for meniOS target\n- Build cross-GCC or Clang targeting meniOS userland ABI\n- Create linker scripts for user program layout\n- Implement basic C runtime startup code (crt0)\n- Create minimal libc subset with essential functions\n- Set up build system for compiling userland programs\n- Document toolchain installation and usage\n- Test toolchain by compiling simple test programs\n\n## Dependencies\n- Syscall ABI definition\n- Process memory layout specification",
+    "labels": ["enhancement"],
+    "status": "Backlog",
+    "github_issue": {
+      "number": 29,
+      "url": "https://github.com/pbalduino/menios/issues/29",
+      "state": "OPEN"
+    }
+  },
+  {
+    "title": "Implement filesystem support and VFS layer",
+    "body": "## Goal\nCreate filesystem support with VFS layer and basic file operations for userland.\n\n## Context\nPart of the Road to Doom infrastructure. User processes need to access files, especially Doom needs to load WAD assets from disk.\n\n## Definition of Done\n- Implement block device driver (AHCI/ATA or RAM-backed disk)\n- Create filesystem implementation (FAT32 or simple custom FS)\n- Build VFS (Virtual File System) abstraction layer\n- Implement syscalls: open, read, write, lseek, close, stat\n- Add directory traversal support (opendir, readdir, closedir)\n- Support file metadata and permissions\n- Handle file system mounting and unmounting\n- Test with loading large files (for Doom WAD assets)\n\n## Dependencies\n- Syscall interface\n- Block device driver infrastructure",
+    "labels": ["enhancement"],
+    "status": "Backlog",
+    "github_issue": {
+      "number": 30,
+      "url": "https://github.com/pbalduino/menios/issues/30",
+      "state": "OPEN"
+    }
+  },
+  {
+    "title": "Implement userspace graphics/framebuffer interface",
+    "body": "## Goal\nCreate userspace-accessible graphics interface for rendering applications like Doom.\n\n## Context\nPart of the Road to Doom infrastructure. Doom needs to render graphics at 320×200 or 640×480 resolution with 8-bit or 32-bit color depth.\n\n## Definition of Done\n- Expose framebuffer to userspace through syscalls or memory mapping\n- Support multiple video modes (320×200, 640×480) with different bit depths\n- Implement double-buffering to avoid screen tearing\n- Add page-flip or buffer swap syscalls\n- Support 8-bit paletted mode and palette control\n- Implement basic blitting operations for performance\n- Add optional software scaling for resolution conversion\n- Ensure thread-safe access to graphics resources\n\n## Dependencies\n- Syscall interface\n- Virtual memory management\n- Existing framebuffer improvements",
+    "labels": ["enhancement"],
+    "status": "Backlog",
+    "github_issue": {
+      "number": 31,
+      "url": "https://github.com/pbalduino/menios/issues/31",
+      "state": "OPEN"
+    }
+  },
+  {
+    "title": "Implement userspace input subsystem",
+    "body": "## Goal\nCreate userspace input interface for keyboard and mouse input.\n\n## Context\nPart of the Road to Doom infrastructure. Doom needs keyboard input for controls and mouse input for looking/turning.\n\n## Definition of Done\n- Create userspace keyboard interface using PS/2 driver\n- Implement event queue or character device for keyboard input\n- Add mouse driver with relative motion and button support\n- Create input event system for userspace applications\n- Support both raw scancodes and cooked keyboard events\n- Implement input buffering and non-blocking reads\n- Add proper input device management and multiplexing\n- Test input responsiveness for gaming applications\n\n## Dependencies\n- PS/2 keyboard driver improvements\n- Syscall interface\n- Mouse driver implementation",
+    "labels": ["enhancement"],
+    "status": "Backlog",
+    "github_issue": {
+      "number": 32,
+      "url": "https://github.com/pbalduino/menios/issues/32",
+      "state": "OPEN"
+    }
+  },
+  {
+    "title": "Implement audio subsystem for userspace",
+    "body": "## Goal\nCreate audio output system that userspace applications like Doom can use.\n\n## Context\nPart of the Road to Doom infrastructure. Doom requires audio output for sound effects and music playback.\n\n## Definition of Done\n- Implement PCM audio output driver (AC97, HDA, or PC speaker fallback)\n- Create audio mixing and streaming syscalls\n- Support 8-bit and 16-bit audio sample formats\n- Implement audio buffer management and DMA transfers\n- Add timer-driven audio callbacks or asynchronous queue system\n- Support multiple audio streams/channels for sound effects + music\n- Handle audio sample rate conversion if needed\n- Test with simple audio playback before Doom integration\n\n## Dependencies\n- Syscall interface\n- Hardware audio driver\n- Timer/interrupt management",
+    "labels": ["enhancement"],
+    "status": "Backlog",
+    "github_issue": {
+      "number": 33,
+      "url": "https://github.com/pbalduino/menios/issues/33",
+      "state": "OPEN"
+    }
+  },
+  {
+    "title": "Implement preemptive userland scheduler",
+    "body": "## Goal\nCreate a preemptive scheduler that can manage userland processes with proper time slicing.\n\n## Context\nPart of the Road to Doom infrastructure. User processes need to be scheduled fairly and Doom needs consistent timing for smooth gameplay.\n\n## Definition of Done\n- Implement preemptive scheduling for user processes\n- Add time slicing with configurable quantum lengths\n- Support process priorities and scheduling policies\n- Implement per-process accounting and statistics\n- Add sleep/yield primitives for user threads\n- Handle scheduler interaction with kernel threads\n- Support process state management (running, sleeping, waiting)\n- Ensure smooth scheduling for real-time applications like games\n\n## Dependencies\n- Process management infrastructure\n- Timer/interrupt handling\n- Context switching mechanism",
+    "labels": ["enhancement"],
+    "status": "Backlog",
+    "github_issue": {
+      "number": 34,
+      "url": "https://github.com/pbalduino/menios/issues/34",
       "state": "OPEN"
     }
   }

@@ -1,6 +1,7 @@
 #ifndef MENIOS_INCLUDE_KERNEL_IDT_H
 #define MENIOS_INCLUDE_KERNEL_IDT_H
 
+#include <stdbool.h>
 #include <types.h>
 
 #define ISR_DIVISION_BY_ZERO         0x00
@@ -63,6 +64,17 @@ typedef struct idt_exception_t {
 
 typedef idt_exception_t* idt_exception_p;
 
+typedef struct {
+  bool present;
+  bool write;
+  bool user;
+  bool reserved;
+  bool instruction_fetch;
+  bool protection_key;
+  bool shadow_stack;
+  bool sgx_violation;
+} idt_pf_error_info_t;
+
 extern void idt_df_isr_asm_handler();
 extern void idt_generic_isr_asm_handler();
 extern void idt_gpf_isr_asm_handler();
@@ -73,5 +85,15 @@ extern void ps2kb_isr_handler();
 
 void idt_add_isr(int interruption, void* handler);
 void idt_init();
+static inline void idt_decode_page_fault(uint64_t error_code, idt_pf_error_info_t *info) {
+  info->present = (error_code & (1ull << 0)) != 0;
+  info->write = (error_code & (1ull << 1)) != 0;
+  info->user = (error_code & (1ull << 2)) != 0;
+  info->reserved = (error_code & (1ull << 3)) != 0;
+  info->instruction_fetch = (error_code & (1ull << 4)) != 0;
+  info->protection_key = (error_code & (1ull << 5)) != 0;
+  info->shadow_stack = (error_code & (1ull << 6)) != 0;
+  info->sgx_violation = (error_code & (1ull << 7)) != 0;
+}
 
 #endif

@@ -9,7 +9,7 @@ global ps2kb_isr_handler
 extern idt_generic_isr_handler
 extern idt_df_isr_handler
 extern idt_gpf_isr_handler
-extern page_fault_handler
+extern idt_pf_isr_handler
 extern timer_handler
 extern ps2kb_handler
 
@@ -94,13 +94,14 @@ idt_gpf_isr_asm_handler:
   iretq                      ; Return from the interrupt
 
 idt_pf_isr_asm_handler:
+  pushfq
   push rax
-  push rbx
   push rcx
+  push rbx
   push rdx
-  push rbp
   push rsi
   push rdi
+  push rbp
   push r8
   push r9
   push r10
@@ -110,10 +111,8 @@ idt_pf_isr_asm_handler:
   push r14
   push r15
 
-  cld
-
   lea rdi, [rsp]
-  call page_fault_handler
+  call idt_pf_isr_handler
 
   pop r15
   pop r14
@@ -123,15 +122,15 @@ idt_pf_isr_asm_handler:
   pop r10
   pop r9
   pop r8
+  pop rbp
   pop rdi
   pop rsi
-  pop rbp
   pop rdx
-  pop rcx
   pop rbx
+  pop rcx
   pop rax
+  popfq
 
-  ; Return from interrupt
   iretq
 
 idt_period_timer_isr_asm_handler:
