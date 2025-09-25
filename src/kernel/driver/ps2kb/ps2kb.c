@@ -32,6 +32,7 @@ static bool left_shift;
 static bool right_shift;
 static bool caps_lock;
 static bool extended_code;
+static bool pic_remapped;
 
 static const char scancode_unshift[128] = {
   0,  27, '1', '2', '3', '4', '5', '6', '7', '8',     /* 9 */
@@ -141,6 +142,36 @@ static char translate_scancode(uint8_t code) {
   return base;
 }
 
+static inline void io_wait(void) {
+  outb(0x80, 0);
+}
+
+static void pic_remap(void) {
+  if(pic_remapped) {
+    return;
+  }
+
+  uint8_t master_mask = inb(PIC1_DATA);
+  uint8_t slave_mask  = inb(PIC2_DATA);
+
+  outb(PIC1_COMM, 0x11); io_wait();
+  outb(PIC2_COMM, 0x11); io_wait();
+
+  outb(PIC1_DATA, 0x20); io_wait();
+  outb(PIC2_DATA, 0x28); io_wait();
+
+  outb(PIC1_DATA, 0x04); io_wait();
+  outb(PIC2_DATA, 0x02); io_wait();
+
+  outb(PIC1_DATA, 0x01); io_wait();
+  outb(PIC2_DATA, 0x01); io_wait();
+
+  outb(PIC1_DATA, master_mask); io_wait();
+  outb(PIC2_DATA, slave_mask); io_wait();
+
+  pic_remapped = true;
+}
+
 void ps2_write_data(uint8_t data) {
   outb(PS2_DATA_PORT, data);
 }
@@ -245,6 +276,8 @@ void ps2kb_start(void) {
   buffer_head = buffer_tail = 0;
   left_shift = right_shift = caps_lock = false;
   extended_code = false;
+
+  pic_remap();
 
   struct acpi_fadt *fadt = NULL;
   uacpi_status status = uacpi_table_fadt(&fadt);
