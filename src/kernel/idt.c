@@ -23,12 +23,13 @@ static void exception_log(const char *fmt, ...) {
   va_end(args);
 }
 
-static const char *gpf_table_name(uint8_t table_bits) {
-  switch (table_bits & 0x3) {
-    case 0: return "GDT";
-    case 1: return "IDT";
-    case 2: return "LDT";
-    default: return "IDT";
+static const char *gpf_table_name(idt_gpf_table_t table) {
+  switch (table) {
+    case IDT_GPF_TABLE_GDT: return "GDT";
+    case IDT_GPF_TABLE_IDT: return "IDT";
+    case IDT_GPF_TABLE_LDT: return "LDT";
+    case IDT_GPF_TABLE_IDT_2: return "IDT";
+    default: return "?";
   }
 }
 
@@ -91,10 +92,8 @@ void idt_gpf_isr_handler(idt_exception_p cpu_state) {
     fault_ss = frame[5];
   }
 
-  const bool has_selector = error_code != 0;
-  const bool external = (error_code & 0x1u) != 0;
-  const uint8_t table_bits = (error_code >> 1) & 0x3u;
-  const uint16_t descriptor_index = (error_code >> 3) & 0x1fffu;
+  idt_gpf_error_info_t info;
+  idt_decode_gpf(error_code, &info);
 
   uint16_t ds, es, fs, gs, ss;
   asm volatile ("mov %%ds, %0" : "=r"(ds));
@@ -106,12 +105,12 @@ void idt_gpf_isr_handler(idt_exception_p cpu_state) {
   exception_log("= General protection fault caught =\n");
   exception_log("  cpu_state @ %p\n", cpu_state);
 
-  exception_log("  Error code: 0x%016lx (%sselector, external=%s, table=%s, index=0x%x)\n",
-          error_code,
-          has_selector ? "" : "no ",
-          external ? "yes" : "no",
-          gpf_table_name(table_bits),
-          descriptor_index);
+  exception_log("  Error code: 0x%016lx (selector=%s, external=%s, table=%s, index=0x%x)\n",
+                error_code,
+                info.has_selector ? "yes" : "no",
+                info.external ? "yes" : "no",
+                gpf_table_name(info.table),
+                info.descriptor_index);
 
   exception_log("  Fault RIP: 0x%016lx  CS:0x%04lx  RFLAGS:0x%016lx\n", fault_rip, fault_cs, fault_rflags);
   if (privilege_transition) {

@@ -75,6 +75,20 @@ typedef struct {
   bool sgx_violation;
 } idt_pf_error_info_t;
 
+typedef enum {
+  IDT_GPF_TABLE_GDT = 0,
+  IDT_GPF_TABLE_IDT = 1,
+  IDT_GPF_TABLE_LDT = 2,
+  IDT_GPF_TABLE_IDT_2 = 3
+} idt_gpf_table_t;
+
+typedef struct {
+  bool external;
+  bool has_selector;
+  idt_gpf_table_t table;
+  uint16_t descriptor_index;
+} idt_gpf_error_info_t;
+
 extern void idt_df_isr_asm_handler();
 extern void idt_generic_isr_asm_handler();
 extern void idt_gpf_isr_asm_handler();
@@ -94,6 +108,13 @@ static inline void idt_decode_page_fault(uint64_t error_code, idt_pf_error_info_
   info->protection_key = (error_code & (1ull << 5)) != 0;
   info->shadow_stack = (error_code & (1ull << 6)) != 0;
   info->sgx_violation = (error_code & (1ull << 7)) != 0;
+}
+
+static inline void idt_decode_gpf(uint64_t error_code, idt_gpf_error_info_t *info) {
+  info->external = (error_code & 0x1ull) != 0;
+  info->has_selector = error_code != 0;
+  info->table = (idt_gpf_table_t)((error_code >> 1) & 0x3ull);
+  info->descriptor_index = (uint16_t)((error_code >> 3) & 0x1fffull);
 }
 
 #endif
