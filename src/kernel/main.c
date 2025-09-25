@@ -48,7 +48,6 @@
 #include <kernel/rtc.h>
 #include <kernel/serial.h>
 #include <kernel/services.h>
-#include <kernel/thread.h>
 #include <kernel/timer.h>
 #include <kernel/tsc.h>
 #include <kernel/driver/ps2kb.h>
@@ -82,17 +81,6 @@ void thread_code(void* arg) {
   logk("Hello from thread %s!\n", text);
   ksleep(1000);
   logk("Bye from thread %s!\n", text);
-}
-
-static int show_caret(void *unused) {
-  while(true){
-    puts("_");
-    ksleep(500);
-    puts("\b");
-    ksleep(500);
-  }
-  (void)unused;
-  return 0;
 }
 
 void _start() {
@@ -131,16 +119,12 @@ void _start() {
   // TODO: Show hardware
   // TODO: Filesystem
 
-  kthread_t caret;
-
   hardware_init();
 
   logk("Enabling interruptions\n");
   enable_interrupts();
 
   printf("menios# ");
-
-  kthread_create(&caret, "caret", show_caret, NULL);
 
   while(true){
     int ch = kgetchar();
