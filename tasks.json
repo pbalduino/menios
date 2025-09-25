@@ -54,8 +54,21 @@
   },
   {
     "title": "Fix the GPF handler to show the right data",
-    "body": "## Goal\nEnhance the General Protection Fault (GPF) handler to display comprehensive CPU state and error analysis when a GPF occurs.\n\n## Context\nThe current GPF handler in `idt.c:57-64` and `lidt.s:56-94` properly saves all registers but only displays limited information (R15 register and error code). The handler uses `dump_heap()` to show memory state but lacks comprehensive register display and error code analysis to help diagnose what caused the GPF.\n\n## Definition of Done\n- Display complete CPU register state (RAX, RBX, RCX, RDX, RSI, RDI, RSP, RBP, etc.) instead of just R15\n- Analyze and decode the error code to explain the GPF cause (invalid segment, privilege violation, etc.)\n- Show instruction pointer (RIP) and segment information (CS, DS, SS, etc.)\n- Provide meaningful error messages explaining the type of protection violation\n- Maintain the existing register preservation but improve the diagnostic output\n- Ensure the handler provides actionable debugging information for GPF diagnosis",
+    "body": "## Goal\nEnhance the General Protection Fault (GPF) handler to display comprehensive CPU state and error analysis when a GPF occurs.\n\n## Context\nThe current GPF handler in `idt.c:57-64` and `lidt.s:56-94` properly saves all registers but only displays limited information (R15 register and error code). The handler uses `dump_heap()` to show memory state but lacks comprehensive register display and error code analysis to help diagnose what caused the GPF.\n\n## Definition of Done\n- Display complete CPU register state (RAX, RBX, RCX, RDX, RSI, RDI, RSP, RBP, etc.) instead of just R15\n- Analyze and decode the error code to explain the GPF cause (invalid segment, privilege violation, etc.)\n- Show instruction pointer (RIP), segment information (CS, DS, SS, etc.) and stack pointer\n- Provide meaningful error messages explaining the type of protection violation\n- Maintain the existing register preservation but improve the diagnostic output\n- Ensure the handler provides actionable debugging information for GPF diagnosis",
     "labels": ["bug"],
+    "status": "Done",
+    "test_results": [
+      {
+        "name": "Test suite",
+        "status": "passed",
+        "details": "Unity tests including new GPF decode helper"
+      },
+      {
+        "name": "make build",
+        "status": "passed",
+        "details": "Kernel rebuild succeeds with enhanced GPF logging"
+      }
+    ],
     "github_issue": {
       "number": 5,
       "url": "https://github.com/pbalduino/menios/issues/5",
