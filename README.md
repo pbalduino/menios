@@ -4,50 +4,156 @@
 
 <a rel="me" href="https://bolha.us/@p_balduino">Mastodon</a>
 
-I'm trying again again. Let's see how far I can go.
+A hobby operating system kernel written in C and Assembly, targeting x86-64 architecture. The ultimate goal is to run Doom in userland! 🎯
 
-Prerequisites:
-  Linux:
-  - gcc
-  - ld
-  - make
-  - qemu
+## Current Status
 
-  MacOS:
-  - Docker
-  - make
-  - qemu
+MeniOS is in active development with basic kernel functionality implemented. The system boots with Limine bootloader and provides:
 
-To run:
- - make build run
+- **Memory Management**: Physical memory mapping, virtual memory allocation, and basic heap management
+- **Console System**: ANSI escape sequence support with scrolling and color output
+- **Process Management**: Kernel threads with basic scheduling (scheduler improvements ongoing)
+- **Input/Output**: PS/2 keyboard driver with buffered input
+- **Debugging**: Page fault and GPF handlers for system diagnostics
+- **Testing**: Unit test framework using Unity for kernel components
 
-To do:
+## Quick Start
 
-[X] Integration with Limine
+### Prerequisites
 
-[X] Map physical memory
+**Linux:**
+- gcc
+- ld
+- make
+- qemu
 
-[X] Request a page from physical memory
+**MacOS:**
+- Docker
+- make
+- qemu
 
-[X] Implement a malloc to provide virtual memory to the process
+### Building and Running
 
-[X] Add ANSI and scrolling to the console
+```bash
+make build run
+```
 
-[X] Complete the vsprintk function with all format specifiers
+This will build the kernel, create a bootable image, and launch it in QEMU.
 
-[ ] Fix the PF and GPF handlers to show the right data
+## Development Progress
 
-[ ] Fix kmalloc to get memory from the virtual memory
+### Completed ✅
+- [x] Integration with Limine bootloader v10
+- [x] Physical memory mapping and management
+- [x] Virtual memory allocation system
+- [x] Kernel malloc implementation
+- [x] ANSI console with scrolling and color support
+- [x] Complete vsprintk function with all format specifiers
+- [x] PS/2 keyboard driver with proper input handling
+- [x] Kernel thread scheduling improvements
+- [x] Virtual-to-physical address translation (page table walking)
 
-[ ] Fix virtual_to_physical calculation
+### In Progress 🚧
+- [ ] Page fault and GPF handler improvements
+- [ ] kmalloc integration with virtual memory system
+- [ ] Kernel thread sleep state alignment
+- [ ] Thread termination status propagation
+- [ ] TSC timekeeping calibration and boot time initialization
 
-[ ] Align kernel thread sleep state with scheduler enums
+### Road to Doom 🎮
 
-[ ] Propagate kernel thread termination status for joins
+The ultimate goal is running Doom in userland! This requires substantial infrastructure:
 
-[ ] Calibrate TSC timekeeping and initialise boot time
+- **Userland Foundation**: ELF loader, syscall interface, process management
+- **Memory Management**: Per-process virtual memory, demand paging, user heap
+- **File System**: VFS layer, disk drivers, file I/O syscalls
+- **Graphics**: Framebuffer interface, double buffering, palette control
+- **Input**: Userspace keyboard/mouse drivers and event system
+- **Audio**: PCM output, mixing, streaming syscalls
+- **Toolchain**: Cross-compiler, libc subset, build system
 
-Reference
+See [`road_to_doom.md`](road_to_doom.md) for the complete roadmap and [`tasks.json`](tasks.json) for detailed task tracking.
+
+## Architecture Overview
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                        USERLAND (Future)                    │
+│  ┌─────────┐  ┌─────────┐  ┌─────────┐  ┌─────────────────┐ │
+│  │  Doom   │  │ Shell   │  │ Games   │  │  Applications   │ │
+│  └─────────┘  └─────────┘  └─────────┘  └─────────────────┘ │
+│                              │                             │
+│                        ┌─────────┐                        │
+│                        │  libc   │                        │
+│                        └─────────┘                        │
+└─────────────────────────────┬───────────────────────────────┘
+                              │ Syscall Interface (Future)
+┌─────────────────────────────┴───────────────────────────────┐
+│                        KERNEL SPACE                        │
+│  ┌─────────────────┐  ┌─────────────────┐  ┌──────────────┐ │
+│  │ Process Mgmt    │  │ Memory Mgmt     │  │ I/O Subsys   │ │
+│  │ • Scheduler     │  │ • Virtual Mem   │  │ • Console    │ │
+│  │ • Kernel Threads│  │ • Physical Mem  │  │ • PS/2 Input │ │
+│  │ • Context Switch│  │ • Page Tables   │  │ • Framebuffer│ │
+│  └─────────────────┘  └─────────────────┘  └──────────────┘ │
+│                              │                             │
+│  ┌─────────────────┐  ┌─────────────────┐  ┌──────────────┐ │
+│  │ Debug/Diag      │  │ File System     │  │ Hardware     │ │
+│  │ • Page Faults   │  │ • VFS (Future)  │  │ • Interrupts │ │
+│  │ • GPF Handler   │  │ • Block Drivers │  │ • Timers     │ │
+│  │ • Unit Tests    │  │ • File I/O      │  │ • Hardware   │ │
+│  └─────────────────┘  └─────────────────┘  └──────────────┘ │
+└─────────────────────────────┬───────────────────────────────┘
+                              │ Hardware Abstraction
+┌─────────────────────────────┴───────────────────────────────┐
+│                         HARDWARE                           │
+│    CPU    │    RAM    │   Storage   │  Graphics  │  Input   │
+│   x86-64  │   4GB+    │    Disk     │    VGA     │   PS/2   │
+└─────────────────────────────────────────────────────────────┘
+```
+
+## Known Issues and Limitations
+
+### Current Limitations
+- **Kernel-only**: No userland support yet (major work in progress)
+- **Single-threaded userspace**: No process isolation or multi-process support
+- **Limited hardware support**: Only basic PS/2 keyboard, VGA framebuffer
+- **No file system**: No persistent storage or file I/O capabilities
+- **Basic memory management**: No demand paging or memory protection between processes
+- **No network stack**: No networking capabilities
+
+### Active Issues
+- **Caret rendering**: Fixed but may need refinement for different scenarios
+- **Thread synchronization**: Join operations and sleep states need alignment with scheduler
+- **Timer accuracy**: TSC calibration needed for accurate timing operations
+- **Memory allocation**: kmalloc needs integration with virtual memory system
+- **Exception handlers**: Page fault and GPF handlers need better diagnostic output
+
+### Testing Environment
+- **QEMU only**: Primary testing on QEMU emulator, real hardware testing limited
+- **x86-64 focus**: No support for other architectures planned
+- **Development tools**: Requires cross-compilation toolchain for full development
+
+## Project Structure
+
+- **`src/`** - Kernel source code (C and Assembly)
+- **`include/`** - Header files
+- **`tests/`** - Unit tests using Unity framework
+- **`bin/`** - Build artifacts and bootloader assets
+- **`tasks.json`** - Detailed task tracking with GitHub issue integration
+- **`road_to_doom.md`** - Comprehensive roadmap for userland Doom support
+
+## Contributing
+
+Feel free to explore the codebase, report issues, or contribute improvements! Check the GitHub issues for current tasks and the `tasks.json` file for detailed progress tracking.
+
+## License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+**Copyright (c) 2020-2024 Plínio Balduino**
+
+## References
   - Intel® 64 and IA-32 Architectures Software Developer’s Manual Combined Volumes: 1, 2A, 2B, 2C, 2D, 3A, 3B, 3C, 3D, and 4: https://www.intel.com/content/www/us/en/developer/articles/technical/intel-sdm.html
   - PIC:  https://pdos.csail.mit.edu/6.828/2014/readings/hardware/8259A.pdf
           http://www.brokenthorn.com/Resources/OSDevPic.html
