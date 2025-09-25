@@ -3,6 +3,19 @@
     "title": "Align kernel thread sleep state with scheduler enums",
     "body": "## Goal\nEnsure `ksleep` marks threads with a valid scheduler state so the kernel builds and the scheduler can detect sleeping threads.\n\n## Context\n`kthread.c` uses `THREAD_SLEEPING`, but no such constant exists. The process scheduler expects `PROC_STATE_SLEEPING`. The mismatch currently prevents compilation and keeps the scheduler from tracking sleep state correctly.\n\n## Definition of Done\n- Replace the undefined `THREAD_SLEEPING` in `kthread.c` with the appropriate scheduler state constant (e.g., `PROC_STATE_SLEEPING`).\n- Verify that the kernel compiles without introducing new warnings.\n- Confirm that sleeping threads transition to the correct state in scheduler diagnostics/logs.\n",
     "labels": ["bug"],
+    "status": "Done",
+    "test_results": [
+      {
+        "name": "Test suite",
+        "status": "passed",
+        "details": "Unity tests (ksleep state change covered indirectly)"
+      },
+      {
+        "name": "make build",
+        "status": "passed",
+        "details": "Kernel rebuild succeeds after ksleep state fix"
+      }
+    ],
     "github_issue": {
       "number": 10,
       "url": "https://github.com/pbalduino/menios/issues/10",

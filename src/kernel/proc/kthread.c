@@ -61,6 +61,8 @@ void ksleep(uint64_t milliseconds) {
   while(read_tsc() < end) {
     noop();
   }
+  current->sleep_until = 0;
+  current->state = PROC_STATE_RUNNING;
 }
 
 void kexit(int code) {
