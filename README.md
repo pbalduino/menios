@@ -20,6 +20,7 @@ MeniOS is in active development with basic kernel functionality implemented. The
 - **Privilege Setup**: Ring 3 GDT selectors, 64-bit TSS, and a user-mode entry trampoline ready for userland bring-up
 - **Syscalls**: INT 0x80 dispatcher with initial `write(1, …)` and `exit(status)` support for user-mode stubs
 - **User Demo**: Kernel launches a Ring 3 thread mapped into its own user page tables, prints via `write(1, …)` then exits through syscall 60, exercising the full syscall/scheduler path
+- **Memory Protection**: Kernel address space is marked supervisor-only; user mappings live in per-process page tables
 
 ### Userland Bring-Up Snapshot
 
