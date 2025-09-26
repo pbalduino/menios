@@ -257,7 +257,7 @@
   },
   {
     "title": "Create basic user mode test program",
-    "body": "## Goal\nImplement a minimal test program that can execute in user mode to validate the Ring 0/Ring 3 infrastructure.\n\n## Context\nOnce we have user/kernel separation working, we need a simple test program to verify everything works correctly. This will be our first userland program.\n\n## Definition of Done\n- **Simple user function**: Create a basic user mode function that can execute\n- **Kernel integration**: Load and execute the user function from kernel\n- **Success validation**: Verify the program runs and returns successfully  \n- **Debug output**: Add logging to track execution flow\n- **Error handling**: Handle any faults that occur during execution\n\n## Implementation Details\n- Create a simple C function for user mode execution\n- Integrate with Ring transition mechanism\n- Add kernel-side code to launch user program\n- Implement basic success/failure detection\n- Add comprehensive logging for debugging\n\n## Files to Create/Modify\n- user_test.c - Test program implementation\n- user_loader.c - Kernel-side user program launcher\n- Integration with existing boot/init code\n\n## Success Criteria\n- User function executes without crashing\n- Return value is properly received by kernel\n- No privilege violations or unexpected faults\n- Clean transition back to kernel mode\n\n## Dependencies\n- Issue #43: GDT user segments\n- Issue #44: TSS implementation\n- Issue #45: Memory protection  \n- Issue #46: Ring transitions\n\n## Time Estimate\n3-5 days",
+    "body": "## Goal\nImplement a minimal test program that can execute in user mode to validate the Ring 0/Ring 3 infrastructure.\n\n## Context\nOnce we have user/kernel separation working, we need a simple test program to verify everything works correctly. This will be our first userland program.\n\n## Definition of Done\n- **Simple user function**: Create a basic user mode function that can execute\n- **Kernel integration**: Load and execute the user function from kernel\n- **Success validation**: Verify the program runs and returns successfully  \n- **Debug output**: Add logging to track execution flow\n- **Error handling**: Handle any faults that occur during execution\n\n## Implementation Details\n- Create a simple C function for user mode execution\n- Integrate with Ring transition mechanism\n- Add kernel-side code to launch user program\n- Implement basic success/failure detection\n- Add comprehensive logging for debugging\n\n## Files to Create/Modify\n- user_test.c - Test program implementation\n- user_loader.c - Kernel-side user program launcher\n- Integration with existing boot/init code\n\n## Success Criteria\n- User function executes without crashing\n- Return value is properly received by kernel\n- No privilege violations or unexpected faults\n- Clean transition back to kernel mode\n\n## Dependencies\n- Issue #43: GDT user segments\n- Issue #44: TSS implementation\n- Issue #45: Memory protection  \n- Issue #46: Ring transitions\n\n## Time Estimate\n3-5 days\n\n## Recent Progress\n- 2025-09-26: Boot now schedules the embedded user demo immediately after hardware detection, and the Ring 3 stub prints via write(1, ...) to both display and serial, exercising INT 0x80 end-to-end.",
     "labels": [
       "enhancement"
     ],
@@ -265,7 +265,8 @@
       "number": 47,
       "url": "https://github.com/pbalduino/menios/issues/47",
       "state": "OPEN"
-    }
+    },
+    "status": "In Progress"
   },
   {
     "title": "Implement basic syscall interface (exit and write)",

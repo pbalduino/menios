@@ -59,6 +59,10 @@ make build run
 
 This will build the kernel, create a bootable image, and launch it in QEMU.
 
+### Verify the User Demo
+
+During boot, meniOS now schedules the embedded `user_demo` ELF immediately after hardware probing. You should see `Hello from user ELF via int 0x80!` both on the graphical console and in `com1.log`, confirming that the INT 0x80 syscall path and user ↔ kernel transitions are live.
+
 ## Development Progress
 
 ### Completed ✅
