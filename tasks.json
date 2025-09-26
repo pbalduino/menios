@@ -1,284 +1,306 @@
 [
-  {
-    "title": "Optimize screen font definition and storage",
-    "body": "## Goal\nOptimize the way the screen font is defined to replace the current huge array with a more efficient approach.\n\n## Context\nThe current screen font implementation uses a huge array to define character bitmaps, which is inefficient in terms of memory usage and maintainability. This approach makes the kernel binary larger and harder to modify or extend with different fonts.\n\n## Definition of Done\n- Analyze the current font array implementation and identify optimization opportunities\n- Research and implement more efficient font storage methods (compressed bitmaps, run-length encoding, etc.)\n- Reduce memory footprint of font data while maintaining rendering quality\n- Improve font loading and rendering performance\n- Make the system more extensible for supporting multiple font faces or sizes\n- Document the new font format and provide tools for font conversion if needed\n\n## Technical Approach\n- Consider bitmap compression techniques\n- Implement font caching mechanisms\n- Optimize memory layout for better cache performance\n- Provide abstraction layer for different font formats\n\n## Files to Modify\n- screen.c - Font rendering and display logic\n- font.h - Font data structures and definitions\n- Any font data files or arrays",
-    "labels": [
-      "enhancement"
-    ],
-    "github_issue": {
-      "number": 24,
-      "url": "https://github.com/pbalduino/menios/issues/24",
-      "state": "OPEN"
-    }
-  },
-  {
-    "title": "Implement proper hardware probing and driver connection",
-    "body": "## Goal\nDetect hardware properly and connect to the respective drivers for further development.\n\n## Context\nThe current hardware probing implementation doesn't do much beyond basic initialization. The system needs a proper hardware detection mechanism that can identify available hardware components and automatically connect them to their appropriate drivers.\n\n## Definition of Done\n- Implement comprehensive hardware detection during system initialization\n- Create a driver registry system that maps hardware IDs to driver implementations\n- Automatically probe and enumerate available hardware (PCI devices, USB controllers, network cards, etc.)\n- Establish proper driver loading and connection mechanisms\n- Add logging/debugging output to show detected hardware and loaded drivers\n- Provide a foundation for future driver development and hardware support expansion\n- Document the hardware probing process and driver architecture",
-    "labels": [
-      "enhancement"
-    ],
-    "github_issue": {
-      "number": 22,
-      "url": "https://github.com/pbalduino/menios/issues/22",
-      "state": "OPEN"
-    }
-  },
-  {
-    "title": "Refactor code structure to make it more organized",
-    "body": "## Goal\nRefactor the codebase structure to improve organization, maintainability, and development workflow.\n\n## Context\nThe current code structure could benefit from better organization to make it easier for developers to navigate, understand, and contribute to the project. A well-organized codebase improves maintainability, reduces technical debt, and makes it easier to locate and modify specific functionality.\n\n## Definition of Done\n- Analyze current code structure and identify areas for improvement\n- Create a logical directory structure that groups related functionality\n- Separate concerns properly (kernel core, drivers, memory management, etc.)\n- Establish consistent naming conventions across the codebase\n- Refactor header file organization and includes\n- Update build system (Makefile) to reflect new structure\n- Ensure all existing functionality continues to work after refactoring\n- Document the new code organization and contribution guidelines\n- Update any documentation that references old file paths or structure",
-    "labels": [
-      "enhancement"
-    ],
-    "github_issue": {
-      "number": 23,
-      "url": "https://github.com/pbalduino/menios/issues/23",
-      "state": "OPEN"
-    }
-  },
-  {
-    "title": "Implement ELF loader for userland programs",
-    "body": "## Goal\nImplement an ELF loader that can load and execute user programs in userland.\n\n## Context  \nPart of the Road to Doom infrastructure. We need to load static ELF64 executables from the kernel into user processes. This is fundamental for running any userland applications including Doom.\n\n## Definition of Done\n- Parse ELF64 headers and validate executable format\n- Load program segments (code, data, bss) into appropriate memory regions\n- Set up initial process memory layout with proper permissions\n- Handle entry point and initial register state for user process\n- Support static linking (dynamic linking can come later)\n- Integrate with virtual memory management system\n- Add proper error handling for malformed ELF files\n- Test with simple userland programs before attempting Doom\n\n## Dependencies\n- User/kernel space separation\n- Per-process virtual memory management\n- Syscall interface implementation",
-    "labels": [
-      "enhancement"
-    ],
-    "github_issue": {
-      "number": 26,
-      "url": "https://github.com/pbalduino/menios/issues/26",
-      "state": "OPEN"
+    {
+        "title": "Optimize screen font definition and storage",
+        "body": "## Goal\nOptimize the way the screen font is defined to replace the current huge array with a more efficient approach.\n\n## Context\nThe current screen font implementation uses a huge array to define character bitmaps, which is inefficient in terms of memory usage and maintainability. This approach makes the kernel binary larger and harder to modify or extend with different fonts.\n\n## Definition of Done\n- Analyze the current font array implementation and identify optimization opportunities\n- Research and implement a more efficient font storage format (compressed bitmaps, vector fonts, or external font files)\n- Reduce memory footprint while maintaining or improving rendering performance\n- Add support for multiple font sizes or styles if feasible\n- Ensure backward compatibility with existing font rendering functionality\n- Update font loading and character rendering code to work with the new format\n- Document the new font system architecture and how to add or modify fonts\n- Verify that all text rendering continues to work correctly after optimization",
+        "labels": [
+            "enhancement"
+        ],
+        "github_issue": {
+            "number": 24,
+            "url": "https://github.com/pbalduino/menios/issues/24",
+            "state": "OPEN"
+        }
     },
-    "status": "In Progress"
-  },
-  {
-    "title": "Implement syscall ABI and dispatcher",
-    "body": "## Goal\nCreate a system call interface and dispatcher for user/kernel communication.\n\n## Context\nPart of the Road to Doom infrastructure. User processes need a way to request kernel services like memory allocation, file I/O, and graphics operations.\n\n## Definition of Done\n- Define syscall numbers and ABI (register usage, calling conventions)\n- Implement syscall entry point in assembly (INT 0x80 or SYSCALL instruction)\n- Create dispatcher that routes syscall numbers to handler functions\n- Handle context switching between user and kernel mode\n- Implement proper error reporting and return value mechanism\n- Add syscall argument validation and bounds checking\n- Document syscall interface for userland developers\n- Create initial set of basic syscalls (exit, write, etc.)\n\n## Dependencies\n- User/kernel space separation\n- Process management infrastructure",
-    "labels": [
-      "enhancement"
-    ],
-    "github_issue": {
-      "number": 27,
-      "url": "https://github.com/pbalduino/menios/issues/27",
-      "state": "OPEN"
+    {
+        "title": "Refactor code structure to make it more organized",
+        "body": "## Goal\nRefactor the codebase structure to improve organization, maintainability, and development workflow.\n\n## Context\nThe current code structure could benefit from better organization to make it easier for developers to navigate, understand, and contribute to the project. A well-organized codebase improves maintainability, reduces technical debt, and makes it easier to locate and modify specific functionality.\n\n## Definition of Done\n- Analyze current code structure and identify areas for improvement\n- Create a logical directory structure that groups related functionality\n- Separate concerns properly (kernel core, drivers, memory management, etc.)\n- Establish consistent naming conventions across the codebase\n- Refactor header file organization and includes\n- Update build system (Makefile) to reflect new structure\n- Ensure all existing functionality continues to work after refactoring\n- Document the new code organization and contribution guidelines\n- Update any documentation that references old file paths or structure",
+        "labels": [
+            "enhancement"
+        ],
+        "github_issue": {
+            "number": 23,
+            "url": "https://github.com/pbalduino/menios/issues/23",
+            "state": "OPEN"
+        }
     },
-    "status": "Done"
-  },
-  {
-    "title": "Implement per-process virtual memory management",
-    "body": "## Goal\nCreate isolated virtual memory spaces for user processes with proper memory layout.\n\n## Context\nPart of the Road to Doom infrastructure. Each user process needs its own virtual address space with code/data/heap/stack regions properly isolated from other processes and the kernel.\n\n## Definition of Done\n- Design user process memory layout (code, data, bss, heap, stack regions)\n- Implement per-process page tables and address space management\n- Add memory isolation between processes and kernel/user space\n- Support memory allocation/deallocation for user processes\n- Implement demand paging and lazy allocation for large programs like Doom\n- Add proper memory permissions (read/write/execute) enforcement\n- Handle page faults in user space appropriately\n- Support memory regions up to 16MB for Doom's requirements\n\n## Dependencies\n- Existing virtual memory management improvements\n- Page fault handler fixes",
-    "labels": [
-      "enhancement"
-    ],
-    "github_issue": {
-      "number": 28,
-      "url": "https://github.com/pbalduino/menios/issues/28",
-      "state": "OPEN"
+    {
+        "title": "Implement proper hardware probing and driver connection",
+        "body": "## Goal\nDetect hardware properly and connect to the respective drivers for further development.\n\n## Context\nThe current hardware probing implementation doesn't do much beyond basic initialization. The system needs a proper hardware detection mechanism that can identify available hardware components and automatically connect them to their appropriate drivers.\n\n## Definition of Done\n- Implement comprehensive hardware detection during system initialization\n- Create a driver registry system that maps hardware IDs to driver implementations\n- Automatically probe and enumerate available hardware (PCI devices, USB controllers, network cards, etc.)\n- Establish proper driver loading and connection mechanisms\n- Add logging/debugging output to show detected hardware and loaded drivers\n- Provide a foundation for future driver development and hardware support expansion\n- Document the hardware probing process and driver architecture",
+        "labels": [
+            "enhancement"
+        ],
+        "github_issue": {
+            "number": 22,
+            "url": "https://github.com/pbalduino/menios/issues/22",
+            "state": "OPEN"
+        }
     },
-    "status": "In Progress"
-  },
-  {
-    "title": "Create cross-compiler toolchain for userland",
-    "body": "## Goal\nSet up a cross-compiler toolchain that targets meniOS userland ABI.\n\n## Context\nPart of the Road to Doom infrastructure. We need a complete toolchain (binutils + GCC/Clang) that can compile user programs for meniOS, including Doom.\n\n## Definition of Done\n- Configure and build cross-binutils for meniOS target\n- Build cross-GCC or Clang targeting meniOS userland ABI\n- Create linker scripts for user program layout\n- Implement basic C runtime startup code (crt0)\n- Create minimal libc subset with essential functions\n- Set up build system for compiling userland programs\n- Document toolchain installation and usage\n- Test toolchain by compiling simple test programs\n\n## Dependencies\n- Syscall ABI definition\n- Process memory layout specification",
-    "labels": [
-      "enhancement"
-    ],
-    "github_issue": {
-      "number": 29,
-      "url": "https://github.com/pbalduino/menios/issues/29",
-      "state": "OPEN"
-    }
-  },
-  {
-    "title": "Implement filesystem support and VFS layer",
-    "body": "## Goal\nCreate filesystem support with VFS layer and basic file operations for userland.\n\n## Context\nPart of the Road to Doom infrastructure. User processes need to access files, especially Doom needs to load WAD assets from disk.\n\n## Definition of Done\n- Implement block device driver (AHCI/ATA or RAM-backed disk)\n- Create filesystem implementation (FAT32 or simple custom FS)\n- Build VFS (Virtual File System) abstraction layer\n- Implement syscalls: open, read, write, lseek, close, stat\n- Add directory traversal support (opendir, readdir, closedir)\n- Support file metadata and permissions\n- Handle file system mounting and unmounting\n- Test with loading large files (for Doom WAD assets)\n\n## Dependencies\n- Syscall interface\n- Block device driver infrastructure",
-    "labels": [
-      "enhancement"
-    ],
-    "github_issue": {
-      "number": 30,
-      "url": "https://github.com/pbalduino/menios/issues/30",
-      "state": "OPEN"
-    }
-  },
-  {
-    "title": "Implement userspace graphics/framebuffer interface",
-    "body": "## Goal\nCreate userspace-accessible graphics interface for rendering applications like Doom.\n\n## Context\nPart of the Road to Doom infrastructure. Doom needs to render graphics at 320\u00d7200 or 640\u00d7480 resolution with 8-bit or 32-bit color depth.\n\n## Definition of Done\n- Expose framebuffer to userspace through syscalls or memory mapping\n- Support multiple video modes (320\u00d7200, 640\u00d7480) with different bit depths\n- Implement double-buffering to avoid screen tearing\n- Add page-flip or buffer swap syscalls\n- Support 8-bit paletted mode and palette control\n- Implement basic blitting operations for performance\n- Add optional software scaling for resolution conversion\n- Ensure thread-safe access to graphics resources\n\n## Dependencies\n- Syscall interface\n- Virtual memory management\n- Existing framebuffer improvements",
-    "labels": [
-      "enhancement"
-    ],
-    "github_issue": {
-      "number": 31,
-      "url": "https://github.com/pbalduino/menios/issues/31",
-      "state": "OPEN"
-    }
-  },
-  {
-    "title": "Implement userspace input subsystem",
-    "body": "## Goal\nCreate userspace input interface for keyboard and mouse input.\n\n## Context\nPart of the Road to Doom infrastructure. Doom needs keyboard input for controls and mouse input for looking/turning.\n\n## Definition of Done\n- Create userspace keyboard interface using PS/2 driver\n- Implement event queue or character device for keyboard input\n- Add mouse driver with relative motion and button support\n- Create input event system for userspace applications\n- Support both raw scancodes and cooked keyboard events\n- Implement input buffering and non-blocking reads\n- Add proper input device management and multiplexing\n- Test input responsiveness for gaming applications\n\n## Dependencies\n- PS/2 keyboard driver improvements\n- Syscall interface\n- Mouse driver implementation",
-    "labels": [
-      "enhancement"
-    ],
-    "github_issue": {
-      "number": 32,
-      "url": "https://github.com/pbalduino/menios/issues/32",
-      "state": "OPEN"
-    }
-  },
-  {
-    "title": "Implement audio subsystem for userspace",
-    "body": "## Goal\nCreate audio output system that userspace applications like Doom can use.\n\n## Context\nPart of the Road to Doom infrastructure. Doom requires audio output for sound effects and music playback.\n\n## Definition of Done\n- Implement PCM audio output driver (AC97, HDA, or PC speaker fallback)\n- Create audio mixing and streaming syscalls\n- Support 8-bit and 16-bit audio sample formats\n- Implement audio buffer management and DMA transfers\n- Add timer-driven audio callbacks or asynchronous queue system\n- Support multiple audio streams/channels for sound effects + music\n- Handle audio sample rate conversion if needed\n- Test with simple audio playback before Doom integration\n\n## Dependencies\n- Syscall interface\n- Hardware audio driver\n- Timer/interrupt management",
-    "labels": [
-      "enhancement"
-    ],
-    "github_issue": {
-      "number": 33,
-      "url": "https://github.com/pbalduino/menios/issues/33",
-      "state": "OPEN"
-    }
-  },
-  {
-    "title": "Implement preemptive userland scheduler",
-    "body": "## Goal\nCreate a preemptive scheduler that can manage userland processes with proper time slicing.\n\n## Context\nPart of the Road to Doom infrastructure. User processes need to be scheduled fairly and Doom needs consistent timing for smooth gameplay.\n\n## Definition of Done\n- Implement preemptive scheduling for user processes\n- Add time slicing with configurable quantum lengths\n- Support process priorities and scheduling policies\n- Implement per-process accounting and statistics\n- Add sleep/yield primitives for user threads\n- Handle scheduler interaction with kernel threads\n- Support process state management (running, sleeping, waiting)\n- Ensure smooth scheduling for real-time applications like games\n\n## Dependencies\n- Process management infrastructure\n- Timer/interrupt handling\n- Context switching mechanism",
-    "labels": [
-      "enhancement"
-    ],
-    "github_issue": {
-      "number": 34,
-      "url": "https://github.com/pbalduino/menios/issues/34",
-      "state": "OPEN"
-    }
-  },
-  {
-    "title": "Improve kmalloc implementation",
-    "body": "## Goal\nEnhance the kmalloc implementation to be more robust, efficient, and feature-complete.\n\n## Context\nThe current kmalloc implementation is basic and could benefit from improvements in performance, reliability, and functionality. As the kernel grows and especially as we move toward userland support, memory allocation becomes increasingly critical.\n\n## Definition of Done\n- **Performance improvements**: Optimize allocation/deallocation algorithms for better speed and reduced fragmentation\n- **Better debugging**: Add allocation tracking, leak detection, and corruption detection\n- **Size alignment**: Ensure proper memory alignment for different data types and architectures\n- **Error handling**: Improve error reporting and graceful handling of allocation failures\n- **Memory pools**: Consider implementing size-based memory pools for common allocation sizes\n- **Statistics**: Add memory usage statistics and monitoring capabilities\n- **Integration**: Better integration with virtual memory management system\n- **Bounds checking**: Add optional bounds checking to detect buffer overflows\n- **Thread safety**: Ensure kmalloc is thread-safe for multi-threaded kernel operations\n\n## Potential Improvements\n- Implement buddy allocator or slab allocator for better performance\n- Add kmalloc_aligned() for specific alignment requirements\n- Implement kcalloc() and krealloc() for completeness\n- Add memory poisoning for debugging (fill freed memory with pattern)\n- Consider adding memory zones (DMA, normal, high memory)\n- Add allocation size classes to reduce fragmentation",
-    "labels": [
-      "enhancement"
-    ],
-    "github_issue": {
-      "number": 35,
-      "url": "https://github.com/pbalduino/menios/issues/35",
-      "state": "OPEN"
-    }
-  },
-  {
-    "title": "Improve kmutex implementation",
-    "body": "## Goal\nEnhance the existing kmutex implementation to be more robust, efficient, and feature-complete for kernel synchronization.\n\n## Context\nThe current kmutex implementation provides basic mutual exclusion but could benefit from improvements in performance, debugging capabilities, and additional features needed for a robust kernel synchronization primitive.\n\n## Definition of Done\n- **Performance improvements**: Optimize lock/unlock operations for minimal overhead\n- **Debugging support**: Add lock tracking, deadlock detection, and ownership validation\n- **Priority handling**: Implement priority inheritance to prevent priority inversion\n- **Timeout support**: Add kmutex_lock_timeout() for non-blocking operations with timeouts\n- **Recursive locks**: Support for recursive mutex acquisition by the same thread\n- **Error handling**: Improve error reporting and validation of mutex operations\n- **Statistics**: Add lock contention statistics and performance monitoring\n- **Documentation**: Comprehensive API documentation with usage examples\n\n## Potential Improvements\n- Add kmutex_trylock() for non-blocking lock attempts\n- Implement fair scheduling to prevent lock starvation\n- Add mutex debugging modes (leak detection, double-lock detection)\n- Support for different mutex types (normal, recursive, errorcheck)\n- Integration with kernel debugging and profiling tools\n- Lock ordering validation to detect potential deadlocks",
-    "labels": [
-      "enhancement"
-    ],
-    "github_issue": {
-      "number": 36,
-      "url": "https://github.com/pbalduino/menios/issues/36",
-      "state": "OPEN"
-    }
-  },
-  {
-    "title": "Implement semaphore synchronization primitive",
-    "body": "## Goal\nImplement counting semaphores for kernel synchronization and resource management.\n\n## Context\nSemaphores are essential synchronization primitives that allow controlling access to a finite number of resources. They're particularly useful for producer-consumer scenarios, resource pools, and implementing other synchronization constructs.\n\n## Definition of Done\n- **Core functionality**: Implement ksem_init(), ksem_wait(), ksem_post(), ksem_destroy()\n- **Counting semaphore**: Support for initial count and maximum count values\n- **Timeout support**: Add ksem_wait_timeout() for non-blocking waits with timeout\n- **Try operations**: Implement ksem_trywait() for non-blocking attempts\n- **Error handling**: Proper error codes and validation for all operations\n- **Thread safety**: Ensure all operations are atomic and thread-safe\n- **Performance**: Optimize for minimal overhead in common use cases\n- **Integration**: Work seamlessly with kernel scheduler and thread management\n\n## Use Cases\n- Resource pool management (memory pools, connection pools)\n- Producer-consumer synchronization\n- Rate limiting and flow control\n- Barrier implementation\n- Building higher-level synchronization primitives",
-    "labels": [
-      "enhancement"
-    ],
-    "github_issue": {
-      "number": 37,
-      "url": "https://github.com/pbalduino/menios/issues/37",
-      "state": "OPEN"
-    }
-  },
-  {
-    "title": "Implement spinlock synchronization primitive",
-    "body": "## Goal\nImplement spinlocks for low-level kernel synchronization in performance-critical sections.\n\n## Context\nSpinlocks are essential for protecting short critical sections where the overhead of sleeping would be greater than busy-waiting. They're particularly important for SMP systems and interrupt handlers.\n\n## Definition of Done\n- **Core functionality**: Implement spinlock_init(), spinlock_lock(), spinlock_unlock()\n- **Atomic operations**: Use CPU atomic instructions for lock/unlock operations\n- **Interrupt safety**: Support for spinlock_irq_save/restore() for interrupt contexts\n- **Try operations**: Implement spinlock_trylock() for non-blocking attempts\n- **Debug support**: Add lock tracking and validation in debug builds\n- **Performance**: Minimal overhead, optimized for short critical sections\n- **Architecture support**: Proper implementation for x86-64 with appropriate barriers\n\n## API Design\n- spinlock_t data structure\n- spinlock_init() - Initialize spinlock\n- spinlock_lock() - Acquire spinlock (busy wait)\n- spinlock_unlock() - Release spinlock\n- spinlock_trylock() - Non-blocking lock attempt\n- spinlock_lock_irqsave() - Lock with interrupt disable\n- spinlock_unlock_irqrestore() - Unlock with interrupt restore\n\n## Use Cases\n- Protecting shared data structures in interrupt handlers\n- SMP-safe critical sections\n- Low-level kernel data structure protection\n- Performance-critical synchronization where sleeping is not acceptable\n- Building blocks for other synchronization primitives",
-    "labels": [
-      "enhancement"
-    ],
-    "github_issue": {
-      "number": 38,
-      "url": "https://github.com/pbalduino/menios/issues/38",
-      "state": "OPEN"
-    }
-  },
-  {
-    "title": "Implement read-write locks (rwlock)",
-    "body": "## Goal\nImplement read-write locks to allow concurrent read access while maintaining exclusive write access.\n\n## Context\nRead-write locks are crucial for scenarios where data is frequently read but infrequently modified. They allow multiple readers to access shared data concurrently while ensuring exclusive access for writers.\n\n## Definition of Done\n- **Core functionality**: Implement rwlock_init(), rwlock_read_lock(), rwlock_write_lock(), rwlock_unlock()\n- **Reader priority**: Allow multiple concurrent readers\n- **Writer exclusivity**: Ensure writers have exclusive access\n- **Fairness**: Prevent writer starvation when many readers are present\n- **Try operations**: Implement rwlock_try_read_lock() and rwlock_try_write_lock()\n- **Timeout support**: Add timeout versions for non-blocking operations\n- **Upgrade/downgrade**: Support for upgrading read locks to write locks (optional)\n- **Debug support**: Lock tracking and validation in debug builds\n\n## API Design\n- rwlock_t data structure\n- rwlock_init() - Initialize read-write lock\n- rwlock_read_lock() - Acquire read lock (shared)\n- rwlock_write_lock() - Acquire write lock (exclusive)\n- rwlock_unlock() - Release lock (read or write)\n- rwlock_try_read_lock() - Non-blocking read lock attempt\n- rwlock_try_write_lock() - Non-blocking write lock attempt\n\n## Use Cases\n- Shared data structures with frequent reads, infrequent writes\n- Cache implementations\n- Configuration data protection\n- File system metadata\n- Network routing tables\n- Database-like operations in kernel",
-    "labels": [
-      "enhancement"
-    ],
-    "github_issue": {
-      "number": 39,
-      "url": "https://github.com/pbalduino/menios/issues/39",
-      "state": "OPEN"
-    }
-  },
-  {
-    "title": "Implement condition variables",
-    "body": "## Goal\nImplement condition variables for thread coordination and event-driven synchronization.\n\n## Context\nCondition variables are essential for implementing wait/notify patterns where threads need to wait for specific conditions to become true. They work in conjunction with mutexes to provide efficient blocking and signaling mechanisms.\n\n## Definition of Done\n- **Core functionality**: Implement kcond_init(), kcond_wait(), kcond_signal(), kcond_broadcast()\n- **Mutex integration**: Work seamlessly with kmutex for atomic condition checking\n- **Spurious wakeup handling**: Proper semantics for condition variable waits\n- **Timeout support**: Add kcond_wait_timeout() for bounded waiting\n- **Signal semantics**: Both single-thread signal and broadcast to all waiters\n- **Error handling**: Proper error codes and validation\n- **Performance**: Efficient implementation with minimal overhead\n\n## API Design\n- kcond_t data structure\n- kcond_init() - Initialize condition variable\n- kcond_wait() - Wait for condition (releases mutex, reacquires on wakeup)\n- kcond_wait_timeout() - Wait with timeout\n- kcond_signal() - Wake up one waiting thread\n- kcond_broadcast() - Wake up all waiting threads\n- kcond_destroy() - Clean up condition variable\n\n## Use Cases\n- Producer-consumer patterns\n- Thread pool work queue management\n- Event notification systems\n- Implementing barriers and rendezvous\n- Resource availability notifications\n- Complex synchronization patterns requiring state-based waiting",
-    "labels": [
-      "enhancement"
-    ],
-    "github_issue": {
-      "number": 40,
-      "url": "https://github.com/pbalduino/menios/issues/40",
-      "state": "OPEN"
-    }
-  },
-  {
-    "title": "Implement atomic operations and memory barriers",
-    "body": "## Goal\nImplement atomic operations and memory barriers for lock-free programming and low-level synchronization.\n\n## Context\nAtomic operations are fundamental building blocks for implementing lock-free data structures and other synchronization primitives. They provide guaranteed atomic read-modify-write operations without requiring locks.\n\n## Definition of Done\n- **Basic atomic types**: Support for atomic integers (32-bit and 64-bit)\n- **Atomic operations**: Load, store, exchange, compare-and-swap, fetch-and-add, etc.\n- **Memory ordering**: Support for different memory ordering semantics (relaxed, acquire, release, seq_cst)\n- **Memory barriers**: Implement compiler and CPU memory barriers\n- **Architecture optimization**: Use CPU-specific atomic instructions on x86-64\n- **Lock-free helpers**: Provide building blocks for lock-free data structures\n- **Documentation**: Comprehensive documentation on usage and memory ordering\n\n## API Design\n- atomic32_t and atomic64_t types\n- atomic_load() / atomic_store()\n- atomic_exchange()\n- atomic_compare_exchange()\n- atomic_fetch_add() / atomic_fetch_sub()\n- atomic_fetch_and() / atomic_fetch_or() / atomic_fetch_xor()\n- Memory barriers: memory_barrier(), read_barrier(), write_barrier()\n- CPU-specific barriers: smp_mb(), smp_rmb(), smp_wmb()\n\n## Use Cases\n- Lock-free data structures (queues, stacks, lists)\n- Reference counting\n- Building other synchronization primitives\n- High-performance inter-thread communication\n- Statistics and counters\n- Flag-based synchronization",
-    "labels": [
-      "enhancement"
-    ],
-    "github_issue": {
-      "number": 41,
-      "url": "https://github.com/pbalduino/menios/issues/41",
-      "state": "OPEN"
-    }
-  },
-  {
-    "title": "Enable SMP (Symmetric Multiprocessing) support",
-    "body": "## Goal\nAdd support for multiple CPU cores to enable true multiprocessing capabilities in meniOS.\n\n## Context\nCurrently meniOS runs on a single CPU core. Adding SMP support will enable the kernel to utilize multiple cores, improving performance and enabling true parallel processing. This is essential for modern systems and will be important for running complex applications like Doom with better performance.\n\n## Definition of Done\n- **CPU Detection**: Detect and enumerate available CPU cores using ACPI tables\n- **AP Initialization**: Boot and initialize Application Processors (non-boot CPUs)\n- **Per-CPU Data**: Implement per-CPU data structures and variables\n- **SMP-Safe Synchronization**: Ensure all kernel data structures are SMP-safe\n- **SMP Scheduler**: Extend scheduler to distribute tasks across multiple CPUs\n- **Load Balancing**: Basic load balancing between CPU cores\n- **CPU Affinity**: Support for binding processes/threads to specific CPUs\n- **SMP-Safe Memory Management**: Make memory allocators and VM system SMP-safe\n\n## Key Components to Implement\n- **ACPI Parsing**: Parse MADT (Multiple APIC Description Table) to find CPU cores\n- **APIC Configuration**: Set up Local APIC and I/O APIC for inter-processor communication\n- **AP Boot Protocol**: Implement CPU startup sequence for secondary cores\n- **Spinlocks**: Implement proper spinlocks for SMP synchronization (depends on issue #38)\n- **Per-CPU Variables**: Implement __percpu data and accessor functions\n- **SMP-Safe Primitives**: Update all shared data structures with proper locking\n- **CPU Hotplug**: Basic support for CPU online/offline operations (optional)\n\n## Technical Challenges\n- **Bootstrap Process**: Complex CPU initialization sequence\n- **Memory Barriers**: Proper memory ordering between CPUs\n- **Race Conditions**: Identify and fix all potential race conditions in kernel\n- **Cache Coherency**: Handle CPU cache synchronization issues\n- **Interrupt Distribution**: Distribute interrupts across multiple CPUs\n- **Atomic Operations**: Hardware-specific atomic instructions (see issue #41)\n\n## Dependencies\n- Issue #38: Spinlock implementation (critical for SMP)\n- Issue #41: Atomic operations and memory barriers\n- Improved synchronization primitives for SMP-safe operations\n\n## Testing Strategy\n- Start with 2-CPU system, expand to 4+ cores\n- Stress testing with concurrent operations\n- Verify proper load distribution across cores\n- Test interrupt handling on multiple CPUs\n- Validate memory consistency across cores\n\n## Performance Benefits\n- Parallel execution of kernel threads\n- Better responsiveness under load\n- Improved performance for multi-threaded applications\n- Foundation for userland multi-threading support\n- Better utilization of modern hardware",
-    "labels": [
-      "enhancement"
-    ],
-    "github_issue": {
-      "number": 42,
-      "url": "https://github.com/pbalduino/menios/issues/42",
-      "state": "OPEN"
-    }
-  },
-  {
-    "title": "Implement user/kernel memory protection",
-    "body": "## Goal\nSet up memory protection to isolate kernel memory from user processes and enable safe user mode execution.\n\n## Context\nCurrently all memory is accessible from any privilege level. For userland support, we need to protect kernel memory from user access while allowing controlled access to user memory.\n\n## Definition of Done\n- **Kernel memory protection**: Mark kernel pages as supervisor-only (CPL 0-2 only)\n- **User memory regions**: Create user-accessible memory regions with proper permissions\n- **Page table updates**: Modify page table creation to set User/Supervisor bits\n- **Memory layout**: Define clear kernel/user memory layout boundaries\n- **Access validation**: Test that privilege violations properly generate page faults\n\n## Implementation Details\n- Update page table entry creation to include User/Supervisor bit\n- Modify memory allocation to support user/kernel memory flags\n- Create functions for allocating user-accessible pages\n- Set up proper memory layout (kernel high, user low)\n- Implement page fault handling for privilege violations\n\n## Files to Modify\n- vmm.c - Virtual memory management updates\n- pmm.c - Physical memory allocation updates  \n- page_fault handler - Handle privilege violations\n- Memory layout headers\n\n## Testing Strategy\n- Verify kernel memory is inaccessible from Ring 3\n- Test user memory is accessible from both Ring 0 and Ring 3\n- Validate page faults occur on privilege violations\n- Check memory layout is correctly established\n\n## Dependencies\n- Existing virtual memory management system\n- Page fault handler improvements\n\n## Time Estimate\n1-2 weeks",
-    "labels": [
-      "enhancement"
-    ],
-    "github_issue": {
-      "number": 45,
-      "url": "https://github.com/pbalduino/menios/issues/45",
-      "state": "OPEN"
+    {
+        "title": "Implement ELF loader for userland programs",
+        "body": "## Goal\nImplement an ELF loader that can load and execute user programs in userland.\n\n## Context  \nPart of the Road to Doom infrastructure. We need to load static ELF64 executables from the kernel into user processes. This is fundamental for running any userland applications including Doom.\n\n## Definition of Done\n- Parse ELF64 headers and validate executable format\n- Load program segments (code, data, bss) into appropriate memory regions\n- Set up initial process memory layout with proper permissions\n- Handle entry point and initial register state for user process\n- Support static linking (dynamic linking can come later)\n- Integrate with virtual memory management system\n- Add proper error handling for malformed ELF files\n- Test with simple userland programs before attempting Doom\n\n## Dependencies\n- User/kernel space separation\n- Per-process virtual memory management\n- Syscall interface implementation",
+        "labels": [
+            "enhancement"
+        ],
+        "github_issue": {
+            "number": 26,
+            "url": "https://github.com/pbalduino/menios/issues/26",
+            "state": "OPEN"
+        },
+        "status": "In Progress"
     },
-    "status": "Done"
-  },
-  {
-    "title": "Create basic user mode test program",
-    "body": "## Goal\nImplement a minimal test program that can execute in user mode to validate the Ring 0/Ring 3 infrastructure.\n\n## Context\nOnce we have user/kernel separation working, we need a simple test program to verify everything works correctly. This will be our first userland program.\n\n## Definition of Done\n- **Simple user function**: Create a basic user mode function that can execute\n- **Kernel integration**: Load and execute the user function from kernel\n- **Success validation**: Verify the program runs and returns successfully  \n- **Debug output**: Add logging to track execution flow\n- **Error handling**: Handle any faults that occur during execution\n\n## Implementation Details\n- Create a simple C function for user mode execution\n- Integrate with Ring transition mechanism\n- Add kernel-side code to launch user program\n- Implement basic success/failure detection\n- Add comprehensive logging for debugging\n\n## Files to Create/Modify\n- user_test.c - Test program implementation\n- user_loader.c - Kernel-side user program launcher\n- Integration with existing boot/init code\n\n## Success Criteria\n- User function executes without crashing\n- Return value is properly received by kernel\n- No privilege violations or unexpected faults\n- Clean transition back to kernel mode\n\n## Dependencies\n- Issue #43: GDT user segments\n- Issue #44: TSS implementation\n- Issue #45: Memory protection  \n- Issue #46: Ring transitions\n\n## Time Estimate\n3-5 days\n\n## Recent Progress\n- 2025-09-26: Boot now schedules the embedded user demo immediately after hardware detection, and the Ring 3 stub prints via write(1, ...) to both display and serial, exercising INT 0x80 end-to-end.",
-    "labels": [
-      "enhancement"
-    ],
-    "github_issue": {
-      "number": 47,
-      "url": "https://github.com/pbalduino/menios/issues/47",
-      "state": "OPEN"
+    {
+        "title": "Implement per-process virtual memory management",
+        "body": "## Goal\nCreate isolated virtual memory spaces for user processes with proper memory layout.\n\n## Context\nPart of the Road to Doom infrastructure. Each user process needs its own virtual address space with code/data/heap/stack regions properly isolated from other processes and the kernel.\n\n## Definition of Done\n- Design user process memory layout (code, data, bss, heap, stack regions)\n- Implement per-process page tables and address space management\n- Add memory isolation between processes and kernel/user space\n- Support memory allocation/deallocation for user processes\n- Implement demand paging and lazy allocation for large programs like Doom\n- Add proper memory permissions (read/write/execute) enforcement\n- Handle page faults in user space appropriately\n- Support memory regions up to 16MB for Doom's requirements\n\n## Dependencies\n- Existing virtual memory management improvements\n- Page fault handler fixes",
+        "labels": [
+            "enhancement"
+        ],
+        "github_issue": {
+            "number": 28,
+            "url": "https://github.com/pbalduino/menios/issues/28",
+            "state": "OPEN"
+        },
+        "status": "In Progress"
     },
-    "status": "In Progress"
-  },
-  {
-    "title": "Implement basic syscall interface (exit and write)",
-    "body": "## Goal\nCreate a minimal system call interface with just exit() and write() syscalls to enable basic user-kernel communication.\n\n## Context\nOnce user mode is working, we need a way for user programs to request kernel services. Starting with just exit() and write() provides the foundation and allows testing/debugging of user programs.\n\n## Definition of Done\n- **Syscall entry point**: Set up INT 0x80 or SYSCALL instruction handling\n- **Syscall dispatcher**: Route syscall numbers to appropriate handlers\n- **exit() syscall**: Allow user programs to terminate cleanly\n- **write() syscall**: Basic output capability for debugging user programs\n- **Parameter passing**: Implement syscall parameter passing via registers\n- **Return values**: Proper return value mechanism\n- **Error handling**: Basic error reporting for invalid syscalls\n\n## Implementation Details\n- Define syscall numbers (SYS_EXIT=1, SYS_WRITE=2)\n- Create interrupt handler for syscall entry\n- Implement parameter extraction from registers\n- Add syscall handler functions\n- Ensure proper privilege validation\n\n## Syscall Interface Design\n- SYS_EXIT: exit(int status) - terminate process\n- SYS_WRITE: write(int fd, const char* buf, size_t count) - write to console\n\n## Files to Create\n- syscall.h - Syscall number definitions\n- syscall.c - Syscall dispatcher and handlers  \n- syscall_entry.s - Assembly syscall entry point\n- Integration with interrupt handling\n\n## Dependencies\n- Issue #47: Basic user mode test (need working user mode first)\n- Interrupt handling system\n\n## Time Estimate\n1 week",
-    "labels": [
-      "enhancement"
-    ],
-    "github_issue": {
-      "number": 48,
-      "url": "https://github.com/pbalduino/menios/issues/48",
-      "state": "OPEN"
+    {
+        "title": "Create cross-compiler toolchain for userland",
+        "body": "## Goal\nSet up a cross-compiler toolchain that targets meniOS userland ABI.\n\n## Context\nPart of the Road to Doom infrastructure. We need a complete toolchain (binutils + GCC/Clang) that can compile user programs for meniOS, including Doom.\n\n## Definition of Done\n- Configure and build cross-binutils for meniOS target\n- Build cross-GCC or Clang targeting meniOS userland ABI\n- Create linker scripts for user program layout\n- Implement basic C runtime startup code (crt0)\n- Create minimal libc subset with essential functions\n- Set up build system for compiling userland programs\n- Document toolchain installation and usage\n- Test toolchain by compiling simple test programs\n\n## Dependencies\n- Syscall ABI definition\n- Process memory layout specification",
+        "labels": [
+            "enhancement"
+        ],
+        "github_issue": {
+            "number": 29,
+            "url": "https://github.com/pbalduino/menios/issues/29",
+            "state": "OPEN"
+        }
     },
-    "status": "Done"
-  }
+    {
+        "title": "Implement filesystem support and VFS layer",
+        "body": "## Goal\nCreate filesystem support with VFS layer and basic file operations for userland.\n\n## Context\nPart of the Road to Doom infrastructure. User processes need to access files, especially Doom needs to load WAD assets from disk.\n\n## Definition of Done\n- Implement block device driver (AHCI/ATA or RAM-backed disk)\n- Create filesystem implementation (FAT32 or simple custom FS)\n- Build VFS (Virtual File System) abstraction layer\n- Implement syscalls: open, read, write, lseek, close, stat\n- Add directory traversal support (opendir, readdir, closedir)\n- Support file metadata and permissions\n- Handle file system mounting and unmounting\n- Test with loading large files (for Doom WAD assets)\n\n## Dependencies\n- Syscall interface\n- Block device driver infrastructure",
+        "labels": [
+            "enhancement"
+        ],
+        "github_issue": {
+            "number": 30,
+            "url": "https://github.com/pbalduino/menios/issues/30",
+            "state": "OPEN"
+        }
+    },
+    {
+        "title": "Implement userspace graphics/framebuffer interface",
+        "body": "## Goal\nCreate userspace-accessible graphics interface for rendering applications like Doom.\n\n## Context\nPart of the Road to Doom infrastructure. Doom needs to render graphics at 320\u00d7200 or 640\u00d7480 resolution with 8-bit or 32-bit color depth.\n\n## Definition of Done\n- Expose framebuffer to userspace through syscalls or memory mapping\n- Support multiple video modes (320\u00d7200, 640\u00d7480) with different bit depths\n- Implement double-buffering to avoid screen tearing\n- Add page-flip or buffer swap syscalls\n- Support 8-bit paletted mode and palette control\n- Implement basic blitting operations for performance\n- Add optional software scaling for resolution conversion\n- Ensure thread-safe access to graphics resources\n\n## Dependencies\n- Syscall interface\n- Virtual memory management\n- Existing framebuffer improvements",
+        "labels": [
+            "enhancement"
+        ],
+        "github_issue": {
+            "number": 31,
+            "url": "https://github.com/pbalduino/menios/issues/31",
+            "state": "OPEN"
+        }
+    },
+    {
+        "title": "Implement userspace input subsystem",
+        "body": "## Goal\nCreate userspace input interface for keyboard and mouse input.\n\n## Context\nPart of the Road to Doom infrastructure. Doom needs keyboard input for controls and mouse input for looking/turning.\n\n## Definition of Done\n- Create userspace keyboard interface using PS/2 driver\n- Implement event queue or character device for keyboard input\n- Add mouse driver with relative motion and button support\n- Create input event system for userspace applications\n- Support both raw scancodes and cooked keyboard events\n- Implement input buffering and non-blocking reads\n- Add proper input device management and multiplexing\n- Test input responsiveness for gaming applications\n\n## Dependencies\n- PS/2 keyboard driver improvements\n- Syscall interface\n- Mouse driver implementation",
+        "labels": [
+            "enhancement"
+        ],
+        "github_issue": {
+            "number": 32,
+            "url": "https://github.com/pbalduino/menios/issues/32",
+            "state": "OPEN"
+        }
+    },
+    {
+        "title": "Implement audio subsystem for userspace",
+        "body": "## Goal\nCreate audio output system that userspace applications like Doom can use.\n\n## Context\nPart of the Road to Doom infrastructure. Doom requires audio output for sound effects and music playback.\n\n## Definition of Done\n- Implement PCM audio output driver (AC97, HDA, or PC speaker fallback)\n- Create audio mixing and streaming syscalls\n- Support 8-bit and 16-bit audio sample formats\n- Implement audio buffer management and DMA transfers\n- Add timer-driven audio callbacks or asynchronous queue system\n- Support multiple audio streams/channels for sound effects + music\n- Handle audio sample rate conversion if needed\n- Test with simple audio playback before Doom integration\n\n## Dependencies\n- Syscall interface\n- Hardware audio driver\n- Timer/interrupt management",
+        "labels": [
+            "enhancement"
+        ],
+        "github_issue": {
+            "number": 33,
+            "url": "https://github.com/pbalduino/menios/issues/33",
+            "state": "OPEN"
+        }
+    },
+    {
+        "title": "Implement preemptive userland scheduler",
+        "body": "## Goal\nCreate a preemptive scheduler that can manage userland processes with proper time slicing.\n\n## Context\nPart of the Road to Doom infrastructure. User processes need to be scheduled fairly and Doom needs consistent timing for smooth gameplay.\n\n## Definition of Done\n- Implement preemptive scheduling for user processes\n- Add time slicing with configurable quantum lengths\n- Support process priorities and scheduling policies\n- Implement per-process accounting and statistics\n- Add sleep/yield primitives for user threads\n- Handle scheduler interaction with kernel threads\n- Support process state management (running, sleeping, waiting)\n- Ensure smooth scheduling for real-time applications like games\n\n## Dependencies\n- Process management infrastructure\n- Timer/interrupt handling\n- Context switching mechanism",
+        "labels": [
+            "enhancement"
+        ],
+        "github_issue": {
+            "number": 34,
+            "url": "https://github.com/pbalduino/menios/issues/34",
+            "state": "OPEN"
+        }
+    },
+    {
+        "title": "Improve kmalloc implementation",
+        "body": "## Goal\nEnhance the kmalloc implementation to be more robust, efficient, and feature-complete.\n\n## Context\nThe current kmalloc implementation is basic and could benefit from improvements in performance, reliability, and functionality. As the kernel grows and especially as we move toward userland support, memory allocation becomes increasingly critical.\n\n## Definition of Done\n- **Performance improvements**: Optimize allocation/deallocation algorithms for better speed and reduced fragmentation\n- **Better debugging**: Add allocation tracking, leak detection, and corruption detection\n- **Size alignment**: Ensure proper memory alignment for different data types and architectures\n- **Error handling**: Improve error reporting and graceful handling of allocation failures\n- **Memory pools**: Consider implementing size-based memory pools for common allocation sizes\n- **Statistics**: Add memory usage statistics and monitoring capabilities\n- **Integration**: Better integration with virtual memory management system\n- **Bounds checking**: Add optional bounds checking to detect buffer overflows\n- **Thread safety**: Ensure kmalloc is thread-safe for multi-threaded kernel operations\n\n## Potential Improvements\n- Implement buddy allocator or slab allocator for better performance\n- Add kmalloc_aligned() for specific alignment requirements\n- Implement kcalloc() and krealloc() for completeness\n- Add memory poisoning for debugging (fill freed memory with pattern)\n- Consider adding memory zones (DMA, normal, high memory)\n- Add allocation size classes to reduce fragmentation",
+        "labels": [
+            "enhancement"
+        ],
+        "github_issue": {
+            "number": 35,
+            "url": "https://github.com/pbalduino/menios/issues/35",
+            "state": "OPEN"
+        }
+    },
+    {
+        "title": "Improve kmutex implementation",
+        "body": "## Goal\nEnhance the existing kmutex implementation to be more robust, efficient, and feature-complete for kernel synchronization.\n\n## Context\nThe current kmutex implementation provides basic mutual exclusion but could benefit from improvements in performance, debugging capabilities, and additional features needed for a robust kernel synchronization primitive.\n\n## Definition of Done\n- **Performance improvements**: Optimize lock/unlock operations for minimal overhead\n- **Debugging support**: Add lock tracking, deadlock detection, and ownership validation\n- **Priority handling**: Implement priority inheritance to prevent priority inversion\n- **Timeout support**: Add kmutex_lock_timeout() for non-blocking operations with timeouts\n- **Recursive locks**: Support for recursive mutex acquisition by the same thread\n- **Error handling**: Improve error reporting and validation of mutex operations\n- **Statistics**: Add lock contention statistics and performance monitoring\n- **Documentation**: Comprehensive API documentation with usage examples\n\n## Potential Improvements\n- Add kmutex_trylock() for non-blocking lock attempts\n- Implement fair scheduling to prevent lock starvation\n- Add mutex debugging modes (leak detection, double-lock detection)\n- Support for different mutex types (normal, recursive, errorcheck)\n- Integration with kernel debugging and profiling tools\n- Lock ordering validation to detect potential deadlocks",
+        "labels": [
+            "enhancement"
+        ],
+        "github_issue": {
+            "number": 36,
+            "url": "https://github.com/pbalduino/menios/issues/36",
+            "state": "OPEN"
+        }
+    },
+    {
+        "title": "Implement semaphore synchronization primitive",
+        "body": "## Goal\nImplement counting semaphores for kernel synchronization and resource management.\n\n## Context\nSemaphores are essential synchronization primitives that allow controlling access to a finite number of resources. They're particularly useful for producer-consumer scenarios, resource pools, and implementing other synchronization constructs.\n\n## Definition of Done\n- **Core functionality**: Implement ksem_init(), ksem_wait(), ksem_post(), ksem_destroy()\n- **Counting semaphore**: Support for initial count and maximum count values\n- **Timeout support**: Add ksem_wait_timeout() for non-blocking waits with timeout\n- **Try operations**: Implement ksem_trywait() for non-blocking attempts\n- **Error handling**: Proper error codes and validation for all operations\n- **Thread safety**: Ensure all operations are atomic and thread-safe\n- **Performance**: Optimize for minimal overhead in common use cases\n- **Integration**: Work seamlessly with kernel scheduler and thread management\n\n## Use Cases\n- Resource pool management (memory pools, connection pools)\n- Producer-consumer synchronization\n- Rate limiting and flow control\n- Barrier implementation\n- Building higher-level synchronization primitives",
+        "labels": [
+            "enhancement"
+        ],
+        "github_issue": {
+            "number": 37,
+            "url": "https://github.com/pbalduino/menios/issues/37",
+            "state": "OPEN"
+        }
+    },
+    {
+        "title": "Implement spinlock synchronization primitive",
+        "body": "## Goal\nImplement spinlocks for low-level kernel synchronization in performance-critical sections.\n\n## Context\nSpinlocks are essential for protecting short critical sections where the overhead of sleeping would be greater than busy-waiting. They're particularly important for SMP systems and interrupt handlers.\n\n## Definition of Done\n- **Core functionality**: Implement spinlock_init(), spinlock_lock(), spinlock_unlock()\n- **Atomic operations**: Use CPU atomic instructions for lock/unlock operations\n- **Interrupt safety**: Support for spinlock_irq_save/restore() for interrupt contexts\n- **Try operations**: Implement spinlock_trylock() for non-blocking attempts\n- **Debug support**: Add lock tracking and validation in debug builds\n- **Performance**: Minimal overhead, optimized for short critical sections\n- **Architecture support**: Proper implementation for x86-64 with appropriate barriers\n\n## API Design\n- spinlock_t data structure\n- spinlock_init() - Initialize spinlock\n- spinlock_lock() - Acquire spinlock (busy wait)\n- spinlock_unlock() - Release spinlock\n- spinlock_trylock() - Non-blocking lock attempt\n- spinlock_lock_irqsave() - Lock with interrupt disable\n- spinlock_unlock_irqrestore() - Unlock with interrupt restore\n\n## Use Cases\n- Protecting shared data structures in interrupt handlers\n- SMP-safe critical sections\n- Low-level kernel data structure protection\n- Performance-critical synchronization where sleeping is not acceptable\n- Building blocks for other synchronization primitives",
+        "labels": [
+            "enhancement"
+        ],
+        "github_issue": {
+            "number": 38,
+            "url": "https://github.com/pbalduino/menios/issues/38",
+            "state": "OPEN"
+        }
+    },
+    {
+        "title": "Implement read-write locks (rwlock)",
+        "body": "## Goal\nImplement read-write locks to allow concurrent read access while maintaining exclusive write access.\n\n## Context\nRead-write locks are crucial for scenarios where data is frequently read but infrequently modified. They allow multiple readers to access shared data concurrently while ensuring exclusive access for writers.\n\n## Definition of Done\n- **Core functionality**: Implement rwlock_init(), rwlock_read_lock(), rwlock_write_lock(), rwlock_unlock()\n- **Reader priority**: Allow multiple concurrent readers\n- **Writer exclusivity**: Ensure writers have exclusive access\n- **Fairness**: Prevent writer starvation when many readers are present\n- **Try operations**: Implement rwlock_try_read_lock() and rwlock_try_write_lock()\n- **Timeout support**: Add timeout versions for non-blocking operations\n- **Upgrade/downgrade**: Support for upgrading read locks to write locks (optional)\n- **Debug support**: Lock tracking and validation in debug builds\n\n## API Design\n- rwlock_t data structure\n- rwlock_init() - Initialize read-write lock\n- rwlock_read_lock() - Acquire read lock (shared)\n- rwlock_write_lock() - Acquire write lock (exclusive)\n- rwlock_unlock() - Release lock (read or write)\n- rwlock_try_read_lock() - Non-blocking read lock attempt\n- rwlock_try_write_lock() - Non-blocking write lock attempt\n\n## Use Cases\n- Shared data structures with frequent reads, infrequent writes\n- Cache implementations\n- Configuration data protection\n- File system metadata\n- Network routing tables\n- Database-like operations in kernel",
+        "labels": [
+            "enhancement"
+        ],
+        "github_issue": {
+            "number": 39,
+            "url": "https://github.com/pbalduino/menios/issues/39",
+            "state": "OPEN"
+        }
+    },
+    {
+        "title": "Implement condition variables",
+        "body": "## Goal\nImplement condition variables for thread coordination and event-driven synchronization.\n\n## Context\nCondition variables are essential for implementing wait/notify patterns where threads need to wait for specific conditions to become true. They work in conjunction with mutexes to provide efficient blocking and signaling mechanisms.\n\n## Definition of Done\n- **Core functionality**: Implement kcond_init(), kcond_wait(), kcond_signal(), kcond_broadcast()\n- **Mutex integration**: Work seamlessly with kmutex for atomic condition checking\n- **Spurious wakeup handling**: Proper semantics for condition variable waits\n- **Timeout support**: Add kcond_wait_timeout() for bounded waiting\n- **Signal semantics**: Both single-thread signal and broadcast to all waiters\n- **Error handling**: Proper error codes and validation\n- **Performance**: Efficient implementation with minimal overhead\n\n## API Design\n- kcond_t data structure\n- kcond_init() - Initialize condition variable\n- kcond_wait() - Wait for condition (releases mutex, reacquires on wakeup)\n- kcond_wait_timeout() - Wait with timeout\n- kcond_signal() - Wake up one waiting thread\n- kcond_broadcast() - Wake up all waiting threads\n- kcond_destroy() - Clean up condition variable\n\n## Use Cases\n- Producer-consumer patterns\n- Thread pool work queue management\n- Event notification systems\n- Implementing barriers and rendezvous\n- Resource availability notifications\n- Complex synchronization patterns requiring state-based waiting",
+        "labels": [
+            "enhancement"
+        ],
+        "github_issue": {
+            "number": 40,
+            "url": "https://github.com/pbalduino/menios/issues/40",
+            "state": "OPEN"
+        }
+    },
+    {
+        "title": "Implement atomic operations and memory barriers",
+        "body": "## Goal\nImplement atomic operations and memory barriers for lock-free programming and low-level synchronization.\n\n## Context\nAtomic operations are fundamental building blocks for implementing lock-free data structures and other synchronization primitives. They provide guaranteed atomic read-modify-write operations without requiring locks.\n\n## Definition of Done\n- **Basic atomic types**: Support for atomic integers (32-bit and 64-bit)\n- **Atomic operations**: Load, store, exchange, compare-and-swap, fetch-and-add, etc.\n- **Memory ordering**: Support for different memory ordering semantics (relaxed, acquire, release, seq_cst)\n- **Memory barriers**: Implement compiler and CPU memory barriers\n- **Architecture optimization**: Use CPU-specific atomic instructions on x86-64\n- **Lock-free helpers**: Provide building blocks for lock-free data structures\n- **Documentation**: Comprehensive documentation on usage and memory ordering\n\n## API Design\n- atomic32_t and atomic64_t types\n- atomic_load() / atomic_store()\n- atomic_exchange()\n- atomic_compare_exchange()\n- atomic_fetch_add() / atomic_fetch_sub()\n- atomic_fetch_and() / atomic_fetch_or() / atomic_fetch_xor()\n- Memory barriers: memory_barrier(), read_barrier(), write_barrier()\n- CPU-specific barriers: smp_mb(), smp_rmb(), smp_wmb()\n\n## Use Cases\n- Lock-free data structures (queues, stacks, lists)\n- Reference counting\n- Building other synchronization primitives\n- High-performance inter-thread communication\n- Statistics and counters\n- Flag-based synchronization",
+        "labels": [
+            "enhancement"
+        ],
+        "github_issue": {
+            "number": 41,
+            "url": "https://github.com/pbalduino/menios/issues/41",
+            "state": "OPEN"
+        }
+    },
+    {
+        "title": "Enable SMP (Symmetric Multiprocessing) support",
+        "body": "## Goal\nAdd support for multiple CPU cores to enable true multiprocessing capabilities in meniOS.\n\n## Context\nCurrently meniOS runs on a single CPU core. Adding SMP support will enable the kernel to utilize multiple cores, improving performance and enabling true parallel processing. This is essential for modern systems and will be important for running complex applications like Doom with better performance.\n\n## Definition of Done\n- **CPU Detection**: Detect and enumerate available CPU cores using ACPI tables\n- **AP Initialization**: Boot and initialize Application Processors (non-boot CPUs)\n- **Per-CPU Data**: Implement per-CPU data structures and variables\n- **SMP-Safe Synchronization**: Ensure all kernel data structures are SMP-safe\n- **SMP Scheduler**: Extend scheduler to distribute tasks across multiple CPUs\n- **Load Balancing**: Basic load balancing between CPU cores\n- **CPU Affinity**: Support for binding processes/threads to specific CPUs\n- **SMP-Safe Memory Management**: Make memory allocators and VM system SMP-safe\n\n## Key Components to Implement\n- **ACPI Parsing**: Parse MADT (Multiple APIC Description Table) to find CPU cores\n- **APIC Configuration**: Set up Local APIC and I/O APIC for inter-processor communication\n- **AP Boot Protocol**: Implement CPU startup sequence for secondary cores\n- **Spinlocks**: Implement proper spinlocks for SMP synchronization (depends on issue #38)\n- **Per-CPU Variables**: Implement __percpu data and accessor functions\n- **SMP-Safe Primitives**: Update all shared data structures with proper locking\n- **CPU Hotplug**: Basic support for CPU online/offline operations (optional)\n\n## Technical Challenges\n- **Bootstrap Process**: Complex CPU initialization sequence\n- **Memory Barriers**: Proper memory ordering between CPUs\n- **Race Conditions**: Identify and fix all potential race conditions in kernel\n- **Cache Coherency**: Handle CPU cache synchronization issues\n- **Interrupt Distribution**: Distribute interrupts across multiple CPUs\n- **Atomic Operations**: Hardware-specific atomic instructions (see issue #41)\n\n## Dependencies\n- Issue #38: Spinlock implementation (critical for SMP)\n- Issue #41: Atomic operations and memory barriers\n- Improved synchronization primitives for SMP-safe operations\n\n## Testing Strategy\n- Start with 2-CPU system, expand to 4+ cores\n- Stress testing with concurrent operations\n- Verify proper load distribution across cores\n- Test interrupt handling on multiple CPUs\n- Validate memory consistency across cores\n\n## Performance Benefits\n- Parallel execution of kernel threads\n- Better responsiveness under load\n- Improved performance for multi-threaded applications\n- Foundation for userland multi-threading support\n- Better utilization of modern hardware",
+        "labels": [
+            "enhancement"
+        ],
+        "github_issue": {
+            "number": 42,
+            "url": "https://github.com/pbalduino/menios/issues/42",
+            "state": "OPEN"
+        }
+    },
+    {
+        "title": "Create basic user mode test program",
+        "body": "## Goal\nImplement a minimal test program that can execute in user mode to validate the Ring 0/Ring 3 infrastructure.\n\n## Context\nOnce we have user/kernel separation working, we need a simple test program to verify everything works correctly. This will be our first userland program.\n\n## Definition of Done\n- **Simple user function**: Create a basic user mode function that can execute\n- **Kernel integration**: Load and execute the user function from kernel\n- **Success validation**: Verify the program runs and returns successfully  \n- **Debug output**: Add logging to track execution flow\n- **Error handling**: Handle any faults that occur during execution\n\n## Implementation Details\n- Create a simple C function for user mode execution\n- Integrate with Ring transition mechanism\n- Add kernel-side code to launch user program\n- Implement basic success/failure detection\n- Add comprehensive logging for debugging\n\n## Files to Create/Modify\n- user_test.c - Test program implementation\n- user_loader.c - Kernel-side user program launcher\n- Integration with existing boot/init code\n\n## Success Criteria\n- User function executes without crashing\n- Return value is properly received by kernel\n- No privilege violations or unexpected faults\n- Clean transition back to kernel mode\n\n## Dependencies\n- Issue #43: GDT user segments\n- Issue #44: TSS implementation\n- Issue #45: Memory protection  \n- Issue #46: Ring transitions\n\n## Time Estimate\n3-5 days",
+        "labels": [
+            "enhancement"
+        ],
+        "github_issue": {
+            "number": 47,
+            "url": "https://github.com/pbalduino/menios/issues/47",
+            "state": "OPEN"
+        },
+        "status": "In Progress"
+    },
+    {
+        "title": "Evolve mosh shell to be the default userland shell for meniOS",
+        "body": "## Goal\nEvolve the basic shell implementation in `app/mosh` (meniOS shell) to become the default userland shell for meniOS with essential bash-like functionality.\n\n## Context\nCurrently, there's a very basic shell implementation in `app/mosh` that serves as a starting point. As meniOS progresses toward full userland support, we need a functional shell that users can interact with to launch programs, navigate the filesystem, and perform basic system operations.\n\n## Definition of Done\n- **Command parsing**: Parse basic command lines with arguments\n- **Built-in commands**: Implement essential built-ins (cd, ls, pwd, exit, help)\n- **Program execution**: Launch userland programs via exec syscalls\n- **File operations**: Basic file manipulation (cat, cp, mv, rm) when filesystem is available\n- **Environment**: Basic environment variable support\n- **History**: Simple command history functionality\n- **Tab completion**: Basic filename/command completion (nice-to-have)\n- **Error handling**: Proper error messages and graceful failure handling\n- **Prompt customization**: Configurable prompt showing current directory\n\n## Implementation Details\n- Build upon existing code in `app/mosh/`\n- Keep implementation simple and lightweight for educational OS\n- Focus on core functionality rather than advanced features\n- Integrate with meniOS syscall interface\n- Design for single-user, single-session usage initially\n\n## Built-in Commands to Implement\n- `cd [directory]` - Change current directory\n- `ls [directory]` - List directory contents\n- `pwd` - Print working directory\n- `cat <file>` - Display file contents\n- `echo <text>` - Print text to console\n- `help` - Show available commands\n- `exit` - Exit shell\n- `clear` - Clear screen\n\n## Dependencies\n- Syscall interface (write, read, open, close, etc.)\n- Filesystem support and VFS layer\n- ELF loader for launching programs\n- Process management for userland programs\n- Basic userland C library functions\n\n## Integration Points\n- Launch as default shell after kernel boot\n- Integrate with userland process lifecycle\n- Work with meniOS filesystem when implemented\n- Provide platform for testing other userland applications\n\n## Future Enhancements\n- Job control (background processes)\n- Pipes and redirection\n- Shell scripting capabilities\n- More advanced built-ins\n- Configuration files\n\n## Files to Work With\n- `app/mosh/` - Existing shell implementation\n- Integration with userland build system\n- Documentation for shell usage\n\n## Testing Strategy\n- Test basic command parsing and execution\n- Verify built-in commands work correctly\n- Test error handling for invalid commands\n- Validate integration with filesystem operations\n- Ensure proper cleanup on exit\n\nThis shell will serve as the primary user interface for meniOS and provide a platform for testing other userland applications, including eventually launching Doom! \ud83c\udfae",
+        "labels": [],
+        "github_issue": {
+            "number": 54,
+            "url": "https://github.com/pbalduino/menios/issues/54",
+            "state": "OPEN"
+        }
+    },
+    {
+        "title": "Relocate build artifacts outside repository",
+        "body": "## Goal\nEnsure generated artifacts live in a gitignored build directory.\n\n## Context\n`bin/` and `obj/` are currently tracked and clutter the repo. They should be produced in an out-of-tree location controlled by the build system.\n\n## Definition of Done\n- Introduce a configurable build output directory (e.g. `_build/`).\n- Update Makefile/Docker flow to emit binaries and intermediate objects there.\n- Remove tracked artifacts from git and add ignores.\n- Verify `make build run` from a clean checkout.\n- Document the new layout in README/contributor docs.\n\n## Time Estimate\n1-2 days",
+        "labels": [
+            "maintenance"
+        ],
+        "status": "Done",
+        "notes": [
+            "2025-09-26: Makefile now stages outputs under build/bin and build/obj, bin/ and obj/ removed from repo, README/.gitignore updated."
+        ]
+    },
+    {
+        "title": "Group x86_64 assembly under arch directory",
+        "body": "## Goal\nMove low-level assembly like `lgdt.s`, `lidt.s`, `pit.s` into `src/kernel/arch/x86_64/`.\n\n## Context\nAssembly files currently sit at `src/kernel/`. Grouping them by architecture improves clarity and prepares for other architectures.\n\n## Definition of Done\n- Create `src/kernel/arch/x86_64/` (and matching include directory).\n- Relocate existing assembly sources and adjust includes/build rules.\n- Ensure both native and Docker builds still work.\n- Update documentation (README/CODING.md).\n\n## Time Estimate\n1 day",
+        "labels": [
+            "refactor"
+        ],
+        "status": "Open"
+    },
+    {
+        "title": "Reorganize user-mode sources",
+        "body": "## Goal\nUnify user-space demos/libs under a consistent directory hierarchy.\n\n## Context\nUser demo assembly lives in `src/usermode/` while kernel launch code sits in `src/kernel/user/`. Consolidation will help as more apps arrive.\n\n## Definition of Done\n- Decide layout (e.g. `user/apps/demo`, `user/lib`).\n- Move current demo code and adjust build scripts.\n- Update kernel loader references.\n- Document the structure for contributors.\n\n## Time Estimate\n1-2 days",
+        "labels": [
+            "refactor"
+        ],
+        "status": "Open"
+    },
+    {
+        "title": "Add docs for tools directory",
+        "body": "## Goal\nDocument the purpose of host-side tools under `app/` (or relocate them to `tools/`).\n\n## Context\nThe `app/` directory contains utilities but lacks documentation, leading to confusion.\n\n## Definition of Done\n- Decide on a standard location name (`tools/`?).\n- Move or rename the directory if needed.\n- Add README covering setup/usage for each tool.\n- Update contributor docs referencing the tools.\n\n## Time Estimate\n0.5 day",
+        "labels": [
+            "documentation"
+        ],
+        "status": "Open"
+    },
+    {
+        "title": "Plan filesystem integration roadmap",
+        "body": "## Goal\nCreate a design document outlining required subsystems for filesystem support.\n\n## Context\nBefore implementing FS/VFS, agreeing on layer responsibilities (block cache, VFS, syscalls) will accelerate development.\n\n## Definition of Done\n- Produce design doc (docs/architecture/fs.md).\n- List milestones and dependencies.\n- Review with maintainers and capture open questions.\n\n## Time Estimate\n1 day",
+        "labels": [
+            "planning"
+        ],
+        "status": "Open"
+    },
+    {
+        "title": "Draft networking roadmap (driver to TCP/IP)",
+        "body": "## Goal\nOutline tasks required to add a basic NIC driver, IPv4 stack, and TCP/UDP layers.\n\n## Context\nNetworking is large in scope; a roadmap helps sequencing (driver -> Ethernet -> IP -> TCP -> sockets).\n\n## Definition of Done\n- Write design (docs/architecture/networking.md).\n- Identify hardware target (e.g., e1000, virtio-net).\n- Enumerate layer-by-layer deliverables and dependencies.\n\n## Time Estimate\n1 day",
+        "labels": [
+            "planning"
+        ],
+        "status": "Open"
+    }
 ]

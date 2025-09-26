@@ -58,6 +58,7 @@ make build run
 ```
 
 This will build the kernel, create a bootable image, and launch it in QEMU.
+All generated artifacts now live under `build/` (`build/bin` for boot assets, `build/obj` for intermediates), keeping the repository tree clean.
 
 ### Verify the User Demo
 

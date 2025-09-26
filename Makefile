@@ -10,12 +10,14 @@ LIB_DIR = src/libc
 CINCLUDE = \
 	-I./include
 
-OUTPUT_DIR = bin
+BUILD_DIR ?= build
+
+OUTPUT_DIR = $(BUILD_DIR)/bin
 KERNEL_DIR = src/kernel
 
 KERNEL = $(OUTPUT_DIR)/kernel.elf
 
-OBJDIR         = obj
+OBJDIR         = $(BUILD_DIR)/obj
 LIBDIR         = lib
 UACPI_OBJ      = $(OBJDIR)/uacpi
 KERNEL_OBJ     = $(OBJDIR)/kernel
@@ -29,8 +31,9 @@ UACPI_SRC = $(shell find -L vendor/uacpi -type f -name '*.c')
 UACPI_OBJS := $(patsubst %.c, %.o, $(UACPI_SRC))
 
 OBJS = $(KERNEL_OBJS) $(KERNEL_ASM_OBJS) $(UACPI_OBJS)
-USER_ELF = obj/usermode/user_demo.elf
-USER_ELF_OBJ = obj/usermode/user_demo_elf.o
+USER_ELF = $(OBJDIR)/usermode/user_demo.elf
+USER_ELF_OBJ = $(OBJDIR)/usermode/user_demo_elf.o
+USER_ELF_SYMBOL := $(subst .,_,$(subst /,_,$(USER_ELF)))
 OBJS += $(USER_ELF_OBJ)
 
 override CFLAGS += \
@@ -152,8 +155,8 @@ check:
 
 .PHONY: clean
 clean:
-	rm -rf $(OUTPUT_DIR) || true
-	mkdir $(OUTPUT_DIR) || true
+	rm -rf $(BUILD_DIR)
+	mkdir -p $(OUTPUT_DIR)
 
 .PHONY: docker
 docker:
@@ -182,21 +185,31 @@ else
 	$(DOCKER) run --rm -it --mount type=bind,source=$$(pwd),target=/mnt $(DOCKER_IMAGE) /bin/sh -c "cd /mnt && make build"
 endif
 
-$(USER_ELF): src/usermode/user_demo.S linker/user_elf.ld | obj/usermode
-	$(GCC) -nostdlib -nostartfiles -ffreestanding -c src/usermode/user_demo.S -o obj/usermode/user_demo.o
-	$(LD) -nostdlib -static -T linker/user_elf.ld -o $@ obj/usermode/user_demo.o
+$(USER_ELF): src/usermode/user_demo.S linker/user_elf.ld
+ifeq ($(OS_NAME),linux)
+	@mkdir -p $(OBJDIR)/usermode
+	$(GCC) -nostdlib -nostartfiles -ffreestanding -c src/usermode/user_demo.S -o $(OBJDIR)/usermode/user_demo.o
+	$(LD) -nostdlib -static -T linker/user_elf.ld -o $@ $(OBJDIR)/usermode/user_demo.o
+else
+	$(DOCKER) run --rm -it --mount type=bind,source=$$(pwd),target=/mnt $(DOCKER_IMAGE) /bin/sh -c "cd /mnt && make $@"
+endif
 
-$(USER_ELF_OBJ): $(USER_ELF) | obj/usermode
+$(USER_ELF_OBJ): $(USER_ELF)
+ifeq ($(OS_NAME),linux)
+	@mkdir -p $(OBJDIR)/usermode
 	$(OBJCOPY) --input binary --output elf64-x86-64 --binary-architecture i386:x86-64 \
-		--redefine-sym _binary_obj_usermode_user_demo_elf_start=user_demo_elf_start \
-		--redefine-sym _binary_obj_usermode_user_demo_elf_end=user_demo_elf_end \
-		--redefine-sym _binary_obj_usermode_user_demo_elf_size=user_demo_elf_size \
+		--redefine-sym _binary_$(USER_ELF_SYMBOL)_start=user_demo_elf_start \
+		--redefine-sym _binary_$(USER_ELF_SYMBOL)_end=user_demo_elf_end \
+		--redefine-sym _binary_$(USER_ELF_SYMBOL)_size=user_demo_elf_size \
 		$< $@
+else
+	$(DOCKER) run --rm -it --mount type=bind,source=$$(pwd),target=/mnt $(DOCKER_IMAGE) /bin/sh -c "cd /mnt && make $@"
+endif
 
-obj/usermode:
+$(OBJDIR)/usermode:
 	@mkdir -p $@
 
-obj/kernel:
+$(OBJDIR)/kernel:
 	@mkdir -p $@
 
 
@@ -209,6 +222,7 @@ ifeq ($(OS_NAME),linux)
 	if [ ! -x "$(LD)" ]; then echo "Missing required tool: $(LD)"; exit 1; fi
 	$(call assert_tools,$(BUILD_REQUIRED_TOOLS))
 
+	mkdir -p $(OUTPUT_DIR) $(KERNEL_OBJ) $(OBJDIR)/usermode
 	rm -rf $(KERNEL_OBJ)/*
 
 	$(NASM) -f elf64 ./src/kernel/lgdt.s
@@ -275,8 +289,8 @@ ifeq ($(OS_NAME),linux)
         -no-emul-boot -boot-load-size 4 -boot-info-table \
         --efi-boot limine-uefi-cd.bin \
         -efi-boot-part --efi-boot-image --protective-msdos-label \
-        ./bin -o $(IMAGE_NAME).iso
-	./bin/limine bios-install $(IMAGE_NAME).iso
+        $(OUTPUT_DIR) -o $(IMAGE_NAME).iso
+	$(OUTPUT_DIR)/limine bios-install $(IMAGE_NAME).iso
 else
 	$(DOCKER) run --rm -it --mount type=bind,source=$$(pwd),target=/mnt $(DOCKER_IMAGE) /bin/sh -c "cd /mnt && make build"
 endif
