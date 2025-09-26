@@ -10,7 +10,7 @@ Below is a high-level checklist of the infrastructure we still need before a van
 ## Executable Loading & Process Model
 - ELF loader for user programs (at least static ELF64).
 - Per-process virtual memory layout (code/data/bss/heap/stack) and paging isolation.
-- Syscall ABI and dispatcher (context switch, user ↔ kernel transition, return path, error reporting).
+- ✅ **Syscall ABI and dispatcher** (context switch, user ↔ kernel transition, return path, error reporting) - *Basic implementation complete with exit() and write() syscalls*
 - Process lifecycle management (fork/exec or spawn semantics, signals/termination, wait/join).
 
 ## Memory Management
