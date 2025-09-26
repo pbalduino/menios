@@ -68,6 +68,7 @@ static uint64_t syscall_write_handler(syscall_frame_t* frame) {
   for(size_t i = 0; i < length; i++) {
     char ch = buffer[i];
     kputchar((int)ch);
+    serial_putchar(ch);
   }
 
   return (uint64_t)length;
