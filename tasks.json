@@ -1,63 +1,13 @@
 [
   {
-    "title": "Propagate kernel thread termination status for joins",
-    "body": "## Goal\nAllow `ktread_join` to detect when a thread has exited so callers can synchronise correctly.\n\n## Context\n`kthread_t.status` is never initialised or updated. `ktread_join` busy-waits on `THREAD_TERMINATED`, but that flag never changes, causing joins to spin forever on uninitialised memory.\n\n## Definition of Done\n- Initialise `kthread_t.status` to a running state when creating a thread.\n- Set the status to `THREAD_TERMINATED` when the entrypoint returns or `kexit` completes.\n- Ensure `ktread_join` exits once the status flips, and document/update any state transitions touched.\n- Add or update logging/tests as needed to show the status change occurs.\n",
-    "labels": [
-      "bug"
-    ],
-    "github_issue": {
-      "number": 11,
-      "url": "https://github.com/pbalduino/menios/issues/11",
-      "state": "OPEN"
-    }
-  },
-  {
-    "title": "Calibrate TSC timekeeping and initialise boot time",
-    "body": "## Goal\nProduce accurate microsecond timestamps from `unix_time_us` by initialising boot time and converting TSC ticks using a measured frequency.\n\n## Context\n`unix_time_us` currently divides raw TSC ticks by 1000 and adds `boot_time_sec`, but the frequency is never calibrated and `boot_time_sec` stays zero. Timers, scheduler accounting, and sleep logic therefore run with incorrect timings.\n\n## Definition of Done\n- Determine TSC frequency (via calibration against LAPIC/HPET/PIT or CPUID invariant data) and use it to convert cycles to real time.\n- Initialise `boot_time_sec` (e.g., from Limine boot time request) before `unix_time_us` is first called.\n- Update `ksleep`, scheduler accounting, and related code if they assume nanoseconds-per-cycle is 1.\n- Validate with logs or tests that reported durations roughly match wall-clock expectations.\n",
-    "labels": [
-      "bug"
-    ],
-    "github_issue": {
-      "number": 12,
-      "url": "https://github.com/pbalduino/menios/issues/12",
-      "state": "OPEN"
-    }
-  },
-  {
-    "title": "Fix kmalloc to get memory from the virtual memory",
-    "body": "## Goal\nIntegrate kmalloc with the virtual memory management system instead of using direct physical memory allocation.\n\n## Context\nThe current kmalloc implementation in `kmalloc.c` uses a simple heap allocator with a linked list of nodes, operating directly on physical memory addresses. The heap is initialized with a fixed address and size via `init_heap(void* addr, size_t size)` but doesn't integrate with the virtual memory manager. The existing `get_first_free_page()` function is available but not used by kmalloc.\n\n## Definition of Done\n- Modify kmalloc to allocate pages from the virtual memory manager instead of direct physical memory\n- Integrate with the existing page allocation system (`get_first_free_page()` function)\n- Implement proper virtual-to-physical address mapping for allocated memory\n- Ensure kmalloc works with the page fault handler for demand paging scenarios\n- Update heap initialization to use virtual memory addresses rather than physical addresses\n- Maintain backwards compatibility with existing kmalloc users while improving the underlying memory management\n- Verify that freed memory is properly returned to the virtual memory system",
+    "title": "Optimize screen font definition and storage",
+    "body": "## Goal\nOptimize the way the screen font is defined to replace the current huge array with a more efficient approach.\n\n## Context\nThe current screen font implementation uses a huge array to define character bitmaps, which is inefficient in terms of memory usage and maintainability. This approach makes the kernel binary larger and harder to modify or extend with different fonts.\n\n## Definition of Done\n- Analyze the current font array implementation and identify optimization opportunities\n- Research and implement more efficient font storage methods (compressed bitmaps, run-length encoding, etc.)\n- Reduce memory footprint of font data while maintaining rendering quality\n- Improve font loading and rendering performance\n- Make the system more extensible for supporting multiple font faces or sizes\n- Document the new font format and provide tools for font conversion if needed\n\n## Technical Approach\n- Consider bitmap compression techniques\n- Implement font caching mechanisms\n- Optimize memory layout for better cache performance\n- Provide abstraction layer for different font formats\n\n## Files to Modify\n- screen.c - Font rendering and display logic\n- font.h - Font data structures and definitions\n- Any font data files or arrays",
     "labels": [
       "enhancement"
     ],
     "github_issue": {
-      "number": 6,
-      "url": "https://github.com/pbalduino/menios/issues/6",
-      "state": "OPEN"
-    }
-  },
-  {
-    "title": "Publish and refresh Docker build image",
-    "body": "## Goal\nMake the `menios:trunk` Docker image reproducible for developers and CI.\n\n## Context\nLocal commands such as `docker run --rm \u2026 menios:trunk` fail because the image is missing or stale. Without a published image or documented build recipe, contributors cannot invoke `make build` inside the container.\n\n## Definition of Done\n- Provide a documented script or Make target that builds the Docker image locally.\n- Optionally publish the image (or artifact) and document how to load it.\n- Update setup instructions so macOS users know how to bootstrap Docker support.\n- Confirm `docker run --rm --platform linux/amd64 --mount type=bind,source=$(pwd),target=/mnt menios:trunk /bin/sh -c \"cd /mnt && make build\"` completes successfully.",
-    "labels": [
-      "maintenance"
-    ],
-    "status": "Backlog",
-    "github_issue": {
-      "number": 19,
-      "url": "https://github.com/pbalduino/menios/issues/19",
-      "state": "OPEN"
-    }
-  },
-  {
-    "title": "Refine kthread termination flow",
-    "body": "## Goal\nAllow kernel threads to exit cleanly once their entrypoint returns.\n\n## Context\n`kthread_execute` currently calls `kexit` and then spins forever, so even a thread that finishes continues consuming CPU and never signals the scheduler that it is done. This complicates join logic and wastes cycles.\n\n## Definition of Done\n- Remove the post-`kexit` spin in `kthread_execute`.\n- Ensure `kexit` updates the owning `kthread_t` status (in conjunction with issue #11).\n- Verify that finished threads are removed from the scheduler queue and no longer run.\n- Add tests or logging to demonstrate that the exit path triggers exactly once.",
-    "labels": [
-      "enhancement"
-    ],
-    "status": "Backlog",
-    "github_issue": {
-      "number": 20,
-      "url": "https://github.com/pbalduino/menios/issues/20",
+      "number": 24,
+      "url": "https://github.com/pbalduino/menios/issues/24",
       "state": "OPEN"
     }
   },
@@ -67,7 +17,6 @@
     "labels": [
       "enhancement"
     ],
-    "status": "Backlog",
     "github_issue": {
       "number": 22,
       "url": "https://github.com/pbalduino/menios/issues/22",
@@ -80,7 +29,6 @@
     "labels": [
       "enhancement"
     ],
-    "status": "Backlog",
     "github_issue": {
       "number": 23,
       "url": "https://github.com/pbalduino/menios/issues/23",
@@ -89,11 +37,10 @@
   },
   {
     "title": "Implement ELF loader for userland programs",
-    "body": "## Goal\nImplement an ELF loader that can load and execute user programs in userland.\n\n## Context\nPart of the Road to Doom infrastructure. We need to load static ELF64 executables from the kernel into user processes. This is fundamental for running any userland applications including Doom.\n\n## Definition of Done\n- Parse ELF64 headers and validate executable format\n- Load program segments (code, data, bss) into appropriate memory regions\n- Set up initial process memory layout with proper permissions\n- Handle entry point and initial register state for user process\n- Support static linking (dynamic linking can come later)\n- Integrate with virtual memory management system\n- Add proper error handling for malformed ELF files\n- Test with simple userland programs before attempting Doom\n\n## Dependencies\n- User/kernel space separation\n- Per-process virtual memory management\n- Syscall interface implementation",
+    "body": "## Goal\nImplement an ELF loader that can load and execute user programs in userland.\n\n## Context  \nPart of the Road to Doom infrastructure. We need to load static ELF64 executables from the kernel into user processes. This is fundamental for running any userland applications including Doom.\n\n## Definition of Done\n- Parse ELF64 headers and validate executable format\n- Load program segments (code, data, bss) into appropriate memory regions\n- Set up initial process memory layout with proper permissions\n- Handle entry point and initial register state for user process\n- Support static linking (dynamic linking can come later)\n- Integrate with virtual memory management system\n- Add proper error handling for malformed ELF files\n- Test with simple userland programs before attempting Doom\n\n## Dependencies\n- User/kernel space separation\n- Per-process virtual memory management\n- Syscall interface implementation",
     "labels": [
       "enhancement"
     ],
-    "status": "Backlog",
     "github_issue": {
       "number": 26,
       "url": "https://github.com/pbalduino/menios/issues/26",
@@ -106,12 +53,12 @@
     "labels": [
       "enhancement"
     ],
-    "status": "Backlog",
     "github_issue": {
       "number": 27,
       "url": "https://github.com/pbalduino/menios/issues/27",
       "state": "OPEN"
-    }
+    },
+    "status": "Done"
   },
   {
     "title": "Implement per-process virtual memory management",
@@ -119,7 +66,6 @@
     "labels": [
       "enhancement"
     ],
-    "status": "Backlog",
     "github_issue": {
       "number": 28,
       "url": "https://github.com/pbalduino/menios/issues/28",
@@ -132,7 +78,6 @@
     "labels": [
       "enhancement"
     ],
-    "status": "Backlog",
     "github_issue": {
       "number": 29,
       "url": "https://github.com/pbalduino/menios/issues/29",
@@ -145,7 +90,6 @@
     "labels": [
       "enhancement"
     ],
-    "status": "Backlog",
     "github_issue": {
       "number": 30,
       "url": "https://github.com/pbalduino/menios/issues/30",
@@ -158,7 +102,6 @@
     "labels": [
       "enhancement"
     ],
-    "status": "Backlog",
     "github_issue": {
       "number": 31,
       "url": "https://github.com/pbalduino/menios/issues/31",
@@ -171,7 +114,6 @@
     "labels": [
       "enhancement"
     ],
-    "status": "Backlog",
     "github_issue": {
       "number": 32,
       "url": "https://github.com/pbalduino/menios/issues/32",
@@ -184,7 +126,6 @@
     "labels": [
       "enhancement"
     ],
-    "status": "Backlog",
     "github_issue": {
       "number": 33,
       "url": "https://github.com/pbalduino/menios/issues/33",
@@ -197,7 +138,6 @@
     "labels": [
       "enhancement"
     ],
-    "status": "Backlog",
     "github_issue": {
       "number": 34,
       "url": "https://github.com/pbalduino/menios/issues/34",
@@ -210,7 +150,6 @@
     "labels": [
       "enhancement"
     ],
-    "status": "Backlog",
     "github_issue": {
       "number": 35,
       "url": "https://github.com/pbalduino/menios/issues/35",
@@ -223,7 +162,6 @@
     "labels": [
       "enhancement"
     ],
-    "status": "Backlog",
     "github_issue": {
       "number": 36,
       "url": "https://github.com/pbalduino/menios/issues/36",
@@ -236,7 +174,6 @@
     "labels": [
       "enhancement"
     ],
-    "status": "Backlog",
     "github_issue": {
       "number": 37,
       "url": "https://github.com/pbalduino/menios/issues/37",
@@ -245,11 +182,10 @@
   },
   {
     "title": "Implement spinlock synchronization primitive",
-    "body": "## Goal\nImplement spinlocks for low-level kernel synchronization in performance-critical sections.\n\n## Context\nSpinlocks are essential for protecting short critical sections where the overhead of sleeping would be greater than busy-waiting. They're particularly important for SMP systems and interrupt handlers.\n\n## Definition of Done\n- **Core functionality**: Implement spinlock_init(), spinlock_lock(), spinlock_unlock()\n- **Atomic operations**: Use CPU atomic instructions for lock/unlock operations\n- **Interrupt safety**: Support for spinlock_irq_save/restore() for interrupt contexts\n- **Try operations**: Implement spinlock_trylock() for non-blocking attempts\n- **Debug support**: Add lock tracking and validation in debug builds\n- **Performance**: Minimal overhead, optimized for short critical sections\n- **Architecture support**: Proper implementation for x86-64 with appropriate barriers\n\n## Use Cases\n- Protecting shared data structures in interrupt handlers\n- SMP-safe critical sections\n- Low-level kernel data structure protection\n- Performance-critical synchronization where sleeping is not acceptable\n- Building blocks for other synchronization primitives",
+    "body": "## Goal\nImplement spinlocks for low-level kernel synchronization in performance-critical sections.\n\n## Context\nSpinlocks are essential for protecting short critical sections where the overhead of sleeping would be greater than busy-waiting. They're particularly important for SMP systems and interrupt handlers.\n\n## Definition of Done\n- **Core functionality**: Implement spinlock_init(), spinlock_lock(), spinlock_unlock()\n- **Atomic operations**: Use CPU atomic instructions for lock/unlock operations\n- **Interrupt safety**: Support for spinlock_irq_save/restore() for interrupt contexts\n- **Try operations**: Implement spinlock_trylock() for non-blocking attempts\n- **Debug support**: Add lock tracking and validation in debug builds\n- **Performance**: Minimal overhead, optimized for short critical sections\n- **Architecture support**: Proper implementation for x86-64 with appropriate barriers\n\n## API Design\n- spinlock_t data structure\n- spinlock_init() - Initialize spinlock\n- spinlock_lock() - Acquire spinlock (busy wait)\n- spinlock_unlock() - Release spinlock\n- spinlock_trylock() - Non-blocking lock attempt\n- spinlock_lock_irqsave() - Lock with interrupt disable\n- spinlock_unlock_irqrestore() - Unlock with interrupt restore\n\n## Use Cases\n- Protecting shared data structures in interrupt handlers\n- SMP-safe critical sections\n- Low-level kernel data structure protection\n- Performance-critical synchronization where sleeping is not acceptable\n- Building blocks for other synchronization primitives",
     "labels": [
       "enhancement"
     ],
-    "status": "Backlog",
     "github_issue": {
       "number": 38,
       "url": "https://github.com/pbalduino/menios/issues/38",
@@ -258,11 +194,10 @@
   },
   {
     "title": "Implement read-write locks (rwlock)",
-    "body": "## Goal\nImplement read-write locks to allow concurrent read access while maintaining exclusive write access.\n\n## Context\nRead-write locks are crucial for scenarios where data is frequently read but infrequently modified. They allow multiple readers to access shared data concurrently while ensuring exclusive access for writers.\n\n## Definition of Done\n- **Core functionality**: Implement rwlock_init(), rwlock_read_lock(), rwlock_write_lock(), rwlock_unlock()\n- **Reader priority**: Allow multiple concurrent readers\n- **Writer exclusivity**: Ensure writers have exclusive access\n- **Fairness**: Prevent writer starvation when many readers are present\n- **Try operations**: Implement rwlock_try_read_lock() and rwlock_try_write_lock()\n- **Timeout support**: Add timeout versions for non-blocking operations\n- **Upgrade/downgrade**: Support for upgrading read locks to write locks (optional)\n- **Debug support**: Lock tracking and validation in debug builds\n\n## Use Cases\n- Shared data structures with frequent reads, infrequent writes\n- Cache implementations\n- Configuration data protection\n- File system metadata\n- Network routing tables\n- Database-like operations in kernel",
+    "body": "## Goal\nImplement read-write locks to allow concurrent read access while maintaining exclusive write access.\n\n## Context\nRead-write locks are crucial for scenarios where data is frequently read but infrequently modified. They allow multiple readers to access shared data concurrently while ensuring exclusive access for writers.\n\n## Definition of Done\n- **Core functionality**: Implement rwlock_init(), rwlock_read_lock(), rwlock_write_lock(), rwlock_unlock()\n- **Reader priority**: Allow multiple concurrent readers\n- **Writer exclusivity**: Ensure writers have exclusive access\n- **Fairness**: Prevent writer starvation when many readers are present\n- **Try operations**: Implement rwlock_try_read_lock() and rwlock_try_write_lock()\n- **Timeout support**: Add timeout versions for non-blocking operations\n- **Upgrade/downgrade**: Support for upgrading read locks to write locks (optional)\n- **Debug support**: Lock tracking and validation in debug builds\n\n## API Design\n- rwlock_t data structure\n- rwlock_init() - Initialize read-write lock\n- rwlock_read_lock() - Acquire read lock (shared)\n- rwlock_write_lock() - Acquire write lock (exclusive)\n- rwlock_unlock() - Release lock (read or write)\n- rwlock_try_read_lock() - Non-blocking read lock attempt\n- rwlock_try_write_lock() - Non-blocking write lock attempt\n\n## Use Cases\n- Shared data structures with frequent reads, infrequent writes\n- Cache implementations\n- Configuration data protection\n- File system metadata\n- Network routing tables\n- Database-like operations in kernel",
     "labels": [
       "enhancement"
     ],
-    "status": "Backlog",
     "github_issue": {
       "number": 39,
       "url": "https://github.com/pbalduino/menios/issues/39",
@@ -271,11 +206,10 @@
   },
   {
     "title": "Implement condition variables",
-    "body": "## Goal\nImplement condition variables for thread coordination and event-driven synchronization.\n\n## Context\nCondition variables are essential for implementing wait/notify patterns where threads need to wait for specific conditions to become true. They work in conjunction with mutexes to provide efficient blocking and signaling mechanisms.\n\n## Definition of Done\n- **Core functionality**: Implement kcond_init(), kcond_wait(), kcond_signal(), kcond_broadcast()\n- **Mutex integration**: Work seamlessly with kmutex for atomic condition checking\n- **Spurious wakeup handling**: Proper semantics for condition variable waits\n- **Timeout support**: Add kcond_wait_timeout() for bounded waiting\n- **Signal semantics**: Both single-thread signal and broadcast to all waiters\n- **Error handling**: Proper error codes and validation\n- **Performance**: Efficient implementation with minimal overhead\n\n## Use Cases\n- Producer-consumer patterns\n- Thread pool work queue management\n- Event notification systems\n- Implementing barriers and rendezvous\n- Resource availability notifications\n- Complex synchronization patterns requiring state-based waiting",
+    "body": "## Goal\nImplement condition variables for thread coordination and event-driven synchronization.\n\n## Context\nCondition variables are essential for implementing wait/notify patterns where threads need to wait for specific conditions to become true. They work in conjunction with mutexes to provide efficient blocking and signaling mechanisms.\n\n## Definition of Done\n- **Core functionality**: Implement kcond_init(), kcond_wait(), kcond_signal(), kcond_broadcast()\n- **Mutex integration**: Work seamlessly with kmutex for atomic condition checking\n- **Spurious wakeup handling**: Proper semantics for condition variable waits\n- **Timeout support**: Add kcond_wait_timeout() for bounded waiting\n- **Signal semantics**: Both single-thread signal and broadcast to all waiters\n- **Error handling**: Proper error codes and validation\n- **Performance**: Efficient implementation with minimal overhead\n\n## API Design\n- kcond_t data structure\n- kcond_init() - Initialize condition variable\n- kcond_wait() - Wait for condition (releases mutex, reacquires on wakeup)\n- kcond_wait_timeout() - Wait with timeout\n- kcond_signal() - Wake up one waiting thread\n- kcond_broadcast() - Wake up all waiting threads\n- kcond_destroy() - Clean up condition variable\n\n## Use Cases\n- Producer-consumer patterns\n- Thread pool work queue management\n- Event notification systems\n- Implementing barriers and rendezvous\n- Resource availability notifications\n- Complex synchronization patterns requiring state-based waiting",
     "labels": [
       "enhancement"
     ],
-    "status": "Backlog",
     "github_issue": {
       "number": 40,
       "url": "https://github.com/pbalduino/menios/issues/40",
@@ -284,11 +218,10 @@
   },
   {
     "title": "Implement atomic operations and memory barriers",
-    "body": "## Goal\nImplement atomic operations and memory barriers for lock-free programming and low-level synchronization.\n\n## Context\nAtomic operations are fundamental building blocks for implementing lock-free data structures and other synchronization primitives. They provide guaranteed atomic read-modify-write operations without requiring locks.\n\n## Definition of Done\n- **Basic atomic types**: Support for atomic integers (32-bit and 64-bit)\n- **Atomic operations**: Load, store, exchange, compare-and-swap, fetch-and-add, etc.\n- **Memory ordering**: Support for different memory ordering semantics (relaxed, acquire, release, seq_cst)\n- **Memory barriers**: Implement compiler and CPU memory barriers\n- **Architecture optimization**: Use CPU-specific atomic instructions on x86-64\n- **Lock-free helpers**: Provide building blocks for lock-free data structures\n- **Documentation**: Comprehensive documentation on usage and memory ordering\n\n## Use Cases\n- Lock-free data structures (queues, stacks, lists)\n- Reference counting\n- Building other synchronization primitives\n- High-performance inter-thread communication\n- Statistics and counters\n- Flag-based synchronization",
+    "body": "## Goal\nImplement atomic operations and memory barriers for lock-free programming and low-level synchronization.\n\n## Context\nAtomic operations are fundamental building blocks for implementing lock-free data structures and other synchronization primitives. They provide guaranteed atomic read-modify-write operations without requiring locks.\n\n## Definition of Done\n- **Basic atomic types**: Support for atomic integers (32-bit and 64-bit)\n- **Atomic operations**: Load, store, exchange, compare-and-swap, fetch-and-add, etc.\n- **Memory ordering**: Support for different memory ordering semantics (relaxed, acquire, release, seq_cst)\n- **Memory barriers**: Implement compiler and CPU memory barriers\n- **Architecture optimization**: Use CPU-specific atomic instructions on x86-64\n- **Lock-free helpers**: Provide building blocks for lock-free data structures\n- **Documentation**: Comprehensive documentation on usage and memory ordering\n\n## API Design\n- atomic32_t and atomic64_t types\n- atomic_load() / atomic_store()\n- atomic_exchange()\n- atomic_compare_exchange()\n- atomic_fetch_add() / atomic_fetch_sub()\n- atomic_fetch_and() / atomic_fetch_or() / atomic_fetch_xor()\n- Memory barriers: memory_barrier(), read_barrier(), write_barrier()\n- CPU-specific barriers: smp_mb(), smp_rmb(), smp_wmb()\n\n## Use Cases\n- Lock-free data structures (queues, stacks, lists)\n- Reference counting\n- Building other synchronization primitives\n- High-performance inter-thread communication\n- Statistics and counters\n- Flag-based synchronization",
     "labels": [
       "enhancement"
     ],
-    "status": "Backlog",
     "github_issue": {
       "number": 41,
       "url": "https://github.com/pbalduino/menios/issues/41",
@@ -297,11 +230,10 @@
   },
   {
     "title": "Enable SMP (Symmetric Multiprocessing) support",
-    "body": "## Goal\nAdd support for multiple CPU cores to enable true multiprocessing capabilities in meniOS.\n\n## Context\nCurrently meniOS runs on a single CPU core. Adding SMP support will enable the kernel to utilize multiple cores, improving performance and enabling true parallel processing. This is essential for modern systems and will be important for running complex applications like Doom with better performance.\n\n## Definition of Done\n- **CPU Detection**: Detect and enumerate available CPU cores using ACPI tables\n- **AP Initialization**: Boot and initialize Application Processors (non-boot CPUs)\n- **Per-CPU Data**: Implement per-CPU data structures and variables\n- **SMP-Safe Synchronization**: Ensure all kernel data structures are SMP-safe\n- **SMP Scheduler**: Extend scheduler to distribute tasks across multiple CPUs\n- **Load Balancing**: Basic load balancing between CPU cores\n- **CPU Affinity**: Support for binding processes/threads to specific CPUs\n- **SMP-Safe Memory Management**: Make memory allocators and VM system SMP-safe\n\n## Key Components to Implement\n- **ACPI Parsing**: Parse MADT (Multiple APIC Description Table) to find CPU cores\n- **APIC Configuration**: Set up Local APIC and I/O APIC for inter-processor communication\n- **AP Boot Protocol**: Implement CPU startup sequence for secondary cores\n- **Spinlocks**: Implement proper spinlocks for SMP synchronization (depends on issue #38)\n- **Per-CPU Variables**: Implement __percpu data and accessor functions\n- **SMP-Safe Primitives**: Update all shared data structures with proper locking\n- **CPU Hotplug**: Basic support for CPU online/offline operations (optional)\n\n## Technical Challenges\n- **Bootstrap Process**: Complex CPU initialization sequence\n- **Memory Barriers**: Proper memory ordering between CPUs\n- **Race Conditions**: Identify and fix all potential race conditions in kernel\n- **Cache Coherency**: Handle CPU cache synchronization issues\n- **Interrupt Distribution**: Distribute interrupts across multiple CPUs\n- **Atomic Operations**: Hardware-specific atomic instructions (see issue #41)\n\n## Dependencies\n- Issue #38: Spinlock implementation (critical for SMP)\n- Issue #41: Atomic operations and memory barriers\n- Improved synchronization primitives for SMP-safe operations",
+    "body": "## Goal\nAdd support for multiple CPU cores to enable true multiprocessing capabilities in meniOS.\n\n## Context\nCurrently meniOS runs on a single CPU core. Adding SMP support will enable the kernel to utilize multiple cores, improving performance and enabling true parallel processing. This is essential for modern systems and will be important for running complex applications like Doom with better performance.\n\n## Definition of Done\n- **CPU Detection**: Detect and enumerate available CPU cores using ACPI tables\n- **AP Initialization**: Boot and initialize Application Processors (non-boot CPUs)\n- **Per-CPU Data**: Implement per-CPU data structures and variables\n- **SMP-Safe Synchronization**: Ensure all kernel data structures are SMP-safe\n- **SMP Scheduler**: Extend scheduler to distribute tasks across multiple CPUs\n- **Load Balancing**: Basic load balancing between CPU cores\n- **CPU Affinity**: Support for binding processes/threads to specific CPUs\n- **SMP-Safe Memory Management**: Make memory allocators and VM system SMP-safe\n\n## Key Components to Implement\n- **ACPI Parsing**: Parse MADT (Multiple APIC Description Table) to find CPU cores\n- **APIC Configuration**: Set up Local APIC and I/O APIC for inter-processor communication\n- **AP Boot Protocol**: Implement CPU startup sequence for secondary cores\n- **Spinlocks**: Implement proper spinlocks for SMP synchronization (depends on issue #38)\n- **Per-CPU Variables**: Implement __percpu data and accessor functions\n- **SMP-Safe Primitives**: Update all shared data structures with proper locking\n- **CPU Hotplug**: Basic support for CPU online/offline operations (optional)\n\n## Technical Challenges\n- **Bootstrap Process**: Complex CPU initialization sequence\n- **Memory Barriers**: Proper memory ordering between CPUs\n- **Race Conditions**: Identify and fix all potential race conditions in kernel\n- **Cache Coherency**: Handle CPU cache synchronization issues\n- **Interrupt Distribution**: Distribute interrupts across multiple CPUs\n- **Atomic Operations**: Hardware-specific atomic instructions (see issue #41)\n\n## Dependencies\n- Issue #38: Spinlock implementation (critical for SMP)\n- Issue #41: Atomic operations and memory barriers\n- Improved synchronization primitives for SMP-safe operations\n\n## Testing Strategy\n- Start with 2-CPU system, expand to 4+ cores\n- Stress testing with concurrent operations\n- Verify proper load distribution across cores\n- Test interrupt handling on multiple CPUs\n- Validate memory consistency across cores\n\n## Performance Benefits\n- Parallel execution of kernel threads\n- Better responsiveness under load\n- Improved performance for multi-threaded applications\n- Foundation for userland multi-threading support\n- Better utilization of modern hardware",
     "labels": [
       "enhancement"
     ],
-    "status": "Backlog",
     "github_issue": {
       "number": 42,
       "url": "https://github.com/pbalduino/menios/issues/42",
@@ -310,11 +242,10 @@
   },
   {
     "title": "Implement user/kernel memory protection",
-    "body": "## Goal\nSet up memory protection to isolate kernel memory from user processes and enable safe user mode execution.\n\n## Context\nCurrently all memory is accessible from any privilege level. For userland support, we need to protect kernel memory from user access while allowing controlled access to user memory.\n\n## Definition of Done\n- **Kernel memory protection**: Mark kernel pages as supervisor-only (CPL 0-2 only)\n- **User memory regions**: Create user-accessible memory regions with proper permissions\n- **Page table updates**: Modify page table creation to set User/Supervisor bits\n- **Memory layout**: Define clear kernel/user memory layout boundaries\n- **Access validation**: Test that privilege violations properly generate page faults\n\n## Files to Modify\n- vmm.c - Virtual memory management updates\n- pmm.c - Physical memory allocation updates\n- page_fault handler - Handle privilege violations\n- Memory layout headers\n\n## Dependencies\n- Existing virtual memory management system\n- Page fault handler improvements\n\n## Time Estimate\n1-2 weeks",
+    "body": "## Goal\nSet up memory protection to isolate kernel memory from user processes and enable safe user mode execution.\n\n## Context\nCurrently all memory is accessible from any privilege level. For userland support, we need to protect kernel memory from user access while allowing controlled access to user memory.\n\n## Definition of Done\n- **Kernel memory protection**: Mark kernel pages as supervisor-only (CPL 0-2 only)\n- **User memory regions**: Create user-accessible memory regions with proper permissions\n- **Page table updates**: Modify page table creation to set User/Supervisor bits\n- **Memory layout**: Define clear kernel/user memory layout boundaries\n- **Access validation**: Test that privilege violations properly generate page faults\n\n## Implementation Details\n- Update page table entry creation to include User/Supervisor bit\n- Modify memory allocation to support user/kernel memory flags\n- Create functions for allocating user-accessible pages\n- Set up proper memory layout (kernel high, user low)\n- Implement page fault handling for privilege violations\n\n## Files to Modify\n- vmm.c - Virtual memory management updates\n- pmm.c - Physical memory allocation updates  \n- page_fault handler - Handle privilege violations\n- Memory layout headers\n\n## Testing Strategy\n- Verify kernel memory is inaccessible from Ring 3\n- Test user memory is accessible from both Ring 0 and Ring 3\n- Validate page faults occur on privilege violations\n- Check memory layout is correctly established\n\n## Dependencies\n- Existing virtual memory management system\n- Page fault handler improvements\n\n## Time Estimate\n1-2 weeks",
     "labels": [
       "enhancement"
     ],
-    "status": "Backlog",
     "github_issue": {
       "number": 45,
       "url": "https://github.com/pbalduino/menios/issues/45",
@@ -323,11 +254,10 @@
   },
   {
     "title": "Create basic user mode test program",
-    "body": "## Goal\nImplement a minimal test program that can execute in user mode to validate the Ring 0/Ring 3 infrastructure.\n\n## Context\nOnce we have user/kernel separation working, we need a simple test program to verify everything works correctly. This will be our first userland program.\n\n## Definition of Done\n- **Simple user function**: Create a basic user mode function that can execute\n- **Kernel integration**: Load and execute the user function from kernel\n- **Success validation**: Verify the program runs and returns successfully\n- **Debug output**: Add logging to track execution flow\n- **Error handling**: Handle any faults that occur during execution\n\n## Files to Create/Modify\n- user_test.c - Test program implementation\n- user_loader.c - Kernel-side user program launcher\n- Integration with existing boot/init code\n\n## Dependencies\n- Issue #43: GDT user segments\n- Issue #44: TSS implementation\n- Issue #45: Memory protection\n- Issue #46: Ring transitions\n\n## Time Estimate\n3-5 days",
+    "body": "## Goal\nImplement a minimal test program that can execute in user mode to validate the Ring 0/Ring 3 infrastructure.\n\n## Context\nOnce we have user/kernel separation working, we need a simple test program to verify everything works correctly. This will be our first userland program.\n\n## Definition of Done\n- **Simple user function**: Create a basic user mode function that can execute\n- **Kernel integration**: Load and execute the user function from kernel\n- **Success validation**: Verify the program runs and returns successfully  \n- **Debug output**: Add logging to track execution flow\n- **Error handling**: Handle any faults that occur during execution\n\n## Implementation Details\n- Create a simple C function for user mode execution\n- Integrate with Ring transition mechanism\n- Add kernel-side code to launch user program\n- Implement basic success/failure detection\n- Add comprehensive logging for debugging\n\n## Files to Create/Modify\n- user_test.c - Test program implementation\n- user_loader.c - Kernel-side user program launcher\n- Integration with existing boot/init code\n\n## Success Criteria\n- User function executes without crashing\n- Return value is properly received by kernel\n- No privilege violations or unexpected faults\n- Clean transition back to kernel mode\n\n## Dependencies\n- Issue #43: GDT user segments\n- Issue #44: TSS implementation\n- Issue #45: Memory protection  \n- Issue #46: Ring transitions\n\n## Time Estimate\n3-5 days",
     "labels": [
       "enhancement"
     ],
-    "status": "Backlog",
     "github_issue": {
       "number": 47,
       "url": "https://github.com/pbalduino/menios/issues/47",
@@ -336,67 +266,15 @@
   },
   {
     "title": "Implement basic syscall interface (exit and write)",
-    "body": "## Goal\nCreate a minimal system call interface with just exit() and write() syscalls to enable basic user-kernel communication.\n\n## Context\nOnce user mode is working, we need a way for user programs to request kernel services. Starting with just exit() and write() provides the foundation and allows testing/debugging of user programs.\n\n## Definition of Done\n- **Syscall entry point**: Set up INT 0x80 or SYSCALL instruction handling\n- **Syscall dispatcher**: Route syscall numbers to appropriate handlers\n- **exit() syscall**: Allow user programs to terminate cleanly\n- **write() syscall**: Basic output capability for debugging user programs\n- **Parameter passing**: Implement syscall parameter passing via registers\n- **Return values**: Proper return value mechanism\n- **Error handling**: Basic error reporting for invalid syscalls\n\n## Syscall Interface Design\n- SYS_EXIT: exit(int status) - terminate process\n- SYS_WRITE: write(int fd, const char* buf, size_t count) - write to console\n\n## Dependencies\n- Issue #47: Basic user mode test (need working user mode first)\n- Interrupt handling system\n\n## Time Estimate\n1 week",
+    "body": "## Goal\nCreate a minimal system call interface with just exit() and write() syscalls to enable basic user-kernel communication.\n\n## Context\nOnce user mode is working, we need a way for user programs to request kernel services. Starting with just exit() and write() provides the foundation and allows testing/debugging of user programs.\n\n## Definition of Done\n- **Syscall entry point**: Set up INT 0x80 or SYSCALL instruction handling\n- **Syscall dispatcher**: Route syscall numbers to appropriate handlers\n- **exit() syscall**: Allow user programs to terminate cleanly\n- **write() syscall**: Basic output capability for debugging user programs\n- **Parameter passing**: Implement syscall parameter passing via registers\n- **Return values**: Proper return value mechanism\n- **Error handling**: Basic error reporting for invalid syscalls\n\n## Implementation Details\n- Define syscall numbers (SYS_EXIT=1, SYS_WRITE=2)\n- Create interrupt handler for syscall entry\n- Implement parameter extraction from registers\n- Add syscall handler functions\n- Ensure proper privilege validation\n\n## Syscall Interface Design\n- SYS_EXIT: exit(int status) - terminate process\n- SYS_WRITE: write(int fd, const char* buf, size_t count) - write to console\n\n## Files to Create\n- syscall.h - Syscall number definitions\n- syscall.c - Syscall dispatcher and handlers  \n- syscall_entry.s - Assembly syscall entry point\n- Integration with interrupt handling\n\n## Dependencies\n- Issue #47: Basic user mode test (need working user mode first)\n- Interrupt handling system\n\n## Time Estimate\n1 week",
     "labels": [
       "enhancement"
     ],
-    "status": "Backlog",
     "github_issue": {
       "number": 48,
       "url": "https://github.com/pbalduino/menios/issues/48",
       "state": "OPEN"
-    }
-  },
-  {
-    "title": "Implement syscall dispatcher and entry path",
-    "body": "## Goal\nCreate the core syscall infrastructure so user code can trap into the kernel using INT 0x80 (or SYSCALL).\n\n## Definition of Done\n- Install INT 0x80 handler (or SYSCALL/SYSRET path) that switches to kernel mode.\n- Implement syscall_table[] with at least entries for SYS_WRITE (1) and SYS_EXIT (60).\n- Provide a syscall dispatcher that validates numbers and invokes handlers.\n- Ensure the dispatcher returns to user mode with correct registers/errno semantics.\n- Document ABI: register usage, return values, error reporting.\n\n## Dependencies\n- Ring 3 entry path and TSS setup (done).\n",
-    "labels": [
-      "enhancement"
-    ],
-    "status": "Done",
-    "github_issue": {
-      "number": 52,
-      "url": "https://github.com/pbalduino/menios/issues/52",
-      "state": "OPEN"
-    }
-  },
-  {
-    "title": "Implement SYS_WRITE (1) syscall",
-    "body": "## Goal\nAllow user processes to write to stdout/stderr using syscall number 1.\n\n## Definition of Done\n- Add handler for SYS_WRITE that copies data from user memory and prints to the kernel console.\n- Support file descriptor 1 (stdout) initially; stub or reject others.\n- Handle partial writes and error reporting (return bytes written or negative errno).\n- Validate user buffers (length, accessibility) to avoid kernel faults.\n- Provide simple user-mode stub or demo showing a message printed from Ring 3.\n\n## Dependencies\n- Syscall dispatcher infrastructure.",
-    "labels": [
-      "enhancement"
-    ],
-    "status": "Done",
-    "github_issue": {
-      "number": 50,
-      "url": "https://github.com/pbalduino/menios/issues/50",
-      "state": "OPEN"
-    }
-  },
-  {
-    "title": "Implement SYS_EXIT (60) syscall",
-    "body": "## Goal\nAllow user processes to terminate cleanly using syscall number 60.\n\n## Definition of Done\n- Add handler for SYS_EXIT that marks the current process as terminated and triggers scheduler cleanup.\n- Ensure the kernel removes the process from run queues and frees resources.\n- Return control to the scheduler so other tasks keep running.\n- Provide a simple user-mode demo that exits with a status code.\n\n## Dependencies\n- Syscall dispatcher infrastructure.",
-    "labels": [
-      "enhancement"
-    ],
-    "status": "Done",
-    "github_issue": {
-      "number": 51,
-      "url": "https://github.com/pbalduino/menios/issues/51",
-      "state": "OPEN"
-    }
-  },
-  {
-    "title": "Launch Ring 3 demo process",
-    "body": "## Goal\nAutomatically create a user-mode process that exercises the syscall path during boot.\n\n## Definition of Done\n- Create a user-mode process via scheduler that prints using SYS_WRITE (1).\n- Ensure the process exits cleanly via SYS_EXIT (60).\n- Confirm the scheduler frees its resources without faults.\n\n## Status\n- Implemented via user_demo_launch().",
-    "labels": [
-      "enhancement"
-    ],
-    "status": "Done",
-    "github_issue": {
-      "number": 51,
-      "url": "https://github.com/pbalduino/menios/issues/51",
-      "state": "OPEN"
-    }
+    },
+    "status": "Done"
   }
 ]
