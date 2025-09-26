@@ -42,6 +42,12 @@ extern "C" {
 
 #define PROC_STACK_SIZE (16 * 1024)
 #define PROC_USER_STACK_SIZE (16 * 1024)
+#define PROC_MAX_USER_SEGMENTS 16
+
+typedef struct proc_user_segment_t {
+  phys_addr_t phys;
+  size_t      pages;
+} proc_user_segment_t;
 
 typedef struct cpu_state_t {
   uint64_t r15;
@@ -91,15 +97,12 @@ typedef struct proc_info_t {
   cpu_state_t* cpu_state;
   void*        stack_pointer;
   uintptr_t*   stack_base;
-  phys_addr_t  user_stack_phys;
-  size_t       user_stack_pages;
   virt_addr_t  user_stack_base_vaddr;
   size_t       user_stack_size;
-  phys_addr_t  user_code_phys;
-  size_t       user_code_pages;
-  virt_addr_t  user_code_vaddr;
   bool         user_mode;
   phys_addr_t  address_space_root;
+  proc_user_segment_t user_segments[PROC_MAX_USER_SEGMENTS];
+  size_t       user_segment_count;
   void(*entrypoint)(void*);
   void*        arguments;
 } proc_info_t;
@@ -115,6 +118,7 @@ void proc_execute(proc_info_p proc);
 void proc_exit(int code);
 void proc_switch(void* state);
 void proc_create_user(proc_info_p proc, const char* name, const void* code_blob, size_t code_size, void* arg);
+bool proc_register_user_segment(proc_info_p proc, phys_addr_t phys, size_t pages);
 
 #ifdef __cplusplus
 }

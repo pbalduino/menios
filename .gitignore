@@ -12,5 +12,8 @@
 bochsout.txt
 core
 usermode
+!src/usermode/
+!src/usermode/*
+!src/usermode/
 .zig-cache/
 zig-out/

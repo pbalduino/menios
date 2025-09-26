@@ -6,8 +6,8 @@
 #include <kernel/proc.h>
 #include <kernel/serial.h>
 
-extern const uint8_t user_demo_stub_start[];
-extern const uint8_t user_demo_stub_end[];
+extern const uint8_t user_demo_elf_start[];
+extern const uint8_t user_demo_elf_end[];
 
 void user_demo_launch(void) {
   proc_info_p proc = kmalloc(sizeof(proc_info_t));
@@ -17,7 +17,7 @@ void user_demo_launch(void) {
   }
   memset(proc, 0, sizeof(proc_info_t));
 
-  size_t code_size = (size_t)(user_demo_stub_end - user_demo_stub_start);
+  size_t code_size = (size_t)(user_demo_elf_end - user_demo_elf_start);
   if(code_size == 0) {
     serial_printf("user_demo_launch: stub size is zero\n");
     kfree(proc);
@@ -25,6 +25,6 @@ void user_demo_launch(void) {
   }
 
   serial_printf("user_demo_launch: scheduling user demo process\n");
-  proc_create_user(proc, "user_demo", user_demo_stub_start, code_size, NULL);
+  proc_create_user(proc, "user_demo", user_demo_elf_start, code_size, NULL);
   proc_execute(proc);
 }

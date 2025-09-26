@@ -118,12 +118,10 @@ void proc_switch(void* arg) {
 
     // Free resources of the terminated process
     kfree(next->stack_pointer);
-    if(next->user_stack_phys && next->user_stack_pages) {
-      pmm_free_pages(next->user_stack_phys, next->user_stack_pages);
+    for(size_t seg = 0; seg < next->user_segment_count; seg++) {
+      pmm_free_pages(next->user_segments[seg].phys, next->user_segments[seg].pages);
     }
-    if(next->user_code_phys && next->user_code_pages) {
-      pmm_free_pages(next->user_code_phys, next->user_code_pages);
-    }
+    next->user_segment_count = 0;
     if(next->address_space_root && next->address_space_root != pmm_get_kernel_cr3()) {
       pmm_free_pages(next->address_space_root, 1);
     }
@@ -188,13 +186,8 @@ void proc_create(proc_info_p proc, const char* name, void (*entrypoint)(void *),
   proc->entrypoint = entrypoint;
   proc->arguments = arg;
   proc->user_mode = false;
-  proc->user_stack_phys = 0;
-  proc->user_stack_pages = 0;
   proc->user_stack_base_vaddr = 0;
   proc->user_stack_size = 0;
-  proc->user_code_phys = 0;
-  proc->user_code_pages = 0;
-  proc->user_code_vaddr = 0;
 
   proc->cpu_state = kmalloc(sizeof(cpu_state_t));
   if(proc->cpu_state == NULL) {
@@ -211,6 +204,7 @@ void proc_create(proc_info_p proc, const char* name, void (*entrypoint)(void *),
   proc->cpu_state->cs = KERNEL_CODE_SEGMENT;
   proc->cpu_state->ss = KERNEL_DATA_SEGMENT;
   proc->address_space_root = pmm_get_kernel_cr3();
+  proc->user_segment_count = 0;
 }
 
 static inline virt_addr_t user_code_base(uint32_t pid) {
@@ -225,6 +219,23 @@ static inline virt_addr_t user_stack_top(uint32_t pid) {
   return base + (stride * pid);
 }
 
+static bool proc_register_user_segment_internal(proc_info_p proc, phys_addr_t phys, size_t pages) {
+  if(pages == 0 || phys == 0) {
+    return false;
+  }
+  if(proc->user_segment_count >= PROC_MAX_USER_SEGMENTS) {
+    return false;
+  }
+  proc->user_segments[proc->user_segment_count].phys = phys;
+  proc->user_segments[proc->user_segment_count].pages = pages;
+  proc->user_segment_count++;
+  return true;
+}
+
+bool proc_register_user_segment(proc_info_p proc, phys_addr_t phys, size_t pages) {
+  return proc_register_user_segment_internal(proc, phys, pages);
+}
+
 void proc_create_user(proc_info_p proc, const char* name, const void* code_blob, size_t code_size, void* arg) {
   proc_create(proc, name, NULL, arg);
 
@@ -236,8 +247,6 @@ void proc_create_user(proc_info_p proc, const char* name, const void* code_blob,
   }
 
   const size_t stack_pages = PROC_USER_STACK_SIZE / PAGE_SIZE;
-  const size_t code_pages = (code_size + PAGE_SIZE - 1) / PAGE_SIZE;
-
   phys_addr_t new_root = pmm_clone_kernel_address_space();
   if(new_root == 0) {
     serial_printf("proc_create_user: failed to clone kernel address space\n");
@@ -250,13 +259,6 @@ void proc_create_user(proc_info_p proc, const char* name, const void* code_blob,
     halt();
   }
 
-  phys_addr_t code_phys = pmm_alloc_pages(code_pages);
-  if(code_phys == 0) {
-    serial_printf("proc_create_user: failed to allocate physical pages for user code\n");
-    halt();
-  }
-
-  virt_addr_t code_vaddr = user_code_base(proc->pid);
   virt_addr_t stack_top = user_stack_top(proc->pid);
   virt_addr_t stack_base_vaddr = stack_top - PROC_USER_STACK_SIZE;
 
@@ -270,32 +272,22 @@ void proc_create_user(proc_info_p proc, const char* name, const void* code_blob,
     }
   }
 
-  const uint8_t* code_src = (const uint8_t*)code_blob;
-  for(size_t i = 0; i < code_pages; i++) {
-    phys_addr_t phys = code_phys + (i * PAGE_SIZE);
-    void* page_ptr = (void*)physical_to_virtual(phys);
-    memset(page_ptr, 0, PAGE_SIZE);
-    size_t offset = i * PAGE_SIZE;
-    size_t remaining = code_size - offset;
-    size_t copy_len = remaining < PAGE_SIZE ? remaining : PAGE_SIZE;
-    memcpy(page_ptr, code_src + offset, copy_len);
-
-    if(!pmm_map_page_in_root(new_root, code_vaddr + offset, phys, false, true)) {
-      serial_printf("proc_create_user: failed to map user code page %zu\n", i);
-      halt();
-    }
-  }
-
-  proc->user_stack_phys = stack_phys;
-  proc->user_stack_pages = stack_pages;
   proc->user_stack_base_vaddr = stack_base_vaddr;
   proc->user_stack_size = PROC_USER_STACK_SIZE;
-  proc->user_code_phys = code_phys;
-  proc->user_code_pages = code_pages;
-  proc->user_code_vaddr = code_vaddr;
   proc->address_space_root = new_root;
 
-  proc->cpu_state->rip = code_vaddr;
+  if(!proc_register_user_segment(proc, stack_phys, stack_pages)) {
+    serial_printf("proc_create_user: too many user segments\n");
+    halt();
+  }
+
+  uint64_t entry = 0;
+  if(!elf64_load_image(proc, new_root, code_blob, code_size, &entry)) {
+    serial_printf("proc_create_user: ELF loading failed for process %s\n", name);
+    halt();
+  }
+
+  proc->cpu_state->rip = entry;
   proc->cpu_state->rdi = (uint64_t)arg;
   proc->cpu_state->rsp = stack_top;
   proc->cpu_state->rbp = stack_top;

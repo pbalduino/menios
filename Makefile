@@ -29,6 +29,9 @@ UACPI_SRC = $(shell find -L vendor/uacpi -type f -name '*.c')
 UACPI_OBJS := $(patsubst %.c, %.o, $(UACPI_SRC))
 
 OBJS = $(KERNEL_OBJS) $(KERNEL_ASM_OBJS) $(UACPI_OBJS)
+USER_ELF = obj/usermode/user_demo.elf
+USER_ELF_OBJ = obj/kernel/user_demo_elf.o
+OBJS += $(USER_ELF_OBJ)
 
 override CFLAGS += \
     -Wall \
@@ -83,6 +86,7 @@ GCC_KERNEL_OPTS = \
 GCC = $(GCC_DIR)/gcc
 LD = $(GCC_DIR)/ld
 NASM = $(GCC_DIR)/nasm
+OBJCOPY = $(GCC_DIR)/objcopy
 
 QEMU_MEMORY = size=2G,maxmem=2G
 QEMU_X86_64 = qemu-system-x86_64
@@ -178,6 +182,24 @@ else
 	$(DOCKER) run --rm -it --mount type=bind,source=$$(pwd),target=/mnt $(DOCKER_IMAGE) /bin/sh -c "cd /mnt && make build"
 endif
 
+$(USER_ELF): src/usermode/user_demo.S linker/user_elf.ld | obj/usermode
+	$(GCC) -nostdlib -nostartfiles -ffreestanding -c src/usermode/user_demo.S -o obj/usermode/user_demo.o
+	$(LD) -nostdlib -static -T linker/user_elf.ld -o $@ obj/usermode/user_demo.o
+
+$(USER_ELF_OBJ): $(USER_ELF) | obj/kernel
+	$(OBJCOPY) --input binary --output elf64-x86-64 --binary-architecture i386:x86-64 \
+		--redefine-sym _binary_obj_usermode_user_demo_elf_start=user_demo_elf_start \
+		--redefine-sym _binary_obj_usermode_user_demo_elf_end=user_demo_elf_end \
+		--redefine-sym _binary_obj_usermode_user_demo_elf_size=user_demo_elf_size \
+		$< $@
+
+obj/usermode:
+	@mkdir -p $@
+
+obj/kernel:
+	@mkdir -p $@
+
+
 .PHONY: build
 build: docker $(OBJS)
 ifeq ($(OS_NAME),linux)
@@ -201,7 +223,7 @@ ifeq ($(OS_NAME),linux)
 
 	cp $(OBJS) $(KERNEL_OBJ)
 
-	$(LD) $(LDFLAGS) -o $(KERNEL) $$(find -L $(KERNEL_OBJ) -type f -name '*.o')
+$(LD) $(LDFLAGS) -o $(KERNEL) $$(find -L $(KERNEL_OBJ) -type f -name '*.o')
 
 	@echo Syncing Limine assets
 	@set -eu; \
