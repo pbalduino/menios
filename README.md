@@ -32,7 +32,7 @@ With the privilege infrastructure in place, the next milestones are:
 
 Progress on these steps unlocks the remaining Road to Doom tasks such as ELF loading, syscall dispatch, and user-mode tooling.
 
-> Tip: `user_demo_launch()` allocates a temporary user stack and invokes `user_mode_enter` so you can experiment with a Ring 3 stub while the syscall surface is under construction.
+> Tip: `user_demo_launch()` now seeds a Ring 3 task that prints via `write(1, …)` and exits with syscall 60, exercising the user/syscall path during boot.
 
 ## Quick Start
 

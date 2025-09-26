@@ -1,10 +1,8 @@
 #include <errno.h>
 #include <kernel/console.h>
-#include <kernel/kernel.h>
 #include <kernel/proc.h>
 #include <kernel/serial.h>
 #include <kernel/syscall.h>
-#include <string.h>
 
 #define SYSCALL_MAX 256
 
@@ -78,6 +76,6 @@ static uint64_t syscall_write_handler(syscall_frame_t* frame) {
 static uint64_t syscall_exit_handler(syscall_frame_t* frame) {
   int status = (int)frame->rdi;
   proc_exit(status);
-  proc_switch(frame);
-  return 0;
+  proc_switch((void*)frame);
+  return frame->rax;
 }

@@ -118,6 +118,9 @@ void proc_switch(void* arg) {
 
     // Free resources of the terminated process
     kfree(next->stack_pointer);
+    if(next->user_stack_pointer) {
+      kfree(next->user_stack_pointer);
+    }
     kfree(next->cpu_state);
     kfree(next);
 
@@ -172,6 +175,10 @@ void proc_create(proc_info_p proc, const char* name, void (*entrypoint)(void *),
   proc->state = PROC_STATE_NEW;
   proc->entrypoint = entrypoint;
   proc->arguments = arg;
+  proc->user_mode = false;
+  proc->user_stack_pointer = NULL;
+  proc->user_stack_base = NULL;
+  proc->user_stack_size = 0;
 
   proc->cpu_state = kmalloc(sizeof(cpu_state_t));
   if(proc->cpu_state == NULL) {
@@ -187,6 +194,30 @@ void proc_create(proc_info_p proc, const char* name, void (*entrypoint)(void *),
   serial_printf("proc_create: cs: %lx ss: %lx\n", current->cpu_state->cs, current->cpu_state->ss);
   proc->cpu_state->cs = KERNEL_CODE_SEGMENT;
   proc->cpu_state->ss = KERNEL_DATA_SEGMENT;
+}
+
+void proc_create_user(proc_info_p proc, const char* name, void (*entrypoint)(void *), void* arg) {
+  proc_create(proc, name, entrypoint, arg);
+
+  proc->user_mode = true;
+  proc->user_stack_pointer = kmalloc(PROC_USER_STACK_SIZE + 0xF);
+  if(proc->user_stack_pointer == NULL) {
+    serial_printf("proc_create_user: Failed to allocate user stack for process %s\n", name);
+    halt();
+  }
+
+  uintptr_t aligned = ((uintptr_t)proc->user_stack_pointer + 0xF) & ~((uintptr_t)0xF);
+  proc->user_stack_base = (uintptr_t*)aligned;
+  proc->user_stack_size = PROC_USER_STACK_SIZE;
+  memset(proc->user_stack_base, 0, PROC_USER_STACK_SIZE);
+
+  proc->cpu_state->rip = (uint64_t)entrypoint;
+  proc->cpu_state->rdi = (uint64_t)arg;
+  proc->cpu_state->rsp = (uint64_t)proc->user_stack_base + PROC_USER_STACK_SIZE;
+  proc->cpu_state->rbp = proc->cpu_state->rsp;
+  proc->cpu_state->cs = USER_CODE_SEGMENT;
+  proc->cpu_state->ss = USER_DATA_SEGMENT;
+  proc->cpu_state->rflags = 0x202;
 }
 
 void proc_execute(proc_info_p proc) {

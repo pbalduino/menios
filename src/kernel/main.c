@@ -53,6 +53,7 @@
 #include <kernel/timer.h>
 #include <kernel/tsc.h>
 #include <kernel/syscall.h>
+#include <kernel/user_mode.h>
 #include <kernel/driver/ps2kb.h>
 
 void print_logo();
@@ -162,6 +163,8 @@ void _start() {
   timer_init();
   
   scheduler_init();
+
+  user_demo_launch();
 
   // init_services();
 

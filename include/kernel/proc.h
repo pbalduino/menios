@@ -41,6 +41,7 @@ extern "C" {
 #define RLIMIT_DATA (4 * 1024 * 1024)
 
 #define PROC_STACK_SIZE (16 * 1024)
+#define PROC_USER_STACK_SIZE (16 * 1024)
 
 typedef struct cpu_state_t {
   uint64_t r15;
@@ -90,6 +91,10 @@ typedef struct proc_info_t {
   cpu_state_t* cpu_state;
   void*        stack_pointer;
   uintptr_t*   stack_base;
+  void*        user_stack_pointer;
+  uintptr_t*   user_stack_base;
+  size_t       user_stack_size;
+  bool         user_mode;
   void(*entrypoint)(void*);
   void*        arguments;
 } proc_info_t;
@@ -104,6 +109,7 @@ void proc_create(proc_info_p proc, const char* name, void (*entrypoint)(void *),
 void proc_execute(proc_info_p proc);
 void proc_exit(int code);
 void proc_switch(void* state);
+void proc_create_user(proc_info_p proc, const char* name, void (*entrypoint)(void *), void* arg);
 
 #ifdef __cplusplus
 }
