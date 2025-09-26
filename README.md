@@ -195,6 +195,6 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
   - Mem:  https://arjunsreedharan.org/post/148675821737/memory-allocators-101-write-a-simple-memory
   - AMD:  https://developer.amd.com/resources/developer-guides-manuals/
           https://www.amd.com/system/files/TechDocs/48751_16h_bkdg.pdf
-  - Limine 8.x: https://github.com/limine-bootloader/limine/blob/v8.x/PROTOCOL.md
+  - Limine Protocol: https://codeberg.org/Limine/limine-protocol/src/branch/trunk/PROTOCOL.md
 
 ![image](https://user-images.githubusercontent.com/32979/212723683-73387eaf-4a48-4193-83b6-5ec155360a50.png)
