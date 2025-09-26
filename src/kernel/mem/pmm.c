@@ -14,6 +14,7 @@
 static uint64_t page_bitmap[PAGE_BITMAP_SIZE];
 static uintptr_t kernel_offset;
 static uintptr_t cr3_vaddr;
+static phys_addr_t kernel_cr3_phys = 0;
 
 static inline void invlpg(void* addr) {
 #ifdef __x86_64__
@@ -340,8 +341,8 @@ phys_addr_t pmm_clone_kernel_address_space(void) {
     return 0;
   }
 
-  void* src = physical_to_virtual(root_phys);
-  void* dst = physical_to_virtual(new_root);
+  void* src = (void*)physical_to_virtual(root_phys);
+  void* dst = (void*)physical_to_virtual(new_root);
   memcpy(dst, src, PAGE_SIZE);
 
   memset(dst, 0, sizeof(page_map_l4_entry_t) * 256);
