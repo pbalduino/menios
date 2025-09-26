@@ -21,7 +21,7 @@ UACPI_OBJ      = $(OBJDIR)/uacpi
 KERNEL_OBJ     = $(OBJDIR)/kernel
 
 KERNEL_SRC = $(shell find -L src -type f -name '*.c')
-KERNEL_ASM = $(shell find -L src/kernel -type f -name '*.s')
+KERNEL_ASM = $(shell find -L src/kernel -type f \( -name '*.s' -o -name '*.S' \))
 KERNEL_OBJS = $(patsubst %.c, %.o, $(KERNEL_SRC))
 
 UACPI_SRC = $(shell find -L vendor/uacpi -type f -name '*.c')
