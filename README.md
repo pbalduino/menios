@@ -19,6 +19,17 @@ MeniOS is in active development with basic kernel functionality implemented. The
 - **Testing**: Unit test framework using Unity for kernel components
 - **Privilege Setup**: Ring 3 GDT selectors, 64-bit TSS, and a user-mode entry trampoline ready for userland bring-up
 
+### Userland Bring-Up Snapshot
+
+With the privilege infrastructure in place, the next milestones are:
+
+1. Wiring `user_mode_enter` into the scheduler/startup path so we can drop a test thread into Ring 3.
+2. Updating process creation to provision a dedicated user stack and call `tss_update_kernel_stack` before first entry.
+3. Enforcing user/kernel page permissions so Ring 3 code traps if it touches supervisor memory.
+4. Building the syscall/interrupt return path that will bring user threads safely back to Ring 0.
+
+Progress on these steps unlocks the remaining Road to Doom tasks such as ELF loading, syscall dispatch, and user-mode tooling.
+
 ## Quick Start
 
 ### Prerequisites
