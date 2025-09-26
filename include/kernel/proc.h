@@ -99,6 +99,7 @@ typedef struct proc_info_t {
   size_t       user_code_pages;
   virt_addr_t  user_code_vaddr;
   bool         user_mode;
+  phys_addr_t  address_space_root;
   void(*entrypoint)(void*);
   void*        arguments;
 } proc_info_t;

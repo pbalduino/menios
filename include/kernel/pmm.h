@@ -119,9 +119,9 @@ typedef pml4_map_t* pml4_map_p;
 
 uintptr_t   read_cr2();
 phys_addr_t read_cr3();
+void write_cr3(phys_addr_t value);
 
 void pmm_init();
-void write_cr3(phys_addr_t value);
 
 uint64_t get_first_free_page();
 
@@ -144,7 +144,10 @@ void pmm_free_pages(phys_addr_t base_address, size_t page_count);
 
 bool pmm_mark_page_user(virt_addr_t vaddr);
 bool pmm_mark_range_user(virt_addr_t start, size_t size);
+bool pmm_map_page_in_root(phys_addr_t root_phys, virt_addr_t vaddr, phys_addr_t paddr, bool writable, bool user);
 bool pmm_map_page(virt_addr_t vaddr, phys_addr_t paddr, bool writable, bool user);
+phys_addr_t pmm_clone_kernel_address_space(void);
+phys_addr_t pmm_get_kernel_cr3(void);
 
 virt_addr_t get_kernel_offset();
 

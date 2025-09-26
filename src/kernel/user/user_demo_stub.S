@@ -1,4 +1,4 @@
-    .section .rodata
+    .section .text
     .global user_demo_stub_start
     .global user_demo_stub_end
 

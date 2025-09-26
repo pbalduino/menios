@@ -19,17 +19,16 @@ MeniOS is in active development with basic kernel functionality implemented. The
 - **Testing**: Unit test framework using Unity for kernel components
 - **Privilege Setup**: Ring 3 GDT selectors, 64-bit TSS, and a user-mode entry trampoline ready for userland bring-up
 - **Syscalls**: INT 0x80 dispatcher with initial `write(1, …)` and `exit(status)` support for user-mode stubs
-- **User Demo**: Kernel launches a Ring 3 thread that runs out of user-mapped pages, prints via `write(1, …)` then exits through syscall 60, exercising the full syscall/scheduler path
+- **User Demo**: Kernel launches a Ring 3 thread mapped into its own user page tables, prints via `write(1, …)` then exits through syscall 60, exercising the full syscall/scheduler path
 
 ### Userland Bring-Up Snapshot
 
 With the privilege infrastructure in place, the next milestones are:
 
-1. Wiring `user_mode_enter` into the scheduler/startup path so we can drop a test thread into Ring 3.
-2. Updating process creation to provision a dedicated user stack and call `tss_update_kernel_stack` before first entry.
-3. Enforcing user/kernel page permissions so Ring 3 code traps if it touches supervisor memory.
-4. Building the syscall/interrupt return path that will bring user threads safely back to Ring 0 (INT 0x80 foundation in place).
-5. Expanding the syscall surface beyond the initial `write`/`exit` pair and adding user-visible libc stubs.
+1. Finalise per-process virtual address spaces (current demo clones kernel root and maps user regions; next step is full isolation and cleanup tooling).
+2. Enforce user/kernel page permissions everywhere (mark kernel pages supervisor-only, audit mappings).
+3. Build out the syscall/interrupt return path for richer ABI support beyond `write`/`exit`.
+4. Implement the ELF loader so user binaries can be placed into the new address space.
 
 Progress on these steps unlocks the remaining Road to Doom tasks such as ELF loading, syscall dispatch, and user-mode tooling.
 

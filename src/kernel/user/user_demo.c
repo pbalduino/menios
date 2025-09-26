@@ -3,7 +3,6 @@
 #include <string.h>
 
 #include <kernel/heap.h>
-#include <kernel/kernel.h>
 #include <kernel/proc.h>
 #include <kernel/serial.h>
 

@@ -124,6 +124,9 @@ void proc_switch(void* arg) {
     if(next->user_code_phys && next->user_code_pages) {
       pmm_free_pages(next->user_code_phys, next->user_code_pages);
     }
+    if(next->address_space_root && next->address_space_root != pmm_get_kernel_cr3()) {
+      pmm_free_pages(next->address_space_root, 1);
+    }
     kfree(next->cpu_state);
     kfree(next);
 
@@ -135,6 +138,12 @@ void proc_switch(void* arg) {
   }
   
   current = current->next;
+
+  phys_addr_t desired_cr3 = current->address_space_root ? current->address_space_root : pmm_get_kernel_cr3();
+  if(read_cr3() != desired_cr3) {
+    write_cr3(desired_cr3);
+  }
+
   memcpy(arg, current->cpu_state, sizeof(cpu_state_t));
   current->state = PROC_STATE_RUNNING;
 
@@ -201,6 +210,7 @@ void proc_create(proc_info_p proc, const char* name, void (*entrypoint)(void *),
   serial_printf("proc_create: cs: %lx ss: %lx\n", current->cpu_state->cs, current->cpu_state->ss);
   proc->cpu_state->cs = KERNEL_CODE_SEGMENT;
   proc->cpu_state->ss = KERNEL_DATA_SEGMENT;
+  proc->address_space_root = pmm_get_kernel_cr3();
 }
 
 static inline virt_addr_t user_code_base(uint32_t pid) {
@@ -228,6 +238,12 @@ void proc_create_user(proc_info_p proc, const char* name, const void* code_blob,
   const size_t stack_pages = PROC_USER_STACK_SIZE / PAGE_SIZE;
   const size_t code_pages = (code_size + PAGE_SIZE - 1) / PAGE_SIZE;
 
+  phys_addr_t new_root = pmm_clone_kernel_address_space();
+  if(new_root == 0) {
+    serial_printf("proc_create_user: failed to clone kernel address space\n");
+    halt();
+  }
+
   phys_addr_t stack_phys = pmm_alloc_pages(stack_pages);
   if(stack_phys == 0) {
     serial_printf("proc_create_user: failed to allocate physical pages for user stack\n");
@@ -248,7 +264,7 @@ void proc_create_user(proc_info_p proc, const char* name, const void* code_blob,
     phys_addr_t phys = stack_phys + (i * PAGE_SIZE);
     void* page_ptr = (void*)physical_to_virtual(phys);
     memset(page_ptr, 0, PAGE_SIZE);
-    if(!pmm_map_page(stack_base_vaddr + (i * PAGE_SIZE), phys, true, true)) {
+    if(!pmm_map_page_in_root(new_root, stack_base_vaddr + (i * PAGE_SIZE), phys, true, true)) {
       serial_printf("proc_create_user: failed to map user stack page %zu\n", i);
       halt();
     }
@@ -264,7 +280,7 @@ void proc_create_user(proc_info_p proc, const char* name, const void* code_blob,
     size_t copy_len = remaining < PAGE_SIZE ? remaining : PAGE_SIZE;
     memcpy(page_ptr, code_src + offset, copy_len);
 
-    if(!pmm_map_page(code_vaddr + offset, phys, false, true)) {
+    if(!pmm_map_page_in_root(new_root, code_vaddr + offset, phys, false, true)) {
       serial_printf("proc_create_user: failed to map user code page %zu\n", i);
       halt();
     }
@@ -277,6 +293,7 @@ void proc_create_user(proc_info_p proc, const char* name, const void* code_blob,
   proc->user_code_phys = code_phys;
   proc->user_code_pages = code_pages;
   proc->user_code_vaddr = code_vaddr;
+  proc->address_space_root = new_root;
 
   proc->cpu_state->rip = code_vaddr;
   proc->cpu_state->rdi = (uint64_t)arg;
@@ -301,6 +318,7 @@ void scheduler_init() {
   current->next = current;
   current->cpu_state = (cpu_state_t*)kmalloc(sizeof(cpu_state_t));
   current->pid = last_pid++;
+  current->address_space_root = pmm_get_kernel_cr3();
   uint64_t kernel_stack = proc_kernel_stack_top(current);
   if(kernel_stack != 0) {
     tss_update_kernel_stack(kernel_stack);

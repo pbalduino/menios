@@ -237,16 +237,12 @@ bool pmm_mark_range_user(virt_addr_t start, size_t size) {
   return true;
 }
 
-bool pmm_map_page(virt_addr_t vaddr, phys_addr_t paddr, bool writable, bool user) {
-  if((paddr & (PAGE_SIZE - 1)) != 0) {
+bool pmm_map_page_in_root(phys_addr_t root_phys, virt_addr_t vaddr, phys_addr_t paddr, bool writable, bool user) {
+  if((paddr & (PAGE_SIZE - 1)) != 0 || root_phys == 0) {
     return false;
   }
 
-  if(cr3_vaddr == 0) {
-    return false;
-  }
-
-  pml4_t* pml4 = (pml4_t*)cr3_vaddr;
+  pml4_t* pml4 = (pml4_t*)physical_to_virtual(root_phys);
 
   uint16_t pml4_index = (vaddr >> 39) & 0x1ff;
   page_map_l4_entry_t* pml4_entry = &pml4->entries[pml4_index];
@@ -331,6 +327,30 @@ bool pmm_map_page(virt_addr_t vaddr, phys_addr_t paddr, bool writable, bool user
 
   invlpg((void*)vaddr);
   return true;
+}
+
+bool pmm_map_page(virt_addr_t vaddr, phys_addr_t paddr, bool writable, bool user) {
+  return pmm_map_page_in_root(read_cr3(), vaddr, paddr, writable, user);
+}
+
+phys_addr_t pmm_clone_kernel_address_space(void) {
+  phys_addr_t root_phys = kernel_cr3_phys ? kernel_cr3_phys : read_cr3();
+  phys_addr_t new_root = pmm_alloc_pages(1);
+  if(new_root == 0) {
+    return 0;
+  }
+
+  void* src = physical_to_virtual(root_phys);
+  void* dst = physical_to_virtual(new_root);
+  memcpy(dst, src, PAGE_SIZE);
+
+  memset(dst, 0, sizeof(page_map_l4_entry_t) * 256);
+
+  return new_root;
+}
+
+phys_addr_t pmm_get_kernel_cr3(void) {
+  return kernel_cr3_phys;
 }
 
 void set_page_used(uintptr_t physical_address) {
@@ -537,8 +557,16 @@ phys_addr_t read_cr3() {
 }
 
 void init_cr3() {
-  cr3_vaddr = physical_to_virtual(read_cr3());
+  kernel_cr3_phys = read_cr3();
+  cr3_vaddr = physical_to_virtual(kernel_cr3_phys);
   logk("CR3 is @ %p\n", cr3_vaddr);
+}
+
+void write_cr3(phys_addr_t value) {
+#ifdef __x86_64__
+  asm volatile("mov %0, %%cr3" :: "r"(value) : "memory");
+#endif
+  cr3_vaddr = physical_to_virtual(value);
 }
 
 void pmm_set_pagetable_root(virt_addr_t root_vaddr) {

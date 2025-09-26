@@ -70,7 +70,8 @@
       "number": 28,
       "url": "https://github.com/pbalduino/menios/issues/28",
       "state": "OPEN"
-    }
+    },
+    "status": "In Progress"
   },
   {
     "title": "Create cross-compiler toolchain for userland",
