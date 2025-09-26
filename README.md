@@ -17,6 +17,7 @@ MeniOS is in active development with basic kernel functionality implemented. The
 - **Input/Output**: PS/2 keyboard driver with buffered input
 - **Debugging**: Page fault and GPF handlers for system diagnostics
 - **Testing**: Unit test framework using Unity for kernel components
+- **Privilege Setup**: Ring 3 GDT selectors, 64-bit TSS, and a user-mode entry trampoline ready for userland bring-up
 
 ## Quick Start
 

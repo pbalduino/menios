@@ -32,9 +32,16 @@ proc_info_p procs[PROC_MAX] = {
 proc_info_p current = &kernel_process_info;
 
 static inline uint64_t proc_kernel_stack_top(proc_info_p proc) {
-  if(proc == NULL || proc->stack_base == NULL) {
+  if(proc == NULL) {
     return 0;
   }
+
+  if(proc->stack_base == NULL) {
+    uint64_t rsp;
+    asm volatile("mov %%rsp, %0" : "=r" (rsp));
+    return rsp;
+  }
+
   return (uint64_t)((uintptr_t)proc->stack_base + PROC_STACK_SIZE);
 }
 
