@@ -31,6 +31,13 @@ proc_info_p procs[PROC_MAX] = {
 
 proc_info_p current = &kernel_process_info;
 
+static inline uint64_t proc_kernel_stack_top(proc_info_p proc) {
+  if(proc == NULL || proc->stack_base == NULL) {
+    return 0;
+  }
+  return (uint64_t)((uintptr_t)proc->stack_base + PROC_STACK_SIZE);
+}
+
 static char* proc_state(proc_state_t state) {
   switch(state)
   {
@@ -118,6 +125,11 @@ void proc_switch(void* arg) {
   memcpy(arg, current->cpu_state, sizeof(cpu_state_t));
   current->state = PROC_STATE_RUNNING;
 
+  uint64_t kernel_stack = proc_kernel_stack_top(current);
+  if(kernel_stack != 0) {
+    tss_update_kernel_stack(kernel_stack);
+  }
+
   serial_printf("proc_switch: Switching to process %s\n", current->name);
 
   serial_puts("proc_switch: Exiting with ");
@@ -184,6 +196,10 @@ void scheduler_init() {
   current->next = current;
   current->cpu_state = (cpu_state_t*)kmalloc(sizeof(cpu_state_t));
   current->pid = last_pid++;
+  uint64_t kernel_stack = proc_kernel_stack_top(current);
+  if(kernel_stack != 0) {
+    tss_update_kernel_stack(kernel_stack);
+  }
   register_timer_callback(proc_switch);
   printf(".OK\n");
 }

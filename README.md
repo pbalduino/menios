@@ -116,7 +116,7 @@ See [`road_to_doom.md`](road_to_doom.md) for the complete roadmap and [`tasks.js
 ## Known Issues and Limitations
 
 ### Current Limitations
-- **Kernel-only**: No userland support yet (major work in progress)
+- **Kernel-only**: User mode groundwork underway (Ring 3 GDT entries + TSS in place)
 - **Single-threaded userspace**: No process isolation or multi-process support
 - **Limited synchronization**: Basic mutex only, no semaphores/spinlocks/rwlocks yet
 - **Limited hardware support**: Only basic PS/2 keyboard, VGA framebuffer
