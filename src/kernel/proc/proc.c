@@ -8,6 +8,7 @@
 #include <kernel/thread.h>
 #include <kernel/tsc.h>
 #include <kernel/timer.h>
+#include <kernel/user/elf_loader.h>
 #include <stdio.h>
 #include <string.h>
 #include <types.h>

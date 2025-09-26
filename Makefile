@@ -20,7 +20,7 @@ LIBDIR         = lib
 UACPI_OBJ      = $(OBJDIR)/uacpi
 KERNEL_OBJ     = $(OBJDIR)/kernel
 
-KERNEL_SRC = $(shell find -L src -type f -name '*.c')
+KERNEL_SRC = $(shell find -L src -path 'src/usermode' -prune -o -type f -name '*.c' -print)
 KERNEL_ASM = $(shell find -L src/kernel -type f \( -name '*.s' -o -name '*.S' \))
 KERNEL_OBJS = $(patsubst %.c, %.o, $(KERNEL_SRC))
 KERNEL_ASM_OBJS = $(patsubst %.S, %.o, $(filter %.S,$(KERNEL_ASM)))
@@ -30,7 +30,7 @@ UACPI_OBJS := $(patsubst %.c, %.o, $(UACPI_SRC))
 
 OBJS = $(KERNEL_OBJS) $(KERNEL_ASM_OBJS) $(UACPI_OBJS)
 USER_ELF = obj/usermode/user_demo.elf
-USER_ELF_OBJ = obj/kernel/user_demo_elf.o
+USER_ELF_OBJ = obj/usermode/user_demo_elf.o
 OBJS += $(USER_ELF_OBJ)
 
 override CFLAGS += \
@@ -186,7 +186,7 @@ $(USER_ELF): src/usermode/user_demo.S linker/user_elf.ld | obj/usermode
 	$(GCC) -nostdlib -nostartfiles -ffreestanding -c src/usermode/user_demo.S -o obj/usermode/user_demo.o
 	$(LD) -nostdlib -static -T linker/user_elf.ld -o $@ obj/usermode/user_demo.o
 
-$(USER_ELF_OBJ): $(USER_ELF) | obj/kernel
+$(USER_ELF_OBJ): $(USER_ELF) | obj/usermode
 	$(OBJCOPY) --input binary --output elf64-x86-64 --binary-architecture i386:x86-64 \
 		--redefine-sym _binary_obj_usermode_user_demo_elf_start=user_demo_elf_start \
 		--redefine-sym _binary_obj_usermode_user_demo_elf_end=user_demo_elf_end \
@@ -223,7 +223,7 @@ ifeq ($(OS_NAME),linux)
 
 	cp $(OBJS) $(KERNEL_OBJ)
 
-$(LD) $(LDFLAGS) -o $(KERNEL) $$(find -L $(KERNEL_OBJ) -type f -name '*.o')
+	$(LD) $(LDFLAGS) -o $(KERNEL) $$(find -L $(KERNEL_OBJ) -type f -name '*.o')
 
 	@echo Syncing Limine assets
 	@set -eu; \
