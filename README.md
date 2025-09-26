@@ -159,11 +159,24 @@ See [`road_to_doom.md`](road_to_doom.md) for the complete roadmap and [`tasks.js
 - **`tests/`** - Unit tests using Unity framework
 - **`bin/`** - Build artifacts and bootloader assets
 - **`tasks.json`** - Detailed task tracking with GitHub issue integration
-- **`road_to_doom.md`** - Comprehensive roadmap for userland Doom support
+- **`ROAD_TO_DOOM.md`** - Comprehensive roadmap for userland Doom support
+- **`CONTRIBUTING.md`** - Complete guide for contributors and development workflow
+- **`SECURITY.md`** - Security policy and vulnerability reporting guidelines
+- **`CODING.md`** - Coding style guidelines and standards
+- **`CODE_OF_CONDUCT.md`** - Community guidelines and standards
 
 ## Contributing
 
-Feel free to explore the codebase, report issues, or contribute improvements! Check the GitHub issues for current tasks and the `tasks.json` file for detailed progress tracking.
+We welcome contributions from developers of all skill levels! 🚀
+
+- **New Contributors**: Start with our [Contributing Guide](CONTRIBUTING.md) for a complete development workflow
+- **Find Tasks**: Check [GitHub Issues](https://github.com/pbalduino/menios/issues) or browse [`tasks.json`](tasks.json) for detailed task tracking
+- **Report Issues**: Use our issue templates to report bugs or request features
+- **Security Issues**: Please review our [Security Policy](SECURITY.md) for responsible disclosure
+- **Code Style**: Follow the guidelines in [`CODING.md`](CODING.md)
+- **Community**: Read our [Code of Conduct](CODE_OF_CONDUCT.md)
+
+Whether you're interested in kernel development, want to learn about operating systems, or just want to help us reach the goal of running Doom in userland, there's a place for you in the meniOS community!
 
 ## License
 
