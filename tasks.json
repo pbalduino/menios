@@ -251,7 +251,8 @@
       "number": 45,
       "url": "https://github.com/pbalduino/menios/issues/45",
       "state": "OPEN"
-    }
+    },
+    "status": "In Progress"
   },
   {
     "title": "Create basic user mode test program",

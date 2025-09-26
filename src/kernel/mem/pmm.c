@@ -204,6 +204,58 @@ static bool mark_intermediate_user(virt_addr_t vaddr,
   return true;
 }
 
+static void clear_kernel_user_permissions(phys_addr_t root_phys) {
+  if(root_phys == 0) {
+    return;
+  }
+
+  pml4_t* pml4 = (pml4_t*)physical_to_virtual(root_phys);
+
+  for(size_t pml4_index = 256; pml4_index < 512; pml4_index++) {
+    page_map_l4_entry_t* pml4_entry = &pml4->entries[pml4_index];
+    if(!pml4_entry->present) {
+      continue;
+    }
+
+    pml4_entry->user = 0;
+
+    page_directory_pointer_t* pdpt = (page_directory_pointer_t*)physical_to_virtual(pml4_entry->page_directory_base << 12);
+    for(size_t pdpt_index = 0; pdpt_index < 512; pdpt_index++) {
+      page_directory_pointer_entry_t* pdpt_entry = &pdpt->entries[pdpt_index];
+      if(!pdpt_entry->present) {
+        continue;
+      }
+
+      pdpt_entry->user = 0;
+      if(pdpt_entry->large_page) {
+        continue;
+      }
+
+      page_directory_t* pd = (page_directory_t*)physical_to_virtual(pdpt_entry->page_directory_base << 12);
+      for(size_t pd_index = 0; pd_index < 512; pd_index++) {
+        page_directory_entry_t* pd_entry = &pd->entries[pd_index];
+        if(!pd_entry->present) {
+          continue;
+        }
+
+        pd_entry->user = 0;
+        if(pd_entry->large_page) {
+          continue;
+        }
+
+        page_table_t* pt = (page_table_t*)physical_to_virtual(pd_entry->page_table_base << 12);
+        for(size_t pt_index = 0; pt_index < 512; pt_index++) {
+          page_table_entry_t* pt_entry = &pt->entries[pt_index];
+          if(!pt_entry->present) {
+            continue;
+          }
+          pt_entry->user = 0;
+        }
+      }
+    }
+  }
+}
+
 bool pmm_mark_page_user(virt_addr_t vaddr) {
   page_directory_pointer_t* pdpt = NULL;
   page_directory_entry_t* pd_entry = NULL;
@@ -346,6 +398,8 @@ phys_addr_t pmm_clone_kernel_address_space(void) {
   memcpy(dst, src, PAGE_SIZE);
 
   memset(dst, 0, sizeof(page_map_l4_entry_t) * 256);
+
+  clear_kernel_user_permissions(new_root);
 
   return new_root;
 }
@@ -560,6 +614,7 @@ phys_addr_t read_cr3() {
 void init_cr3() {
   kernel_cr3_phys = read_cr3();
   cr3_vaddr = physical_to_virtual(kernel_cr3_phys);
+  clear_kernel_user_permissions(kernel_cr3_phys);
   logk("CR3 is @ %p\n", cr3_vaddr);
 }
 
