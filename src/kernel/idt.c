@@ -11,6 +11,18 @@
 static idt_pointer_t idt_p; // __attribute__((aligned(8)));
 static idt_entry_t idt[0x100]; // __attribute__((aligned(4096)));
 
+static void idt_set_entry(int interruption, void* handler, uint8_t type_attr) {
+  uintptr_t handler_address = (uintptr_t)handler;
+
+  idt[interruption].base_low = (uint16_t)(handler_address & 0xFFFF);
+  idt[interruption].selector = KERNEL_CODE_SEGMENT;
+  idt[interruption].ist = 0;
+  idt[interruption].type_attr = type_attr;
+  idt[interruption].base_mid = (uint16_t)((handler_address >> 16) & 0xffff);
+  idt[interruption].base_high = (uint32_t)((handler_address >> 32) & 0xffffffff);
+  idt[interruption].reserved = 0;
+}
+
 static void exception_log(const char *fmt, ...) {
   va_list args;
 
@@ -34,16 +46,11 @@ static const char *gpf_table_name(idt_gpf_table_t table) {
 }
 
 void idt_add_isr(int interruption, void* handler) {
-  // Set up the IDT entry
-  uintptr_t handler_address = (uintptr_t)handler;
+  idt_set_entry(interruption, handler, 0x8e);
+}
 
-  idt[interruption].base_low = (uint16_t)(handler_address & 0xFFFF);
-  idt[interruption].selector = KERNEL_CODE_SEGMENT; // Your code segment selector
-  idt[interruption].ist = 0;   // Set to 0 for most cases
-  idt[interruption].type_attr = 0x8e; // 0x8e indicates an interrupt gate (64-bit interrupt gate)
-  idt[interruption].base_mid = (uint16_t)((handler_address >> 16) & 0xffff);
-  idt[interruption].base_high = (uint32_t)((handler_address >> 32) & 0xffffffff);
-  idt[interruption].reserved = 0;
+void idt_add_user_isr(int interruption, void* handler) {
+  idt_set_entry(interruption, handler, 0xee);
 }
 
 void idt_init() {
@@ -59,6 +66,7 @@ void idt_init() {
   idt_add_isr(ISR_PAGE_FAULT, &idt_pf_isr_asm_handler);
   idt_add_isr(ISR_PERIODIC_TIMER, &idt_period_timer_isr_asm_handler);
   idt_add_isr(ISR_KEYBOARD, &ps2kb_isr_handler);
+  idt_add_user_isr(ISR_SYSCALL, &syscall_isr_handler);
 
   idt_load(&idt_p);
 

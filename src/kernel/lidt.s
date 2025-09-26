@@ -5,6 +5,7 @@ global idt_gpf_isr_asm_handler
 global idt_pf_isr_asm_handler
 global idt_period_timer_isr_asm_handler
 global ps2kb_isr_handler
+global syscall_isr_handler
 
 extern idt_generic_isr_handler
 extern idt_df_isr_handler
@@ -12,6 +13,7 @@ extern idt_gpf_isr_handler
 extern idt_pf_isr_handler
 extern timer_handler
 extern ps2kb_handler
+extern syscall_dispatch
 
 idt_load:
   lidt [rdi]   ; Load the IDT from the memory location pointed to by rdi
@@ -188,3 +190,43 @@ ps2kb_isr_handler:
   popfq                      ; Restore RFLAGS
 
   iretq                      ; Return from the interrupt
+
+syscall_isr_handler:
+  cld
+
+  push rax
+  push rcx
+  push rdx
+  push rbx
+  push rbp
+  push rsi
+  push rdi
+  push r8
+  push r9
+  push r10
+  push r11
+  push r12
+  push r13
+  push r14
+  push r15
+
+  mov rdi, rsp
+  call syscall_dispatch
+
+  pop r15
+  pop r14
+  pop r13
+  pop r12
+  pop r11
+  pop r10
+  pop r9
+  pop r8
+  pop rdi
+  pop rsi
+  pop rbp
+  pop rbx
+  pop rdx
+  pop rcx
+  pop rax
+
+  iretq

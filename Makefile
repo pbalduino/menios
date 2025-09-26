@@ -23,11 +23,12 @@ KERNEL_OBJ     = $(OBJDIR)/kernel
 KERNEL_SRC = $(shell find -L src -type f -name '*.c')
 KERNEL_ASM = $(shell find -L src/kernel -type f \( -name '*.s' -o -name '*.S' \))
 KERNEL_OBJS = $(patsubst %.c, %.o, $(KERNEL_SRC))
+KERNEL_ASM_OBJS = $(patsubst %.S, %.o, $(filter %.S,$(KERNEL_ASM)))
 
 UACPI_SRC = $(shell find -L vendor/uacpi -type f -name '*.c')
 UACPI_OBJS := $(patsubst %.c, %.o, $(UACPI_SRC))
 
-OBJS = $(KERNEL_OBJS) $(UACPI_OBJS)
+OBJS = $(KERNEL_OBJS) $(KERNEL_ASM_OBJS) $(UACPI_OBJS)
 
 override CFLAGS += \
     -Wall \
@@ -164,6 +165,13 @@ endif
 endif
 
 %.o: %.c
+ifeq ($(OS_NAME),linux)
+	$(GCC) $(GCC_KERNEL_OPTS) -c $< -o $@
+else
+	$(DOCKER) run --rm -it --mount type=bind,source=$$(pwd),target=/mnt $(DOCKER_IMAGE) /bin/sh -c "cd /mnt && make build"
+endif
+
+%.o: %.S
 ifeq ($(OS_NAME),linux)
 	$(GCC) $(GCC_KERNEL_OPTS) -c $< -o $@
 else

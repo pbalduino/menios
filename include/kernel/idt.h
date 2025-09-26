@@ -23,6 +23,7 @@
 #define ISR_MACHINE_CHECK            0x12
 #define ISR_PERIODIC_TIMER           0x20
 #define ISR_KEYBOARD                 0x21
+#define ISR_SYSCALL                  0x80
 
 typedef struct {
   uint16_t base_low;      // Lower 16 bits of ISR address
@@ -96,8 +97,10 @@ extern void idt_load(idt_pointer_t *idt_ptr);
 extern void idt_pf_isr_asm_handler();
 extern void idt_period_timer_isr_asm_handler();
 extern void ps2kb_isr_handler();
+extern void syscall_isr_handler();
 
 void idt_add_isr(int interruption, void* handler);
+void idt_add_user_isr(int interruption, void* handler);
 void idt_init();
 static inline void idt_decode_page_fault(uint64_t error_code, idt_pf_error_info_t *info) {
   info->present = (error_code & (1ull << 0)) != 0;

@@ -52,6 +52,7 @@
 #include <kernel/thread.h>
 #include <kernel/timer.h>
 #include <kernel/tsc.h>
+#include <kernel/syscall.h>
 #include <kernel/driver/ps2kb.h>
 
 void print_logo();
@@ -144,6 +145,8 @@ void _start() {
   gdt_init();
 
   idt_init();
+
+  syscall_init();
 
   mem_init();
 

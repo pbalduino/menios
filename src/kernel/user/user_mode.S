@@ -1,34 +1,31 @@
-    .text
+    .section .text
     .globl user_mode_enter
 
-    .equ USER_CODE_SELECTOR, 0x3B
-    .equ USER_DATA_SELECTOR, 0x43
-
+/* void user_mode_enter(void (*entrypoint)(void*), void* user_stack_top, uint64_t arg) */
 user_mode_enter:
-    /* rdi = entrypoint, rsi = user stack top, rdx = argument */
     cld
 
-    mov %rdi, %r8
-    mov %rdx, %rdi
+    mov %rdi, %r8           /* preserve entry point */
+    mov %rdx, %rdi          /* first argument */
 
     mov %rsi, %rax
-    and $~0xF, %rax
-    lea -8(%rax), %rax
+    and $-16, %rax          /* align stack */
+    lea -8(%rax), %rax      /* reserve return slot */
 
-    mov $USER_DATA_SELECTOR, %cx
+    mov $0x43, %cx          /* USER_DATA_SELECTOR */
     mov %cx, %ds
     mov %cx, %es
     mov %cx, %fs
     mov %cx, %gs
 
-    pushq $USER_DATA_SELECTOR
+    pushq $0x43
     pushq %rax
 
     pushfq
     pop %rcx
-    or $0x200, %rcx
-    push %rcx
+    or $0x200, %rcx         /* enable IF */
+    pushq %rcx
 
-    pushq $USER_CODE_SELECTOR
+    pushq $0x3B             /* USER_CODE_SELECTOR */
     pushq %r8
     iretq

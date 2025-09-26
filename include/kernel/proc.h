@@ -103,6 +103,7 @@ void scheduler_init();
 void proc_create(proc_info_p proc, const char* name, void (*entrypoint)(void *), void* arg);
 void proc_execute(proc_info_p proc);
 void proc_exit(int code);
+void proc_switch(void* state);
 
 #ifdef __cplusplus
 }

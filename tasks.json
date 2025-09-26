@@ -2,7 +2,9 @@
   {
     "title": "Propagate kernel thread termination status for joins",
     "body": "## Goal\nAllow `ktread_join` to detect when a thread has exited so callers can synchronise correctly.\n\n## Context\n`kthread_t.status` is never initialised or updated. `ktread_join` busy-waits on `THREAD_TERMINATED`, but that flag never changes, causing joins to spin forever on uninitialised memory.\n\n## Definition of Done\n- Initialise `kthread_t.status` to a running state when creating a thread.\n- Set the status to `THREAD_TERMINATED` when the entrypoint returns or `kexit` completes.\n- Ensure `ktread_join` exits once the status flips, and document/update any state transitions touched.\n- Add or update logging/tests as needed to show the status change occurs.\n",
-    "labels": ["bug"],
+    "labels": [
+      "bug"
+    ],
     "github_issue": {
       "number": 11,
       "url": "https://github.com/pbalduino/menios/issues/11",
@@ -12,7 +14,9 @@
   {
     "title": "Calibrate TSC timekeeping and initialise boot time",
     "body": "## Goal\nProduce accurate microsecond timestamps from `unix_time_us` by initialising boot time and converting TSC ticks using a measured frequency.\n\n## Context\n`unix_time_us` currently divides raw TSC ticks by 1000 and adds `boot_time_sec`, but the frequency is never calibrated and `boot_time_sec` stays zero. Timers, scheduler accounting, and sleep logic therefore run with incorrect timings.\n\n## Definition of Done\n- Determine TSC frequency (via calibration against LAPIC/HPET/PIT or CPUID invariant data) and use it to convert cycles to real time.\n- Initialise `boot_time_sec` (e.g., from Limine boot time request) before `unix_time_us` is first called.\n- Update `ksleep`, scheduler accounting, and related code if they assume nanoseconds-per-cycle is 1.\n- Validate with logs or tests that reported durations roughly match wall-clock expectations.\n",
-    "labels": ["bug"],
+    "labels": [
+      "bug"
+    ],
     "github_issue": {
       "number": 12,
       "url": "https://github.com/pbalduino/menios/issues/12",
@@ -22,7 +26,9 @@
   {
     "title": "Fix kmalloc to get memory from the virtual memory",
     "body": "## Goal\nIntegrate kmalloc with the virtual memory management system instead of using direct physical memory allocation.\n\n## Context\nThe current kmalloc implementation in `kmalloc.c` uses a simple heap allocator with a linked list of nodes, operating directly on physical memory addresses. The heap is initialized with a fixed address and size via `init_heap(void* addr, size_t size)` but doesn't integrate with the virtual memory manager. The existing `get_first_free_page()` function is available but not used by kmalloc.\n\n## Definition of Done\n- Modify kmalloc to allocate pages from the virtual memory manager instead of direct physical memory\n- Integrate with the existing page allocation system (`get_first_free_page()` function)\n- Implement proper virtual-to-physical address mapping for allocated memory\n- Ensure kmalloc works with the page fault handler for demand paging scenarios\n- Update heap initialization to use virtual memory addresses rather than physical addresses\n- Maintain backwards compatibility with existing kmalloc users while improving the underlying memory management\n- Verify that freed memory is properly returned to the virtual memory system",
-    "labels": ["enhancement"],
+    "labels": [
+      "enhancement"
+    ],
     "github_issue": {
       "number": 6,
       "url": "https://github.com/pbalduino/menios/issues/6",
@@ -31,8 +37,10 @@
   },
   {
     "title": "Publish and refresh Docker build image",
-    "body": "## Goal\nMake the `menios:trunk` Docker image reproducible for developers and CI.\n\n## Context\nLocal commands such as `docker run --rm … menios:trunk` fail because the image is missing or stale. Without a published image or documented build recipe, contributors cannot invoke `make build` inside the container.\n\n## Definition of Done\n- Provide a documented script or Make target that builds the Docker image locally.\n- Optionally publish the image (or artifact) and document how to load it.\n- Update setup instructions so macOS users know how to bootstrap Docker support.\n- Confirm `docker run --rm --platform linux/amd64 --mount type=bind,source=$(pwd),target=/mnt menios:trunk /bin/sh -c \"cd /mnt && make build\"` completes successfully.",
-    "labels": ["maintenance"],
+    "body": "## Goal\nMake the `menios:trunk` Docker image reproducible for developers and CI.\n\n## Context\nLocal commands such as `docker run --rm \u2026 menios:trunk` fail because the image is missing or stale. Without a published image or documented build recipe, contributors cannot invoke `make build` inside the container.\n\n## Definition of Done\n- Provide a documented script or Make target that builds the Docker image locally.\n- Optionally publish the image (or artifact) and document how to load it.\n- Update setup instructions so macOS users know how to bootstrap Docker support.\n- Confirm `docker run --rm --platform linux/amd64 --mount type=bind,source=$(pwd),target=/mnt menios:trunk /bin/sh -c \"cd /mnt && make build\"` completes successfully.",
+    "labels": [
+      "maintenance"
+    ],
     "status": "Backlog",
     "github_issue": {
       "number": 19,
@@ -43,7 +51,9 @@
   {
     "title": "Refine kthread termination flow",
     "body": "## Goal\nAllow kernel threads to exit cleanly once their entrypoint returns.\n\n## Context\n`kthread_execute` currently calls `kexit` and then spins forever, so even a thread that finishes continues consuming CPU and never signals the scheduler that it is done. This complicates join logic and wastes cycles.\n\n## Definition of Done\n- Remove the post-`kexit` spin in `kthread_execute`.\n- Ensure `kexit` updates the owning `kthread_t` status (in conjunction with issue #11).\n- Verify that finished threads are removed from the scheduler queue and no longer run.\n- Add tests or logging to demonstrate that the exit path triggers exactly once.",
-    "labels": ["enhancement"],
+    "labels": [
+      "enhancement"
+    ],
     "status": "Backlog",
     "github_issue": {
       "number": 20,
@@ -54,7 +64,9 @@
   {
     "title": "Implement proper hardware probing and driver connection",
     "body": "## Goal\nDetect hardware properly and connect to the respective drivers for further development.\n\n## Context\nThe current hardware probing implementation doesn't do much beyond basic initialization. The system needs a proper hardware detection mechanism that can identify available hardware components and automatically connect them to their appropriate drivers.\n\n## Definition of Done\n- Implement comprehensive hardware detection during system initialization\n- Create a driver registry system that maps hardware IDs to driver implementations\n- Automatically probe and enumerate available hardware (PCI devices, USB controllers, network cards, etc.)\n- Establish proper driver loading and connection mechanisms\n- Add logging/debugging output to show detected hardware and loaded drivers\n- Provide a foundation for future driver development and hardware support expansion\n- Document the hardware probing process and driver architecture",
-    "labels": ["enhancement"],
+    "labels": [
+      "enhancement"
+    ],
     "status": "Backlog",
     "github_issue": {
       "number": 22,
@@ -65,7 +77,9 @@
   {
     "title": "Refactor code structure to make it more organized",
     "body": "## Goal\nRefactor the codebase structure to improve organization, maintainability, and development workflow.\n\n## Context\nThe current code structure could benefit from better organization to make it easier for developers to navigate, understand, and contribute to the project. A well-organized codebase improves maintainability, reduces technical debt, and makes it easier to locate and modify specific functionality.\n\n## Definition of Done\n- Analyze current code structure and identify areas for improvement\n- Create a logical directory structure that groups related functionality\n- Separate concerns properly (kernel core, drivers, memory management, etc.)\n- Establish consistent naming conventions across the codebase\n- Refactor header file organization and includes\n- Update build system (Makefile) to reflect new structure\n- Ensure all existing functionality continues to work after refactoring\n- Document the new code organization and contribution guidelines\n- Update any documentation that references old file paths or structure",
-    "labels": ["enhancement"],
+    "labels": [
+      "enhancement"
+    ],
     "status": "Backlog",
     "github_issue": {
       "number": 23,
@@ -76,7 +90,9 @@
   {
     "title": "Implement ELF loader for userland programs",
     "body": "## Goal\nImplement an ELF loader that can load and execute user programs in userland.\n\n## Context\nPart of the Road to Doom infrastructure. We need to load static ELF64 executables from the kernel into user processes. This is fundamental for running any userland applications including Doom.\n\n## Definition of Done\n- Parse ELF64 headers and validate executable format\n- Load program segments (code, data, bss) into appropriate memory regions\n- Set up initial process memory layout with proper permissions\n- Handle entry point and initial register state for user process\n- Support static linking (dynamic linking can come later)\n- Integrate with virtual memory management system\n- Add proper error handling for malformed ELF files\n- Test with simple userland programs before attempting Doom\n\n## Dependencies\n- User/kernel space separation\n- Per-process virtual memory management\n- Syscall interface implementation",
-    "labels": ["enhancement"],
+    "labels": [
+      "enhancement"
+    ],
     "status": "Backlog",
     "github_issue": {
       "number": 26,
@@ -87,7 +103,9 @@
   {
     "title": "Implement syscall ABI and dispatcher",
     "body": "## Goal\nCreate a system call interface and dispatcher for user/kernel communication.\n\n## Context\nPart of the Road to Doom infrastructure. User processes need a way to request kernel services like memory allocation, file I/O, and graphics operations.\n\n## Definition of Done\n- Define syscall numbers and ABI (register usage, calling conventions)\n- Implement syscall entry point in assembly (INT 0x80 or SYSCALL instruction)\n- Create dispatcher that routes syscall numbers to handler functions\n- Handle context switching between user and kernel mode\n- Implement proper error reporting and return value mechanism\n- Add syscall argument validation and bounds checking\n- Document syscall interface for userland developers\n- Create initial set of basic syscalls (exit, write, etc.)\n\n## Dependencies\n- User/kernel space separation\n- Process management infrastructure",
-    "labels": ["enhancement"],
+    "labels": [
+      "enhancement"
+    ],
     "status": "Backlog",
     "github_issue": {
       "number": 27,
@@ -98,7 +116,9 @@
   {
     "title": "Implement per-process virtual memory management",
     "body": "## Goal\nCreate isolated virtual memory spaces for user processes with proper memory layout.\n\n## Context\nPart of the Road to Doom infrastructure. Each user process needs its own virtual address space with code/data/heap/stack regions properly isolated from other processes and the kernel.\n\n## Definition of Done\n- Design user process memory layout (code, data, bss, heap, stack regions)\n- Implement per-process page tables and address space management\n- Add memory isolation between processes and kernel/user space\n- Support memory allocation/deallocation for user processes\n- Implement demand paging and lazy allocation for large programs like Doom\n- Add proper memory permissions (read/write/execute) enforcement\n- Handle page faults in user space appropriately\n- Support memory regions up to 16MB for Doom's requirements\n\n## Dependencies\n- Existing virtual memory management improvements\n- Page fault handler fixes",
-    "labels": ["enhancement"],
+    "labels": [
+      "enhancement"
+    ],
     "status": "Backlog",
     "github_issue": {
       "number": 28,
@@ -109,7 +129,9 @@
   {
     "title": "Create cross-compiler toolchain for userland",
     "body": "## Goal\nSet up a cross-compiler toolchain that targets meniOS userland ABI.\n\n## Context\nPart of the Road to Doom infrastructure. We need a complete toolchain (binutils + GCC/Clang) that can compile user programs for meniOS, including Doom.\n\n## Definition of Done\n- Configure and build cross-binutils for meniOS target\n- Build cross-GCC or Clang targeting meniOS userland ABI\n- Create linker scripts for user program layout\n- Implement basic C runtime startup code (crt0)\n- Create minimal libc subset with essential functions\n- Set up build system for compiling userland programs\n- Document toolchain installation and usage\n- Test toolchain by compiling simple test programs\n\n## Dependencies\n- Syscall ABI definition\n- Process memory layout specification",
-    "labels": ["enhancement"],
+    "labels": [
+      "enhancement"
+    ],
     "status": "Backlog",
     "github_issue": {
       "number": 29,
@@ -120,7 +142,9 @@
   {
     "title": "Implement filesystem support and VFS layer",
     "body": "## Goal\nCreate filesystem support with VFS layer and basic file operations for userland.\n\n## Context\nPart of the Road to Doom infrastructure. User processes need to access files, especially Doom needs to load WAD assets from disk.\n\n## Definition of Done\n- Implement block device driver (AHCI/ATA or RAM-backed disk)\n- Create filesystem implementation (FAT32 or simple custom FS)\n- Build VFS (Virtual File System) abstraction layer\n- Implement syscalls: open, read, write, lseek, close, stat\n- Add directory traversal support (opendir, readdir, closedir)\n- Support file metadata and permissions\n- Handle file system mounting and unmounting\n- Test with loading large files (for Doom WAD assets)\n\n## Dependencies\n- Syscall interface\n- Block device driver infrastructure",
-    "labels": ["enhancement"],
+    "labels": [
+      "enhancement"
+    ],
     "status": "Backlog",
     "github_issue": {
       "number": 30,
@@ -130,8 +154,10 @@
   },
   {
     "title": "Implement userspace graphics/framebuffer interface",
-    "body": "## Goal\nCreate userspace-accessible graphics interface for rendering applications like Doom.\n\n## Context\nPart of the Road to Doom infrastructure. Doom needs to render graphics at 320×200 or 640×480 resolution with 8-bit or 32-bit color depth.\n\n## Definition of Done\n- Expose framebuffer to userspace through syscalls or memory mapping\n- Support multiple video modes (320×200, 640×480) with different bit depths\n- Implement double-buffering to avoid screen tearing\n- Add page-flip or buffer swap syscalls\n- Support 8-bit paletted mode and palette control\n- Implement basic blitting operations for performance\n- Add optional software scaling for resolution conversion\n- Ensure thread-safe access to graphics resources\n\n## Dependencies\n- Syscall interface\n- Virtual memory management\n- Existing framebuffer improvements",
-    "labels": ["enhancement"],
+    "body": "## Goal\nCreate userspace-accessible graphics interface for rendering applications like Doom.\n\n## Context\nPart of the Road to Doom infrastructure. Doom needs to render graphics at 320\u00d7200 or 640\u00d7480 resolution with 8-bit or 32-bit color depth.\n\n## Definition of Done\n- Expose framebuffer to userspace through syscalls or memory mapping\n- Support multiple video modes (320\u00d7200, 640\u00d7480) with different bit depths\n- Implement double-buffering to avoid screen tearing\n- Add page-flip or buffer swap syscalls\n- Support 8-bit paletted mode and palette control\n- Implement basic blitting operations for performance\n- Add optional software scaling for resolution conversion\n- Ensure thread-safe access to graphics resources\n\n## Dependencies\n- Syscall interface\n- Virtual memory management\n- Existing framebuffer improvements",
+    "labels": [
+      "enhancement"
+    ],
     "status": "Backlog",
     "github_issue": {
       "number": 31,
@@ -142,7 +168,9 @@
   {
     "title": "Implement userspace input subsystem",
     "body": "## Goal\nCreate userspace input interface for keyboard and mouse input.\n\n## Context\nPart of the Road to Doom infrastructure. Doom needs keyboard input for controls and mouse input for looking/turning.\n\n## Definition of Done\n- Create userspace keyboard interface using PS/2 driver\n- Implement event queue or character device for keyboard input\n- Add mouse driver with relative motion and button support\n- Create input event system for userspace applications\n- Support both raw scancodes and cooked keyboard events\n- Implement input buffering and non-blocking reads\n- Add proper input device management and multiplexing\n- Test input responsiveness for gaming applications\n\n## Dependencies\n- PS/2 keyboard driver improvements\n- Syscall interface\n- Mouse driver implementation",
-    "labels": ["enhancement"],
+    "labels": [
+      "enhancement"
+    ],
     "status": "Backlog",
     "github_issue": {
       "number": 32,
@@ -153,7 +181,9 @@
   {
     "title": "Implement audio subsystem for userspace",
     "body": "## Goal\nCreate audio output system that userspace applications like Doom can use.\n\n## Context\nPart of the Road to Doom infrastructure. Doom requires audio output for sound effects and music playback.\n\n## Definition of Done\n- Implement PCM audio output driver (AC97, HDA, or PC speaker fallback)\n- Create audio mixing and streaming syscalls\n- Support 8-bit and 16-bit audio sample formats\n- Implement audio buffer management and DMA transfers\n- Add timer-driven audio callbacks or asynchronous queue system\n- Support multiple audio streams/channels for sound effects + music\n- Handle audio sample rate conversion if needed\n- Test with simple audio playback before Doom integration\n\n## Dependencies\n- Syscall interface\n- Hardware audio driver\n- Timer/interrupt management",
-    "labels": ["enhancement"],
+    "labels": [
+      "enhancement"
+    ],
     "status": "Backlog",
     "github_issue": {
       "number": 33,
@@ -164,7 +194,9 @@
   {
     "title": "Implement preemptive userland scheduler",
     "body": "## Goal\nCreate a preemptive scheduler that can manage userland processes with proper time slicing.\n\n## Context\nPart of the Road to Doom infrastructure. User processes need to be scheduled fairly and Doom needs consistent timing for smooth gameplay.\n\n## Definition of Done\n- Implement preemptive scheduling for user processes\n- Add time slicing with configurable quantum lengths\n- Support process priorities and scheduling policies\n- Implement per-process accounting and statistics\n- Add sleep/yield primitives for user threads\n- Handle scheduler interaction with kernel threads\n- Support process state management (running, sleeping, waiting)\n- Ensure smooth scheduling for real-time applications like games\n\n## Dependencies\n- Process management infrastructure\n- Timer/interrupt handling\n- Context switching mechanism",
-    "labels": ["enhancement"],
+    "labels": [
+      "enhancement"
+    ],
     "status": "Backlog",
     "github_issue": {
       "number": 34,
@@ -175,7 +207,9 @@
   {
     "title": "Improve kmalloc implementation",
     "body": "## Goal\nEnhance the kmalloc implementation to be more robust, efficient, and feature-complete.\n\n## Context\nThe current kmalloc implementation is basic and could benefit from improvements in performance, reliability, and functionality. As the kernel grows and especially as we move toward userland support, memory allocation becomes increasingly critical.\n\n## Definition of Done\n- **Performance improvements**: Optimize allocation/deallocation algorithms for better speed and reduced fragmentation\n- **Better debugging**: Add allocation tracking, leak detection, and corruption detection\n- **Size alignment**: Ensure proper memory alignment for different data types and architectures\n- **Error handling**: Improve error reporting and graceful handling of allocation failures\n- **Memory pools**: Consider implementing size-based memory pools for common allocation sizes\n- **Statistics**: Add memory usage statistics and monitoring capabilities\n- **Integration**: Better integration with virtual memory management system\n- **Bounds checking**: Add optional bounds checking to detect buffer overflows\n- **Thread safety**: Ensure kmalloc is thread-safe for multi-threaded kernel operations\n\n## Potential Improvements\n- Implement buddy allocator or slab allocator for better performance\n- Add kmalloc_aligned() for specific alignment requirements\n- Implement kcalloc() and krealloc() for completeness\n- Add memory poisoning for debugging (fill freed memory with pattern)\n- Consider adding memory zones (DMA, normal, high memory)\n- Add allocation size classes to reduce fragmentation",
-    "labels": ["enhancement"],
+    "labels": [
+      "enhancement"
+    ],
     "status": "Backlog",
     "github_issue": {
       "number": 35,
@@ -186,7 +220,9 @@
   {
     "title": "Improve kmutex implementation",
     "body": "## Goal\nEnhance the existing kmutex implementation to be more robust, efficient, and feature-complete for kernel synchronization.\n\n## Context\nThe current kmutex implementation provides basic mutual exclusion but could benefit from improvements in performance, debugging capabilities, and additional features needed for a robust kernel synchronization primitive.\n\n## Definition of Done\n- **Performance improvements**: Optimize lock/unlock operations for minimal overhead\n- **Debugging support**: Add lock tracking, deadlock detection, and ownership validation\n- **Priority handling**: Implement priority inheritance to prevent priority inversion\n- **Timeout support**: Add kmutex_lock_timeout() for non-blocking operations with timeouts\n- **Recursive locks**: Support for recursive mutex acquisition by the same thread\n- **Error handling**: Improve error reporting and validation of mutex operations\n- **Statistics**: Add lock contention statistics and performance monitoring\n- **Documentation**: Comprehensive API documentation with usage examples\n\n## Potential Improvements\n- Add kmutex_trylock() for non-blocking lock attempts\n- Implement fair scheduling to prevent lock starvation\n- Add mutex debugging modes (leak detection, double-lock detection)\n- Support for different mutex types (normal, recursive, errorcheck)\n- Integration with kernel debugging and profiling tools\n- Lock ordering validation to detect potential deadlocks",
-    "labels": ["enhancement"],
+    "labels": [
+      "enhancement"
+    ],
     "status": "Backlog",
     "github_issue": {
       "number": 36,
@@ -197,7 +233,9 @@
   {
     "title": "Implement semaphore synchronization primitive",
     "body": "## Goal\nImplement counting semaphores for kernel synchronization and resource management.\n\n## Context\nSemaphores are essential synchronization primitives that allow controlling access to a finite number of resources. They're particularly useful for producer-consumer scenarios, resource pools, and implementing other synchronization constructs.\n\n## Definition of Done\n- **Core functionality**: Implement ksem_init(), ksem_wait(), ksem_post(), ksem_destroy()\n- **Counting semaphore**: Support for initial count and maximum count values\n- **Timeout support**: Add ksem_wait_timeout() for non-blocking waits with timeout\n- **Try operations**: Implement ksem_trywait() for non-blocking attempts\n- **Error handling**: Proper error codes and validation for all operations\n- **Thread safety**: Ensure all operations are atomic and thread-safe\n- **Performance**: Optimize for minimal overhead in common use cases\n- **Integration**: Work seamlessly with kernel scheduler and thread management\n\n## Use Cases\n- Resource pool management (memory pools, connection pools)\n- Producer-consumer synchronization\n- Rate limiting and flow control\n- Barrier implementation\n- Building higher-level synchronization primitives",
-    "labels": ["enhancement"],
+    "labels": [
+      "enhancement"
+    ],
     "status": "Backlog",
     "github_issue": {
       "number": 37,
@@ -208,7 +246,9 @@
   {
     "title": "Implement spinlock synchronization primitive",
     "body": "## Goal\nImplement spinlocks for low-level kernel synchronization in performance-critical sections.\n\n## Context\nSpinlocks are essential for protecting short critical sections where the overhead of sleeping would be greater than busy-waiting. They're particularly important for SMP systems and interrupt handlers.\n\n## Definition of Done\n- **Core functionality**: Implement spinlock_init(), spinlock_lock(), spinlock_unlock()\n- **Atomic operations**: Use CPU atomic instructions for lock/unlock operations\n- **Interrupt safety**: Support for spinlock_irq_save/restore() for interrupt contexts\n- **Try operations**: Implement spinlock_trylock() for non-blocking attempts\n- **Debug support**: Add lock tracking and validation in debug builds\n- **Performance**: Minimal overhead, optimized for short critical sections\n- **Architecture support**: Proper implementation for x86-64 with appropriate barriers\n\n## Use Cases\n- Protecting shared data structures in interrupt handlers\n- SMP-safe critical sections\n- Low-level kernel data structure protection\n- Performance-critical synchronization where sleeping is not acceptable\n- Building blocks for other synchronization primitives",
-    "labels": ["enhancement"],
+    "labels": [
+      "enhancement"
+    ],
     "status": "Backlog",
     "github_issue": {
       "number": 38,
@@ -219,7 +259,9 @@
   {
     "title": "Implement read-write locks (rwlock)",
     "body": "## Goal\nImplement read-write locks to allow concurrent read access while maintaining exclusive write access.\n\n## Context\nRead-write locks are crucial for scenarios where data is frequently read but infrequently modified. They allow multiple readers to access shared data concurrently while ensuring exclusive access for writers.\n\n## Definition of Done\n- **Core functionality**: Implement rwlock_init(), rwlock_read_lock(), rwlock_write_lock(), rwlock_unlock()\n- **Reader priority**: Allow multiple concurrent readers\n- **Writer exclusivity**: Ensure writers have exclusive access\n- **Fairness**: Prevent writer starvation when many readers are present\n- **Try operations**: Implement rwlock_try_read_lock() and rwlock_try_write_lock()\n- **Timeout support**: Add timeout versions for non-blocking operations\n- **Upgrade/downgrade**: Support for upgrading read locks to write locks (optional)\n- **Debug support**: Lock tracking and validation in debug builds\n\n## Use Cases\n- Shared data structures with frequent reads, infrequent writes\n- Cache implementations\n- Configuration data protection\n- File system metadata\n- Network routing tables\n- Database-like operations in kernel",
-    "labels": ["enhancement"],
+    "labels": [
+      "enhancement"
+    ],
     "status": "Backlog",
     "github_issue": {
       "number": 39,
@@ -230,7 +272,9 @@
   {
     "title": "Implement condition variables",
     "body": "## Goal\nImplement condition variables for thread coordination and event-driven synchronization.\n\n## Context\nCondition variables are essential for implementing wait/notify patterns where threads need to wait for specific conditions to become true. They work in conjunction with mutexes to provide efficient blocking and signaling mechanisms.\n\n## Definition of Done\n- **Core functionality**: Implement kcond_init(), kcond_wait(), kcond_signal(), kcond_broadcast()\n- **Mutex integration**: Work seamlessly with kmutex for atomic condition checking\n- **Spurious wakeup handling**: Proper semantics for condition variable waits\n- **Timeout support**: Add kcond_wait_timeout() for bounded waiting\n- **Signal semantics**: Both single-thread signal and broadcast to all waiters\n- **Error handling**: Proper error codes and validation\n- **Performance**: Efficient implementation with minimal overhead\n\n## Use Cases\n- Producer-consumer patterns\n- Thread pool work queue management\n- Event notification systems\n- Implementing barriers and rendezvous\n- Resource availability notifications\n- Complex synchronization patterns requiring state-based waiting",
-    "labels": ["enhancement"],
+    "labels": [
+      "enhancement"
+    ],
     "status": "Backlog",
     "github_issue": {
       "number": 40,
@@ -241,7 +285,9 @@
   {
     "title": "Implement atomic operations and memory barriers",
     "body": "## Goal\nImplement atomic operations and memory barriers for lock-free programming and low-level synchronization.\n\n## Context\nAtomic operations are fundamental building blocks for implementing lock-free data structures and other synchronization primitives. They provide guaranteed atomic read-modify-write operations without requiring locks.\n\n## Definition of Done\n- **Basic atomic types**: Support for atomic integers (32-bit and 64-bit)\n- **Atomic operations**: Load, store, exchange, compare-and-swap, fetch-and-add, etc.\n- **Memory ordering**: Support for different memory ordering semantics (relaxed, acquire, release, seq_cst)\n- **Memory barriers**: Implement compiler and CPU memory barriers\n- **Architecture optimization**: Use CPU-specific atomic instructions on x86-64\n- **Lock-free helpers**: Provide building blocks for lock-free data structures\n- **Documentation**: Comprehensive documentation on usage and memory ordering\n\n## Use Cases\n- Lock-free data structures (queues, stacks, lists)\n- Reference counting\n- Building other synchronization primitives\n- High-performance inter-thread communication\n- Statistics and counters\n- Flag-based synchronization",
-    "labels": ["enhancement"],
+    "labels": [
+      "enhancement"
+    ],
     "status": "Backlog",
     "github_issue": {
       "number": 41,
@@ -252,7 +298,9 @@
   {
     "title": "Enable SMP (Symmetric Multiprocessing) support",
     "body": "## Goal\nAdd support for multiple CPU cores to enable true multiprocessing capabilities in meniOS.\n\n## Context\nCurrently meniOS runs on a single CPU core. Adding SMP support will enable the kernel to utilize multiple cores, improving performance and enabling true parallel processing. This is essential for modern systems and will be important for running complex applications like Doom with better performance.\n\n## Definition of Done\n- **CPU Detection**: Detect and enumerate available CPU cores using ACPI tables\n- **AP Initialization**: Boot and initialize Application Processors (non-boot CPUs)\n- **Per-CPU Data**: Implement per-CPU data structures and variables\n- **SMP-Safe Synchronization**: Ensure all kernel data structures are SMP-safe\n- **SMP Scheduler**: Extend scheduler to distribute tasks across multiple CPUs\n- **Load Balancing**: Basic load balancing between CPU cores\n- **CPU Affinity**: Support for binding processes/threads to specific CPUs\n- **SMP-Safe Memory Management**: Make memory allocators and VM system SMP-safe\n\n## Key Components to Implement\n- **ACPI Parsing**: Parse MADT (Multiple APIC Description Table) to find CPU cores\n- **APIC Configuration**: Set up Local APIC and I/O APIC for inter-processor communication\n- **AP Boot Protocol**: Implement CPU startup sequence for secondary cores\n- **Spinlocks**: Implement proper spinlocks for SMP synchronization (depends on issue #38)\n- **Per-CPU Variables**: Implement __percpu data and accessor functions\n- **SMP-Safe Primitives**: Update all shared data structures with proper locking\n- **CPU Hotplug**: Basic support for CPU online/offline operations (optional)\n\n## Technical Challenges\n- **Bootstrap Process**: Complex CPU initialization sequence\n- **Memory Barriers**: Proper memory ordering between CPUs\n- **Race Conditions**: Identify and fix all potential race conditions in kernel\n- **Cache Coherency**: Handle CPU cache synchronization issues\n- **Interrupt Distribution**: Distribute interrupts across multiple CPUs\n- **Atomic Operations**: Hardware-specific atomic instructions (see issue #41)\n\n## Dependencies\n- Issue #38: Spinlock implementation (critical for SMP)\n- Issue #41: Atomic operations and memory barriers\n- Improved synchronization primitives for SMP-safe operations",
-    "labels": ["enhancement"],
+    "labels": [
+      "enhancement"
+    ],
     "status": "Backlog",
     "github_issue": {
       "number": 42,
@@ -261,31 +309,11 @@
     }
   },
   {
-    "title": "Implement GDT user segments for Ring 3 support",
-    "body": "## Goal\nAdd user code and data segments to the Global Descriptor Table (GDT) to enable Ring 3 (user mode) execution.\n\n## Context\nCurrently meniOS only has kernel segments (Ring 0). To support userland, we need Ring 3 segments that allow user processes to execute with limited privileges.\n\n## Definition of Done\n- **Add user segments**: Create USER_CODE_SELECTOR and USER_DATA_SELECTOR in GDT\n- **Set privilege levels**: Configure DPL (Descriptor Privilege Level) = 3 for user segments\n- **Update GDT loading**: Ensure new segments are properly loaded during boot\n- **Define constants**: Add segment selector constants to header files\n- **Validation**: Verify segments can be loaded without faulting\n\n## Files to Modify\n- include/gdt.h - Add user segment constants\n- src/gdt.c - Implement user segment creation\n- src/boot/gdt_load.s - Update GDT loading if needed\n\n## Testing\n- Boot kernel and verify GDT loads successfully\n- Check that segment registers can be loaded with user selectors\n- Validate segment descriptors are properly configured\n\n## Dependencies\nNone - this is foundational work\n\n## Time Estimate\n3-5 days",
-    "labels": ["enhancement"],
-    "status": "Backlog",
-    "github_issue": {
-      "number": 43,
-      "url": "https://github.com/pbalduino/menios/issues/43",
-      "state": "OPEN"
-    }
-  },
-  {
-    "title": "Implement TSS for privilege level transitions",
-    "body": "## Goal\nSet up Task State Segment (TSS) to handle stack switching during Ring 0/Ring 3 transitions.\n\n## Context\nWhen switching between user mode (Ring 3) and kernel mode (Ring 0), the CPU needs to know where the kernel stack is located. The TSS provides this information and is essential for safe privilege transitions.\n\n## Definition of Done\n- **Create TSS structure**: Define and initialize TSS data structure\n- **Set kernel stack**: Configure TSS with kernel stack pointer for ring transitions\n- **Load TSS into GDT**: Add TSS descriptor to GDT and load it\n- **Stack switching**: Ensure proper stack switching on privilege level changes\n- **Testing**: Verify TSS is correctly loaded and functional\n\n## Implementation Details\n- Define TSS structure with required fields (ESP0, SS0, etc.)\n- Initialize TSS with kernel stack pointer\n- Add TSS descriptor to GDT with proper access rights\n- Use LTR instruction to load TSS register\n- Set up separate kernel stack for interrupt handling\n\n## Dependencies\n- Issue #43: GDT user segments (TSS goes in GDT)\n\n## Time Estimate\n4-6 days",
-    "labels": ["enhancement"],
-    "status": "Backlog",
-    "github_issue": {
-      "number": 44,
-      "url": "https://github.com/pbalduino/menios/issues/44",
-      "state": "OPEN"
-    }
-  },
-  {
     "title": "Implement user/kernel memory protection",
     "body": "## Goal\nSet up memory protection to isolate kernel memory from user processes and enable safe user mode execution.\n\n## Context\nCurrently all memory is accessible from any privilege level. For userland support, we need to protect kernel memory from user access while allowing controlled access to user memory.\n\n## Definition of Done\n- **Kernel memory protection**: Mark kernel pages as supervisor-only (CPL 0-2 only)\n- **User memory regions**: Create user-accessible memory regions with proper permissions\n- **Page table updates**: Modify page table creation to set User/Supervisor bits\n- **Memory layout**: Define clear kernel/user memory layout boundaries\n- **Access validation**: Test that privilege violations properly generate page faults\n\n## Files to Modify\n- vmm.c - Virtual memory management updates\n- pmm.c - Physical memory allocation updates\n- page_fault handler - Handle privilege violations\n- Memory layout headers\n\n## Dependencies\n- Existing virtual memory management system\n- Page fault handler improvements\n\n## Time Estimate\n1-2 weeks",
-    "labels": ["enhancement"],
+    "labels": [
+      "enhancement"
+    ],
     "status": "Backlog",
     "github_issue": {
       "number": 45,
@@ -294,20 +322,11 @@
     }
   },
   {
-    "title": "Implement Ring 0/Ring 3 transition mechanism",
-    "body": "## Goal\nCreate the assembly code and mechanisms to safely transition between kernel mode (Ring 0) and user mode (Ring 3).\n\n## Context\nThis is the core mechanism that enables user processes to run. We need to be able to jump from kernel to user mode and handle returns from user to kernel mode through interrupts and system calls.\n\n## Definition of Done\n- **User mode entry**: Assembly code to jump from Ring 0 to Ring 3\n- **Kernel mode return**: Handle transitions from Ring 3 back to Ring 0\n- **Stack management**: Proper stack switching during transitions\n- **Register setup**: Correct register state for user mode execution\n- **IRET implementation**: Use IRET instruction for privilege level changes\n- **Exception handling**: Handle faults during transitions\n\n## Files to Create\n- user_transition.s - Assembly transition code\n- user_mode.h - Function declarations\n- user_mode.c - C wrapper functions\n\n## Dependencies\n- Issue #43: GDT user segments\n- Issue #44: TSS implementation\n- Issue #45: Memory protection\n\n## Time Estimate\n1 week",
-    "labels": ["enhancement"],
-    "status": "Backlog",
-    "github_issue": {
-      "number": 46,
-      "url": "https://github.com/pbalduino/menios/issues/46",
-      "state": "OPEN"
-    }
-  },
-  {
     "title": "Create basic user mode test program",
     "body": "## Goal\nImplement a minimal test program that can execute in user mode to validate the Ring 0/Ring 3 infrastructure.\n\n## Context\nOnce we have user/kernel separation working, we need a simple test program to verify everything works correctly. This will be our first userland program.\n\n## Definition of Done\n- **Simple user function**: Create a basic user mode function that can execute\n- **Kernel integration**: Load and execute the user function from kernel\n- **Success validation**: Verify the program runs and returns successfully\n- **Debug output**: Add logging to track execution flow\n- **Error handling**: Handle any faults that occur during execution\n\n## Files to Create/Modify\n- user_test.c - Test program implementation\n- user_loader.c - Kernel-side user program launcher\n- Integration with existing boot/init code\n\n## Dependencies\n- Issue #43: GDT user segments\n- Issue #44: TSS implementation\n- Issue #45: Memory protection\n- Issue #46: Ring transitions\n\n## Time Estimate\n3-5 days",
-    "labels": ["enhancement"],
+    "labels": [
+      "enhancement"
+    ],
     "status": "Backlog",
     "github_issue": {
       "number": 47,
@@ -318,11 +337,52 @@
   {
     "title": "Implement basic syscall interface (exit and write)",
     "body": "## Goal\nCreate a minimal system call interface with just exit() and write() syscalls to enable basic user-kernel communication.\n\n## Context\nOnce user mode is working, we need a way for user programs to request kernel services. Starting with just exit() and write() provides the foundation and allows testing/debugging of user programs.\n\n## Definition of Done\n- **Syscall entry point**: Set up INT 0x80 or SYSCALL instruction handling\n- **Syscall dispatcher**: Route syscall numbers to appropriate handlers\n- **exit() syscall**: Allow user programs to terminate cleanly\n- **write() syscall**: Basic output capability for debugging user programs\n- **Parameter passing**: Implement syscall parameter passing via registers\n- **Return values**: Proper return value mechanism\n- **Error handling**: Basic error reporting for invalid syscalls\n\n## Syscall Interface Design\n- SYS_EXIT: exit(int status) - terminate process\n- SYS_WRITE: write(int fd, const char* buf, size_t count) - write to console\n\n## Dependencies\n- Issue #47: Basic user mode test (need working user mode first)\n- Interrupt handling system\n\n## Time Estimate\n1 week",
-    "labels": ["enhancement"],
+    "labels": [
+      "enhancement"
+    ],
     "status": "Backlog",
     "github_issue": {
       "number": 48,
       "url": "https://github.com/pbalduino/menios/issues/48",
+      "state": "OPEN"
+    }
+  },
+  {
+    "title": "Implement syscall dispatcher and entry path",
+    "body": "## Goal\nCreate the core syscall infrastructure so user code can trap into the kernel using INT 0x80 (or SYSCALL).\n\n## Definition of Done\n- Install INT 0x80 handler (or SYSCALL/SYSRET path) that switches to kernel mode.\n- Implement syscall_table[] with at least entries for SYS_WRITE (1) and SYS_EXIT (60).\n- Provide a syscall dispatcher that validates numbers and invokes handlers.\n- Ensure the dispatcher returns to user mode with correct registers/errno semantics.\n- Document ABI: register usage, return values, error reporting.\n\n## Dependencies\n- Ring 3 entry path and TSS setup (done).\n",
+    "labels": [
+      "enhancement"
+    ],
+    "status": "Done",
+    "github_issue": {
+      "number": 52,
+      "url": "https://github.com/pbalduino/menios/issues/52",
+      "state": "OPEN"
+    }
+  },
+  {
+    "title": "Implement SYS_WRITE (1) syscall",
+    "body": "## Goal\nAllow user processes to write to stdout/stderr using syscall number 1.\n\n## Definition of Done\n- Add handler for SYS_WRITE that copies data from user memory and prints to the kernel console.\n- Support file descriptor 1 (stdout) initially; stub or reject others.\n- Handle partial writes and error reporting (return bytes written or negative errno).\n- Validate user buffers (length, accessibility) to avoid kernel faults.\n- Provide simple user-mode stub or demo showing a message printed from Ring 3.\n\n## Dependencies\n- Syscall dispatcher infrastructure.",
+    "labels": [
+      "enhancement"
+    ],
+    "status": "Done",
+    "github_issue": {
+      "number": 50,
+      "url": "https://github.com/pbalduino/menios/issues/50",
+      "state": "OPEN"
+    }
+  },
+  {
+    "title": "Implement SYS_EXIT (60) syscall",
+    "body": "## Goal\nAllow user processes to terminate cleanly using syscall number 60.\n\n## Definition of Done\n- Add handler for SYS_EXIT that marks the current process as terminated and triggers scheduler cleanup.\n- Ensure the kernel removes the process from run queues and frees resources.\n- Return control to the scheduler so other tasks keep running.\n- Provide a simple user-mode demo that exits with a status code.\n\n## Dependencies\n- Syscall dispatcher infrastructure.",
+    "labels": [
+      "enhancement"
+    ],
+    "status": "Done",
+    "github_issue": {
+      "number": 51,
+      "url": "https://github.com/pbalduino/menios/issues/51",
       "state": "OPEN"
     }
   }
