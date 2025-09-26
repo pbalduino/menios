@@ -1,28 +1,5 @@
 [
   {
-    "title": "Align kernel thread sleep state with scheduler enums",
-    "body": "## Goal\nEnsure `ksleep` marks threads with a valid scheduler state so the kernel builds and the scheduler can detect sleeping threads.\n\n## Context\n`kthread.c` uses `THREAD_SLEEPING`, but no such constant exists. The process scheduler expects `PROC_STATE_SLEEPING`. The mismatch currently prevents compilation and keeps the scheduler from tracking sleep state correctly.\n\n## Definition of Done\n- Replace the undefined `THREAD_SLEEPING` in `kthread.c` with the appropriate scheduler state constant (e.g., `PROC_STATE_SLEEPING`).\n- Verify that the kernel compiles without introducing new warnings.\n- Confirm that sleeping threads transition to the correct state in scheduler diagnostics/logs.\n",
-    "labels": ["bug"],
-    "status": "Done",
-    "test_results": [
-      {
-        "name": "Test suite",
-        "status": "passed",
-        "details": "Unity tests (ksleep state change covered indirectly)"
-      },
-      {
-        "name": "make build",
-        "status": "passed",
-        "details": "Kernel rebuild succeeds after ksleep state fix"
-      }
-    ],
-    "github_issue": {
-      "number": 10,
-      "url": "https://github.com/pbalduino/menios/issues/10",
-      "state": "OPEN"
-    }
-  },
-  {
     "title": "Propagate kernel thread termination status for joins",
     "body": "## Goal\nAllow `ktread_join` to detect when a thread has exited so callers can synchronise correctly.\n\n## Context\n`kthread_t.status` is never initialised or updated. `ktread_join` busy-waits on `THREAD_TERMINATED`, but that flag never changes, causing joins to spin forever on uninitialised memory.\n\n## Definition of Done\n- Initialise `kthread_t.status` to a running state when creating a thread.\n- Set the status to `THREAD_TERMINATED` when the entrypoint returns or `kexit` completes.\n- Ensure `ktread_join` exits once the status flips, and document/update any state transitions touched.\n- Add or update logging/tests as needed to show the status change occurs.\n",
     "labels": ["bug"],
@@ -43,52 +20,6 @@
     }
   },
   {
-    "title": "Fix the PF handler to show the right data",
-    "body": "## Goal\nFix the page fault handler to display complete and accurate CPU state information when a page fault occurs.\n\n## Context\nThere's a mismatch in the page fault handler implementation between the assembly code and C handlers. The ASM handler in `lidt.s:116` calls `page_fault_handler(stack_frame_t* stack_frame)`, but there's also a separate `idt_pf_isr_handler(uint64_t error_code)` in `idt.c:66`. The current handler shows basic information (error code, CR2 register) but may be missing comprehensive CPU state due to this handler mismatch.\n\n## Definition of Done\n- Resolve the function signature mismatch between assembly and C page fault handlers\n- Display complete CPU register state (RAX, RBX, RCX, RDX, RSI, RDI, etc.) \n- Show proper page fault analysis (present bit, write/read access, user/kernel mode)\n- Provide accurate virtual address (CR2) and detailed error code breakdown\n- Ensure the handler receives and displays correct stack frame information\n- Verify page fault debugging information is comprehensive and accurate",
-    "labels": ["bug"],
-    "status": "Done",
-    "test_results": [
-      {
-        "name": "Test suite",
-        "status": "passed",
-        "details": "Unity tests including pf_error decode helper"
-      },
-      {
-        "name": "make build",
-        "status": "passed",
-        "details": "Kernel rebuild succeeds with enhanced PF diagnostics"
-      }
-    ],
-    "github_issue": {
-      "number": 4,
-      "url": "https://github.com/pbalduino/menios/issues/4",
-      "state": "OPEN"
-    }
-  },
-  {
-    "title": "Fix the GPF handler to show the right data",
-    "body": "## Goal\nEnhance the General Protection Fault (GPF) handler to display comprehensive CPU state and error analysis when a GPF occurs.\n\n## Context\nThe current GPF handler in `idt.c:57-64` and `lidt.s:56-94` properly saves all registers but only displays limited information (R15 register and error code). The handler uses `dump_heap()` to show memory state but lacks comprehensive register display and error code analysis to help diagnose what caused the GPF.\n\n## Definition of Done\n- Display complete CPU register state (RAX, RBX, RCX, RDX, RSI, RDI, RSP, RBP, etc.) instead of just R15\n- Analyze and decode the error code to explain the GPF cause (invalid segment, privilege violation, etc.)\n- Show instruction pointer (RIP), segment information (CS, DS, SS, etc.) and stack pointer\n- Provide meaningful error messages explaining the type of protection violation\n- Maintain the existing register preservation but improve the diagnostic output\n- Ensure the handler provides actionable debugging information for GPF diagnosis",
-    "labels": ["bug"],
-    "status": "Done",
-    "test_results": [
-      {
-        "name": "Test suite",
-        "status": "passed",
-        "details": "Unity tests including new GPF decode helper"
-      },
-      {
-        "name": "make build",
-        "status": "passed",
-        "details": "Kernel rebuild succeeds with enhanced GPF logging"
-      }
-    ],
-    "github_issue": {
-      "number": 5,
-      "url": "https://github.com/pbalduino/menios/issues/5",
-      "state": "OPEN"
-    }
-  },
-  {
     "title": "Fix kmalloc to get memory from the virtual memory",
     "body": "## Goal\nIntegrate kmalloc with the virtual memory management system instead of using direct physical memory allocation.\n\n## Context\nThe current kmalloc implementation in `kmalloc.c` uses a simple heap allocator with a linked list of nodes, operating directly on physical memory addresses. The heap is initialized with a fixed address and size via `init_heap(void* addr, size_t size)` but doesn't integrate with the virtual memory manager. The existing `get_first_free_page()` function is available but not used by kmalloc.\n\n## Definition of Done\n- Modify kmalloc to allocate pages from the virtual memory manager instead of direct physical memory\n- Integrate with the existing page allocation system (`get_first_free_page()` function)\n- Implement proper virtual-to-physical address mapping for allocated memory\n- Ensure kmalloc works with the page fault handler for demand paging scenarios\n- Update heap initialization to use virtual memory addresses rather than physical addresses\n- Maintain backwards compatibility with existing kmalloc users while improving the underlying memory management\n- Verify that freed memory is properly returned to the virtual memory system",
     "labels": ["enhancement"],
@@ -96,100 +27,6 @@
       "number": 6,
       "url": "https://github.com/pbalduino/menios/issues/6",
       "state": "OPEN"
-    }
-  },
-  {
-    "title": "Fix virtual_to_physical calculation",
-    "body": "## Goal\nReplace the overly simplistic virtual_to_physical calculation with a proper page table walking implementation.\n\n## Context\nThe current `virtual_to_physical` function in `pmm.c:43-45` uses a basic calculation `return virtual_address - kernel_offset` which only works for kernel direct-mapped memory (HHDM - Higher Half Direct Map). This approach doesn't handle user space virtual addresses, doesn't walk the actual page tables, and assumes linear mapping which may not be true for all memory regions.\n\n## Definition of Done\n- Implement proper page table hierarchy walking (PML4 → PDPT → PD → PT) to find actual physical mappings\n- Handle different memory regions correctly (kernel space, user space, device memory)\n- Return appropriate error codes for unmapped virtual addresses or invalid page table entries\n- Integrate with the existing paging structures already defined in the codebase\n- Ensure the function works correctly for both kernel and user virtual addresses\n- Add proper bounds checking and validation of page table entries\n- Maintain performance while providing accurate virtual-to-physical translation\n- Add documentation explaining the page table walking process",
-    "labels": ["bug"],
-    "status": "Completed",
-    "branch": "issue-7-fix-virtual-to-physical",
-    "commit": "550aac4d39305bc221289230a34a129648a5419c",
-    "test_results": [
-      {
-        "name": "test_virtual_to_physical",
-        "status": "passed",
-        "details": "Unity suite validating 4KiB, 2MiB mappings and unmapped address handling"
-      },
-      {
-        "name": "test_kmalloc",
-        "status": "passed",
-        "details": "Regression loop confirms existing heap allocation tests continue to pass"
-      }
-    ],
-    "github_issue": {
-      "number": 7,
-      "url": "https://github.com/pbalduino/menios/issues/7",
-      "state": "CLOSED"
-    }
-  },
-  {
-    "title": "Add ANSI and scrolling to the console",
-    "body": "## Goal\nImplement comprehensive ANSI escape sequence support and enhanced scrolling functionality for the console.\n\n## Context\nThe current console implementation in `framebuffer.c:148-188` has basic ANSI escape sequence detection that handles color codes but is incomplete. It only processes ESC, digits, semicolons, and 'm' commands without actual color setting. The scrolling implementation in `fb_scroll_up()` only scrolls up one line at a time with no scrollback buffer or smooth scrolling capabilities.\n\n## Definition of Done\n- Implement full ANSI escape sequence support for cursor movement commands (`\\x1b[H` for home, `\\x1b[2J` for clear screen, etc.)\n- Add comprehensive color palette support (minimum 16 colors) with proper color setting functionality\n- Implement text attributes support (bold, dim, underline, reverse video)\n- Add cursor positioning commands and screen clearing functionality\n- Implement scrollback buffer to allow viewing previous screen content\n- Add smooth scrolling capabilities beyond the current single-line scrolling\n- Ensure ANSI processing is complete and handles edge cases properly\n- Test with various ANSI escape sequences to verify compatibility\n- Document the supported ANSI codes and their implementation",
-    "labels": ["enhancement"],
-    "status": "In Review",
-    "branch": "fix-ansi-tests",
-    "pull_request": {
-      "title": "Fix ANSI unit compilation and expectations",
-      "draft": false
-    },
-    "test_results": [
-      {
-        "name": "make test",
-        "status": "passed",
-        "details": "Links ansi.c and defines UNITY_EXCLUDE_SETJMP_H; test_vsprintk, test_kmalloc, and test_ansi all pass"
-      }
-    ],
-    "github_issue": {
-      "number": 8,
-      "url": "https://github.com/pbalduino/menios/issues/8",
-      "state": "CLOSED"
-    }
-  },
-  {
-    "title": "Complete the vsprintk function and add tests",
-    "body": "## Goal\nComplete the missing format specifiers in vsprintk and ensure all existing tests pass.\n\n## Context\nThe vsprintk function in `vprintk.c` is quite complete with support for basic format specifiers (`%c`, `%d`, `%u`, `%x`, `%X`, `%s`, `%p`, `%ld`, `%lx`) and padding/width features. However, several format specifiers have tests written in `test_vsprintk.c` but are not implemented: `%llu`, `%-` (left align), precision support (`.`), `%*` (dynamic width), `%#` (alternate form), and `%%` (literal percent).\n\n## Definition of Done\n- Implement `%llu` (unsigned long long) support to handle 64-bit unsigned integers\n- Add `%-` (left align) support for left-justified output formatting\n- Uncomment and complete precision support (`.` specifier) that is currently disabled in lines 246-253\n- Implement `%*` (dynamic width) support for runtime width specification\n- Add `%#` (alternate form) support for hex formatting with 0x prefix\n- Implement `%%` (literal percent) support to output a single percent character\n- Ensure all existing tests in `test_vsprintk.c` pass without modification\n- Add additional edge case tests for the newly implemented features\n- Verify compatibility with standard printf behavior for the implemented specifiers",
-    "labels": ["enhancement"],
-    "status": "Awaiting Merge",
-    "branch": "issue-9-vsprintk",
-    "pull_request": {
-      "title": "Complete vsprintk format coverage (#9)",
-      "draft": true
-    },
-    "test_results": [
-      {
-        "name": "test_vsprintk",
-        "status": "passed",
-        "details": "Unity formatter suite passes locally after rewrite and additional edge cases"
-      }
-    ],
-    "github_issue": {
-      "number": 9,
-      "url": "https://github.com/pbalduino/menios/issues/9",
-      "state": "CLOSED"
-    }
-  },
-  {
-    "title": "Update Limine bootloader to v10 binary release",
-    "body": "## Goal\nRefresh the Limine bootloader assets used by the Docker build so the kernel boots with the current v10 binary release.\n\n## Context\nThe existing Dockerfile bootstrapped Limine 8.x from source and produced BIOS binaries that no longer match the published v10 API. This mismatch caused Limine to panic while loading stage 3 once the kernel started using the newer headers.\n\n## Definition of Done\n- Fetch the v10.x-binary branch during the Docker build with a fallback to v8.x-binary if necessary.\n- Expose the prebuilt Limine binaries and headers to the project build and ensure they are copied into `bin/`.\n- Adjust the Makefile so Limine assets are synchronised before image creation and added to every search path Limine expects.\n- Verify `make build` and `make run` succeed with the refreshed bootloader.",
-    "labels": ["maintenance"],
-    "status": "Done",
-    "test_results": [
-      {
-        "name": "docker run … make build",
-        "status": "passed",
-        "details": "Builds kernel, installs Limine v10 assets, and produces HDD/ISO images"
-      },
-      {
-        "name": "make run",
-        "status": "passed",
-        "details": "Limine boots from menios.hdd and loads the kernel without stage 3 panic"
-      }
-    ],
-    "github_issue": {
-      "number": 17,
-      "url": "https://github.com/pbalduino/menios/issues/17",
-      "state": "CLOSED"
     }
   },
   {
@@ -215,24 +52,6 @@
     }
   },
   {
-    "title": "Decode PS/2 keyboard input correctly",
-    "body": "## Goal\nReturn real key events from the PS/2 driver instead of filtering everything out.\n\n## Context\n`ps2kb_read` currently ignores every scancode except the `0xFA` ACK byte, meaning the driver never forwards actual key presses. Higher-level input therefore relies on the fallback port-polling `getchar`.\n\n## Definition of Done\n- Parse make/break scancodes and translate them using `keyboard_map`.\n- Buffer key events so `ps2kb_read` returns characters without busy waiting.\n- Track modifier keys (shift/control) or document the limitations.\n- Demonstrate typing via the driver (e.g., exercising the console).",
-    "labels": ["bug"],
-    "status": "Done",
-    "test_results": [
-      {
-        "name": "docker run … make build",
-        "status": "passed",
-        "details": "Build succeeds with ACPI-backed PS/2 initialisation and buffered input"
-      }
-    ],
-    "github_issue": {
-      "number": 21,
-      "url": "https://github.com/pbalduino/menios/issues/21",
-      "state": "OPEN"
-    }
-  },
-  {
     "title": "Implement proper hardware probing and driver connection",
     "body": "## Goal\nDetect hardware properly and connect to the respective drivers for further development.\n\n## Context\nThe current hardware probing implementation doesn't do much beyond basic initialization. The system needs a proper hardware detection mechanism that can identify available hardware components and automatically connect them to their appropriate drivers.\n\n## Definition of Done\n- Implement comprehensive hardware detection during system initialization\n- Create a driver registry system that maps hardware IDs to driver implementations\n- Automatically probe and enumerate available hardware (PCI devices, USB controllers, network cards, etc.)\n- Establish proper driver loading and connection mechanisms\n- Add logging/debugging output to show detected hardware and loaded drivers\n- Provide a foundation for future driver development and hardware support expansion\n- Document the hardware probing process and driver architecture",
     "labels": ["enhancement"],
@@ -251,24 +70,6 @@
     "github_issue": {
       "number": 23,
       "url": "https://github.com/pbalduino/menios/issues/23",
-      "state": "OPEN"
-    }
-  },
-  {
-    "title": "Fix caret rendering to prevent character erasure",
-    "body": "## Goal\nImprove the caret implementation to prevent it from erasing characters on screen.\n\n## Context\nThe current caret implementation is causing visual issues where it erases or overwrites characters that are displayed on screen. This makes the console difficult to read and affects the user experience when typing or viewing text output.\n\n## Definition of Done\n- Analyze the current caret rendering implementation to identify why it's erasing characters\n- Implement proper caret rendering that doesn't interfere with existing text\n- Use techniques like XOR drawing, background saving/restoration, or cursor blinking without text destruction\n- Ensure the caret is visible and functional without affecting surrounding characters\n- Test caret behavior in various scenarios (typing, moving cursor, scrolling)\n- Verify that text remains intact when the caret moves or blinks\n- Document the caret rendering approach for future reference",
-    "labels": ["bug"],
-    "status": "Done",
-    "test_results": [
-      {
-        "name": "make build",
-        "status": "passed",
-        "details": "Caret thread removed; console echoes input without corrupting characters"
-      }
-    ],
-    "github_issue": {
-      "number": 25,
-      "url": "https://github.com/pbalduino/menios/issues/25",
       "state": "OPEN"
     }
   },
@@ -368,6 +169,160 @@
     "github_issue": {
       "number": 34,
       "url": "https://github.com/pbalduino/menios/issues/34",
+      "state": "OPEN"
+    }
+  },
+  {
+    "title": "Improve kmalloc implementation",
+    "body": "## Goal\nEnhance the kmalloc implementation to be more robust, efficient, and feature-complete.\n\n## Context\nThe current kmalloc implementation is basic and could benefit from improvements in performance, reliability, and functionality. As the kernel grows and especially as we move toward userland support, memory allocation becomes increasingly critical.\n\n## Definition of Done\n- **Performance improvements**: Optimize allocation/deallocation algorithms for better speed and reduced fragmentation\n- **Better debugging**: Add allocation tracking, leak detection, and corruption detection\n- **Size alignment**: Ensure proper memory alignment for different data types and architectures\n- **Error handling**: Improve error reporting and graceful handling of allocation failures\n- **Memory pools**: Consider implementing size-based memory pools for common allocation sizes\n- **Statistics**: Add memory usage statistics and monitoring capabilities\n- **Integration**: Better integration with virtual memory management system\n- **Bounds checking**: Add optional bounds checking to detect buffer overflows\n- **Thread safety**: Ensure kmalloc is thread-safe for multi-threaded kernel operations\n\n## Potential Improvements\n- Implement buddy allocator or slab allocator for better performance\n- Add kmalloc_aligned() for specific alignment requirements\n- Implement kcalloc() and krealloc() for completeness\n- Add memory poisoning for debugging (fill freed memory with pattern)\n- Consider adding memory zones (DMA, normal, high memory)\n- Add allocation size classes to reduce fragmentation",
+    "labels": ["enhancement"],
+    "status": "Backlog",
+    "github_issue": {
+      "number": 35,
+      "url": "https://github.com/pbalduino/menios/issues/35",
+      "state": "OPEN"
+    }
+  },
+  {
+    "title": "Improve kmutex implementation",
+    "body": "## Goal\nEnhance the existing kmutex implementation to be more robust, efficient, and feature-complete for kernel synchronization.\n\n## Context\nThe current kmutex implementation provides basic mutual exclusion but could benefit from improvements in performance, debugging capabilities, and additional features needed for a robust kernel synchronization primitive.\n\n## Definition of Done\n- **Performance improvements**: Optimize lock/unlock operations for minimal overhead\n- **Debugging support**: Add lock tracking, deadlock detection, and ownership validation\n- **Priority handling**: Implement priority inheritance to prevent priority inversion\n- **Timeout support**: Add kmutex_lock_timeout() for non-blocking operations with timeouts\n- **Recursive locks**: Support for recursive mutex acquisition by the same thread\n- **Error handling**: Improve error reporting and validation of mutex operations\n- **Statistics**: Add lock contention statistics and performance monitoring\n- **Documentation**: Comprehensive API documentation with usage examples\n\n## Potential Improvements\n- Add kmutex_trylock() for non-blocking lock attempts\n- Implement fair scheduling to prevent lock starvation\n- Add mutex debugging modes (leak detection, double-lock detection)\n- Support for different mutex types (normal, recursive, errorcheck)\n- Integration with kernel debugging and profiling tools\n- Lock ordering validation to detect potential deadlocks",
+    "labels": ["enhancement"],
+    "status": "Backlog",
+    "github_issue": {
+      "number": 36,
+      "url": "https://github.com/pbalduino/menios/issues/36",
+      "state": "OPEN"
+    }
+  },
+  {
+    "title": "Implement semaphore synchronization primitive",
+    "body": "## Goal\nImplement counting semaphores for kernel synchronization and resource management.\n\n## Context\nSemaphores are essential synchronization primitives that allow controlling access to a finite number of resources. They're particularly useful for producer-consumer scenarios, resource pools, and implementing other synchronization constructs.\n\n## Definition of Done\n- **Core functionality**: Implement ksem_init(), ksem_wait(), ksem_post(), ksem_destroy()\n- **Counting semaphore**: Support for initial count and maximum count values\n- **Timeout support**: Add ksem_wait_timeout() for non-blocking waits with timeout\n- **Try operations**: Implement ksem_trywait() for non-blocking attempts\n- **Error handling**: Proper error codes and validation for all operations\n- **Thread safety**: Ensure all operations are atomic and thread-safe\n- **Performance**: Optimize for minimal overhead in common use cases\n- **Integration**: Work seamlessly with kernel scheduler and thread management\n\n## Use Cases\n- Resource pool management (memory pools, connection pools)\n- Producer-consumer synchronization\n- Rate limiting and flow control\n- Barrier implementation\n- Building higher-level synchronization primitives",
+    "labels": ["enhancement"],
+    "status": "Backlog",
+    "github_issue": {
+      "number": 37,
+      "url": "https://github.com/pbalduino/menios/issues/37",
+      "state": "OPEN"
+    }
+  },
+  {
+    "title": "Implement spinlock synchronization primitive",
+    "body": "## Goal\nImplement spinlocks for low-level kernel synchronization in performance-critical sections.\n\n## Context\nSpinlocks are essential for protecting short critical sections where the overhead of sleeping would be greater than busy-waiting. They're particularly important for SMP systems and interrupt handlers.\n\n## Definition of Done\n- **Core functionality**: Implement spinlock_init(), spinlock_lock(), spinlock_unlock()\n- **Atomic operations**: Use CPU atomic instructions for lock/unlock operations\n- **Interrupt safety**: Support for spinlock_irq_save/restore() for interrupt contexts\n- **Try operations**: Implement spinlock_trylock() for non-blocking attempts\n- **Debug support**: Add lock tracking and validation in debug builds\n- **Performance**: Minimal overhead, optimized for short critical sections\n- **Architecture support**: Proper implementation for x86-64 with appropriate barriers\n\n## Use Cases\n- Protecting shared data structures in interrupt handlers\n- SMP-safe critical sections\n- Low-level kernel data structure protection\n- Performance-critical synchronization where sleeping is not acceptable\n- Building blocks for other synchronization primitives",
+    "labels": ["enhancement"],
+    "status": "Backlog",
+    "github_issue": {
+      "number": 38,
+      "url": "https://github.com/pbalduino/menios/issues/38",
+      "state": "OPEN"
+    }
+  },
+  {
+    "title": "Implement read-write locks (rwlock)",
+    "body": "## Goal\nImplement read-write locks to allow concurrent read access while maintaining exclusive write access.\n\n## Context\nRead-write locks are crucial for scenarios where data is frequently read but infrequently modified. They allow multiple readers to access shared data concurrently while ensuring exclusive access for writers.\n\n## Definition of Done\n- **Core functionality**: Implement rwlock_init(), rwlock_read_lock(), rwlock_write_lock(), rwlock_unlock()\n- **Reader priority**: Allow multiple concurrent readers\n- **Writer exclusivity**: Ensure writers have exclusive access\n- **Fairness**: Prevent writer starvation when many readers are present\n- **Try operations**: Implement rwlock_try_read_lock() and rwlock_try_write_lock()\n- **Timeout support**: Add timeout versions for non-blocking operations\n- **Upgrade/downgrade**: Support for upgrading read locks to write locks (optional)\n- **Debug support**: Lock tracking and validation in debug builds\n\n## Use Cases\n- Shared data structures with frequent reads, infrequent writes\n- Cache implementations\n- Configuration data protection\n- File system metadata\n- Network routing tables\n- Database-like operations in kernel",
+    "labels": ["enhancement"],
+    "status": "Backlog",
+    "github_issue": {
+      "number": 39,
+      "url": "https://github.com/pbalduino/menios/issues/39",
+      "state": "OPEN"
+    }
+  },
+  {
+    "title": "Implement condition variables",
+    "body": "## Goal\nImplement condition variables for thread coordination and event-driven synchronization.\n\n## Context\nCondition variables are essential for implementing wait/notify patterns where threads need to wait for specific conditions to become true. They work in conjunction with mutexes to provide efficient blocking and signaling mechanisms.\n\n## Definition of Done\n- **Core functionality**: Implement kcond_init(), kcond_wait(), kcond_signal(), kcond_broadcast()\n- **Mutex integration**: Work seamlessly with kmutex for atomic condition checking\n- **Spurious wakeup handling**: Proper semantics for condition variable waits\n- **Timeout support**: Add kcond_wait_timeout() for bounded waiting\n- **Signal semantics**: Both single-thread signal and broadcast to all waiters\n- **Error handling**: Proper error codes and validation\n- **Performance**: Efficient implementation with minimal overhead\n\n## Use Cases\n- Producer-consumer patterns\n- Thread pool work queue management\n- Event notification systems\n- Implementing barriers and rendezvous\n- Resource availability notifications\n- Complex synchronization patterns requiring state-based waiting",
+    "labels": ["enhancement"],
+    "status": "Backlog",
+    "github_issue": {
+      "number": 40,
+      "url": "https://github.com/pbalduino/menios/issues/40",
+      "state": "OPEN"
+    }
+  },
+  {
+    "title": "Implement atomic operations and memory barriers",
+    "body": "## Goal\nImplement atomic operations and memory barriers for lock-free programming and low-level synchronization.\n\n## Context\nAtomic operations are fundamental building blocks for implementing lock-free data structures and other synchronization primitives. They provide guaranteed atomic read-modify-write operations without requiring locks.\n\n## Definition of Done\n- **Basic atomic types**: Support for atomic integers (32-bit and 64-bit)\n- **Atomic operations**: Load, store, exchange, compare-and-swap, fetch-and-add, etc.\n- **Memory ordering**: Support for different memory ordering semantics (relaxed, acquire, release, seq_cst)\n- **Memory barriers**: Implement compiler and CPU memory barriers\n- **Architecture optimization**: Use CPU-specific atomic instructions on x86-64\n- **Lock-free helpers**: Provide building blocks for lock-free data structures\n- **Documentation**: Comprehensive documentation on usage and memory ordering\n\n## Use Cases\n- Lock-free data structures (queues, stacks, lists)\n- Reference counting\n- Building other synchronization primitives\n- High-performance inter-thread communication\n- Statistics and counters\n- Flag-based synchronization",
+    "labels": ["enhancement"],
+    "status": "Backlog",
+    "github_issue": {
+      "number": 41,
+      "url": "https://github.com/pbalduino/menios/issues/41",
+      "state": "OPEN"
+    }
+  },
+  {
+    "title": "Enable SMP (Symmetric Multiprocessing) support",
+    "body": "## Goal\nAdd support for multiple CPU cores to enable true multiprocessing capabilities in meniOS.\n\n## Context\nCurrently meniOS runs on a single CPU core. Adding SMP support will enable the kernel to utilize multiple cores, improving performance and enabling true parallel processing. This is essential for modern systems and will be important for running complex applications like Doom with better performance.\n\n## Definition of Done\n- **CPU Detection**: Detect and enumerate available CPU cores using ACPI tables\n- **AP Initialization**: Boot and initialize Application Processors (non-boot CPUs)\n- **Per-CPU Data**: Implement per-CPU data structures and variables\n- **SMP-Safe Synchronization**: Ensure all kernel data structures are SMP-safe\n- **SMP Scheduler**: Extend scheduler to distribute tasks across multiple CPUs\n- **Load Balancing**: Basic load balancing between CPU cores\n- **CPU Affinity**: Support for binding processes/threads to specific CPUs\n- **SMP-Safe Memory Management**: Make memory allocators and VM system SMP-safe\n\n## Key Components to Implement\n- **ACPI Parsing**: Parse MADT (Multiple APIC Description Table) to find CPU cores\n- **APIC Configuration**: Set up Local APIC and I/O APIC for inter-processor communication\n- **AP Boot Protocol**: Implement CPU startup sequence for secondary cores\n- **Spinlocks**: Implement proper spinlocks for SMP synchronization (depends on issue #38)\n- **Per-CPU Variables**: Implement __percpu data and accessor functions\n- **SMP-Safe Primitives**: Update all shared data structures with proper locking\n- **CPU Hotplug**: Basic support for CPU online/offline operations (optional)\n\n## Technical Challenges\n- **Bootstrap Process**: Complex CPU initialization sequence\n- **Memory Barriers**: Proper memory ordering between CPUs\n- **Race Conditions**: Identify and fix all potential race conditions in kernel\n- **Cache Coherency**: Handle CPU cache synchronization issues\n- **Interrupt Distribution**: Distribute interrupts across multiple CPUs\n- **Atomic Operations**: Hardware-specific atomic instructions (see issue #41)\n\n## Dependencies\n- Issue #38: Spinlock implementation (critical for SMP)\n- Issue #41: Atomic operations and memory barriers\n- Improved synchronization primitives for SMP-safe operations",
+    "labels": ["enhancement"],
+    "status": "Backlog",
+    "github_issue": {
+      "number": 42,
+      "url": "https://github.com/pbalduino/menios/issues/42",
+      "state": "OPEN"
+    }
+  },
+  {
+    "title": "Implement GDT user segments for Ring 3 support",
+    "body": "## Goal\nAdd user code and data segments to the Global Descriptor Table (GDT) to enable Ring 3 (user mode) execution.\n\n## Context\nCurrently meniOS only has kernel segments (Ring 0). To support userland, we need Ring 3 segments that allow user processes to execute with limited privileges.\n\n## Definition of Done\n- **Add user segments**: Create USER_CODE_SELECTOR and USER_DATA_SELECTOR in GDT\n- **Set privilege levels**: Configure DPL (Descriptor Privilege Level) = 3 for user segments\n- **Update GDT loading**: Ensure new segments are properly loaded during boot\n- **Define constants**: Add segment selector constants to header files\n- **Validation**: Verify segments can be loaded without faulting\n\n## Files to Modify\n- include/gdt.h - Add user segment constants\n- src/gdt.c - Implement user segment creation\n- src/boot/gdt_load.s - Update GDT loading if needed\n\n## Testing\n- Boot kernel and verify GDT loads successfully\n- Check that segment registers can be loaded with user selectors\n- Validate segment descriptors are properly configured\n\n## Dependencies\nNone - this is foundational work\n\n## Time Estimate\n3-5 days",
+    "labels": ["enhancement"],
+    "status": "Backlog",
+    "github_issue": {
+      "number": 43,
+      "url": "https://github.com/pbalduino/menios/issues/43",
+      "state": "OPEN"
+    }
+  },
+  {
+    "title": "Implement TSS for privilege level transitions",
+    "body": "## Goal\nSet up Task State Segment (TSS) to handle stack switching during Ring 0/Ring 3 transitions.\n\n## Context\nWhen switching between user mode (Ring 3) and kernel mode (Ring 0), the CPU needs to know where the kernel stack is located. The TSS provides this information and is essential for safe privilege transitions.\n\n## Definition of Done\n- **Create TSS structure**: Define and initialize TSS data structure\n- **Set kernel stack**: Configure TSS with kernel stack pointer for ring transitions\n- **Load TSS into GDT**: Add TSS descriptor to GDT and load it\n- **Stack switching**: Ensure proper stack switching on privilege level changes\n- **Testing**: Verify TSS is correctly loaded and functional\n\n## Implementation Details\n- Define TSS structure with required fields (ESP0, SS0, etc.)\n- Initialize TSS with kernel stack pointer\n- Add TSS descriptor to GDT with proper access rights\n- Use LTR instruction to load TSS register\n- Set up separate kernel stack for interrupt handling\n\n## Dependencies\n- Issue #43: GDT user segments (TSS goes in GDT)\n\n## Time Estimate\n4-6 days",
+    "labels": ["enhancement"],
+    "status": "Backlog",
+    "github_issue": {
+      "number": 44,
+      "url": "https://github.com/pbalduino/menios/issues/44",
+      "state": "OPEN"
+    }
+  },
+  {
+    "title": "Implement user/kernel memory protection",
+    "body": "## Goal\nSet up memory protection to isolate kernel memory from user processes and enable safe user mode execution.\n\n## Context\nCurrently all memory is accessible from any privilege level. For userland support, we need to protect kernel memory from user access while allowing controlled access to user memory.\n\n## Definition of Done\n- **Kernel memory protection**: Mark kernel pages as supervisor-only (CPL 0-2 only)\n- **User memory regions**: Create user-accessible memory regions with proper permissions\n- **Page table updates**: Modify page table creation to set User/Supervisor bits\n- **Memory layout**: Define clear kernel/user memory layout boundaries\n- **Access validation**: Test that privilege violations properly generate page faults\n\n## Files to Modify\n- vmm.c - Virtual memory management updates\n- pmm.c - Physical memory allocation updates\n- page_fault handler - Handle privilege violations\n- Memory layout headers\n\n## Dependencies\n- Existing virtual memory management system\n- Page fault handler improvements\n\n## Time Estimate\n1-2 weeks",
+    "labels": ["enhancement"],
+    "status": "Backlog",
+    "github_issue": {
+      "number": 45,
+      "url": "https://github.com/pbalduino/menios/issues/45",
+      "state": "OPEN"
+    }
+  },
+  {
+    "title": "Implement Ring 0/Ring 3 transition mechanism",
+    "body": "## Goal\nCreate the assembly code and mechanisms to safely transition between kernel mode (Ring 0) and user mode (Ring 3).\n\n## Context\nThis is the core mechanism that enables user processes to run. We need to be able to jump from kernel to user mode and handle returns from user to kernel mode through interrupts and system calls.\n\n## Definition of Done\n- **User mode entry**: Assembly code to jump from Ring 0 to Ring 3\n- **Kernel mode return**: Handle transitions from Ring 3 back to Ring 0\n- **Stack management**: Proper stack switching during transitions\n- **Register setup**: Correct register state for user mode execution\n- **IRET implementation**: Use IRET instruction for privilege level changes\n- **Exception handling**: Handle faults during transitions\n\n## Files to Create\n- user_transition.s - Assembly transition code\n- user_mode.h - Function declarations\n- user_mode.c - C wrapper functions\n\n## Dependencies\n- Issue #43: GDT user segments\n- Issue #44: TSS implementation\n- Issue #45: Memory protection\n\n## Time Estimate\n1 week",
+    "labels": ["enhancement"],
+    "status": "Backlog",
+    "github_issue": {
+      "number": 46,
+      "url": "https://github.com/pbalduino/menios/issues/46",
+      "state": "OPEN"
+    }
+  },
+  {
+    "title": "Create basic user mode test program",
+    "body": "## Goal\nImplement a minimal test program that can execute in user mode to validate the Ring 0/Ring 3 infrastructure.\n\n## Context\nOnce we have user/kernel separation working, we need a simple test program to verify everything works correctly. This will be our first userland program.\n\n## Definition of Done\n- **Simple user function**: Create a basic user mode function that can execute\n- **Kernel integration**: Load and execute the user function from kernel\n- **Success validation**: Verify the program runs and returns successfully\n- **Debug output**: Add logging to track execution flow\n- **Error handling**: Handle any faults that occur during execution\n\n## Files to Create/Modify\n- user_test.c - Test program implementation\n- user_loader.c - Kernel-side user program launcher\n- Integration with existing boot/init code\n\n## Dependencies\n- Issue #43: GDT user segments\n- Issue #44: TSS implementation\n- Issue #45: Memory protection\n- Issue #46: Ring transitions\n\n## Time Estimate\n3-5 days",
+    "labels": ["enhancement"],
+    "status": "Backlog",
+    "github_issue": {
+      "number": 47,
+      "url": "https://github.com/pbalduino/menios/issues/47",
+      "state": "OPEN"
+    }
+  },
+  {
+    "title": "Implement basic syscall interface (exit and write)",
+    "body": "## Goal\nCreate a minimal system call interface with just exit() and write() syscalls to enable basic user-kernel communication.\n\n## Context\nOnce user mode is working, we need a way for user programs to request kernel services. Starting with just exit() and write() provides the foundation and allows testing/debugging of user programs.\n\n## Definition of Done\n- **Syscall entry point**: Set up INT 0x80 or SYSCALL instruction handling\n- **Syscall dispatcher**: Route syscall numbers to appropriate handlers\n- **exit() syscall**: Allow user programs to terminate cleanly\n- **write() syscall**: Basic output capability for debugging user programs\n- **Parameter passing**: Implement syscall parameter passing via registers\n- **Return values**: Proper return value mechanism\n- **Error handling**: Basic error reporting for invalid syscalls\n\n## Syscall Interface Design\n- SYS_EXIT: exit(int status) - terminate process\n- SYS_WRITE: write(int fd, const char* buf, size_t count) - write to console\n\n## Dependencies\n- Issue #47: Basic user mode test (need working user mode first)\n- Interrupt handling system\n\n## Time Estimate\n1 week",
+    "labels": ["enhancement"],
+    "status": "Backlog",
+    "github_issue": {
+      "number": 48,
+      "url": "https://github.com/pbalduino/menios/issues/48",
       "state": "OPEN"
     }
   }

@@ -69,12 +69,58 @@ void test_kmalloc_WHEN_size_is_positive_SHOULD_return_a_valid_node() {
 // TODO: test what happens when arena1 runs out of space
 // TODO: test when a node position is not contiguous to the next/previous
 
+void test_kcalloc_SHOULD_return_zeroed_buffer() {
+  uint8_t* buffer = (uint8_t*)kcalloc(8, sizeof(uint8_t));
+
+  TEST_ASSERT_NOT_NULL_MESSAGE(buffer, "kcalloc returned NULL");
+
+  for(size_t i = 0; i < 8; i++) {
+    TEST_ASSERT_EQUAL_UINT8_MESSAGE(0, buffer[i], "kcalloc did not zero memory");
+  }
+}
+
+void test_krealloc_WHEN_expanding_SHOULD_preserve_original_bytes() {
+  uint8_t* buffer = (uint8_t*)kmalloc(32);
+  TEST_ASSERT_NOT_NULL(buffer);
+
+  for(size_t i = 0; i < 32; i++) {
+    buffer[i] = (uint8_t)(i + 1);
+  }
+
+  uint8_t* resized = (uint8_t*)krealloc(buffer, 96);
+  TEST_ASSERT_NOT_NULL(resized);
+
+  for(size_t i = 0; i < 32; i++) {
+    TEST_ASSERT_EQUAL_UINT8((uint8_t)(i + 1), resized[i]);
+  }
+}
+
+void test_heap_get_stats_SHOULD_reflect_allocations() {
+  heap_stats_t before = heap_get_stats();
+
+  TEST_ASSERT_TRUE(before.total_bytes >= before.free_bytes);
+
+  void* ptr = kmalloc(64);
+  TEST_ASSERT_NOT_NULL(ptr);
+
+  heap_stats_t after = heap_get_stats();
+
+  const size_t expected_delta = 64 + HEAP_HEADER_SIZE;
+
+  TEST_ASSERT_EQUAL_UINT64(before.total_bytes, after.total_bytes);
+  TEST_ASSERT_EQUAL_UINT64(before.used_bytes + expected_delta, after.used_bytes);
+  TEST_ASSERT_EQUAL_UINT64(before.free_bytes - expected_delta, after.free_bytes);
+}
+
 int main() {
   UNITY_BEGIN();
 
   RUN_TEST(test_kmalloc_WHEN_size_is_zero_SHOULD_return_null);
   RUN_TEST(test_kmalloc_SHOULD_start_in_a_valid_heap);
   RUN_TEST(test_kmalloc_WHEN_size_is_positive_SHOULD_return_a_valid_node);
+  RUN_TEST(test_kcalloc_SHOULD_return_zeroed_buffer);
+  RUN_TEST(test_krealloc_WHEN_expanding_SHOULD_preserve_original_bytes);
+  RUN_TEST(test_heap_get_stats_SHOULD_reflect_allocations);
 
   return UNITY_END();
 }

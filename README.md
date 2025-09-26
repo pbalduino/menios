@@ -13,6 +13,7 @@ MeniOS is in active development with basic kernel functionality implemented. The
 - **Memory Management**: Physical memory mapping, virtual memory allocation, and basic heap management
 - **Console System**: ANSI escape sequence support with scrolling and color output
 - **Process Management**: Kernel threads with basic scheduling (scheduler improvements ongoing)
+- **Synchronization**: Basic mutex implementation (comprehensive sync primitives planned)
 - **Input/Output**: PS/2 keyboard driver with buffered input
 - **Debugging**: Page fault and GPF handlers for system diagnostics
 - **Testing**: Unit test framework using Unity for kernel components
@@ -54,11 +55,11 @@ This will build the kernel, create a bootable image, and launch it in QEMU.
 - [x] Virtual-to-physical address translation (page table walking)
 
 ### In Progress 🚧
-- [ ] Page fault and GPF handler improvements
-- [ ] kmalloc integration with virtual memory system
-- [ ] Kernel thread sleep state alignment
-- [ ] Thread termination status propagation
+- [ ] Thread termination status propagation and join improvements
 - [ ] TSC timekeeping calibration and boot time initialization
+- [ ] kmalloc integration with virtual memory system and performance improvements
+- [ ] Comprehensive synchronization primitives (semaphores, spinlocks, rwlocks, condition variables)
+- [ ] Atomic operations and memory barriers for lock-free programming
 
 ### Road to Doom 🎮
 
@@ -94,7 +95,7 @@ See [`road_to_doom.md`](road_to_doom.md) for the complete roadmap and [`tasks.js
 │  │ Process Mgmt    │  │ Memory Mgmt     │  │ I/O Subsys   │ │
 │  │ • Scheduler     │  │ • Virtual Mem   │  │ • Console    │ │
 │  │ • Kernel Threads│  │ • Physical Mem  │  │ • PS/2 Input │ │
-│  │ • Context Switch│  │ • Page Tables   │  │ • Framebuffer│ │
+│  │ • Synchronization│ │ • Page Tables   │  │ • Framebuffer│ │
 │  └─────────────────┘  └─────────────────┘  └──────────────┘ │
 │                              │                             │
 │  ┌─────────────────┐  ┌─────────────────┐  ┌──────────────┐ │
@@ -117,6 +118,7 @@ See [`road_to_doom.md`](road_to_doom.md) for the complete roadmap and [`tasks.js
 ### Current Limitations
 - **Kernel-only**: No userland support yet (major work in progress)
 - **Single-threaded userspace**: No process isolation or multi-process support
+- **Limited synchronization**: Basic mutex only, no semaphores/spinlocks/rwlocks yet
 - **Limited hardware support**: Only basic PS/2 keyboard, VGA framebuffer
 - **No file system**: No persistent storage or file I/O capabilities
 - **Basic memory management**: No demand paging or memory protection between processes

@@ -120,7 +120,6 @@ typedef pml4_map_t* pml4_map_p;
 uintptr_t   read_cr2();
 phys_addr_t read_cr3();
 
-void debug_heap();
 void pmm_init();
 void write_cr3(phys_addr_t value);
 
@@ -140,6 +139,8 @@ void pmm_set_kernel_offset(virt_addr_t offset);
 void pmm_set_pagetable_root(virt_addr_t root_vaddr);
 
 void set_page_used(phys_addr_t physical_address);
+phys_addr_t pmm_alloc_pages(size_t page_count);
+void pmm_free_pages(phys_addr_t base_address, size_t page_count);
 
 virt_addr_t get_kernel_offset();
 

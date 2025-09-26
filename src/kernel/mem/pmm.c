@@ -137,6 +137,60 @@ void set_page_row_free(uintptr_t physical_address) {
   page_bitmap[index] = PAGE_FREE;
 }
 
+phys_addr_t pmm_alloc_pages(size_t page_count) {
+  if(page_count == 0) {
+    return 0;
+  }
+
+  size_t run_length = 0;
+  size_t run_start = 0;
+
+  for(size_t index = 0; index < PAGE_BITMAP_SIZE; index++) {
+    uint64_t row = page_bitmap[index];
+
+    if(row == PAGE_BITMAP_FULL) {
+      run_length = 0;
+      continue;
+    }
+
+    for(size_t bit = 0; bit < 64; bit++) {
+      size_t page_number = (index * 64) + bit;
+
+      if((row & (1UL << bit)) == 0) {
+        if(run_length == 0) {
+          run_start = page_number;
+        }
+
+        run_length++;
+
+        if(run_length == page_count) {
+          phys_addr_t base = run_start * PAGE_SIZE;
+
+          for(size_t page = 0; page < page_count; page++) {
+            set_page_used(base + (page * PAGE_SIZE));
+          }
+
+          return base;
+        }
+      } else {
+        run_length = 0;
+      }
+    }
+  }
+
+  return 0;
+}
+
+void pmm_free_pages(phys_addr_t base_address, size_t page_count) {
+  if(page_count == 0) {
+    return;
+  }
+
+  for(size_t page = 0; page < page_count; page++) {
+    set_page_free(base_address + (page * PAGE_SIZE));
+  }
+}
+
 uint8_t get_page_status(uintptr_t physical_address) {
   serial_printf("get_page_status: %d\n", __LINE__);
   size_t page_number = physical_address / PAGE_SIZE;
@@ -283,7 +337,6 @@ void pmm_set_pagetable_root(virt_addr_t root_vaddr) {
 }
 
 void pml4_map(uintptr_t vaddr, pml4_map_t* map) {
-  pml4_t* root = (pml4_t*)cr3_vaddr;
   map->pml4 = (vaddr >> 39) & 0x1ff;
   map->pdpt = (vaddr >> 30) & 0x1ff;
   map->pd = (vaddr >> 21) & 0x1ff;

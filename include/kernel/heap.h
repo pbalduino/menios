@@ -32,15 +32,24 @@ typedef struct heap_node_t* heap_node_p;
 
 #define HEAP_HEADER_SIZE offsetof(heap_node_t, data) 
 
+typedef struct heap_stats_t {
+  size_t total_bytes;
+  size_t free_bytes;
+  size_t used_bytes;
+  size_t region_count;
+} heap_stats_t;
+
 HEAP_INSPECT_RESULT inspect_heap(uint32_t node_index, heap_node_p* node);
 
 void init_heap(void* addr, size_t size);
 
 void* kmalloc(size_t size);
-// void* kcalloc(uint64_t nelem, uint64_t elsize);
-// void* krealloc(void* ptr, uint64_t size);
+void* kcalloc(size_t nelem, size_t elsize);
+void* krealloc(void* ptr, size_t size);
 void kfree(void* ptr);
 // void* kmem_align(uint64_t size);
+
+heap_stats_t heap_get_stats(void);
 
 void dump_heap(heap_node_p heap, size_t size);
 

@@ -31,6 +31,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stddef.h>
+#include <string.h>
 
 #include <kernel/acpi.h>
 #include <kernel/apic.h>
@@ -54,6 +55,52 @@
 #include <kernel/driver/ps2kb.h>
 
 void print_logo();
+
+static void heap_demo(void) {
+  heap_stats_t before = heap_get_stats();
+  logk("Heap demo: regions=%lu total=%lu used=%lu free=%lu\n",
+    (unsigned long)before.region_count,
+    (unsigned long)before.total_bytes,
+    (unsigned long)before.used_bytes,
+    (unsigned long)before.free_bytes);
+
+  const size_t first_size = 512 * 1024;
+  void* block = kmalloc(first_size);
+
+  if(block == NULL) {
+    logk("Heap demo: initial allocation failed\n");
+    return;
+  }
+
+  memset(block, 0xa5, first_size);
+
+  void* grown = krealloc(block, 1024 * 1024);
+  if(grown) {
+    block = grown;
+  }
+
+  void* zeroed = kcalloc(128, sizeof(uint64_t));
+
+  heap_stats_t after = heap_get_stats();
+  logk("Heap demo: post-alloc regions=%lu total=%lu used=%lu free=%lu\n",
+    (unsigned long)after.region_count,
+    (unsigned long)after.total_bytes,
+    (unsigned long)after.used_bytes,
+    (unsigned long)after.free_bytes);
+
+  if(zeroed) {
+    kfree(zeroed);
+  }
+
+  kfree(block);
+
+  heap_stats_t final = heap_get_stats();
+  logk("Heap demo: cleaned regions=%lu total=%lu used=%lu free=%lu\n",
+    (unsigned long)final.region_count,
+    (unsigned long)final.total_bytes,
+    (unsigned long)final.used_bytes,
+    (unsigned long)final.free_bytes);
+}
 
 void boot_graphics_init() {
   fb_init();
@@ -99,6 +146,11 @@ void _start() {
   idt_init();
 
   mem_init();
+
+  printf("Heap demo\n");
+  logk("Heap demo\n");
+  heap_demo();
+  logk("Finished heap demo\n");
 
   acpi_init();
 
