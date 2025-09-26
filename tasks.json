@@ -385,5 +385,18 @@
       "url": "https://github.com/pbalduino/menios/issues/51",
       "state": "OPEN"
     }
+  },
+  {
+    "title": "Launch Ring 3 demo process",
+    "body": "## Goal\nAutomatically create a user-mode process that exercises the syscall path during boot.\n\n## Definition of Done\n- Create a user-mode process via scheduler that prints using SYS_WRITE (1).\n- Ensure the process exits cleanly via SYS_EXIT (60).\n- Confirm the scheduler frees its resources without faults.\n\n## Status\n- Implemented via user_demo_launch().",
+    "labels": [
+      "enhancement"
+    ],
+    "status": "Done",
+    "github_issue": {
+      "number": 51,
+      "url": "https://github.com/pbalduino/menios/issues/51",
+      "state": "OPEN"
+    }
   }
 ]

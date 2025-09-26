@@ -19,6 +19,7 @@ MeniOS is in active development with basic kernel functionality implemented. The
 - **Testing**: Unit test framework using Unity for kernel components
 - **Privilege Setup**: Ring 3 GDT selectors, 64-bit TSS, and a user-mode entry trampoline ready for userland bring-up
 - **Syscalls**: INT 0x80 dispatcher with initial `write(1, …)` and `exit(status)` support for user-mode stubs
+- **User Demo**: Kernel launches a Ring 3 thread that prints via `write(1, …)` then exits through syscall 60, exercising the full syscall/scheduler path
 
 ### Userland Bring-Up Snapshot
 

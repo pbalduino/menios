@@ -142,6 +142,9 @@ void set_page_used(phys_addr_t physical_address);
 phys_addr_t pmm_alloc_pages(size_t page_count);
 void pmm_free_pages(phys_addr_t base_address, size_t page_count);
 
+bool pmm_mark_page_user(virt_addr_t vaddr);
+bool pmm_mark_range_user(virt_addr_t start, size_t size);
+
 virt_addr_t get_kernel_offset();
 
 #endif

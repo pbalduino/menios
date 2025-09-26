@@ -218,6 +218,16 @@ void proc_create_user(proc_info_p proc, const char* name, void (*entrypoint)(voi
   proc->cpu_state->cs = USER_CODE_SEGMENT;
   proc->cpu_state->ss = USER_DATA_SEGMENT;
   proc->cpu_state->rflags = 0x202;
+
+  if(!pmm_mark_range_user((virt_addr_t)proc->user_stack_base, PROC_USER_STACK_SIZE)) {
+    serial_printf("proc_create_user: failed to mark user stack as user-accessible\n");
+    halt();
+  }
+
+  if(!pmm_mark_range_user((virt_addr_t)entrypoint, PAGE_SIZE)) {
+    serial_printf("proc_create_user: failed to mark entrypoint page as user-accessible\n");
+    halt();
+  }
 }
 
 void proc_execute(proc_info_p proc) {
