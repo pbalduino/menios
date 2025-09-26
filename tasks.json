@@ -61,7 +61,8 @@
         },
         "status": "In Progress",
         "notes": [
-            "2025-09-26: Added docs/architecture/per_process_vm.md outlining layout, region metadata, lazy allocation, and page-fault plan."
+            "2025-09-26: Added docs/architecture/per_process_vm.md outlining layout, region metadata, lazy allocation, and page-fault plan.",
+            "2025-09-26: Documented current memory architecture in docs/architecture/mem.md and linked per-process plan."
         ]
     },
     {

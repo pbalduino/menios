@@ -96,8 +96,7 @@ The ultimate goal is running Doom in userland! This requires substantial infrast
 - **Audio**: PCM output, mixing, streaming syscalls
 - **Toolchain**: Cross-compiler, libc subset, build system
 
-See [`road_to_doom.md`](road_to_doom.md) for the complete roadmap and [`tasks.json`](tasks.json) for detailed task tracking.
-For per-process virtual memory work notes, check [`docs/architecture/per_process_vm.md`](docs/architecture/per_process_vm.md).
+See [`road_to_doom.md`](road_to_doom.md) for the complete roadmap and [`tasks.json`](tasks.json) for detailed task tracking. Memory management decisions live in [`docs/architecture/mem.md`](docs/architecture/mem.md); per-process virtual memory work notes are in [`docs/architecture/per_process_vm.md`](docs/architecture/per_process_vm.md).
 
 ## Architecture Overview
 
