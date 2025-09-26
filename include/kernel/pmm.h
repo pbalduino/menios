@@ -144,6 +144,7 @@ void pmm_free_pages(phys_addr_t base_address, size_t page_count);
 
 bool pmm_mark_page_user(virt_addr_t vaddr);
 bool pmm_mark_range_user(virt_addr_t start, size_t size);
+bool pmm_map_page(virt_addr_t vaddr, phys_addr_t paddr, bool writable, bool user);
 
 virt_addr_t get_kernel_offset();
 

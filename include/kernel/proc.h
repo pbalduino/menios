@@ -91,9 +91,13 @@ typedef struct proc_info_t {
   cpu_state_t* cpu_state;
   void*        stack_pointer;
   uintptr_t*   stack_base;
-  void*        user_stack_pointer;
-  uintptr_t*   user_stack_base;
+  phys_addr_t  user_stack_phys;
+  size_t       user_stack_pages;
+  virt_addr_t  user_stack_base_vaddr;
   size_t       user_stack_size;
+  phys_addr_t  user_code_phys;
+  size_t       user_code_pages;
+  virt_addr_t  user_code_vaddr;
   bool         user_mode;
   void(*entrypoint)(void*);
   void*        arguments;
@@ -109,7 +113,7 @@ void proc_create(proc_info_p proc, const char* name, void (*entrypoint)(void *),
 void proc_execute(proc_info_p proc);
 void proc_exit(int code);
 void proc_switch(void* state);
-void proc_create_user(proc_info_p proc, const char* name, void (*entrypoint)(void *), void* arg);
+void proc_create_user(proc_info_p proc, const char* name, const void* code_blob, size_t code_size, void* arg);
 
 #ifdef __cplusplus
 }

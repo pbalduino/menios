@@ -237,6 +237,102 @@ bool pmm_mark_range_user(virt_addr_t start, size_t size) {
   return true;
 }
 
+bool pmm_map_page(virt_addr_t vaddr, phys_addr_t paddr, bool writable, bool user) {
+  if((paddr & (PAGE_SIZE - 1)) != 0) {
+    return false;
+  }
+
+  if(cr3_vaddr == 0) {
+    return false;
+  }
+
+  pml4_t* pml4 = (pml4_t*)cr3_vaddr;
+
+  uint16_t pml4_index = (vaddr >> 39) & 0x1ff;
+  page_map_l4_entry_t* pml4_entry = &pml4->entries[pml4_index];
+
+  if(!pml4_entry->present) {
+    phys_addr_t new_pdpt_phys = pmm_alloc_pages(1);
+    if(new_pdpt_phys == 0) {
+      return false;
+    }
+    memset((void*)physical_to_virtual(new_pdpt_phys), 0, PAGE_SIZE);
+    pml4_entry->present = 1;
+    pml4_entry->writable = 1;
+    pml4_entry->user = user ? 1 : pml4_entry->user;
+    pml4_entry->page_directory_base = new_pdpt_phys >> 12;
+  }
+
+  if(user) {
+    pml4_entry->user = 1;
+  }
+
+  page_directory_pointer_t* pdpt = (page_directory_pointer_t*)physical_to_virtual(pml4_entry->page_directory_base << 12);
+  uint16_t pdpt_index = (vaddr >> 30) & 0x1ff;
+  page_directory_pointer_entry_t* pdpt_entry = &pdpt->entries[pdpt_index];
+
+  if(!pdpt_entry->present) {
+    phys_addr_t new_pd_phys = pmm_alloc_pages(1);
+    if(new_pd_phys == 0) {
+      return false;
+    }
+    memset((void*)physical_to_virtual(new_pd_phys), 0, PAGE_SIZE);
+    pdpt_entry->present = 1;
+    pdpt_entry->writable = 1;
+    pdpt_entry->user = user ? 1 : 0;
+    pdpt_entry->page_directory_base = new_pd_phys >> 12;
+  }
+
+  if(user) {
+    pdpt_entry->user = 1;
+  }
+
+  if(pdpt_entry->large_page) {
+    return false;
+  }
+
+  page_directory_t* pd = (page_directory_t*)physical_to_virtual(pdpt_entry->page_directory_base << 12);
+  uint16_t pd_index = (vaddr >> 21) & 0x1ff;
+  page_directory_entry_t* pd_entry = &pd->entries[pd_index];
+
+  if(!pd_entry->present) {
+    phys_addr_t new_pt_phys = pmm_alloc_pages(1);
+    if(new_pt_phys == 0) {
+      return false;
+    }
+    memset((void*)physical_to_virtual(new_pt_phys), 0, PAGE_SIZE);
+    pd_entry->present = 1;
+    pd_entry->writable = 1;
+    pd_entry->user = user ? 1 : 0;
+    pd_entry->page_table_base = new_pt_phys >> 12;
+  }
+
+  if(user) {
+    pd_entry->user = 1;
+  }
+
+  if(pd_entry->large_page) {
+    return false;
+  }
+
+  page_table_t* pt = (page_table_t*)physical_to_virtual(pd_entry->page_table_base << 12);
+  uint16_t pt_index = (vaddr >> 12) & 0x1ff;
+  page_table_entry_t* pt_entry = &pt->entries[pt_index];
+
+  pt_entry->present = 1;
+  pt_entry->writable = writable ? 1 : 0;
+  pt_entry->user = user ? 1 : 0;
+  pt_entry->write_through = 0;
+  pt_entry->cache_disable = 0;
+  pt_entry->global = 0;
+  pt_entry->available = 0;
+  pt_entry->frame = paddr >> 12;
+  pt_entry->no_execute = 0;
+
+  invlpg((void*)vaddr);
+  return true;
+}
+
 void set_page_used(uintptr_t physical_address) {
   size_t page_number = physical_address / PAGE_SIZE;
   size_t index = page_number / (sizeof(uint64_t) * 8);

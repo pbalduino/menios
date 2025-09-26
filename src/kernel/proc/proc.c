@@ -118,8 +118,11 @@ void proc_switch(void* arg) {
 
     // Free resources of the terminated process
     kfree(next->stack_pointer);
-    if(next->user_stack_pointer) {
-      kfree(next->user_stack_pointer);
+    if(next->user_stack_phys && next->user_stack_pages) {
+      pmm_free_pages(next->user_stack_phys, next->user_stack_pages);
+    }
+    if(next->user_code_phys && next->user_code_pages) {
+      pmm_free_pages(next->user_code_phys, next->user_code_pages);
     }
     kfree(next->cpu_state);
     kfree(next);
@@ -176,9 +179,13 @@ void proc_create(proc_info_p proc, const char* name, void (*entrypoint)(void *),
   proc->entrypoint = entrypoint;
   proc->arguments = arg;
   proc->user_mode = false;
-  proc->user_stack_pointer = NULL;
-  proc->user_stack_base = NULL;
+  proc->user_stack_phys = 0;
+  proc->user_stack_pages = 0;
+  proc->user_stack_base_vaddr = 0;
   proc->user_stack_size = 0;
+  proc->user_code_phys = 0;
+  proc->user_code_pages = 0;
+  proc->user_code_vaddr = 0;
 
   proc->cpu_state = kmalloc(sizeof(cpu_state_t));
   if(proc->cpu_state == NULL) {
@@ -196,38 +203,88 @@ void proc_create(proc_info_p proc, const char* name, void (*entrypoint)(void *),
   proc->cpu_state->ss = KERNEL_DATA_SEGMENT;
 }
 
-void proc_create_user(proc_info_p proc, const char* name, void (*entrypoint)(void *), void* arg) {
-  proc_create(proc, name, entrypoint, arg);
+static inline virt_addr_t user_code_base(uint32_t pid) {
+  const virt_addr_t base = 0x0000000000400000ull;
+  const virt_addr_t stride = 0x200000ull; // 2MB per process
+  return base + (stride * pid);
+}
+
+static inline virt_addr_t user_stack_top(uint32_t pid) {
+  const virt_addr_t base = 0x0000000000800000ull;
+  const virt_addr_t stride = 0x200000ull; // 2MB per process
+  return base + (stride * pid);
+}
+
+void proc_create_user(proc_info_p proc, const char* name, const void* code_blob, size_t code_size, void* arg) {
+  proc_create(proc, name, NULL, arg);
 
   proc->user_mode = true;
-  proc->user_stack_pointer = kmalloc(PROC_USER_STACK_SIZE + 0xF);
-  if(proc->user_stack_pointer == NULL) {
-    serial_printf("proc_create_user: Failed to allocate user stack for process %s\n", name);
+
+  if(code_size == 0) {
+    serial_printf("proc_create_user: code blob is empty for process %s\n", name);
     halt();
   }
 
-  uintptr_t aligned = ((uintptr_t)proc->user_stack_pointer + 0xF) & ~((uintptr_t)0xF);
-  proc->user_stack_base = (uintptr_t*)aligned;
-  proc->user_stack_size = PROC_USER_STACK_SIZE;
-  memset(proc->user_stack_base, 0, PROC_USER_STACK_SIZE);
+  const size_t stack_pages = PROC_USER_STACK_SIZE / PAGE_SIZE;
+  const size_t code_pages = (code_size + PAGE_SIZE - 1) / PAGE_SIZE;
 
-  proc->cpu_state->rip = (uint64_t)entrypoint;
+  phys_addr_t stack_phys = pmm_alloc_pages(stack_pages);
+  if(stack_phys == 0) {
+    serial_printf("proc_create_user: failed to allocate physical pages for user stack\n");
+    halt();
+  }
+
+  phys_addr_t code_phys = pmm_alloc_pages(code_pages);
+  if(code_phys == 0) {
+    serial_printf("proc_create_user: failed to allocate physical pages for user code\n");
+    halt();
+  }
+
+  virt_addr_t code_vaddr = user_code_base(proc->pid);
+  virt_addr_t stack_top = user_stack_top(proc->pid);
+  virt_addr_t stack_base_vaddr = stack_top - PROC_USER_STACK_SIZE;
+
+  for(size_t i = 0; i < stack_pages; i++) {
+    phys_addr_t phys = stack_phys + (i * PAGE_SIZE);
+    void* page_ptr = (void*)physical_to_virtual(phys);
+    memset(page_ptr, 0, PAGE_SIZE);
+    if(!pmm_map_page(stack_base_vaddr + (i * PAGE_SIZE), phys, true, true)) {
+      serial_printf("proc_create_user: failed to map user stack page %zu\n", i);
+      halt();
+    }
+  }
+
+  const uint8_t* code_src = (const uint8_t*)code_blob;
+  for(size_t i = 0; i < code_pages; i++) {
+    phys_addr_t phys = code_phys + (i * PAGE_SIZE);
+    void* page_ptr = (void*)physical_to_virtual(phys);
+    memset(page_ptr, 0, PAGE_SIZE);
+    size_t offset = i * PAGE_SIZE;
+    size_t remaining = code_size - offset;
+    size_t copy_len = remaining < PAGE_SIZE ? remaining : PAGE_SIZE;
+    memcpy(page_ptr, code_src + offset, copy_len);
+
+    if(!pmm_map_page(code_vaddr + offset, phys, false, true)) {
+      serial_printf("proc_create_user: failed to map user code page %zu\n", i);
+      halt();
+    }
+  }
+
+  proc->user_stack_phys = stack_phys;
+  proc->user_stack_pages = stack_pages;
+  proc->user_stack_base_vaddr = stack_base_vaddr;
+  proc->user_stack_size = PROC_USER_STACK_SIZE;
+  proc->user_code_phys = code_phys;
+  proc->user_code_pages = code_pages;
+  proc->user_code_vaddr = code_vaddr;
+
+  proc->cpu_state->rip = code_vaddr;
   proc->cpu_state->rdi = (uint64_t)arg;
-  proc->cpu_state->rsp = (uint64_t)proc->user_stack_base + PROC_USER_STACK_SIZE;
-  proc->cpu_state->rbp = proc->cpu_state->rsp;
+  proc->cpu_state->rsp = stack_top;
+  proc->cpu_state->rbp = stack_top;
   proc->cpu_state->cs = USER_CODE_SEGMENT;
   proc->cpu_state->ss = USER_DATA_SEGMENT;
   proc->cpu_state->rflags = 0x202;
-
-  if(!pmm_mark_range_user((virt_addr_t)proc->user_stack_base, PROC_USER_STACK_SIZE)) {
-    serial_printf("proc_create_user: failed to mark user stack as user-accessible\n");
-    halt();
-  }
-
-  if(!pmm_mark_range_user((virt_addr_t)entrypoint, PAGE_SIZE)) {
-    serial_printf("proc_create_user: failed to mark entrypoint page as user-accessible\n");
-    halt();
-  }
 }
 
 void proc_execute(proc_info_p proc) {
