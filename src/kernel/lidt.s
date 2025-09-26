@@ -195,9 +195,9 @@ syscall_isr_handler:
   cld
 
   push rax
+  push rbx
   push rcx
   push rdx
-  push rbx
   push rbp
   push rsi
   push rdi
@@ -224,9 +224,9 @@ syscall_isr_handler:
   pop rdi
   pop rsi
   pop rbp
-  pop rbx
   pop rdx
   pop rcx
+  pop rbx
   pop rax
 
   iretq

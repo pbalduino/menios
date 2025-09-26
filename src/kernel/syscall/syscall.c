@@ -57,6 +57,10 @@ static uint64_t syscall_write_handler(syscall_frame_t* frame) {
   const char* buffer = (const char*)frame->rsi;
   size_t length = (size_t)frame->rdx;
 
+  serial_printf("sys_write: fd=%d len=%lu buf=%p\n", fd, (unsigned long)length, buffer);
+  serial_printf("sys_write regs: rax=%lx rbx=%lx rcx=%lx rdx=%lx rsi=%lx rdi=%lx rip=%lx\n",
+    frame->rax, frame->rbx, frame->rcx, frame->rdx, frame->rsi, frame->rdi, frame->rip);
+
   if(fd != 1) {
     return (uint64_t)(-EBADF);
   }

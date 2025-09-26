@@ -164,8 +164,6 @@ void _start() {
   
   scheduler_init();
 
-  user_demo_launch();
-
   // init_services();
 
   // enable_interrupts();
@@ -182,6 +180,8 @@ void _start() {
 
   logk("Enabling interruptions\n");
   enable_interrupts();
+
+  user_demo_launch();
 
   printf("menios# ");
 
