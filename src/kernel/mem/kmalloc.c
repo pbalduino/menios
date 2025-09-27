@@ -5,7 +5,7 @@
 
 #include <kernel/heap.h>
 #include <kernel/kernel.h>
-#include <kernel/mutex.h>
+#include <kernel/spinlock.h>
 #include <kernel/pmm.h>
 #include <kernel/proc.h>
 #include <kernel/serial.h>
@@ -28,7 +28,7 @@ struct heap_region_t {
 static bool            heap_freed = false;
 static heap_node_p     heap;
 static heap_node_p     heap_tail;
-static kmutex_t        heap_mutex;
+static spinlock_t      heap_lock;
 static heap_region_t*  heap_regions_head;
 static heap_region_t*  heap_regions_tail;
 static heap_region_t   heap_region_entries[HEAP_REGION_CAP];
@@ -353,9 +353,8 @@ static bool heap_grow(size_t minimum_size) {
   return true;
 }
 
-static inline void heap_reset_mutex(void) {
-  heap_mutex.lock = 0;
-  heap_mutex.pid = 0;
+static inline void heap_reset_lock(void) {
+  spinlock_init(&heap_lock);
 }
 
 static void heap_split_node(heap_node_p node, size_t requested_size) {
@@ -407,7 +406,7 @@ static void heap_set_errno(int err) {
 }
 
 void init_heap(void* addr, size_t size) {
-  heap_reset_mutex();
+  heap_reset_lock();
   heap_freed = false;
   heap = NULL;
   heap_tail = NULL;
@@ -488,7 +487,7 @@ void* kmalloc(size_t size) {
 
   size = align_up(size, HEAP_ALIGNMENT);
 
-  kmutex_lock(&heap_mutex);
+  spinlock_lock(&heap_lock);
 
   heap_node_p node = heap_find_suitable_node(size);
 
@@ -498,7 +497,7 @@ void* kmalloc(size_t size) {
         size,
         heap_calculate_free_bytes());
       heap_set_errno(ENOMEM);
-      kmutex_unlock(&heap_mutex);
+      spinlock_unlock(&heap_lock);
       return NULL;
     }
 
@@ -507,14 +506,14 @@ void* kmalloc(size_t size) {
     if(node == NULL) {
       serial_printf("kmalloc: no block even after grow\n");
       heap_set_errno(ENOMEM);
-      kmutex_unlock(&heap_mutex);
+      spinlock_unlock(&heap_lock);
       return NULL;
     }
   }
 
   heap_split_node(node, size);
 
-  kmutex_unlock(&heap_mutex);
+  spinlock_unlock(&heap_lock);
 
   return (void*)node->data;
 }
@@ -552,17 +551,17 @@ void* krealloc(void* ptr, size_t size) {
   heap_node_p node = (heap_node_p)((uintptr_t)ptr - HEAP_HEADER_SIZE);
   size_t old_size = 0;
 
-  kmutex_lock(&heap_mutex);
+  spinlock_lock(&heap_lock);
 
   if(node->magic != HEAP_MAGIC) {
     serial_printf("krealloc: invalid pointer %p\n", ptr);
-    kmutex_unlock(&heap_mutex);
+    spinlock_unlock(&heap_lock);
     heap_set_errno(EINVAL);
     return NULL;
   }
 
   old_size = node->size;
-  kmutex_unlock(&heap_mutex);
+  spinlock_unlock(&heap_lock);
 
   if(size <= old_size) {
     return ptr;
@@ -599,17 +598,17 @@ void kfree(void* ptr) {
 
   heap_node_p node = (heap_node_p)((uintptr_t)ptr - HEAP_HEADER_SIZE);
 
-  kmutex_lock(&heap_mutex);
+  spinlock_lock(&heap_lock);
 
   if(node->magic != HEAP_MAGIC) {
     serial_printf("kfree: invalid pointer %p\n", ptr);
-    kmutex_unlock(&heap_mutex);
+    spinlock_unlock(&heap_lock);
     return;
   }
 
   if(node->status == HEAP_FREE) {
     serial_printf("kfree: double free detected at %p\n", ptr);
-    kmutex_unlock(&heap_mutex);
+    spinlock_unlock(&heap_lock);
     return;
   }
 
@@ -632,15 +631,15 @@ void kfree(void* ptr) {
   heap_merge_forward(node);
   heap_release_region_if_unused(node);
 
-  kmutex_unlock(&heap_mutex);
+  spinlock_unlock(&heap_lock);
 }
 
 void heap_compactor() {
   serial_printf("heap_compactor: initing\n");
-  kmutex_lock(&heap_mutex);
+  spinlock_lock(&heap_lock);
 
   if(!heap_freed) {
-    kmutex_unlock(&heap_mutex);
+    spinlock_unlock(&heap_lock);
     serial_printf("heap_compactor: nothing to do here.\n");
     return;
   }
@@ -658,14 +657,14 @@ void heap_compactor() {
   }
 
   heap_freed = false;
-  kmutex_unlock(&heap_mutex);
+  spinlock_unlock(&heap_lock);
   serial_printf("heap_compactor: leaving.\n");
 }
 
 heap_stats_t heap_get_stats(void) {
   heap_stats_t stats = {0};
 
-  kmutex_lock(&heap_mutex);
+  spinlock_lock(&heap_lock);
 
   heap_region_t* region = heap_regions_head;
 
@@ -693,7 +692,7 @@ heap_stats_t heap_get_stats(void) {
     stats.used_bytes = 0;
   }
 
-  kmutex_unlock(&heap_mutex);
+  spinlock_unlock(&heap_lock);
 
   return stats;
 }

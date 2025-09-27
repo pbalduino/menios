@@ -3,6 +3,7 @@
 #include <kernel/kernel.h>
 #include <kernel/mman.h>
 #include <kernel/mutex.h>
+#include <kernel/spinlock.h>
 #include <kernel/pmm.h>
 #include <kernel/proc.h>
 #include <kernel/serial.h>
@@ -161,15 +162,13 @@ uacpi_status uacpi_kernel_uninstall_interrupt_handler(
 }
 
 uacpi_cpu_flags uacpi_kernel_lock_spinlock(uacpi_handle handle) {
-  kmutex_t* mutex = (kmutex_t*)handle;
-  kmutex_lock(mutex);
-
-  return 0;
+  spinlock_t* lock = (spinlock_t*)handle;
+  return (uacpi_cpu_flags)spinlock_lock_irqsave(lock);
 }
 
-void uacpi_kernel_unlock_spinlock(uacpi_handle handle, uacpi_cpu_flags) {
-  kmutex_t* mutex = (kmutex_t*)handle;
-  kmutex_unlock(mutex);
+void uacpi_kernel_unlock_spinlock(uacpi_handle handle, uacpi_cpu_flags flags) {
+  spinlock_t* lock = (spinlock_t*)handle;
+  spinlock_unlock_irqrestore(lock, (uint64_t)flags);
 }
 
 void uacpi_kernel_signal_event(uacpi_handle handle) {
@@ -197,10 +196,10 @@ void uacpi_kernel_free_event(uacpi_handle handle) {
 }
 
 uacpi_handle uacpi_kernel_create_spinlock(void) {
-  kmutex_t* event = kmalloc(sizeof(kmutex_t));
-  event->lock = false;
-  serial_printf("uacpi_kernel_create_spinlock: %p - %d\n", event, event->lock);
-  return event;
+  spinlock_t* lock = kmalloc(sizeof(spinlock_t));
+  spinlock_init(lock);
+  serial_printf("uacpi_kernel_create_spinlock: %p\n", lock);
+  return lock;
 }
 
 void uacpi_kernel_free_spinlock(uacpi_handle handle) {

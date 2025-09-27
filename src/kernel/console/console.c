@@ -5,11 +5,11 @@
 #include <kernel/console.h>
 #include <kernel/framebuffer.h>
 #include <kernel/file.h>
-#include <kernel/mutex.h>
+#include <kernel/spinlock.h>
 #include <kernel/serial.h>
 #include <kernel/tsc.h>
 
-kmutex_t fvprintf_mutex;
+static spinlock_t fvprintf_lock;
 
 int fputchar(int ch, FILE* file) {
   if(file == NULL) {
@@ -53,9 +53,9 @@ int fvprintf(FILE *file, const char *format, va_list args){
   char buffer[1024];
   int len = vsprintk(buffer, format, args);
 
-  kmutex_lock(&fvprintf_mutex);
+  spinlock_lock(&fvprintf_lock);
   fputs(buffer, file);
-  kmutex_unlock(&fvprintf_mutex);
+  spinlock_unlock(&fvprintf_lock);
 
   return len;
 }

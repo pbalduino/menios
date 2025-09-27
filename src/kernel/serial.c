@@ -2,12 +2,12 @@
 #include <stdlib.h>
 #include <kernel/console.h>
 #include <kernel/kernel.h>
-#include <kernel/mutex.h>
 #include <kernel/serial.h>
+#include <kernel/spinlock.h>
 
 // static FILE* com1 = NULL;
 bool serial_debug = false;
-kmutex_t serial_printf_mutex;
+static spinlock_t serial_printf_lock;
 
 void serial_init() {
   logk("- Initing serial communication");
@@ -37,6 +37,7 @@ void serial_init() {
 */
   // Enable interrupts (optional, if using interrupts)
   // outb(0x3f8 + 1, 0x01);
+  spinlock_init(&serial_printf_lock);
   printf(".OK\n");
 }
 
@@ -69,9 +70,9 @@ int serial_vprintf(const char *format, va_list args){
   char buffer[1024];
   int len = vsprintk(buffer, format, args);
 
-  kmutex_lock(&serial_printf_mutex);
+  uint64_t flags = spinlock_lock_irqsave(&serial_printf_lock);
   serial_puts(buffer);
-  kmutex_unlock(&serial_printf_mutex);
+  spinlock_unlock_irqrestore(&serial_printf_lock, flags);
 
   return len;
 }
