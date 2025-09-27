@@ -5,8 +5,8 @@ Issue #41 tracks the introduction of kernel-wide atomic primitives and memory or
 ## Current State
 
 * The kernel now provides `include/kernel/atomic.h`, a header-only wrapper over GCC/Clang `__atomic_*` builtins that exposes 32/64-bit load/store, exchange, compare-and-swap, and fetch-* helpers plus fence functions (`memory_barrier`, `smp_mb`, etc.).
-* `test/test_atomic.c` exercises the API in userland, validating CAS, fetch-add, and basic 64-bit operations via the host compiler.
-* No in-tree users exist yet; upcoming synchronisation primitives and SMP work will be refactored to adopt this API.
+* `include/kernel/spinlock.h` builds on the atomic API to offer spinlocks (with optional IRQ-save helpers) for short critical sections; `test/test_spinlock.c` covers basic lock/unlock semantics.
+* `test/test_atomic.c` exercises the raw atomic helpers in userland, validating CAS, fetch-add, and basic 64-bit operations via the host compiler.
 * uACPI keeps using its private atomics; long term we may consolidate.
 
 ## Goals
@@ -62,8 +62,8 @@ Implementation notes:
 ## Integration Plan
 
 1. **Adopt in Synchronisation Primitives**
-   * Rework upcoming spinlock/RW lock implementations to call the new helpers.
-   * Replace ad-hoc busy-wait loops and manual `lock xchg` sequences with `atomic_exchange`/`compare_exchange`.
+   * Rework higher-level synchronisation (RW locks, mutexes) to call the spinlock/atomic helpers.
+   * Replace remaining ad-hoc busy-wait loops and manual `lock xchg` sequences with `atomic_exchange`/`compare_exchange`.
 
 2. **SMP & Kernel Usage**
    * Use the barrier wrappers (`smp_mb`/`smp_rmb`/`smp_wmb`) in scheduler, IPC, and future per-CPU structures once SMP lands.

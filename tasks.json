@@ -171,7 +171,11 @@
             "number": 38,
             "url": "https://github.com/pbalduino/menios/issues/38",
             "state": "OPEN"
-        }
+        },
+        "status": "Done",
+        "notes": [
+            "2025-09-26: Added include/kernel/spinlock.h with atomic-based implementation and Unity test/test_spinlock.c."
+        ]
     },
     {
         "title": "Implement read-write locks (rwlock)",
