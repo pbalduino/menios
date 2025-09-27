@@ -62,7 +62,13 @@ All generated artifacts now live under `build/` (`build/bin` for boot assets, `b
 
 ### Verify the User Demo
 
-During boot, meniOS now schedules the embedded `user_demo` ELF immediately after hardware probing. You should see `Hello from user ELF via int 0x80!` both on the graphical console and in `com1.log`, confirming that the INT 0x80 syscall path and user ↔ kernel transitions are live. If you need a quieter serial log, toggle the verbose syscall traces in `src/kernel/syscall/syscall.c` (look for the `serial_printf` lines inside `syscall_write_handler`).
+During boot, meniOS schedules the embedded `user_demo` ELF immediately after hardware probing. The program now:
+
+- forces the stack to grow across an 8 KiB boundary (exercising lazy stack paging),
+- emits three `write(1, …)` syscalls with status messages, and
+- exits with status 42 via `SYS_exit`.
+
+Expect the log to show the `[user_demo]` messages on screen and in `com1.log`, confirming that the INT 0x80 path, lazy stack allocation, and non-zero exit codes work. If you need quieter serial output, toggle the verbose syscall traces in `src/kernel/syscall/syscall.c` (search for `serial_printf` inside `syscall_write_handler`).
 
 ## Development Progress
 

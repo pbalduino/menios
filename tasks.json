@@ -36,24 +36,6 @@
         }
     },
     {
-        "title": "Implement per-process virtual memory management",
-        "body": "## Goal\nCreate isolated virtual memory spaces for user processes with proper memory layout.\n\n## Context\nPart of the Road to Doom infrastructure. Each user process needs its own virtual address space with code/data/heap/stack regions properly isolated from other processes and the kernel.\n\n## Definition of Done\n- Design user process memory layout (code, data, bss, heap, stack regions)\n- Implement per-process page tables and address space management\n- Add memory isolation between processes and kernel/user space\n- Support memory allocation/deallocation for user processes\n- Implement demand paging and lazy allocation for large programs like Doom\n- Add proper memory permissions (read/write/execute) enforcement\n- Handle page faults in user space appropriately\n- Support memory regions up to 16MB for Doom's requirements\n\n## Dependencies\n- Existing virtual memory management improvements\n- Page fault handler fixes",
-        "labels": [
-            "enhancement"
-        ],
-        "github_issue": {
-            "number": 28,
-            "url": "https://github.com/pbalduino/menios/issues/28",
-            "state": "OPEN"
-        },
-        "status": "Done",
-        "notes": [
-            "2025-09-26: Added docs/architecture/per_process_vm.md outlining layout, region metadata, lazy allocation, and page-fault plan.",
-            "2025-09-26: Documented current memory architecture in docs/architecture/mem.md and linked per-process plan.",
-            "2025-09-26: Added vm_region tracking, lazy stack growth, and user-mode page fault handling."
-        ]
-    },
-    {
         "title": "Create cross-compiler toolchain for userland",
         "body": "## Goal\nSet up a cross-compiler toolchain that targets meniOS userland ABI.\n\n## Context\nPart of the Road to Doom infrastructure. We need a complete toolchain (binutils + GCC/Clang) that can compile user programs for meniOS, including Doom.\n\n## Definition of Done\n- Configure and build cross-binutils for meniOS target\n- Build cross-GCC or Clang targeting meniOS userland ABI\n- Create linker scripts for user program layout\n- Implement basic C runtime startup code (crt0)\n- Create minimal libc subset with essential functions\n- Set up build system for compiling userland programs\n- Document toolchain installation and usage\n- Test toolchain by compiling simple test programs\n\n## Dependencies\n- Syscall ABI definition\n- Process memory layout specification",
         "labels": [
@@ -162,22 +144,6 @@
         }
     },
     {
-        "title": "Implement spinlock synchronization primitive",
-        "body": "## Goal\nImplement spinlocks for low-level kernel synchronization in performance-critical sections.\n\n## Context\nSpinlocks are essential for protecting short critical sections where the overhead of sleeping would be greater than busy-waiting. They're particularly important for SMP systems and interrupt handlers.\n\n## Definition of Done\n- **Core functionality**: Implement spinlock_init(), spinlock_lock(), spinlock_unlock()\n- **Atomic operations**: Use CPU atomic instructions for lock/unlock operations\n- **Interrupt safety**: Support for spinlock_irq_save/restore() for interrupt contexts\n- **Try operations**: Implement spinlock_trylock() for non-blocking attempts\n- **Debug support**: Add lock tracking and validation in debug builds\n- **Performance**: Minimal overhead, optimized for short critical sections\n- **Architecture support**: Proper implementation for x86-64 with appropriate barriers\n\n## API Design\n- spinlock_t data structure\n- spinlock_init() - Initialize spinlock\n- spinlock_lock() - Acquire spinlock (busy wait)\n- spinlock_unlock() - Release spinlock\n- spinlock_trylock() - Non-blocking lock attempt\n- spinlock_lock_irqsave() - Lock with interrupt disable\n- spinlock_unlock_irqrestore() - Unlock with interrupt restore\n\n## Use Cases\n- Protecting shared data structures in interrupt handlers\n- SMP-safe critical sections\n- Low-level kernel data structure protection\n- Performance-critical synchronization where sleeping is not acceptable\n- Building blocks for other synchronization primitives",
-        "labels": [
-            "enhancement"
-        ],
-        "github_issue": {
-            "number": 38,
-            "url": "https://github.com/pbalduino/menios/issues/38",
-            "state": "OPEN"
-        },
-        "status": "Done",
-        "notes": [
-            "2025-09-26: Added include/kernel/spinlock.h with atomic-based implementation and Unity test/test_spinlock.c."
-        ]
-    },
-    {
         "title": "Implement read-write locks (rwlock)",
         "body": "## Goal\nImplement read-write locks to allow concurrent read access while maintaining exclusive write access.\n\n## Context\nRead-write locks are crucial for scenarios where data is frequently read but infrequently modified. They allow multiple readers to access shared data concurrently while ensuring exclusive access for writers.\n\n## Definition of Done\n- **Core functionality**: Implement rwlock_init(), rwlock_read_lock(), rwlock_write_lock(), rwlock_unlock()\n- **Reader priority**: Allow multiple concurrent readers\n- **Writer exclusivity**: Ensure writers have exclusive access\n- **Fairness**: Prevent writer starvation when many readers are present\n- **Try operations**: Implement rwlock_try_read_lock() and rwlock_try_write_lock()\n- **Timeout support**: Add timeout versions for non-blocking operations\n- **Upgrade/downgrade**: Support for upgrading read locks to write locks (optional)\n- **Debug support**: Lock tracking and validation in debug builds\n\n## API Design\n- rwlock_t data structure\n- rwlock_init() - Initialize read-write lock\n- rwlock_read_lock() - Acquire read lock (shared)\n- rwlock_write_lock() - Acquire write lock (exclusive)\n- rwlock_unlock() - Release lock (read or write)\n- rwlock_try_read_lock() - Non-blocking read lock attempt\n- rwlock_try_write_lock() - Non-blocking write lock attempt\n\n## Use Cases\n- Shared data structures with frequent reads, infrequent writes\n- Cache implementations\n- Configuration data protection\n- File system metadata\n- Network routing tables\n- Database-like operations in kernel",
         "labels": [
@@ -202,24 +168,6 @@
         }
     },
     {
-        "title": "Implement atomic operations and memory barriers",
-        "body": "## Goal\nImplement atomic operations and memory barriers for lock-free programming and low-level synchronization.\n\n## Context\nAtomic operations are fundamental building blocks for implementing lock-free data structures and other synchronization primitives. They provide guaranteed atomic read-modify-write operations without requiring locks.\n\n## Definition of Done\n- **Basic atomic types**: Support for atomic integers (32-bit and 64-bit)\n- **Atomic operations**: Load, store, exchange, compare-and-swap, fetch-and-add, etc.\n- **Memory ordering**: Support for different memory ordering semantics (relaxed, acquire, release, seq_cst)\n- **Memory barriers**: Implement compiler and CPU memory barriers\n- **Architecture optimization**: Use CPU-specific atomic instructions on x86-64\n- **Lock-free helpers**: Provide building blocks for lock-free data structures\n- **Documentation**: Comprehensive documentation on usage and memory ordering\n\n## API Design\n- atomic32_t and atomic64_t types\n- atomic_load() / atomic_store()\n- atomic_exchange()\n- atomic_compare_exchange()\n- atomic_fetch_add() / atomic_fetch_sub()\n- atomic_fetch_and() / atomic_fetch_or() / atomic_fetch_xor()\n- Memory barriers: memory_barrier(), read_barrier(), write_barrier()\n- CPU-specific barriers: smp_mb(), smp_rmb(), smp_wmb()\n\n## Use Cases\n- Lock-free data structures (queues, stacks, lists)\n- Reference counting\n- Building other synchronization primitives\n- High-performance inter-thread communication\n- Statistics and counters\n- Flag-based synchronization",
-        "labels": [
-            "enhancement"
-        ],
-        "github_issue": {
-            "number": 41,
-            "url": "https://github.com/pbalduino/menios/issues/41",
-            "state": "OPEN"
-        },
-        "notes": [
-            "2025-09-26: Drafted atomic API plan in docs/architecture/atomic.md (GCC builtins + barrier helpers).",
-            "2025-09-26: Added include/kernel/atomic.h and test/test_atomic.c scaffolding.",
-            "2025-09-26: Atomic API merged with Unity tests (test_atomic) passing via Unity harness."
-        ],
-        "status": "Done"
-    },
-    {
         "title": "Enable SMP (Symmetric Multiprocessing) support",
         "body": "## Goal\nAdd support for multiple CPU cores to enable true multiprocessing capabilities in meniOS.\n\n## Context\nCurrently meniOS runs on a single CPU core. Adding SMP support will enable the kernel to utilize multiple cores, improving performance and enabling true parallel processing. This is essential for modern systems and will be important for running complex applications like Doom with better performance.\n\n## Definition of Done\n- **CPU Detection**: Detect and enumerate available CPU cores using ACPI tables\n- **AP Initialization**: Boot and initialize Application Processors (non-boot CPUs)\n- **Per-CPU Data**: Implement per-CPU data structures and variables\n- **SMP-Safe Synchronization**: Ensure all kernel data structures are SMP-safe\n- **SMP Scheduler**: Extend scheduler to distribute tasks across multiple CPUs\n- **Load Balancing**: Basic load balancing between CPU cores\n- **CPU Affinity**: Support for binding processes/threads to specific CPUs\n- **SMP-Safe Memory Management**: Make memory allocators and VM system SMP-safe\n\n## Key Components to Implement\n- **ACPI Parsing**: Parse MADT (Multiple APIC Description Table) to find CPU cores\n- **APIC Configuration**: Set up Local APIC and I/O APIC for inter-processor communication\n- **AP Boot Protocol**: Implement CPU startup sequence for secondary cores\n- **Spinlocks**: Implement proper spinlocks for SMP synchronization (depends on issue #38)\n- **Per-CPU Variables**: Implement __percpu data and accessor functions\n- **SMP-Safe Primitives**: Update all shared data structures with proper locking\n- **CPU Hotplug**: Basic support for CPU online/offline operations (optional)\n\n## Technical Challenges\n- **Bootstrap Process**: Complex CPU initialization sequence\n- **Memory Barriers**: Proper memory ordering between CPUs\n- **Race Conditions**: Identify and fix all potential race conditions in kernel\n- **Cache Coherency**: Handle CPU cache synchronization issues\n- **Interrupt Distribution**: Distribute interrupts across multiple CPUs\n- **Atomic Operations**: Hardware-specific atomic instructions (see issue #41)\n\n## Dependencies\n- Issue #38: Spinlock implementation (critical for SMP)\n- Issue #41: Atomic operations and memory barriers\n- Improved synchronization primitives for SMP-safe operations\n\n## Testing Strategy\n- Start with 2-CPU system, expand to 4+ cores\n- Stress testing with concurrent operations\n- Verify proper load distribution across cores\n- Test interrupt handling on multiple CPUs\n- Validate memory consistency across cores\n\n## Performance Benefits\n- Parallel execution of kernel threads\n- Better responsiveness under load\n- Improved performance for multi-threaded applications\n- Foundation for userland multi-threading support\n- Better utilization of modern hardware",
         "labels": [
@@ -242,7 +190,10 @@
             "url": "https://github.com/pbalduino/menios/issues/47",
             "state": "OPEN"
         },
-        "status": "In Progress"
+        "status": "Done",
+        "notes": [
+            "2025-09-26: Expanded user_demo to touch multiple stack pages, emit multiple syscalls, exit with code 42."
+        ]
     },
     {
         "title": "Evolve mosh shell to be the default userland shell for meniOS",
@@ -316,6 +267,90 @@
         "github_issue": {
             "number": 79,
             "url": "https://github.com/pbalduino/menios/issues/79",
+            "state": "OPEN"
+        }
+    },
+    {
+        "title": "Implement per-CPU data infrastructure",
+        "body": "## Goal\nCreate per-CPU data infrastructure to support SMP by ensuring each CPU has distinct stacks, runqueues, stats, and other CPU-local data.\n\n## Context\nEssential SMP foundation. Once multiple CPUs are running, each needs isolated data structures to avoid race conditions and improve performance. This includes CPU-local stacks, runqueues, statistics, and temporary storage.\n\n## Definition of Done\n- **Per-CPU allocator**: Implement percpu_alloc() and percpu_free() functions\n- **Per-CPU macros**: Create macros for declaring and accessing per-CPU variables\n- **CPU-local stacks**: Separate kernel stacks for each CPU\n- **CPU-local runqueues**: Individual scheduler runqueues per CPU\n- **CPU-local statistics**: Per-CPU counters and performance metrics\n- **CPU ID management**: Reliable way to get current CPU ID\n- **Memory layout**: Efficient memory layout for per-CPU data sections",
+        "labels": [
+            "enhancement"
+        ],
+        "github_issue": {
+            "number": 80,
+            "url": "https://github.com/pbalduino/menios/issues/80",
+            "state": "OPEN"
+        }
+    },
+    {
+        "title": "Implement APIC/MADT CPU enumeration",
+        "body": "## Goal\nParse ACPI MADT (Multiple APIC Description Table) to enumerate CPU cores and prepare for Application Processor (AP) startup.\n\n## Context\nEssential SMP foundation. Before bringing up additional CPUs, we need to discover how many cores are available, their LAPIC IDs, and other CPU-specific information from the ACPI tables.\n\n## Definition of Done\n- **ACPI MADT parsing**: Parse MADT table to find CPU entries\n- **CPU enumeration**: Build list of available CPUs with their LAPIC IDs\n- **CPU information storage**: Store CPU topology and capabilities\n- **BSP identification**: Identify Bootstrap Processor vs Application Processors\n- **CPU state tracking**: Track CPU states (offline, online, booting)\n- **LAPIC base address**: Extract Local APIC base address from MADT\n- **Error handling**: Handle malformed or missing ACPI tables gracefully",
+        "labels": [
+            "enhancement"
+        ],
+        "github_issue": {
+            "number": 81,
+            "url": "https://github.com/pbalduino/menios/issues/81",
+            "state": "OPEN"
+        }
+    },
+    {
+        "title": "Implement AP startup and BSP \u2192 AP bring-up",
+        "body": "## Goal\nInitialize Application Processors (APs): set up startup trampoline, per-CPU GDT/TSS, switch to long mode, and hand off to C code.\n\n## Context\nCore SMP implementation. After CPU enumeration, we need to wake up the Application Processors and get them running kernel code alongside the Bootstrap Processor.\n\n## Definition of Done\n- **Startup trampoline**: Real-mode trampoline code to bootstrap APs\n- **AP initialization sequence**: Complete AP startup from real mode to long mode\n- **Per-CPU GDT/TSS**: Separate GDT and TSS for each CPU\n- **Per-CPU stacks**: Dedicated kernel stacks for each AP\n- **SIPI protocol**: Send Startup IPI to wake up APs\n- **Synchronization**: Coordinate AP startup with BSP\n- **C handoff**: Transfer AP control to C kernel code\n- **Error handling**: Handle AP startup failures gracefully",
+        "labels": [
+            "enhancement"
+        ],
+        "github_issue": {
+            "number": 82,
+            "url": "https://github.com/pbalduino/menios/issues/82",
+            "state": "OPEN"
+        }
+    },
+    {
+        "title": "Extend scheduler for SMP with per-CPU runqueues",
+        "body": "## Goal\nExtend the scheduler to support SMP with per-CPU runqueues, load balancing, and inter-processor interrupt (IPI) based reschedules.\n\n## Context\nSMP scheduler foundation. Once multiple CPUs are running, the scheduler needs to distribute work across cores, balance load, and handle cross-CPU scheduling decisions.\n\n## Definition of Done\n- **Per-CPU runqueues**: Separate runqueue for each CPU core\n- **Load balancing**: Migrate tasks between CPUs to balance load\n- **IPI reschedules**: Send IPIs to trigger reschedules on other CPUs\n- **CPU affinity**: Support for binding tasks to specific CPUs\n- **Idle CPU handling**: Proper idle loop and work stealing\n- **Scheduler statistics**: Per-CPU scheduling statistics and metrics\n- **SMP-safe operations**: All scheduler operations protected with appropriate locks",
+        "labels": [
+            "enhancement"
+        ],
+        "github_issue": {
+            "number": 83,
+            "url": "https://github.com/pbalduino/menios/issues/83",
+            "state": "OPEN"
+        }
+    },
+    {
+        "title": "Implement interrupt distribution and IPIs",
+        "body": "## Goal\nImplement interrupt distribution and Inter-Processor Interrupts (IPIs) to properly distribute device IRQs and enable CPU-to-CPU communication.\n\n## Context\nSMP interrupt handling. Multiple CPUs need coordinated interrupt handling, with device interrupts distributed across cores and IPIs enabling CPU-to-CPU communication for scheduling and other kernel operations.\n\n## Definition of Done\n- **Device interrupt distribution**: Distribute device IRQs across multiple CPUs\n- **IPI framework**: Send and receive inter-processor interrupts\n- **LAPIC programming**: Configure Local APIC for IPI generation/reception\n- **IOAPIC programming**: Configure I/O APIC for interrupt routing\n- **IPI types**: Support for reschedule, function call, and TLB flush IPIs\n- **Interrupt affinity**: Control which CPU handles specific interrupts\n- **Performance optimization**: Minimize interrupt latency and overhead",
+        "labels": [
+            "enhancement"
+        ],
+        "github_issue": {
+            "number": 84,
+            "url": "https://github.com/pbalduino/menios/issues/84",
+            "state": "OPEN"
+        }
+    },
+    {
+        "title": "Audit kernel structures for SMP safety",
+        "body": "## Goal\nAudit critical kernel subsystems to ensure they are SMP-safe with proper spinlock protection or per-CPU isolation.\n\n## Context\nSMP safety audit. Before enabling multiple CPUs, all shared kernel data structures must be protected against race conditions through appropriate synchronization mechanisms.\n\n## Definition of Done\n- **Subsystem audit**: Review all critical kernel subsystems for SMP safety\n- **Lock identification**: Identify what locks are needed for each shared structure\n- **Per-CPU conversion**: Convert appropriate structures to per-CPU where beneficial\n- **Lock implementation**: Add spinlocks/mutexes to protect shared data\n- **Documentation**: Document locking rules and conventions\n- **Testing**: Verify SMP safety under stress testing",
+        "labels": [
+            "enhancement"
+        ],
+        "github_issue": {
+            "number": 85,
+            "url": "https://github.com/pbalduino/menios/issues/85",
+            "state": "OPEN"
+        }
+    },
+    {
+        "title": "Add SMP testing and diagnostics",
+        "body": "## Goal\nAdd comprehensive testing and diagnostic capabilities for SMP functionality including smoke tests, CPU verification, and cross-CPU locking validation.\n\n## Context\nSMP validation and debugging. Once SMP is implemented, we need robust testing to ensure it works correctly and diagnostic tools to debug issues.\n\n## Definition of Done\n- **SMP smoke tests**: Basic tests to verify multiple CPUs are operational\n- **CPU enumeration tests**: Verify all CPUs are detected and brought online\n- **Cross-CPU communication tests**: Test IPI delivery and handling\n- **Lock contention tests**: Stress test spinlocks and synchronization\n- **Performance benchmarks**: Measure SMP performance gains\n- **Diagnostic tools**: Tools to monitor CPU states and activity\n- **Failure diagnosis**: Tools to debug SMP bring-up failures",
+        "labels": [
+            "enhancement"
+        ],
+        "github_issue": {
+            "number": 86,
+            "url": "https://github.com/pbalduino/menios/issues/86",
             "state": "OPEN"
         }
     }
