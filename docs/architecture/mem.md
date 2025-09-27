@@ -39,22 +39,20 @@ Other points:
 
 ## User Address Spaces (Current State)
 
-* `proc_create_user()` clones the kernel PML4 by calling `pmm_clone_kernel_address_space()`. That routine allocates a fresh PML4, copies the kernel entries, and clears user bits for canonical high-half segments before returning the new root.
-* Stacks are eagerly allocated: we compute a per-PID stack window using `user_stack_top()` and allocate `PROC_USER_STACK_SIZE` bytes worth of physical pages up-front. Each page is zeroed and mapped writable+user into the new CR3.
-* The ELF loader (`elf64_load_image`) allocates new physical pages for each PT_LOAD segment, zeroes them, copies the segment bytes, and maps them into the process CR3 with the correct permissions. We record each allocation in `proc->user_segments` so `proc_exit()` can free the pages later.
-* There is no separate heap segment: user processes have no `brk`/`mmap` support yet. All allocations are static segments from the ELF plus the fixed-size stack.
-* Page faults are terminal. Any access outside the pre-mapped pages triggers the page-fault handler, which currently just logs diagnostics and halts.
+* `proc_create_user()` still clones the kernel PML4 via `pmm_clone_kernel_address_space()`, giving each process the shared higher-half mappings while providing a unique CR3 for user pages.
+* Each process carries `vm_regions[]` metadata. The stack region is registered as grow-down; only the top page is mapped eagerly so the task can start executing, and further growth is handled lazily.
+* `elf64_load_image()` maps PT_LOAD segments and records them in both `user_segments` (for physical cleanup) and the owning region metadata so we know exactly which virtual ranges are populated.
+* There is not yet a heap region (`brk`/`mmap`), but the infrastructure for grow-up regions is ready—only the stack uses it today.
+* User-mode page faults are intercepted by `vm_region_handle_page_fault()`. Faults inside growable regions allocate zeroed pages on demand; illegal or permission-violating faults still fall back to the diagnostic handler.
 
 ## User Address Spaces (Planned Enhancements)
 
-Work tracked under issue #28 will push the design forward. Key decisions so far (expanded in `docs/architecture/per_process_vm.md`):
+Work remaining after issue #28 (also expanded in `docs/architecture/per_process_vm.md`):
 
-* **Canonical Layout**: We will define fixed bases for text, rodata, data/BSS, heap, stack, and mmappable regions. PIDs will no longer influence virtual addresses.
-* **Region Metadata**: Each process will own a list of regions (`vm_region_t`) describing the start, size, permissions, and behaviour (static, heap, stack, mmap). This will replace the flat `user_segments` array.
-* **Lazy Allocation**: Stacks and heap will grow on demand. Only the top stack page is mapped initially; faults inside the stack window will allocate new pages and update the region metadata.
-* **Page-Fault Pump**: The page-fault handler will call a new `vm_handle_page_fault()` function that consults region metadata, performs lazy allocation when allowed, or terminates the task for illegal access.
-* **Tighter Kernel/User Separation**: Instead of cloning the entire kernel page table, we will build per-process PML4s that include only the required kernel shared mappings plus the user regions. That reduces attack surface and waste.
-* **Cleanup**: `proc_exit()` will release regions by walking metadata, unmapping, and freeing physical pages—including lazily allocated ones.
+* **Canonical Layout**: Define fixed bases for text, rodata, data/BSS, heap, stack, and mmappable regions so PIDs no longer influence addresses and we can reserve guard pages.
+* **Heap Region**: Introduce a grow-up region for `brk`/`mmap`, wire it into the lazy allocation path, and converge cleanup logic on the region metadata instead of the flat `user_segments` array.
+* **Address-Space Isolation**: Replace the “clone kernel CR3” strategy with a curated template that maps only the required shared kernel ranges plus user regions, then teach `proc_exit` to unmap via region descriptors.
+* **Demand Paging**: Build on the region infrastructure to lazily populate PT_LOAD segments or file-backed mappings once the filesystem and VFS layers arrive.
 
 ## Open Questions / Future Work
 
