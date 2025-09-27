@@ -93,6 +93,14 @@ static uint64_t div_u128_u64(uint64_t hi, uint64_t lo, uint64_t div) {
   return quotient;
 }
 
+static inline void add_u64_to_u128(uint64_t* hi, uint64_t* lo, uint64_t add) {
+  uint64_t new_lo = *lo + add;
+  if(new_lo < *lo) {
+    (*hi)++;
+  }
+  *lo = new_lo;
+}
+
 static inline uint64_t tsc_ticks_to_ns_internal(uint64_t ticks) {
   if(tsc_freq_hz == 0) {
     return ticks;
@@ -138,8 +146,10 @@ uint64_t tsc_frequency_hz(void) {
 useconds_t unix_time_us() {
   uint64_t tsc_delta = read_tsc() - tick_start;
   uint64_t ns = tsc_ticks_to_ns_internal(tsc_delta);
-  __int128 total_ns = (__int128)boot_time_sec * 1000000000ull + ns;
-  return (useconds_t)(total_ns / 1000ull);
+  uint64_t hi, lo;
+  mul_u64(boot_time_sec, 1000000000ull, &hi, &lo);
+  add_u64_to_u128(&hi, &lo, ns);
+  return (useconds_t)div_u128_u64(hi, lo, 1000ull);
 }
 
 useconds_t ns_from_boot() {
