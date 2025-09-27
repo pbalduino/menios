@@ -4,9 +4,10 @@ Issue #41 tracks the introduction of kernel-wide atomic primitives and memory or
 
 ## Current State
 
-* There is no in-tree atomic API for kernel code. Synchronisation uses coarse primitives (`kmutex`, future spinlocks) built directly on instruction sequences.
-* Vendor code (uACPI) bundles its own atomic helpers under `include/uacpi/platform/atomic.h`, relying on compiler builtins where available. These are scoped to the ACPI component and not exposed to the rest of the kernel.
-* No memory-barrier macros exist beyond implicit serialisation in `cli/sti` or lock-prefixed instructions.
+* The kernel now provides `include/kernel/atomic.h`, a header-only wrapper over GCC/Clang `__atomic_*` builtins that exposes 32/64-bit load/store, exchange, compare-and-swap, and fetch-* helpers plus fence functions (`memory_barrier`, `smp_mb`, etc.).
+* `test/test_atomic.c` exercises the API in userland, validating CAS, fetch-add, and basic 64-bit operations via the host compiler.
+* No in-tree users exist yet; upcoming synchronisation primitives and SMP work will be refactored to adopt this API.
+* uACPI keeps using its private atomics; long term we may consolidate.
 
 ## Goals
 
@@ -52,33 +53,27 @@ void smp_rmb(void);
 void smp_wmb(void);
 ```
 
-Implementation strategy:
+Implementation notes:
 
-* Use GCC/Clang `__atomic_*` builtins to back the API. They already map to the correct instructions and honour the requested memory ordering.
-* Wrap the builtins in inline functions to keep call-sites clean and allow future per-arch overrides.
-* Provide convenience macros for pointer atomics (alias the 64-bit path on x86_64).
+* Functions are inline wrappers around the `__atomic_*` builtins so call-sites stay clean and the compiler emits the correct instructions.
+* Memory orders map directly to builtin order constants through `atomic_order_to_builtin()`.
+* Pointer atomics can use the 64-bit variants on x86_64 until we add explicit typedefs.
 
 ## Integration Plan
 
-1. **Header & Inline Implementation**
-   * Create `include/kernel/atomic.h` and `src/kernel/atomic/atomic.c` (or header-only inline implementations) wrapping the GCC builtins.
-   * Provide compile-time assertions to ensure `sizeof(_Atomic)` assumptions hold on x86_64.
+1. **Adopt in Synchronisation Primitives**
+   * Rework upcoming spinlock/RW lock implementations to call the new helpers.
+   * Replace ad-hoc busy-wait loops and manual `lock xchg` sequences with `atomic_exchange`/`compare_exchange`.
 
-2. **Barriers**
-   * Introduce barriers as thin wrappers over `__atomic_thread_fence()` using the appropriate orderings.
-   * Optionally provide architecture-specific fallbacks using `asm volatile ("mfence" ::: "memory")` if the compiler builtins are unavailable.
+2. **SMP & Kernel Usage**
+   * Use the barrier wrappers (`smp_mb`/`smp_rmb`/`smp_wmb`) in scheduler, IPC, and future per-CPU structures once SMP lands.
 
-3. **Adopt in Synchronisation Primitives**
-   * Update pending spinlock/RW lock tasks to use the new API.
-   * Replace ad-hoc busy-wait loops with `atomic_exchange`/`compare_exchange` once the primitives exist.
+3. **Testing**
+   * Extend unit tests to cover failure paths (CAS failing) and ensure fences compile on all platforms we support.
+   * When SMP support is in place, add runtime stress tests to validate memory ordering.
 
-4. **Testing**
-   * Add unit tests under `test/` that validate basic atomic behaviour (CAS success/failure, fetch-add semantics) using fake SMP scenarios.
-   * For barriers, rely on compiler intrinsics; deeper validation will come alongside SMP work.
-
-5. **Documentation & Examples**
-   * Expand this note once prototypes land, adding usage examples for compare-and-swap loops and barrier placement guidelines.
-   * Update the coding guidelines (if needed) to point contributors at the atomic API rather than rolling their own inline assembly.
+4. **Documentation & Examples**
+   * Add cookbook examples (CAS loops, reference counting) once the primitives are used in-tree.
 
 ## Open Questions
 
