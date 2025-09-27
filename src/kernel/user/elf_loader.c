@@ -3,6 +3,7 @@
 #include <kernel/mem.h>
 #include <kernel/pmm.h>
 #include <kernel/serial.h>
+#include <kernel/vm_region.h>
 #include <string.h>
 
 #define ELF_MAGIC0 0x7f
@@ -92,7 +93,11 @@ static bool elf_validate(const Elf64_Ehdr* hdr, size_t size) {
   return true;
 }
 
-static bool map_segment(proc_info_p proc, phys_addr_t root_phys, const uint8_t* image, size_t size, const Elf64_Phdr* phdr) {
+static bool map_segment(proc_info_p proc,
+                        phys_addr_t root_phys,
+                        const uint8_t* image,
+                        size_t size,
+                        const Elf64_Phdr* phdr) {
   if(phdr->p_memsz == 0) {
     return true;
   }
@@ -131,6 +136,26 @@ static bool map_segment(proc_info_p proc, phys_addr_t root_phys, const uint8_t* 
       serial_printf("ELF: failed to map page at %lx\n", page_vaddr);
       return false;
     }
+  }
+
+  vm_region_type_t region_type = VM_REGION_DATA;
+  uint32_t region_flags = VM_REGION_FLAG_READ | VM_REGION_FLAG_USER;
+
+  if((phdr->p_flags & PF_X) != 0) {
+    region_type = VM_REGION_TEXT;
+    region_flags |= VM_REGION_FLAG_EXEC;
+  } else if((phdr->p_flags & PF_W) == 0) {
+    region_type = VM_REGION_RODATA;
+  }
+
+  if((phdr->p_flags & PF_W) != 0) {
+    region_flags |= VM_REGION_FLAG_WRITE;
+  }
+
+  vm_region_add(proc, phdr->p_vaddr, phdr->p_memsz, region_type, region_flags);
+  vm_region_t* region = vm_region_find(proc, phdr->p_vaddr);
+  if(region != NULL) {
+    vm_region_note_mapping(region, phdr->p_vaddr, phdr->p_memsz);
   }
 
   return true;

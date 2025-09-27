@@ -2,7 +2,9 @@
 #include <kernel/gdt.h>
 #include <kernel/idt.h>
 #include <kernel/kernel.h>
+#include <kernel/proc.h>
 #include <kernel/serial.h>
+#include <kernel/vm_region.h>
 
 #include <stdbool.h>
 #include <stdarg.h>
@@ -170,6 +172,15 @@ void idt_pf_isr_handler(idt_exception_p cpu_state) {
 
   idt_pf_error_info_t info;
   idt_decode_page_fault(error_code, &info);
+
+  bool handled = false;
+  if(info.user) {
+    handled = vm_region_handle_page_fault(current, cr2, info.present, info.write, info.user);
+  }
+
+  if(handled) {
+    return;
+  }
 
   exception_log("= Page fault caught =\n");
   exception_log("  cpu_state @ %p\n", cpu_state);

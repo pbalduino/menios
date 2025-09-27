@@ -6,6 +6,7 @@ extern "C" {
 #endif
 
 #include <types.h>
+#include <kernel/vm_region.h>
 
 #define PROC_KERNEL 0
 #define PROC_MAX   16
@@ -42,7 +43,8 @@ extern "C" {
 
 #define PROC_STACK_SIZE (16 * 1024)
 #define PROC_USER_STACK_SIZE (16 * 1024)
-#define PROC_MAX_USER_SEGMENTS 16
+#define PROC_MAX_USER_SEGMENTS 256
+#define PROC_MAX_VM_REGIONS 32
 
 typedef struct proc_user_segment_t {
   phys_addr_t phys;
@@ -103,6 +105,8 @@ typedef struct proc_info_t {
   phys_addr_t  address_space_root;
   proc_user_segment_t user_segments[PROC_MAX_USER_SEGMENTS];
   size_t       user_segment_count;
+  vm_region_t  vm_regions[PROC_MAX_VM_REGIONS];
+  size_t       vm_region_count;
   void(*entrypoint)(void*);
   void*        arguments;
 } proc_info_t;

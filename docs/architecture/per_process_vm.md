@@ -1,6 +1,6 @@
 # Per-Process Virtual Memory Plan
 
-This document captures the current state of meniOS user address spaces and the work remaining to complete issue #28 (per-process virtual memory management).
+This document captures the current state of meniOS user address spaces and the plan that drove issue #28 (per-process virtual memory management). The initial implementation now in trunk covers region metadata, lazy-growing stacks, and user-mode page-fault recovery. Remaining enhancements (heap growth, demand paging) build on this foundation.
 
 ## Current Behaviour
 

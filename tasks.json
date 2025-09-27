@@ -36,19 +36,6 @@
         }
     },
     {
-        "title": "Implement ELF loader for userland programs",
-        "body": "## Goal\nImplement an ELF loader that can load and execute user programs in userland.\n\n## Context  \nPart of the Road to Doom infrastructure. We need to load static ELF64 executables from the kernel into user processes. This is fundamental for running any userland applications including Doom.\n\n## Definition of Done\n- Parse ELF64 headers and validate executable format\n- Load program segments (code, data, bss) into appropriate memory regions\n- Set up initial process memory layout with proper permissions\n- Handle entry point and initial register state for user process\n- Support static linking (dynamic linking can come later)\n- Integrate with virtual memory management system\n- Add proper error handling for malformed ELF files\n- Test with simple userland programs before attempting Doom\n\n## Dependencies\n- User/kernel space separation\n- Per-process virtual memory management\n- Syscall interface implementation",
-        "labels": [
-            "enhancement"
-        ],
-        "github_issue": {
-            "number": 26,
-            "url": "https://github.com/pbalduino/menios/issues/26",
-            "state": "OPEN"
-        },
-        "status": "In Progress"
-    },
-    {
         "title": "Implement per-process virtual memory management",
         "body": "## Goal\nCreate isolated virtual memory spaces for user processes with proper memory layout.\n\n## Context\nPart of the Road to Doom infrastructure. Each user process needs its own virtual address space with code/data/heap/stack regions properly isolated from other processes and the kernel.\n\n## Definition of Done\n- Design user process memory layout (code, data, bss, heap, stack regions)\n- Implement per-process page tables and address space management\n- Add memory isolation between processes and kernel/user space\n- Support memory allocation/deallocation for user processes\n- Implement demand paging and lazy allocation for large programs like Doom\n- Add proper memory permissions (read/write/execute) enforcement\n- Handle page faults in user space appropriately\n- Support memory regions up to 16MB for Doom's requirements\n\n## Dependencies\n- Existing virtual memory management improvements\n- Page fault handler fixes",
         "labels": [
@@ -59,10 +46,11 @@
             "url": "https://github.com/pbalduino/menios/issues/28",
             "state": "OPEN"
         },
-        "status": "In Progress",
+        "status": "Done",
         "notes": [
             "2025-09-26: Added docs/architecture/per_process_vm.md outlining layout, region metadata, lazy allocation, and page-fault plan.",
-            "2025-09-26: Documented current memory architecture in docs/architecture/mem.md and linked per-process plan."
+            "2025-09-26: Documented current memory architecture in docs/architecture/mem.md and linked per-process plan.",
+            "2025-09-26: Added vm_region tracking, lazy stack growth, and user-mode page fault handling."
         ]
     },
     {
@@ -257,31 +245,30 @@
         }
     },
     {
-        "title": "Relocate build artifacts outside repository",
-        "body": "## Goal\nEnsure generated artifacts live in a gitignored build directory.\n\n## Context\n`bin/` and `obj/` are currently tracked and clutter the repo. They should be produced in an out-of-tree location controlled by the build system.\n\n## Definition of Done\n- Introduce a configurable build output directory (e.g. `_build/`).\n- Update Makefile/Docker flow to emit binaries and intermediate objects there.\n- Remove tracked artifacts from git and add ignores.\n- Verify `make build run` from a clean checkout.\n- Document the new layout in README/contributor docs.\n\n## Time Estimate\n1-2 days",
-        "labels": [
-            "maintenance"
-        ],
-        "status": "Done",
-        "notes": [
-            "2025-09-26: Makefile now stages outputs under build/bin and build/obj, bin/ and obj/ removed from repo, README/.gitignore updated."
-        ]
-    },
-    {
         "title": "Group x86_64 assembly under arch directory",
         "body": "## Goal\nMove low-level assembly like `lgdt.s`, `lidt.s`, `pit.s` into `src/kernel/arch/x86_64/`.\n\n## Context\nAssembly files currently sit at `src/kernel/`. Grouping them by architecture improves clarity and prepares for other architectures.\n\n## Definition of Done\n- Create `src/kernel/arch/x86_64/` (and matching include directory).\n- Relocate existing assembly sources and adjust includes/build rules.\n- Ensure both native and Docker builds still work.\n- Update documentation (README/CODING.md).\n\n## Time Estimate\n1 day",
         "labels": [
-            "refactor"
+            "enhancement"
         ],
-        "status": "Open"
+        "status": "Open",
+        "github_issue": {
+            "number": 75,
+            "url": "https://github.com/pbalduino/menios/issues/75",
+            "state": "OPEN"
+        }
     },
     {
         "title": "Reorganize user-mode sources",
         "body": "## Goal\nUnify user-space demos/libs under a consistent directory hierarchy.\n\n## Context\nUser demo assembly lives in `src/usermode/` while kernel launch code sits in `src/kernel/user/`. Consolidation will help as more apps arrive.\n\n## Definition of Done\n- Decide layout (e.g. `user/apps/demo`, `user/lib`).\n- Move current demo code and adjust build scripts.\n- Update kernel loader references.\n- Document the structure for contributors.\n\n## Time Estimate\n1-2 days",
         "labels": [
-            "refactor"
+            "enhancement"
         ],
-        "status": "Open"
+        "status": "Open",
+        "github_issue": {
+            "number": 76,
+            "url": "https://github.com/pbalduino/menios/issues/76",
+            "state": "OPEN"
+        }
     },
     {
         "title": "Add docs for tools directory",
@@ -289,22 +276,37 @@
         "labels": [
             "documentation"
         ],
-        "status": "Open"
+        "status": "Open",
+        "github_issue": {
+            "number": 77,
+            "url": "https://github.com/pbalduino/menios/issues/77",
+            "state": "OPEN"
+        }
     },
     {
         "title": "Plan filesystem integration roadmap",
         "body": "## Goal\nCreate a design document outlining required subsystems for filesystem support.\n\n## Context\nBefore implementing FS/VFS, agreeing on layer responsibilities (block cache, VFS, syscalls) will accelerate development.\n\n## Definition of Done\n- Produce design doc (docs/architecture/fs.md).\n- List milestones and dependencies.\n- Review with maintainers and capture open questions.\n\n## Time Estimate\n1 day",
         "labels": [
-            "planning"
+            "documentation"
         ],
-        "status": "Open"
+        "status": "Open",
+        "github_issue": {
+            "number": 78,
+            "url": "https://github.com/pbalduino/menios/issues/78",
+            "state": "OPEN"
+        }
     },
     {
         "title": "Draft networking roadmap (driver to TCP/IP)",
         "body": "## Goal\nOutline tasks required to add a basic NIC driver, IPv4 stack, and TCP/UDP layers.\n\n## Context\nNetworking is large in scope; a roadmap helps sequencing (driver -> Ethernet -> IP -> TCP -> sockets).\n\n## Definition of Done\n- Write design (docs/architecture/networking.md).\n- Identify hardware target (e.g., e1000, virtio-net).\n- Enumerate layer-by-layer deliverables and dependencies.\n\n## Time Estimate\n1 day",
         "labels": [
-            "planning"
+            "documentation"
         ],
-        "status": "Open"
+        "status": "Open",
+        "github_issue": {
+            "number": 79,
+            "url": "https://github.com/pbalduino/menios/issues/79",
+            "state": "OPEN"
+        }
     }
 ]

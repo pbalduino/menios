@@ -247,39 +247,54 @@ void proc_create_user(proc_info_p proc, const char* name, const void* code_blob,
     halt();
   }
 
-  const size_t stack_pages = PROC_USER_STACK_SIZE / PAGE_SIZE;
   phys_addr_t new_root = pmm_clone_kernel_address_space();
   if(new_root == 0) {
     serial_printf("proc_create_user: failed to clone kernel address space\n");
     halt();
   }
 
-  phys_addr_t stack_phys = pmm_alloc_pages(stack_pages);
-  if(stack_phys == 0) {
-    serial_printf("proc_create_user: failed to allocate physical pages for user stack\n");
-    halt();
-  }
-
   virt_addr_t stack_top = user_stack_top(proc->pid);
   virt_addr_t stack_base_vaddr = stack_top - PROC_USER_STACK_SIZE;
-
-  for(size_t i = 0; i < stack_pages; i++) {
-    phys_addr_t phys = stack_phys + (i * PAGE_SIZE);
-    void* page_ptr = (void*)physical_to_virtual(phys);
-    memset(page_ptr, 0, PAGE_SIZE);
-    if(!pmm_map_page_in_root(new_root, stack_base_vaddr + (i * PAGE_SIZE), phys, true, true)) {
-      serial_printf("proc_create_user: failed to map user stack page %zu\n", i);
-      halt();
-    }
-  }
 
   proc->user_stack_base_vaddr = stack_base_vaddr;
   proc->user_stack_size = PROC_USER_STACK_SIZE;
   proc->address_space_root = new_root;
 
-  if(!proc_register_user_segment(proc, stack_phys, stack_pages)) {
-    serial_printf("proc_create_user: too many user segments\n");
+  if(!vm_region_add(proc,
+                    stack_base_vaddr,
+                    PROC_USER_STACK_SIZE,
+                    VM_REGION_STACK,
+                    VM_REGION_FLAG_READ | VM_REGION_FLAG_WRITE | VM_REGION_FLAG_USER | VM_REGION_FLAG_GROW_DOWN)) {
+    serial_printf("proc_create_user: failed to register stack region\n");
     halt();
+  }
+
+  // Map the initial stack page at the top of the region so early frames work without faults
+  phys_addr_t initial_stack_phys = pmm_alloc_pages(1);
+  if(initial_stack_phys == 0) {
+    serial_printf("proc_create_user: failed to allocate initial stack page\n");
+    halt();
+  }
+
+  void* initial_page_ptr = (void*)physical_to_virtual(initial_stack_phys);
+  memset(initial_page_ptr, 0, PAGE_SIZE);
+
+  virt_addr_t initial_stack_page = stack_top - PAGE_SIZE;
+  if(!pmm_map_page_in_root(new_root, initial_stack_page, initial_stack_phys, true, true)) {
+    serial_printf("proc_create_user: failed to map initial stack page\n");
+    pmm_free_pages(initial_stack_phys, 1);
+    halt();
+  }
+
+  if(!proc_register_user_segment(proc, initial_stack_phys, 1)) {
+    serial_printf("proc_create_user: too many user segments\n");
+    pmm_free_pages(initial_stack_phys, 1);
+    halt();
+  }
+
+  vm_region_t* stack_region = vm_region_find(proc, initial_stack_page);
+  if(stack_region != NULL) {
+    vm_region_note_mapping(stack_region, initial_stack_page, PAGE_SIZE);
   }
 
   uint64_t entry = 0;
