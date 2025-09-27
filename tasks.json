@@ -33,7 +33,11 @@
             "number": 22,
             "url": "https://github.com/pbalduino/menios/issues/22",
             "state": "OPEN"
-        }
+        },
+        "status": "Done",
+        "notes": [
+            "2025-09-26: ACPI enumeration records devices, driver registry returns matched driver, hardware_log_devices summarizes detected hardware."
+        ]
     },
     {
         "title": "Refine kthread termination flow",

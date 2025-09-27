@@ -24,21 +24,6 @@ uint64_t boot_time(void) {
 
 void proc_yield(void) {}
 
-int kmutex_lock(kmutex_t* mutex) {
-  (void)mutex;
-  return 0;
-}
-
-bool kmutex_trylock(kmutex_t* mutex) {
-  (void)mutex;
-  return true;
-}
-
-int kmutex_unlock(kmutex_t* mutex) {
-  (void)mutex;
-  return 0;
-}
-
 void memzero(void* s, uint64_t n) {
 	memset(s, 0, n);
 }

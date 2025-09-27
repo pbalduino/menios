@@ -30,16 +30,17 @@ void driver_register(driver_p driver) {
   serial_printf("driver_register: Registered driver '%s' for HID '%s'\n", driver->name, driver->hid);
 }
 
-void driver_load(const char* hid) {
+driver_p driver_load(const char* hid) {
   driver_list_p node = driver_list;
 
   while(node) {
     if(strncmp(node->driver->hid, hid, 12) == 0) {
       logk("  Found driver '%s' for HID '%s'\n", node->driver->name, hid);
       node->driver->start();
-      return;
+      return node->driver;
     }
     node = node->next;
   }
   errk("  Driver not found for HID '%s'\n", hid);
+  return NULL;
 }

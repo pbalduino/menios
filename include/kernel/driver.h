@@ -33,7 +33,7 @@ typedef struct driver_list_t* driver_list_p;
 void driver_init();
 
 void driver_register(driver_t*);
-void driver_load(const char* hid);
+driver_p driver_load(const char* hid);
 
 #ifdef __cplusplus
 }

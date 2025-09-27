@@ -12,6 +12,36 @@
 #include <uacpi/utilities.h>
 
 #include <stdio.h>
+#include <string.h>
+
+static hardware_device_p devices_head;
+
+static void hardware_device_register(const char* path, const char* hid, driver_p driver) {
+  hardware_device_p node = (hardware_device_p)kmalloc(sizeof(hardware_device_t));
+  if(node == NULL) {
+    errk("hardware_device_register: allocation failed for %s\n", path);
+    return;
+  }
+  memset(node, 0, sizeof(*node));
+  strncpy(node->path, path ? path : "?", sizeof(node->path) - 1);
+  strncpy(node->hid, hid ? hid : "?", sizeof(node->hid) - 1);
+  node->driver = driver;
+  node->next = devices_head;
+  devices_head = node;
+}
+
+hardware_device_p hardware_devices(void) {
+  return devices_head;
+}
+
+void hardware_log_devices(void) {
+  hardware_device_p node = devices_head;
+  while(node) {
+    const char* driver_name = node->driver ? node->driver->name : "(no driver)";
+    logk("  Device %-40s HID=%-8s Driver=%s\n", node->path, node->hid, driver_name);
+    node = node->next;
+  }
+}
 
 static uacpi_ns_iteration_decision register_device(void *ctx, uacpi_namespace_node* node) {
   uacpi_namespace_node_info* info;
@@ -41,7 +71,8 @@ static uacpi_ns_iteration_decision register_device(void *ctx, uacpi_namespace_no
       // errk("  Found device '%s' with HID '%s' but no driver was found\n", path, info->hid.value);
     }
 
-    driver_load(info->hid.value);
+    driver_p driver = driver_load(info->hid.value);
+    hardware_device_register(path, info->hid.value, driver);
   }
 
   uacpi_free_absolute_path(path);
@@ -55,10 +86,12 @@ void acpi_enumerate() {
 }
 
 void hardware_init() {
+  devices_head = NULL;
   driver_init();
   logk("Probing hardware\n");
   serial_printf("hardware_init: Reading device tree\n");
   read_device_tree();
   // serial_printf("hardware_init: Probing hardware via ACPI\n");
   acpi_enumerate();
+  hardware_log_devices();
 }
