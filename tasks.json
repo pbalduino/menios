@@ -210,9 +210,10 @@
         },
         "notes": [
             "2025-09-26: Drafted atomic API plan in docs/architecture/atomic.md (GCC builtins + barrier helpers).",
-            "2025-09-26: Added include/kernel/atomic.h and test/test_atomic.c scaffolding."
+            "2025-09-26: Added include/kernel/atomic.h and test/test_atomic.c scaffolding.",
+            "2025-09-26: Atomic API merged with Unity tests (test_atomic) passing via Unity harness."
         ],
-        "status": "In Progress"
+        "status": "Done"
     },
     {
         "title": "Enable SMP (Symmetric Multiprocessing) support",
