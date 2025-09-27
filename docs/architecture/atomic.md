@@ -5,7 +5,7 @@ Issue #41 tracks the introduction of kernel-wide atomic primitives and memory or
 ## Current State
 
 * The kernel now provides `include/kernel/atomic.h`, a header-only wrapper over GCC/Clang `__atomic_*` builtins that exposes 32/64-bit load/store, exchange, compare-and-swap, and fetch-* helpers plus fence functions (`memory_barrier`, `smp_mb`, etc.).
-* `include/kernel/spinlock.h` builds on the atomic API to offer spinlocks (with optional IRQ-save helpers) for short critical sections; `test/test_spinlock.c` covers basic lock/unlock semantics.
+* `include/kernel/spinlock.h` builds on the atomic API to offer spinlocks (with optional IRQ-save helpers) for short critical sections; `test/test_spinlock.c` covers basic lock/unlock semantics. Core subsystems (serial, console, kmalloc, ACPI glue) now use these spinlocks instead of ad-hoc kmutexes for brief critical sections.
 * `test/test_atomic.c` exercises the raw atomic helpers in userland, validating CAS, fetch-add, and basic 64-bit operations via the host compiler.
 * uACPI keeps using its private atomics; long term we may consolidate.
 
