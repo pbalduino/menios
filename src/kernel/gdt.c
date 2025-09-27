@@ -88,7 +88,7 @@ void gdt_init() {
   gdt_set_entry(GDT_ENTRY_KERNEL_CODE, 0, 0, 0x9a, 0x20);
   gdt_set_entry(GDT_ENTRY_KERNEL_DATA, 0, 0, 0x92, 0x00);
   gdt_set_entry(GDT_ENTRY_USER_CODE, 0, 0, 0xfa, 0x20);
-  gdt_set_entry(GDT_ENTRY_USER_DATA, 0, 0, 0xf2, 0x00);
+  gdt_set_entry(GDT_ENTRY_USER_DATA, 0, 0x000fffff, 0xf2, 0xcf);
   gdt_initialize_tss();
 
   // Create a GDT pointer
