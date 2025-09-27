@@ -18,6 +18,10 @@ void halt() {
   exit(1);
 }
 
+uint64_t boot_time(void) {
+  return 0;
+}
+
 int kmutex_lock(kmutex_t* mutex) {
   (void)mutex;
   return 0;

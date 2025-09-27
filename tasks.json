@@ -70,9 +70,10 @@
             "url": "https://github.com/pbalduino/menios/issues/12",
             "state": "OPEN"
         },
-        "status": "In Progress",
+        "status": "Done",
         "notes": [
-            "2025-09-26: Added CPUID-based TSC calibration, frequency helpers, and calibrated sleep conversions."
+            "2025-09-26: Added CPUID-based TSC calibration, frequency helpers, and calibrated sleep conversions.",
+            "2025-09-26: CPUID-based TSC calibration with conversion helpers; sleep uses calibrated ticks; tests added."
         ]
     },
     {
@@ -85,7 +86,11 @@
             "number": 11,
             "url": "https://github.com/pbalduino/menios/issues/11",
             "state": "OPEN"
-        }
+        },
+        "status": "Done",
+        "notes": [
+            "2025-09-26: kmutex rebuilt atop spinlocks; kthread exit status uses atomic fields and join loop reads them safely."
+        ]
     },
     {
         "title": "Fix kmalloc to get memory from the virtual memory",
@@ -98,9 +103,10 @@
             "url": "https://github.com/pbalduino/menios/issues/6",
             "state": "OPEN"
         },
-        "status": "In Progress",
+        "status": "Done",
         "notes": [
-            "2025-09-26: Added kmalloc virtual arena scaffolding mapping pages into KHEAP_BASE window."
+            "2025-09-26: Added kmalloc virtual arena scaffolding mapping pages into KHEAP_BASE window.",
+            "2025-09-26: Kernel heap now maps pages into dedicated virtual arena at KHEAP_BASE."
         ]
     },
     {

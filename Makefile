@@ -316,6 +316,8 @@ ifeq ($(OS_NAME),linux)
 			src/kernel/console/vprintk.c \
 			src/kernel/console/ansi.c \
 			src/kernel/mem/kmalloc.c \
+			src/kernel/proc/kmutex.c \
+			src/kernel/timer/tsc.c \
 			src/libc/itoa.c \
 			src/libc/string.c \
 			-o "$$file".bin ; \

@@ -92,6 +92,12 @@ void tsc_init() {
   tick_start = read_tsc();
 }
 
+void tsc_override_calibration(uint64_t frequency_hz, uint64_t boot_seconds) {
+  tsc_freq_hz = frequency_hz;
+  boot_time_sec = boot_seconds;
+  tick_start = read_tsc();
+}
+
 uint64_t tsc_ticks_to_ns(uint64_t ticks) {
   return tsc_ticks_to_ns_internal(ticks);
 }

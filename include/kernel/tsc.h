@@ -12,6 +12,8 @@ extern "C" {
 
 void tsc_init();
 
+void tsc_override_calibration(uint64_t frequency_hz, uint64_t boot_seconds);
+
 uint64_t read_tsc(void);
 
 uint64_t tsc_ticks_to_ns(uint64_t ticks);
