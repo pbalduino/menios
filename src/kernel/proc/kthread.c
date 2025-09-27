@@ -70,10 +70,8 @@ void ksleep(uint64_t milliseconds) {
 void kexit(int code) {
   proc_exit(code);
   serial_printf("kexit: process '%s' terminated with code %d\n", current->name, current->exit_code);
-  enable_interrupts();
-  for(;;) {
-    asm volatile("hlt");
-  }
+  proc_yield();
+  __builtin_unreachable();
 }
 
 int ktread_join(kthread_t* thread) {

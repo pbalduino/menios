@@ -45,7 +45,11 @@
             "number": 20,
             "url": "https://github.com/pbalduino/menios/issues/20",
             "state": "OPEN"
-        }
+        },
+        "status": "Done",
+        "notes": [
+            "2025-09-26: kexit now yields via software timer interrupt; kthread_execute exits without spinning."
+        ]
     },
     {
         "title": "Publish and refresh Docker build image",

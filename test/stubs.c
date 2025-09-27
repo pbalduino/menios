@@ -22,6 +22,8 @@ uint64_t boot_time(void) {
   return 0;
 }
 
+void proc_yield(void) {}
+
 int kmutex_lock(kmutex_t* mutex) {
   (void)mutex;
   return 0;

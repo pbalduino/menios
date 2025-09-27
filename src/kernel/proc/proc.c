@@ -342,3 +342,7 @@ void proc_exit(int code) {
   current->exit_code = code;
   serial_printf("proc_exit: Process %s exited with code %d\n", current->name, code);
 }
+
+void proc_yield(void) {
+  __asm__ volatile("int $0x20" ::: "memory");
+}
