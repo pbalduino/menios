@@ -15,16 +15,17 @@ static inline void _cpuid(uint32_t eax, uint32_t ecx, uint32_t* regs) {
 
 static uint64_t boot_time_sec;
 static uint64_t tick_start;
+static uint64_t tsc_freq_hz;
 
-uint64_t frequency_ns = 0;
+static uint32_t cpuid_max_basic_leaf(void) {
+  uint32_t regs[4];
+  _cpuid(0, 0, regs);
+  return regs[0];
+}
 
 bool has_invariant_tsc() {
   uint32_t regs[4];
-  
-  // Call CPUID with function 0x80000007
   _cpuid(0x80000007, 0, regs);
-
-  // Check if bit 8 of EDX is set (Invariant TSC)
   return (regs[3] & (1 << 8)) != 0;
 }
 
@@ -34,15 +35,83 @@ uint64_t read_tsc(void) {
   return ((uint64_t)edx << 32) | eax;
 }
 
+static void tsc_calibrate(void) {
+  uint32_t regs[4];
+  uint32_t max_basic = cpuid_max_basic_leaf();
+  uint64_t freq = 0;
+
+  if(max_basic >= 0x15) {
+    _cpuid(0x15, 0, regs);
+    uint32_t denom = regs[0];
+    uint32_t numer = regs[1];
+    uint32_t ref = regs[2];
+
+    if(denom != 0 && numer != 0) {
+      if(ref != 0) {
+        freq = ((uint64_t)ref * numer) / denom;
+      }
+    }
+  }
+
+  if(freq == 0 && max_basic >= 0x16) {
+    _cpuid(0x16, 0, regs);
+    uint32_t base_mhz = regs[0];
+    if(base_mhz != 0) {
+      freq = (uint64_t)base_mhz * 1000000ull;
+    }
+  }
+
+  if(freq == 0) {
+    freq = 1000000000ull;
+    serial_printf("tsc_calibrate: fallback frequency 1GHz\n");
+  }
+
+  tsc_freq_hz = freq;
+  serial_printf("tsc_calibrate: TSC frequency %llu Hz\n", (unsigned long long)tsc_freq_hz);
+}
+
+static inline uint64_t tsc_ticks_to_ns_internal(uint64_t ticks) {
+  if(tsc_freq_hz == 0) {
+    return ticks;
+  }
+  __int128 scaled = (__int128)ticks * 1000000000ull;
+  return (uint64_t)(scaled / tsc_freq_hz);
+}
+
+static inline uint64_t tsc_ns_to_ticks_internal(uint64_t ns) {
+  if(tsc_freq_hz == 0) {
+    return ns;
+  }
+  __int128 scaled = (__int128)ns * tsc_freq_hz;
+  return (uint64_t)(scaled / 1000000000ull);
+}
+
 void tsc_init() {
+  boot_time_sec = boot_time();
+  tsc_calibrate();
   tick_start = read_tsc();
 }
 
+uint64_t tsc_ticks_to_ns(uint64_t ticks) {
+  return tsc_ticks_to_ns_internal(ticks);
+}
+
+uint64_t tsc_ns_to_ticks(uint64_t ns) {
+  return tsc_ns_to_ticks_internal(ns);
+}
+
+uint64_t tsc_frequency_hz(void) {
+  return tsc_freq_hz;
+}
+
 useconds_t unix_time_us() {
-  uint64_t tsc = read_tsc() - tick_start;
-  return ((boot_time_sec * 1000000000) + tsc) / 1000;
+  uint64_t tsc_delta = read_tsc() - tick_start;
+  uint64_t ns = tsc_ticks_to_ns_internal(tsc_delta);
+  __int128 total_ns = (__int128)boot_time_sec * 1000000000ull + ns;
+  return (useconds_t)(total_ns / 1000ull);
 }
 
 useconds_t ns_from_boot() {
-  return read_tsc() - tick_start;
+  uint64_t tsc_delta = read_tsc() - tick_start;
+  return tsc_ticks_to_ns_internal(tsc_delta);
 }

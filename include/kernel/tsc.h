@@ -14,6 +14,10 @@ void tsc_init();
 
 uint64_t read_tsc(void);
 
+uint64_t tsc_ticks_to_ns(uint64_t ticks);
+uint64_t tsc_ns_to_ticks(uint64_t ns);
+uint64_t tsc_frequency_hz(void);
+
 useconds_t unix_time_us();
 
 useconds_t ns_from_boot();

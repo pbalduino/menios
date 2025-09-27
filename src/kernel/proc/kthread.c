@@ -56,7 +56,8 @@ int kthread_create(kthread_t* thread, const char* name, int (*entrypoint)(void *
 
 void ksleep(uint64_t milliseconds) {
   uint64_t start = read_tsc();
-  uint64_t end = start + (milliseconds * 1000000);
+  uint64_t duration_ticks = tsc_ns_to_ticks(milliseconds * 1000000ull);
+  uint64_t end = start + duration_ticks;
   current->sleep_until = end;
   current->state = PROC_STATE_SLEEPING;
   while(read_tsc() < end) {
