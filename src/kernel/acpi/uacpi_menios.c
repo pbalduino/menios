@@ -209,7 +209,7 @@ void uacpi_kernel_free_spinlock(uacpi_handle handle) {
 
 uacpi_handle uacpi_kernel_create_mutex(void) {
   kmutex_t* mutex = kmalloc(sizeof(kmutex_t));
-  mutex->lock = 0;
+  kmutex_init(mutex);
   return mutex;
 }
 

@@ -2,6 +2,7 @@
 #include <kernel/proc.h>
 #include <stdarg.h>
 #include <stdint.h>
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -20,6 +21,11 @@ void halt() {
 int kmutex_lock(kmutex_t* mutex) {
   (void)mutex;
   return 0;
+}
+
+bool kmutex_trylock(kmutex_t* mutex) {
+  (void)mutex;
+  return true;
 }
 
 int kmutex_unlock(kmutex_t* mutex) {

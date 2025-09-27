@@ -4,6 +4,7 @@
 #include <kernel/serial.h>
 #include <kernel/thread.h>
 #include <kernel/tsc.h>
+#include <kernel/atomic.h>
 
 #include <errno.h>
 #include <string.h>
@@ -19,8 +20,8 @@ void kthread_execute(void* arg) {
     serial_error("kthread_execute: entrypoint is NULL\n");
     res = -EINVAL;
   }
-  thread->exit_code = res;
-  thread->status = THREAD_TERMINATED;
+  atomic_store32(&thread->exit_code, res, memory_order_release);
+  atomic_store32(&thread->status, THREAD_TERMINATED, memory_order_release);
   serial_line("");
   kexit(res);
 }
@@ -29,8 +30,8 @@ int kthread_create(kthread_t* thread, const char* name, int (*entrypoint)(void *
   thread->name = name;
   thread->entrypoint = entrypoint;
   thread->arguments = arg;
-  thread->status = THREAD_RUNNING;
-  thread->exit_code = 0;
+  atomic_store32(&thread->status, THREAD_RUNNING, memory_order_relaxed);
+  atomic_store32(&thread->exit_code, 0, memory_order_relaxed);
   serial_printf("kthread_create: argument for %s is null? %s\n", thread->name, thread->arguments == NULL ? "YES" : "NO");
 
   serial_line("");
@@ -75,8 +76,8 @@ void kexit(int code) {
 }
 
 int ktread_join(kthread_t* thread) {
-  while(thread->status != THREAD_TERMINATED) {
+  while(atomic_load32(&thread->status, memory_order_acquire) != THREAD_TERMINATED) {
     asm volatile("pause");
   }
-  return thread->exit_code;
+  return (int)atomic_load32(&thread->exit_code, memory_order_acquire);
 }

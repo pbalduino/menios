@@ -14,6 +14,10 @@
 #define HEAP_MINIMUM_PAGES   1UL
 #define HEAP_REGION_CAP     64UL
 
+#define KHEAP_BASE  0xffffc00000000000ull
+#define KHEAP_SIZE  (64ull * 1024 * 1024ull)
+#define KHEAP_LIMIT (KHEAP_BASE + KHEAP_SIZE)
+
 typedef struct heap_region_t heap_region_t;
 
 struct heap_region_t {
@@ -33,6 +37,38 @@ static heap_region_t*  heap_regions_head;
 static heap_region_t*  heap_regions_tail;
 static heap_region_t   heap_region_entries[HEAP_REGION_CAP];
 static bool            heap_region_used[HEAP_REGION_CAP];
+static virt_addr_t     heap_next_vaddr = KHEAP_BASE;
+
+static inline void heap_reset_lock(void) {
+  spinlock_init(&heap_lock);
+  heap_next_vaddr = KHEAP_BASE;
+}
+
+static inline bool heap_virtual_available(size_t bytes) {
+  return heap_next_vaddr + bytes <= KHEAP_LIMIT;
+}
+
+static void* heap_map_region(phys_addr_t phys_base, size_t page_count) {
+  size_t bytes = page_count * PAGE_SIZE;
+  if(!heap_virtual_available(bytes)) {
+    serial_printf("heap_map_region: virtual arena exhausted (requested %zu bytes)\n", bytes);
+    return NULL;
+  }
+
+  virt_addr_t virt = heap_next_vaddr;
+
+  for(size_t page = 0; page < page_count; page++) {
+    phys_addr_t phys = phys_base + (page * PAGE_SIZE);
+    virt_addr_t vaddr = virt + (page * PAGE_SIZE);
+    if(!pmm_map_page(vaddr, phys, true, false)) {
+      serial_printf("heap_map_region: map failed at %lx\n", (unsigned long)vaddr);
+      return NULL;
+    }
+  }
+
+  heap_next_vaddr += bytes;
+  return (void*)virt;
+}
 
 void dump_heap(heap_node_p heap, size_t size) {
   serial_printf("dump_heap: %p\n", heap);
@@ -314,7 +350,12 @@ static bool heap_grow(size_t minimum_size) {
     return false;
   }
 
-  void* base_address = (void*)physical_to_virtual(phys_base);
+  void* base_address = heap_map_region(phys_base, page_count);
+  if(base_address == NULL) {
+    pmm_free_pages(phys_base, page_count);
+    return false;
+  }
+
   memset(base_address, 0, requested);
 
   heap_node_p node = (heap_node_p)base_address;
@@ -351,10 +392,6 @@ static bool heap_grow(size_t minimum_size) {
   }
 
   return true;
-}
-
-static inline void heap_reset_lock(void) {
-  spinlock_init(&heap_lock);
 }
 
 static void heap_split_node(heap_node_p node, size_t requested_size) {

@@ -8,12 +8,14 @@ extern "C" {
 #define THREAD_RUNNING    0
 #define THREAD_TERMINATED 1
 
+#include <kernel/atomic.h>
+
 typedef struct kthread_t {
   const char* name;
   int         (*entrypoint)(void*);
   void*       arguments;
-  volatile int status;
-  volatile int exit_code;
+  atomic32_t  status;
+  atomic32_t  exit_code;
 } kthread_t;
 
 typedef kthread_t* kthread_p;

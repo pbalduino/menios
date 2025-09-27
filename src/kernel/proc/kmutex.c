@@ -1,22 +1,42 @@
-#include <kernel/kernel.h>
 #include <kernel/mutex.h>
 #include <kernel/proc.h>
 #include <kernel/serial.h>
 #include <kernel/thread.h>
-#include <stdio.h>
-
-int test_and_set(volatile int* lock) {
-  return __sync_lock_test_and_set(lock, 1);
-}
 
 int kmutex_lock(kmutex_t* mutex) {
-  while(test_and_set(&mutex->lock)) {
+  if(mutex == NULL) {
+    serial_printf("kmutex_lock: mutex is NULL\n");
+    return -1;
   }
-  mutex->pid = current->pid;
+
+  spinlock_lock(&mutex->lock);
+  if(current != NULL) {
+    mutex->owner_pid = current->pid;
+  }
   return 0;
 }
 
+bool kmutex_trylock(kmutex_t* mutex) {
+  if(mutex == NULL) {
+    return false;
+  }
+
+  if(spinlock_trylock(&mutex->lock)) {
+    if(current != NULL) {
+      mutex->owner_pid = current->pid;
+    }
+    return true;
+  }
+  return false;
+}
+
 int kmutex_unlock(kmutex_t* mutex) {
-  __sync_lock_release(&mutex->lock);
+  if(mutex == NULL) {
+    serial_printf("kmutex_unlock: mutex is NULL\n");
+    return -1;
+  }
+
+  mutex->owner_pid = 0;
+  spinlock_unlock(&mutex->lock);
   return 0;
 }

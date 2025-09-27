@@ -36,6 +36,70 @@
         }
     },
     {
+        "title": "Refine kthread termination flow",
+        "body": "Improve kernel thread termination flow to be more robust and properly handle cleanup.",
+        "labels": [
+            "enhancement"
+        ],
+        "github_issue": {
+            "number": 20,
+            "url": "https://github.com/pbalduino/menios/issues/20",
+            "state": "OPEN"
+        }
+    },
+    {
+        "title": "Publish and refresh Docker build image",
+        "body": "Update and publish the Docker build image for consistent development environment.",
+        "labels": [
+            "enhancement"
+        ],
+        "github_issue": {
+            "number": 19,
+            "url": "https://github.com/pbalduino/menios/issues/19",
+            "state": "OPEN"
+        }
+    },
+    {
+        "title": "Calibrate TSC timekeeping and initialise boot time",
+        "body": "Calibrate the TSC for accurate timekeeping and initialize boot time.",
+        "labels": [
+            "bug"
+        ],
+        "github_issue": {
+            "number": 12,
+            "url": "https://github.com/pbalduino/menios/issues/12",
+            "state": "OPEN"
+        }
+    },
+    {
+        "title": "Propagate kernel thread termination status for joins",
+        "body": "Implement proper kernel thread termination status propagation for thread joins.",
+        "labels": [
+            "bug"
+        ],
+        "github_issue": {
+            "number": 11,
+            "url": "https://github.com/pbalduino/menios/issues/11",
+            "state": "OPEN"
+        }
+    },
+    {
+        "title": "Fix kmalloc to get memory from the virtual memory",
+        "body": "Fix kmalloc implementation to properly allocate memory from virtual memory system.",
+        "labels": [
+            "enhancement"
+        ],
+        "github_issue": {
+            "number": 6,
+            "url": "https://github.com/pbalduino/menios/issues/6",
+            "state": "OPEN"
+        },
+        "status": "In Progress",
+        "notes": [
+            "2025-09-26: Added kmalloc virtual arena scaffolding mapping pages into KHEAP_BASE window."
+        ]
+    },
+    {
         "title": "Create cross-compiler toolchain for userland",
         "body": "## Goal\nSet up a cross-compiler toolchain that targets meniOS userland ABI.\n\n## Context\nPart of the Road to Doom infrastructure. We need a complete toolchain (binutils + GCC/Clang) that can compile user programs for meniOS, including Doom.\n\n## Definition of Done\n- Configure and build cross-binutils for meniOS target\n- Build cross-GCC or Clang targeting meniOS userland ABI\n- Create linker scripts for user program layout\n- Implement basic C runtime startup code (crt0)\n- Create minimal libc subset with essential functions\n- Set up build system for compiling userland programs\n- Document toolchain installation and usage\n- Test toolchain by compiling simple test programs\n\n## Dependencies\n- Syscall ABI definition\n- Process memory layout specification",
         "labels": [
@@ -129,7 +193,11 @@
             "number": 36,
             "url": "https://github.com/pbalduino/menios/issues/36",
             "state": "OPEN"
-        }
+        },
+        "status": "In Progress",
+        "notes": [
+            "2025-09-26: kmutex now wraps spinlock_t with atomic status tracking."
+        ]
     },
     {
         "title": "Implement semaphore synchronization primitive",
@@ -192,12 +260,239 @@
         }
     },
     {
+        "title": "Design formal per-process virtual memory layout system",
+        "body": "Design a formal per-process virtual memory layout system for userland processes.",
+        "labels": [
+            "enhancement"
+        ],
+        "github_issue": {
+            "number": 55,
+            "url": "https://github.com/pbalduino/menios/issues/55",
+            "state": "OPEN"
+        }
+    },
+    {
+        "title": "Implement lazy allocation with guard pages and on-demand paging",
+        "body": "Implement lazy allocation with guard pages and on-demand paging for virtual memory management.",
+        "labels": [
+            "enhancement"
+        ],
+        "github_issue": {
+            "number": 56,
+            "url": "https://github.com/pbalduino/menios/issues/56",
+            "state": "OPEN"
+        }
+    },
+    {
+        "title": "Build lightweight virtual memory manager (vm_map/vm_unmap/vm_clone)",
+        "body": "Build a lightweight virtual memory manager with vm_map, vm_unmap, and vm_clone functionality.",
+        "labels": [
+            "enhancement"
+        ],
+        "github_issue": {
+            "number": 57,
+            "url": "https://github.com/pbalduino/menios/issues/57",
+            "state": "OPEN"
+        }
+    },
+    {
+        "title": "Integrate VM manager with loader and scheduler",
+        "body": "Integrate the virtual memory manager with the loader and scheduler systems.",
+        "labels": [
+            "enhancement"
+        ],
+        "github_issue": {
+            "number": 58,
+            "url": "https://github.com/pbalduino/menios/issues/58",
+            "state": "OPEN"
+        }
+    },
+    {
+        "title": "Add regression tests for virtual memory management",
+        "body": "Add comprehensive regression tests for virtual memory management functionality.",
+        "labels": [
+            "enhancement"
+        ],
+        "github_issue": {
+            "number": 59,
+            "url": "https://github.com/pbalduino/menios/issues/59",
+            "state": "OPEN"
+        }
+    },
+    {
+        "title": "Implement filesystem syscalls (open/read/write/lseek/close)",
+        "body": "Implement filesystem syscalls including open, read, write, lseek, and close.",
+        "labels": [
+            "enhancement"
+        ],
+        "github_issue": {
+            "number": 60,
+            "url": "https://github.com/pbalduino/menios/issues/60",
+            "state": "OPEN"
+        }
+    },
+    {
+        "title": "Update userspace integration for filesystem operations",
+        "body": "Update userspace integration to support filesystem operations and file access.",
+        "labels": [
+            "enhancement"
+        ],
+        "github_issue": {
+            "number": 61,
+            "url": "https://github.com/pbalduino/menios/issues/61",
+            "state": "OPEN"
+        }
+    },
+    {
+        "title": "Implement block device driver with DMA and interrupt support",
+        "body": "Implement a block device driver with DMA and interrupt support for storage access.",
+        "labels": [
+            "enhancement"
+        ],
+        "github_issue": {
+            "number": 62,
+            "url": "https://github.com/pbalduino/menios/issues/62",
+            "state": "OPEN"
+        }
+    },
+    {
+        "title": "Implement block cache and buffer management system",
+        "body": "Implement a block cache and buffer management system for efficient disk I/O.",
+        "labels": [
+            "enhancement"
+        ],
+        "github_issue": {
+            "number": 63,
+            "url": "https://github.com/pbalduino/menios/issues/63",
+            "state": "OPEN"
+        }
+    },
+    {
+        "title": "Implement filesystem library (FAT32/ext2/simple FS)",
+        "body": "Implement a filesystem library supporting FAT32, ext2, or a simple custom filesystem.",
+        "labels": [
+            "enhancement"
+        ],
+        "github_issue": {
+            "number": 64,
+            "url": "https://github.com/pbalduino/menios/issues/64",
+            "state": "OPEN"
+        }
+    },
+    {
+        "title": "Implement VFS (Virtual File System) layer",
+        "body": "Implement a Virtual File System (VFS) layer to provide a unified filesystem interface.",
+        "labels": [
+            "enhancement"
+        ],
+        "github_issue": {
+            "number": 65,
+            "url": "https://github.com/pbalduino/menios/issues/65",
+            "state": "OPEN"
+        }
+    },
+    {
+        "title": "Create filesystem tooling and documentation",
+        "body": "Create filesystem tooling and comprehensive documentation for filesystem usage.",
+        "labels": [
+            "enhancement"
+        ],
+        "github_issue": {
+            "number": 66,
+            "url": "https://github.com/pbalduino/menios/issues/66",
+            "state": "OPEN"
+        }
+    },
+    {
+        "title": "Implement network device driver (e1000/virtio-net)",
+        "body": "## Goal\nWrite an interrupt-driven network device driver for QEMU-emulated NICs to enable network packet transmission and reception.\n\n## Context\nThis is the foundation layer for TCP/IP networking support. We need reliable hardware-level packet I/O before building protocol stacks.\n\n## Definition of Done\n- PCI discovery: Detect and initialize network controllers via PCI enumeration\n- MMIO register setup: Configure device registers for operation\n- Descriptor rings: Implement TX/RX descriptor ring management\n- DMA buffers: Allocate and manage DMA-safe packet buffers\n- Transmit queue: Implement packet transmission with queueing\n- Receive path: Handle incoming packets and feed them to network stack\n- Interrupt handling: Process device interrupts for TX completion and RX packets\n\n## Device Choice: Intel e1000/e1000e\nChosen for:\n- Well-documented hardware interface\n- Good QEMU emulation support\n- Widely used and tested\n- Reasonable complexity for educational implementation\n\n## Implementation Details\n- PCI device detection and BAR mapping\n- Device reset and initialization sequence\n- TX/RX descriptor ring setup and management\n- Packet buffer allocation and DMA mapping\n- Interrupt handler for device events\n- Basic error handling and device recovery\n- Statistics collection and monitoring\n\n## Hardware Interface\n- PCI configuration space access\n- MMIO register programming\n- Descriptor ring structure management\n- DMA coherency and cache management\n- Interrupt line configuration and handling\n\n## Files to Create\n- drivers/net/e1000.h - Hardware definitions and structures\n- drivers/net/e1000.c - Main driver implementation\n- drivers/net/netdev.h - Generic network device interface\n- drivers/net/netdev.c - Network device management layer\n- include/net/netdevice.h - Network device abstractions\n\n## API Design\n- netdev_register() - Register network device with kernel\n- netdev_transmit() - Send packet through device\n- netdev_receive() - Handle received packet from device\n- netdev_set_mac() - Configure device MAC address\n- netdev_get_stats() - Retrieve device statistics\n\n## Testing Strategy\n- Test device detection and initialization\n- Verify packet transmission and reception\n- Test interrupt handling and performance\n- Validate DMA buffer management\n- Test error conditions and recovery\n\n## Performance Goals\n- Handle standard Ethernet frame sizes (64-1518 bytes)\n- Support reasonable throughput for educational OS\n- Minimize interrupt overhead through efficient batching\n- Proper resource management without memory leaks\n\n## Dependencies\n- PCI device enumeration infrastructure\n- DMA allocation and management\n- Interrupt handling system\n- Memory management for packet buffers\n\n## Related Issues\nFoundation layer for networking stack - enables link layer implementation.",
+        "labels": [
+            "enhancement"
+        ],
+        "github_issue": {
+            "number": 67,
+            "url": "https://github.com/pbalduino/menios/issues/67",
+            "state": "OPEN"
+        }
+    },
+    {
+        "title": "Implement Ethernet layer and ARP protocol",
+        "body": "## Goal\nImplement Ethernet framing and ARP (Address Resolution Protocol) for IPv4 neighbor resolution and link-layer communication.\n\n## Context\nThe link and framing layer sits above the network device driver, handling MAC addresses, Ethernet headers, and IP-to-MAC address resolution.\n\n## Definition of Done\n- Ethernet framing: Build and parse 802.3/Ethernet II headers\n- MAC address handling: Maintain device MAC addresses and destination lookup\n- ARP implementation: Request/reply handling for IPv4 address resolution\n- ARP cache: Maintain IP-to-MAC mapping cache with timeout handling\n- Packet filtering: Basic filtering and promiscuous mode support\n- Frame validation: Check frame integrity and handle different frame types\n\n## Ethernet Implementation\n- Frame header construction and parsing\n- EtherType handling (IPv4, ARP, etc.)\n- MAC address management and validation\n- Frame size validation (64-1518 bytes)\n- Broadcast and multicast frame handling\n\n## ARP Protocol Implementation\n- ARP request generation for unknown IP addresses\n- ARP reply processing and cache updates\n- ARP cache management with TTL and aging\n- Gratuitous ARP handling\n- ARP table lookup and maintenance\n\n## Key Features\n- MAC address learning and caching\n- Ethernet header encapsulation/decapsulation\n- ARP request/reply packet generation\n- Neighbor table management\n- Frame type demultiplexing to upper layers\n\n## Files to Create\n- net/ethernet/ethernet.h - Ethernet protocol definitions\n- net/ethernet/ethernet.c - Ethernet frame handling\n- net/arp/arp.h - ARP protocol definitions\n- net/arp/arp.c - ARP implementation\n- net/arp/arp_cache.c - ARP cache management\n- include/net/ethernet.h - Ethernet interface\n\n## Data Structures\n- Ethernet header structure and constants\n- ARP header and packet structures\n- ARP cache entry with timing information\n- Neighbor table for IP-to-MAC mappings\n- Frame type dispatch table\n\n## Protocol Handling\n- Incoming frame processing and type identification\n- ARP packet processing (request/reply)\n- Frame forwarding to appropriate protocol handlers\n- Outgoing frame construction with proper headers\n- Broadcast frame handling\n\n## Testing Strategy\n- Test ARP request/reply cycle\n- Verify MAC address resolution works correctly\n- Test ARP cache aging and refresh\n- Validate Ethernet header parsing\n- Test with various frame sizes and types\n\n## Debug Features\n- ARP table display and statistics\n- Ethernet frame dumping for debugging\n- Promiscuous mode for packet analysis\n- Statistics collection for monitoring\n\n## Dependencies\n- Network device driver implementation\n- Timer system for ARP cache aging\n- Memory management for packet buffers\n- Basic networking data structures\n\n## Related Issues\nBuilds on network device driver - enables IP layer implementation.",
+        "labels": [
+            "enhancement"
+        ],
+        "github_issue": {
+            "number": 68,
+            "url": "https://github.com/pbalduino/menios/issues/68",
+            "state": "OPEN"
+        }
+    },
+    {
+        "title": "Implement IPv4 layer with routing and ICMP",
+        "body": "## Goal\nImplement IPv4 packet processing including header validation, routing, checksum calculation, fragmentation/reassembly, and ICMP support.\n\n## Context\nThe IP layer provides internetwork packet delivery, sitting above Ethernet and below transport protocols like UDP/TCP.\n\n## Definition of Done\n- IPv4 header processing: Parse and validate IPv4 packet headers\n- Routing table: Maintain routing table with default gateway support\n- Checksum calculation: Compute and verify IPv4 header checksums\n- Fragmentation: Handle fragmented datagram reassembly\n- ICMP implementation: Echo (ping) and destination unreachable messages\n- ARP integration: Interface with ARP for next-hop resolution\n- Packet forwarding: Basic packet forwarding between interfaces\n\n## IPv4 Implementation\n- Header validation and parsing\n- TTL (Time To Live) handling and decrement\n- Options processing (basic support)\n- Source/destination address validation\n- Protocol field demultiplexing to transport layer\n\n## Routing System\n- Routing table with destination, gateway, interface, metric\n- Longest prefix matching for route selection\n- Default route handling (0.0.0.0/0)\n- Route addition/deletion interface\n- Next-hop resolution via ARP\n\n## Fragmentation and Reassembly\n- Detect and handle fragmented packets\n- Reassembly buffer management with timeouts\n- Fragment validation and ordering\n- MTU handling and path MTU discovery preparation\n\n## ICMP Protocol\n- Echo request/reply (ping functionality)\n- Destination unreachable messages\n- Time exceeded for TTL expiration\n- Parameter problem for malformed packets\n- Basic ICMP error generation\n\n## Files to Create\n- net/ipv4/ip.h - IPv4 protocol definitions\n- net/ipv4/ip.c - IPv4 packet processing\n- net/ipv4/route.h - Routing table definitions\n- net/ipv4/route.c - Routing table management\n- net/ipv4/icmp.h - ICMP protocol definitions\n- net/ipv4/icmp.c - ICMP implementation\n- net/ipv4/ip_fragment.c - Fragmentation handling\n\n## Key Functions\n- ip_rcv() - Process incoming IPv4 packets\n- ip_send() - Send IPv4 packets with routing\n- route_lookup() - Find route for destination\n- icmp_send() - Generate ICMP messages\n- ip_defrag() - Handle packet reassembly\n\n## Security and Validation\n- Source address validation (no spoofing from local interfaces)\n- Header length and total length validation\n- Checksum verification and generation\n- TTL validation and handling\n- Protocol number validation\n\n## Testing Strategy\n- Test packet routing with multiple destinations\n- Verify ICMP ping functionality\n- Test fragmentation and reassembly\n- Validate checksum calculation\n- Test with various packet sizes and options\n\n## Performance Considerations\n- Efficient routing table lookup\n- Fast checksum calculation\n- Optimized fragment reassembly\n- Minimal packet copying overhead\n\n## Dependencies\n- Ethernet layer and ARP implementation\n- Timer system for reassembly timeouts\n- Memory management for packet handling\n- Network device interface\n\n## Related Issues\nBuilds on Ethernet/ARP layer - enables UDP/TCP transport protocols.",
+        "labels": [
+            "enhancement"
+        ],
+        "github_issue": {
+            "number": 69,
+            "url": "https://github.com/pbalduino/menios/issues/69",
+            "state": "OPEN"
+        }
+    },
+    {
+        "title": "Implement UDP and TCP transport protocols",
+        "body": "## Goal\nImplement UDP for simple datagrams and TCP with full connection management, reliability, and flow control.\n\n## Context\nTransport layer protocols provide end-to-end communication services, with UDP offering simple datagram delivery and TCP providing reliable, ordered data streams.\n\n## Definition of Done\n\n### UDP Implementation\n- UDP header parsing and generation\n- Port-based demultiplexing to applications\n- Checksum calculation and verification\n- Socket binding to ports\n- Simple datagram send/receive interface\n\n### TCP Implementation\n- Connection state machine (CLOSED, LISTEN, SYN-SENT, ESTABLISHED, etc.)\n- SYN/ACK handshake for connection establishment\n- Sequence number and acknowledgment tracking\n- Retransmission timers and timeout handling\n- Congestion control (basic algorithms)\n- Flow control with receive window management\n- Connection teardown (FIN/ACK sequences)\n- Edge case handling (RST, simultaneous close, FIN-WAIT states)\n\n## UDP Features\n- Connectionless datagram service\n- Port number management and binding\n- Broadcast and multicast support\n- Checksum verification (optional but recommended)\n- Socket interface integration\n\n## TCP Features\n- Reliable, ordered data delivery\n- Connection-oriented service\n- Congestion control algorithms\n- Flow control with sliding windows\n- Retransmission and duplicate detection\n- Graceful connection termination\n- Error handling and recovery\n\n## Implementation Components\n\n### UDP Module\n- UDP header structure and parsing\n- Port demultiplexing table\n- Checksum calculation over pseudo-header\n- Simple send/receive packet handling\n- Integration with socket layer\n\n### TCP Module\n- TCP header parsing and generation\n- Connection control block (TCB) management\n- Sequence number space management\n- Timer management (retransmission, keepalive, etc.)\n- Congestion window and slow start\n- Receive buffer and window management\n- State machine implementation\n\n## Files to Create\n- net/udp/udp.h - UDP protocol definitions\n- net/udp/udp.c - UDP implementation\n- net/tcp/tcp.h - TCP protocol definitions and state machine\n- net/tcp/tcp.c - Core TCP implementation\n- net/tcp/tcp_input.c - TCP packet input processing\n- net/tcp/tcp_output.c - TCP packet transmission\n- net/tcp/tcp_timer.c - TCP timer management\n- net/tcp/tcp_congestion.c - Congestion control algorithms\n\n## State Management\n- TCP connection state tracking\n- Timer management for retransmissions\n- Sequence number validation\n- Window size management\n- Buffer management for out-of-order data\n\n## Testing Strategy\n- UDP echo server/client testing\n- TCP connection establishment/teardown\n- Data transfer integrity verification\n- Congestion control behavior validation\n- Error condition and recovery testing\n- Performance testing with various data sizes\n\n## Advanced TCP Features\n- Nagle algorithm for small packet optimization\n- Delayed ACK to reduce network overhead\n- Fast retransmit and fast recovery\n- Timestamp options for RTT measurement\n- Window scaling for high-bandwidth connections\n\n## Dependencies\n- IPv4 layer implementation\n- Socket infrastructure and syscalls\n- Timer system for retransmissions\n- Memory management for buffers\n\n## Related Issues\nBuilds on IPv4 layer - enables socket API and network applications.",
+        "labels": [
+            "enhancement"
+        ],
+        "github_issue": {
+            "number": 70,
+            "url": "https://github.com/pbalduino/menios/issues/70",
+            "state": "OPEN"
+        }
+    },
+    {
+        "title": "Implement socket API and network syscalls",
+        "body": "## Goal\nProvide BSD-like socket syscalls and integrate them with the kernel scheduler for blocking I/O operations.\n\n## Context\nThe socket API provides the userspace interface to networking, offering familiar BSD socket semantics for network programming.\n\n## Definition of Done\n- Socket syscalls: socket, bind, listen, accept, connect, send, recv, close\n- Socket options: setsockopt, getsockopt for configuration\n- Socket types: Support for SOCK_STREAM (TCP) and SOCK_DGRAM (UDP)\n- Address families: AF_INET for IPv4 networking\n- Blocking I/O: Integration with scheduler for sleep/wakeup on data availability\n- Non-blocking I/O: Support for O_NONBLOCK socket operations\n- Socket state management: Per-socket kernel data structures and queues\n\n## Socket Syscalls Implementation\n\n### Core Socket Operations\n- socket() - Create socket with specified family, type, and protocol\n- bind() - Bind socket to local address and port\n- listen() - Mark socket as passive for incoming connections\n- accept() - Accept incoming connection and return new socket\n- connect() - Initiate connection to remote address\n- send()/sendto() - Send data through socket\n- recv()/recvfrom() - Receive data from socket\n- close() - Close socket and free resources\n\n### Socket Configuration\n- setsockopt() - Set socket options (SO_REUSEADDR, etc.)\n- getsockopt() - Get socket option values\n- getsockname() - Get local socket address\n- getpeername() - Get peer socket address\n\n## Socket Infrastructure\n- Socket descriptor allocation and management\n- Per-process socket table integration\n- Socket state tracking and validation\n- Address family and protocol dispatch\n- Buffer management for socket queues\n\n## Blocking I/O Integration\n- Sleep/wakeup mechanism for blocking operations\n- Integration with kernel scheduler\n- Signal handling for interrupted system calls\n- Timeout support for socket operations\n- Select/poll preparation (future enhancement)\n\n## Socket Data Structures\n- Socket control block with state and queues\n- Send and receive buffer management\n- Connection queue for listening sockets\n- Address binding and port management\n- Socket option storage and validation\n\n## Files to Create\n- net/socket/socket.h - Socket interface definitions\n- net/socket/socket.c - Core socket implementation\n- net/socket/af_inet.c - IPv4 address family support\n- syscall/net_syscalls.c - Network syscall implementations\n- include/sys/socket.h - Userspace socket interface\n- include/netinet/in.h - Internet address structures\n\n## API Design\n- Standard BSD socket interface compatibility\n- Proper error handling with errno codes\n- Address structure handling (sockaddr_in)\n- Socket type and protocol validation\n- Resource cleanup on process termination\n\n## Error Handling\n- Standard network error codes (ECONNREFUSED, ETIMEDOUT, etc.)\n- Proper cleanup on error conditions\n- Resource leak prevention\n- Signal interruption handling\n\n## Testing Strategy\n- TCP client/server communication\n- UDP datagram exchange\n- Socket option configuration\n- Error condition handling\n- Concurrent socket operations\n- Resource cleanup verification\n\n## Performance Considerations\n- Efficient socket lookup and management\n- Optimized buffer copying for send/recv\n- Minimal overhead for common operations\n- Proper resource pooling and reuse\n\n## Security Features\n- Port permission checking\n- Address validation and binding restrictions\n- Resource limits per process\n- Protection against common network attacks\n\n## Dependencies\n- UDP and TCP transport protocols\n- Process management and file descriptor tables\n- Scheduler integration for blocking I/O\n- Memory management for socket buffers\n\n## Related Issues\nBuilds on transport protocols - enables network applications and utilities.",
+        "labels": [
+            "enhancement"
+        ],
+        "github_issue": {
+            "number": 71,
+            "url": "https://github.com/pbalduino/menios/issues/71",
+            "state": "OPEN"
+        }
+    },
+    {
+        "title": "Implement network utilities and testing tools",
+        "body": "## Goal\nCreate networking utilities, testing tools, and diagnostic capabilities to validate and debug the TCP/IP stack implementation.\n\n## Context\nNetwork utilities provide essential tools for testing, debugging, and monitoring the network stack, ensuring reliability and performance.\n\n## Definition of Done\n- Ping implementation: ICMP echo request/reply utility\n- Netstat utility: Network connection and routing table display\n- Loopback device: Local testing without physical network\n- Checksum utilities: Network checksum calculation and validation tools\n- Routing utilities: Route manipulation and display tools\n- Network diagnostics: Connection state and statistics display\n- Automated test suite: Regression tests for network functionality\n\n## Core Utilities\n\n### Ping Implementation\n- ICMP echo request generation\n- Response time measurement\n- Packet loss statistics\n- Configurable packet size and count\n- Integration with socket API\n\n### Netstat Utility\n- Active connection display (TCP/UDP)\n- Listening socket information\n- Routing table display\n- Interface statistics\n- Network protocol statistics\n\n### Network Testing Tools\n- TCP echo server/client\n- UDP echo server/client\n- Bandwidth testing utilities\n- Connection stress testing\n- Protocol conformance testing\n\n## Loopback Device\n- Virtual network interface (127.0.0.1)\n- Local packet routing without hardware\n- Testing interface for network stack\n- Reliable testing environment\n- Performance testing capabilities\n\n## Diagnostic Tools\n- Packet capture and analysis\n- Network interface statistics\n- Protocol-specific diagnostics\n- Connection state monitoring\n- Error condition reporting\n\n## Automated Testing Suite\n\n### Test Categories\n- Loopback TCP connection testing\n- UDP echo and broadcast testing\n- Large file transfer validation\n- Packet loss and retransmission scenarios\n- Connection establishment/teardown\n- Error condition handling\n- Performance benchmarking\n\n### Test Scenarios\n- Single TCP connection data transfer\n- Multiple concurrent connections\n- UDP packet exchange patterns\n- Network congestion simulation\n- Connection timeout and recovery\n- Malformed packet handling\n\n## Files to Create\n- userspace/net/ping.c - Ping utility implementation\n- userspace/net/netstat.c - Network statistics utility\n- userspace/net/nc.c - Network cat (netcat) utility\n- drivers/net/loopback.c - Loopback network device\n- test/net/ - Network testing framework\n- tools/net/ - Network development utilities\n\n## Utility Features\n- Command-line argument parsing\n- Proper error reporting and diagnostics\n- Human-readable output formatting\n- Configurable operation parameters\n- Integration with shell environment\n\n## Testing Framework\n- Automated test execution\n- Test result validation and reporting\n- Performance measurement and analysis\n- Regression detection\n- Continuous integration support\n\n## Debug and Analysis Tools\n- Packet dumping and analysis\n- Network traffic visualization\n- Protocol state machine tracing\n- Performance profiling tools\n- Memory usage analysis for network operations\n\n## Integration Points\n- Shell command integration (mosh)\n- System startup network configuration\n- Network service management\n- Log file integration for diagnostics\n\n## Performance Testing\n- Throughput measurement utilities\n- Latency testing tools\n- Concurrent connection scaling\n- Memory usage under load\n- CPU utilization analysis\n\n## Documentation\n- Utility usage documentation\n- Network configuration guides\n- Troubleshooting procedures\n- Performance tuning guidelines\n- Testing methodology documentation\n\n## Dependencies\n- Complete socket API implementation\n- Network device drivers\n- TCP/UDP transport protocols\n- System utilities infrastructure\n\n## Related Issues\nCompletes the networking stack - provides tools for validation and operation.",
+        "labels": [
+            "enhancement"
+        ],
+        "github_issue": {
+            "number": 72,
+            "url": "https://github.com/pbalduino/menios/issues/72",
+            "state": "OPEN"
+        }
+    },
+    {
+        "title": "Implement advanced networking features and polish",
+        "body": "## Goal\nAdd advanced networking features including DHCP client, DNS resolver, IPv6 support, and performance optimizations.\n\n## Context\nAdvanced networking features provide production-ready capabilities and modern network protocol support for comprehensive networking.\n\n## Definition of Done\n- DHCP client: Automatic IP address configuration\n- DNS resolver: Domain name resolution functionality\n- IPv6 support: Dual-stack IPv4/IPv6 networking\n- Hardware offload: Checksum and TSO/GSO optimizations\n- Async I/O APIs: Non-blocking network I/O interfaces\n- TLS support: Secure communication layer\n- Higher-level libraries: HTTP client/server, etc.",
+        "labels": [
+            "enhancement"
+        ],
+        "github_issue": {
+            "number": 73,
+            "url": "https://github.com/pbalduino/menios/issues/73",
+            "state": "OPEN"
+        }
+    },
+    {
         "title": "Group x86_64 assembly under arch directory",
         "body": "## Goal\nMove low-level assembly like `lgdt.s`, `lidt.s`, `pit.s` into `src/kernel/arch/x86_64/`.\n\n## Context\nAssembly files currently sit at `src/kernel/`. Grouping them by architecture improves clarity and prepares for other architectures.\n\n## Definition of Done\n- Create `src/kernel/arch/x86_64/` (and matching include directory).\n- Relocate existing assembly sources and adjust includes/build rules.\n- Ensure both native and Docker builds still work.\n- Update documentation (README/CODING.md).\n\n## Time Estimate\n1 day",
         "labels": [
             "enhancement"
         ],
-        "status": "Open",
         "github_issue": {
             "number": 75,
             "url": "https://github.com/pbalduino/menios/issues/75",
@@ -210,7 +505,6 @@
         "labels": [
             "enhancement"
         ],
-        "status": "Open",
         "github_issue": {
             "number": 76,
             "url": "https://github.com/pbalduino/menios/issues/76",
@@ -223,7 +517,6 @@
         "labels": [
             "documentation"
         ],
-        "status": "Open",
         "github_issue": {
             "number": 77,
             "url": "https://github.com/pbalduino/menios/issues/77",
@@ -236,7 +529,6 @@
         "labels": [
             "documentation"
         ],
-        "status": "Open",
         "github_issue": {
             "number": 78,
             "url": "https://github.com/pbalduino/menios/issues/78",
@@ -249,7 +541,6 @@
         "labels": [
             "documentation"
         ],
-        "status": "Open",
         "github_issue": {
             "number": 79,
             "url": "https://github.com/pbalduino/menios/issues/79",
@@ -339,85 +630,5 @@
             "url": "https://github.com/pbalduino/menios/issues/86",
             "state": "OPEN"
         }
-    },
-    {
-        "title": "Implement per-process virtual memory management",
-        "body": "Track per-process VM work.",
-        "labels": [
-            "enhancement"
-        ],
-        "github_issue": {
-            "number": 28,
-            "url": "https://github.com/pbalduino/menios/issues/28",
-            "state": "CLOSED"
-        },
-        "status": "Done",
-        "notes": [
-            "2025-09-26: Region metadata, lazy stack allocation, and user-mode page fault handling merged."
-        ]
-    },
-    {
-        "title": "Implement spinlock synchronization primitive",
-        "body": "Spinlock primitive for short critical sections.",
-        "labels": [
-            "enhancement"
-        ],
-        "github_issue": {
-            "number": 38,
-            "url": "https://github.com/pbalduino/menios/issues/38",
-            "state": "CLOSED"
-        },
-        "status": "Done",
-        "notes": [
-            "2025-09-26: include/kernel/spinlock.h, core subsystems migrated."
-        ]
-    },
-    {
-        "title": "Implement atomic operations and memory barriers",
-        "body": "Atomic API for kernel.",
-        "labels": [
-            "enhancement"
-        ],
-        "github_issue": {
-            "number": 41,
-            "url": "https://github.com/pbalduino/menios/issues/41",
-            "state": "CLOSED"
-        },
-        "status": "Done",
-        "notes": [
-            "2025-09-26: include/kernel/atomic.h + tests."
-        ]
-    },
-    {
-        "title": "Create basic user mode test program",
-        "body": "Boot-time user demo exercising syscalls.",
-        "labels": [
-            "enhancement"
-        ],
-        "github_issue": {
-            "number": 47,
-            "url": "https://github.com/pbalduino/menios/issues/47",
-            "state": "CLOSED"
-        },
-        "status": "Done",
-        "notes": [
-            "2025-09-26: user_demo prints messages, touches stack, exits 42."
-        ]
-    },
-    {
-        "title": "Relocate build artifacts outside repository",
-        "body": "Move artifacts to build directory.",
-        "labels": [
-            "maintenance"
-        ],
-        "github_issue": {
-            "number": 74,
-            "url": "https://github.com/pbalduino/menios/issues/74",
-            "state": "CLOSED"
-        },
-        "status": "Done",
-        "notes": [
-            "2025-09-26: build/bin + build/obj with README update."
-        ]
     }
 ]
