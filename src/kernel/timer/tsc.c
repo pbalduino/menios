@@ -70,20 +70,45 @@ static void tsc_calibrate(void) {
   serial_printf("tsc_calibrate: TSC frequency %llu Hz\n", (unsigned long long)tsc_freq_hz);
 }
 
+static void mul_u64(uint64_t a, uint64_t b, uint64_t* hi, uint64_t* lo) {
+  __uint128_t product = (__uint128_t)a * (__uint128_t)b;
+  *hi = (uint64_t)(product >> 64);
+  *lo = (uint64_t)product;
+}
+
+static uint64_t div_u128_u64(uint64_t hi, uint64_t lo, uint64_t div) {
+  uint64_t quotient = 0;
+  uint64_t remainder = hi;
+
+  for(int i = 0; i < 64; i++) {
+    remainder = (remainder << 1) | (lo >> 63);
+    lo <<= 1;
+    quotient <<= 1;
+    if(remainder >= div) {
+      remainder -= div;
+      quotient |= 1;
+    }
+  }
+
+  return quotient;
+}
+
 static inline uint64_t tsc_ticks_to_ns_internal(uint64_t ticks) {
   if(tsc_freq_hz == 0) {
     return ticks;
   }
-  __int128 scaled = (__int128)ticks * 1000000000ull;
-  return (uint64_t)(scaled / tsc_freq_hz);
+  uint64_t hi, lo;
+  mul_u64(ticks, 1000000000ull, &hi, &lo);
+  return div_u128_u64(hi, lo, tsc_freq_hz);
 }
 
 static inline uint64_t tsc_ns_to_ticks_internal(uint64_t ns) {
   if(tsc_freq_hz == 0) {
     return ns;
   }
-  __int128 scaled = (__int128)ns * tsc_freq_hz;
-  return (uint64_t)(scaled / 1000000000ull);
+  uint64_t hi, lo;
+  mul_u64(ns, tsc_freq_hz, &hi, &lo);
+  return div_u128_u64(hi, lo, 1000000000ull);
 }
 
 void tsc_init() {
