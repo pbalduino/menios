@@ -339,5 +339,85 @@
             "url": "https://github.com/pbalduino/menios/issues/86",
             "state": "OPEN"
         }
+    },
+    {
+        "title": "Implement per-process virtual memory management",
+        "body": "Track per-process VM work.",
+        "labels": [
+            "enhancement"
+        ],
+        "github_issue": {
+            "number": 28,
+            "url": "https://github.com/pbalduino/menios/issues/28",
+            "state": "CLOSED"
+        },
+        "status": "Done",
+        "notes": [
+            "2025-09-26: Region metadata, lazy stack allocation, and user-mode page fault handling merged."
+        ]
+    },
+    {
+        "title": "Implement spinlock synchronization primitive",
+        "body": "Spinlock primitive for short critical sections.",
+        "labels": [
+            "enhancement"
+        ],
+        "github_issue": {
+            "number": 38,
+            "url": "https://github.com/pbalduino/menios/issues/38",
+            "state": "CLOSED"
+        },
+        "status": "Done",
+        "notes": [
+            "2025-09-26: include/kernel/spinlock.h, core subsystems migrated."
+        ]
+    },
+    {
+        "title": "Implement atomic operations and memory barriers",
+        "body": "Atomic API for kernel.",
+        "labels": [
+            "enhancement"
+        ],
+        "github_issue": {
+            "number": 41,
+            "url": "https://github.com/pbalduino/menios/issues/41",
+            "state": "CLOSED"
+        },
+        "status": "Done",
+        "notes": [
+            "2025-09-26: include/kernel/atomic.h + tests."
+        ]
+    },
+    {
+        "title": "Create basic user mode test program",
+        "body": "Boot-time user demo exercising syscalls.",
+        "labels": [
+            "enhancement"
+        ],
+        "github_issue": {
+            "number": 47,
+            "url": "https://github.com/pbalduino/menios/issues/47",
+            "state": "CLOSED"
+        },
+        "status": "Done",
+        "notes": [
+            "2025-09-26: user_demo prints messages, touches stack, exits 42."
+        ]
+    },
+    {
+        "title": "Relocate build artifacts outside repository",
+        "body": "Move artifacts to build directory.",
+        "labels": [
+            "maintenance"
+        ],
+        "github_issue": {
+            "number": 74,
+            "url": "https://github.com/pbalduino/menios/issues/74",
+            "state": "CLOSED"
+        },
+        "status": "Done",
+        "notes": [
+            "2025-09-26: build/bin + build/obj with README update."
+        ]
     }
 ]
