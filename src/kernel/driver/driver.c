@@ -41,6 +41,5 @@ driver_p driver_load(const char* hid) {
     }
     node = node->next;
   }
-  errk("  Driver not found for HID '%s'\n", hid);
   return NULL;
 }
