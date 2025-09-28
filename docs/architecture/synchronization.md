@@ -38,5 +38,19 @@ variable. Key operations include:
 Semaphores make it easy to model producer/consumer queues and fixed pools of
 resources without reinventing the blocking logic each time.
 
-Future synchronization primitives, such as read-write locks, build on the same
-infrastructure and follow the same conventions.
+## Read-Write Locks
+
+`krwlock_t` provides shared (reader) and exclusive (writer) access guards. The
+implementation prioritises writers to avoid starving threads waiting for
+exclusive access.
+
+- `krwlock_rdlock()` / `krwlock_rdunlock()` – acquire and release shared access;
+  multiple readers may hold the lock simultaneously.
+- `krwlock_wrlock()` / `krwlock_wrunlock()` – acquire and release exclusive
+  access; writers wait until all readers exit and no writer is active.
+- `krwlock_tryrdlock()` and `krwlock_trywrlock()` – non-blocking attempts that
+  report whether the lock could be acquired immediately.
+
+Read-write locks are a good fit for data structures that see frequent reads and
+infrequent writes, minimising contention while still permitting safe
+modification.

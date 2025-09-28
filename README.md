@@ -13,7 +13,7 @@ MeniOS has made significant progress with core kernel functionality now solidly 
 ### ✅ **Completed Core Infrastructure**
 - **✅ Memory Management**: Physical memory mapping, virtual memory allocation, and kernel heap management (Issues #35, #57)
 - **✅ Process Scheduling**: Preemptive userland scheduler with kernel threads and time slicing (Issue #34)
-- **✅ Synchronization**: Blocking mutexes, condition variables, and counting semaphores with scheduler integration (Issues #36, #37, #40)
+- **✅ Synchronization**: Blocking mutexes, condition variables, semaphores, and read-write locks with scheduler integration (Issues #36, #37, #39, #40)
 - **Console System**: ANSI escape sequence support with scrolling and color output
 - **Input/Output**: PS/2 keyboard driver with buffered input
 - **Debugging**: Page fault and GPF handlers for system diagnostics
