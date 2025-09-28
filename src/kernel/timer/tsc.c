@@ -7,10 +7,20 @@
 #include <time.h>
 #include <types.h>
 
+#if defined(__APPLE__) && !defined(__x86_64__)
+#include <mach/mach_time.h>
+#endif
+
 static inline void _cpuid(uint32_t eax, uint32_t ecx, uint32_t* regs) {
+#ifdef __x86_64__
   __asm__ volatile("cpuid"
                   : "=a"(regs[0]), "=b"(regs[1]), "=c"(regs[2]), "=d"(regs[3])
                   : "a"(eax), "c"(ecx));
+#else
+  (void)eax;
+  (void)ecx;
+  regs[0] = regs[1] = regs[2] = regs[3] = 0;
+#endif
 }
 
 static uint64_t boot_time_sec;
@@ -30,9 +40,24 @@ bool has_invariant_tsc() {
 }
 
 uint64_t read_tsc(void) {
+#ifdef __x86_64__
   uint32_t eax, edx;
   __asm__ volatile("rdtsc" : "=a"(eax), "=d"(edx));
   return ((uint64_t)edx << 32) | eax;
+#else
+#if defined(__APPLE__)
+  static mach_timebase_info_data_t timebase = {0};
+  if(timebase.denom == 0) {
+    mach_timebase_info(&timebase);
+  }
+  uint64_t ticks = mach_absolute_time();
+  return (ticks * timebase.numer) / timebase.denom;
+#else
+  struct timespec ts;
+  clock_gettime(CLOCK_MONOTONIC, &ts);
+  return ((uint64_t)ts.tv_sec * 1000000000ull) + (uint64_t)ts.tv_nsec;
+#endif
+#endif
 }
 
 static void tsc_calibrate(void) {

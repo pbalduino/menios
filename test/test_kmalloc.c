@@ -7,7 +7,6 @@
 #include <string.h>
 
 void* arena1;
-void* arena2;
 
 void setUp() {
   current = (proc_info_p)malloc(sizeof(proc_info_t));
@@ -65,9 +64,65 @@ void test_kmalloc_WHEN_size_is_positive_SHOULD_return_a_valid_node() {
   }
 }
 
-// TODO: test if the content of node->data is being overwritten
-// TODO: test what happens when arena1 runs out of space
-// TODO: test when a node position is not contiguous to the next/previous
+void test_kmalloc_WHEN_arena_is_full_SHOULD_return_null() {
+  const size_t chunk = 64;
+  void* ptr;
+  size_t allocations = 0;
+
+  while((ptr = kmalloc(chunk)) != NULL) {
+    memset(ptr, 0xcd, chunk);
+    allocations++;
+  }
+
+  TEST_ASSERT_NULL(ptr);
+  TEST_ASSERT_GREATER_THAN_UINT32(0, allocations);
+  TEST_ASSERT_NULL(kmalloc(chunk));
+}
+
+void test_kmalloc_SHOULD_not_corrupt_adjacent_blocks() {
+  uint8_t* first = (uint8_t*)kmalloc(48);
+  uint8_t* second = (uint8_t*)kmalloc(48);
+
+  TEST_ASSERT_NOT_NULL(first);
+  TEST_ASSERT_NOT_NULL(second);
+
+  memset(first, 0x11, 48);
+  memset(second, 0x22, 48);
+
+  for(size_t i = 0; i < 48; i++) {
+    TEST_ASSERT_EQUAL_UINT8(0x11, first[i]);
+    TEST_ASSERT_EQUAL_UINT8(0x22, second[i]);
+  }
+}
+
+void test_kfree_SHOULD_merge_contiguous_nodes() {
+  void* a = kmalloc(80);
+  void* b = kmalloc(80);
+  void* c = kmalloc(80);
+
+  TEST_ASSERT_NOT_NULL(a);
+  TEST_ASSERT_NOT_NULL(b);
+  TEST_ASSERT_NOT_NULL(c);
+
+  kfree(b);
+
+  heap_node_p second;
+  TEST_ASSERT_EQUAL_UINT32(HEAP_INSPECT_OK, inspect_heap(1, &second));
+  TEST_ASSERT_EQUAL_UINT8(HEAP_FREE, second->status);
+
+  kfree(a);
+
+  heap_node_p merged;
+  TEST_ASSERT_EQUAL_UINT32(HEAP_INSPECT_OK, inspect_heap(0, &merged));
+  TEST_ASSERT_EQUAL_UINT8(HEAP_FREE, merged->status);
+
+  kfree(c);
+
+  heap_node_p whole_heap;
+  TEST_ASSERT_EQUAL_UINT32(HEAP_INSPECT_OK, inspect_heap(0, &whole_heap));
+  TEST_ASSERT_EQUAL_UINT8(HEAP_FREE, whole_heap->status);
+  TEST_ASSERT_EQUAL_UINT32(PAGE_SIZE - HEAP_HEADER_SIZE, whole_heap->size);
+}
 
 void test_kcalloc_SHOULD_return_zeroed_buffer() {
   uint8_t* buffer = (uint8_t*)kcalloc(8, sizeof(uint8_t));
@@ -118,6 +173,9 @@ int main() {
   RUN_TEST(test_kmalloc_WHEN_size_is_zero_SHOULD_return_null);
   RUN_TEST(test_kmalloc_SHOULD_start_in_a_valid_heap);
   RUN_TEST(test_kmalloc_WHEN_size_is_positive_SHOULD_return_a_valid_node);
+  RUN_TEST(test_kmalloc_WHEN_arena_is_full_SHOULD_return_null);
+  RUN_TEST(test_kmalloc_SHOULD_not_corrupt_adjacent_blocks);
+  RUN_TEST(test_kfree_SHOULD_merge_contiguous_nodes);
   RUN_TEST(test_kcalloc_SHOULD_return_zeroed_buffer);
   RUN_TEST(test_krealloc_WHEN_expanding_SHOULD_preserve_original_bytes);
   RUN_TEST(test_heap_get_stats_SHOULD_reflect_allocations);
