@@ -2,6 +2,12 @@
     .globl _start
 
 _start:
+    mov $0x43, %rax
+    mov %ax, %ds
+    mov %ax, %es
+    mov %ax, %fs
+    mov %ax, %gs
+
     sub $8192, %rsp         # touch a second stack page (lazy allocation)
     movb $'A', (%rsp)
     add $8192, %rsp
