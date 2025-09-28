@@ -17,7 +17,7 @@ hpet_status_t hpet_timer_init() {
   }
 
   hpet_table_t *hpet = (hpet_table_t *)tbl.virt_addr;
-  uint64_t hpet_base = hpet->address.address;
+  (void)hpet;
 
   serial_printf("Found HPET @ %lx\n", tbl.ptr);
 
