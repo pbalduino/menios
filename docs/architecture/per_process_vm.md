@@ -53,5 +53,6 @@ With vm_clone in place, meniOS now offers a full `fork`/`execve` path:
 * `proc_exec_image()` stages the replacement image in a fresh CR3, mapping a clean stack region before running the ELF loader. On success the old user mappings are torn down, the new root installs in the process, and the syscall frame is reset with pristine registers and user segments so the caller resumes in ring 3 at the ELF entry point.
 * `SYS_fork` and `SYS_execve` dispatch into the helpers above, performing basic pointer/size validation and propagating negative errno values back to user mode on failure.
 * The user demo program now exercises `fork`, emitting per-branch messages before the child exits, keeping the example deterministic while we wire up richer userland payloads.
+* `vm_clone()` now rounds partially committed regions up to full pages before copying, ensuring child processes inherit stack data that was still sharing a leaf page with uncommitted space.
 
 This closes the loop on process cloning and image replacement: the scheduler can now spin up arbitrary user tasks, duplicate them, and hand control over to new executables without rebooting the kernel.
