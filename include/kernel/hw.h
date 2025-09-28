@@ -5,6 +5,8 @@
 extern "C" {
 #endif
 
+#include <kernel/driver.h>
+
 typedef struct hardware_device_t hardware_device_t;
 typedef hardware_device_t* hardware_device_p;
 

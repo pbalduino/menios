@@ -2,6 +2,7 @@
 #include <kernel/driver.h>
 #include <kernel/driver/ps2kb.h>
 #include <kernel/driver/ps2.h>
+#include <kernel/file.h>
 #include <kernel/kernel.h>
 #include <kernel/serial.h>
 #include <kernel/idt.h>
@@ -97,6 +98,7 @@ static void buffer_push(uint8_t ch) {
   }
   key_buffer[buffer_head] = ch;
   buffer_head = next;
+  stdin_enqueue_char(ch);
 }
 
 static uint8_t buffer_pop(void) {

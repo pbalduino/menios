@@ -1,21 +1,29 @@
 #include <errno.h>
 #include <kernel/console.h>
+#include <kernel/file.h>
 #include <kernel/mman.h>
 #include <kernel/proc.h>
 #include <kernel/serial.h>
 #include <kernel/syscall.h>
+#include <sys/fcntl.h>
 
 #define SYSCALL_MAX 256
 
 static uint64_t syscall_stub_unimplemented(syscall_frame_t* frame);
+static uint64_t syscall_read_handler(syscall_frame_t* frame);
 static uint64_t syscall_write_handler(syscall_frame_t* frame);
+static uint64_t syscall_close_handler(syscall_frame_t* frame);
 static uint64_t syscall_mmap_handler(syscall_frame_t* frame);
 static uint64_t syscall_munmap_handler(syscall_frame_t* frame);
+static uint64_t syscall_pipe_handler(syscall_frame_t* frame);
+static uint64_t syscall_dup_handler(syscall_frame_t* frame);
+static uint64_t syscall_dup2_handler(syscall_frame_t* frame);
 static uint64_t syscall_fork_handler(syscall_frame_t* frame);
 static uint64_t syscall_execve_handler(syscall_frame_t* frame);
 static uint64_t syscall_yield_handler(syscall_frame_t* frame);
 static uint64_t syscall_sleep_handler(syscall_frame_t* frame);
 static uint64_t syscall_exit_handler(syscall_frame_t* frame);
+static uint64_t syscall_fcntl_handler(syscall_frame_t* frame);
 
 static syscall_handler_t syscall_table[SYSCALL_MAX];
 
@@ -32,14 +40,20 @@ void syscall_init(void) {
     syscall_table[i] = syscall_stub_unimplemented;
   }
 
+  syscall_register(SYS_READ, syscall_read_handler);
   syscall_register(SYS_WRITE, syscall_write_handler);
+  syscall_register(SYS_CLOSE, syscall_close_handler);
   syscall_register(SYS_MMAP, syscall_mmap_handler);
   syscall_register(SYS_MUNMAP, syscall_munmap_handler);
+  syscall_register(SYS_PIPE, syscall_pipe_handler);
+  syscall_register(SYS_DUP, syscall_dup_handler);
+  syscall_register(SYS_DUP2, syscall_dup2_handler);
   syscall_register(SYS_FORK, syscall_fork_handler);
   syscall_register(SYS_EXECVE, syscall_execve_handler);
   syscall_register(SYS_YIELD, syscall_yield_handler);
   syscall_register(SYS_SLEEP, syscall_sleep_handler);
   syscall_register(SYS_EXIT, syscall_exit_handler);
+  syscall_register(SYS_FCNTL, syscall_fcntl_handler);
 
   serial_printf("syscall_init: initialized dispatcher (INT 0x80)\n");
 }
@@ -65,30 +79,60 @@ static uint64_t syscall_stub_unimplemented(syscall_frame_t* frame) {
   return (uint64_t)(-ENOSYS);
 }
 
-static uint64_t syscall_write_handler(syscall_frame_t* frame) {
+static uint64_t syscall_read_handler(syscall_frame_t* frame) {
+  if(current == NULL) {
+    frame->rax = (uint64_t)(-EINVAL);
+    return frame->rax;
+  }
+
   int fd = (int)frame->rdi;
-  const char* buffer = (const char*)frame->rsi;
+  void* buffer = (void*)frame->rsi;
   size_t length = (size_t)frame->rdx;
-
-  serial_printf("sys_write: fd=%d len=%lu buf=%p\n", fd, (unsigned long)length, buffer);
-  serial_printf("sys_write regs: rax=%lx rbx=%lx rcx=%lx rdx=%lx rsi=%lx rdi=%lx rip=%lx\n",
-    frame->rax, frame->rbx, frame->rcx, frame->rdx, frame->rsi, frame->rdi, frame->rip);
-
-  if(fd != 1) {
-    return (uint64_t)(-EBADF);
+  file_t* file = proc_file_get(current, fd, NULL);
+  if(file == NULL) {
+    int err = current->errno ? current->errno : EBADF;
+    frame->rax = (uint64_t)(-err);
+    return frame->rax;
   }
 
-  if(buffer == NULL) {
-    return (uint64_t)(-EFAULT);
+  int64_t result = file_read(file, buffer, length);
+  file_unref(file);
+  frame->rax = (uint64_t)result;
+  return frame->rax;
+}
+
+static uint64_t syscall_write_handler(syscall_frame_t* frame) {
+  if(current == NULL) {
+    frame->rax = (uint64_t)(-EINVAL);
+    return frame->rax;
   }
 
-  for(size_t i = 0; i < length; i++) {
-    char ch = buffer[i];
-    kputchar((int)ch);
-    serial_putchar(ch);
+  int fd = (int)frame->rdi;
+  const void* buffer = (const void*)frame->rsi;
+  size_t length = (size_t)frame->rdx;
+  file_t* file = proc_file_get(current, fd, NULL);
+  if(file == NULL) {
+    int err = current->errno ? current->errno : EBADF;
+    frame->rax = (uint64_t)(-err);
+    return frame->rax;
   }
 
-  return (uint64_t)length;
+  int64_t result = file_write(file, buffer, length);
+  file_unref(file);
+  frame->rax = (uint64_t)result;
+  return frame->rax;
+}
+
+static uint64_t syscall_close_handler(syscall_frame_t* frame) {
+  if(current == NULL) {
+    frame->rax = (uint64_t)(-EINVAL);
+    return frame->rax;
+  }
+
+  int fd = (int)frame->rdi;
+  int rc = proc_file_close(current, fd);
+  frame->rax = (uint64_t)rc;
+  return frame->rax;
 }
 
 static uint64_t syscall_mmap_handler(syscall_frame_t* frame) {
@@ -118,6 +162,78 @@ static uint64_t syscall_munmap_handler(syscall_frame_t* frame) {
   size_t length = (size_t)frame->rsi;
 
   int rc = kmunmap(addr, length);
+  frame->rax = (uint64_t)rc;
+  return frame->rax;
+}
+
+static uint64_t syscall_pipe_handler(syscall_frame_t* frame) {
+  if(current == NULL) {
+    frame->rax = (uint64_t)(-EINVAL);
+    return frame->rax;
+  }
+
+  int* fds = (int*)frame->rdi;
+  if(fds == NULL) {
+    frame->rax = (uint64_t)(-EFAULT);
+    return frame->rax;
+  }
+
+  file_t* read_end = NULL;
+  file_t* write_end = NULL;
+
+  int rc = pipe_create(&read_end, &write_end);
+  if(rc < 0) {
+    frame->rax = (uint64_t)rc;
+    return frame->rax;
+  }
+
+  int read_fd = proc_file_install(current, read_end, 0);
+  if(read_fd < 0) {
+    file_unref(read_end);
+    file_unref(write_end);
+    frame->rax = (uint64_t)read_fd;
+    return frame->rax;
+  }
+
+  int write_fd = proc_file_install(current, write_end, 0);
+  if(write_fd < 0) {
+    proc_file_close(current, read_fd);
+    file_unref(read_end);
+    file_unref(write_end);
+    frame->rax = (uint64_t)write_fd;
+    return frame->rax;
+  }
+
+  file_unref(read_end);
+  file_unref(write_end);
+
+  fds[0] = read_fd;
+  fds[1] = write_fd;
+  frame->rax = 0;
+  return frame->rax;
+}
+
+static uint64_t syscall_dup_handler(syscall_frame_t* frame) {
+  if(current == NULL) {
+    frame->rax = (uint64_t)(-EINVAL);
+    return frame->rax;
+  }
+
+  int oldfd = (int)frame->rdi;
+  int rc = proc_file_dup(current, oldfd, -1, false);
+  frame->rax = (uint64_t)rc;
+  return frame->rax;
+}
+
+static uint64_t syscall_dup2_handler(syscall_frame_t* frame) {
+  if(current == NULL) {
+    frame->rax = (uint64_t)(-EINVAL);
+    return frame->rax;
+  }
+
+  int oldfd = (int)frame->rdi;
+  int newfd = (int)frame->rsi;
+  int rc = proc_file_dup(current, oldfd, newfd, false);
   frame->rax = (uint64_t)rc;
   return frame->rax;
 }
@@ -171,4 +287,47 @@ static uint64_t syscall_exit_handler(syscall_frame_t* frame) {
   proc_exit(status);
   proc_switch((void*)frame);
   return frame->rax;
+}
+
+static uint64_t syscall_fcntl_handler(syscall_frame_t* frame) {
+  if(current == NULL) {
+    frame->rax = (uint64_t)(-EINVAL);
+    return frame->rax;
+  }
+
+  int fd = (int)frame->rdi;
+  int cmd = (int)frame->rsi;
+  uint64_t arg = frame->rdx;
+
+  uint32_t fd_flags = 0;
+  file_t* file = proc_file_get(current, fd, &fd_flags);
+  if(file == NULL) {
+    int err = current->errno ? current->errno : EBADF;
+    frame->rax = (uint64_t)(-err);
+    return frame->rax;
+  }
+
+  file_unref(file);
+
+  switch(cmd) {
+    case F_GETFD: {
+      int result = (fd_flags & FD_FLAG_CLOEXEC) ? FD_CLOEXEC : 0;
+      frame->rax = (uint64_t)result;
+      return frame->rax;
+    }
+    case F_SETFD: {
+      uint32_t new_flags = fd_flags;
+      if(arg & FD_CLOEXEC) {
+        new_flags |= FD_FLAG_CLOEXEC;
+      } else {
+        new_flags &= ~FD_FLAG_CLOEXEC;
+      }
+      int rc = proc_file_set_flags(current, fd, new_flags);
+      frame->rax = (uint64_t)rc;
+      return frame->rax;
+    }
+    default:
+      frame->rax = (uint64_t)(-ENOSYS);
+      return frame->rax;
+  }
 }

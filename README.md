@@ -94,14 +94,15 @@ Expect the log to show the `[user_demo]` messages on screen and in `com1.log`, c
 - [x] Per-process virtual memory with kernel/user separation
 
 ### 🔥 **Ready to Implement** (Dependencies Met)
-- [ ] **File descriptor management and pipes** (Issue #96) - No blockers
+- [x] **File descriptor management and pipes** (Issue #96)
+- [x] Stdin routed through descriptor table for interactive user input
 - [x] **Memory mapping syscalls (mmap/munmap)** (Issue #89) - Enabled by completed VM work
 - [ ] **Kernel threading infrastructure** (Issue #108) - Enabled by completed foundation
 - [x] **Fork/exec process creation** (Issue #93) - Enabled by VM and file descriptor work
 
 ### 🚧 **In Progress & Planned**
 - [ ] **Threading Support**: Complete pthread API and multithreading (Issues #108-#113)
-- [ ] **Advanced IPC**: Pipes, signals, shared memory, microkernel IPC (Issues #102-#107)
+- [ ] **Advanced IPC**: Signals, shared memory, microkernel IPC (Issues #102-#107)
 - [ ] **Filesystem**: Block drivers, VFS, and file operations (Issues #60, #62-#65)
 - [ ] **Networking**: Complete TCP/IP stack (Issues #67-#73)
 - [ ] **Graphics**: Framebuffer interface and input subsystem (Issues #31-#33)

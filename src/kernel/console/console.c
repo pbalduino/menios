@@ -1,10 +1,13 @@
+#include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <types.h>
 
 #include <kernel/console.h>
 #include <kernel/framebuffer.h>
 #include <kernel/file.h>
+#include <kernel/proc.h>
 #include <kernel/spinlock.h>
 #include <kernel/serial.h>
 #include <kernel/tsc.h>
@@ -13,17 +16,19 @@ static spinlock_t fvprintf_lock;
 
 int fputchar(int ch, FILE* file) {
   if(file == NULL) {
-    printf("file is null ");
-    serial_error("file is null\n");
-    return -1;
+    return -EINVAL;
   }
 
-  file_descriptor_t fd = fd_get(file->reserved);
-  if(fd == NULL || !fd->used) {
-    return -1;
+  struct proc_info_t* proc = current ? current : &kernel_process_info;
+  file_t* handle = proc_file_get(proc, file->reserved, NULL);
+  if(handle == NULL) {
+    return -EBADF;
   }
 
-  return fd->write(ch);
+  char c = (char)ch;
+  int64_t written = file_write(handle, &c, 1);
+  file_unref(handle);
+  return (int)written;
 }
 
 int putchar(int ch) {
@@ -39,10 +44,20 @@ int puts(const char* text) {
 }
 
 int fputs(const char* text, FILE* file) {
-  while(*text) {
-    fputchar(*text++, file);
+  if(file == NULL || text == NULL) {
+    return -EINVAL;
   }
-  return 0;
+
+  struct proc_info_t* proc = current ? current : &kernel_process_info;
+  file_t* handle = proc_file_get(proc, file->reserved, NULL);
+  if(handle == NULL) {
+    return -EBADF;
+  }
+
+  size_t len = strlen(text);
+  int64_t written = file_write(handle, text, len);
+  file_unref(handle);
+  return (int)written;
 }
 
 int vprintf(const char* format, va_list args) {

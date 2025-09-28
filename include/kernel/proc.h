@@ -6,6 +6,7 @@ extern "C" {
 #endif
 
 #include <types.h>
+#include <kernel/file.h>
 #include <kernel/vm_region.h>
 
 struct syscall_frame_t;
@@ -124,10 +125,12 @@ typedef struct proc_info_t {
   size_t       vm_region_count;
   void(*entrypoint)(void*);
   void*        arguments;
+  file_descriptor_entry_t files[PROC_MAX_FILES];
 } proc_info_t;
 
 typedef proc_info_t* proc_info_p;
 
+extern proc_info_t kernel_process_info;
 extern proc_info_p procs[PROC_MAX];
 extern proc_info_p current;
 

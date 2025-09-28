@@ -104,6 +104,7 @@ static void proc_free_resources(proc_info_p proc) {
   }
 
   proc_release_user_memory(proc);
+  proc_file_table_cleanup(proc);
 
   if(proc->address_space_root) {
     pmm_free_pages(proc->address_space_root, 1);
@@ -373,6 +374,10 @@ void proc_create(proc_info_p proc, const char* name, void (*entrypoint)(void *),
   proc->children_count = 0;
   proc->parent = current;
   proc->pid = last_pid++;
+  proc_file_table_init(proc);
+  if(current != NULL) {
+    proc_file_table_clone(proc, current);
+  }
 
   serial_printf("proc_create: Creating process %s - %s with arg %lx\n", name, proc->name, arg);
 
@@ -572,6 +577,8 @@ proc_info_p proc_fork(proc_info_p parent, const syscall_frame_t* frame, int* err
     return NULL;
   }
   memset(child, 0, sizeof(proc_info_t));
+  proc_file_table_init(child);
+  proc_file_table_clone(child, parent);
 
   child->parent = parent;
   child->pid = last_pid++;
@@ -663,6 +670,8 @@ int proc_exec_image(proc_info_p proc, const uint8_t* image, size_t size, syscall
   memset(&staging, 0, sizeof(staging));
   staging.pid = proc->pid;
   staging.address_space_root = new_root;
+
+  proc_file_table_prepare_exec(proc);
 
   virt_addr_t stack_top = user_stack_top(proc->pid);
   virt_addr_t stack_base_vaddr = stack_top - PROC_USER_STACK_SIZE;

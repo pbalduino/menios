@@ -137,9 +137,11 @@ void _start() {
   serial_debug = true;
   tsc_init();
 
-  file_init();
-
   serial_init();
+
+  mem_init();
+
+  file_system_init();
 
   boot_graphics_init();
 
@@ -148,8 +150,6 @@ void _start() {
   idt_init();
 
   syscall_init();
-
-  mem_init();
 
   printf("Heap demo\n");
   logk("Heap demo\n");

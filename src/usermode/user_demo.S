@@ -14,10 +14,25 @@ _start:
     movb $'A', (%rsp)
     add $8192, %rsp
 
+    lea pipe_fds(%rip), %rdi
+    mov $22, %rax           # SYS_pipe
+    int $0x80
+
     mov $57, %rax           # SYS_fork
     int $0x80
     test %rax, %rax
     jne 1f
+
+    mov $3, %rax            # close write end in child
+    mov pipe_fds+4(%rip), %edi
+    int $0x80
+
+    mov $0, %rax            # read from pipe
+    mov pipe_fds(%rip), %edi
+    lea pipe_buffer(%rip), %rsi
+    mov $64, %rdx
+    int $0x80
+    mov %rax, %r12          # store number of bytes read
 
     lea msg_fork_child(%rip), %rsi
     mov $(msg_fork_child_end - msg_fork_child), %rdx
@@ -25,11 +40,37 @@ _start:
     mov $1, %rdi
     int $0x80
 
+    mov $1, %rax            # emit pipe payload prefix
+    mov $1, %rdi
+    lea msg_pipe_child(%rip), %rsi
+    mov $(msg_pipe_child_end - msg_pipe_child), %rdx
+    int $0x80
+
+    mov $1, %rax            # write buffered payload
+    mov $1, %rdi
+    lea pipe_buffer(%rip), %rsi
+    mov %r12, %rdx
+    int $0x80
+
     mov $60, %rax           # child exits immediately after reporting
     xor %rdi, %rdi
     int $0x80
 
 1:
+    mov $3, %rax            # close read end in parent
+    mov pipe_fds(%rip), %edi
+    int $0x80
+
+    lea msg_pipe_payload(%rip), %rsi
+    mov $(msg_pipe_payload_end - msg_pipe_payload), %rdx
+    mov $1, %rax
+    mov pipe_fds+4(%rip), %edi
+    int $0x80
+
+    mov $3, %rax            # close write end in parent
+    mov pipe_fds+4(%rip), %edi
+    int $0x80
+
     lea msg_fork_parent(%rip), %rsi
     mov $(msg_fork_parent_end - msg_fork_parent), %rdx
     mov $1, %rax
@@ -132,6 +173,14 @@ msg_done:
     .ascii "[user_demo] completed demo loop\n"
 msg_done_end:
 
+msg_pipe_child:
+    .ascii "[pipe child] received: "
+msg_pipe_child_end:
+
+msg_pipe_payload:
+    .ascii "payload from parent via pipe\n"
+msg_pipe_payload_end:
+
 msg_fork_parent:
     .ascii "[user_demo] forked child process\n"
 msg_fork_parent_end:
@@ -139,3 +188,10 @@ msg_fork_parent_end:
 msg_fork_child:
     .ascii "[user_demo] hello from child after fork\n"
 msg_fork_child_end:
+
+    .section .bss
+    .balign 8
+pipe_fds:
+    .space 8
+pipe_buffer:
+    .space 64

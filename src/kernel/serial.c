@@ -10,7 +10,6 @@ bool serial_debug = false;
 static spinlock_t serial_printf_lock;
 
 void serial_init() {
-  logk("- Initing serial communication");
   // Disable interrupts
   outb(0x3f8 + 1, 0x00);
 
@@ -38,7 +37,8 @@ void serial_init() {
   // Enable interrupts (optional, if using interrupts)
   // outb(0x3f8 + 1, 0x01);
   spinlock_init(&serial_printf_lock);
-  printf(".OK\n");
+  serial_puts("- Initing serial communication\n");
+  serial_puts(".OK\n");
 }
 
 int serial_putchar(int ch) {

@@ -10,6 +10,7 @@ build/
 *.iso
 *.log
 *.o
+*.d
 .DS_Store
 .vscode/
 bochsout.txt

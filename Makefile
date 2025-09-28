@@ -36,6 +36,8 @@ USER_ELF_OBJ = $(OBJDIR)/usermode/user_demo_elf.o
 USER_ELF_SYMBOL := $(subst .,_,$(subst /,_,$(USER_ELF)))
 OBJS += $(USER_ELF_OBJ)
 
+-include $(OBJS:.o=.d)
+
 override CFLAGS += \
     -Wall \
     -Wextra \
@@ -83,8 +85,8 @@ override NASMFLAGS += \
     -f elf64
 
 GCC_KERNEL_OPTS = \
-		$(CFLAGS) \
-		$(CINCLUDE)
+		$(CPPFLAGS) \
+		$(CFLAGS)
 
 GCC = $(GCC_DIR)/gcc
 LD = $(GCC_DIR)/ld
@@ -157,6 +159,7 @@ check:
 .PHONY: clean
 clean:
 	rm -rf $(BUILD_DIR)
+	rm -f $(OBJS) $(OBJS:.o=.d)
 	mkdir -p $(OUTPUT_DIR)
 
 .PHONY: docker

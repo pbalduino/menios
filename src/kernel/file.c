@@ -1,204 +1,610 @@
+#include <errno.h>
+#include <stddef.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
-
-#include <kernel/console.h>
+#include <kernel/condvar.h>
 #include <kernel/file.h>
 #include <kernel/framebuffer.h>
+#include <kernel/heap.h>
+#include <kernel/mutex.h>
+#include <kernel/proc.h>
 #include <kernel/serial.h>
+#include <kernel/spinlock.h>
 
-#define FD_STDIN       0
-#define FD_STDOUT      1
-#define FD_STDERR      2
+#define FD_STDIN   0
+#define FD_STDOUT  1
+#define FD_STDERR  2
 
-#define FD_LIMIT 0xff
+static const file_ops_t serial_file_ops;
+static const file_ops_t null_file_ops;
+static const file_ops_t framebuffer_file_ops;
+static const file_ops_t stdin_file_ops;
 
-int noop_read();
-int noop_close();
-int noop_write(int ch);
+static FILE kernel_stdin_stream = { .reserved = FD_STDIN };
+static FILE kernel_stdout_stream = { .reserved = FD_STDOUT };
+static FILE kernel_stderr_stream = { .reserved = FD_STDERR };
 
-FILE* stdin;
-FILE* stdout;
-FILE* stderr;
+FILE* stdin = &kernel_stdin_stream;
+FILE* stdout = &kernel_stdout_stream;
+FILE* stderr = &kernel_stderr_stream;
 
-// FIXME: this list should be attached to the process
-static file_descriptor_t descriptors[FD_LIMIT + 1];
-static struct __fd_t fd;
-static struct __sFile ff;
+static file_t* serial_stdout_file = NULL;
+static file_t* serial_stderr_file = NULL;
+static file_t* stdin_stream_file  = NULL;
 
+#define STDIN_BUFFER_SIZE 256
 
-// static struct __fd_t fdstdout = {
-//   .used = true,
-//   .close = noop_close,
-//   .read = noop_read,
-//   .write = noop_write
-// };
+typedef struct stdin_ring_buffer_t {
+  spinlock_t lock;
+  kmutex_t   wait_lock;
+  kcondvar_t waiters;
+  uint8_t    data[STDIN_BUFFER_SIZE];
+  size_t     head;
+  size_t     tail;
+} stdin_ring_buffer_t;
 
-static struct __fd_t fdserial0 = {
-  .used = true,
-  .close = noop_close,
-  .read = noop_read,
-  .write = serial_putchar
-};
+static stdin_ring_buffer_t stdin_buffer;
+static bool stdin_initialized = false;
 
-static struct __sFile ffstdin = {
-  .reserved = FD_STDIN
-};
-
-static struct __sFile ffstdout = {
-  .reserved = FD_STDOUT
-};
-
-static struct __sFile ffserial0 = {
-  .reserved = -1
-};
-
-
-int noop_read() {
-  serial_log("noop_read\n");
-  return -1;
+static struct proc_info_t* owning_proc(void) {
+  if(current != NULL) {
+    return current;
+  }
+  return &kernel_process_info;
 }
 
-int noop_close() {
-  serial_log("noop_close\n");
-  return -1;
+static inline void set_errno(int err) {
+  if(current) {
+    current->errno = err;
+  }
 }
 
-int noop_write(int ch) {
-  serial_puts("noop_write\n");
-  serial_puts("  ");
-  serial_putchar(ch);
-  serial_puts("\n");
-  return -1;
+static inline void stdin_buffer_init(void) {
+  spinlock_init(&stdin_buffer.lock);
+  kmutex_init(&stdin_buffer.wait_lock);
+  kcondvar_init(&stdin_buffer.waiters);
+  stdin_buffer.head = 0;
+  stdin_buffer.tail = 0;
+  stdin_initialized = true;
 }
 
-void file_init() {
-  serial_log("Entering file_init");
-
-  // ffstdin.reserved = FD_STDIN;
-  // stdin = &ffstdin;
-  // descriptors[FD_STDIN] = &ffstdin;
-
-  ffstdout.reserved = FD_STDOUT;
-  stdout = &ffstdout;
-  descriptors[FD_STDOUT] = &fdserial0;
-
-  logk("Setting file descriptor...OK\n");
-  serial_log("Leaving file_init");
+static bool stdin_buffer_pop(uint8_t* ch) {
+  bool result = false;
+  spinlock_lock(&stdin_buffer.lock);
+  if(stdin_buffer.head != stdin_buffer.tail) {
+    *ch = stdin_buffer.data[stdin_buffer.tail];
+    stdin_buffer.tail = (stdin_buffer.tail + 1) % STDIN_BUFFER_SIZE;
+    result = true;
+  }
+  spinlock_unlock(&stdin_buffer.lock);
+  return result;
 }
 
-file_descriptor_t fd_get(int fd) {
-  if(fd >= 0 && fd < FD_LIMIT) {
-    return descriptors[fd];
+static bool stdin_buffer_push(uint8_t ch) {
+  bool was_empty;
+  spinlock_lock(&stdin_buffer.lock);
+  was_empty = (stdin_buffer.head == stdin_buffer.tail);
+  size_t next = (stdin_buffer.head + 1) % STDIN_BUFFER_SIZE;
+  if(next == stdin_buffer.tail) {
+    stdin_buffer.tail = (stdin_buffer.tail + 1) % STDIN_BUFFER_SIZE;
+  }
+  stdin_buffer.data[stdin_buffer.head] = ch;
+  stdin_buffer.head = next;
+  spinlock_unlock(&stdin_buffer.lock);
+  return was_empty;
+}
+
+static int64_t stdin_read_impl(file_t* file, void* buffer, size_t length) {
+  (void)file;
+
+  if(buffer == NULL) {
+    set_errno(EINVAL);
+    return -EINVAL;
   }
 
-  return NULL;
-}
+  if(length == 0) {
+    return 0;
+  }
 
-int dup2(int oldfd, int newfd) {
-  serial_log("Entering dup2");
-  if(oldfd >= 0 && oldfd < FD_LIMIT && newfd >= 0 && newfd < FD_LIMIT) {
-    file_descriptor_t nd = descriptors[newfd];
-    char str[256];
-    itoa(oldfd, str, 10);
-    itoa(newfd, str, 10);
+  uint8_t* out = (uint8_t*)buffer;
+  size_t total = 0;
 
-    if(nd->close == NULL) {
-      serial_error("Leaving dup2: file->close is null");
-      return -1;
+  while(total < length) {
+    uint8_t ch = 0;
+    if(stdin_buffer_pop(&ch)) {
+      out[total++] = ch;
+      continue;
     }
 
-    descriptors[newfd] = descriptors[oldfd];
-
-      serial_log("Leaving dup2 with OK");
-    return newfd;
-  }
-
-  serial_error("Leaving dup2: invalid parameter");
-  return -1;
-}
-
-int get_free_fd() {
-  serial_log("Entering get_free_fd");
-  for(int p = 3; p < FD_LIMIT; p++) {
-    if(descriptors[p] == NULL || !descriptors[p]->used) {
-      serial_log("Leaving get_free_fd with OK");
-      return p;
-    }
-  }
-  serial_error("Leaving get_free_fd: no free descriptor");
-  return -1;
-}
-
-// FIXME: file should not know about framebuffer. create a device list instead and use it.
-FILE* fopen(const char* filename, const char* mode) {
-  serial_log("Entering fopen");
-  serial_log(filename);
-  serial_log(mode);
-
-  FILE* file = NULL;
-  int fid = get_free_fd();
-
-  if(fid < 0) {
-    serial_error("Leaving fopen: no more available file descriptors");
-    return file;
-  }
-
-  if(strcmp(filename, "/dev/fb/0") == 0 && strncmp(mode, "w", 1) == 0) {
-    serial_log("Opening framebuffer");
-    fd.used = true;
-    fd.write = fb_putchar;
-    fd.close = noop_close;
-    fd.read = noop_read;
-
-    descriptors[fid] = &fd;
-    ff.reserved = fid;
-    file = &ff;
-  } else if(strcmp(filename, "/dev/ttyS0") == 0 && strncmp(mode, "w", 1) == 0) {
-    serial_log("Opening serial");
-
-    descriptors[fid] = &fdserial0;
-
-    ffserial0.reserved = fid;
-
-    file = &ffserial0;
-  }
-
-  serial_log("Leaving fopen");
-
-  return file;
-}
-
-int fclose(FILE *stream) {
-  return -1;
-}
-
-FILE* freopen(const char *filename, const char *mode, FILE *file) {
-  serial_log("Entering freopen");
-  FILE* new_file = fopen(filename, mode);
-
-  if(new_file == NULL || file == NULL || dup2(new_file->reserved, file->reserved) < 0) {
-    if(new_file == NULL) {
-      serial_log("New file is null");
+    if(total > 0) {
+      break;
     }
 
-    if(file == NULL) {
-      serial_error("File is null");
+    kmutex_lock(&stdin_buffer.wait_lock);
+    for(;;) {
+      if(stdin_buffer_pop(&ch)) {
+        kmutex_unlock(&stdin_buffer.wait_lock);
+        out[total++] = ch;
+        break;
+      }
+      kcondvar_wait(&stdin_buffer.waiters, &stdin_buffer.wait_lock);
     }
+  }
 
-    serial_error("Leaving freopen");
+  return (int64_t)total;
+}
 
-    fclose(new_file);
+void stdin_enqueue_char(uint8_t ch) {
+  if(!stdin_initialized) {
+    return;
+  }
+  (void)stdin_buffer_push(ch);
+  kcondvar_signal(&stdin_buffer.waiters);
+}
 
+file_t* file_create(const file_ops_t* ops, void* private_data, uint32_t mode) {
+  file_t* handle = kmalloc(sizeof(file_t));
+  if(handle == NULL) {
+    set_errno(ENOMEM);
     return NULL;
   }
 
-  fclose(file);
+  handle->ops = ops;
+  handle->private_data = private_data;
+  handle->refcount = 1;
+  handle->mode = mode;
+  return handle;
+}
 
-  file = new_file;
+void file_ref(file_t* file) {
+  if(file == NULL) {
+    return;
+  }
+  __atomic_add_fetch(&file->refcount, 1, __ATOMIC_SEQ_CST);
+}
 
-  serial_log("Leaving freopen with OK");
+static void file_destroy(file_t* file) {
+  if(file->ops && file->ops->close) {
+    file->ops->close(file);
+  }
+  kfree(file);
+}
 
-  return new_file;
+void file_unref(file_t* file) {
+  if(file == NULL) {
+    return;
+  }
+  int64_t refs = __atomic_sub_fetch(&file->refcount, 1, __ATOMIC_SEQ_CST);
+  if(refs == 0) {
+    file_destroy(file);
+  }
+}
+
+int64_t file_read(file_t* file, void* buffer, size_t length) {
+  if(file == NULL || buffer == NULL || length == 0) {
+    set_errno(EINVAL);
+    return -EINVAL;
+  }
+  if((file->mode & FILE_MODE_READ) == 0 || file->ops == NULL || file->ops->read == NULL) {
+    set_errno(EBADF);
+    return -EBADF;
+  }
+  int64_t result = file->ops->read(file, buffer, length);
+  if(result < 0) {
+    set_errno((int)-result);
+  } else if(current) {
+    current->errno = 0;
+  }
+  return result;
+}
+
+int64_t file_write(file_t* file, const void* buffer, size_t length) {
+  if(file == NULL || buffer == NULL) {
+    set_errno(EINVAL);
+    return -EINVAL;
+  }
+  if((file->mode & FILE_MODE_WRITE) == 0 || file->ops == NULL || file->ops->write == NULL) {
+    set_errno(EBADF);
+    return -EBADF;
+  }
+  int64_t result = file->ops->write(file, buffer, length);
+  if(result < 0) {
+    set_errno((int)-result);
+  } else if(current) {
+    current->errno = 0;
+  }
+  return result;
+}
+
+void proc_file_table_init(struct proc_info_t* proc) {
+  if(proc == NULL) {
+    return;
+  }
+  for(size_t fd = 0; fd < PROC_MAX_FILES; fd++) {
+    proc->files[fd].file = NULL;
+    proc->files[fd].flags = 0;
+  }
+}
+
+void proc_file_table_clone(struct proc_info_t* child, struct proc_info_t* parent) {
+  if(child == NULL || parent == NULL) {
+    return;
+  }
+  for(size_t fd = 0; fd < PROC_MAX_FILES; fd++) {
+    file_t* file = parent->files[fd].file;
+    child->files[fd].file = file;
+    child->files[fd].flags = parent->files[fd].flags;
+    if(file != NULL) {
+      file_ref(file);
+    }
+  }
+}
+
+void proc_file_table_cleanup(struct proc_info_t* proc) {
+  if(proc == NULL) {
+    return;
+  }
+  for(size_t fd = 0; fd < PROC_MAX_FILES; fd++) {
+    if(proc->files[fd].file != NULL) {
+      file_unref(proc->files[fd].file);
+      proc->files[fd].file = NULL;
+      proc->files[fd].flags = 0;
+    }
+  }
+}
+
+void proc_file_table_prepare_exec(struct proc_info_t* proc) {
+  if(proc == NULL) {
+    return;
+  }
+  for(size_t fd = 0; fd < PROC_MAX_FILES; fd++) {
+    if(proc->files[fd].file != NULL && (proc->files[fd].flags & FD_FLAG_CLOEXEC)) {
+      file_unref(proc->files[fd].file);
+      proc->files[fd].file = NULL;
+      proc->files[fd].flags = 0;
+    }
+  }
+}
+
+static int find_free_fd(struct proc_info_t* proc, int start) {
+  for(int fd = start; fd < PROC_MAX_FILES; fd++) {
+    if(proc->files[fd].file == NULL) {
+      return fd;
+    }
+  }
+  return -EMFILE;
+}
+
+int proc_file_install_at(struct proc_info_t* proc, int fd, file_t* file, uint32_t flags) {
+  if(proc == NULL || file == NULL) {
+    set_errno(EINVAL);
+    return -EINVAL;
+  }
+  if(fd < 0 || fd >= PROC_MAX_FILES) {
+    set_errno(EBADF);
+    return -EBADF;
+  }
+  if(proc->files[fd].file != NULL) {
+    set_errno(EBADF);
+    return -EBADF;
+  }
+  file_ref(file);
+  proc->files[fd].file = file;
+  proc->files[fd].flags = flags;
+  if(current) {
+    current->errno = 0;
+  }
+  return fd;
+}
+
+int proc_file_install(struct proc_info_t* proc, file_t* file, uint32_t flags) {
+  if(proc == NULL || file == NULL) {
+    set_errno(EINVAL);
+    return -EINVAL;
+  }
+  int fd = find_free_fd(proc, 0);
+  if(fd < 0) {
+    set_errno(-fd);
+    return fd;
+  }
+  return proc_file_install_at(proc, fd, file, flags);
+}
+
+file_t* proc_file_get(struct proc_info_t* proc, int fd, uint32_t* flags_out) {
+  if(proc == NULL || fd < 0 || fd >= PROC_MAX_FILES) {
+    set_errno(EBADF);
+    return NULL;
+  }
+  file_t* file = proc->files[fd].file;
+  if(file == NULL) {
+    set_errno(EBADF);
+    return NULL;
+  }
+  if(flags_out) {
+    *flags_out = proc->files[fd].flags;
+  }
+  file_ref(file);
+  if(current) {
+    current->errno = 0;
+  }
+  return file;
+}
+
+int proc_file_set_flags(struct proc_info_t* proc, int fd, uint32_t flags) {
+  if(proc == NULL || fd < 0 || fd >= PROC_MAX_FILES) {
+    set_errno(EBADF);
+    return -EBADF;
+  }
+  if(proc->files[fd].file == NULL) {
+    set_errno(EBADF);
+    return -EBADF;
+  }
+  proc->files[fd].flags = flags;
+  if(current) {
+    current->errno = 0;
+  }
+  return 0;
+}
+
+int proc_file_close(struct proc_info_t* proc, int fd) {
+  if(proc == NULL || fd < 0 || fd >= PROC_MAX_FILES) {
+    set_errno(EBADF);
+    return -EBADF;
+  }
+  file_t* file = proc->files[fd].file;
+  if(file == NULL) {
+    set_errno(EBADF);
+    return -EBADF;
+  }
+  proc->files[fd].file = NULL;
+  proc->files[fd].flags = 0;
+  file_unref(file);
+  if(current) {
+    current->errno = 0;
+  }
+  return 0;
+}
+
+int proc_file_dup(struct proc_info_t* proc, int oldfd, int newfd, bool cloexec) {
+  if(proc == NULL) {
+    set_errno(EINVAL);
+    return -EINVAL;
+  }
+  if(oldfd < 0 || oldfd >= PROC_MAX_FILES) {
+    set_errno(EBADF);
+    return -EBADF;
+  }
+  file_t* file = proc->files[oldfd].file;
+  if(file == NULL) {
+    set_errno(EBADF);
+    return -EBADF;
+  }
+
+  int target_fd = newfd;
+  if(newfd < 0) {
+    target_fd = find_free_fd(proc, 0);
+    if(target_fd < 0) {
+      set_errno(-target_fd);
+      return target_fd;
+    }
+  } else if(newfd >= PROC_MAX_FILES) {
+    set_errno(EBADF);
+    return -EBADF;
+  }
+
+  if(target_fd == oldfd) {
+    if(cloexec) {
+      proc->files[target_fd].flags |= FD_FLAG_CLOEXEC;
+    }
+    if(current) {
+      current->errno = 0;
+    }
+    return target_fd;
+  }
+
+  if(proc->files[target_fd].file != NULL) {
+    file_unref(proc->files[target_fd].file);
+  }
+
+  file_ref(file);
+  proc->files[target_fd].file = file;
+  uint32_t flags = proc->files[oldfd].flags;
+  if(cloexec) {
+    flags |= FD_FLAG_CLOEXEC;
+  }
+  proc->files[target_fd].flags = flags;
+
+  if(current) {
+    current->errno = 0;
+  }
+  return target_fd;
+}
+
+file_descriptor_t fd_get(int fd) {
+  if(fd < 0 || fd >= PROC_MAX_FILES) {
+    return NULL;
+  }
+  return kernel_process_info.files[fd].file;
+}
+
+static int64_t serial_write_impl(file_t* file, const void* buffer, size_t length) {
+  (void)file;
+  const char* data = (const char*)buffer;
+  for(size_t idx = 0; idx < length; idx++) {
+    serial_putchar(data[idx]);
+  }
+  return (int64_t)length;
+}
+
+static int serial_close_noop(file_t* file) {
+  (void)file;
+  return 0;
+}
+
+static int64_t null_read_impl(file_t* file, void* buffer, size_t length) {
+  (void)file;
+  (void)buffer;
+  (void)length;
+  return 0;
+}
+
+static int64_t null_write_impl(file_t* file, const void* buffer, size_t length) {
+  (void)file;
+  (void)buffer;
+  (void)length;
+  return (int64_t)length;
+}
+
+static int64_t framebuffer_write_impl(file_t* file, const void* buffer, size_t length) {
+  (void)file;
+  const char* text = (const char*)buffer;
+  for(size_t idx = 0; idx < length; idx++) {
+    fb_putchar(text[idx]);
+  }
+  return (int64_t)length;
+}
+
+static const file_ops_t serial_file_ops = {
+  .read = NULL,
+  .write = serial_write_impl,
+  .close = serial_close_noop
+};
+
+static const file_ops_t null_file_ops = {
+  .read = null_read_impl,
+  .write = null_write_impl,
+  .close = serial_close_noop
+};
+
+static const file_ops_t framebuffer_file_ops = {
+  .read = NULL,
+  .write = framebuffer_write_impl,
+  .close = serial_close_noop
+};
+
+static const file_ops_t stdin_file_ops = {
+  .read = stdin_read_impl,
+  .write = NULL,
+  .close = serial_close_noop
+};
+
+static void install_standard_streams(void) {
+  proc_file_table_init(&kernel_process_info);
+
+  stdin_buffer_init();
+
+  stdin_stream_file = file_create(&stdin_file_ops, NULL, FILE_MODE_READ);
+  if(stdin_stream_file != NULL) {
+    proc_file_install_at(&kernel_process_info, FD_STDIN, stdin_stream_file, 0);
+    file_unref(stdin_stream_file);
+  }
+
+  serial_stdout_file = file_create(&serial_file_ops, NULL, FILE_MODE_WRITE);
+  if(serial_stdout_file != NULL) {
+    proc_file_install_at(&kernel_process_info, FD_STDOUT, serial_stdout_file, 0);
+    file_unref(serial_stdout_file);
+  }
+
+  serial_stderr_file = file_create(&serial_file_ops, NULL, FILE_MODE_WRITE);
+  if(serial_stderr_file != NULL) {
+    proc_file_install_at(&kernel_process_info, FD_STDERR, serial_stderr_file, 0);
+    file_unref(serial_stderr_file);
+  }
+}
+
+void file_system_init(void) {
+  install_standard_streams();
+}
+
+static struct proc_info_t* stream_owner(void) {
+  return owning_proc();
+}
+
+int dup2(int oldfd, int newfd) {
+  return proc_file_dup(stream_owner(), oldfd, newfd, false);
+}
+
+FILE* fopen(const char* filename, const char* mode) {
+  if(filename == NULL || mode == NULL) {
+    set_errno(EINVAL);
+    return NULL;
+  }
+
+  bool write = mode[0] == 'w' || mode[0] == 'a';
+  file_t* file = NULL;
+  uint32_t file_mode = 0;
+
+  if(strcmp(filename, "/dev/ttyS0") == 0 && write) {
+    file = file_create(&serial_file_ops, NULL, FILE_MODE_WRITE);
+    file_mode = FILE_MODE_WRITE;
+  } else if(strcmp(filename, "/dev/fb/0") == 0 && write) {
+    file = file_create(&framebuffer_file_ops, NULL, FILE_MODE_WRITE);
+    file_mode = FILE_MODE_WRITE;
+  } else {
+    set_errno(ENOENT);
+    return NULL;
+  }
+
+  if(file == NULL) {
+    return NULL;
+  }
+
+  struct proc_info_t* proc = stream_owner();
+  int fd = proc_file_install(proc, file, 0);
+  file_unref(file);
+  if(fd < 0) {
+    set_errno(-fd);
+    return NULL;
+  }
+
+  FILE* stream = kmalloc(sizeof(FILE));
+  if(stream == NULL) {
+    proc_file_close(proc, fd);
+    set_errno(ENOMEM);
+    return NULL;
+  }
+  (void)file_mode;
+  stream->reserved = fd;
+  return stream;
+}
+
+int fclose(FILE* stream) {
+  if(stream == NULL) {
+    set_errno(EINVAL);
+    return -EINVAL;
+  }
+
+  if(stream == &kernel_stdin_stream || stream == &kernel_stdout_stream || stream == &kernel_stderr_stream) {
+    return -EBADF;
+  }
+
+  struct proc_info_t* proc = stream_owner();
+  int fd = stream->reserved;
+  int rc = proc_file_close(proc, fd);
+  kfree(stream);
+  return rc;
+}
+
+FILE* freopen(const char* filename, const char* mode, FILE* stream) {
+  if(stream == NULL) {
+    set_errno(EINVAL);
+    return NULL;
+  }
+
+  FILE* new_stream = fopen(filename, mode);
+  if(new_stream == NULL) {
+    return NULL;
+  }
+
+  struct proc_info_t* proc = stream_owner();
+  if(proc_file_dup(proc, new_stream->reserved, stream->reserved, false) < 0) {
+    fclose(new_stream);
+    return NULL;
+  }
+
+fclose(new_stream);
+  return stream;
 }
