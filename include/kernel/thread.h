@@ -8,14 +8,23 @@ extern "C" {
 #define THREAD_RUNNING    0
 #define THREAD_TERMINATED 1
 
-#include <kernel/atomic.h>
+#include <stdbool.h>
+
+#include <kernel/condvar.h>
+#include <kernel/mutex.h>
+
+struct proc_info_t;
 
 typedef struct kthread_t {
   const char* name;
   int         (*entrypoint)(void*);
   void*       arguments;
-  atomic32_t  status;
-  atomic32_t  exit_code;
+  struct proc_info_t* proc;
+  kmutex_t    lock;
+  kcondvar_t  cond;
+  bool        finished;
+  bool        joined;
+  int         exit_code;
 } kthread_t;
 
 typedef kthread_t* kthread_p;
@@ -26,7 +35,11 @@ int kthread_create(kthread_t* thread, const char* name, int (*entrypoint)(void *
 
 void ksleep(uint64_t milliseconds);
 void kexit(int code);
-int ktread_join(kthread_t* thread);
+int kthread_join(kthread_t* thread);
+
+static inline int ktread_join(kthread_t* thread) {
+  return kthread_join(thread);
+}
 
 #ifdef __cplusplus
 }

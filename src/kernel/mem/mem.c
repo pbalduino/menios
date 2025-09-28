@@ -8,6 +8,7 @@
 #include <kernel/thread.h>
 #include <kernel/serial.h>
 #include <stdio.h>
+#include <string.h>
 
 void mem_init() {
   serial_puts("\n- Initing memory management:\n");
@@ -32,11 +33,12 @@ int mem_compactor(void *unused) {
 }
 
 void init_memory_compactor() {
-  serial_line("");
   kthread_p pthread = kmalloc(sizeof(kthread_t));
-  serial_line("");
+  if(pthread == NULL) {
+    serial_error("init_memory_compactor: failed to allocate thread descriptor\n");
+    return;
+  }
+  memzero(pthread, sizeof(kthread_t));
   kthread_create(pthread, "heap_compactor", mem_compactor, NULL);
-  serial_line("");
   puts(".");
-  serial_line("");
 }

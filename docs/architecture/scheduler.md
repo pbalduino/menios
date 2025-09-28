@@ -48,6 +48,9 @@ higher-priority task becomes ready.
   enqueued; it simply runs when no other ready task exists.
 * Kernel-managed threads inherit normal priority by default but can be boosted
   if necessary.
+* `kthread_join()` now blocks on a condition variable rather than polling,
+  allowing callers to sleep while the worker thread runs and wake immediately
+  on completion.
 
 ## Statistics & Future Work
 

@@ -19,7 +19,6 @@
 #define FD_STDERR  2
 
 static const file_ops_t serial_file_ops;
-static const file_ops_t null_file_ops;
 static const file_ops_t framebuffer_file_ops;
 static const file_ops_t stdin_file_ops;
 
