@@ -132,6 +132,7 @@ idt_pf_isr_asm_handler:
   pop rcx
   pop rax
   popfq
+  add rsp, 8
 
   iretq
 
