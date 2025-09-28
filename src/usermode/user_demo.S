@@ -12,40 +12,94 @@ _start:
     movb $'A', (%rsp)
     add $8192, %rsp
 
-    lea messages(%rip), %rbx
-    mov $3, %rcx
+    # Select prefix based on argument in RDI (0..2).
+    mov %rdi, %rax
+    cmp $2, %rax
+    jbe 1f
+    xor %rax, %rax
+1:
+    lea prefixes(%rip), %rbx
+    mov (%rbx,%rax,16), %rsi
+    mov 8(%rbx,%rax,16), %rdx
+    mov $1, %rax            # SYS_write
+    mov $1, %rdi            # stdout
+    int $0x80
 
-loop_messages:
-    mov (%rbx), %rsi        # message pointer
-    mov 8(%rbx), %rdx       # message length
+    mov $5, %rcx            # outer iterations
+outer_loop:
+    lea messages(%rip), %rbx
+    mov $3, %r8             # messages per iteration
+print_loop:
+    mov (%rbx), %rsi
+    mov 8(%rbx), %rdx
     mov $1, %rax            # SYS_write
     mov $1, %rdi            # stdout
     int $0x80
 
     add $16, %rbx
-    loop loop_messages
+    dec %r8
+    jnz print_loop
+
+    mov $200000, %rdi       # sleep for 200,000 microseconds (200 ms)
+    mov $35, %rax           # SYS_sleep
+    int $0x80
+
+    mov $24, %rax           # SYS_yield
+    int $0x80
+
+    loop outer_loop
+
+    mov $1, %rax            # final message
+    mov $1, %rdi
+    lea msg_done(%rip), %rsi
+    mov $(msg_done_end - msg_done), %rdx
+    int $0x80
 
     mov $60, %rax           # SYS_exit
-    mov $42, %rdi           # exit code
+    xor %rdi, %rdi
     int $0x80
 
     .section .rodata
+prefixes:
+    .quad prefix0
+    .quad prefix0_end - prefix0
+    .quad prefix1
+    .quad prefix1_end - prefix1
+    .quad prefix2
+    .quad prefix2_end - prefix2
+
 messages:
-    .quad msg_hello
-    .quad msg_hello_end - msg_hello
-    .quad msg_stack
-    .quad msg_stack_end - msg_stack
-    .quad msg_exit
-    .quad msg_exit_end - msg_exit
+    .quad msg_tick
+    .quad msg_tick_end - msg_tick
+    .quad msg_sleep
+    .quad msg_sleep_end - msg_sleep
+    .quad msg_yield
+    .quad msg_yield_end - msg_yield
 
-msg_hello:
-    .ascii "[user_demo] Hello from user mode via int 0x80!\n"
-msg_hello_end:
+prefix0:
+    .ascii "[user_demo low] starting scheduler demo\n"
+prefix0_end:
 
-msg_stack:
-    .ascii "[user_demo] Forced stack touch across 8KiB boundary.\n"
-msg_stack_end:
+prefix1:
+    .ascii "[user_demo normal] ready to run\n"
+prefix1_end:
 
-msg_exit:
-    .ascii "[user_demo] Exiting with code 42.\n"
-msg_exit_end:
+prefix2:
+    .ascii "[user_demo high] entering main loop\n"
+prefix2_end:
+
+msg_tick:
+    .ascii "[user_demo] tick...\n"
+msg_tick_end:
+
+msg_sleep:
+    .ascii "[user_demo] sleeping for 200ms\n"
+msg_sleep_end:
+
+msg_yield:
+    .ascii "[user_demo] yielding CPU\n"
+msg_yield_end:
+
+msg_done:
+    .ascii "[user_demo] completed demo loop\n"
+msg_done_end:

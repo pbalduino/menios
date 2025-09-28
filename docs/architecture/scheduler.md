@@ -53,3 +53,10 @@ higher-priority task becomes ready.
 * Follow-up items include exposing configuration knobs to userspace, integrating
   with blocking primitives (mutexes/condition variables), and introducing
   deadline-aware policies.
+
+## Demo Harness
+
+The `user_demo_launch()` helper now spawns three user processes (low, normal,
+and high priority) that repeatedly write to stdout, sleep for 200 ms, and issue
+explicit yields. This provides an out-of-the-box way to observe preemption,
+sleep/wake transitions, and priority ordering on the serial console.
