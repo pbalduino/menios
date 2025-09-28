@@ -8,6 +8,19 @@
 #include <string.h>
 #include <stddef.h>
 
+#ifdef serial_printf
+#undef serial_printf
+#endif
+#ifdef serial_puts
+#undef serial_puts
+#endif
+#ifdef serial_error
+#undef serial_error
+#endif
+#ifdef serial_line
+#undef serial_line
+#endif
+
 proc_info_p current;
 
 void disable_interrupts() {}
@@ -23,6 +36,18 @@ uint64_t boot_time(void) {
 }
 
 void proc_yield(void) {}
+
+void proc_request_yield(void) {}
+
+void proc_request_sleep(uint64_t duration_us) {
+  (void)duration_us;
+}
+
+void proc_mark_ready(proc_info_p proc) {
+  if(proc) {
+    proc->state = PROC_STATE_READY;
+  }
+}
 
 void memzero(void* s, uint64_t n) {
 	memset(s, 0, n);

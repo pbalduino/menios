@@ -139,6 +139,7 @@ void scheduler_set_quantum(uint8_t priority, uint64_t quantum_us);
 uint64_t scheduler_get_quantum(uint8_t priority);
 void proc_request_yield(void);
 void proc_request_sleep(uint64_t duration_us);
+void proc_mark_ready(proc_info_p proc);
 
 #ifdef __cplusplus
 }

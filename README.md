@@ -13,7 +13,7 @@ MeniOS is in active development with basic kernel functionality implemented. The
 - **Memory Management**: Physical memory mapping, virtual memory allocation, and basic heap management
 - **Console System**: ANSI escape sequence support with scrolling and color output
 - **Process Management**: Kernel threads with basic scheduling (scheduler improvements ongoing)
-- **Synchronization**: Basic mutex implementation (comprehensive sync primitives planned)
+- **Synchronization**: Blocking mutexes with scheduler integration plus kernel condition variables
 - **Input/Output**: PS/2 keyboard driver with buffered input
 - **Debugging**: Page fault and GPF handlers for system diagnostics
 - **Testing**: Unit test framework using Unity for kernel components
@@ -87,7 +87,7 @@ Expect the log to show the `[user_demo]` messages on screen and in `com1.log`, c
 - [ ] Thread termination status propagation and join improvements
 - [ ] TSC timekeeping calibration and boot time initialization
 - [ ] kmalloc integration with virtual memory system and performance improvements
-- [ ] Comprehensive synchronization primitives (semaphores, spinlocks, rwlocks, condition variables)
+- [ ] Further synchronization primitives (semaphores, reader-writer locks)
 - [ ] Atomic operations and memory barriers for lock-free programming
 
 ### Road to Doom 🎮

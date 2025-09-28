@@ -19,8 +19,10 @@ _start:
     xor %rax, %rax
 1:
     lea prefixes(%rip), %rbx
-    mov (%rbx,%rax,16), %rsi
-    mov 8(%rbx,%rax,16), %rdx
+    mov %rax, %r9
+    shl $4, %r9
+    mov (%rbx,%r9,1), %rsi
+    mov 8(%rbx,%r9,1), %rdx
     mov $1, %rax            # SYS_write
     mov $1, %rdi            # stdout
     int $0x80

@@ -1,0 +1,123 @@
+#include <errno.h>
+
+#include <kernel/condvar.h>
+#include <kernel/heap.h>
+#include <kernel/kernel.h>
+#include <kernel/proc.h>
+#include <kernel/spinlock.h>
+
+static inline void kcondvar_wait_cycle(void) {
+#if defined(__x86_64__)
+  asm volatile("hlt");
+#else
+  spinlock_cpu_relax();
+#endif
+}
+
+typedef struct kcondvar_wait_node {
+  struct kcondvar_wait_node* next;
+  proc_info_p                proc;
+} kcondvar_wait_node_t;
+
+static void kcondvar_enqueue(kcondvar_t* cv, kcondvar_wait_node_t* node) {
+  node->next = NULL;
+  if(cv->waiters_tail) {
+    cv->waiters_tail->next = node;
+  } else {
+    cv->waiters_head = node;
+  }
+  cv->waiters_tail = node;
+}
+
+static kcondvar_wait_node_t* kcondvar_dequeue(kcondvar_t* cv) {
+  kcondvar_wait_node_t* node = cv->waiters_head;
+  if(node != NULL) {
+    cv->waiters_head = node->next;
+    if(cv->waiters_head == NULL) {
+      cv->waiters_tail = NULL;
+    }
+  }
+  return node;
+}
+
+void kcondvar_wait(kcondvar_t* cv, kmutex_t* mutex) {
+  if(cv == NULL || mutex == NULL) {
+    if(current) {
+      current->errno = EINVAL;
+    }
+    return;
+  }
+
+  kcondvar_wait_node_t* node = kmalloc(sizeof(*node));
+  if(node == NULL) {
+    if(current) {
+      current->errno = ENOMEM;
+    }
+    return;
+  }
+
+  node->proc = current;
+
+  spinlock_lock(&cv->lock);
+  if(current != NULL) {
+    current->state = PROC_STATE_WAITING;
+    kcondvar_enqueue(cv, node);
+  }
+  spinlock_unlock(&cv->lock);
+
+  kmutex_unlock(mutex);
+
+  proc_request_yield();
+  enable_interrupts();
+  while(current->state == PROC_STATE_WAITING) {
+    kcondvar_wait_cycle();
+  }
+
+  while(kmutex_lock(mutex) != 0) {
+    proc_request_yield();
+    enable_interrupts();
+    while(current->state == PROC_STATE_WAITING) {
+      kcondvar_wait_cycle();
+    }
+  }
+}
+
+void kcondvar_signal(kcondvar_t* cv) {
+  if(cv == NULL) {
+    return;
+  }
+
+  spinlock_lock(&cv->lock);
+  kcondvar_wait_node_t* node = kcondvar_dequeue(cv);
+  spinlock_unlock(&cv->lock);
+
+  if(node != NULL) {
+    if(node->proc != NULL) {
+      node->proc->state = PROC_STATE_READY;
+      proc_mark_ready(node->proc);
+    }
+    kfree(node);
+  }
+}
+
+void kcondvar_broadcast(kcondvar_t* cv) {
+  if(cv == NULL) {
+    return;
+  }
+
+  spinlock_lock(&cv->lock);
+  kcondvar_wait_node_t* node = kcondvar_dequeue(cv);
+  spinlock_unlock(&cv->lock);
+
+  while(node != NULL) {
+    if(node->proc != NULL) {
+      node->proc->state = PROC_STATE_READY;
+      proc_mark_ready(node->proc);
+    }
+    kfree(node);
+
+    spinlock_lock(&cv->lock);
+    node = kcondvar_dequeue(cv);
+    spinlock_unlock(&cv->lock);
+  }
+}

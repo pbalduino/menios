@@ -468,6 +468,31 @@ void proc_request_sleep(uint64_t duration_us) {
   scheduler_actions |= (SCHED_ACTION_SLEEP | SCHED_ACTION_FORCE);
 }
 
+void proc_mark_ready(proc_info_p proc) {
+  if(proc == NULL) {
+    return;
+  }
+
+  if(proc->state == PROC_STATE_TERMINATED || proc->state == PROC_STATE_READY) {
+    return;
+  }
+
+  uint64_t flags;
+  __asm__ volatile("pushfq; pop %0" : "=r"(flags) :: "memory");
+  disable_interrupts();
+
+  proc->state = PROC_STATE_READY;
+  proc->time_slice_remaining_us = proc->quantum_us;
+  proc->sleep_until = 0;
+  ready_queue_push(proc);
+
+  scheduler_actions |= SCHED_ACTION_FORCE;
+
+  if(flags & (1ull << 9)) {
+    enable_interrupts();
+  }
+}
+
 void proc_create_user(proc_info_p proc, const char* name, const void* code_blob, size_t code_size, void* arg) {
   proc_create(proc, name, NULL, arg);
 
