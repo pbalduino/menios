@@ -138,12 +138,27 @@ void proc_switch(void* arg) {
   
   current = current->next;
 
+  serial_printf("proc_switch: next=%s cs=%lx ss=%lx rip=%lx rsp=%lx\n",
+                current->name,
+                current->cpu_state->cs,
+                current->cpu_state->ss,
+                current->cpu_state->rip,
+                current->cpu_state->rsp);
+
   phys_addr_t desired_cr3 = current->address_space_root ? current->address_space_root : pmm_get_kernel_cr3();
   if(read_cr3() != desired_cr3) {
     write_cr3(desired_cr3);
   }
 
-  memcpy(arg, current->cpu_state, sizeof(cpu_state_t));
+  cpu_state_p frame = (cpu_state_p)arg;
+  memcpy(frame, current->cpu_state, sizeof(cpu_state_t));
+  if(current->user_mode) {
+    frame->cs = USER_CODE_SEGMENT;
+    frame->ss = USER_DATA_SEGMENT;
+  } else {
+    frame->cs = KERNEL_CODE_SEGMENT;
+    frame->ss = KERNEL_DATA_SEGMENT;
+  }
   current->state = PROC_STATE_RUNNING;
 
   uint64_t kernel_stack = proc_kernel_stack_top(current);
