@@ -386,6 +386,131 @@ bool pmm_map_page(virt_addr_t vaddr, phys_addr_t paddr, bool writable, bool user
   return pmm_map_page_in_root(read_cr3(), vaddr, paddr, writable, user);
 }
 
+pml4_walk_result_t pmm_walk_address(phys_addr_t root_phys, virt_addr_t vaddr) {
+  pml4_walk_result_t result = {
+    .pml4_entry = NULL,
+    .pdpt_entry = NULL,
+    .pd_entry = NULL,
+    .pt_entry = NULL
+  };
+
+  if(root_phys == 0) {
+    return result;
+  }
+
+  pml4_t* pml4 = (pml4_t*)physical_to_virtual(root_phys);
+  uint16_t pml4_index = (vaddr >> 39) & 0x1ff;
+  page_map_l4_entry_t* pml4_entry = &pml4->entries[pml4_index];
+  result.pml4_entry = pml4_entry;
+  if(!pml4_entry->present) {
+    return result;
+  }
+
+  page_directory_pointer_t* pdpt = (page_directory_pointer_t*)physical_to_virtual(pml4_entry->page_directory_base << 12);
+  uint16_t pdpt_index = (vaddr >> 30) & 0x1ff;
+  page_directory_pointer_entry_t* pdpt_entry = &pdpt->entries[pdpt_index];
+  result.pdpt_entry = pdpt_entry;
+  if(!pdpt_entry->present || pdpt_entry->large_page) {
+    return result;
+  }
+
+  page_directory_t* pd = (page_directory_t*)physical_to_virtual(pdpt_entry->page_directory_base << 12);
+  uint16_t pd_index = (vaddr >> 21) & 0x1ff;
+  page_directory_entry_t* pd_entry = &pd->entries[pd_index];
+  result.pd_entry = pd_entry;
+  if(!pd_entry->present || pd_entry->large_page) {
+    return result;
+  }
+
+  page_table_t* pt = (page_table_t*)physical_to_virtual(pd_entry->page_table_base << 12);
+  uint16_t pt_index = (vaddr >> 12) & 0x1ff;
+  page_table_entry_t* pt_entry = &pt->entries[pt_index];
+  result.pt_entry = pt_entry;
+
+  return result;
+}
+
+static bool table_has_present_entries(page_table_entry_t* entries) {
+  for(size_t i = 0; i < 512; i++) {
+    if(entries[i].present) {
+      return true;
+    }
+  }
+  return false;
+}
+
+bool pmm_unmap_page_in_root(phys_addr_t root_phys, virt_addr_t vaddr) {
+  if(root_phys == 0) {
+    return false;
+  }
+
+  pml4_walk_result_t walk = pmm_walk_address(root_phys, vaddr);
+  if(walk.pt_entry == NULL || !walk.pt_entry->present) {
+    return false;
+  }
+
+  walk.pt_entry->present = 0;
+  phys_addr_t frame = walk.pt_entry->frame << 12;
+  walk.pt_entry->frame = 0;
+  invlpg((void*)vaddr);
+
+  if(walk.pd_entry) {
+    page_table_t* pt = (page_table_t*)physical_to_virtual(walk.pd_entry->page_table_base << 12);
+    if(!table_has_present_entries(pt->entries)) {
+      phys_addr_t pt_phys = walk.pd_entry->page_table_base << 12;
+      walk.pd_entry->present = 0;
+      walk.pd_entry->page_table_base = 0;
+      pmm_free_pages(pt_phys, 1);
+    }
+  }
+
+  if(walk.pdpt_entry) {
+    page_directory_t* pd = (page_directory_t*)physical_to_virtual(walk.pdpt_entry->page_directory_base << 12);
+    if(!table_has_present_entries(pd->entries)) {
+      phys_addr_t pd_phys = walk.pdpt_entry->page_directory_base << 12;
+      walk.pdpt_entry->present = 0;
+      walk.pdpt_entry->page_directory_base = 0;
+      pmm_free_pages(pd_phys, 1);
+    }
+  }
+
+  if(walk.pml4_entry) {
+    page_directory_pointer_t* pdpt = (page_directory_pointer_t*)physical_to_virtual(walk.pml4_entry->page_directory_base << 12);
+    if(!table_has_present_entries(pdpt->entries)) {
+      phys_addr_t pdpt_phys = walk.pml4_entry->page_directory_base << 12;
+      walk.pml4_entry->present = 0;
+      walk.pml4_entry->page_directory_base = 0;
+      pmm_free_pages(pdpt_phys, 1);
+    }
+  }
+
+  pmm_free_pages(frame, 1);
+  return true;
+}
+
+bool pmm_get_mapping(phys_addr_t root_phys, virt_addr_t vaddr, phys_addr_t* out_phys, bool* out_writable, bool* out_user) {
+  if(root_phys == 0) {
+    return false;
+  }
+
+  pml4_walk_result_t walk = pmm_walk_address(root_phys, vaddr);
+  if(walk.pt_entry == NULL || !walk.pt_entry->present) {
+    return false;
+  }
+
+  if(out_phys) {
+    *out_phys = walk.pt_entry->frame << 12;
+  }
+  if(out_writable) {
+    *out_writable = walk.pt_entry->writable != 0;
+  }
+  if(out_user) {
+    *out_user = walk.pt_entry->user != 0;
+  }
+
+  return true;
+}
+
 phys_addr_t pmm_clone_kernel_address_space(void) {
   phys_addr_t root_phys = kernel_cr3_phys ? kernel_cr3_phys : read_cr3();
   phys_addr_t new_root = pmm_alloc_pages(1);

@@ -29,3 +29,18 @@ This document captures the current state of meniOS user address spaces and the p
    * Once the heap is wired, stress the allocator by forcing repeated grow/shrink cycles.
 
 With these follow-ups in place we can move toward demand paging and file-backed mappings while keeping the region infrastructure as the central source of truth.
+
+## VM Manager API (Issue #57)
+
+With the introduction of `vm_map`, `vm_unmap`, and `vm_clone`, user address-space management now has a kernel-facing API:
+
+* `vm_map(proc, params)` reserves a region, allocates physical pages, zeroes them, maps them into the target CR3, and updates both region metadata and the legacy `user_segments[]` bookkeeping.
+* `vm_unmap(proc, base, length)` removes page table entries and frees the backing frames for the specified range, then drops the region descriptor. (Current implementation assumes whole-region unmap; partial unmap support is a follow-up.)
+* `vm_clone(child, parent)` duplicates the parent’s region table, allocates fresh frames for each committed page, copies contents, and maps them into the child, giving us a baseline for `fork()` once process cloning arrives.
+
+Limitations:
+* No copy-on-write yet; clone eagerly copies committed pages.
+* `vm_unmap` currently frees entire regions at once—page-granular tear-down will come alongside mmap/heap work.
+* Guard pages and canonical per-process layouts are still pending (see roadmap above).
+
+These APIs bridge the earlier region metadata work with actual page-table manipulation, enabling higher-level features (heap grow, mmap, fork/exec) to advance.

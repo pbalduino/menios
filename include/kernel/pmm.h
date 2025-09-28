@@ -117,6 +117,13 @@ typedef struct pml4_map_t {
 
 typedef pml4_map_t* pml4_map_p;
 
+typedef struct {
+  page_map_l4_entry_t*             pml4_entry;
+  page_directory_pointer_entry_t*  pdpt_entry;
+  page_directory_entry_t*          pd_entry;
+  page_table_entry_t*              pt_entry;
+} pml4_walk_result_t;
+
 uintptr_t   read_cr2();
 phys_addr_t read_cr3();
 void write_cr3(phys_addr_t value);
@@ -146,6 +153,9 @@ bool pmm_mark_page_user(virt_addr_t vaddr);
 bool pmm_mark_range_user(virt_addr_t start, size_t size);
 bool pmm_map_page_in_root(phys_addr_t root_phys, virt_addr_t vaddr, phys_addr_t paddr, bool writable, bool user);
 bool pmm_map_page(virt_addr_t vaddr, phys_addr_t paddr, bool writable, bool user);
+pml4_walk_result_t pmm_walk_address(phys_addr_t root_phys, virt_addr_t vaddr);
+bool pmm_unmap_page_in_root(phys_addr_t root_phys, virt_addr_t vaddr);
+bool pmm_get_mapping(phys_addr_t root_phys, virt_addr_t vaddr, phys_addr_t* out_phys, bool* out_writable, bool* out_user);
 phys_addr_t pmm_clone_kernel_address_space(void);
 phys_addr_t pmm_get_kernel_cr3(void);
 

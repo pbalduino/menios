@@ -123,6 +123,7 @@ void proc_exit(int code);
 void proc_switch(void* state);
 void proc_create_user(proc_info_p proc, const char* name, const void* code_blob, size_t code_size, void* arg);
 bool proc_register_user_segment(proc_info_p proc, phys_addr_t phys, size_t pages);
+void proc_unregister_user_segment(proc_info_p proc, phys_addr_t phys, size_t pages);
 
 #ifdef __cplusplus
 }

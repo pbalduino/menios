@@ -252,6 +252,22 @@ bool proc_register_user_segment(proc_info_p proc, phys_addr_t phys, size_t pages
   return proc_register_user_segment_internal(proc, phys, pages);
 }
 
+void proc_unregister_user_segment(proc_info_p proc, phys_addr_t phys, size_t pages) {
+  if(proc == NULL || pages == 0) {
+    return;
+  }
+
+  for(size_t i = 0; i < proc->user_segment_count; i++) {
+    if(proc->user_segments[i].phys == phys && proc->user_segments[i].pages == pages) {
+      for(size_t j = i + 1; j < proc->user_segment_count; j++) {
+        proc->user_segments[j - 1] = proc->user_segments[j];
+      }
+      proc->user_segment_count--;
+      break;
+    }
+  }
+}
+
 void proc_create_user(proc_info_p proc, const char* name, const void* code_blob, size_t code_size, void* arg) {
   proc_create(proc, name, NULL, arg);
 
