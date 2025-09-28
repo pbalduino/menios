@@ -30,6 +30,7 @@ void halt() {
 
   logk("System halted.\n");
   serial_log("System halted.");
+  outb(0xF4, 0x00);
   for(;;) {
     asm("hlt");
   }

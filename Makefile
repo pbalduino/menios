@@ -104,7 +104,8 @@ QEMU_OPTS = -smp cpus=2,maxcpus=4,sockets=1,dies=1,clusters=1,cores=2 \
 	-serial file:$(QEMU_LOG_FILE) \
 	-monitor stdio \
 	-d int \
-	-rtc base=utc,clock=host
+	-rtc base=utc,clock=host \
+	-device isa-debug-exit,iobase=0xf4,iosize=0x04
 # -M hpet=on \
 # -usb \
 # -device usb-ehci,id=ehci \
