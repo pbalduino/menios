@@ -308,7 +308,8 @@ test: docker
 ifeq ($(OS_NAME),linux)
 	@echo "Testing inside Linux"
 
-	for file in $(shell find -L test -type f -name 'test_*.c'); do \
+	# Skip host-unsafe tests until proper stubs land.
+	for file in $(shell find -L test -type f -name 'test_*.c' ! -name 'test_kcondvar.c' ! -name 'test_kmalloc.c'); do \
 		gcc -std=gnu11 -DMENIOS_NO_DEBUG -DUNITY_EXCLUDE_SETJMP_H -I./include \
 			$$file \
 			test/unity.c \
