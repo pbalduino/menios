@@ -350,7 +350,7 @@
     ]
   },
   {
-    "title": "Implement AP startup and BSP → AP bring-up",
+    "title": "Implement AP startup and BSP \u2192 AP bring-up",
     "github_issue": {
       "number": 82,
       "url": "https://github.com/pbalduino/menios/issues/82",
@@ -690,7 +690,7 @@
     "github_issue": {
       "number": 57,
       "url": "https://github.com/pbalduino/menios/issues/57",
-      "state": "OPEN"
+      "state": "CLOSED"
     },
     "labels": [
       "enhancement"
@@ -816,7 +816,7 @@
     "github_issue": {
       "number": 35,
       "url": "https://github.com/pbalduino/menios/issues/35",
-      "state": "OPEN"
+      "state": "CLOSED"
     },
     "labels": [
       "enhancement"
@@ -830,7 +830,7 @@
     "github_issue": {
       "number": 34,
       "url": "https://github.com/pbalduino/menios/issues/34",
-      "state": "OPEN"
+      "state": "CLOSED"
     },
     "labels": [
       "enhancement"
