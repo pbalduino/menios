@@ -6,11 +6,12 @@
 
 **✅ Foundation Complete!** The core kernel infrastructure needed for userspace applications is now solidly implemented:
 
-- ✅ **Memory Management**: Physical/virtual memory, kernel heap (Issues #35, #57)
+- ✅ **Memory Management**: Physical/virtual memory, kernel heap, mmap/munmap (Issues #35, #57, #89)
 - ✅ **Process Scheduling**: Preemptive userland scheduler with time slicing (Issue #34)
 - ✅ **Synchronization**: Mutexes and condition variables (Issues #36, #40)
 - ✅ **User Mode Infrastructure**: Ring 3 transitions, syscall interface, ELF loader
-- ✅ **Basic Syscalls**: write() and exit() working with user demo
+- ✅ **Process Management**: File descriptors, fork/exec process creation (Issues #96, #93)
+- ✅ **Threading Foundation**: Kernel threading infrastructure complete (Issue #108)
 
 **🔥 Ready for Next Phase**: With the foundation complete, we can now tackle application-level infrastructure!
 
@@ -18,34 +19,30 @@
 
 Below is the roadmap of infrastructure we still need before a vanilla Doom port can enter userland, organized by priority and dependencies.
 
-### **Phase 1: Process & I/O Management** (HIGH PRIORITY - Ready Now!)
-These have no blocking dependencies and can be implemented immediately:
+### **Phase 1: Process & I/O Management** ✅ **COMPLETE!**
+Foundation process management infrastructure is now implemented:
 
-#### **File Descriptor Management** (Issue #96)
-- ✅ **Status**: Ready to implement (no blockers)
-- **Scope**: dup/dup2 operations, FD table management, close-on-exec support
-- **Impact**: Foundation for all I/O operations (files, pipes, sockets)
+#### **File Descriptor Management** (Issue #96) ✅ **COMPLETE**
+- ✅ **Status**: COMPLETED - dup/dup2 operations, FD table management, close-on-exec support
+- **Impact**: Foundation for all I/O operations (files, pipes, sockets) - ENABLED
 
-#### **Memory Mapping Syscalls** (Issue #89)
-- ✅ **Status**: Ready to implement (enabled by completed VM work)
-- **Scope**: mmap/munmap for userspace memory allocation and file mapping
-- **Impact**: Enables userspace heap allocators and large memory allocations
+#### **Memory Mapping Syscalls** (Issue #89) ✅ **COMPLETE**
+- ✅ **Status**: COMPLETED - mmap/munmap for userspace memory allocation and file mapping
+- **Impact**: Userspace heap allocators and large memory allocations - ENABLED
 
-#### **Fork/Exec Process Creation** (Issue #93)
-- ✅ **Status**: Ready after Issue #96 (file descriptors)
-- **Scope**: Complete process lifecycle with copy-on-write memory
-- **Impact**: Enables running separate programs and shell operations
+#### **Fork/Exec Process Creation** (Issue #93) ✅ **COMPLETE**
+- ✅ **Status**: COMPLETED - Complete process lifecycle with copy-on-write memory
+- **Impact**: Running separate programs and shell operations - ENABLED
 
-### **Phase 2: Threading Support** (NEW PRIORITY!)
+### **Phase 2: Threading Support** (HIGH PRIORITY - Foundation Complete!)
 Complete multithreading infrastructure for modern applications:
 
-#### **Kernel Threading Infrastructure** (Issue #108)
-- ✅ **Status**: Ready to implement (foundation complete)
-- **Scope**: Thread Control Blocks, thread scheduling, stack management
-- **Impact**: Enables multithreaded applications
+#### **Kernel Threading Infrastructure** (Issue #108) ✅ **COMPLETE**
+- ✅ **Status**: COMPLETED - Thread Control Blocks, thread scheduling, stack management
+- **Impact**: Multithreaded applications foundation - ENABLED
 
 #### **pthread API Implementation** (Issue #109)
-- **Dependencies**: Issue #108 (kernel threading)
+- ✅ **Status**: Ready to implement (kernel threading complete)
 - **Scope**: Full POSIX threading API (create/join/exit, attributes, TSD)
 - **Impact**: Standard threading interface for applications
 
@@ -59,21 +56,21 @@ Complete multithreading infrastructure for modern applications:
 - **Scope**: Barriers, spinlocks, reader-writer locks, robust mutexes
 - **Impact**: High-performance synchronization for complex applications
 
-### **Phase 3: Advanced IPC** (MEDIUM PRIORITY)
+### **Phase 3: Advanced IPC** (READY TO IMPLEMENT!)
 Inter-process communication for complex applications:
 
 #### **Pipes and FIFOs** (Issue #102)
-- **Dependencies**: Issue #96 (file descriptors), Issue #40 (condition variables - ✅)
+- ✅ **Status**: Ready to implement (file descriptors complete, condition variables complete)
 - **Scope**: pipe(), mkfifo(), bidirectional communication
 - **Impact**: Shell operations, process communication
 
 #### **UNIX Signals** (Issue #103)
-- **Dependencies**: Issue #93 (fork/exec), Issue #101 (timers)
+- ✅ **Status**: Ready to implement (fork/exec complete, waiting on Issue #101 timers)
 - **Scope**: Signal delivery, handlers, masks, default actions
 - **Impact**: Process control, error handling, graceful shutdown
 
 #### **Shared Memory** (Issue #104)
-- **Dependencies**: Issue #57 (VM manager - ✅)
+- ✅ **Status**: Ready to implement (VM manager complete)
 - **Scope**: shmget/shmat/shmdt for high-performance IPC
 - **Impact**: Fast inter-process data sharing
 
@@ -100,7 +97,7 @@ Persistent storage for game assets and save files:
 - **Impact**: Uniform interface for different filesystems
 
 #### **File I/O Syscalls** (Issue #60)
-- **Dependencies**: Issue #65 (VFS), Issue #96 (file descriptors)
+- ✅ **Status**: Ready to implement (file descriptors complete, waiting on VFS)
 - **Scope**: open/read/write/lseek/close and directory operations
 - **Impact**: Userspace file access for loading WAD files
 
@@ -108,19 +105,19 @@ Persistent storage for game assets and save files:
 Visual output and user interaction:
 
 #### **Userspace Graphics Interface** (Issue #31)
-- **Dependencies**: Issue #96 (file descriptors for device access)
+- ✅ **Status**: Ready to implement (file descriptors complete)
 - **Scope**: Framebuffer interface, double buffering, palette control
 - **Requirements**: 320×200 paletted or 640×480 8/32-bit modes for Doom
 - **Impact**: Visual output for games and applications
 
 #### **Input Subsystem** (Issue #32)
-- **Dependencies**: Issue #96 (file descriptors)
+- ✅ **Status**: Ready to implement (file descriptors complete)
 - **Scope**: Userspace keyboard/mouse interface, event queue system
 - **Requirements**: Character device or event queue using PS/2 driver
 - **Impact**: User interaction and game controls
 
 #### **Audio Subsystem** (Issue #33)
-- **Dependencies**: Issue #96 (file descriptors)
+- ✅ **Status**: Ready to implement (file descriptors complete)
 - **Scope**: PCM output, mixer/stream syscalls, timer-driven audio
 - **Requirements**: 8-bit/16-bit audio buffers for Doom sound
 - **Impact**: Game audio and sound effects
