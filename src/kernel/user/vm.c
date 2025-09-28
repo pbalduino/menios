@@ -142,13 +142,22 @@ static bool clone_region(proc_info_p dst,
     return false;
   }
 
-  size_t pages = (region->committed_top - region->committed_base) / PAGE_SIZE;
-  size_t offset_pages = (region->committed_base - region->base) / PAGE_SIZE;
+  virt_addr_t clone_start = region->committed_base & ~((virt_addr_t)PAGE_SIZE - 1);
+  virt_addr_t clone_end = region->committed_top;
+  if(clone_end % PAGE_SIZE != 0) {
+    clone_end = (clone_end + PAGE_SIZE - 1) & ~((virt_addr_t)PAGE_SIZE - 1);
+  }
+
+  if(clone_end <= clone_start) {
+    return true;
+  }
+
+  size_t pages = (clone_end - clone_start) / PAGE_SIZE;
   bool writable = (region->flags & VM_REGION_FLAG_WRITE) != 0;
   bool user = (region->flags & VM_REGION_FLAG_USER) != 0;
 
   for(size_t page = 0; page < pages; page++) {
-    virt_addr_t vaddr = region->committed_base + (page * PAGE_SIZE);
+    virt_addr_t vaddr = clone_start + (page * PAGE_SIZE);
     phys_addr_t src_phys;
     if(!pmm_get_mapping(src->address_space_root, vaddr, &src_phys, NULL, NULL)) {
       continue;
@@ -172,7 +181,6 @@ static bool clone_region(proc_info_p dst,
 
   dst_region->committed_base = region->committed_base;
   dst_region->committed_top = region->committed_top;
-  (void)offset_pages;
   return true;
 }
 
