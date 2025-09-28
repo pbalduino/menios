@@ -211,11 +211,6 @@ uacpi_handle uacpi_kernel_create_mutex(void) {
   kmutex_t* mutex = kmalloc(sizeof(kmutex_t));
   memset(mutex, 0, sizeof(kmutex_t));
   kmutex_init(mutex);
-  serial_printf("uacpi_kernel_create_mutex: %p head=%p tail=%p owner=%p\n",
-                mutex,
-                mutex->waiters_head,
-                mutex->waiters_tail,
-                mutex->owner);
   return mutex;
 }
 

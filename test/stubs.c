@@ -37,7 +37,13 @@ uint64_t boot_time(void) {
 
 void proc_yield(void) {}
 
-void proc_request_yield(void) {}
+void (*test_proc_request_yield_hook)(void) = NULL;
+
+void proc_request_yield(void) {
+  if(test_proc_request_yield_hook) {
+    test_proc_request_yield_hook();
+  }
+}
 
 void proc_request_sleep(uint64_t duration_us) {
   (void)duration_us;

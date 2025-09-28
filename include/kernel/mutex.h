@@ -6,7 +6,6 @@ extern "C" {
 #endif
 
 #include <kernel/spinlock.h>
-#include <kernel/serial.h>
 #include <types.h>
 
 struct proc_info_t;
@@ -24,9 +23,6 @@ static inline void kmutex_init(kmutex_t* mutex) {
   mutex->owner = NULL;
   mutex->waiters_head = NULL;
   mutex->waiters_tail = NULL;
-#ifdef MENIOS_KERNEL
-  serial_printf("kmutex_init: %p\n", mutex);
-#endif
 }
 
 int kmutex_lock(kmutex_t* mutex);
