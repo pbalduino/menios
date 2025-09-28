@@ -8,33 +8,38 @@ A hobby operating system kernel written in C and Assembly, targeting x86-64 arch
 
 ## Current Status
 
-MeniOS is in active development with basic kernel functionality implemented. The system boots with Limine bootloader and provides:
+MeniOS has made significant progress with core kernel functionality now solidly implemented. The system boots with Limine bootloader and provides:
 
-- **Memory Management**: Physical memory mapping, virtual memory allocation, and basic heap management
+### ✅ **Completed Core Infrastructure**
+- **✅ Memory Management**: Physical memory mapping, virtual memory allocation, and kernel heap management (Issues #35, #57)
+- **✅ Process Scheduling**: Preemptive userland scheduler with kernel threads and time slicing (Issue #34)
+- **✅ Synchronization**: Blocking mutexes and condition variables with scheduler integration (Issues #36, #40)
 - **Console System**: ANSI escape sequence support with scrolling and color output
-- **Process Management**: Kernel threads with basic scheduling (scheduler improvements ongoing)
-- **Synchronization**: Blocking mutexes with scheduler integration plus kernel condition variables
 - **Input/Output**: PS/2 keyboard driver with buffered input
 - **Debugging**: Page fault and GPF handlers for system diagnostics
 - **Testing**: Unit test framework using Unity for kernel components
-- **Privilege Setup**: Ring 3 GDT selectors, 64-bit TSS, and a user-mode entry trampoline ready for userland bring-up
-- **Syscalls**: INT 0x80 dispatcher with initial `write(1, …)` and `exit(status)` support for user-mode stubs
-- **User Demo**: Kernel launches a Ring 3 thread mapped into its own user page tables, prints via `write(1, …)` then exits through syscall 60, exercising the full syscall/scheduler path
-- **ELF Support**: Minimal ELF64 loader maps binary segments into user address space; demo process now boots from an embedded user-mode ELF image
-- **Memory Protection**: Kernel address space is marked supervisor-only; user mappings live in per-process page tables
+- **Privilege Setup**: Ring 3 GDT selectors, 64-bit TSS, and user-mode entry trampoline
+- **Syscalls**: INT 0x80 dispatcher with initial `write(1, …)` and `exit(status)` support
+- **User Demo**: Kernel launches Ring 3 thread with ELF loader exercising full syscall path
+- **Memory Protection**: Kernel/user separation with per-process page tables
 
-### Userland Bring-Up Snapshot
+### 🚧 **Next Major Milestones**
+With the strong foundation now in place, the next high-priority developments are:
 
-With the privilege infrastructure in place, the next milestones are:
+1. **File Descriptor Management** (Issue #96) - Foundation for all I/O operations
+2. **Memory Mapping Syscalls** (Issue #89) - mmap/munmap for userspace allocators
+3. **Fork/Exec Process Creation** (Issue #93) - Full process lifecycle management
+4. **Threading Support** (Issues #108-#113) - Complete multithreading infrastructure
+5. **Advanced IPC** (Issues #102-#107) - Pipes, signals, shared memory, and microkernel IPC
 
-1. Finalise per-process virtual address spaces (current demo clones kernel root and maps user regions; next step is full isolation and cleanup tooling).
-2. Enforce user/kernel page permissions everywhere (mark kernel pages supervisor-only, audit mappings).
-3. Build out the syscall/interrupt return path for richer ABI support beyond `write`/`exit`.
-4. Implement the ELF loader so user binaries can be placed into the new address space.
-
-Progress on these steps unlocks the remaining Road to Doom tasks such as ELF loading, syscall dispatch, and user-mode tooling.
-
-> Tip: `user_demo_launch()` now seeds a Ring 3 task that prints via `write(1, …)` and exits with syscall 60, exercising the user/syscall path during boot.
+### 🆕 **Threading Support Added**
+A complete threading roadmap has been designed with 6 new issues:
+- **#108**: Kernel threading infrastructure
+- **#109**: pthread API and POSIX threading support
+- **#110**: Thread-safe C library (libc)
+- **#111**: Advanced pthread synchronization primitives
+- **#112**: Thread debugging and profiling support
+- **#113**: Thread-aware system calls and kernel integration
 
 ## Quick Start
 
@@ -64,7 +69,7 @@ All generated artifacts now live under `build/` (`build/bin` for boot assets, `b
 
 During boot, meniOS schedules the embedded `user_demo` ELF immediately after hardware probing. The program now:
 
-- forces the stack to grow across an 8 KiB boundary (exercising lazy stack paging),
+- forces the stack to grow across an 8 KiB boundary (exercising lazy stack paging),
 - emits three `write(1, …)` syscalls with status messages, and
 - exits with status 42 via `SYS_exit`.
 
@@ -72,67 +77,86 @@ Expect the log to show the `[user_demo]` messages on screen and in `com1.log`, c
 
 ## Development Progress
 
-### Completed ✅
+### ✅ **Major Milestones Completed**
+- [x] **Foundation Complete**: Memory management, scheduling, and synchronization (Issues #34, #35, #36, #40, #57)
 - [x] Integration with Limine bootloader v10
-- [x] Physical memory mapping and management
-- [x] Virtual memory allocation system
-- [x] Kernel malloc implementation
+- [x] Physical memory mapping and management with virtual memory allocation
+- [x] Kernel malloc implementation with heap management
+- [x] Preemptive scheduler with kernel threads and time slicing
+- [x] Mutex implementation with blocking and scheduler integration
+- [x] Condition variables for advanced synchronization
 - [x] ANSI console with scrolling and color support
 - [x] Complete vsprintk function with all format specifiers
 - [x] PS/2 keyboard driver with proper input handling
-- [x] Kernel thread scheduling improvements
 - [x] Virtual-to-physical address translation (page table walking)
+- [x] Ring 3 user mode infrastructure with syscall interface
+- [x] ELF loader for user programs
+- [x] Per-process virtual memory with kernel/user separation
 
-### In Progress 🚧
-- [ ] Thread termination status propagation and join improvements
-- [ ] TSC timekeeping calibration and boot time initialization
-- [ ] kmalloc integration with virtual memory system and performance improvements
-- [ ] Further synchronization primitives (semaphores, reader-writer locks)
-- [ ] Atomic operations and memory barriers for lock-free programming
+### 🔥 **Ready to Implement** (Dependencies Met)
+- [ ] **File descriptor management and pipes** (Issue #96) - No blockers
+- [ ] **Memory mapping syscalls (mmap/munmap)** (Issue #89) - Enabled by completed VM work
+- [ ] **Kernel threading infrastructure** (Issue #108) - Enabled by completed foundation
+- [ ] **Fork/exec process creation** (Issue #93) - Enabled by VM and file descriptor work
+
+### 🚧 **In Progress & Planned**
+- [ ] **Threading Support**: Complete pthread API and multithreading (Issues #108-#113)
+- [ ] **Advanced IPC**: Pipes, signals, shared memory, microkernel IPC (Issues #102-#107)
+- [ ] **Filesystem**: Block drivers, VFS, and file operations (Issues #60, #62-#65)
+- [ ] **Networking**: Complete TCP/IP stack (Issues #67-#73)
+- [ ] **Graphics**: Framebuffer interface and input subsystem (Issues #31-#33)
 
 ### Road to Doom 🎮
 
-The ultimate goal is running Doom in userland! This requires substantial infrastructure:
+**Foundation ✅ COMPLETE**: The core kernel infrastructure needed for userspace applications is now solid!
 
-- **Userland Foundation**: ELF loader, syscall interface, process management
-- **Memory Management**: Per-process virtual memory, demand paging, user heap
+Remaining major components for Doom:
 - **File System**: VFS layer, disk drivers, file I/O syscalls
 - **Graphics**: Framebuffer interface, double buffering, palette control
 - **Input**: Userspace keyboard/mouse drivers and event system
 - **Audio**: PCM output, mixing, streaming syscalls
 - **Toolchain**: Cross-compiler, libc subset, build system
 
-See [`road_to_doom.md`](road_to_doom.md) for the complete roadmap and [`tasks.json`](tasks.json) for detailed task tracking. Memory management decisions live in [`docs/architecture/mem.md`](docs/architecture/mem.md); per-process virtual memory notes are in [`docs/architecture/per_process_vm.md`](docs/architecture/per_process_vm.md); ELF loader behaviour is documented in [`docs/architecture/elf_loader.md`](docs/architecture/elf_loader.md); synchronisation work (atomics & spinlocks) is outlined in [`docs/architecture/atomic.md`](docs/architecture/atomic.md); kmalloc/VM integration and timekeeping plans are captured in [`docs/architecture/kmalloc_vm.md`](docs/architecture/kmalloc_vm.md) and [`docs/architecture/timing.md`](docs/architecture/timing.md); hardware probing & driver registry details are in [`docs/architecture/hardware.md`](docs/architecture/hardware.md).
+See [`road_to_doom.md`](road_to_doom.md) for the complete roadmap and [`tasks.json`](tasks.json) for detailed task tracking.
+
+**📊 Progress Assessment**: With 5 major foundation issues completed and 64 remaining issues, meniOS is now positioned for rapid feature development. The completed memory management and synchronization work enables parallel development of process management, threading, and I/O systems.
 
 ## Architecture Overview
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│                        USERLAND (Future)                    │
+│                    USERLAND (In Development)                │
 │  ┌─────────┐  ┌─────────┐  ┌─────────┐  ┌─────────────────┐ │
 │  │  Doom   │  │ Shell   │  │ Games   │  │  Applications   │ │
 │  └─────────┘  └─────────┘  └─────────┘  └─────────────────┘ │
 │                              │                             │
 │                        ┌─────────┐                        │
-│                        │  libc   │                        │
+│                        │  libc   │  (Threading Support)   │
 │                        └─────────┘                        │
 └─────────────────────────────┬───────────────────────────────┘
-                              │ Syscall Interface (Future)
+                              │ Syscall Interface ✅
 ┌─────────────────────────────┴───────────────────────────────┐
-│                        KERNEL SPACE                        │
+│                      KERNEL SPACE ✅                       │
 │  ┌─────────────────┐  ┌─────────────────┐  ┌──────────────┐ │
-│  │ Process Mgmt    │  │ Memory Mgmt     │  │ I/O Subsys   │ │
-│  │ • Scheduler     │  │ • Virtual Mem   │  │ • Console    │ │
-│  │ • Kernel Threads│  │ • Physical Mem  │  │ • PS/2 Input │ │
-│  │ • Synchronization│ │ • Page Tables   │  │ • Framebuffer│ │
+│  │ Process Mgmt ✅ │  │ Memory Mgmt ✅  │  │ I/O Subsys   │ │
+│  │ • Scheduler ✅  │  │ • Virtual Mem ✅│  │ • Console ✅ │ │
+│  │ • Kernel Threads│  │ • Physical Mem ✅│  │ • PS/2 Input │ │
+│  │ • Sync Prims ✅ │  │ • Page Tables ✅│  │ • Framebuffer│ │
 │  └─────────────────┘  └─────────────────┘  └──────────────┘ │
 │                              │                             │
 │  ┌─────────────────┐  ┌─────────────────┐  ┌──────────────┐ │
 │  │ Debug/Diag      │  │ File System     │  │ Hardware     │ │
-│  │ • Page Faults   │  │ • VFS (Future)  │  │ • Interrupts │ │
-│  │ • GPF Handler   │  │ • Block Drivers │  │ • Timers     │ │
-│  │ • Unit Tests    │  │ • File I/O      │  │ • Hardware   │ │
+│  │ • Page Faults ✅│  │ • VFS (Planned) │  │ • Interrupts │ │
+│  │ • GPF Handler ✅│  │ • Block Drivers │  │ • Timers     │ │
+│  │ • Unit Tests ✅ │  │ • File I/O      │  │ • Hardware   │ │
 │  └─────────────────┘  └─────────────────┘  └──────────────┘ │
+│                                                             │
+│  ┌─────────────────────────────────────────────────────────┐ │
+│  │            🆕 Threading Support (Planned)               │ │
+│  │  • Kernel threading infrastructure (#108)              │ │
+│  │  • pthread API (#109) • Thread-safe libc (#110)       │ │
+│  │  • Advanced synchronization (#111) • Debugging (#112) │ │
+│  └─────────────────────────────────────────────────────────┘ │
 └─────────────────────────────┬───────────────────────────────┘
                               │ Hardware Abstraction
 ┌─────────────────────────────┴───────────────────────────────┐
@@ -145,24 +169,21 @@ See [`road_to_doom.md`](road_to_doom.md) for the complete roadmap and [`tasks.js
 ## Known Issues and Limitations
 
 ### Current Limitations
-- **Kernel-only**: User mode groundwork underway (Ring 3 GDT entries + TSS in place)
-- **Single-threaded userspace**: No process isolation or multi-process support
-- **Limited synchronization**: Basic mutex only, no semaphores/spinlocks/rwlocks yet
+- **Filesystem**: No persistent storage or file I/O capabilities yet (Issues #60, #62-#65)
 - **Limited hardware support**: Only basic PS/2 keyboard, VGA framebuffer
-- **No file system**: No persistent storage or file I/O capabilities
-- **Basic memory management**: No demand paging or memory protection between processes
-- **No network stack**: No networking capabilities
+- **No network stack**: No networking capabilities (Issues #67-#73)
+- **Graphics**: Basic framebuffer, no hardware acceleration
+- **Audio**: No audio subsystem implemented yet
 
-### Active Issues
-- **Caret rendering**: Fixed but may need refinement for different scenarios
-- **Thread synchronization**: Join operations and sleep states need alignment with scheduler
-- **Timer accuracy**: TSC calibration needed for accurate timing operations
-- **Memory allocation**: kmalloc needs integration with virtual memory system
-- **Exception handlers**: Page fault and GPF handlers need better diagnostic output
+### Active Development Areas
+- **Threading**: Complete multithreading support in development (Issues #108-#113)
+- **IPC**: Advanced inter-process communication planned (Issues #102-#107)
+- **File I/O**: File descriptor management and filesystem support (Issues #96, #60, #62-#65)
+- **Process Management**: Fork/exec and full process lifecycle (Issue #93)
 
 ### Testing Environment
 - **QEMU only**: Primary testing on QEMU emulator, real hardware testing limited
-- **x86-64 focus**: No support for other architectures planned
+- **x86-64 focus**: No support for other architectures planned currently
 - **Development tools**: Requires cross-compilation toolchain for full development
 
 ## Project Structure
@@ -170,13 +191,12 @@ See [`road_to_doom.md`](road_to_doom.md) for the complete roadmap and [`tasks.js
 - **`src/`** - Kernel source code (C and Assembly)
 - **`include/`** - Header files
 - **`tests/`** - Unit tests using Unity framework
-- **`bin/`** - Build artifacts and bootloader assets
+- **`build/`** - Build artifacts and bootloader assets
+- **`docs/`** - Architecture documentation and design decisions
 - **`tasks.json`** - Detailed task tracking with GitHub issue integration
-- **`ROAD_TO_DOOM.md`** - Comprehensive roadmap for userland Doom support
-- **`CONTRIBUTING.md`** - Complete guide for contributors and development workflow
-- **`SECURITY.md`** - Security policy and vulnerability reporting guidelines
-- **`CODING.md`** - Coding style guidelines and standards
-- **`CODE_OF_CONDUCT.md`** - Community guidelines and standards
+- **`road_to_doom.md`** - Comprehensive roadmap for userland Doom support
+- **`issue_dependencies.dot/.png`** - Visual dependency chart of all issues
+- **`ISSUE_DEPENDENCY_ANALYSIS.md`** - Detailed dependency analysis and implementation strategy
 
 ## Contributing
 
@@ -184,6 +204,7 @@ We welcome contributions from developers of all skill levels! 🚀
 
 - **New Contributors**: Start with our [Contributing Guide](CONTRIBUTING.md) for a complete development workflow
 - **Find Tasks**: Check [GitHub Issues](https://github.com/pbalduino/menios/issues) or browse [`tasks.json`](tasks.json) for detailed task tracking
+- **High Priority**: Issues #89, #96, #108 are ready to implement with no blocking dependencies
 - **Report Issues**: Use our issue templates to report bugs or request features
 - **Security Issues**: Please review our [Security Policy](SECURITY.md) for responsible disclosure
 - **Code Style**: Follow the guidelines in [`CODING.md`](CODING.md)
@@ -198,7 +219,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 **Copyright (c) 2020-2025 Plínio Balduino**
 
 ## References
-  - Intel® 64 and IA-32 Architectures Software Developer’s Manual Combined Volumes: 1, 2A, 2B, 2C, 2D, 3A, 3B, 3C, 3D, and 4: https://www.intel.com/content/www/us/en/developer/articles/technical/intel-sdm.html
+  - Intel® 64 and IA-32 Architectures Software Developer's Manual Combined Volumes: 1, 2A, 2B, 2C, 2D, 3A, 3B, 3C, 3D, and 4: https://www.intel.com/content/www/us/en/developer/articles/technical/intel-sdm.html
   - PIC:  https://pdos.csail.mit.edu/6.828/2014/readings/hardware/8259A.pdf
           http://www.brokenthorn.com/Resources/OSDevPic.html
   - APIC: http://web.archive.org/web/20070112195752/http://developer.intel.com/design/pentium/datashts/24201606.pdf
