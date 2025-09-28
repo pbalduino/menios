@@ -56,3 +56,11 @@ With vm_clone in place, meniOS now offers a full `fork`/`execve` path:
 * `vm_clone()` now rounds partially committed regions up to full pages before copying, ensuring child processes inherit stack data that was still sharing a leaf page with uncommitted space.
 
 This closes the loop on process cloning and image replacement: the scheduler can now spin up arbitrary user tasks, duplicate them, and hand control over to new executables without rebooting the kernel.
+
+## Memory Mapping Syscalls (Issue #89)
+
+Anonymous `mmap`/`munmap` now ride on top of the VM manager:
+
+* `kmmap()` translates POSIX protection/flag bits into `vm_region_t` metadata and carves a `VM_REGION_MMAP` entry using `vm_map()`. Each process tracks an independent `(base, next, limit)` window so mappings live away from the code/stack layout.
+* `kmunmap()` looks up the owning region, calls `vm_unmap()`, and rolls back the cursor when the highest mapping is released—no partial unmaps yet, matching the `vm_unmap` semantics.
+* syscalls `SYS_mmap` and `SYS_munmap` validate arguments, surface kernel errors as negative errno values, and return page-aligned addresses. A tiny libc wrapper (`src/libc/mman.c`) forwards the POSIX API into the new interrupt 0x80 entries and keeps `errno` in sync for userspace allocators like jemalloc.

@@ -1,78 +1,204 @@
-#include <kernel/pmm.h>
+#include <errno.h>
+#include <kernel/mman.h>
 #include <kernel/proc.h>
 #include <kernel/serial.h>
-#include <kernel/mman.h>
+#include <kernel/vm.h>
+#include <kernel/vm_region.h>
+#include <kernel/pmm.h>
+#include <stdbool.h>
+#include <stdint.h>
 #include <types.h>
-#include <unistd.h>
 
-void init_brk() {
-  serial_printf("init_brk: current->heap: %lx\n", current->heap);
+#define MMAP_SUPPORTED_FLAGS (MAP_ANONYMOUS | MAP_PRIVATE)
 
-  uintptr_t value = get_first_free_page();
-  if(!value) {
-    serial_printf("init_brk: no free page\n");
-    return;
+static size_t page_align_up_size(size_t value) {
+  if(value == 0) {
+    return PAGE_SIZE;
   }
-
-  current->heap = physical_to_virtual(value);
-  
-  current->brk = current->heap;
-
-  serial_printf("init_brk: free page: %lx\n", get_first_free_page());
-  serial_printf("init_brk: heap_offset: %lx\n", current->heap);
+  size_t remainder = value % PAGE_SIZE;
+  if(remainder == 0) {
+    return value;
+  }
+  return value + (PAGE_SIZE - remainder);
 }
 
-void* kmmap_anonymous(void *addr, size_t length, int prot) {
-  serial_printf("mmap_anonymous: addr: %lx, length: %lx, prot: %d\n", addr, length, prot);
-  serial_printf("mmap_anonymous: current->brk: %lx\n", current->brk);
+static virt_addr_t page_align_down_addr(virt_addr_t value) {
+  return value & ~((virt_addr_t)PAGE_SIZE - 1);
+}
 
-  if(current->brk == 0) {
-    init_brk();
-    if(current->brk == 0) {
-      return MAP_FAILED;
+static virt_addr_t page_align_up_addr(virt_addr_t value) {
+  if((value & (PAGE_SIZE - 1)) == 0) {
+    return value;
+  }
+  return (value + PAGE_SIZE) & ~((virt_addr_t)PAGE_SIZE - 1);
+}
+
+static bool mmap_flags_supported(int flags) {
+  if((flags & MAP_ANONYMOUS) == 0) {
+    return false;
+  }
+  if(flags & ~MMAP_SUPPORTED_FLAGS) {
+    return false;
+  }
+  return true;
+}
+
+static uint32_t prot_to_region_flags(int prot) {
+  uint32_t flags = VM_REGION_FLAG_USER;
+  if(prot & PROT_READ) {
+    flags |= VM_REGION_FLAG_READ;
+  }
+  if(prot & PROT_WRITE) {
+    flags |= VM_REGION_FLAG_WRITE;
+  }
+  if(prot & PROT_EXEC) {
+    flags |= VM_REGION_FLAG_EXEC;
+  }
+  return flags;
+}
+
+static bool ranges_overlap(virt_addr_t a_base, virt_addr_t a_end,
+                           virt_addr_t b_base, virt_addr_t b_end) {
+  return !(a_end <= b_base || a_base >= b_end);
+}
+
+static bool proc_region_overlaps(proc_info_p proc, virt_addr_t base, size_t length) {
+  virt_addr_t end = base + length;
+  for(size_t i = 0; i < proc->vm_region_count; i++) {
+    vm_region_t* region = &proc->vm_regions[i];
+    virt_addr_t region_base = region->base;
+    virt_addr_t region_end = region->base + region->length;
+    if(ranges_overlap(base, end, region_base, region_end)) {
+      return true;
     }
   }
+  return false;
+}
 
-  if(addr == NULL) {
-    uintptr_t value = get_first_free_virtual_address(physical_to_virtual(current->brk));
-    if(!value) {
-      return MAP_FAILED;
-    }
-    addr = (void*)value;
-  }
-
-  if(length == 0) {
-    length = PAGE_SIZE;
-  }
-
-  if(length % PAGE_SIZE != 0) {
-    length = ((length / PAGE_SIZE) + 1) * PAGE_SIZE;
-  }
-
-  void* brk = sbrk(length);
-
-  if(brk != MAP_FAILED) {
-    set_page_used(virtual_to_physical(current->brk));
-  }
-
-  return brk;
+static bool check_overflow(virt_addr_t base, size_t length) {
+  return length > (size_t)(UINT64_MAX - base);
 }
 
 void* kmmap(void *addr, size_t length, int prot, int flags, int fd, off_t offset) {
-  switch(flags) {
-  case MAP_ANONYMOUS:
-  case MAP_ANONYMOUS | MAP_PRIVATE:
-    return kmmap_anonymous(addr, length, prot);
-    break;
-  
-  default:
-    serial_printf("mmap: unknown flag: %d\n", flags);
-    return NULL;
-    break;
+  (void)fd;
+  (void)offset;
+
+  if(current == NULL || !current->user_mode) {
+    if(current) {
+      current->errno = ENOSYS;
+    }
+    return MAP_FAILED;
   }
+
+  if(!mmap_flags_supported(flags)) {
+    current->errno = EINVAL;
+    return MAP_FAILED;
+  }
+
+  size_t aligned_len = page_align_up_size(length);
+  if(check_overflow(0, aligned_len)) {
+    current->errno = EINVAL;
+    return MAP_FAILED;
+  }
+
+  virt_addr_t base = addr ? page_align_down_addr((virt_addr_t)addr)
+                          : page_align_up_addr(current->mmap_next ? current->mmap_next : current->mmap_base);
+
+  bool hint = (addr != NULL);
+
+  if(check_overflow(base, aligned_len)) {
+    current->errno = EINVAL;
+    return MAP_FAILED;
+  }
+
+  virt_addr_t end = base + aligned_len;
+
+  if(base < current->mmap_base || end > current->mmap_limit || base >= end) {
+    current->errno = ENOMEM;
+    return MAP_FAILED;
+  }
+
+  if(!hint) {
+    while(end <= current->mmap_limit && proc_region_overlaps(current, base, aligned_len)) {
+      base = page_align_up_addr(end);
+      if(check_overflow(base, aligned_len)) {
+        current->errno = ENOMEM;
+        return MAP_FAILED;
+      }
+      end = base + aligned_len;
+    }
+
+    if(end > current->mmap_limit || base >= end) {
+      current->errno = ENOMEM;
+      return MAP_FAILED;
+    }
+  } else if(proc_region_overlaps(current, base, aligned_len)) {
+    current->errno = EINVAL;
+    return MAP_FAILED;
+  }
+
+  vm_map_params_t params = {
+    .base = base,
+    .length = aligned_len,
+    .flags = prot_to_region_flags(prot),
+    .type = VM_REGION_MMAP
+  };
+
+  if(!vm_map(current, &params)) {
+    current->errno = ENOMEM;
+    return MAP_FAILED;
+  }
+
+  if(!hint) {
+    virt_addr_t next = page_align_up_addr(end);
+    if(next > current->mmap_next) {
+      current->mmap_next = next;
+    }
+  }
+
+  current->errno = 0;
+  return (void*)base;
 }
 
 int kmunmap(void *addr, size_t len) {
-  serial_printf("munmap: addr: %lx, len: %lx\n", addr, len);
-  return 0; 
+  if(current == NULL || !current->user_mode || addr == NULL || len == 0) {
+    if(current) {
+      current->errno = EINVAL;
+    }
+    return -EINVAL;
+  }
+
+  virt_addr_t base = page_align_down_addr((virt_addr_t)addr);
+  size_t aligned_len = page_align_up_size(len);
+
+  if(check_overflow(base, aligned_len)) {
+    current->errno = EINVAL;
+    return -EINVAL;
+  }
+
+  vm_region_t* region = NULL;
+  for(size_t i = 0; i < current->vm_region_count; i++) {
+    vm_region_t* candidate = &current->vm_regions[i];
+    if(candidate->base == base && candidate->type == VM_REGION_MMAP) {
+      region = candidate;
+      break;
+    }
+  }
+
+  if(region == NULL || region->length != aligned_len) {
+    current->errno = EINVAL;
+    return -EINVAL;
+  }
+
+  if(!vm_unmap(current, base, aligned_len)) {
+    current->errno = EFAULT;
+    return -EFAULT;
+  }
+
+  if(base + aligned_len == current->mmap_next) {
+    current->mmap_next = base;
+  }
+
+  current->errno = 0;
+  return 0;
 }

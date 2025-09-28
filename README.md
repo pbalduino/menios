@@ -95,9 +95,9 @@ Expect the log to show the `[user_demo]` messages on screen and in `com1.log`, c
 
 ### 🔥 **Ready to Implement** (Dependencies Met)
 - [ ] **File descriptor management and pipes** (Issue #96) - No blockers
-- [ ] **Memory mapping syscalls (mmap/munmap)** (Issue #89) - Enabled by completed VM work
+- [x] **Memory mapping syscalls (mmap/munmap)** (Issue #89) - Enabled by completed VM work
 - [ ] **Kernel threading infrastructure** (Issue #108) - Enabled by completed foundation
-- [ ] **Fork/exec process creation** (Issue #93) - Enabled by VM and file descriptor work
+- [x] **Fork/exec process creation** (Issue #93) - Enabled by VM and file descriptor work
 
 ### 🚧 **In Progress & Planned**
 - [ ] **Threading Support**: Complete pthread API and multithreading (Issues #108-#113)

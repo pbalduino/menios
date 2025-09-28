@@ -1,5 +1,6 @@
 #include <errno.h>
 #include <kernel/console.h>
+#include <kernel/mman.h>
 #include <kernel/proc.h>
 #include <kernel/serial.h>
 #include <kernel/syscall.h>
@@ -8,6 +9,8 @@
 
 static uint64_t syscall_stub_unimplemented(syscall_frame_t* frame);
 static uint64_t syscall_write_handler(syscall_frame_t* frame);
+static uint64_t syscall_mmap_handler(syscall_frame_t* frame);
+static uint64_t syscall_munmap_handler(syscall_frame_t* frame);
 static uint64_t syscall_fork_handler(syscall_frame_t* frame);
 static uint64_t syscall_execve_handler(syscall_frame_t* frame);
 static uint64_t syscall_yield_handler(syscall_frame_t* frame);
@@ -30,6 +33,8 @@ void syscall_init(void) {
   }
 
   syscall_register(SYS_WRITE, syscall_write_handler);
+  syscall_register(SYS_MMAP, syscall_mmap_handler);
+  syscall_register(SYS_MUNMAP, syscall_munmap_handler);
   syscall_register(SYS_FORK, syscall_fork_handler);
   syscall_register(SYS_EXECVE, syscall_execve_handler);
   syscall_register(SYS_YIELD, syscall_yield_handler);
@@ -84,6 +89,37 @@ static uint64_t syscall_write_handler(syscall_frame_t* frame) {
   }
 
   return (uint64_t)length;
+}
+
+static uint64_t syscall_mmap_handler(syscall_frame_t* frame) {
+  void* addr = (void*)frame->rdi;
+  size_t length = (size_t)frame->rsi;
+  int prot = (int)frame->rdx;
+  int flags = (int)frame->r10;
+  int fd = (int)frame->r8;
+  off_t offset = (off_t)frame->r9;
+
+  void* result = kmmap(addr, length, prot, flags, fd, offset);
+  if(result == MAP_FAILED) {
+    int err = current ? current->errno : ENOMEM;
+    if(err == 0) {
+      err = ENOMEM;
+    }
+    frame->rax = (uint64_t)(-err);
+    return frame->rax;
+  }
+
+  frame->rax = (uint64_t)result;
+  return frame->rax;
+}
+
+static uint64_t syscall_munmap_handler(syscall_frame_t* frame) {
+  void* addr = (void*)frame->rdi;
+  size_t length = (size_t)frame->rsi;
+
+  int rc = kmunmap(addr, length);
+  frame->rax = (uint64_t)rc;
+  return frame->rax;
 }
 
 static uint64_t syscall_fork_handler(syscall_frame_t* frame) {

@@ -392,6 +392,9 @@ void proc_create(proc_info_p proc, const char* name, void (*entrypoint)(void *),
   proc->user_mode = false;
   proc->user_stack_base_vaddr = 0;
   proc->user_stack_size = 0;
+  proc->mmap_base = 0;
+  proc->mmap_next = 0;
+  proc->mmap_limit = 0;
   proc->dispatch_count = 0;
   proc->exec_time = 0;
   proc->last_dispatch_us = 0;
@@ -426,6 +429,17 @@ static inline virt_addr_t user_stack_top(uint32_t pid) {
   const virt_addr_t base = 0x0000000000800000ull;
   const virt_addr_t stride = 0x200000ull; // 2MB per process
   return base + (stride * pid);
+}
+
+static inline virt_addr_t user_mmap_base(uint32_t pid) {
+  const virt_addr_t base = 0x0000000100000000ull;   // 4GB window per process slot
+  const virt_addr_t stride = 0x0000000010000000ull; // 256MB per process
+  return base + (stride * pid);
+}
+
+static inline virt_addr_t user_mmap_limit(uint32_t pid) {
+  const virt_addr_t stride = 0x0000000010000000ull;
+  return user_mmap_base(pid) + stride;
 }
 
 static bool proc_register_user_segment_internal(proc_info_p proc, phys_addr_t phys, size_t pages) {
@@ -568,6 +582,9 @@ proc_info_p proc_fork(proc_info_p parent, const syscall_frame_t* frame, int* err
   child->user_stack_size = parent->user_stack_size;
   child->brk = parent->brk;
   child->heap = parent->heap;
+  child->mmap_base = parent->mmap_base;
+  child->mmap_next = parent->mmap_next;
+  child->mmap_limit = parent->mmap_limit;
   child->errno = 0;
   child->exit_code = 0;
   child->sleep_until = 0;
@@ -717,6 +734,9 @@ int proc_exec_image(proc_info_p proc, const uint8_t* image, size_t size, syscall
          staging.vm_regions,
          staging.vm_region_count * sizeof(vm_region_t));
   proc->user_mode = true;
+  proc->mmap_base = user_mmap_base(proc->pid);
+  proc->mmap_next = proc->mmap_base;
+  proc->mmap_limit = user_mmap_limit(proc->pid);
 
   kfree(elf_copy);
 
@@ -787,6 +807,9 @@ void proc_create_user(proc_info_p proc, const char* name, const void* code_blob,
   proc->user_stack_base_vaddr = stack_base_vaddr;
   proc->user_stack_size = PROC_USER_STACK_SIZE;
   proc->address_space_root = new_root;
+  proc->mmap_base = user_mmap_base(proc->pid);
+  proc->mmap_next = proc->mmap_base;
+  proc->mmap_limit = user_mmap_limit(proc->pid);
 
   if(!vm_region_add(proc,
                     stack_base_vaddr,
@@ -815,7 +838,8 @@ void proc_create_user(proc_info_p proc, const char* name, const void* code_blob,
   }
 
   if(!proc_register_user_segment(proc, initial_stack_phys, 1)) {
-    serial_printf("proc_create_user: too many user segments\n");
+    serial_printf("proc_create_user: failed to register stack segment phys=%lx\n",
+                  initial_stack_phys);
     pmm_free_pages(initial_stack_phys, 1);
     halt();
   }
@@ -838,10 +862,6 @@ void proc_create_user(proc_info_p proc, const char* name, const void* code_blob,
   proc->cpu_state->cs = USER_CODE_SEGMENT;
   proc->cpu_state->ss = USER_DATA_SEGMENT;
   proc->cpu_state->rflags = 0x202;
-  serial_printf("proc_create_user: ss=%lx cs=%lx rsp=%lx\n",
-                proc->cpu_state->ss,
-                proc->cpu_state->cs,
-                proc->cpu_state->rsp);
 }
 
 void proc_execute(proc_info_p proc) {

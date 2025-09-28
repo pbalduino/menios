@@ -130,6 +130,8 @@ extern "C" {
 #define ERESTARTSYS    512
 #define ERESTARTNOINTR    513
 
+extern int errno;
+
 #ifdef __cplusplus
 }
 #endif

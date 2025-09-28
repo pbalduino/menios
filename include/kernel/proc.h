@@ -95,6 +95,9 @@ typedef struct proc_info_t {
   uint32_t     pid;
   uintptr_t    brk;
   uintptr_t    heap;
+  virt_addr_t  mmap_base;
+  virt_addr_t  mmap_next;
+  virt_addr_t  mmap_limit;
   proc_state_t state;
   uint8_t      priority;
   uint64_t     sleep_until;

@@ -8,10 +8,12 @@ extern "C" {
 #include <types.h>
 
 #define SYS_WRITE   1
-#define SYS_FORK   57
-#define SYS_EXECVE 59
+#define SYS_MMAP    9
+#define SYS_MUNMAP 11
 #define SYS_YIELD  24
 #define SYS_SLEEP  35
+#define SYS_FORK   57
+#define SYS_EXECVE 59
 #define SYS_EXIT   60
 
 typedef struct syscall_frame_t {
