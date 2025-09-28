@@ -143,15 +143,7 @@ void proc_switch(void* arg) {
     write_cr3(desired_cr3);
   }
 
-  serial_printf("proc_switch: target cs=%lx ss=%lx rip=%lx rsp=%lx\n",
-                current->cpu_state->cs,
-                current->cpu_state->ss,
-                current->cpu_state->rip,
-                current->cpu_state->rsp);
-  uint64_t* frame = (uint64_t*)arg;
   memcpy(arg, current->cpu_state, sizeof(cpu_state_t));
-  serial_printf("proc_switch: frame rip=%lx cs=%lx rflags=%lx rsp=%lx ss=%lx\n",
-                frame[15], frame[16], frame[17], frame[18], frame[19]);
   current->state = PROC_STATE_RUNNING;
 
   uint64_t kernel_stack = proc_kernel_stack_top(current);
