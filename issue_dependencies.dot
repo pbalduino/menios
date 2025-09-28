@@ -1,0 +1,191 @@
+digraph IssueDependencies {
+    // Graph styling
+    rankdir=TB;
+    bgcolor="white";
+    node [shape=box, style=filled, fontname="Arial", fontsize=10];
+    edge [fontname="Arial", fontsize=8];
+
+    // Color coding by category
+    subgraph cluster_foundation {
+        label="Foundation & Core";
+        style=filled;
+        fillcolor="#E8F4FD";
+
+        // Memory Management
+        issue35 [label="#35: kmalloc\nimplementation", fillcolor="#FFE6E6"];
+        issue57 [label="#57: VM manager\n(vm_map/vm_unmap)", fillcolor="#FFE6E6"];
+        issue89 [label="#89: mmap/munmap\nsyscalls", fillcolor="#FFE6E6"];
+        issue97 [label="#97: Architecture\nabstraction layer", fillcolor="#E6F3FF"];
+
+        // Process Management
+        issue93 [label="#93: fork/exec\nprocess creation", fillcolor="#E6FFE6"];
+        issue34 [label="#34: Preemptive\nscheduler", fillcolor="#E6FFE6"];
+    }
+
+    subgraph cluster_sync {
+        label="Synchronization";
+        style=filled;
+        fillcolor="#F0F8E8";
+
+        issue36 [label="#36: mutex\nimplementation", fillcolor="#FFFACD"];
+        issue37 [label="#37: semaphore", fillcolor="#FFFACD"];
+        issue39 [label="#39: read-write locks", fillcolor="#FFFACD"];
+        issue40 [label="#40: condition variables", fillcolor="#FFFACD"];
+    }
+
+    subgraph cluster_io {
+        label="I/O & File System";
+        style=filled;
+        fillcolor="#FFF8DC";
+
+        issue96 [label="#96: File descriptor\nmanagement", fillcolor="#FFE4B5"];
+        issue60 [label="#60: Filesystem\nsyscalls", fillcolor="#FFE4B5"];
+        issue65 [label="#65: VFS layer", fillcolor="#FFE4B5"];
+    }
+
+    subgraph cluster_ipc {
+        label="IPC Mechanisms";
+        style=filled;
+        fillcolor="#F5F0FF";
+
+        issue102 [label="#102: pipes\n(pipe/mkfifo)", fillcolor="#E6E6FA"];
+        issue103 [label="#103: UNIX signals", fillcolor="#E6E6FA"];
+        issue104 [label="#104: shared memory\n(shmget/shmat)", fillcolor="#E6E6FA"];
+        issue105 [label="#105: Unix domain\nsockets", fillcolor="#E6E6FA"];
+        issue106 [label="#106: microkernel\nIPC", fillcolor="#DDA0DD"];
+        issue107 [label="#107: capability-based\nsecurity", fillcolor="#DDA0DD"];
+    }
+
+    subgraph cluster_net {
+        label="Networking";
+        style=filled;
+        fillcolor="#E8F8F5";
+
+        issue67 [label="#67: Network driver\n(e1000/virtio-net)", fillcolor="#B2DFDB"];
+        issue68 [label="#68: Ethernet/ARP", fillcolor="#B2DFDB"];
+        issue69 [label="#69: IPv4/ICMP", fillcolor="#B2DFDB"];
+        issue70 [label="#70: UDP/TCP", fillcolor="#B2DFDB"];
+        issue71 [label="#71: Socket API", fillcolor="#B2DFDB"];
+    }
+
+    subgraph cluster_smp {
+        label="SMP Support";
+        style=filled;
+        fillcolor="#FFF0F5";
+
+        issue80 [label="#80: per-CPU data", fillcolor="#FFB6C1"];
+        issue81 [label="#81: APIC/MADT\nCPU enumeration", fillcolor="#FFB6C1"];
+        issue82 [label="#82: AP startup", fillcolor="#FFB6C1"];
+        issue83 [label="#83: SMP scheduler", fillcolor="#FFB6C1"];
+        issue84 [label="#84: interrupt\ndistribution", fillcolor="#FFB6C1"];
+    }
+
+    subgraph cluster_alloc {
+        label="Advanced Allocation";
+        style=filled;
+        fillcolor="#F0FFF0";
+
+        issue87 [label="#87: jemalloc\nresearch", fillcolor="#98FB98"];
+        issue88 [label="#88: TLS\ninfrastructure", fillcolor="#98FB98"];
+        issue90 [label="#90: jemalloc-inspired\nallocator", fillcolor="#98FB98"];
+        issue91 [label="#91: jemalloc port", fillcolor="#98FB98"];
+        issue95 [label="#95: userspace\nmalloc/free", fillcolor="#98FB98"];
+    }
+
+    subgraph cluster_timers {
+        label="Timers & Hardware";
+        style=filled;
+        fillcolor="#FFFAF0";
+
+        issue101 [label="#101: LAPIC/HPET\ntimer integration", fillcolor="#F0E68C"];
+    }
+
+    // Foundation dependencies
+    issue35 -> issue57;
+    issue57 -> issue89;
+    issue57 -> issue93;
+    issue57 -> issue104;
+    issue89 -> issue95;
+    issue89 -> issue87;
+    issue97 -> issue98 [label="#98: ARM64 port"];
+
+    // Process management dependencies
+    issue93 -> issue94 [label="#94: signals"];
+    issue34 -> issue36;
+    issue34 -> issue83;
+
+    // Synchronization chain
+    issue36 -> issue37;
+    issue36 -> issue39;
+    issue36 -> issue40;
+    issue40 -> issue102;
+    issue40 -> issue104;
+    issue40 -> issue105;
+
+    // File descriptor dependencies
+    issue96 -> issue102;
+    issue96 -> issue105;
+    issue96 -> issue60;
+    issue65 -> issue60;
+
+    // IPC dependencies
+    issue102 -> issue106;
+    issue104 -> issue106;
+    issue101 -> issue103;
+    issue101 -> issue106;
+    issue93 -> issue103;
+    issue106 -> issue107;
+
+    // Networking chain
+    issue67 -> issue68;
+    issue68 -> issue69;
+    issue69 -> issue70;
+    issue70 -> issue71;
+    issue71 -> issue105;
+
+    // SMP dependencies
+    issue80 -> issue81;
+    issue81 -> issue82;
+    issue82 -> issue83;
+    issue83 -> issue84;
+
+    // Memory allocator dependencies
+    issue87 -> issue88;
+    issue87 -> issue90;
+    issue88 -> issue91;
+    issue89 -> issue90;
+    issue89 -> issue91;
+    issue90 -> issue91;
+    issue91 -> issue92 [label="#92: benchmarking"];
+
+    // Cross-cutting dependencies
+    issue57 -> issue58 [label="#58: VM integration"];
+    issue57 -> issue56 [label="#56: lazy allocation"];
+    issue60 -> issue54 [label="#54: shell evolution"];
+    issue71 -> issue72 [label="#72: network utils"];
+    issue72 -> issue73 [label="#73: advanced networking"];
+
+    // Hardware/driver dependencies
+    issue62 [label="#62: block device\ndriver", fillcolor="#FFEAA7"];
+    issue63 [label="#63: block cache", fillcolor="#FFEAA7"];
+    issue64 [label="#64: filesystem\nlibrary", fillcolor="#FFEAA7"];
+
+    issue62 -> issue63;
+    issue63 -> issue64;
+    issue64 -> issue65;
+
+    // Graphics and userspace
+    issue31 [label="#31: graphics/\nframebuffer", fillcolor="#DEB887"];
+    issue32 [label="#32: input\nsubsystem", fillcolor="#DEB887"];
+    issue33 [label="#33: audio\nsubsystem", fillcolor="#DEB887"];
+
+    issue96 -> issue31;
+    issue96 -> issue32;
+    issue96 -> issue33;
+
+    // Critical path highlighting
+    edge [color=red, penwidth=2];
+    issue35 -> issue57 [label="CRITICAL"];
+    issue57 -> issue93 [label="CRITICAL"];
+    issue96 -> issue102 [label="CRITICAL"];
+}
