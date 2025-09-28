@@ -6,42 +6,64 @@ This document provides a comprehensive analysis of dependencies between open iss
 
 These issues form the backbone of the system and should be prioritized:
 
-### Tier 1: Foundation
-1. **#35** - kmalloc implementation (enables all kernel features)
-2. **#57** - VM manager (vm_map/vm_unmap/vm_clone)
+### Tier 1: Foundation ✅ (Mostly Complete!)
+1. ✅ **#35** - kmalloc implementation (CLOSED - enables all kernel features)
+2. ✅ **#57** - VM manager (CLOSED - vm_map/vm_unmap/vm_clone)
 3. **#96** - File descriptor management
-4. **#34** - Preemptive scheduler
+4. ✅ **#34** - Preemptive scheduler (CLOSED)
 
 ### Tier 2: Core Systems
 5. **#89** - mmap/munmap syscalls
 6. **#93** - fork/exec process creation
-7. **#36** - mutex implementation
+7. ✅ **#36** - mutex implementation (CLOSED)
 8. **#101** - LAPIC/HPET timer integration
 
 ### Tier 3: IPC Foundation
 9. **#102** - pipes (pipe/mkfifo)
-10. **#40** - condition variables
+10. ✅ **#40** - condition variables (CLOSED)
 11. **#103** - UNIX signals
 12. **#104** - shared memory (shmget/shmat/shmdt)
 
-## 📊 Dependency Categories
+### 🆕 Tier 4: Threading Support (NEW!)
+13. **#108** - Kernel threading infrastructure
+14. **#109** - pthread API and POSIX threading support
+15. **#110** - Thread-safe C library (libc)
+16. **#111** - Advanced pthread synchronization primitives
+17. **#112** - Thread debugging and profiling support
+18. **#113** - Thread-aware system calls and kernel integration
 
-### Memory Management Chain
+## 📊 Updated Dependency Categories
+
+### Memory Management Chain ✅ (Foundation Complete!)
 ```
-#35 (kmalloc) → #57 (VM manager) → #89 (mmap/munmap) → #95 (userspace malloc)
-                                 ↓
-                              #93 (fork/exec)
-                                 ↓
-                              #104 (shared memory)
+✅ #35 (kmalloc) → ✅ #57 (VM manager) → #89 (mmap/munmap) → #95 (userspace malloc)
+                                        ↓
+                                     #93 (fork/exec)
+                                        ↓
+                                     #104 (shared memory)
 ```
 
-### Synchronization Chain
+### Synchronization Chain ✅ (Core Complete!)
 ```
-#34 (scheduler) → #36 (mutex) → #37 (semaphore)
-                              → #39 (rwlock)
-                              → #40 (condition variables)
-                                     ↓
-                              #102/#104/#105 (IPC systems)
+✅ #34 (scheduler) → ✅ #36 (mutex) → #37 (semaphore)
+                                   → #39 (rwlock)
+                                   → ✅ #40 (condition variables)
+                                          ↓
+                                   #102/#104/#105 (IPC systems)
+```
+
+### 🆕 Threading Chain (NEW!)
+```
+✅ #34 (scheduler) ────┐
+✅ #36 (mutex) ────────┼──→ #108 (kernel threading) ──→ #109 (pthread API)
+✅ #57 (VM manager) ───┘                                        ↓
+                                                          #110 (thread-safe libc)
+                                                                 ↓
+                       #88 (TLS) ──→ #109 ──→ #111 (advanced pthread sync)
+                                                     ↓
+                       #94 (signals) ──→ #109 ──→ #112 (debugging/profiling)
+                                                     ↓
+                       #108 ──→ #113 (thread-aware syscalls)
 ```
 
 ### IPC Communication Chain
@@ -66,18 +88,18 @@ These issues form the backbone of the system and should be prioritized:
                                                                       #96 (file descriptors)
 ```
 
-## 🏗️ Implementation Phases
+## 🏗️ Updated Implementation Phases
 
-### Phase 1: Core Foundation (Essential)
+### Phase 1: Core Foundation ✅ (COMPLETE!)
 **Goal**: Basic kernel functionality
-- #35: kmalloc implementation
-- #57: VM manager (vm_map/vm_unmap)
-- #34: Preemptive scheduler
-- #36: mutex implementation
+- ✅ #35: kmalloc implementation (CLOSED)
+- ✅ #57: VM manager (vm_map/vm_unmap) (CLOSED)
+- ✅ #34: Preemptive scheduler (CLOSED)
+- ✅ #36: mutex implementation (CLOSED)
 
-**Why First**: These provide the fundamental infrastructure every other feature depends on.
+**Status**: Foundation is solid! Great progress made.
 
-### Phase 2: Process Management (High Priority)
+### Phase 2: Process & I/O Management (HIGH PRIORITY)
 **Goal**: Process creation and basic IPC
 - #96: File descriptor management
 - #89: mmap/munmap syscalls
@@ -87,25 +109,36 @@ These issues form the backbone of the system and should be prioritized:
 
 **Why Second**: Enables basic process management and simple IPC.
 
-### Phase 3: Advanced IPC (Medium Priority)
+### Phase 3: Threading Support (NEW PRIORITY!)
+**Goal**: Full multithreading capability
+- #108: Kernel threading infrastructure
+- #109: pthread API and POSIX threading
+- #113: Thread-aware system calls
+- #110: Thread-safe C library
+- #111: Advanced pthread synchronization
+- #112: Thread debugging and profiling
+
+**Why Important**: Enables modern multithreaded applications (text editors, servers, etc.)
+
+### Phase 4: Advanced IPC (Medium Priority)
 **Goal**: Full IPC suite for applications
-- #40: condition variables
+- ✅ #40: condition variables (CLOSED)
 - #103: UNIX signals
 - #104: shared memory
 - #105: Unix domain sockets
 - #94: signal handling system
 
-**Why Third**: Provides complete IPC functionality for complex applications.
+**Why Fourth**: Provides complete IPC functionality for complex applications.
 
-### Phase 4: Microkernel Transition (Advanced)
+### Phase 5: Microkernel Transition (Advanced)
 **Goal**: Microkernel architecture
 - #106: microkernel message passing IPC
 - #107: capability-based security
 - #97: architecture abstraction layer
 
-**Why Fourth**: Advanced features for microkernel architecture.
+**Why Fifth**: Advanced features for microkernel architecture.
 
-### Phase 5: Specialized Systems (Optional/Parallel)
+### Phase 6: Specialized Systems (Optional/Parallel)
 **Goal**: Complete system functionality
 - **Networking**: #67→#68→#69→#70→#71→#72→#73
 - **Filesystem**: #62→#63→#64→#65→#60
@@ -113,16 +146,23 @@ These issues form the backbone of the system and should be prioritized:
 - **Advanced Memory**: #87→#88→#90→#91→#95
 - **Hardware**: #31, #32, #33
 
-## 🔴 Blocking Relationships
+## 🔴 Current Blocking Relationships
+
+### Ready to Start (Dependencies Met):
+- **#89 (mmap/munmap)** ✅ - Dependencies: #57 (CLOSED), #35 (CLOSED)
+- **#96 (file descriptors)** ✅ - No blocking dependencies
+- **#93 (fork/exec)** ✅ - Dependencies: #57 (CLOSED), #96 (ready)
+- **#108 (kernel threading)** ✅ - Dependencies: #34 (CLOSED), #36 (CLOSED), #57 (CLOSED)
 
 ### Cannot Start Until Complete:
-- **#93 (fork/exec)** blocks on: #57 (VM), #96 (file descriptors)
-- **#106 (microkernel IPC)** blocks on: #101 (timers), #57 (VM), #40 (condition variables)
+- **#109 (pthread API)** blocks on: #108 (kernel threading)
+- **#106 (microkernel IPC)** blocks on: #101 (timers), #104 (shared memory), #40 (CLOSED)
 - **#107 (capability security)** blocks on: #106 (microkernel IPC)
 - **#105 (Unix sockets)** blocks on: #71 (socket API), #96 (file descriptors)
 - **#95 (userspace malloc)** blocks on: #89 (mmap/munmap)
 
 ### Parallel Development Opportunities:
+- **Threading** (#108-#113) can develop after Phase 2
 - **Networking stack** (#67-#73) can develop independently after basic kernel
 - **SMP support** (#80-#84) can develop in parallel with IPC
 - **Filesystem** (#62-#65) can develop independently
@@ -130,37 +170,53 @@ These issues form the backbone of the system and should be prioritized:
 
 ## 🎯 Recommended Focus Areas
 
-### For Maximum Impact:
-1. **Start with #35, #57, #34** - Core foundation
-2. **Then #96, #89, #93** - Process management
-3. **Then #102, #103, #104** - Essential IPC
+### 🚀 **Immediate Next Steps (Ready Now!)**
+1. **#89** - mmap/munmap syscalls (ready to implement)
+2. **#96** - File descriptor management (ready to implement)
+3. **#108** - Kernel threading infrastructure (ready to implement)
 
-### For Running Applications (like Doom):
-1. **Memory**: #35 → #57 → #89 → #95
-2. **Processes**: #93 → #94
-3. **I/O**: #96 → #60 (with #62→#65 filesystem chain)
-4. **Graphics**: #31 (framebuffer interface)
+### For Maximum Impact:
+1. **Complete Phase 2** (#89, #96, #93, #101, #102) - Essential for applications
+2. **Implement Threading** (#108, #109, #113) - Enables modern software
+3. **Add Advanced IPC** (#103, #104, #105) - Complete application support
+
+### For Running Applications (like text editors):
+1. **File I/O**: #96 → #60 (with #62→#65 filesystem chain)
+2. **Process management**: #93 → #94 (signals)
+3. **Memory**: #89 → #95 (userspace malloc)
+4. **Threading**: #108 → #109 (for advanced editors)
+5. **Terminal**: Terminal subsystem (new issue needed)
 
 ### For Microkernel Vision:
-1. **Foundation**: Complete Phases 1-3 first
-2. **Transition**: #106 → #107
+1. **Complete Phases 1-3** first (foundation + threading)
+2. **Transition**: #106 → #107 (microkernel IPC + security)
 3. **Architecture**: #97 for multi-platform support
 
-## 📈 Effort vs Impact Analysis
+## 📈 Progress Assessment
 
-### High Impact, Low Effort:
-- #35 (kmalloc) - Small but critical
-- #36 (mutex) - Well-understood implementation
-- #102 (pipes) - Straightforward after file descriptors
+### ✅ **Completed (5 issues)**:
+- Foundation memory management (#35, #57)
+- Core scheduling (#34)
+- Basic synchronization (#36, #40)
 
-### High Impact, High Effort:
-- #57 (VM manager) - Complex but foundational
-- #93 (fork/exec) - Sophisticated but essential
-- #106 (microkernel IPC) - Advanced but enables architecture
+### 🔥 **Ready to Implement (3 issues)**:
+- #89 (mmap/munmap)
+- #96 (file descriptors)
+- #108 (kernel threading)
 
-### Medium Impact, Variable Effort:
-- **Networking stack** - High effort, medium priority for basic OS
-- **SMP support** - High effort, nice-to-have for most use cases
-- **Filesystem** - Medium effort, high user value
+### 📋 **Total Remaining**: ~64 open issues
 
-This analysis provides a roadmap for systematic development, ensuring that foundational issues are addressed before dependent features, maximizing development efficiency and system stability.
+### 🎯 **Threading Support**: 6 new issues created (#108-#113)
+
+## 💡 **Updated Strategy**
+
+With the strong foundation now in place, meniOS is well-positioned for rapid development. The completed synchronization and memory management work enables both process management and threading support to be implemented in parallel.
+
+**Recommended parallel development tracks:**
+1. **Track A**: File I/O and processes (#96, #89, #93)
+2. **Track B**: Threading infrastructure (#108, #109, #113)
+3. **Track C**: Advanced features (#101, #102, #103)
+
+This parallel approach could significantly accelerate development and enable running sophisticated applications sooner than the original sequential timeline suggested.
+
+**Key Achievement**: The foundation work is essentially complete, providing a solid base for all higher-level features!
