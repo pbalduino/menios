@@ -35,7 +35,13 @@ extern "C" {
 #define PROC_STATE_SLEEPING   4
 #define PROC_STATE_TERMINATED 7
 
-#define PROC_PRIO_NORMAL 3
+#define PROC_PRIO_IDLE    0
+#define PROC_PRIO_LOW     1
+#define PROC_PRIO_NORMAL  2
+#define PROC_PRIO_HIGH    3
+#define PROC_PRIO_REALTIME 4
+#define PROC_PRIORITY_MAX PROC_PRIO_REALTIME
+#define PROC_PRIORITY_COUNT (PROC_PRIORITY_MAX + 1)
 
 #define PROC_PARENT_NONE 0
 
@@ -90,6 +96,10 @@ typedef struct proc_info_t {
   proc_state_t state;
   uint8_t      priority;
   uint64_t     sleep_until;
+  uint64_t     quantum_us;
+  uint64_t     time_slice_remaining_us;
+  uint64_t     last_dispatch_us;
+  uint64_t     dispatch_count;
   proc_info_p  next;
   int          exit_code;
   int          errno;
@@ -124,6 +134,11 @@ void proc_switch(void* state);
 void proc_create_user(proc_info_p proc, const char* name, const void* code_blob, size_t code_size, void* arg);
 bool proc_register_user_segment(proc_info_p proc, phys_addr_t phys, size_t pages);
 void proc_unregister_user_segment(proc_info_p proc, phys_addr_t phys, size_t pages);
+void proc_set_priority(proc_info_p proc, uint8_t priority);
+void scheduler_set_quantum(uint8_t priority, uint64_t quantum_us);
+uint64_t scheduler_get_quantum(uint8_t priority);
+void proc_request_yield(void);
+void proc_request_sleep(uint64_t duration_us);
 
 #ifdef __cplusplus
 }

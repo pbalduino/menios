@@ -430,9 +430,36 @@ pml4_walk_result_t pmm_walk_address(phys_addr_t root_phys, virt_addr_t vaddr) {
   return result;
 }
 
-static bool table_has_present_entries(page_table_entry_t* entries) {
+static bool pt_has_present_entries(const page_table_t* pt) {
+  if(pt == NULL) {
+    return false;
+  }
   for(size_t i = 0; i < 512; i++) {
-    if(entries[i].present) {
+    if(pt->entries[i].present) {
+      return true;
+    }
+  }
+  return false;
+}
+
+static bool pd_has_present_entries(const page_directory_t* pd) {
+  if(pd == NULL) {
+    return false;
+  }
+  for(size_t i = 0; i < 512; i++) {
+    if(pd->entries[i].present) {
+      return true;
+    }
+  }
+  return false;
+}
+
+static bool pdpt_has_present_entries(const page_directory_pointer_t* pdpt) {
+  if(pdpt == NULL) {
+    return false;
+  }
+  for(size_t i = 0; i < 512; i++) {
+    if(pdpt->entries[i].present) {
       return true;
     }
   }
@@ -456,7 +483,7 @@ bool pmm_unmap_page_in_root(phys_addr_t root_phys, virt_addr_t vaddr) {
 
   if(walk.pd_entry) {
     page_table_t* pt = (page_table_t*)physical_to_virtual(walk.pd_entry->page_table_base << 12);
-    if(!table_has_present_entries(pt->entries)) {
+    if(!pt_has_present_entries(pt)) {
       phys_addr_t pt_phys = walk.pd_entry->page_table_base << 12;
       walk.pd_entry->present = 0;
       walk.pd_entry->page_table_base = 0;
@@ -466,7 +493,7 @@ bool pmm_unmap_page_in_root(phys_addr_t root_phys, virt_addr_t vaddr) {
 
   if(walk.pdpt_entry) {
     page_directory_t* pd = (page_directory_t*)physical_to_virtual(walk.pdpt_entry->page_directory_base << 12);
-    if(!table_has_present_entries(pd->entries)) {
+    if(!pd_has_present_entries(pd)) {
       phys_addr_t pd_phys = walk.pdpt_entry->page_directory_base << 12;
       walk.pdpt_entry->present = 0;
       walk.pdpt_entry->page_directory_base = 0;
@@ -476,7 +503,7 @@ bool pmm_unmap_page_in_root(phys_addr_t root_phys, virt_addr_t vaddr) {
 
   if(walk.pml4_entry) {
     page_directory_pointer_t* pdpt = (page_directory_pointer_t*)physical_to_virtual(walk.pml4_entry->page_directory_base << 12);
-    if(!table_has_present_entries(pdpt->entries)) {
+    if(!pdpt_has_present_entries(pdpt)) {
       phys_addr_t pdpt_phys = walk.pml4_entry->page_directory_base << 12;
       walk.pml4_entry->present = 0;
       walk.pml4_entry->page_directory_base = 0;

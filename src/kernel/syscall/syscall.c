@@ -8,6 +8,8 @@
 
 static uint64_t syscall_stub_unimplemented(syscall_frame_t* frame);
 static uint64_t syscall_write_handler(syscall_frame_t* frame);
+static uint64_t syscall_yield_handler(syscall_frame_t* frame);
+static uint64_t syscall_sleep_handler(syscall_frame_t* frame);
 static uint64_t syscall_exit_handler(syscall_frame_t* frame);
 
 static syscall_handler_t syscall_table[SYSCALL_MAX];
@@ -26,6 +28,8 @@ void syscall_init(void) {
   }
 
   syscall_register(SYS_WRITE, syscall_write_handler);
+  syscall_register(SYS_YIELD, syscall_yield_handler);
+  syscall_register(SYS_SLEEP, syscall_sleep_handler);
   syscall_register(SYS_EXIT, syscall_exit_handler);
 
   serial_printf("syscall_init: initialized dispatcher (INT 0x80)\n");
@@ -76,6 +80,21 @@ static uint64_t syscall_write_handler(syscall_frame_t* frame) {
   }
 
   return (uint64_t)length;
+}
+
+static uint64_t syscall_yield_handler(syscall_frame_t* frame) {
+  proc_request_yield();
+  proc_switch((void*)frame);
+  frame->rax = 0;
+  return 0;
+}
+
+static uint64_t syscall_sleep_handler(syscall_frame_t* frame) {
+  uint64_t usec = frame->rdi;
+  proc_request_sleep(usec);
+  proc_switch((void*)frame);
+  frame->rax = 0;
+  return 0;
 }
 
 static uint64_t syscall_exit_handler(syscall_frame_t* frame) {

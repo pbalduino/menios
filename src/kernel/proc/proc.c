@@ -21,7 +21,7 @@ proc_info_t kernel_process_info = {
   .children_count = 0,
   .name = "kernel",
   .parent = NULL,
-  .priority = PROC_PRIO_NORMAL,
+  .priority = PROC_PRIO_IDLE,
   .stack_base = NULL,
   .state = PROC_STATE_READY
 };
@@ -31,6 +31,26 @@ proc_info_p procs[PROC_MAX] = {
 };
 
 proc_info_p current = &kernel_process_info;
+
+typedef struct scheduler_queue_t {
+  proc_info_p head;
+  proc_info_p tail;
+} scheduler_queue_t;
+
+static scheduler_queue_t ready_queues[PROC_PRIORITY_COUNT];
+static proc_info_p sleep_queue_head = NULL;
+static uint32_t scheduler_actions = 0;
+
+#define SCHED_ACTION_FORCE (1u << 0)
+#define SCHED_ACTION_SLEEP (1u << 1)
+
+static const uint64_t scheduler_default_quanta[PROC_PRIORITY_COUNT] = {
+  1000, 4000, 6000, 8000, 12000
+};
+
+static uint64_t scheduler_quantum_table[PROC_PRIORITY_COUNT] = {
+  1000, 4000, 6000, 8000, 12000
+};
 
 static inline uint64_t proc_kernel_stack_top(proc_info_p proc) {
   if(proc == NULL) {
@@ -46,32 +66,139 @@ static inline uint64_t proc_kernel_stack_top(proc_info_p proc) {
   return (uint64_t)((uintptr_t)proc->stack_base + PROC_STACK_SIZE);
 }
 
-static char* proc_state(proc_state_t state) {
-  switch(state)
-  {
-  case PROC_STATE_NEW:
-    return "NEW";
-    break;
-  case PROC_STATE_READY:
-    return "READY";
-    break;
-  case PROC_STATE_RUNNING:
-    return "RUNNING";
-    break;
-  case PROC_STATE_WAITING:
-    return "WAITING";
-    break;
-  case PROC_STATE_SLEEPING:
-    return "SLEEPING";
-    break;
-  case PROC_STATE_TERMINATED:
-    return "TERMINATED";
-    break;
-  default:
-    serial_printf("proc_state: Unknown state %d\n", state);
-    return "UNKNOWN";
-    break;
+static void scheduler_sleep_enqueue(proc_info_p proc);
+static void scheduler_cleanup_process(proc_info_p proc);
+
+static inline uint64_t scheduler_now_us(void) {
+  return unix_time_us();
+}
+
+static void ready_queue_push(proc_info_p proc) {
+  if(proc == NULL) {
+    return;
   }
+
+  if(proc->priority > PROC_PRIORITY_MAX) {
+    proc->priority = PROC_PRIO_NORMAL;
+  }
+
+  scheduler_queue_t* queue = &ready_queues[proc->priority];
+  proc->next = NULL;
+  if(queue->tail) {
+    queue->tail->next = proc;
+  } else {
+    queue->head = proc;
+  }
+  queue->tail = proc;
+}
+
+static proc_info_p ready_queue_pop_at_priority(uint8_t priority) {
+  if(priority > PROC_PRIORITY_MAX) {
+    return NULL;
+  }
+
+  scheduler_queue_t* queue = &ready_queues[priority];
+  while(queue->head) {
+    proc_info_p proc = queue->head;
+    queue->head = proc->next;
+    if(queue->head == NULL) {
+      queue->tail = NULL;
+    }
+    proc->next = NULL;
+
+    if(proc->state == PROC_STATE_TERMINATED) {
+      scheduler_cleanup_process(proc);
+      continue;
+    }
+
+    if(proc->state == PROC_STATE_SLEEPING) {
+      scheduler_sleep_enqueue(proc);
+      continue;
+    }
+
+    return proc;
+  }
+
+  return NULL;
+}
+
+static proc_info_p ready_queue_pop_highest(void) {
+  for(int pr = PROC_PRIORITY_MAX; pr >= PROC_PRIO_IDLE; --pr) {
+    proc_info_p proc = ready_queue_pop_at_priority((uint8_t)pr);
+    if(proc != NULL) {
+      return proc;
+    }
+  }
+  return NULL;
+}
+
+static uint8_t ready_queue_highest_priority(void) {
+  for(int pr = PROC_PRIORITY_MAX; pr >= PROC_PRIO_IDLE; --pr) {
+    if(ready_queues[pr].head != NULL) {
+      return (uint8_t)pr;
+    }
+  }
+  return PROC_PRIO_IDLE;
+}
+
+static void scheduler_sleep_enqueue(proc_info_p proc) {
+  if(proc == NULL) {
+    return;
+  }
+
+  if(sleep_queue_head == NULL || proc->sleep_until < sleep_queue_head->sleep_until) {
+    proc->next = sleep_queue_head;
+    sleep_queue_head = proc;
+    return;
+  }
+
+  proc_info_p node = sleep_queue_head;
+  while(node->next && node->next->sleep_until <= proc->sleep_until) {
+    node = node->next;
+  }
+  proc->next = node->next;
+  node->next = proc;
+}
+
+static void scheduler_wake_sleepers(uint64_t now) {
+  while(sleep_queue_head && sleep_queue_head->sleep_until <= now) {
+    proc_info_p proc = sleep_queue_head;
+    sleep_queue_head = proc->next;
+    proc->next = NULL;
+    proc->state = PROC_STATE_READY;
+    proc->time_slice_remaining_us = proc->quantum_us;
+    ready_queue_push(proc);
+  }
+}
+
+static void scheduler_cleanup_process(proc_info_p proc) {
+  if(proc == NULL || proc == &kernel_process_info) {
+    return;
+  }
+
+  if(proc->stack_pointer) {
+    kfree(proc->stack_pointer);
+    proc->stack_pointer = NULL;
+  }
+
+  for(size_t seg = 0; seg < proc->user_segment_count; seg++) {
+    if(proc->user_segments[seg].phys) {
+      pmm_free_pages(proc->user_segments[seg].phys, proc->user_segments[seg].pages);
+    }
+  }
+  proc->user_segment_count = 0;
+
+  if(proc->address_space_root && proc->address_space_root != pmm_get_kernel_cr3()) {
+    pmm_free_pages(proc->address_space_root, 1);
+    proc->address_space_root = 0;
+  }
+
+  if(proc->cpu_state) {
+    kfree(proc->cpu_state);
+    proc->cpu_state = NULL;
+  }
+
+  kfree(proc);
 }
 
 void proc_debug(cpu_state_p state) {
@@ -83,74 +210,96 @@ void proc_debug(cpu_state_p state) {
 }
 
 void proc_switch(void* arg) {
+  if(current == NULL) {
+    current = &kernel_process_info;
+  }
+
+  cpu_state_p frame = (cpu_state_p)arg;
+  uint64_t now = scheduler_now_us();
+
   if(last_exec == 0) {
-    last_exec = unix_time_us();
-  } else {
-    uint64_t now = unix_time_us();
-    uint64_t diff = now - last_exec;
     last_exec = now;
+  }
+
+  uint64_t diff = now - last_exec;
+  last_exec = now;
+
+  if(current && current->cpu_state) {
+    memcpy(current->cpu_state, frame, sizeof(cpu_state_t));
+  }
+
+  scheduler_wake_sleepers(now);
+
+  bool forced = (scheduler_actions & SCHED_ACTION_FORCE) != 0;
+  bool to_sleep = (scheduler_actions & SCHED_ACTION_SLEEP) != 0;
+  scheduler_actions = 0;
+
+  if(current != NULL && current->state == PROC_STATE_RUNNING) {
     current->exec_time += diff;
-    serial_printf("proc_switch: Process %s executed for %lu.%lu\n", current->name, diff / 1000000000, diff % 1000000000);
-  }
-
-  if(current->pid == current->next->pid) {
-    serial_printf("Next process is the same. Skipping switch.\n");
-    return;
-  }
-
-  cpu_state_p state = (cpu_state_p)arg;
-  // proc_debug(state);
-  memcpy(current->cpu_state, state, sizeof(cpu_state_t));
-
-  serial_puts("proc_switch: Entering with ");
-  proc_info_p node = current;
-
-  for(int i = 0; i < 5; i++) {
-    serial_printf("%s(%s) -> ", node->name, proc_state(node->state));
-    node = node->next;
-  }
-  serial_puts("\n");
-
-  proc_info_p next = current->next;
-
-  while(next->state == PROC_STATE_TERMINATED) {
-    current->next = next->next;
-    serial_printf("proc_switch: Removing terminated process %s\n", next->name);
-
-    // Free resources of the terminated process
-    kfree(next->stack_pointer);
-    for(size_t seg = 0; seg < next->user_segment_count; seg++) {
-      pmm_free_pages(next->user_segments[seg].phys, next->user_segments[seg].pages);
+    if(diff < current->time_slice_remaining_us) {
+      current->time_slice_remaining_us -= diff;
+    } else {
+      current->time_slice_remaining_us = 0;
     }
-    next->user_segment_count = 0;
-    if(next->address_space_root && next->address_space_root != pmm_get_kernel_cr3()) {
-      pmm_free_pages(next->address_space_root, 1);
+  }
+
+  if(current != NULL && current->state == PROC_STATE_TERMINATED) {
+    forced = true;
+  }
+
+  uint8_t highest_ready = ready_queue_highest_priority();
+  if(!forced && current != NULL && current->state == PROC_STATE_RUNNING) {
+    if(current->time_slice_remaining_us > 0 && highest_ready <= current->priority) {
+      current->last_dispatch_us = now;
+      return;
     }
-    kfree(next->cpu_state);
-    kfree(next);
-
-    next = current->next; // Move to the next process
   }
 
-  if(current->state != PROC_STATE_TERMINATED) {
-    current->state = PROC_STATE_READY;
-  }
-  
-  current = current->next;
+  proc_info_p previous = current;
 
-  serial_printf("proc_switch: next=%s cs=%lx ss=%lx rip=%lx rsp=%lx\n",
-                current->name,
-                current->cpu_state->cs,
-                current->cpu_state->ss,
-                current->cpu_state->rip,
-                current->cpu_state->rsp);
+  if(previous != NULL) {
+    if(to_sleep) {
+      previous->state = PROC_STATE_SLEEPING;
+      scheduler_sleep_enqueue(previous);
+    } else if(previous->state == PROC_STATE_TERMINATED) {
+      scheduler_cleanup_process(previous);
+      previous = NULL;
+    } else if(previous->state == PROC_STATE_RUNNING) {
+      if(previous != &kernel_process_info) {
+        previous->state = PROC_STATE_READY;
+        previous->time_slice_remaining_us = previous->quantum_us;
+        ready_queue_push(previous);
+      } else {
+        previous->time_slice_remaining_us = previous->quantum_us;
+      }
+    }
+  }
+
+  proc_info_p next = ready_queue_pop_highest();
+  if(next == NULL) {
+    next = &kernel_process_info;
+  }
+
+  current = next;
+
+  if(current->cpu_state == NULL) {
+    current->cpu_state = kmalloc(sizeof(cpu_state_t));
+    if(current->cpu_state == NULL) {
+      halt();
+    }
+    memset(current->cpu_state, 0, sizeof(cpu_state_t));
+  }
+
+  current->state = PROC_STATE_RUNNING;
+  current->dispatch_count++;
+  current->time_slice_remaining_us = current->quantum_us;
+  current->last_dispatch_us = now;
 
   phys_addr_t desired_cr3 = current->address_space_root ? current->address_space_root : pmm_get_kernel_cr3();
   if(read_cr3() != desired_cr3) {
     write_cr3(desired_cr3);
   }
 
-  cpu_state_p frame = (cpu_state_p)arg;
   memcpy(frame, current->cpu_state, sizeof(cpu_state_t));
   if(current->user_mode) {
     frame->cs = USER_CODE_SEGMENT;
@@ -159,22 +308,11 @@ void proc_switch(void* arg) {
     frame->cs = KERNEL_CODE_SEGMENT;
     frame->ss = KERNEL_DATA_SEGMENT;
   }
-  current->state = PROC_STATE_RUNNING;
 
   uint64_t kernel_stack = proc_kernel_stack_top(current);
   if(kernel_stack != 0) {
     tss_update_kernel_stack(kernel_stack);
   }
-
-  serial_printf("proc_switch: Switching to process %s\n", current->name);
-
-  serial_puts("proc_switch: Exiting with ");
-  node = current;
-  for(int i = 0; i < 5; i++) {
-    serial_printf("%s(%s) -> ", node->name, proc_state(node->state));
-    node = node->next;
-  }
-  serial_puts("\n");
 }
 
 void proc_create(proc_info_p proc, const char* name, void (*entrypoint)(void *), void* arg) {
@@ -184,7 +322,6 @@ void proc_create(proc_info_p proc, const char* name, void (*entrypoint)(void *),
   proc->children_count = 0;
   proc->parent = current;
   proc->pid = last_pid++;
-  proc->priority = PROC_PRIO_NORMAL;
 
   serial_printf("proc_create: Creating process %s - %s with arg %lx\n", name, proc->name, arg);
 
@@ -204,6 +341,9 @@ void proc_create(proc_info_p proc, const char* name, void (*entrypoint)(void *),
   proc->user_mode = false;
   proc->user_stack_base_vaddr = 0;
   proc->user_stack_size = 0;
+  proc->dispatch_count = 0;
+  proc->exec_time = 0;
+  proc->last_dispatch_us = 0;
 
   proc->cpu_state = kmalloc(sizeof(cpu_state_t));
   if(proc->cpu_state == NULL) {
@@ -221,6 +361,8 @@ void proc_create(proc_info_p proc, const char* name, void (*entrypoint)(void *),
   proc->cpu_state->ss = KERNEL_DATA_SEGMENT;
   proc->address_space_root = pmm_get_kernel_cr3();
   proc->user_segment_count = 0;
+  proc_set_priority(proc, PROC_PRIO_NORMAL);
+  proc->time_slice_remaining_us = proc->quantum_us;
 }
 
 static inline virt_addr_t user_code_base(uint32_t pid) {
@@ -266,6 +408,64 @@ void proc_unregister_user_segment(proc_info_p proc, phys_addr_t phys, size_t pag
       break;
     }
   }
+}
+
+void scheduler_set_quantum(uint8_t priority, uint64_t quantum_us) {
+  if(priority > PROC_PRIORITY_MAX || quantum_us == 0) {
+    return;
+  }
+  scheduler_quantum_table[priority] = quantum_us;
+}
+
+uint64_t scheduler_get_quantum(uint8_t priority) {
+  if(priority > PROC_PRIORITY_MAX) {
+    priority = PROC_PRIO_NORMAL;
+  }
+
+  uint64_t quantum = scheduler_quantum_table[priority];
+  if(quantum == 0) {
+    quantum = scheduler_default_quanta[priority];
+  }
+  return quantum;
+}
+
+void proc_set_priority(proc_info_p proc, uint8_t priority) {
+  if(proc == NULL) {
+    return;
+  }
+
+  if(priority > PROC_PRIORITY_MAX) {
+    priority = PROC_PRIO_NORMAL;
+  }
+
+  proc->priority = priority;
+  proc->quantum_us = scheduler_get_quantum(priority);
+  if(proc->quantum_us == 0) {
+    proc->quantum_us = scheduler_default_quanta[PROC_PRIO_NORMAL];
+  }
+  proc->time_slice_remaining_us = proc->quantum_us;
+}
+
+void proc_request_yield(void) {
+  scheduler_actions |= SCHED_ACTION_FORCE;
+  if(current) {
+    current->time_slice_remaining_us = 0;
+  }
+}
+
+void proc_request_sleep(uint64_t duration_us) {
+  if(current == NULL) {
+    return;
+  }
+
+  if(duration_us == 0) {
+    proc_request_yield();
+    return;
+  }
+
+  current->sleep_until = scheduler_now_us() + duration_us;
+  current->time_slice_remaining_us = 0;
+  scheduler_actions |= (SCHED_ACTION_SLEEP | SCHED_ACTION_FORCE);
 }
 
 void proc_create_user(proc_info_p proc, const char* name, const void* code_blob, size_t code_size, void* arg) {
@@ -348,20 +548,45 @@ void proc_create_user(proc_info_p proc, const char* name, const void* code_blob,
 }
 
 void proc_execute(proc_info_p proc) {
-  serial_line("");
-  proc->next = current->next;
-  serial_line("");
-  current->next = proc;
-  serial_printf("proc_execute: Executing process %s\n", proc->name);
+  if(proc == NULL) {
+    return;
+  }
+
+  proc->state = PROC_STATE_READY;
+  proc->time_slice_remaining_us = proc->quantum_us;
+  proc->last_dispatch_us = 0;
+  ready_queue_push(proc);
+  serial_printf("proc_execute: queued process %s (priority %u)\n", proc->name, proc->priority);
 }
 
 void scheduler_init() {
   logk("Initing scheduler");
   current = &kernel_process_info;
-  current->next = current;
-  current->cpu_state = (cpu_state_t*)kmalloc(sizeof(cpu_state_t));
+  memset(ready_queues, 0, sizeof(ready_queues));
+  sleep_queue_head = NULL;
+  scheduler_actions = 0;
+
+  for(uint8_t pr = 0; pr < PROC_PRIORITY_COUNT; pr++) {
+    if(scheduler_quantum_table[pr] == 0) {
+      scheduler_quantum_table[pr] = scheduler_default_quanta[pr];
+    }
+  }
+
+  if(current->cpu_state == NULL) {
+    current->cpu_state = (cpu_state_t*)kmalloc(sizeof(cpu_state_t));
+    if(current->cpu_state == NULL) {
+      halt();
+    }
+  }
+  memset(current->cpu_state, 0, sizeof(cpu_state_t));
+
   current->pid = last_pid++;
   current->address_space_root = pmm_get_kernel_cr3();
+  proc_set_priority(current, PROC_PRIO_IDLE);
+  current->state = PROC_STATE_RUNNING;
+  current->dispatch_count = 1;
+  current->last_dispatch_us = scheduler_now_us();
+
   uint64_t kernel_stack = proc_kernel_stack_top(current);
   if(kernel_stack != 0) {
     tss_update_kernel_stack(kernel_stack);
@@ -371,9 +596,8 @@ void scheduler_init() {
 }
 
 void proc_exit(int code) {
-  serial_line("");
   current->state = PROC_STATE_TERMINATED;
-  serial_line("");
   current->exit_code = code;
   serial_printf("proc_exit: Process %s exited with code %d\n", current->name, code);
+  scheduler_actions |= SCHED_ACTION_FORCE;
 }
