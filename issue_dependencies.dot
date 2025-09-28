@@ -14,11 +14,11 @@ digraph IssueDependencies {
         // Memory Management (some completed)
         issue35 [label="#35: kmalloc\nimplementation", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED
         issue57 [label="#57: VM manager\n(vm_map/vm_unmap)", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED
-        issue89 [label="#89: mmap/munmap\nsyscalls", fillcolor="#FFE6E6"];
+        issue89 [label="#89: mmap/munmap\nsyscalls", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED
         issue97 [label="#97: Architecture\nabstraction layer", fillcolor="#E6F3FF"];
 
         // Process Management (some completed)
-        issue93 [label="#93: fork/exec\nprocess creation", fillcolor="#E6FFE6"];
+        issue93 [label="#93: fork/exec\nprocess creation", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED
         issue34 [label="#34: Preemptive\nscheduler", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED
     }
 
@@ -51,7 +51,7 @@ digraph IssueDependencies {
         style=filled;
         fillcolor="#FFF8DC";
 
-        issue96 [label="#96: File descriptor\nmanagement", fillcolor="#FFE4B5"];
+        issue96 [label="#96: File descriptor\nmanagement", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED
         issue60 [label="#60: Filesystem\nsyscalls", fillcolor="#FFE4B5"];
         issue65 [label="#65: VFS layer", fillcolor="#FFE4B5"];
     }
@@ -115,22 +115,22 @@ digraph IssueDependencies {
 
     // Foundation dependencies (completed foundations)
     issue35 -> issue57 [style=dashed, color=gray];
-    issue57 -> issue89;
-    issue57 -> issue93;
-    issue57 -> issue104;
-    issue89 -> issue95;
-    issue89 -> issue87;
+    issue57 -> issue89 [style=dashed, color=gray];
+    issue57 -> issue93 [style=dashed, color=gray];
+    issue57 -> issue104 [style=dashed, color=gray];
+    issue89 -> issue95 [style=dashed, color=gray];
+    issue89 -> issue87 [style=dashed, color=gray];
     issue97 -> issue98 [label="#98: ARM64 port"];
 
     // Process management dependencies
-    issue93 -> issue94 [label="#94: signals"];
+    issue93 -> issue94 [label="#94: signals", style=dashed, color=gray];
     issue34 -> issue36 [style=dashed, color=gray];
-    issue34 -> issue83;
+    issue34 -> issue83 [style=dashed, color=gray];
 
     // Threading dependencies (NEW)
-    issue34 -> issue108 [color=blue, penwidth=2, label="enables"];
-    issue36 -> issue108 [color=blue, penwidth=2, label="enables"];
-    issue57 -> issue108 [color=blue, penwidth=2, label="enables"];
+    issue34 -> issue108 [color=blue, penwidth=2, label="enables", style=dashed];
+    issue36 -> issue108 [color=blue, penwidth=2, label="enables", style=dashed];
+    issue57 -> issue108 [color=blue, penwidth=2, label="enables", style=dashed];
     issue108 -> issue109 [color=blue, penwidth=2];
     issue108 -> issue113 [color=blue, penwidth=2];
     issue109 -> issue110 [color=blue, penwidth=2];
@@ -151,9 +151,9 @@ digraph IssueDependencies {
     issue40 -> issue105 [style=dashed, color=gray];
 
     // File descriptor dependencies
-    issue96 -> issue102;
-    issue96 -> issue105;
-    issue96 -> issue60;
+    issue96 -> issue102 [style=dashed, color=gray];
+    issue96 -> issue105 [style=dashed, color=gray];
+    issue96 -> issue60 [style=dashed, color=gray];
     issue65 -> issue60;
 
     // IPC dependencies
@@ -161,7 +161,7 @@ digraph IssueDependencies {
     issue104 -> issue106;
     issue101 -> issue103;
     issue101 -> issue106;
-    issue93 -> issue103;
+    issue93 -> issue103 [style=dashed, color=gray];
     issue106 -> issue107;
 
     // Networking chain
@@ -207,14 +207,14 @@ digraph IssueDependencies {
     issue32 [label="#32: input\nsubsystem", fillcolor="#DEB887"];
     issue33 [label="#33: audio\nsubsystem", fillcolor="#DEB887"];
 
-    issue96 -> issue31;
-    issue96 -> issue32;
-    issue96 -> issue33;
+    issue96 -> issue31 [style=dashed, color=gray];
+    issue96 -> issue32 [style=dashed, color=gray];
+    issue96 -> issue33 [style=dashed, color=gray];
 
     // Critical path highlighting (updated for threading)
     edge [color=red, penwidth=3];
-    issue89 -> issue95 [label="CRITICAL"];
-    issue96 -> issue102 [label="CRITICAL"];
+    issue89 -> issue95 [label="CRITICAL", style=dashed];
+    issue96 -> issue102 [label="CRITICAL", style=dashed];
     issue108 -> issue109 [label="THREADING CRITICAL"];
 
     // Legend

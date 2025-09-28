@@ -1,5 +1,89 @@
 [
   {
+    "title": "Implement thread-aware system calls and kernel integration",
+    "github_issue": {
+      "number": 113,
+      "url": "https://github.com/pbalduino/menios/issues/113",
+      "state": "OPEN"
+    },
+    "labels": [
+      "enhancement"
+    ],
+    "assignees": [
+      "pbalduino"
+    ]
+  },
+  {
+    "title": "Implement thread debugging and profiling support",
+    "github_issue": {
+      "number": 112,
+      "url": "https://github.com/pbalduino/menios/issues/112",
+      "state": "OPEN"
+    },
+    "labels": [
+      "enhancement"
+    ],
+    "assignees": [
+      "pbalduino"
+    ]
+  },
+  {
+    "title": "Implement advanced pthread synchronization primitives",
+    "github_issue": {
+      "number": 111,
+      "url": "https://github.com/pbalduino/menios/issues/111",
+      "state": "OPEN"
+    },
+    "labels": [
+      "enhancement"
+    ],
+    "assignees": [
+      "pbalduino"
+    ]
+  },
+  {
+    "title": "Implement thread-safe C library (libc)",
+    "github_issue": {
+      "number": 110,
+      "url": "https://github.com/pbalduino/menios/issues/110",
+      "state": "OPEN"
+    },
+    "labels": [
+      "enhancement"
+    ],
+    "assignees": [
+      "pbalduino"
+    ]
+  },
+  {
+    "title": "Implement pthread API and POSIX threading support",
+    "github_issue": {
+      "number": 109,
+      "url": "https://github.com/pbalduino/menios/issues/109",
+      "state": "OPEN"
+    },
+    "labels": [
+      "enhancement"
+    ],
+    "assignees": [
+      "pbalduino"
+    ]
+  },
+  {
+    "title": "Implement kernel threading infrastructure",
+    "github_issue": {
+      "number": 108,
+      "url": "https://github.com/pbalduino/menios/issues/108",
+      "state": "OPEN"
+    },
+    "labels": [
+      "enhancement"
+    ],
+    "assignees": [
+      "pbalduino"
+    ]
+  },
+  {
     "title": "Implement capability-based security system for microkernel IPC",
     "github_issue": {
       "number": 107,
@@ -158,7 +242,7 @@
     "github_issue": {
       "number": 96,
       "url": "https://github.com/pbalduino/menios/issues/96",
-      "state": "OPEN"
+      "state": "CLOSED"
     },
     "labels": [
       "enhancement"
@@ -396,7 +480,7 @@
     "github_issue": {
       "number": 79,
       "url": "https://github.com/pbalduino/menios/issues/79",
-      "state": "OPEN"
+      "state": "CLOSED"
     },
     "labels": [
       "documentation"
@@ -410,7 +494,7 @@
     "github_issue": {
       "number": 78,
       "url": "https://github.com/pbalduino/menios/issues/78",
-      "state": "OPEN"
+      "state": "CLOSED"
     },
     "labels": [
       "documentation"
@@ -453,6 +537,20 @@
       "number": 75,
       "url": "https://github.com/pbalduino/menios/issues/75",
       "state": "OPEN"
+    },
+    "labels": [
+      "enhancement"
+    ],
+    "assignees": [
+      "pbalduino"
+    ]
+  },
+  {
+    "title": "Relocate build artifacts outside repository",
+    "github_issue": {
+      "number": 74,
+      "url": "https://github.com/pbalduino/menios/issues/74",
+      "state": "CLOSED"
     },
     "labels": [
       "enhancement"
@@ -742,6 +840,130 @@
     ]
   },
   {
+    "title": "Update README to reflect Limine bootloader v10",
+    "github_issue": {
+      "number": 53,
+      "url": "https://github.com/pbalduino/menios/issues/53",
+      "state": "CLOSED"
+    },
+    "labels": [
+      "enhancement"
+    ],
+    "assignees": [
+      "pbalduino"
+    ]
+  },
+  {
+    "title": "Implement syscall dispatcher and entry path",
+    "github_issue": {
+      "number": 52,
+      "url": "https://github.com/pbalduino/menios/issues/52",
+      "state": "CLOSED"
+    },
+    "labels": [
+      "enhancement"
+    ],
+    "assignees": []
+  },
+  {
+    "title": "Implement SYS_EXIT (60) syscall",
+    "github_issue": {
+      "number": 51,
+      "url": "https://github.com/pbalduino/menios/issues/51",
+      "state": "CLOSED"
+    },
+    "labels": [
+      "enhancement"
+    ],
+    "assignees": []
+  },
+  {
+    "title": "Implement SYS_WRITE (1) syscall",
+    "github_issue": {
+      "number": 50,
+      "url": "https://github.com/pbalduino/menios/issues/50",
+      "state": "CLOSED"
+    },
+    "labels": [
+      "enhancement"
+    ],
+    "assignees": []
+  },
+  {
+    "title": "Implement basic syscall interface (exit and write)",
+    "github_issue": {
+      "number": 48,
+      "url": "https://github.com/pbalduino/menios/issues/48",
+      "state": "CLOSED"
+    },
+    "labels": [
+      "enhancement"
+    ],
+    "assignees": [
+      "pbalduino"
+    ]
+  },
+  {
+    "title": "Create basic user mode test program",
+    "github_issue": {
+      "number": 47,
+      "url": "https://github.com/pbalduino/menios/issues/47",
+      "state": "CLOSED"
+    },
+    "labels": [
+      "enhancement"
+    ],
+    "assignees": []
+  },
+  {
+    "title": "Implement Ring 0/Ring 3 transition mechanism",
+    "github_issue": {
+      "number": 46,
+      "url": "https://github.com/pbalduino/menios/issues/46",
+      "state": "CLOSED"
+    },
+    "labels": [
+      "enhancement"
+    ],
+    "assignees": []
+  },
+  {
+    "title": "Implement user/kernel memory protection",
+    "github_issue": {
+      "number": 45,
+      "url": "https://github.com/pbalduino/menios/issues/45",
+      "state": "CLOSED"
+    },
+    "labels": [
+      "enhancement"
+    ],
+    "assignees": []
+  },
+  {
+    "title": "Implement TSS for privilege level transitions",
+    "github_issue": {
+      "number": 44,
+      "url": "https://github.com/pbalduino/menios/issues/44",
+      "state": "CLOSED"
+    },
+    "labels": [
+      "enhancement"
+    ],
+    "assignees": []
+  },
+  {
+    "title": "Implement GDT user segments for Ring 3 support",
+    "github_issue": {
+      "number": 43,
+      "url": "https://github.com/pbalduino/menios/issues/43",
+      "state": "CLOSED"
+    },
+    "labels": [
+      "enhancement"
+    ],
+    "assignees": []
+  },
+  {
     "title": "Enable SMP (Symmetric Multiprocessing) support",
     "github_issue": {
       "number": 42,
@@ -754,6 +976,18 @@
     "assignees": [
       "pbalduino"
     ]
+  },
+  {
+    "title": "Implement atomic operations and memory barriers",
+    "github_issue": {
+      "number": 41,
+      "url": "https://github.com/pbalduino/menios/issues/41",
+      "state": "CLOSED"
+    },
+    "labels": [
+      "enhancement"
+    ],
+    "assignees": []
   },
   {
     "title": "Implement condition variables",
@@ -775,6 +1009,20 @@
       "number": 39,
       "url": "https://github.com/pbalduino/menios/issues/39",
       "state": "OPEN"
+    },
+    "labels": [
+      "enhancement"
+    ],
+    "assignees": [
+      "pbalduino"
+    ]
+  },
+  {
+    "title": "Implement spinlock synchronization primitive",
+    "github_issue": {
+      "number": 38,
+      "url": "https://github.com/pbalduino/menios/issues/38",
+      "state": "CLOSED"
     },
     "labels": [
       "enhancement"
@@ -910,6 +1158,54 @@
     ]
   },
   {
+    "title": "Implement per-process virtual memory management",
+    "github_issue": {
+      "number": 28,
+      "url": "https://github.com/pbalduino/menios/issues/28",
+      "state": "CLOSED"
+    },
+    "labels": [
+      "enhancement"
+    ],
+    "assignees": []
+  },
+  {
+    "title": "Implement syscall ABI and dispatcher",
+    "github_issue": {
+      "number": 27,
+      "url": "https://github.com/pbalduino/menios/issues/27",
+      "state": "CLOSED"
+    },
+    "labels": [
+      "enhancement"
+    ],
+    "assignees": []
+  },
+  {
+    "title": "Implement ELF loader for userland programs",
+    "github_issue": {
+      "number": 26,
+      "url": "https://github.com/pbalduino/menios/issues/26",
+      "state": "CLOSED"
+    },
+    "labels": [
+      "enhancement"
+    ],
+    "assignees": []
+  },
+  {
+    "title": "Fix caret rendering to prevent character erasure",
+    "github_issue": {
+      "number": 25,
+      "url": "https://github.com/pbalduino/menios/issues/25",
+      "state": "CLOSED"
+    },
+    "labels": [
+      "bug"
+    ],
+    "assignees": []
+  },
+  {
     "title": "Optimize screen font definition and storage",
     "github_issue": {
       "number": 24,
@@ -931,6 +1227,47 @@
       "state": "OPEN"
     },
     "labels": [
+      "enhancement",
+      "nice to have"
+    ],
+    "assignees": [
+      "pbalduino"
+    ]
+  },
+  {
+    "title": "Implement proper hardware probing and driver connection",
+    "github_issue": {
+      "number": 22,
+      "url": "https://github.com/pbalduino/menios/issues/22",
+      "state": "CLOSED"
+    },
+    "labels": [
+      "enhancement"
+    ],
+    "assignees": [
+      "pbalduino"
+    ]
+  },
+  {
+    "title": "Decode PS/2 keyboard input correctly",
+    "github_issue": {
+      "number": 21,
+      "url": "https://github.com/pbalduino/menios/issues/21",
+      "state": "CLOSED"
+    },
+    "labels": [
+      "bug"
+    ],
+    "assignees": []
+  },
+  {
+    "title": "Refine kthread termination flow",
+    "github_issue": {
+      "number": 20,
+      "url": "https://github.com/pbalduino/menios/issues/20",
+      "state": "CLOSED"
+    },
+    "labels": [
       "enhancement"
     ],
     "assignees": [
@@ -943,6 +1280,163 @@
       "number": 19,
       "url": "https://github.com/pbalduino/menios/issues/19",
       "state": "OPEN"
+    },
+    "labels": [
+      "enhancement",
+      "nice to have"
+    ],
+    "assignees": [
+      "pbalduino"
+    ]
+  },
+  {
+    "title": "Stabilise kernel thread scheduling stack",
+    "github_issue": {
+      "number": 18,
+      "url": "https://github.com/pbalduino/menios/issues/18",
+      "state": "CLOSED"
+    },
+    "labels": [
+      "bug"
+    ],
+    "assignees": []
+  },
+  {
+    "title": "Update Limine bootloader to v10 binary release",
+    "github_issue": {
+      "number": 17,
+      "url": "https://github.com/pbalduino/menios/issues/17",
+      "state": "CLOSED"
+    },
+    "labels": [
+      "enhancement"
+    ],
+    "assignees": [
+      "pbalduino"
+    ]
+  },
+  {
+    "title": "Calibrate TSC timekeeping and initialise boot time",
+    "github_issue": {
+      "number": 12,
+      "url": "https://github.com/pbalduino/menios/issues/12",
+      "state": "CLOSED"
+    },
+    "labels": [
+      "bug"
+    ],
+    "assignees": [
+      "pbalduino"
+    ]
+  },
+  {
+    "title": "Propagate kernel thread termination status for joins",
+    "github_issue": {
+      "number": 11,
+      "url": "https://github.com/pbalduino/menios/issues/11",
+      "state": "CLOSED"
+    },
+    "labels": [
+      "bug"
+    ],
+    "assignees": [
+      "pbalduino"
+    ]
+  },
+  {
+    "title": "Align kernel thread sleep state with scheduler enums",
+    "github_issue": {
+      "number": 10,
+      "url": "https://github.com/pbalduino/menios/issues/10",
+      "state": "CLOSED"
+    },
+    "labels": [
+      "bug"
+    ],
+    "assignees": []
+  },
+  {
+    "title": "Complete the vsprintk function and add tests",
+    "github_issue": {
+      "number": 9,
+      "url": "https://github.com/pbalduino/menios/issues/9",
+      "state": "CLOSED"
+    },
+    "labels": [
+      "enhancement"
+    ],
+    "assignees": []
+  },
+  {
+    "title": "Add ANSI and scrolling to the console",
+    "github_issue": {
+      "number": 8,
+      "url": "https://github.com/pbalduino/menios/issues/8",
+      "state": "CLOSED"
+    },
+    "labels": [
+      "enhancement"
+    ],
+    "assignees": [
+      "pbalduino"
+    ]
+  },
+  {
+    "title": "Fix virtual_to_physical calculation",
+    "github_issue": {
+      "number": 7,
+      "url": "https://github.com/pbalduino/menios/issues/7",
+      "state": "CLOSED"
+    },
+    "labels": [
+      "bug"
+    ],
+    "assignees": []
+  },
+  {
+    "title": "Fix kmalloc to get memory from the virtual memory",
+    "github_issue": {
+      "number": 6,
+      "url": "https://github.com/pbalduino/menios/issues/6",
+      "state": "CLOSED"
+    },
+    "labels": [
+      "enhancement"
+    ],
+    "assignees": [
+      "pbalduino"
+    ]
+  },
+  {
+    "title": "Fix the GPF handler to show the right data",
+    "github_issue": {
+      "number": 5,
+      "url": "https://github.com/pbalduino/menios/issues/5",
+      "state": "CLOSED"
+    },
+    "labels": [
+      "bug"
+    ],
+    "assignees": []
+  },
+  {
+    "title": "Fix the PF handler to show the right data",
+    "github_issue": {
+      "number": 4,
+      "url": "https://github.com/pbalduino/menios/issues/4",
+      "state": "CLOSED"
+    },
+    "labels": [
+      "bug"
+    ],
+    "assignees": []
+  },
+  {
+    "title": "Is this OS buildable, if yes, can I get build instructions?",
+    "github_issue": {
+      "number": 1,
+      "url": "https://github.com/pbalduino/menios/issues/1",
+      "state": "CLOSED"
     },
     "labels": [
       "enhancement"
