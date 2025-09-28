@@ -1,6 +1,5 @@
 #include <kernel/console.h>
 #include <kernel/driver.h>
-#include <kernel/devicetree.h>
 #include <kernel/heap.h>
 #include <kernel/hw.h>
 #include <kernel/serial.h>
@@ -89,9 +88,6 @@ void hardware_init() {
   devices_head = NULL;
   driver_init();
   logk("Probing hardware\n");
-  serial_printf("hardware_init: Reading device tree\n");
-  read_device_tree();
-  // serial_printf("hardware_init: Probing hardware via ACPI\n");
   acpi_enumerate();
   hardware_log_devices();
 }
