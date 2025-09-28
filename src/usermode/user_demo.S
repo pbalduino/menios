@@ -8,16 +8,42 @@ _start:
     mov %ax, %fs
     mov %ax, %gs
 
+    mov %rdi, %r13          # preserve initial prefix selector
+
     sub $8192, %rsp         # touch a second stack page (lazy allocation)
     movb $'A', (%rsp)
     add $8192, %rsp
 
-    # Select prefix based on argument in RDI (0..2).
-    mov %rdi, %rax
-    cmp $2, %rax
-    jbe 1f
-    xor %rax, %rax
+    mov $57, %rax           # SYS_fork
+    int $0x80
+    test %rax, %rax
+    jne 1f
+
+    lea msg_fork_child(%rip), %rsi
+    mov $(msg_fork_child_end - msg_fork_child), %rdx
+    mov $1, %rax
+    mov $1, %rdi
+    int $0x80
+
+    mov $60, %rax           # child exits immediately after reporting
+    xor %rdi, %rdi
+    int $0x80
+
 1:
+    lea msg_fork_parent(%rip), %rsi
+    mov $(msg_fork_parent_end - msg_fork_parent), %rdx
+    mov $1, %rax
+    mov $1, %rdi
+    int $0x80
+
+    mov %r13, %r14          # select prefix based on original argument (0..2)
+
+2:
+    mov %r14, %rax
+    cmp $2, %rax
+    jbe 3f
+    xor %rax, %rax
+3:
     lea prefixes(%rip), %rbx
     mov %rax, %r9
     shl $4, %r9
@@ -105,3 +131,11 @@ msg_yield_end:
 msg_done:
     .ascii "[user_demo] completed demo loop\n"
 msg_done_end:
+
+msg_fork_parent:
+    .ascii "[user_demo] forked child process\n"
+msg_fork_parent_end:
+
+msg_fork_child:
+    .ascii "[user_demo] hello from child after fork\n"
+msg_fork_child_end:

@@ -8,6 +8,8 @@
 
 static uint64_t syscall_stub_unimplemented(syscall_frame_t* frame);
 static uint64_t syscall_write_handler(syscall_frame_t* frame);
+static uint64_t syscall_fork_handler(syscall_frame_t* frame);
+static uint64_t syscall_execve_handler(syscall_frame_t* frame);
 static uint64_t syscall_yield_handler(syscall_frame_t* frame);
 static uint64_t syscall_sleep_handler(syscall_frame_t* frame);
 static uint64_t syscall_exit_handler(syscall_frame_t* frame);
@@ -28,6 +30,8 @@ void syscall_init(void) {
   }
 
   syscall_register(SYS_WRITE, syscall_write_handler);
+  syscall_register(SYS_FORK, syscall_fork_handler);
+  syscall_register(SYS_EXECVE, syscall_execve_handler);
   syscall_register(SYS_YIELD, syscall_yield_handler);
   syscall_register(SYS_SLEEP, syscall_sleep_handler);
   syscall_register(SYS_EXIT, syscall_exit_handler);
@@ -80,6 +84,35 @@ static uint64_t syscall_write_handler(syscall_frame_t* frame) {
   }
 
   return (uint64_t)length;
+}
+
+static uint64_t syscall_fork_handler(syscall_frame_t* frame) {
+  int err = 0;
+  proc_info_p child = proc_fork(current, frame, &err);
+  if(child == NULL) {
+    if(err == 0) {
+      err = -ENOMEM;
+    }
+    frame->rax = (uint64_t)err;
+    return frame->rax;
+  }
+
+  frame->rax = (uint64_t)child->pid;
+  return frame->rax;
+}
+
+static uint64_t syscall_execve_handler(syscall_frame_t* frame) {
+  const uint8_t* image = (const uint8_t*)frame->rdi;
+  size_t size = (size_t)frame->rsi;
+
+  if(image == NULL || size == 0 || size > (32 * 1024 * 1024)) {
+    frame->rax = (uint64_t)(-EINVAL);
+    return frame->rax;
+  }
+
+  int err = proc_exec_image(current, image, size, frame);
+  frame->rax = (uint64_t)err;
+  return frame->rax;
 }
 
 static uint64_t syscall_yield_handler(syscall_frame_t* frame) {

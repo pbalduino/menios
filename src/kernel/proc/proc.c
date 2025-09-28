@@ -9,6 +9,9 @@
 #include <kernel/tsc.h>
 #include <kernel/timer.h>
 #include <kernel/user/elf_loader.h>
+#include <kernel/syscall.h>
+#include <kernel/vm.h>
+#include <errno.h>
 #include <stdio.h>
 #include <string.h>
 #include <types.h>
@@ -71,6 +74,54 @@ static void scheduler_cleanup_process(proc_info_p proc);
 
 static inline uint64_t scheduler_now_us(void) {
   return unix_time_us();
+}
+
+static void proc_release_user_memory(proc_info_p proc) {
+  if(proc == NULL) {
+    return;
+  }
+
+  while(proc->vm_region_count > 0) {
+    vm_region_t region = proc->vm_regions[proc->vm_region_count - 1];
+    if(!vm_unmap(proc, region.base, region.length)) {
+      serial_printf("proc_release_user_memory: failed to unmap region %lx length %zu\n",
+                    region.base,
+                    region.length);
+      break;
+    }
+  }
+
+  if(proc->vm_region_count != 0) {
+    serial_printf("proc_release_user_memory: leaked %zu regions during teardown\n",
+                  proc->vm_region_count);
+  }
+  proc->user_segment_count = 0;
+}
+
+static void proc_free_resources(proc_info_p proc) {
+  if(proc == NULL) {
+    return;
+  }
+
+  proc_release_user_memory(proc);
+
+  if(proc->address_space_root) {
+    pmm_free_pages(proc->address_space_root, 1);
+    proc->address_space_root = 0;
+  }
+
+  if(proc->cpu_state) {
+    kfree(proc->cpu_state);
+    proc->cpu_state = NULL;
+  }
+
+  if(proc->stack_pointer) {
+    kfree(proc->stack_pointer);
+    proc->stack_pointer = NULL;
+    proc->stack_base = NULL;
+  }
+
+  kfree(proc);
 }
 
 static void ready_queue_push(proc_info_p proc) {
@@ -491,6 +542,227 @@ void proc_mark_ready(proc_info_p proc) {
   if(flags & (1ull << 9)) {
     enable_interrupts();
   }
+}
+
+proc_info_p proc_fork(proc_info_p parent, const syscall_frame_t* frame, int* err_out) {
+  if(err_out) {
+    *err_out = -ENOMEM;
+  }
+
+  if(parent == NULL || frame == NULL) {
+    return NULL;
+  }
+
+  proc_info_p child = kmalloc(sizeof(proc_info_t));
+  if(child == NULL) {
+    return NULL;
+  }
+  memset(child, 0, sizeof(proc_info_t));
+
+  child->parent = parent;
+  child->pid = last_pid++;
+  strncpy(child->name, parent->name, sizeof(child->name) - 1);
+  child->name[sizeof(child->name) - 1] = '\0';
+  child->user_mode = parent->user_mode;
+  child->user_stack_base_vaddr = parent->user_stack_base_vaddr;
+  child->user_stack_size = parent->user_stack_size;
+  child->brk = parent->brk;
+  child->heap = parent->heap;
+  child->errno = 0;
+  child->exit_code = 0;
+  child->sleep_until = 0;
+  child->last_dispatch_us = 0;
+  child->dispatch_count = 0;
+  child->exec_time = 0;
+
+  child->stack_pointer = kmalloc(PROC_STACK_SIZE + 0xF);
+  if(child->stack_pointer == NULL) {
+    proc_free_resources(child);
+    return NULL;
+  }
+  uintptr_t aligned = ((uintptr_t)child->stack_pointer + 0xF) & ~((uintptr_t)0xF);
+  child->stack_base = (uintptr_t*)aligned;
+  memset(child->stack_base, 0, PROC_STACK_SIZE);
+
+  child->cpu_state = kmalloc(sizeof(cpu_state_t));
+  if(child->cpu_state == NULL) {
+    proc_free_resources(child);
+    return NULL;
+  }
+  memset(child->cpu_state, 0, sizeof(cpu_state_t));
+
+  phys_addr_t new_root = pmm_clone_kernel_address_space();
+  if(new_root == 0) {
+    proc_free_resources(child);
+    return NULL;
+  }
+  child->address_space_root = new_root;
+
+  child->user_segment_count = 0;
+  child->vm_region_count = 0;
+
+  if(!vm_clone(child, parent)) {
+    proc_free_resources(child);
+    return NULL;
+  }
+
+  memcpy(child->cpu_state, frame, sizeof(syscall_frame_t));
+  child->cpu_state->rax = 0;
+
+  proc_set_priority(child, parent->priority);
+  child->time_slice_remaining_us = child->quantum_us;
+  child->state = PROC_STATE_READY;
+
+  parent->children_count++;
+
+  proc_execute(child);
+
+  if(err_out) {
+    *err_out = 0;
+  }
+
+  return child;
+}
+
+int proc_exec_image(proc_info_p proc, const uint8_t* image, size_t size, syscall_frame_t* frame) {
+  if(proc == NULL || image == NULL || size == 0 || frame == NULL) {
+    return -EINVAL;
+  }
+
+  uint8_t* elf_copy = kmalloc(size);
+  if(elf_copy == NULL) {
+    return -ENOMEM;
+  }
+
+  memcpy(elf_copy, image, size);
+
+  phys_addr_t new_root = pmm_clone_kernel_address_space();
+  if(new_root == 0) {
+    kfree(elf_copy);
+    return -ENOMEM;
+  }
+
+  proc_info_t staging;
+  memset(&staging, 0, sizeof(staging));
+  staging.pid = proc->pid;
+  staging.address_space_root = new_root;
+
+  virt_addr_t stack_top = user_stack_top(proc->pid);
+  virt_addr_t stack_base_vaddr = stack_top - PROC_USER_STACK_SIZE;
+  staging.user_stack_base_vaddr = stack_base_vaddr;
+  staging.user_stack_size = PROC_USER_STACK_SIZE;
+
+  int result = -ENOMEM;
+
+  if(!vm_region_add(&staging,
+                    stack_base_vaddr,
+                    PROC_USER_STACK_SIZE,
+                    VM_REGION_STACK,
+                    VM_REGION_FLAG_READ | VM_REGION_FLAG_WRITE | VM_REGION_FLAG_USER | VM_REGION_FLAG_GROW_DOWN)) {
+    goto fail;
+  }
+
+  vm_region_t* stack_region = vm_region_find(&staging, stack_base_vaddr);
+  if(stack_region == NULL) {
+    goto fail;
+  }
+
+  phys_addr_t initial_stack_phys = pmm_alloc_pages(1);
+  if(initial_stack_phys == 0) {
+    goto fail;
+  }
+
+  void* stack_page_ptr = (void*)physical_to_virtual(initial_stack_phys);
+  memset(stack_page_ptr, 0, PAGE_SIZE);
+
+  virt_addr_t initial_stack_page = stack_top - PAGE_SIZE;
+  if(!pmm_map_page_in_root(new_root, initial_stack_page, initial_stack_phys, true, true)) {
+    pmm_free_pages(initial_stack_phys, 1);
+    goto fail;
+  }
+
+  if(!proc_register_user_segment(&staging, initial_stack_phys, 1)) {
+    pmm_unmap_page_in_root(new_root, initial_stack_page);
+    pmm_free_pages(initial_stack_phys, 1);
+    goto fail;
+  }
+
+  vm_region_note_mapping(stack_region, initial_stack_page, PAGE_SIZE);
+
+  uint64_t entry = 0;
+  if(!elf64_load_image(&staging, new_root, elf_copy, size, &entry)) {
+    result = -ENOEXEC;
+    goto fail;
+  }
+
+  proc->brk = 0;
+  proc->heap = 0;
+
+  phys_addr_t old_root = proc->address_space_root;
+  proc_release_user_memory(proc);
+
+  if(old_root != 0 && old_root != new_root && old_root != pmm_get_kernel_cr3()) {
+    pmm_free_pages(old_root, 1);
+  }
+
+  proc->address_space_root = new_root;
+  proc->user_stack_base_vaddr = staging.user_stack_base_vaddr;
+  proc->user_stack_size = staging.user_stack_size;
+  proc->user_segment_count = staging.user_segment_count;
+  memcpy(proc->user_segments,
+         staging.user_segments,
+         staging.user_segment_count * sizeof(proc_user_segment_t));
+  proc->vm_region_count = staging.vm_region_count;
+  memcpy(proc->vm_regions,
+         staging.vm_regions,
+         staging.vm_region_count * sizeof(vm_region_t));
+  proc->user_mode = true;
+
+  kfree(elf_copy);
+
+  if(current == proc) {
+    write_cr3(proc->address_space_root);
+  }
+
+  frame->rip = entry;
+  frame->rsp = stack_top;
+  frame->rbp = stack_top;
+  frame->rax = 0;
+  frame->rbx = 0;
+  frame->rcx = 0;
+  frame->rdx = 0;
+  frame->rsi = 0;
+  frame->rdi = 0;
+  frame->r8 = 0;
+  frame->r9 = 0;
+  frame->r10 = 0;
+  frame->r11 = 0;
+  frame->r12 = 0;
+  frame->r13 = 0;
+  frame->r14 = 0;
+  frame->r15 = 0;
+  frame->cs = USER_CODE_SEGMENT;
+  frame->ss = USER_DATA_SEGMENT;
+  frame->rflags = 0x202;
+
+  if(proc->cpu_state == NULL) {
+    proc->cpu_state = kmalloc(sizeof(cpu_state_t));
+    if(proc->cpu_state == NULL) {
+      return -ENOMEM;
+    }
+  }
+
+  memcpy(proc->cpu_state, frame, sizeof(syscall_frame_t));
+
+  return 0;
+
+fail:
+  proc_release_user_memory(&staging);
+  if(new_root != 0) {
+    pmm_free_pages(new_root, 1);
+  }
+  kfree(elf_copy);
+  return result;
 }
 
 void proc_create_user(proc_info_p proc, const char* name, const void* code_blob, size_t code_size, void* arg) {

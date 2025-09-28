@@ -36,7 +36,7 @@ With the introduction of `vm_map`, `vm_unmap`, and `vm_clone`, user address-spac
 
 * `vm_map(proc, params)` reserves a region, allocates physical pages, zeroes them, maps them into the target CR3, and updates both region metadata and the legacy `user_segments[]` bookkeeping.
 * `vm_unmap(proc, base, length)` removes page table entries and frees the backing frames for the specified range, then drops the region descriptor. (Current implementation assumes whole-region unmap; partial unmap support is a follow-up.)
-* `vm_clone(child, parent)` duplicates the parent’s region table, allocates fresh frames for each committed page, copies contents, and maps them into the child, giving us a baseline for `fork()` once process cloning arrives.
+* `vm_clone(child, parent)` duplicates the parent’s region table, allocates fresh frames for each committed page, copies contents, and maps them into the child.
 
 Limitations:
 * No copy-on-write yet; clone eagerly copies committed pages.
@@ -44,3 +44,14 @@ Limitations:
 * Guard pages and canonical per-process layouts are still pending (see roadmap above).
 
 These APIs bridge the earlier region metadata work with actual page-table manipulation, enabling higher-level features (heap grow, mmap, fork/exec) to advance.
+
+## Process Creation (Issue #93)
+
+With vm_clone in place, meniOS now offers a full `fork`/`execve` path:
+
+* `proc_fork()` allocates a child `proc_info_t`, clones the kernel PML4, and calls `vm_clone()` to duplicate committed user regions into the new address space. The syscall trampoline copies the parent frame into the child so both return to user space with distinct return values (`0` in the child, `child_pid` in the parent).
+* `proc_exec_image()` stages the replacement image in a fresh CR3, mapping a clean stack region before running the ELF loader. On success the old user mappings are torn down, the new root installs in the process, and the syscall frame is reset with pristine registers and user segments so the caller resumes in ring 3 at the ELF entry point.
+* `SYS_fork` and `SYS_execve` dispatch into the helpers above, performing basic pointer/size validation and propagating negative errno values back to user mode on failure.
+* The user demo program now exercises `fork`, emitting per-branch messages before the child exits, keeping the example deterministic while we wire up richer userland payloads.
+
+This closes the loop on process cloning and image replacement: the scheduler can now spin up arbitrary user tasks, duplicate them, and hand control over to new executables without rebooting the kernel.

@@ -8,6 +8,8 @@ extern "C" {
 #include <types.h>
 #include <kernel/vm_region.h>
 
+struct syscall_frame_t;
+
 #define PROC_KERNEL 0
 #define PROC_MAX   16
 
@@ -140,6 +142,8 @@ uint64_t scheduler_get_quantum(uint8_t priority);
 void proc_request_yield(void);
 void proc_request_sleep(uint64_t duration_us);
 void proc_mark_ready(proc_info_p proc);
+proc_info_p proc_fork(proc_info_p parent, const struct syscall_frame_t* frame, int* err_out);
+int proc_exec_image(proc_info_p proc, const uint8_t* image, size_t size, struct syscall_frame_t* frame);
 
 #ifdef __cplusplus
 }
