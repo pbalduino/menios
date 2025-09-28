@@ -444,20 +444,6 @@ static int serial_close_noop(file_t* file) {
   return 0;
 }
 
-static int64_t null_read_impl(file_t* file, void* buffer, size_t length) {
-  (void)file;
-  (void)buffer;
-  (void)length;
-  return 0;
-}
-
-static int64_t null_write_impl(file_t* file, const void* buffer, size_t length) {
-  (void)file;
-  (void)buffer;
-  (void)length;
-  return (int64_t)length;
-}
-
 static int64_t framebuffer_write_impl(file_t* file, const void* buffer, size_t length) {
   (void)file;
   const char* text = (const char*)buffer;
@@ -470,12 +456,6 @@ static int64_t framebuffer_write_impl(file_t* file, const void* buffer, size_t l
 static const file_ops_t serial_file_ops = {
   .read = NULL,
   .write = serial_write_impl,
-  .close = serial_close_noop
-};
-
-static const file_ops_t null_file_ops = {
-  .read = null_read_impl,
-  .write = null_write_impl,
   .close = serial_close_noop
 };
 
