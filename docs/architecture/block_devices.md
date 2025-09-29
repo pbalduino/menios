@@ -37,9 +37,11 @@ to higher layers.
 ## Next Steps
 
 - SATA disks are now exposed as `sataN` block devices backed by DMA reads and
-  writes, with interrupts unmasking completion on vector `0x40`. The driver
-  currently serialises commands per port and stages data through a bounce buffer
-  to keep the PRDT layout simple (Issue #62).
+  writes, with interrupts unmasking completion on vector `0x40`. During boot the
+  `user_demo_launch()` routine performs a smoke test by reading LBA0 and logging
+  the first bytes, confirming end-to-end AHCI I/O. The driver currently
+  serialises commands per port and stages data through a bounce buffer to keep
+  the PRDT layout simple (Issue #62).
 - Integrate the block layer with the upcoming block cache (Issue #63).
 - Extend the API with asynchronous I/O and request queues once drivers require
   higher throughput.
