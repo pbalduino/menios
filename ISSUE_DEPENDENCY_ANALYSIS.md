@@ -16,7 +16,7 @@ These issues form the backbone of the system and should be prioritized:
 5. **#89** - mmap/munmap syscalls (CLOSED)
 6. **#93** - fork/exec process creation (CLOSED)
 7. **#36** - mutex implementation (CLOSED)
-8. **#101** - LAPIC/HPET timer integration
+8. **#101** - LAPIC/HPET timer integration (CLOSED)
 
 ### Tier 3: IPC Foundation (PARTIALLY COMPLETE)
 9. **#102** - pipes (pipe/mkfifo)
@@ -192,7 +192,7 @@ Phase 2: USB Support                                  Mouse events
 - #96: File descriptor management (CLOSED)
 - #89: mmap/munmap syscalls (CLOSED)
 - #93: fork/exec process creation (CLOSED)
-- #101: LAPIC/HPET timers
+- #101: LAPIC/HPET timers (CLOSED)
 - #102: pipes implementation
 
 **Status**: Core process management operational, IPC components remaining.
@@ -242,7 +242,6 @@ Phase 2: USB Support                                  Mouse events
 - **#127 (UTF-8 utilities)** - No dependencies, ready to start immediately!
 - **#135 (code coverage)** - Can start with existing Unity tests, no blocking dependencies
 - **#136 (device filesystem)** - Dependencies: #96 (CLOSED), #60 (CLOSED) - ready!
-- **#101 (LAPIC/HPET timers)** - Core timing infrastructure for advanced features
 - **#102 (pipes)** - Basic IPC implementation
 - **#103 (UNIX signals)** - Process control mechanism
 
@@ -274,13 +273,12 @@ Phase 2: USB Support                                  Mouse events
 2. **#127** - UTF-8 utilities (ready to implement, no dependencies!)
 3. **#135** - Code coverage with Gcov (ready to implement, existing Unity tests!)
 4. **#136** - Device filesystem infrastructure (ready to implement!)
-5. **#101** - LAPIC/HPET timer integration (core timing for advanced features)
-6. **#102** - pipes implementation (basic IPC ready)
-7. **#103** - UNIX signals (process control ready)
+5. **#102** - pipes implementation (basic IPC ready)
+6. **#103** - UNIX signals (process control ready)
 
 ### For Maximum Impact:
 1. **Complete Threading APIs** (#109, #110, #113) - Enable modern multithreaded applications
-2. **Implement Advanced IPC** (#101, #102, #103, #104) - Complete process communication
+2. **Implement Advanced IPC** (#102, #103, #104) - Complete process communication
 3. **Add Unicode Support** (#127, #128, #129) - International text handling
 
 ### For Running Applications (like text editors):
@@ -332,7 +330,7 @@ Phase 2: USB Support                                  Mouse events
 - #136 (device filesystem) - Hardware access
 - #137 (null/zero devices) - Good first issue
 - #143 (PS/2 mouse) - Input expansion
-- #101 (LAPIC/HPET timers) - Core timing
+- #101 (LAPIC/HPET timers) *(CLOSED)* - Core timing
 - #102 (pipes) - Basic IPC
 - #103 (UNIX signals) - Process control
 
@@ -349,7 +347,7 @@ With core kernel infrastructure operational, meniOS has strong foundations for a
 
 **Recommended immediate development tracks:**
 1. **Threading APIs** (#109, #110, #113) - Enable multithreaded applications
-2. **Advanced IPC** (#101, #102, #103, #104) - Complete process communication
+2. **Advanced IPC** (#102, #103, #104) - Complete process communication
 3. **Unicode Support** (#127, #128, #129, #130) - International text handling
 4. **Device Infrastructure** (#136, #137, #138) - Hardware access layer
 5. **Mouse Input** (#143, #144) - Complete input subsystem with mouse support

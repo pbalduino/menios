@@ -5,6 +5,7 @@
 extern "C" {
 #endif
 
+#include <stdbool.h>
 #include <types.h>
 
 #include <kernel/acpi.h>
@@ -49,7 +50,15 @@ typedef struct hpet_table_t {
   uint8_t           page_protection;
 } __attribute__((packed)) hpet_table_t;
 
-hpet_status_t hpet_timer_init();
+typedef int hpet_status_t;
+
+hpet_status_t hpet_timer_init(void);
+bool hpet_is_available(void);
+uint64_t hpet_frequency_hz(void);
+uint64_t hpet_read_counter(void);
+void hpet_reset_counter(void);
+void hpet_wait_ticks(uint64_t ticks);
+void hpet_wait_us(uint64_t microseconds);
 
 #ifdef __cplusplus
 }

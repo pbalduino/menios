@@ -23,7 +23,7 @@ MeniOS now boots via the Limine bootloader, initializes the x86-64 platform, and
 ### Next Major Milestones
 1. **pthread API & libc hardening** (Issues #109, #110) – expose kernel threads to user programs with a POSIX surface
 2. **Thread-aware syscalls & tooling** (Issues #112, #113) – scheduler introspection, thread IDs, and blocking semantics across the syscall suite
-3. **Signals & timers** (Issues #101, #103) – UNIX signal delivery, masking, and timer facilities for process control
+3. **Signals & timers** (Issue #103; timer calibration #101 complete) – UNIX signal delivery, masking, and timer facilities for process control
 4. **Shared memory & IPC expansion** (Issues #104-#107) – shared regions, message queues, and futex-style primitives
 5. **Userspace device interfaces** (Issues #33, #61) – input event queues, audio streaming, and filesystem write support for Doom assets now that the framebuffer protocol (`SYS_FB_GETINFO`/`SYS_FB_MAP`/`SYS_FB_FLIP`) is in place
 
@@ -83,7 +83,7 @@ On the kernel side, `user_demo_launch()` probes the SATA disk, dumps the first s
 ### Active Development & Near-Term Focus
 - **Threading APIs**: pthread surface, thread-safe libc, and advanced synchronization (Issues #109-#111)
 - **Thread observability**: Thread-aware syscalls, debugging hooks, and scheduling metrics (Issues #112-#113)
-- **Signals & IPC**: Timers, UNIX signals, shared memory, pipes enhancements, and futex/message primitives (Issues #101-#107)
+- **Signals & IPC**: UNIX signals, shared memory, pipes enhancements, and futex/message primitives (Issues #103-#107)
 - **Userspace device interfaces**: Writable filesystem path, framebuffer protocol (`SYS_FB_GETINFO`/`SYS_FB_MAP`/`SYS_FB_FLIP`), input events, and audio streaming (Issues #33, #61)
 - **Toolchain & SDK**: Cross-compiler, crt0, libc packaging, and build tooling for user apps (Issue #29)
 - **Networking stack**: TCP/IP layers, sockets, and driver support (Issues #67-#73)
@@ -151,14 +151,14 @@ See [`road_to_doom.md`](road_to_doom.md) and [`tasks.json`](tasks.json) for the 
 ### Current Limitations
 - **Filesystem**: FAT32 stack is read-only; no create/write/unlink path yet (Issue #61)
 - **Threading**: No pthread API or thread-safe libc exposed to userland (Issues #109-#111)
-- **Signals & IPC**: UNIX signals, timers, and shared memory are not implemented (Issues #101-#107)
+- **Signals & IPC**: UNIX signals and shared memory are not implemented (Issues #103-#107)
 - **Device interfaces**: Userland cannot yet access audio via character devices; framebuffer mapping now lands a double-buffered staging area (Issue #33)
 - **Networking**: TCP/IP stack, sockets, and drivers remain to be written (Issues #67-#73)
 - **Tooling**: No official cross-compiler or SDK packaged for meniOS user apps (Issue #29)
 
 ### Active Development Areas
 - Threading APIs and libc hardening (Issues #109-#113)
-- Signals, timers, shared memory, and futex/message IPC (Issues #101-#107)
+- Signals, shared memory, and futex/message IPC (Issues #103-#107)
 - Filesystem write support and userland device access (Issues #33, #61)
 - Toolchain and SDK preparation (Issue #29)
 - Networking stack design (Issues #67-#73)

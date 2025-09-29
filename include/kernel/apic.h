@@ -34,8 +34,15 @@
 #define DIV_BY_1    0x0b
 
 void apic_init();
-void lapic_timer_init();
-void timer_frequency(uint32_t freq);
+void lapic_timer_init(void);
+void lapic_timer_set_divider(uint32_t divider);
+void lapic_timer_configure(uint8_t vector, bool periodic, bool masked);
+void lapic_timer_set_initial_count(uint32_t count);
+uint32_t lapic_timer_current_count(void);
+void lapic_timer_stop(void);
+void lapic_timer_set_counts_per_second(uint64_t counts);
+uint64_t lapic_timer_counts_per_second(void);
+
 void write_lapic(uintptr_t reg, uint32_t value);
 
 uint32_t read_lapic(uintptr_t reg);

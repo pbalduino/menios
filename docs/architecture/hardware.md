@@ -7,6 +7,7 @@ Issue #22 tracks hardware discovery in meniOS. The registry now works as follows
 * ACPI enumeration (`hardware_init() -> acpi_enumerate()`) walks the namespace, logging every device with a Hardware ID (HID) and calling `driver_load()`.
 * `driver_load()` now returns the matched driver descriptor and invokes its `start()` hook. Devices whose interrupts are routed through the IOAPIC keep their matching PIC lines masked so the handler only fires once.
 * The linear framebuffer is exposed to userland via `SYS_FB_GETINFO` / `SYS_FB_MAP` / `SYS_FB_FLIP`. Each process gets a private staging buffer that is blitted into the hardware front buffer on flip, providing a simple double-buffered presentation path without requiring direct physical mappings yet.
+* LAPIC timer calibration now uses HPET as the preferred reference (with TSC fallback), delivering a stable 1 kHz system tick for the scheduler and sleep routines.
 * `hardware_device_register()` records every detected device, storing its ACPI path, HID, and matched driver. `hardware_log_devices()` prints a summary for diagnostics at the end of hardware discovery.
 
 This lays the groundwork for plugging in PCI and other bus enumerators while keeping all detected devices visible from the kernel side.

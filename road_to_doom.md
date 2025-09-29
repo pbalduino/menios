@@ -66,7 +66,7 @@ Inter-process communication for complex applications:
 - **Impact**: Shell pipelines, parent/child hand-off, and Doom's streaming needs
 
 #### **UNIX Signals** (Issue #103)
-- 🟡 **Status**: Ready to implement once timer services (#101) land
+- 🟡 **Status**: Ready to implement using the calibrated LAPIC timer (#101 complete)
 - **Scope**: Signal delivery, handlers, masks, default actions
 - **Impact**: Process control, crash handling, cooperative shutdown
 
@@ -176,7 +176,7 @@ Development environment for building applications:
 ### **Short Term (0-3 months)**
 - Ship pthread API and thread-safe libc foundations (#109, #110)
 - Add thread-aware syscalls, profiling hooks, and scheduler tooling (#112, #113)
-- Implement timer services and UNIX signals (#101, #103)
+- Implement UNIX signals (#103) atop the calibrated timer service (#101)
 
 ### **Medium Term (3-9 months)**
 - Deliver shared memory and futex/message IPC primitives (#104-#107)
@@ -196,9 +196,9 @@ Development environment for building applications:
 3. **#113** – Thread-aware syscalls and scheduler inspection hooks
 
 **High impact for applications**:
-4. **#103/#101** – UNIX signals built atop the timer service
+4. **#103** – UNIX signals built atop the timer service
 5. **#104** – Shared memory primitives for high-bandwidth IPC
-6. **#31** – Userspace framebuffer interface to unblock rendering
+6. **#33** – Audio subsystem for playback in userland
 
 ## 🎯 **Success Criteria**
 

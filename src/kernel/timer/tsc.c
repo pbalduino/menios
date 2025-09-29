@@ -1,4 +1,5 @@
 #include <kernel/console.h>
+#include <kernel/hpet.h>
 #include <kernel/serial.h>
 #include <kernel/timer.h>
 #include <kernel/tsc.h>
@@ -60,6 +61,39 @@ uint64_t read_tsc(void) {
 #endif
 }
 
+static uint64_t tsc_calibrate_with_hpet(void) {
+  if(!hpet_is_available()) {
+    return 0;
+  }
+
+  const uint64_t hpet_freq = hpet_frequency_hz();
+  if(hpet_freq == 0) {
+    return 0;
+  }
+
+  uint64_t target = hpet_freq / 100; // ~10ms
+  if(target == 0) {
+    target = hpet_freq / 1000; // ~1ms fallback
+  }
+  if(target == 0) {
+    target = 1;
+  }
+
+  uint64_t start_counter = hpet_read_counter();
+  uint64_t start_tsc = read_tsc();
+
+  while((hpet_read_counter() - start_counter) < target) {
+    __asm__ volatile("pause");
+  }
+
+  uint64_t delta_tsc = read_tsc() - start_tsc;
+  if(delta_tsc == 0) {
+    return 0;
+  }
+
+  return (delta_tsc * hpet_freq) / target;
+}
+
 static void tsc_calibrate(void) {
   uint32_t regs[4];
   uint32_t max_basic = cpuid_max_basic_leaf();
@@ -83,6 +117,15 @@ static void tsc_calibrate(void) {
     uint32_t base_mhz = regs[0];
     if(base_mhz != 0) {
       freq = (uint64_t)base_mhz * 1000000ull;
+    }
+  }
+
+  if(freq == 0) {
+    uint64_t hpet_freq = tsc_calibrate_with_hpet();
+    if(hpet_freq != 0) {
+      freq = hpet_freq;
+      serial_printf("tsc_calibrate: calibrated via HPET to %llu Hz\n",
+                    (unsigned long long)freq);
     }
   }
 
