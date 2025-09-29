@@ -429,7 +429,8 @@ static bool ahci_port_device_present(ahci_port_t* port) {
 
   uint32_t sctl = regs->sctl;
   regs->sctl = (sctl & ~0xFu) | 0x1u;
-  for(volatile uint32_t i = 0; i < 1000; i++) {
+  uint64_t wait_start = ns_from_boot();
+  while((uint64_t)(ns_from_boot() - wait_start) < 1000000ull) {
     asm volatile("pause");
   }
   regs->sctl = (sctl & ~0xFu);
@@ -793,6 +794,7 @@ static bool ahci_port_identify(ahci_port_t* port) {
     .buffer = identify_buffer.virt,
     .byte_count = AHCI_SECTOR_SIZE,
     .write = false,
+    .dma_phys = identify_buffer.phys,
   };
 
   bool ok = ahci_port_issue_command(port, &ctx, ATA_CMD_IDENTIFY);
