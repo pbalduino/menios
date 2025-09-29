@@ -150,11 +150,10 @@ digraph IssueDependencies {
     issue40 -> issue104 [style=dashed, color=gray];
     issue40 -> issue105 [style=dashed, color=gray];
 
-    // File descriptor dependencies
+    // File descriptor dependencies (filesystem complete)
     issue96 -> issue102 [style=dashed, color=gray];
     issue96 -> issue105 [style=dashed, color=gray];
     issue96 -> issue60 [style=dashed, color=gray];
-    issue65 -> issue60;
 
     // IPC dependencies
     issue102 -> issue106;
@@ -193,14 +192,27 @@ digraph IssueDependencies {
     issue71 -> issue72 [label="#72: network utils"];
     issue72 -> issue73 [label="#73: advanced networking"];
 
-    // Hardware/driver dependencies
-    issue62 [label="#62: block device\ndriver", fillcolor="#FFEAA7"];
-    issue63 [label="#63: block cache", fillcolor="#FFEAA7"];
-    issue64 [label="#64: filesystem\nlibrary", fillcolor="#FFEAA7"];
+    // Hardware/driver dependencies (completed filesystem stack)
+    issue114 [label="#114: block device\nabstraction layer", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED
+    issue115 [label="#115: DMA allocation\nhelpers", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED
+    issue116 [label="#116: PCI/AHCI\ncontroller init", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED
+    issue117 [label="#117: AHCI interrupt\nservice path", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED
+    issue62 [label="#62: AHCI/ATA block\ndevice driver", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED
+    issue63 [label="#63: block cache", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED
+    issue64 [label="#64: filesystem\nlibrary (FAT32)", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED
+    issue65 [label="#65: VFS layer", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED
+    issue60 [label="#60: filesystem\nsyscalls", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED
 
-    issue62 -> issue63;
-    issue63 -> issue64;
-    issue64 -> issue65;
+    // Completed filesystem dependencies
+    issue114 -> issue62 [style=dashed, color=gray];
+    issue115 -> issue116 [style=dashed, color=gray];
+    issue116 -> issue117 [style=dashed, color=gray];
+    issue117 -> issue62 [style=dashed, color=gray];
+    issue115 -> issue62 [style=dashed, color=gray];
+    issue62 -> issue63 [style=dashed, color=gray];
+    issue63 -> issue64 [style=dashed, color=gray];
+    issue64 -> issue65 [style=dashed, color=gray];
+    issue65 -> issue60 [style=dashed, color=gray];
 
     // Graphics and userspace
     issue31 [label="#31: graphics/\nframebuffer", fillcolor="#DEB887"];
@@ -211,11 +223,12 @@ digraph IssueDependencies {
     issue96 -> issue32 [style=dashed, color=gray];
     issue96 -> issue33 [style=dashed, color=gray];
 
-    // Critical path highlighting (updated for threading)
+    // Critical path highlighting (filesystem complete, threading ready)
     edge [color=red, penwidth=3];
     issue89 -> issue95 [label="CRITICAL", style=dashed];
     issue96 -> issue102 [label="CRITICAL", style=dashed];
     issue108 -> issue109 [label="THREADING CRITICAL"];
+    issue60 -> issue31 [label="GRAPHICS READY", color=purple];
 
     // Legend
     subgraph cluster_legend {
