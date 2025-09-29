@@ -271,12 +271,14 @@ static void ahci_register_controller(uint8_t bus,
   controllers_count++;
 
 #if AHCI_VERBOSE_LOG
-  serial_printf("ahci: controller %02x:%02x.%u mapped at phys=%llx virt=%p\n",
+  serial_printf("ahci: controller %02x:%02x.%u mapped at phys=%llx virt=%p irq_line=%u irq_pin=%u\n",
                 bus,
                 device,
                 function,
                 (unsigned long long)abar_phys,
-                node->abar);
+                node->abar,
+                irq_line,
+                irq_pin);
 #endif
 
   ahci_controller_configure(node);
@@ -334,6 +336,16 @@ static void ahci_controller_configure(ahci_controller_t* controller) {
 static void ahci_controller_discover_ports(ahci_controller_t* controller) {
   volatile ahci_hba_mem_t* hba = (volatile ahci_hba_mem_t*)controller->abar;
   uint32_t implemented = hba->pi;
+
+#if AHCI_VERBOSE_LOG
+  serial_printf("ahci: controller %02x:%02x.%u port bitmap=0x%08x ghc=0x%08x cap=0x%08x\n",
+                controller->bus,
+                controller->device,
+                controller->function,
+                implemented,
+                hba->ghc,
+                hba->cap);
+#endif
 
   if(controller->ports != NULL) {
     return;
@@ -435,6 +447,15 @@ static bool ahci_port_device_present(ahci_port_t* port) {
   }
 
   uint32_t sig = regs->sig;
+#if AHCI_VERBOSE_LOG
+  serial_printf("ahci: ctrl %02x:%02x.%u port %u link active, sig=0x%08x ssts=0x%08x\n",
+                port->controller->bus,
+                port->controller->device,
+                port->controller->function,
+                port->index,
+                sig,
+                regs->ssts);
+#endif
   if(sig == SATA_SIG_ATAPI || sig == SATA_SIG_PM || sig == SATA_SIG_SEMB) {
     serial_printf("ahci: ctrl %02x:%02x.%u port %u unsupported device signature 0x%08x\n",
                   port->controller->bus,
@@ -1044,7 +1065,7 @@ void ahci_init(void) {
 
   ahci_scan_bus();
 
-  serial_printf("ahci: discovered %zu controller(s)\n", controllers_count);
+  serial_printf("ahci: discovered %lu controller(s)\n", (unsigned long)controllers_count);
   ahci_initialized = true;
 }
 
