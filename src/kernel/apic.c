@@ -13,6 +13,7 @@
 
 #include <stdint.h>
 #include <stdio.h>
+#include <stdbool.h>
 
 typedef struct ioapicdesc_t {
 	void *addr;
@@ -151,8 +152,9 @@ void apic_init() {
 		struct acpi_madt_ioapic *entry = getentry(ACPI_MADT_ENTRY_TYPE_IOAPIC, i);
 
     ioapics[i].addr = (void*)physical_to_virtual((uintptr_t)entry->address);
+    ioapics[i].base = entry->gsi_base;
     ioapics[i].top = ioapics[i].base + ((readioapic(ioapics[i].addr, IOAPIC_REG_ENTRYCOUNT) >> 16) & 0xff) + 1;
-		serial_printf("ioapic%lu: addr %p base %lu top %lu\n", i, entry->address, entry->gsi_base, ioapics[i].top);
+		serial_printf("ioapic%lu: addr %p base %lu top %lu\n", i, entry->address, ioapics[i].base, ioapics[i].top);
     for(int j = ioapics[i].base; j < ioapics[i].top; ++j) {
 			writeiored(ioapics[i].addr, j - ioapics[i].base, 0xfe, 0, 0, 0, 0, 1, 0);
       puts(".");
@@ -167,4 +169,54 @@ void write_lapic(uintptr_t reg, uint32_t value) {
 
 uint32_t read_lapic(uintptr_t reg) {
   return *((volatile uint32_t*) reg);
+}
+
+static ioapicdesc_t* apic_find_ioapic(uint32_t gsi) {
+  for(size_t i = 0; i < iocount; ++i) {
+    if(gsi >= (uint32_t)ioapics[i].base && gsi < (uint32_t)ioapics[i].top) {
+      return &ioapics[i];
+    }
+  }
+  return NULL;
+}
+
+bool apic_configure_irq(uint32_t gsi,
+                        uint8_t vector,
+                        bool level_triggered,
+                        bool active_low) {
+  ioapicdesc_t* desc = apic_find_ioapic(gsi);
+  if(desc == NULL) {
+    serial_printf("apic_configure_irq: no IOAPIC covers GSI %u\n", gsi);
+    return false;
+  }
+
+  uint8_t entry = (uint8_t)(gsi - (uint32_t)desc->base);
+  uint8_t polarity = active_low ? 1 : 0;
+  uint8_t trigger_mode = level_triggered ? 1 : 0;
+
+  writeiored(desc->addr,
+             entry,
+             vector,
+             0,            // delivery: fixed
+             0,            // physical destination mode
+             polarity,
+             trigger_mode,
+             0,            // unmask entry
+             0);           // target CPU 0
+
+  serial_printf("apic_configure_irq: GSI %u routed to vector 0x%02x (level=%s, active_low=%s)\n",
+                gsi,
+                (unsigned)vector,
+                level_triggered ? "yes" : "no",
+                active_low ? "yes" : "no");
+
+  return true;
+}
+
+void apic_send_eoi(void) {
+  if(lapicaddr == NULL) {
+    return;
+  }
+
+  write_lapic((uintptr_t)lapicaddr + LAPIC_EOI, 0);
 }

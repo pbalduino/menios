@@ -33,9 +33,12 @@ to higher layers.
 
 ## Next Steps
 
-- The AHCI driver skeleton enumerates PCI devices with class code 0x01/0x06 and
-  maps BAR5 into the HHDM, laying the groundwork for full DMA-backed transfers
-  (Issue #117).
+- The AHCI controller driver now maps BAR5, enables AHCI mode, and routes the
+  controller's legacy INTx line through the IOAPIC. Port interrupts are
+  acknowledged and cleared in the shared handler, paving the way for command
+  submission and DMA-backed transfers (Issue #117).
+- Follow up with DMA engine setup and command submission so the driver can
+  service real read/write requests (Issue #62).
 - Integrate the block layer with the upcoming block cache (Issue #63).
 - Extend the API with asynchronous I/O and request queues once drivers require
   higher throughput.

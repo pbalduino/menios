@@ -1,6 +1,7 @@
 #ifndef MENIOS_INCLUDE_KERNEL_APIC_H
 #define MENIOS_INCLUDE_KERNEL_APIC_H
 
+#include <stdbool.h>
 #include <types.h>
 
 #define CPUID_INFO 0x1
@@ -38,5 +39,12 @@ void timer_frequency(uint32_t freq);
 void write_lapic(uintptr_t reg, uint32_t value);
 
 uint32_t read_lapic(uintptr_t reg);
+
+bool apic_configure_irq(uint32_t gsi,
+                        uint8_t vector,
+                        bool level_triggered,
+                        bool active_low);
+
+void apic_send_eoi(void);
 
 #endif

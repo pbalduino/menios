@@ -63,7 +63,7 @@ make build run
 ```
 
 This will build the kernel, create a bootable image, and launch it in QEMU.
-All generated artifacts now live under `build/` (`build/bin` for boot assets, `build/obj` for intermediates), keeping the repository tree clean. When the kernel reaches `halt()` the QEMU instance exits automatically via the debug-exit device, so `make run` returns to your shell without manual intervention.
+All generated artifacts now live under `build/` (`build/bin` for boot assets, `build/obj` for intermediates), keeping the repository tree clean. When the kernel reaches `halt()` the QEMU instance exits automatically via the debug-exit device, so `make run` returns to your shell without manual intervention. The default `QEMU_OPTS` wire an AHCI controller (`-device ahci`) with the disk attached to `ahci.0`, ensuring the kernel exercises its SATA/AHCI path during every run.
 
 ### Verify the User Demo
 

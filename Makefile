@@ -102,14 +102,21 @@ QEMU_OPTS = -smp cpus=2,maxcpus=4,sockets=1,dies=1,clusters=1,cores=2 \
 	--no-shutdown \
 	-M q35 \
 	-m $(QEMU_MEMORY) \
-	-hda $(IMAGE_NAME).hdd \
+	-device ahci,id=ahci \
+	-device ide-hd,drive=hd0,bus=ahci.0 \
+	-drive file=$(IMAGE_NAME).hdd,if=none,id=hd0 \
+	-usb \
+	-device usb-ehci,id=ehci \
+	-device usb-mouse \
 	-serial file:$(QEMU_LOG_FILE) \
 	-monitor stdio \
 	-d int \
+	-M hpet=on \
 	-rtc base=utc,clock=host \
 	-device isa-debug-exit,iobase=0xf4,iosize=0x04
-# -M hpet=on \
+# -hda $(IMAGE_NAME).hdd \
 # -usb \
+#	-device usb-kbd \
 # -device usb-ehci,id=ehci \
 # -device usb-mouse \
 # -device usb-kbd \
