@@ -95,6 +95,7 @@ Expect the log to show the `[user_demo]` messages on screen and in `com1.log`, c
 - [x] Kernel block device abstraction layer (Issue #114)
 - [x] SATA/AHCI DMA block driver with interrupt completion (Issue #62)
 - [x] DMA-friendly allocation helpers (Issue #115)
+- [x] GPT-aware FAT32 filesystem mounting and file access (Issue #64)
 
 ### 🔥 **Ready to Implement** (Dependencies Met)
 - [x] **File descriptor management and pipes** (Issue #96)
@@ -106,7 +107,7 @@ Expect the log to show the `[user_demo]` messages on screen and in `com1.log`, c
 ### 🚧 **In Progress & Planned**
 - [ ] **Threading Support**: Complete pthread API and multithreading (Issues #108-#113)
 - [ ] **Advanced IPC**: Signals, shared memory, microkernel IPC (Issues #102-#107)
-- [ ] **Filesystem**: Block drivers, VFS, and file operations (Issues #60, #62-#65)
+- [ ] **Filesystem**: VFS layer, block cache, and write support (Issues #60, #63, #65)
 - [ ] **Networking**: Complete TCP/IP stack (Issues #67-#73)
 - [ ] **Graphics**: Framebuffer interface and input subsystem (Issues #31-#33)
 
@@ -115,7 +116,7 @@ Expect the log to show the `[user_demo]` messages on screen and in `com1.log`, c
 **Foundation ✅ COMPLETE**: The core kernel infrastructure needed for userspace applications is now solid!
 
 Remaining major components for Doom:
-- **File System**: VFS layer, disk drivers, file I/O syscalls
+- **File System**: VFS layer, write support, file I/O syscalls
 - **Graphics**: Framebuffer interface, double buffering, palette control
 - **Input**: Userspace keyboard/mouse drivers and event system
 - **Audio**: PCM output, mixing, streaming syscalls

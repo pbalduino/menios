@@ -748,7 +748,7 @@
     "github_issue": {
       "number": 64,
       "url": "https://github.com/pbalduino/menios/issues/64",
-      "state": "OPEN"
+      "state": "CLOSED"
     },
     "labels": [
       "enhancement"

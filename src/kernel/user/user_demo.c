@@ -3,6 +3,7 @@
 #include <string.h>
 
 #include <kernel/block_device.h>
+#include <kernel/fs.h>
 #include <kernel/heap.h>
 #include <kernel/proc.h>
 #include <kernel/serial.h>
@@ -59,6 +60,143 @@ static void user_demo_block_probe(void) {
   kfree(buffer);
 }
 
+typedef struct user_demo_list_ctx_t {
+  const fs_mount_t* mount;
+  size_t            depth;
+  size_t            max_depth;
+  const char*       parent_path;
+} user_demo_list_ctx_t;
+
+static void user_demo_print_indent(size_t depth) {
+  for(size_t i = 0; i < depth; i++) {
+    serial_printf("  ");
+  }
+}
+
+static bool user_demo_build_child_path(char* buffer,
+                                       size_t buffer_size,
+                                       const char* parent,
+                                       const char* name) {
+  if(buffer == NULL || parent == NULL || name == NULL) {
+    return false;
+  }
+
+  size_t name_len = strlen(name);
+  if(parent[0] == '\0' || (parent[0] == '/' && parent[1] == '\0')) {
+    if(name_len + 2 > buffer_size) {
+      return false;
+    }
+    buffer[0] = '/';
+    memcpy(buffer + 1, name, name_len);
+    buffer[1 + name_len] = '\0';
+  } else {
+    size_t parent_len = strlen(parent);
+    if(parent_len + 1 + name_len + 1 > buffer_size) {
+      return false;
+    }
+    memcpy(buffer, parent, parent_len);
+    buffer[parent_len] = '/';
+    memcpy(buffer + parent_len + 1, name, name_len);
+    buffer[parent_len + 1 + name_len] = '\0';
+  }
+
+  return true;
+}
+
+static void user_demo_list_directory(const fs_mount_t* mount,
+                                     const char* path,
+                                     size_t depth,
+                                     size_t max_depth);
+
+static bool user_demo_dir_iter(const fs_dir_entry_t* entry, void* context) {
+  user_demo_list_ctx_t* ctx = (user_demo_list_ctx_t*)context;
+  if(ctx == NULL || entry == NULL) {
+    return false;
+  }
+
+  if(entry->is_directory &&
+     (strcmp(entry->name, ".") == 0 || strcmp(entry->name, "..") == 0)) {
+    return true;
+  }
+
+  const char* type = entry->is_directory ? "<DIR>" : "<FILE>";
+  user_demo_print_indent(ctx->depth + 1);
+  serial_printf("user_demo_fs: %s %s (%u bytes)\n",
+                type,
+                entry->name,
+                entry->size);
+
+  if(!entry->is_directory) {
+    return true;
+  }
+
+  if(ctx->depth + 1 >= ctx->max_depth) {
+    return true;
+  }
+
+  char child_path[256];
+  if(!user_demo_build_child_path(child_path,
+                                 sizeof(child_path),
+                                 ctx->parent_path,
+                                 entry->name)) {
+    user_demo_print_indent(ctx->depth + 1);
+    serial_printf("user_demo_fs: <path too long, skipping>\n");
+    return true;
+  }
+
+  user_demo_list_directory(ctx->mount, child_path, ctx->depth + 1, ctx->max_depth);
+  return true;
+}
+
+static void user_demo_list_directory(const fs_mount_t* mount,
+                                     const char* path,
+                                     size_t depth,
+                                     size_t max_depth) {
+  if(mount == NULL || path == NULL) {
+    return;
+  }
+
+  user_demo_print_indent(depth);
+  serial_printf("user_demo_fs: dir %s\n", path);
+
+  user_demo_list_ctx_t ctx = {
+    .mount = mount,
+    .depth = depth,
+    .max_depth = max_depth,
+    .parent_path = path,
+  };
+
+  if(!fs_list_directory(mount, path, user_demo_dir_iter, &ctx)) {
+    user_demo_print_indent(depth + 1);
+    serial_printf("user_demo_fs: <failed to list %s>\n", path);
+  }
+}
+
+static void user_demo_filesystem_probe(void) {
+  block_device_t* device = block_device_first();
+  while(device != NULL) {
+    if(device->block_size != 0 && strncmp(device->name, "sata", 4) == 0) {
+      break;
+    }
+    device = block_device_next(device);
+  }
+
+  if(device == NULL) {
+    serial_printf("user_demo_launch: no SATA device available for filesystem demo\n");
+    return;
+  }
+
+  fs_mount_t* mount = NULL;
+  if(!fs_mount_fat32_first(device, &mount)) {
+    serial_printf("user_demo_launch: failed to mount FAT32 filesystem on '%s'\n", device->name);
+    return;
+  }
+
+  serial_printf("user_demo_launch: mounted FAT32 filesystem on '%s'\n", device->name);
+  user_demo_list_directory(mount, "/", 0, 2);
+  fs_unmount(mount);
+}
+
 void user_demo_launch(void) {
   size_t code_size = (size_t)(user_demo_elf_end - user_demo_elf_start);
   if(code_size == 0) {
@@ -92,4 +230,5 @@ void user_demo_launch(void) {
   }
 
   user_demo_block_probe();
+  user_demo_filesystem_probe();
 }
