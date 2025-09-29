@@ -34,11 +34,15 @@ configuration files and, eventually, user binaries from persistent storage.
 - `src/kernel/fs/fat32.c` implements the GPT scanner, FAT32 parser, and the
   public API surface declared in `include/kernel/fs.h`.
 - `user_demo_launch()` now demonstrates the stack end-to-end: it mounts the SATA
-  disk and walks the FAT32 directory tree (depth-limited) so the serial log
-  shows every top-level directory plus their children.
-- The filesystem layer is independent from the file-descriptor subsystem
-  (`file.c`). A future VFS (Issue #65) can wrap the existing callbacks to expose
-  mounted volumes to userland.
+  disk through the VFS, walks the FAT32 directory tree (depth-limited), and logs
+  both the top-level entries and the first layer of children to `com1.log`.
+- The FAT32 mount plugs into the VFS dispatcher declared in `include/kernel/vfs.h`.
+  `vfs_mount_fat32_root()` discovers the first GPT partition, registers it at
+  the `/` mountpoint, and exposes generic helpers such as `vfs_list()` and
+  `vfs_open()`.
+- The VFS layer feeds the existing file-descriptor subsystem (`file.c`), so
+  `fopen("/path", "r")` transparently loads data from the mounted FAT32 volume
+  while other sources (serial, framebuffer) continue to use bespoke handlers.
 
 ## Limitations and Follow-up Work
 

@@ -3,7 +3,7 @@
 #include <string.h>
 
 #include <kernel/block_device.h>
-#include <kernel/fs.h>
+#include <kernel/vfs.h>
 #include <kernel/heap.h>
 #include <kernel/proc.h>
 #include <kernel/serial.h>
@@ -61,10 +61,9 @@ static void user_demo_block_probe(void) {
 }
 
 typedef struct user_demo_list_ctx_t {
-  const fs_mount_t* mount;
-  size_t            depth;
-  size_t            max_depth;
-  const char*       parent_path;
+  size_t      depth;
+  size_t      max_depth;
+  const char* parent_path;
 } user_demo_list_ctx_t;
 
 static void user_demo_print_indent(size_t depth) {
@@ -103,12 +102,11 @@ static bool user_demo_build_child_path(char* buffer,
   return true;
 }
 
-static void user_demo_list_directory(const fs_mount_t* mount,
-                                     const char* path,
+static void user_demo_list_directory(const char* path,
                                      size_t depth,
                                      size_t max_depth);
 
-static bool user_demo_dir_iter(const fs_dir_entry_t* entry, void* context) {
+static bool user_demo_dir_iter(const vfs_dir_entry_t* entry, void* context) {
   user_demo_list_ctx_t* ctx = (user_demo_list_ctx_t*)context;
   if(ctx == NULL || entry == NULL) {
     return false;
@@ -144,15 +142,14 @@ static bool user_demo_dir_iter(const fs_dir_entry_t* entry, void* context) {
     return true;
   }
 
-  user_demo_list_directory(ctx->mount, child_path, ctx->depth + 1, ctx->max_depth);
+  user_demo_list_directory(child_path, ctx->depth + 1, ctx->max_depth);
   return true;
 }
 
-static void user_demo_list_directory(const fs_mount_t* mount,
-                                     const char* path,
+static void user_demo_list_directory(const char* path,
                                      size_t depth,
                                      size_t max_depth) {
-  if(mount == NULL || path == NULL) {
+  if(path == NULL) {
     return;
   }
 
@@ -160,13 +157,12 @@ static void user_demo_list_directory(const fs_mount_t* mount,
   serial_printf("user_demo_fs: dir %s\n", path);
 
   user_demo_list_ctx_t ctx = {
-    .mount = mount,
     .depth = depth,
     .max_depth = max_depth,
     .parent_path = path,
   };
 
-  if(!fs_list_directory(mount, path, user_demo_dir_iter, &ctx)) {
+  if(!vfs_list(path, user_demo_dir_iter, &ctx)) {
     user_demo_print_indent(depth + 1);
     serial_printf("user_demo_fs: <failed to list %s>\n", path);
   }
@@ -186,15 +182,13 @@ static void user_demo_filesystem_probe(void) {
     return;
   }
 
-  fs_mount_t* mount = NULL;
-  if(!fs_mount_fat32_first(device, &mount)) {
+  if(!vfs_mount_fat32_root(device)) {
     serial_printf("user_demo_launch: failed to mount FAT32 filesystem on '%s'\n", device->name);
     return;
   }
 
   serial_printf("user_demo_launch: mounted FAT32 filesystem on '%s'\n", device->name);
-  user_demo_list_directory(mount, "/", 0, 2);
-  fs_unmount(mount);
+  user_demo_list_directory("/", 0, 2);
 }
 
 void user_demo_launch(void) {

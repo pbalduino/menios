@@ -56,6 +56,7 @@
 #include <kernel/syscall.h>
 #include <kernel/user_mode.h>
 #include <kernel/driver/ps2kb.h>
+#include <kernel/vfs.h>
 
 void print_logo();
 
@@ -145,6 +146,8 @@ void _start() {
   file_system_init();
 
   block_device_system_init();
+
+  vfs_init();
 
   boot_graphics_init();
 

@@ -38,8 +38,8 @@ to higher layers.
 
 - SATA disks are now exposed as `sataN` block devices backed by DMA reads and
   writes, with interrupts unmasking completion on vector `0x40`. During boot the
-  `user_demo_launch()` routine confirms the full stack by mounting the FAT32
-  volume and logging a depth-limited directory tree to the serial console.
+  VFS mounts the FAT32 volume at `/`, and `user_demo_launch()` logs a
+  depth-limited directory tree to the serial console as a smoke test.
 - Integrate the block layer with the upcoming block cache (Issue #63) to avoid
   re-reading clusters for filesystem consumers.
 - Extend the API with asynchronous I/O and request queues once drivers require

@@ -13,6 +13,7 @@
 #include <kernel/proc.h>
 #include <kernel/serial.h>
 #include <kernel/spinlock.h>
+#include <kernel/vfs.h>
 
 #define FD_STDIN   0
 #define FD_STDOUT  1
@@ -513,6 +514,20 @@ FILE* fopen(const char* filename, const char* mode) {
   }
 
   bool write = mode[0] == 'w' || mode[0] == 'a';
+  bool read = mode[0] == 'r';
+  bool update = false;
+  for(const char* it = mode; *it != '\0'; ++it) {
+    if(*it == '+') {
+      update = true;
+      break;
+    }
+  }
+
+  if(update) {
+    set_errno(ENOSYS);
+    return NULL;
+  }
+
   file_t* file = NULL;
   uint32_t file_mode = 0;
 
@@ -522,8 +537,15 @@ FILE* fopen(const char* filename, const char* mode) {
   } else if(strcmp(filename, "/dev/fb/0") == 0 && write) {
     file = file_create(&framebuffer_file_ops, NULL, FILE_MODE_WRITE);
     file_mode = FILE_MODE_WRITE;
+  } else if(read && !write) {
+    file = vfs_open(filename);
+    if(file == NULL) {
+      set_errno(ENOENT);
+      return NULL;
+    }
+    file_mode = FILE_MODE_READ;
   } else {
-    set_errno(ENOENT);
+    set_errno(ENOSYS);
     return NULL;
   }
 

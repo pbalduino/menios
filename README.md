@@ -95,6 +95,7 @@ Expect the log to show the `[user_demo]` messages on screen and in `com1.log`, c
 - [x] Kernel block device abstraction layer (Issue #114)
 - [x] SATA/AHCI DMA block driver with interrupt completion (Issue #62)
 - [x] DMA-friendly allocation helpers (Issue #115)
+- [x] Kernel VFS layer backed by FAT32 filesystem (Issue #65)
 - [x] GPT-aware FAT32 filesystem mounting and file access (Issue #64)
 
 ### 🔥 **Ready to Implement** (Dependencies Met)
@@ -107,7 +108,7 @@ Expect the log to show the `[user_demo]` messages on screen and in `com1.log`, c
 ### 🚧 **In Progress & Planned**
 - [ ] **Threading Support**: Complete pthread API and multithreading (Issues #108-#113)
 - [ ] **Advanced IPC**: Signals, shared memory, microkernel IPC (Issues #102-#107)
-- [ ] **Filesystem**: VFS layer, block cache, and write support (Issues #60, #63, #65)
+- [ ] **Filesystem**: Block cache and write support (Issues #60, #63)
 - [ ] **Networking**: Complete TCP/IP stack (Issues #67-#73)
 - [ ] **Graphics**: Framebuffer interface and input subsystem (Issues #31-#33)
 
