@@ -38,6 +38,9 @@ variable. Key operations include:
 Semaphores make it easy to model producer/consumer queues and fixed pools of
 resources without reinventing the blocking logic each time.
 
+Test coverage: `test/test_ksemaphore.c` exercises empty, contention, and
+multi-token cycles to protect the counter logic from regressions.
+
 ## Read-Write Locks
 
 `krwlock_t` provides shared (reader) and exclusive (writer) access guards. The
@@ -54,3 +57,6 @@ exclusive access.
 Read-write locks are a good fit for data structures that see frequent reads and
 infrequent writes, minimising contention while still permitting safe
 modification.
+
+Test coverage: `test/test_krwlock.c` validates shared-reader admission,
+writer exclusion, and waiter bookkeeping.

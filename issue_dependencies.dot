@@ -28,8 +28,8 @@ digraph IssueDependencies {
         fillcolor="#F0F8E8";
 
         issue36 [label="#36: mutex\nimplementation", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED
-        issue37 [label="#37: semaphore", fillcolor="#FFFACD"];
-        issue39 [label="#39: read-write locks", fillcolor="#FFFACD"];
+        issue37 [label="#37: semaphore", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED
+        issue39 [label="#39: read-write locks", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED
         issue40 [label="#40: condition variables", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED
     }
 
@@ -126,6 +126,14 @@ digraph IssueDependencies {
         issue132 [label="#132: Filesystem\nUnicode filename support", fillcolor="#E6F3FF"];
         issue133 [label="#133: Locale/i18n\nframework", fillcolor="#E6F3FF"];
         issue134 [label="#134: Unicode testing\nand validation", fillcolor="#E6F3FF"];
+    }
+
+    subgraph cluster_testing {
+        label="Testing & Quality Assurance";
+        style=filled;
+        fillcolor="#F5F5DC";
+
+        issue135 [label="#135: Code coverage\nreporting (Gcov)", fillcolor="#DDDAAA"];
     }
 
     subgraph cluster_storage {
@@ -284,6 +292,12 @@ digraph IssueDependencies {
     issue32 -> issue130 [color=green, label="input integration"];
     issue60 -> issue132 [color=green, label="filesystem integration"];
 
+    // Testing and code coverage dependencies
+    issue134 -> issue135 [color=orange, label="test coverage analysis"];
+    issue135 -> issue127 [color=orange, label="coverage feedback", style=dashed];
+    issue135 -> issue128 [color=orange, label="coverage feedback", style=dashed];
+    issue135 -> issue129 [color=orange, label="coverage feedback", style=dashed];
+
     // IDE storage dependencies
     issue118 -> issue119 [color=brown, penwidth=2];
     issue119 -> issue120 [color=brown, penwidth=2];
@@ -316,6 +330,7 @@ digraph IssueDependencies {
         legend_closed [label="Closed Issue", fillcolor="#90EE90", style="filled,dashed"];
         legend_threading [label="New Threading", fillcolor="#B3E5FC"];
         legend_unicode [label="Unicode Support", fillcolor="#E6F3FF"];
+        legend_testing [label="Testing & QA", fillcolor="#DDDAAA"];
         legend_ide [label="IDE Storage", fillcolor="#F5DEB3"];
         legend_usb [label="USB Support", fillcolor="#AFEEEE"];
     }

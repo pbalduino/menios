@@ -331,6 +331,8 @@ ifeq ($(OS_NAME),linux)
 			src/kernel/console/vprintk.c \
 			src/kernel/console/ansi.c \
 			src/kernel/proc/kmutex.c \
+			src/kernel/proc/ksemaphore.c \
+			src/kernel/proc/krwlock.c \
 			src/kernel/timer/tsc.c \
 			src/libc/itoa.c \
 			src/libc/string.c \

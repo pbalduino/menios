@@ -42,6 +42,9 @@ These issues form the backbone of the system and should be prioritized:
 25. **#133** - Locale/i18n framework
 26. **#134** - Unicode testing and validation
 
+### 🆕 Tier 6: Testing & Quality Assurance (NEW!)
+27. **#135** - Code coverage reporting with Gcov integration
+
 ## 📊 Updated Dependency Categories
 
 ### Memory Management Chain ✅ (Foundation Complete!)
@@ -55,8 +58,8 @@ These issues form the backbone of the system and should be prioritized:
 
 ### Synchronization Chain ✅ (Core Complete!)
 ```
-✅ #34 (scheduler) → ✅ #36 (mutex) → #37 (semaphore)
-                                   → #39 (rwlock)
+✅ #34 (scheduler) → ✅ #36 (mutex) → ✅ #37 (semaphore)
+                                   → ✅ #39 (rwlock)
                                    → ✅ #40 (condition variables)
                                           ↓
                                    #102/#104/#105 (IPC systems)
@@ -116,6 +119,14 @@ USB Support:
                               #32 (input)            #126 (USB storage)
                                                            ↓
                                                     #63 (block cache)
+```
+
+### 🆕 Testing & Quality Assurance Chain (NEW!)
+```
+Unity Test Framework (existing) → #134 (Unicode testing) → #135 (code coverage)
+                                                                   ↓
+                                                           Coverage feedback loop
+                                                           (improves all components)
 ```
 
 ### Filesystem Stack
@@ -191,6 +202,7 @@ USB Support:
 - **#93 (fork/exec)** ✅ - Dependencies: #57 (CLOSED), #96 (ready)
 - **#108 (kernel threading)** ✅ - Dependencies: #34 (CLOSED), #36 (CLOSED), #57 (CLOSED)
 - **#127 (UTF-8 utilities)** ✅ - No dependencies, ready to start immediately!
+- **#135 (code coverage)** ✅ - Can start with existing Unity tests, no blocking dependencies
 
 ### Cannot Start Until Complete:
 - **#109 (pthread API)** blocks on: #108 (kernel threading)
@@ -202,6 +214,7 @@ USB Support:
 ### Parallel Development Opportunities:
 - **Threading** (#108-#113) can develop after Phase 2
 - **Unicode Support** (#127-#134) can develop independently - start with #127!
+- **Code Coverage** (#135) can develop immediately with existing Unity tests
 - **Networking stack** (#67-#73) can develop independently after basic kernel
 - **SMP support** (#80-#84) can develop in parallel with IPC
 - **Filesystem** (#62-#65) can develop independently
@@ -215,6 +228,7 @@ USB Support:
 2. **#96** - File descriptor management (ready to implement)
 3. **#108** - Kernel threading infrastructure (ready to implement)
 4. **#127** - UTF-8 utilities (ready to implement, no dependencies!)
+5. **#135** - Code coverage with Gcov (ready to implement, existing Unity tests!)
 
 ### For Maximum Impact:
 1. **Complete Phase 2** (#89, #96, #93, #101, #102) - Essential for applications
@@ -245,17 +259,20 @@ USB Support:
 - Core scheduling (#34)
 - Basic synchronization (#36, #40)
 
-### 🔥 **Ready to Implement (4 issues)**:
+### 🔥 **Ready to Implement (5 issues)**:
 - #89 (mmap/munmap)
 - #96 (file descriptors)
 - #108 (kernel threading)
 - #127 (UTF-8 utilities)
+- #135 (code coverage)
 
-### 📋 **Total Remaining**: ~78 open issues
+### 📋 **Total Remaining**: ~79 open issues
 
 ### 🎯 **Threading Support**: 6 new issues created (#108-#113)
 
 ### 🆕 **Unicode Support**: 8 new issues created (#127-#134)
+
+### 🆕 **Testing & QA**: 1 new issue created (#135)
 
 ## 💡 **Updated Strategy**
 
