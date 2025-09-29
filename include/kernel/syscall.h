@@ -19,9 +19,12 @@ extern "C" {
 #define SYS_SLEEP  35
 #define SYS_DUP    32
 #define SYS_DUP2   33
-#define SYS_FORK   57
-#define SYS_EXECVE 59
-#define SYS_EXIT   60
+#define SYS_FORK       57
+#define SYS_EXECVE     59
+#define SYS_EXIT       60
+#define SYS_KILL       62
+#define SYS_SIGNAL     63
+#define SYS_SIGRETURN  64
 #define SYS_FCNTL  72
 #define SYS_FB_GETINFO 200
 #define SYS_FB_MAP     201

@@ -7,6 +7,7 @@
 #include <kernel/serial.h>
 #include <kernel/syscall.h>
 #include <kernel/vfs.h>
+#include <uapi/signal.h>
 #include <sys/fcntl.h>
 #include <string.h>
 
@@ -32,6 +33,9 @@ static uint64_t syscall_fcntl_handler(syscall_frame_t* frame);
 static uint64_t syscall_fb_getinfo_handler(syscall_frame_t* frame);
 static uint64_t syscall_fb_map_handler(syscall_frame_t* frame);
 static uint64_t syscall_fb_flip_handler(syscall_frame_t* frame);
+static uint64_t syscall_kill_handler(syscall_frame_t* frame);
+static uint64_t syscall_signal_handler(syscall_frame_t* frame);
+static uint64_t syscall_sigreturn_handler(syscall_frame_t* frame);
 
 static syscall_handler_t syscall_table[SYSCALL_MAX];
 
@@ -63,6 +67,9 @@ void syscall_init(void) {
   syscall_register(SYS_YIELD, syscall_yield_handler);
   syscall_register(SYS_SLEEP, syscall_sleep_handler);
   syscall_register(SYS_EXIT, syscall_exit_handler);
+  syscall_register(SYS_KILL, syscall_kill_handler);
+  syscall_register(SYS_SIGNAL, syscall_signal_handler);
+  syscall_register(SYS_SIGRETURN, syscall_sigreturn_handler);
   syscall_register(SYS_FCNTL, syscall_fcntl_handler);
   syscall_register(SYS_FB_GETINFO, syscall_fb_getinfo_handler);
   syscall_register(SYS_FB_MAP, syscall_fb_map_handler);
@@ -79,11 +86,17 @@ uint64_t syscall_dispatch(syscall_frame_t* frame) {
     if(handler) {
       uint64_t result = handler(frame);
       frame->rax = result;
-      return result;
+      if(current != NULL) {
+        proc_process_pending_signals((cpu_state_p)frame);
+      }
+      return frame->rax;
     }
   }
 
   frame->rax = (uint64_t)(-ENOSYS);
+  if(current != NULL) {
+    proc_process_pending_signals((cpu_state_p)frame);
+  }
   return frame->rax;
 }
 
@@ -512,5 +525,100 @@ static uint64_t syscall_fb_flip_handler(syscall_frame_t* frame) {
   }
 
   frame->rax = 0;
+  return frame->rax;
+}
+
+static uint64_t syscall_kill_handler(syscall_frame_t* frame) {
+  int pid = (int)frame->rdi;
+  int sig = (int)frame->rsi;
+
+  if(pid <= 0) {
+    frame->rax = (uint64_t)(-EINVAL);
+    return frame->rax;
+  }
+
+  proc_info_p target = proc_find((uint32_t)pid);
+  if(target == NULL) {
+    frame->rax = (uint64_t)(-ESRCH);
+    return frame->rax;
+  }
+
+  int rc = proc_send_signal(target, sig);
+  frame->rax = (uint64_t)rc;
+  return frame->rax;
+}
+
+static uint64_t syscall_signal_handler(syscall_frame_t* frame) {
+  if(current == NULL) {
+    frame->rax = (uint64_t)(-EINVAL);
+    return frame->rax;
+  }
+
+  int sig = (int)frame->rdi;
+  void* handler = (void*)frame->rsi;
+  void* restorer = (void*)frame->rdx;
+
+  if(sig <= 0 || sig >= NSIG) {
+    frame->rax = (uint64_t)(-EINVAL);
+    return frame->rax;
+  }
+
+  if(handler == SIG_ERR) {
+    frame->rax = (uint64_t)(-EINVAL);
+    return frame->rax;
+  }
+
+  if(sig == SIGKILL || sig == SIGSTOP) {
+    frame->rax = (uint64_t)(-EINVAL);
+    return frame->rax;
+  }
+
+  if(restorer == NULL) {
+    frame->rax = (uint64_t)(-EINVAL);
+    return frame->rax;
+  }
+
+  void* previous = current->signal_handlers[sig];
+  current->signal_handlers[sig] = handler;
+  current->signal_restorer = restorer;
+
+  if(handler == SIG_IGN) {
+    current->signal_pending &= ~(1u << sig);
+  }
+
+  frame->rax = (uint64_t)previous;
+  return frame->rax;
+}
+
+static uint64_t syscall_sigreturn_handler(syscall_frame_t* frame) {
+  if(current == NULL) {
+    frame->rax = (uint64_t)(-EINVAL);
+    return frame->rax;
+  }
+
+  signal_frame_t* user_frame = (signal_frame_t*)frame->rdi;
+  if(user_frame == NULL) {
+    frame->rax = (uint64_t)(-EINVAL);
+    return frame->rax;
+  }
+
+  if(!proc_user_buffer_accessible(current, user_frame, sizeof(signal_frame_t), false)) {
+    frame->rax = (uint64_t)(-EFAULT);
+    return frame->rax;
+  }
+
+  signal_frame_t sigframe;
+  memcpy(&sigframe, user_frame, sizeof(sigframe));
+
+  memcpy(frame, &sigframe.saved_state, sizeof(cpu_state_t));
+  if(current->cpu_state != NULL) {
+    memcpy(current->cpu_state, &sigframe.saved_state, sizeof(cpu_state_t));
+  }
+
+  current->signal_mask = sigframe.saved_mask;
+  current->handling_signal = 0;
+
+  proc_process_pending_signals((cpu_state_p)frame);
+
   return frame->rax;
 }

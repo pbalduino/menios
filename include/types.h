@@ -25,6 +25,7 @@ typedef long long off_t;
 
 typedef uintptr_t phys_addr_t;
 typedef uintptr_t virt_addr_t;
+typedef int pid_t;
 
 #ifdef __cplusplus
 }

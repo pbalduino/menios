@@ -64,6 +64,15 @@ These issues form the backbone of the system and should be prioritized:
 39. **#147** - procfs (process information filesystem for /proc)
 40. **#148** - ext2 filesystem support (read-only initially)
 
+### 🆕 Tier 10: init & Shell Infrastructure (NEW!)
+41. **#149** - wait/waitpid syscall (process synchronization)
+42. **#150** - Process zombie state and orphan reparenting
+43. **#151** - getcwd/chdir syscalls (directory navigation)
+44. **#152** - Environment variables support (getenv/setenv/unsetenv)
+45. **#153** - Barebone init program (PID 1 process supervisor)
+46. **#154** - Boot integration to start init as PID 1
+47. **#54** - mosh shell (depends on init infrastructure)
+
 ## 📊 Updated Dependency Categories
 
 ### Memory Management Chain (CORE COMPLETE!)
@@ -194,6 +203,32 @@ Phase 5: Block FS            #148 (ext2) → Better persistent storage
 #63 (block cache) ───────────────┘         Native Linux filesystem
 ```
 
+### 🆕 init & Shell Chain (NEW!)
+```
+Phase 1: Process Synchronization
+#93 (fork/exec - CLOSED) ──┐
+#60 (syscalls - CLOSED) ────┼──→ #149 (wait/waitpid) → Process can wait for children
+                            │            ↓
+Phase 2: Zombie Handling    │      #150 (zombie state + orphan reparenting)
+                            │            ↓                Parent reaps children
+                            │            ↓                Orphans go to init
+Phase 3: Shell Support      │            ↓
+#65 (VFS - CLOSED) ─────────┼──→   #151 (getcwd/chdir) → Directory navigation
+                            │            ↓
+                            └──→   #152 (environment vars) → PATH, HOME, etc.
+                                         ↓
+Phase 4: init Program                    ├──→ #153 (init program)
+#149 (wait/waitpid) ─────────────────────┘         ↓  Reaps zombies
+#150 (zombie handling) ──────────────────────────────┘  Supervises processes
+                                                    ↓
+Phase 5: Boot Integration                    #154 (boot init as PID 1)
+                                                    ↓  Start init at boot
+                                                    ↓
+Phase 6: Shell                                 #54 (mosh shell)
+#149 (wait) + #151 (chdir) + #152 (env) ────────────┘  Interactive shell
+#153 (init) + #154 (boot) ──────────────────────────┘  Spawned by init
+```
+
 ### Filesystem Stack (COMPLETE!)
 ```
 #62 (block driver - CLOSED) → #63 (block cache - CLOSED) → #64 (filesystem lib - CLOSED) → #65 (VFS - CLOSED) → #60 (syscalls - CLOSED)
@@ -262,6 +297,9 @@ Phase 5: Block FS            #148 (ext2) → Better persistent storage
 ## 🔴 Current Blocking Relationships
 
 ### Ready to Start (Dependencies Met):
+- **#149 (wait/waitpid)** - Dependencies: #93 (fork/exec - CLOSED), #60 (syscalls - CLOSED) - ready!
+- **#151 (getcwd/chdir)** - Dependencies: #65 (VFS - CLOSED) - ready!
+- **#152 (environment vars)** - No dependencies, ready to start!
 - **#109 (pthread API)** - Dependencies met: #108 (CLOSED)
 - **#110 (thread-safe libc)** - Can start in parallel with #109
 - **#127 (UTF-8 utilities)** - No dependencies, ready to start immediately!
@@ -275,7 +313,11 @@ Phase 5: Block FS            #148 (ext2) → Better persistent storage
 - **#103 (UNIX signals)** - Process control mechanism
 
 ### Cannot Start Until Complete:
-- **#106 (microkernel IPC)** blocks on: #101 (timers), #104 (shared memory)
+- **#150 (zombie/orphan handling)** blocks on: #149 (wait/waitpid)
+- **#153 (init program)** blocks on: #149 (wait/waitpid), #150 (zombie handling)
+- **#154 (boot init as PID 1)** blocks on: #153 (init program)
+- **#54 (mosh shell)** blocks on: #149 (wait), #151 (chdir), #152 (env), #153 (init), #154 (boot)
+- **#106 (microkernel IPC)** blocks on: #101 (timers - CLOSED), #104 (shared memory)
 - **#107 (capability security)** blocks on: #106 (microkernel IPC)
 - **#105 (Unix sockets)** blocks on: #71 (socket API)
 - **#95 (userspace malloc)** blocks on: #89 (CLOSED) - ready!
@@ -284,6 +326,11 @@ Phase 5: Block FS            #148 (ext2) → Better persistent storage
 - **#113 (thread-aware syscalls)** blocks on: #109 (pthread API)
 
 ### Parallel Development Opportunities:
+- **init & Shell** (#149-#154, #54) can start immediately - foundation complete!
+  - #149 (wait/waitpid) - Critical syscall, good first issue (2-3 days)
+  - #151 (getcwd/chdir) - Directory navigation (1 day)
+  - #152 (environment vars) - PATH, HOME, etc. (2-3 days)
+  - Sequential: #150 → #153 → #154 → #54 (mosh)
 - **Threading APIs** (#109-#113) can start immediately - foundation complete!
 - **Unicode Support** (#127-#134) can develop independently - start with #127!
 - **Code Coverage** (#135) can develop immediately with existing Unity tests
@@ -303,15 +350,18 @@ Phase 5: Block FS            #148 (ext2) → Better persistent storage
 ## 🎯 Recommended Focus Areas
 
 ### Immediate Next Steps (Ready Now!)
-1. **#145** - tmpfs/ramfs (quick win, good first issue, enables /tmp)
-2. **#109** - pthread API and POSIX threading (foundation complete)
-3. **#146** - devfs (device filesystem, unblocks hardware device access)
-4. **#127** - UTF-8 utilities (ready to implement, no dependencies!)
-5. **#135** - Code coverage with Gcov (ready to implement, existing Unity tests!)
-6. **#136** - Device filesystem infrastructure (ready to implement!)
-7. **#147** - procfs (system introspection and debugging)
-8. **#102** - pipes implementation (basic IPC ready)
-9. **#103** - UNIX signals (process control ready)
+1. **#149** - wait/waitpid syscall (CRITICAL for init/shell - 2-3 days)
+2. **#151** - getcwd/chdir syscalls (essential for shell - 1 day)
+3. **#152** - Environment variables (PATH lookup - 2-3 days)
+4. **#145** - tmpfs/ramfs (quick win, good first issue, enables /tmp)
+5. **#109** - pthread API and POSIX threading (foundation complete)
+6. **#146** - devfs (device filesystem, unblocks hardware device access)
+7. **#127** - UTF-8 utilities (ready to implement, no dependencies!)
+8. **#135** - Code coverage with Gcov (ready to implement, existing Unity tests!)
+9. **#136** - Device filesystem infrastructure (ready to implement!)
+10. **#147** - procfs (system introspection and debugging)
+11. **#102** - pipes implementation (basic IPC ready)
+12. **#103** - UNIX signals (process control ready)
 
 ### For Maximum Impact:
 1. **Complete Threading APIs** (#109, #110, #113) - Enable modern multithreaded applications
@@ -352,6 +402,13 @@ Phase 5: Block FS            #148 (ext2) → Better persistent storage
 3. **Phase 3**: #147 (procfs) → /proc for system monitoring (4-6 days)
 4. **Phase 4**: #148 (ext2) → Better persistent storage (1-2 weeks)
 
+### For init & Shell (Interactive System):
+1. **Week 1**: #149 (wait/waitpid - 2-3 days) → #150 (zombie handling - 1-2 days)
+2. **Week 1-2**: #151 (getcwd/chdir - 1 day) + #152 (environment vars - 2-3 days) in parallel
+3. **Week 2**: #153 (init program - 2 days) → #154 (boot integration - 1 day)
+4. **Week 3-4**: #54 (mosh shell - 1-2 weeks) → Basic interactive shell
+5. **Result**: Single-user system with process supervision and interactive shell
+
 ### For Microkernel Vision:
 1. **Complete Phases 1-3** first (foundation + threading)
 2. **Transition**: #106 → #107 (microkernel IPC + security)
@@ -367,6 +424,9 @@ Phase 5: Block FS            #148 (ext2) → Better persistent storage
 - **Hardware**: PCI/AHCI controller (#114-#117), input subsystem (#32), framebuffer interface (#31)
 
 ### **Ready to Implement (High Impact)**:
+- #149 (wait/waitpid) - CRITICAL for init/shell (2-3 days, good first issue)
+- #151 (getcwd/chdir) - Essential for shell (1 day)
+- #152 (environment vars) - PATH lookup (2-3 days)
 - #145 (tmpfs/ramfs) - Quick win, enables /tmp (2-3 days)
 - #146 (devfs) - Device filesystem for /dev (3-5 days)
 - #147 (procfs) - System introspection (4-6 days)
@@ -381,29 +441,38 @@ Phase 5: Block FS            #148 (ext2) → Better persistent storage
 - #103 (UNIX signals) - Process control
 
 ### **Project Status**:
-- **Total Issues**: 140 issues (highest #148, some numbers skipped)
+- **Total Issues**: 147 issues (highest #154, some numbers skipped)
 - **Closed**: 57 issues (major systems operational including #101 timers)
-- **Open**: 83 issues (organized by priority tiers)
+- **Open**: 90 issues (organized by priority tiers)
 - **Major Completions**: Memory, scheduling, processes, storage, basic threading, framebuffer, timers
-- **Active Development**: Virtual filesystems, threading APIs, device filesystem, mouse input, hardware drivers, advanced IPC
+- **Active Development**: init & shell, virtual filesystems, threading APIs, device filesystem, mouse input, hardware drivers, advanced IPC
 
 ## **Current Development Strategy**
 
 With core kernel infrastructure operational, meniOS has strong foundations for advanced features. Major systems like memory management, scheduling, processes, and storage are complete and functional.
 
 **Recommended immediate development tracks:**
-1. **Virtual Filesystems** (#145, #146, #147, #148) - Essential system services
+1. **init & Shell** (#149-#154, #54) - Interactive single-user system (TOP PRIORITY)
+   - wait/waitpid syscall (CRITICAL - 2-3 days)
+   - getcwd/chdir syscalls (1 day)
+   - environment variables (2-3 days)
+   - zombie handling (1-2 days)
+   - init program (2 days)
+   - boot integration (1 day)
+   - mosh shell (1-2 weeks)
+   - **Result: Working interactive shell in 3-4 weeks**
+2. **Virtual Filesystems** (#145, #146, #147, #148) - Essential system services
    - tmpfs for /tmp (quick win)
    - devfs for /dev (hardware access)
    - procfs for /proc (debugging)
    - ext2 for better persistent storage
-2. **Threading APIs** (#109, #110, #113) - Enable multithreaded applications
-3. **Advanced IPC** (#102, #103, #104) - Complete process communication
-4. **Unicode Support** (#127, #128, #129, #130) - International text handling
-5. **Device Infrastructure** (#136, #137, #138) - Hardware access layer
-6. **Mouse Input** (#143, #144) - Complete input subsystem with mouse support
-7. **Quality Assurance** (#135) - Code coverage and testing improvements
-8. **Hardware Drivers** (ongoing #118-#126) - USB and storage expansion
+3. **Threading APIs** (#109, #110, #113) - Enable multithreaded applications
+4. **Advanced IPC** (#102, #103, #104) - Complete process communication
+5. **Unicode Support** (#127, #128, #129, #130) - International text handling
+6. **Device Infrastructure** (#136, #137, #138) - Hardware access layer
+7. **Mouse Input** (#143, #144) - Complete input subsystem with mouse support
+8. **Quality Assurance** (#135) - Code coverage and testing improvements
+9. **Hardware Drivers** (ongoing #118-#126) - USB and storage expansion
 
 This parallel approach leverages the completed foundation to enable sophisticated userland applications including text editors, shells, and eventually Doom.
 

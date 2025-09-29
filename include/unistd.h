@@ -20,6 +20,7 @@ int dup(int fd);
 int dup2(int oldfd, int newfd);
 int pipe(int pipefd[2]);
 off_t lseek(int fd, off_t offset, int whence);
+int kill(pid_t pid, int sig);
 
 int brk(void *addr);
 

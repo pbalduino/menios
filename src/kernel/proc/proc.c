@@ -11,6 +11,7 @@
 #include <kernel/user/elf_loader.h>
 #include <kernel/syscall.h>
 #include <kernel/vm.h>
+#include <uapi/signal.h>
 #include <kernel/vm_region.h>
 #include <errno.h>
 #include <stdio.h>
@@ -97,6 +98,9 @@ static void proc_release_user_memory(proc_info_p proc) {
                   proc->vm_region_count);
   }
   proc->user_segment_count = 0;
+  proc->signal_pending = 0;
+  proc->signal_mask = 0;
+  proc->handling_signal = 0;
   proc->fb_map_base = NULL;
   proc->fb_map_size = 0;
   proc->fb_map_flags = 0;
@@ -221,10 +225,110 @@ static void scheduler_wake_sleepers(uint64_t now) {
     proc_info_p proc = sleep_queue_head;
     sleep_queue_head = proc->next;
     proc->next = NULL;
+    if(proc->state == PROC_STATE_TERMINATED) {
+      scheduler_cleanup_process(proc);
+      continue;
+    }
     proc->state = PROC_STATE_READY;
     proc->time_slice_remaining_us = proc->quantum_us;
     ready_queue_push(proc);
   }
+}
+
+static int next_pending_signal(proc_info_p proc) {
+  if(proc == NULL) {
+    return 0;
+  }
+  uint32_t deliverable = proc->signal_pending & ~proc->signal_mask;
+  if(deliverable == 0) {
+    return 0;
+  }
+  for(int sig = 1; sig < NSIG; sig++) {
+    if(deliverable & (1u << sig)) {
+      return sig;
+    }
+  }
+  return 0;
+}
+
+bool proc_process_pending_signals(cpu_state_p frame) {
+  bool processed = false;
+
+  while(true) {
+    if(current == NULL || frame == NULL) {
+      break;
+    }
+    if(!current->user_mode) {
+      break;
+    }
+    if(current->handling_signal) {
+      break;
+    }
+
+    int sig = next_pending_signal(current);
+    if(sig == 0) {
+      break;
+    }
+
+    processed = true;
+    current->signal_pending &= ~(1u << sig);
+
+    if(sig == SIGKILL) {
+      proc_exit(128 + sig);
+      break;
+    }
+
+    void* handler = current->signal_handlers[sig];
+    if(handler == SIG_IGN) {
+      continue;
+    }
+
+    if(handler == SIG_DFL || handler == NULL) {
+      proc_exit(128 + sig);
+      break;
+    }
+
+    if(current->signal_restorer == NULL) {
+      proc_exit(128 + sig);
+      break;
+    }
+
+    signal_frame_t sigframe;
+    sigframe.saved_state = *frame;
+    sigframe.saved_mask = current->signal_mask;
+    sigframe.sig = (uint32_t)sig;
+
+    uint64_t frame_addr = (frame->rsp - sizeof(signal_frame_t)) & ~0xFULL;
+    if(!proc_user_buffer_accessible(current, (void*)frame_addr, sizeof(signal_frame_t), true)) {
+      proc_exit(128 + sig);
+      break;
+    }
+
+    memcpy((void*)frame_addr, &sigframe, sizeof(sigframe));
+
+    uint64_t new_sp = frame_addr - sizeof(uint64_t);
+    if(!proc_user_buffer_accessible(current, (void*)new_sp, sizeof(uint64_t), true)) {
+      proc_exit(128 + sig);
+      break;
+    }
+
+    *((uint64_t*)new_sp) = (uint64_t)current->signal_restorer;
+
+    frame->rsp = new_sp;
+    frame->rip = (uint64_t)handler;
+    frame->rdi = (uint64_t)sig;
+    frame->rsi = frame_addr;
+    current->signal_mask |= (1u << sig);
+    current->handling_signal = (uint8_t)sig;
+
+    if(current->cpu_state != NULL) {
+      memcpy(current->cpu_state, frame, sizeof(cpu_state_t));
+    }
+
+    return true;
+  }
+
+  return processed;
 }
 
 static void scheduler_cleanup_process(proc_info_p proc) {
@@ -365,6 +469,8 @@ void proc_switch(void* arg) {
     frame->ss = KERNEL_DATA_SEGMENT;
   }
 
+  proc_process_pending_signals(frame);
+
   uint64_t kernel_stack = proc_kernel_stack_top(current);
   if(kernel_stack != 0) {
     tss_update_kernel_stack(kernel_stack);
@@ -407,6 +513,13 @@ void proc_create(proc_info_p proc, const char* name, void (*entrypoint)(void *),
   proc->fb_map_base = NULL;
   proc->fb_map_size = 0;
   proc->fb_map_flags = 0;
+  proc->signal_pending = 0;
+  proc->signal_mask = 0;
+  proc->signal_restorer = NULL;
+  proc->handling_signal = 0;
+  for(int sig = 0; sig < NSIG; sig++) {
+    proc->signal_handlers[sig] = SIG_DFL;
+  }
   proc->dispatch_count = 0;
   proc->exec_time = 0;
   proc->last_dispatch_us = 0;
@@ -532,6 +645,67 @@ bool proc_user_buffer_accessible(proc_info_p proc, const void* buffer, size_t le
   }
 
   return true;
+}
+
+proc_info_p proc_find(uint32_t pid) {
+  for(size_t i = 0; i < PROC_MAX; i++) {
+    proc_info_p candidate = procs[i];
+    if(candidate == NULL) {
+      continue;
+    }
+    if(candidate->pid == pid) {
+      return candidate;
+    }
+  }
+  return NULL;
+}
+
+int proc_send_signal(proc_info_p proc, int sig) {
+  if(proc == NULL) {
+    return -ESRCH;
+  }
+  if(sig < 0 || sig >= NSIG) {
+    return -EINVAL;
+  }
+  if(sig == 0) {
+    return 0;
+  }
+  if(proc == &kernel_process_info) {
+    return -EPERM;
+  }
+  if(proc->state == PROC_STATE_TERMINATED) {
+    return -ESRCH;
+  }
+
+  if(sig == SIGSTOP) {
+    return -ENOSYS;
+  }
+
+  if(sig == SIGKILL) {
+    if(proc == current) {
+      proc_exit(128 + sig);
+    } else {
+      proc->exit_code = 128 + sig;
+      proc->sleep_until = 0;
+      proc->state = PROC_STATE_TERMINATED;
+      scheduler_actions |= SCHED_ACTION_FORCE;
+    }
+    return 0;
+  }
+
+  proc->signal_pending |= (1u << sig);
+
+  if(proc != current) {
+    if(proc->state == PROC_STATE_SLEEPING || proc->state == PROC_STATE_WAITING) {
+      proc_mark_ready(proc);
+    } else {
+      scheduler_actions |= SCHED_ACTION_FORCE;
+    }
+  } else {
+    scheduler_actions |= SCHED_ACTION_FORCE;
+  }
+
+  return 0;
 }
 
 void scheduler_set_quantum(uint8_t priority, uint64_t quantum_us) {
@@ -681,6 +855,13 @@ proc_info_p proc_fork(proc_info_p parent, const syscall_frame_t* frame, int* err
 
   child->user_segment_count = 0;
   child->vm_region_count = 0;
+  child->signal_pending = 0;
+  child->signal_mask = parent->signal_mask;
+  child->signal_restorer = parent->signal_restorer;
+  child->handling_signal = 0;
+  for(int sig = 0; sig < NSIG; sig++) {
+    child->signal_handlers[sig] = parent->signal_handlers[sig];
+  }
 
   if(!vm_clone(child, parent)) {
     proc_free_resources(child);
@@ -876,6 +1057,13 @@ void proc_create_user(proc_info_p proc, const char* name, const void* code_blob,
   proc->mmap_base = user_mmap_base(proc->pid);
   proc->mmap_next = proc->mmap_base;
   proc->mmap_limit = user_mmap_limit(proc->pid);
+  proc->signal_pending = 0;
+  proc->signal_mask = 0;
+  proc->signal_restorer = NULL;
+  proc->handling_signal = 0;
+  for(int sig = 0; sig < NSIG; sig++) {
+    proc->signal_handlers[sig] = SIG_DFL;
+  }
 
   if(!vm_region_add(proc,
                     stack_base_vaddr,

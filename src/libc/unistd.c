@@ -139,4 +139,23 @@ off_t lseek(int fd, off_t offset, int whence) {
   return (off_t)rax;
 }
 
+int kill(pid_t pid, int sig) {
+  register uint64_t rax asm("rax") = SYS_KILL;
+  register uint64_t rdi asm("rdi") = (uint64_t)pid;
+  register uint64_t rsi asm("rsi") = (uint64_t)sig;
+
+  asm volatile("int $0x80"
+               : "+a"(rax)
+               : "D"(rdi), "S"(rsi)
+               : "rcx", "r11", "memory");
+
+  if((int64_t)rax < 0) {
+    errno = (int)(-((int64_t)rax));
+    return -1;
+  }
+
+  errno = 0;
+  return 0;
+}
+
 #endif

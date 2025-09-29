@@ -1,5 +1,90 @@
 [
   {
+    "title": "Implement boot integration to start init as PID 1",
+    "github_issue": {
+      "number": 154,
+      "url": "https://github.com/pbalduino/menios/issues/154",
+      "state": "OPEN"
+    },
+    "labels": [
+      "enhancement"
+    ],
+    "assignees": [
+      "pbalduino"
+    ]
+  },
+  {
+    "title": "Implement barebone init program for process supervision",
+    "github_issue": {
+      "number": 153,
+      "url": "https://github.com/pbalduino/menios/issues/153",
+      "state": "OPEN"
+    },
+    "labels": [
+      "enhancement"
+    ],
+    "assignees": [
+      "pbalduino"
+    ]
+  },
+  {
+    "title": "Implement environment variables support (getenv/setenv/unsetenv)",
+    "github_issue": {
+      "number": 152,
+      "url": "https://github.com/pbalduino/menios/issues/152",
+      "state": "OPEN"
+    },
+    "labels": [
+      "enhancement"
+    ],
+    "assignees": [
+      "pbalduino"
+    ]
+  },
+  {
+    "title": "Implement getcwd and chdir syscalls for directory navigation",
+    "github_issue": {
+      "number": 151,
+      "url": "https://github.com/pbalduino/menios/issues/151",
+      "state": "OPEN"
+    },
+    "labels": [
+      "enhancement"
+    ],
+    "assignees": [
+      "pbalduino"
+    ]
+  },
+  {
+    "title": "Implement process zombie state and orphan reparenting to init",
+    "github_issue": {
+      "number": 150,
+      "url": "https://github.com/pbalduino/menios/issues/150",
+      "state": "OPEN"
+    },
+    "labels": [
+      "enhancement"
+    ],
+    "assignees": [
+      "pbalduino"
+    ]
+  },
+  {
+    "title": "Implement wait/waitpid syscall for process synchronization",
+    "github_issue": {
+      "number": 149,
+      "url": "https://github.com/pbalduino/menios/issues/149",
+      "state": "OPEN"
+    },
+    "labels": [
+      "enhancement",
+      "good first issue"
+    ],
+    "assignees": [
+      "pbalduino"
+    ]
+  },
+  {
     "title": "Implement ext2 filesystem support (read-only initially)",
     "github_issue": {
       "number": 148,
@@ -606,7 +691,7 @@
     "github_issue": {
       "number": 103,
       "url": "https://github.com/pbalduino/menios/issues/103",
-      "state": "OPEN"
+      "state": "CLOSED"
     },
     "labels": [
       "enhancement"

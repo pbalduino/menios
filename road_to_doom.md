@@ -65,8 +65,8 @@ Inter-process communication for complex applications:
 - ✅ **Status**: COMPLETE – anonymous pipes live in `src/kernel/fs/pipe.c`; `sys_pipe` installs read/write descriptors with blocking semantics
 - **Impact**: Shell pipelines, parent/child hand-off, and Doom's streaming needs
 
-#### **UNIX Signals** (Issue #103)
-- 🟡 **Status**: Ready to implement using the calibrated LAPIC timer (#101 complete)
+-#### **UNIX Signals** (Issue #103)
+- 🟢 **Status**: Prototype+ – `kill(2)` plus user `signal()`/`sigreturn` handlers; advanced masks, `SIGSTOP`, and delivery nuances remain TODO
 - **Scope**: Signal delivery, handlers, masks, default actions
 - **Impact**: Process control, crash handling, cooperative shutdown
 
