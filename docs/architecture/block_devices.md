@@ -23,15 +23,19 @@ to higher layers.
 
 1. `block_device_system_init()` runs early during boot (invoked from `_start`
    after the heap and file layer are available).
-2. Storage drivers (e.g., future AHCI, NVMe, RAM disk implementations) allocate
-   a `block_device_t`, populate metadata and callbacks, and register it.
+2. Storage drivers (e.g., the AHCI PCI controller) discover hardware, obtain
+   memory-mapped register ranges, and allocate bookkeeping structures.
+3. Once a driver is ready, it allocates a `block_device_t`, populates metadata
+   and callbacks, and registers it with the block core.
 3. Higher-level subsystems—block cache, filesystem implementations, ramdisks—can
    discover available devices and issue read/write requests through the unified
    API.
 
 ## Next Steps
 
-- Integrate the new abstraction into upcoming block drivers (Issue #62) and the
-  block cache (Issue #63).
+- The AHCI driver skeleton enumerates PCI devices with class code 0x01/0x06 and
+  maps BAR5 into the HHDM, laying the groundwork for full DMA-backed transfers
+  (Issue #117).
+- Integrate the block layer with the upcoming block cache (Issue #63).
 - Extend the API with asynchronous I/O and request queues once drivers require
   higher throughput.

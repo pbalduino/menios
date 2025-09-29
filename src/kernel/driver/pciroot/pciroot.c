@@ -1,3 +1,4 @@
+#include <kernel/ahci.h>
 #include <kernel/console.h>
 #include <kernel/driver.h>
 #include <kernel/acpi.h>
@@ -24,6 +25,8 @@ void pciroot_start(void) {
   acpi_mcfg_t* mcfg = (acpi_mcfg_t*)tbl.ptr;
 
   serial_printf("pciroot_start: sign: %.4s - len: %d\n", mcfg->header.signature, mcfg->header.length);
+
+  ahci_init();
 }
 
 uint8_t pciroot_read(void) {
