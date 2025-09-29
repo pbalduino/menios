@@ -65,7 +65,7 @@ These issues form the backbone of the system and should be prioritized:
 40. **#148** - ext2 filesystem support (read-only initially)
 
 ### 🆕 Tier 10: init & Shell Infrastructure (NEW!)
-41. **#149** - wait/waitpid syscall (process synchronization)
+41. **#149** - wait/waitpid syscall (process synchronization - CLOSED)
 42. **#150** - Process zombie state and orphan reparenting
 43. **#151** - getcwd/chdir syscalls (directory navigation)
 44. **#152** - Environment variables support (getenv/setenv/unsetenv)
@@ -207,7 +207,7 @@ Phase 5: Block FS            #148 (ext2) → Better persistent storage
 ```
 Phase 1: Process Synchronization
 #93 (fork/exec - CLOSED) ──┐
-#60 (syscalls - CLOSED) ────┼──→ #149 (wait/waitpid) → Process can wait for children
+#60 (syscalls - CLOSED) ────┼──→ #149 (wait/waitpid - CLOSED) → Process can wait for children
                             │            ↓
 Phase 2: Zombie Handling    │      #150 (zombie state + orphan reparenting)
                             │            ↓                Parent reaps children
@@ -218,14 +218,14 @@ Phase 3: Shell Support      │            ↓
                             └──→   #152 (environment vars) → PATH, HOME, etc.
                                          ↓
 Phase 4: init Program                    ├──→ #153 (init program)
-#149 (wait/waitpid) ─────────────────────┘         ↓  Reaps zombies
+#149 (wait/waitpid - CLOSED) ─────────────────────┘         ↓  Reaps zombies
 #150 (zombie handling) ──────────────────────────────┘  Supervises processes
                                                     ↓
 Phase 5: Boot Integration                    #154 (boot init as PID 1)
                                                     ↓  Start init at boot
                                                     ↓
 Phase 6: Shell                                 #54 (mosh shell)
-#149 (wait) + #151 (chdir) + #152 (env) ────────────┘  Interactive shell
+#149 (wait - CLOSED) + #151 (chdir) + #152 (env) ────────────┘  Interactive shell
 #153 (init) + #154 (boot) ──────────────────────────┘  Spawned by init
 ```
 
@@ -297,7 +297,6 @@ Phase 6: Shell                                 #54 (mosh shell)
 ## 🔴 Current Blocking Relationships
 
 ### Ready to Start (Dependencies Met):
-- **#149 (wait/waitpid)** - Dependencies: #93 (fork/exec - CLOSED), #60 (syscalls - CLOSED) - ready!
 - **#151 (getcwd/chdir)** - Dependencies: #65 (VFS - CLOSED) - ready!
 - **#152 (environment vars)** - No dependencies, ready to start!
 - **#109 (pthread API)** - Dependencies met: #108 (CLOSED)
@@ -313,10 +312,10 @@ Phase 6: Shell                                 #54 (mosh shell)
 - **#103 (UNIX signals)** - Process control mechanism (handlers delivered; siginfo/rt signals TBD)
 
 ### Cannot Start Until Complete:
-- **#150 (zombie/orphan handling)** blocks on: #149 (wait/waitpid)
-- **#153 (init program)** blocks on: #149 (wait/waitpid), #150 (zombie handling)
+- **#150 (zombie/orphan handling)** blocks on: #149 (wait/waitpid - CLOSED)
+- **#153 (init program)** blocks on: #149 (wait/waitpid - CLOSED), #150 (zombie handling)
 - **#154 (boot init as PID 1)** blocks on: #153 (init program)
-- **#54 (mosh shell)** blocks on: #149 (wait), #151 (chdir), #152 (env), #153 (init), #154 (boot)
+- **#54 (mosh shell)** blocks on: #149 (wait - CLOSED), #151 (chdir), #152 (env), #153 (init), #154 (boot)
 - **#106 (microkernel IPC)** blocks on: #101 (timers - CLOSED), #104 (shared memory)
 - **#107 (capability security)** blocks on: #106 (microkernel IPC)
 - **#105 (Unix sockets)** blocks on: #71 (socket API)
@@ -326,8 +325,7 @@ Phase 6: Shell                                 #54 (mosh shell)
 - **#113 (thread-aware syscalls)** blocks on: #109 (pthread API)
 
 ### Parallel Development Opportunities:
-- **init & Shell** (#149-#154, #54) can start immediately - foundation complete!
-  - #149 (wait/waitpid) - Critical syscall, good first issue (2-3 days)
+- **init & Shell** (#149-#154, #54) can start immediately - wait/waitpid is done, paving the way for the remaining tasks!
   - #151 (getcwd/chdir) - Directory navigation (1 day)
   - #152 (environment vars) - PATH, HOME, etc. (2-3 days)
   - Sequential: #150 → #153 → #154 → #54 (mosh)
@@ -350,16 +348,15 @@ Phase 6: Shell                                 #54 (mosh shell)
 ## 🎯 Recommended Focus Areas
 
 ### Immediate Next Steps (Ready Now!)
-1. **#149** - wait/waitpid syscall (CRITICAL for init/shell - 2-3 days)
-2. **#151** - getcwd/chdir syscalls (essential for shell - 1 day)
-3. **#152** - Environment variables (PATH lookup - 2-3 days)
-4. **#145** - tmpfs/ramfs (quick win, good first issue, enables /tmp)
-5. **#109** - pthread API and POSIX threading (foundation complete)
-6. **#146** - devfs (device filesystem, unblocks hardware device access)
-7. **#127** - UTF-8 utilities (ready to implement, no dependencies!)
-8. **#135** - Code coverage with Gcov (ready to implement, existing Unity tests!)
-9. **#136** - Device filesystem infrastructure (ready to implement!)
-10. **#147** - procfs (system introspection and debugging)
+1. **#151** - getcwd/chdir syscalls (essential for shell - 1 day)
+2. **#152** - Environment variables (PATH lookup - 2-3 days)
+3. **#145** - tmpfs/ramfs (quick win, good first issue, enables /tmp)
+4. **#109** - pthread API and POSIX threading (foundation complete)
+5. **#146** - devfs (device filesystem, unblocks hardware device access)
+6. **#127** - UTF-8 utilities (ready to implement, no dependencies!)
+7. **#135** - Code coverage with Gcov (ready to implement, existing Unity tests!)
+8. **#136** - Device filesystem infrastructure (ready to implement!)
+9. **#147** - procfs (system introspection and debugging)
 11. **#102** - pipes implementation (basic IPC ready)
 12. **#103** - UNIX signals (process control ready: sigaction/masks live)
 
@@ -403,7 +400,7 @@ Phase 6: Shell                                 #54 (mosh shell)
 4. **Phase 4**: #148 (ext2) → Better persistent storage (1-2 weeks)
 
 ### For init & Shell (Interactive System):
-1. **Week 1**: #149 (wait/waitpid - 2-3 days) → #150 (zombie handling - 1-2 days)
+1. **Week 1**: #149 (wait/waitpid - CLOSED) → #150 (zombie handling - 1-2 days)
 2. **Week 1-2**: #151 (getcwd/chdir - 1 day) + #152 (environment vars - 2-3 days) in parallel
 3. **Week 2**: #153 (init program - 2 days) → #154 (boot integration - 1 day)
 4. **Week 3-4**: #54 (mosh shell - 1-2 weeks) → Basic interactive shell
@@ -424,7 +421,6 @@ Phase 6: Shell                                 #54 (mosh shell)
 - **Hardware**: PCI/AHCI controller (#114-#117), input subsystem (#32), framebuffer interface (#31)
 
 ### **Ready to Implement (High Impact)**:
-- #149 (wait/waitpid) - CRITICAL for init/shell (2-3 days, good first issue)
 - #151 (getcwd/chdir) - Essential for shell (1 day)
 - #152 (environment vars) - PATH lookup (2-3 days)
 - #145 (tmpfs/ramfs) - Quick win, enables /tmp (2-3 days)
@@ -452,8 +448,8 @@ Phase 6: Shell                                 #54 (mosh shell)
 With core kernel infrastructure operational, meniOS has strong foundations for advanced features. Major systems like memory management, scheduling, processes, and storage are complete and functional.
 
 **Recommended immediate development tracks:**
-1. **init & Shell** (#149-#154, #54) - Interactive single-user system (TOP PRIORITY)
-   - wait/waitpid syscall (CRITICAL - 2-3 days)
+1. **init & Shell** (#149-#154, #54) - wait/waitpid complete; focus now on zombies, init, and shell (TOP PRIORITY)
+   - wait/waitpid syscall (DONE)
    - getcwd/chdir syscalls (1 day)
    - environment variables (2-3 days)
    - zombie handling (1-2 days)

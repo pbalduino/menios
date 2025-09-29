@@ -38,6 +38,7 @@ struct syscall_frame_t;
 #define PROC_STATE_WAITING    3
 #define PROC_STATE_SLEEPING   4
 #define PROC_STATE_STOPPED    5
+#define PROC_STATE_ZOMBIE     6
 #define PROC_STATE_TERMINATED 7
 
 #define PROC_PRIO_IDLE    0
@@ -113,7 +114,8 @@ typedef struct proc_info_t {
   int          errno;
   uint64_t     exec_time;
   char         name[32];
-  proc_info_p* children;
+  proc_info_p  first_child;
+  proc_info_p  sibling_next;
   cpu_state_t* cpu_state;
   void*        stack_pointer;
   uintptr_t*   stack_base;
@@ -141,6 +143,11 @@ typedef struct proc_info_t {
   } signal_actions[NSIG];
   uint8_t      signal_depth;
   uint8_t      stop_signal;
+  struct {
+    int    pid;
+    int    options;
+    bool   waiting;
+  } wait_state;
 } proc_info_t;
 
 typedef proc_info_t* proc_info_p;
@@ -170,6 +177,7 @@ int proc_send_signal(proc_info_p proc, int sig);
 bool proc_process_pending_signals(cpu_state_p frame);
 int proc_install_sigaction(proc_info_p proc, int sig, const struct sigaction* act, struct sigaction* oldact);
 int proc_update_signal_mask(proc_info_p proc, int how, sigset_t set, sigset_t* oldset);
+int proc_waitpid(proc_info_p parent, int pid, int options, int* status_out);
 bool proc_user_buffer_accessible(proc_info_p proc, const void* buffer, size_t length, bool write);
 
 typedef struct signal_frame_t {

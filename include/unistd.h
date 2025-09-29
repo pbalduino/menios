@@ -21,6 +21,8 @@ int dup2(int oldfd, int newfd);
 int pipe(int pipefd[2]);
 off_t lseek(int fd, off_t offset, int whence);
 int kill(pid_t pid, int sig);
+pid_t waitpid(pid_t pid, int* status, int options);
+pid_t wait(int* status);
 
 int brk(void *addr);
 

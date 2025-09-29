@@ -38,6 +38,7 @@ static uint64_t syscall_signal_handler(syscall_frame_t* frame);
 static uint64_t syscall_sigreturn_handler(syscall_frame_t* frame);
 static uint64_t syscall_sigaction_handler(syscall_frame_t* frame);
 static uint64_t syscall_sigprocmask_handler(syscall_frame_t* frame);
+static uint64_t syscall_waitpid_handler(syscall_frame_t* frame);
 
 static syscall_handler_t syscall_table[SYSCALL_MAX];
 
@@ -74,6 +75,7 @@ void syscall_init(void) {
   syscall_register(SYS_SIGRETURN, syscall_sigreturn_handler);
   syscall_register(SYS_SIGACTION, syscall_sigaction_handler);
   syscall_register(SYS_SIGPROCMASK, syscall_sigprocmask_handler);
+  syscall_register(SYS_WAITPID, syscall_waitpid_handler);
   syscall_register(SYS_FCNTL, syscall_fcntl_handler);
   syscall_register(SYS_FB_GETINFO, syscall_fb_getinfo_handler);
   syscall_register(SYS_FB_MAP, syscall_fb_map_handler);
@@ -707,5 +709,36 @@ static uint64_t syscall_sigprocmask_handler(syscall_frame_t* frame) {
   }
 
   frame->rax = 0;
+  return frame->rax;
+}
+
+static uint64_t syscall_waitpid_handler(syscall_frame_t* frame) {
+  if(current == NULL) {
+    frame->rax = (uint64_t)(-EINVAL);
+    return frame->rax;
+  }
+
+  int pid = (int)frame->rdi;
+  int* status_user = (int*)frame->rsi;
+  int options = (int)frame->rdx;
+
+  int status = 0;
+  int* status_ptr = (status_user != NULL) ? &status : NULL;
+
+  int rc = proc_waitpid(current, pid, options, status_ptr);
+  if(rc < 0) {
+    frame->rax = (uint64_t)rc;
+    return frame->rax;
+  }
+
+  if(status_user != NULL) {
+    if(!proc_user_buffer_accessible(current, status_user, sizeof(int), true)) {
+      frame->rax = (uint64_t)(-EFAULT);
+      return frame->rax;
+    }
+    memcpy(status_user, &status, sizeof(int));
+  }
+
+  frame->rax = (uint64_t)rc;
   return frame->rax;
 }

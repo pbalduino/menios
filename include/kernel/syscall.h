@@ -27,6 +27,7 @@ extern "C" {
 #define SYS_SIGRETURN   64
 #define SYS_SIGACTION   65
 #define SYS_SIGPROCMASK 66
+#define SYS_WAITPID     67
 #define SYS_FCNTL  72
 #define SYS_FB_GETINFO 200
 #define SYS_FB_MAP     201

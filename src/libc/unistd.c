@@ -158,4 +158,28 @@ int kill(pid_t pid, int sig) {
   return 0;
 }
 
+pid_t waitpid(pid_t pid, int* status, int options) {
+  register uint64_t rax asm("rax") = SYS_WAITPID;
+  register uint64_t rdi asm("rdi") = (uint64_t)pid;
+  register uint64_t rsi asm("rsi") = (uint64_t)status;
+  register uint64_t rdx asm("rdx") = (uint64_t)options;
+
+  asm volatile("int $0x80"
+               : "+a"(rax)
+               : "D"(rdi), "S"(rsi), "d"(rdx)
+               : "rcx", "r11", "memory");
+
+  if((int64_t)rax < 0) {
+    errno = (int)(-((int64_t)rax));
+    return (pid_t)-1;
+  }
+
+  errno = 0;
+  return (pid_t)rax;
+}
+
+pid_t wait(int* status) {
+  return waitpid(-1, status, 0);
+}
+
 #endif

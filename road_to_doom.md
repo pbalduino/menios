@@ -65,10 +65,15 @@ Inter-process communication for complex applications:
 - ✅ **Status**: COMPLETE – anonymous pipes live in `src/kernel/fs/pipe.c`; `sys_pipe` installs read/write descriptors with blocking semantics
 - **Impact**: Shell pipelines, parent/child hand-off, and Doom's streaming needs
 
--#### **UNIX Signals** (Issue #103)
+#### **UNIX Signals** (Issue #103)
 - 🟢 **Status**: Handler-ready – `kill(2)`, `sigaction(2)`, `sigprocmask(2)`, and user trampolines with basic `SIGSTOP`/`SIGCONT` transitions; queued delivery semantics (info blocks, siginfo) still pending
 - **Scope**: Signal delivery, handlers, masks, default actions
 - **Impact**: Process control, crash handling, cooperative shutdown
+
+#### **wait/waitpid** (Issue #149)
+- ✅ **Status**: COMPLETE – parent processes block or reap immediately via `waitpid(2)`; zombies persist until collected, waking blocked parents and emitting `SIGCHLD`
+- **Scope**: Baseline POSIX wait semantics (blocking only)
+- **Impact**: Enables init/shell supervision trees, graceful worker shutdown, and leak-free process lifecycles
 
 #### **Shared Memory** (Issue #104)
 - 🟡 **Status**: Ready to implement (VM manager complete, `mmap` groundwork done)

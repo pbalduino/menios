@@ -22,13 +22,15 @@ uint64_t last_pid = 0;
 static uint64_t last_exec = 0;
 
 proc_info_t kernel_process_info = {
-  .children = NULL,
+  .first_child = NULL,
+  .sibling_next = NULL,
   .children_count = 0,
   .name = "kernel",
   .parent = NULL,
   .priority = PROC_PRIO_IDLE,
   .stack_base = NULL,
-  .state = PROC_STATE_READY
+  .state = PROC_STATE_READY,
+  .wait_state = { .pid = -1, .options = 0, .waiting = false }
 };
 
 proc_info_p procs[PROC_MAX] = {
@@ -96,6 +98,9 @@ static void proc_init_signal_state(proc_info_p proc) {
   proc->signal_mask = 0;
   proc->signal_depth = 0;
   proc->stop_signal = 0;
+  proc->wait_state.pid = -1;
+  proc->wait_state.options = 0;
+  proc->wait_state.waiting = false;
 
   for(int sig = 0; sig < NSIG; sig++) {
     proc->signal_actions[sig].handler = SIG_DFL;
@@ -103,6 +108,63 @@ static void proc_init_signal_state(proc_info_p proc) {
     proc->signal_actions[sig].flags = 0;
     proc->signal_actions[sig].restorer = NULL;
   }
+}
+
+static void proc_add_child(proc_info_p parent, proc_info_p child) {
+  if(parent == NULL || child == NULL) {
+    return;
+  }
+
+  child->sibling_next = parent->first_child;
+  parent->first_child = child;
+  parent->children_count++;
+}
+
+static void proc_remove_child(proc_info_p parent, proc_info_p child) {
+  if(parent == NULL || child == NULL) {
+    return;
+  }
+
+  proc_info_p prev = NULL;
+  proc_info_p node = parent->first_child;
+  while(node) {
+    if(node == child) {
+      if(prev) {
+        prev->sibling_next = node->sibling_next;
+      } else {
+        parent->first_child = node->sibling_next;
+      }
+      node->sibling_next = NULL;
+      if(parent->children_count > 0) {
+        parent->children_count--;
+      }
+      return;
+    }
+    prev = node;
+    node = node->sibling_next;
+  }
+}
+
+static bool proc_has_children(proc_info_p parent) {
+  return parent != NULL && parent->first_child != NULL;
+}
+
+static proc_info_p proc_find_zombie_child(proc_info_p parent, int pid) {
+  if(parent == NULL) {
+    return NULL;
+  }
+
+  proc_info_p node = parent->first_child;
+  while(node) {
+    if(node->state == PROC_STATE_ZOMBIE) {
+      if(pid == -1 || (pid >= 0 && (uint32_t)pid == node->pid)) {
+        return node;
+      }
+    }
+    node = node->sibling_next;
+  }
+
+  return NULL;
 }
 
 static inline uint64_t scheduler_now_us(void) {
@@ -129,6 +191,9 @@ static void proc_release_user_memory(proc_info_p proc) {
                   proc->vm_region_count);
   }
   proc->user_segment_count = 0;
+  proc->first_child = NULL;
+  proc->sibling_next = NULL;
+  proc->children_count = 0;
   proc_init_signal_state(proc);
   proc->fb_map_base = NULL;
   proc->fb_map_size = 0;
@@ -209,6 +274,10 @@ static proc_info_p ready_queue_pop_at_priority(uint8_t priority) {
       continue;
     }
 
+    if(proc->state == PROC_STATE_ZOMBIE) {
+      continue;
+    }
+
     return proc;
   }
 
@@ -263,6 +332,9 @@ static void scheduler_wake_sleepers(uint64_t now) {
       continue;
     }
     if(proc->state == PROC_STATE_STOPPED) {
+      continue;
+    }
+    if(proc->state == PROC_STATE_ZOMBIE) {
       continue;
     }
     proc->state = PROC_STATE_READY;
@@ -464,6 +536,10 @@ static void scheduler_cleanup_process(proc_info_p proc) {
     return;
   }
 
+  if(proc->parent) {
+    proc_remove_child(proc->parent, proc);
+  }
+
   if(proc->stack_pointer) {
     kfree(proc->stack_pointer);
     proc->stack_pointer = NULL;
@@ -608,7 +684,6 @@ void proc_switch(void* arg) {
 void proc_create(proc_info_p proc, const char* name, void (*entrypoint)(void *), void* arg) {
   memset(proc->name, 0, sizeof(proc->name));
   strncpy(proc->name, name, sizeof(proc->name) - 1);
-  proc->children = NULL;
   proc->children_count = 0;
   proc->parent = current;
   proc->pid = last_pid++;
@@ -641,6 +716,8 @@ void proc_create(proc_info_p proc, const char* name, void (*entrypoint)(void *),
   proc->fb_map_base = NULL;
   proc->fb_map_size = 0;
   proc->fb_map_flags = 0;
+  proc->first_child = NULL;
+  proc->sibling_next = NULL;
   proc_init_signal_state(proc);
   proc->dispatch_count = 0;
   proc->exec_time = 0;
@@ -1083,7 +1160,7 @@ proc_info_p proc_fork(proc_info_p parent, const syscall_frame_t* frame, int* err
   child->time_slice_remaining_us = child->quantum_us;
   child->state = PROC_STATE_READY;
 
-  parent->children_count++;
+  proc_add_child(parent, child);
 
   proc_execute(child);
 
@@ -1368,9 +1445,80 @@ void scheduler_init() {
   printf(".OK\n");
 }
 
+int proc_waitpid(proc_info_p parent, int pid, int options, int* status_out) {
+  if(parent == NULL) {
+    return -ECHILD;
+  }
+
+  if(pid == 0 || pid < -1) {
+    return -EINVAL;
+  }
+
+  if(options != 0) {
+    return -EINVAL;
+  }
+
+  for(;;) {
+    proc_info_p child = proc_find_zombie_child(parent, pid);
+    if(child != NULL) {
+      if(status_out) {
+        *status_out = (child->exit_code & 0xff) << 8;
+      }
+
+      proc_remove_child(parent, child);
+      child->parent = NULL;
+      child->state = PROC_STATE_TERMINATED;
+      scheduler_cleanup_process(child);
+      parent->wait_state.waiting = false;
+      parent->wait_state.pid = -1;
+      parent->wait_state.options = 0;
+      return (int)child->pid;
+    }
+
+    if(!proc_has_children(parent)) {
+      parent->wait_state.waiting = false;
+      parent->wait_state.pid = -1;
+      parent->wait_state.options = 0;
+      return -ECHILD;
+    }
+
+    parent->wait_state.pid = pid;
+    parent->wait_state.options = options;
+    parent->wait_state.waiting = true;
+    parent->state = PROC_STATE_WAITING;
+    proc_request_yield();
+  }
+}
+
 void proc_exit(int code) {
-  current->state = PROC_STATE_TERMINATED;
-  current->exit_code = code;
-  serial_printf("proc_exit: Process %s exited with code %d\n", current->name, code);
+  proc_info_p proc = current;
+  if(proc == NULL) {
+    return;
+  }
+
+  proc->exit_code = code;
+  serial_printf("proc_exit: Process %s exited with code %d\n", proc->name, code);
+
+  proc_info_p parent = proc->parent;
+
+  if(parent == NULL || parent == &kernel_process_info) {
+    proc->state = PROC_STATE_TERMINATED;
+    scheduler_actions |= SCHED_ACTION_FORCE;
+    return;
+  }
+
+  proc->state = PROC_STATE_ZOMBIE;
+  proc->time_slice_remaining_us = 0;
+
+  int target = parent->wait_state.pid;
+  if(parent->wait_state.waiting) {
+    if(target == -1 || (target >= 0 && (uint32_t)target == proc->pid)) {
+      parent->wait_state.waiting = false;
+      proc_mark_ready(parent);
+    }
+  }
+
+  proc_signal_parent(proc);
+
   scheduler_actions |= SCHED_ACTION_FORCE;
 }
