@@ -1,5 +1,114 @@
 [
   {
+    "title": "Implement USB mouse support through HID class driver",
+    "github_issue": {
+      "number": 144,
+      "url": "https://github.com/pbalduino/menios/issues/144",
+      "state": "OPEN"
+    },
+    "labels": [
+      "enhancement"
+    ],
+    "assignees": []
+  },
+  {
+    "title": "Implement PS/2 mouse driver and input support",
+    "github_issue": {
+      "number": 143,
+      "url": "https://github.com/pbalduino/menios/issues/143",
+      "state": "OPEN"
+    },
+    "labels": [
+      "enhancement"
+    ],
+    "assignees": []
+  },
+  {
+    "title": "Implement /dev/ttyS0 serial device interface",
+    "github_issue": {
+      "number": 142,
+      "url": "https://github.com/pbalduino/menios/issues/142",
+      "state": "OPEN"
+    },
+    "labels": [
+      "enhancement"
+    ],
+    "assignees": []
+  },
+  {
+    "title": "Implement /dev/sda and block device interfaces for storage",
+    "github_issue": {
+      "number": 141,
+      "url": "https://github.com/pbalduino/menios/issues/141",
+      "state": "OPEN"
+    },
+    "labels": [
+      "enhancement"
+    ],
+    "assignees": []
+  },
+  {
+    "title": "Implement /dev/kbd0 and /dev/fb0 hardware device interfaces",
+    "github_issue": {
+      "number": 140,
+      "url": "https://github.com/pbalduino/menios/issues/140",
+      "state": "OPEN"
+    },
+    "labels": [
+      "enhancement"
+    ],
+    "assignees": []
+  },
+  {
+    "title": "Implement /dev/random and /dev/urandom entropy devices",
+    "github_issue": {
+      "number": 139,
+      "url": "https://github.com/pbalduino/menios/issues/139",
+      "state": "OPEN"
+    },
+    "labels": [
+      "enhancement"
+    ],
+    "assignees": []
+  },
+  {
+    "title": "Implement /dev/console and terminal device interfaces",
+    "github_issue": {
+      "number": 138,
+      "url": "https://github.com/pbalduino/menios/issues/138",
+      "state": "OPEN"
+    },
+    "labels": [
+      "enhancement"
+    ],
+    "assignees": []
+  },
+  {
+    "title": "Implement /dev/null and /dev/zero virtual devices",
+    "github_issue": {
+      "number": 137,
+      "url": "https://github.com/pbalduino/menios/issues/137",
+      "state": "OPEN"
+    },
+    "labels": [
+      "enhancement",
+      "good first issue"
+    ],
+    "assignees": []
+  },
+  {
+    "title": "Implement device filesystem infrastructure and /dev directory",
+    "github_issue": {
+      "number": 136,
+      "url": "https://github.com/pbalduino/menios/issues/136",
+      "state": "OPEN"
+    },
+    "labels": [
+      "enhancement"
+    ],
+    "assignees": []
+  },
+  {
     "title": "Add code coverage reporting to unit tests with Gcov integration",
     "github_issue": {
       "number": 135,

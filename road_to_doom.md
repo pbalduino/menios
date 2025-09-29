@@ -116,7 +116,8 @@ Visual output and user interaction:
 - **Impact**: Doom rendering pipeline and general GUI support
 
 #### **Input Subsystem** (Issue #32)
-- ✅ **Status**: COMPLETED – PS/2 keyboard events exposed via `/dev/input/kbd`
+- ✅ **Status**: KEYBOARD COMPLETED – PS/2 keyboard events exposed via `/dev/input/kbd`
+- 🟡 **Status**: MOUSE PENDING – PS/2 mouse (#143) and USB mouse (#144) support planned
 - **Scope**: Userspace keyboard/mouse interface, focus management
 - **Impact**: Game controls, shell interaction, debugging tools
 
