@@ -119,4 +119,24 @@ int pipe(int pipefd[2]) {
   return 0;
 }
 
+off_t lseek(int fd, off_t offset, int whence) {
+  register uint64_t rax asm("rax") = SYS_LSEEK;
+  register uint64_t rdi asm("rdi") = (uint64_t)fd;
+  register off_t rsi asm("rsi") = offset;
+  register uint64_t rdx asm("rdx") = (uint64_t)whence;
+
+  asm volatile("int $0x80"
+               : "+a"(rax)
+               : "D"(rdi), "S"(rsi), "d"(rdx)
+               : "rcx", "r11", "memory");
+
+  if((int64_t)rax < 0) {
+    errno = (int)(-((int64_t)rax));
+    return (off_t)-1;
+  }
+
+  errno = 0;
+  return (off_t)rax;
+}
+
 #endif

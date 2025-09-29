@@ -177,7 +177,8 @@ static int pipe_close_impl(file_t* file) {
 static const file_ops_t pipe_file_ops = {
   .read = pipe_read_impl,
   .write = pipe_write_impl,
-  .close = pipe_close_impl
+  .close = pipe_close_impl,
+  .seek = NULL,
 };
 
 int pipe_create(file_t** read_end, file_t** write_end) {

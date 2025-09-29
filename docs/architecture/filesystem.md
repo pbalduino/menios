@@ -43,6 +43,9 @@ configuration files and, eventually, user binaries from persistent storage.
 - The VFS layer feeds the existing file-descriptor subsystem (`file.c`), so
   `fopen("/path", "r")` transparently loads data from the mounted FAT32 volume
   while other sources (serial, framebuffer) continue to use bespoke handlers.
+- Userspace now reaches the filesystem via the usual Unix syscalls: `open`
+  installs descriptors backed by the VFS, `read`/`write` reuse the existing file
+  helpers, and `lseek` walks the per-file offsets maintained by `vfs_open()`.
 
 ## Limitations and Follow-up Work
 

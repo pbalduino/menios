@@ -98,6 +98,7 @@ Expect the log to show the `[user_demo]` messages on screen and in `com1.log`, c
 - [x] Global block cache for block devices (Issue #63)
 - [x] Kernel VFS layer backed by FAT32 filesystem (Issue #65)
 - [x] GPT-aware FAT32 filesystem mounting and file access (Issue #64)
+- [x] Filesystem syscalls (`open`/`read`/`write`/`lseek`/`close`) (Issue #60)
 
 ### 🔥 **Ready to Implement** (Dependencies Met)
 - [x] **File descriptor management and pipes** (Issue #96)

@@ -804,7 +804,7 @@
     "github_issue": {
       "number": 60,
       "url": "https://github.com/pbalduino/menios/issues/60",
-      "state": "OPEN"
+      "state": "CLOSED"
     },
     "labels": [
       "enhancement"

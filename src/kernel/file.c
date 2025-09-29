@@ -219,6 +219,25 @@ int64_t file_write(file_t* file, const void* buffer, size_t length) {
   return result;
 }
 
+int64_t file_seek(file_t* file, int64_t offset, int whence) {
+  if(file == NULL) {
+    set_errno(EINVAL);
+    return -EINVAL;
+  }
+  if(file->ops == NULL || file->ops->seek == NULL) {
+    set_errno(ESPIPE);
+    return -ESPIPE;
+  }
+
+  int64_t result = file->ops->seek(file, offset, whence);
+  if(result < 0) {
+    set_errno((int)-result);
+  } else if(current) {
+    current->errno = 0;
+  }
+  return result;
+}
+
 void proc_file_table_init(struct proc_info_t* proc) {
   if(proc == NULL) {
     return;
@@ -456,19 +475,22 @@ static int64_t framebuffer_write_impl(file_t* file, const void* buffer, size_t l
 static const file_ops_t serial_file_ops = {
   .read = NULL,
   .write = serial_write_impl,
-  .close = serial_close_noop
+  .close = serial_close_noop,
+  .seek = NULL,
 };
 
 static const file_ops_t framebuffer_file_ops = {
   .read = NULL,
   .write = framebuffer_write_impl,
-  .close = serial_close_noop
+  .close = serial_close_noop,
+  .seek = NULL,
 };
 
 static const file_ops_t stdin_file_ops = {
   .read = stdin_read_impl,
   .write = NULL,
-  .close = serial_close_noop
+  .close = serial_close_noop,
+  .seek = NULL,
 };
 
 static void install_standard_streams(void) {

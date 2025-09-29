@@ -4,6 +4,7 @@
 #include <stddef.h>
 #include <stdint.h>
 #include <string.h>
+#include <unistd.h>
 
 #include <kernel/block_device.h>
 #include <kernel/fs.h>
@@ -324,10 +325,45 @@ static int vfs_file_close_impl(file_t* file) {
   return 0;
 }
 
+static int64_t vfs_file_seek_impl(file_t* file, int64_t offset, int whence) {
+  if(file == NULL) {
+    return -EINVAL;
+  }
+
+  vfs_file_buffer_t* ctx = (vfs_file_buffer_t*)file->private_data;
+  if(ctx == NULL) {
+    return -EINVAL;
+  }
+
+  int64_t base = 0;
+  switch(whence) {
+    case SEEK_SET:
+      base = 0;
+      break;
+    case SEEK_CUR:
+      base = (int64_t)ctx->offset;
+      break;
+    case SEEK_END:
+      base = (int64_t)ctx->size;
+      break;
+    default:
+      return -EINVAL;
+  }
+
+  int64_t new_offset = base + offset;
+  if(new_offset < 0 || (uint64_t)new_offset > ctx->size) {
+    return -EINVAL;
+  }
+
+  ctx->offset = (size_t)new_offset;
+  return new_offset;
+}
+
 static const file_ops_t vfs_file_ops = {
   .read = vfs_file_read_impl,
   .write = NULL,
   .close = vfs_file_close_impl,
+  .seek = vfs_file_seek_impl,
 };
 
 file_t* vfs_open(const char* path) {

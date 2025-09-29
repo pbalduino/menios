@@ -5,6 +5,7 @@
 #include <kernel/proc.h>
 #include <kernel/serial.h>
 #include <kernel/syscall.h>
+#include <kernel/vfs.h>
 #include <sys/fcntl.h>
 
 #define SYSCALL_MAX 256
@@ -13,6 +14,8 @@ static uint64_t syscall_stub_unimplemented(syscall_frame_t* frame);
 static uint64_t syscall_read_handler(syscall_frame_t* frame);
 static uint64_t syscall_write_handler(syscall_frame_t* frame);
 static uint64_t syscall_close_handler(syscall_frame_t* frame);
+static uint64_t syscall_open_handler(syscall_frame_t* frame);
+static uint64_t syscall_lseek_handler(syscall_frame_t* frame);
 static uint64_t syscall_mmap_handler(syscall_frame_t* frame);
 static uint64_t syscall_munmap_handler(syscall_frame_t* frame);
 static uint64_t syscall_pipe_handler(syscall_frame_t* frame);
@@ -42,7 +45,9 @@ void syscall_init(void) {
 
   syscall_register(SYS_READ, syscall_read_handler);
   syscall_register(SYS_WRITE, syscall_write_handler);
+  syscall_register(SYS_OPEN, syscall_open_handler);
   syscall_register(SYS_CLOSE, syscall_close_handler);
+  syscall_register(SYS_LSEEK, syscall_lseek_handler);
   syscall_register(SYS_MMAP, syscall_mmap_handler);
   syscall_register(SYS_MUNMAP, syscall_munmap_handler);
   syscall_register(SYS_PIPE, syscall_pipe_handler);
@@ -132,6 +137,72 @@ static uint64_t syscall_close_handler(syscall_frame_t* frame) {
   int fd = (int)frame->rdi;
   int rc = proc_file_close(current, fd);
   frame->rax = (uint64_t)rc;
+  return frame->rax;
+}
+
+static uint64_t syscall_open_handler(syscall_frame_t* frame) {
+  if(current == NULL) {
+    frame->rax = (uint64_t)(-EINVAL);
+    return frame->rax;
+  }
+
+  const char* path = (const char*)frame->rdi;
+  int flags = (int)frame->rsi;
+  (void)frame->rdx; // mode currently unused
+
+  if(path == NULL) {
+    frame->rax = (uint64_t)(-EFAULT);
+    return frame->rax;
+  }
+
+  uint32_t install_flags = 0;
+  if(flags & O_CLOEXEC) {
+    install_flags |= FD_FLAG_CLOEXEC;
+  }
+
+  int unsupported = flags & ~(O_RDONLY | O_CLOEXEC);
+  if(unsupported != 0) {
+    frame->rax = (uint64_t)(-ENOSYS);
+    return frame->rax;
+  }
+
+  file_t* file = vfs_open(path);
+  if(file == NULL) {
+    frame->rax = (uint64_t)(-ENOENT);
+    return frame->rax;
+  }
+
+  int fd = proc_file_install(current, file, install_flags);
+  file_unref(file);
+  if(fd < 0) {
+    frame->rax = (uint64_t)fd;
+    return frame->rax;
+  }
+
+  frame->rax = (uint64_t)fd;
+  return frame->rax;
+}
+
+static uint64_t syscall_lseek_handler(syscall_frame_t* frame) {
+  if(current == NULL) {
+    frame->rax = (uint64_t)(-EINVAL);
+    return frame->rax;
+  }
+
+  int fd = (int)frame->rdi;
+  int64_t offset = (int64_t)frame->rsi;
+  int whence = (int)frame->rdx;
+
+  file_t* file = proc_file_get(current, fd, NULL);
+  if(file == NULL) {
+    int err = current->errno ? current->errno : EBADF;
+    frame->rax = (uint64_t)(-err);
+    return frame->rax;
+  }
+
+  int64_t result = file_seek(file, offset, whence);
+  file_unref(file);
+  frame->rax = (uint64_t)result;
   return frame->rax;
 }
 
