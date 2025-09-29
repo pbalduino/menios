@@ -92,12 +92,13 @@ Expect the log to show the `[user_demo]` messages on screen and in `com1.log`, c
 - [x] Ring 3 user mode infrastructure with syscall interface
 - [x] ELF loader for user programs
 - [x] Per-process virtual memory with kernel/user separation
+- [x] Kernel block device abstraction layer (Issue #114)
 
 ### 🔥 **Ready to Implement** (Dependencies Met)
 - [x] **File descriptor management and pipes** (Issue #96)
 - [x] Stdin routed through descriptor table for interactive user input
 - [x] **Memory mapping syscalls (mmap/munmap)** (Issue #89) - Enabled by completed VM work
-- [ ] **Kernel threading infrastructure** (Issue #108) - Enabled by completed foundation
+- [x] **Kernel threading infrastructure** (Issue #108)
 - [x] **Fork/exec process creation** (Issue #93) - Enabled by VM and file descriptor work
 
 ### 🚧 **In Progress & Planned**

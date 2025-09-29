@@ -1,5 +1,19 @@
 [
   {
+    "title": "Implement kernel block device abstraction layer",
+    "github_issue": {
+      "number": 114,
+      "url": "https://github.com/pbalduino/menios/issues/114",
+      "state": "CLOSED"
+    },
+    "labels": [
+      "enhancement"
+    ],
+    "assignees": [
+      "pbalduino"
+    ]
+  },
+  {
     "title": "Implement thread-aware system calls and kernel integration",
     "github_issue": {
       "number": 113,
@@ -217,7 +231,8 @@
       "state": "OPEN"
     },
     "labels": [
-      "enhancement"
+      "enhancement",
+      "nice to have"
     ],
     "assignees": [
       "pbalduino"
@@ -231,7 +246,8 @@
       "state": "OPEN"
     },
     "labels": [
-      "enhancement"
+      "enhancement",
+      "nice to have"
     ],
     "assignees": [
       "pbalduino"
@@ -1008,7 +1024,7 @@
     "github_issue": {
       "number": 39,
       "url": "https://github.com/pbalduino/menios/issues/39",
-      "state": "CLOSED"
+      "state": "OPEN"
     },
     "labels": [
       "enhancement"
@@ -1036,7 +1052,7 @@
     "github_issue": {
       "number": 37,
       "url": "https://github.com/pbalduino/menios/issues/37",
-      "state": "CLOSED"
+      "state": "OPEN"
     },
     "labels": [
       "enhancement"
@@ -1213,7 +1229,8 @@
       "state": "OPEN"
     },
     "labels": [
-      "enhancement"
+      "enhancement",
+      "nice to have"
     ],
     "assignees": [
       "pbalduino"

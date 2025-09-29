@@ -35,6 +35,7 @@
 
 #include <kernel/acpi.h>
 #include <kernel/apic.h>
+#include <kernel/block_device.h>
 #include <kernel/console.h>
 #include <kernel/file.h>
 #include <kernel/fonts.h>
@@ -142,6 +143,8 @@ void _start() {
   mem_init();
 
   file_system_init();
+
+  block_device_system_init();
 
   boot_graphics_init();
 
