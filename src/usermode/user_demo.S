@@ -77,6 +77,122 @@ _start:
     mov $1, %rdi
     int $0x80
 
+    lea msg_input_intro(%rip), %rsi
+    mov $(msg_input_intro_end - msg_input_intro), %rdx
+    mov $1, %rax
+    mov $1, %rdi
+    int $0x80
+
+    mov $2, %rax            # SYS_open
+    lea input_device_path(%rip), %rdi
+    xor %rsi, %rsi          # O_RDONLY
+    xor %rdx, %rdx
+    int $0x80
+    mov %rax, %r15          # store kbd fd
+    cmp $0, %rax
+    jge input_open_ok
+
+    lea msg_input_open_fail(%rip), %rsi
+    mov $(msg_input_open_fail_end - msg_input_open_fail), %rdx
+    mov $1, %rax
+    mov $1, %rdi
+    int $0x80
+    jmp input_demo_done
+
+input_open_ok:
+    mov $3, %r10d           # collect three events
+
+input_read_loop:
+    mov $0, %rax            # SYS_read
+    mov %r15d, %edi
+    lea input_event_buffer(%rip), %rsi
+    mov $16, %rdx
+    int $0x80
+    cmp $16, %rax
+    jne input_close
+
+    movzwl input_event_buffer+8(%rip), %eax
+    mov %eax, %edx
+    shr $12, %edx
+    mov hex_digits(%rip,%rdx,1), %bl
+    mov %bl, kbd_event_scancode(%rip)
+    movzwl input_event_buffer+8(%rip), %eax
+    shr $8, %eax
+    and $0xF, %eax
+    mov hex_digits(%rip,%rax,1), %bl
+    mov %bl, kbd_event_scancode+1(%rip)
+    movzwl input_event_buffer+8(%rip), %eax
+    shr $4, %eax
+    and $0xF, %eax
+    mov hex_digits(%rip,%rax,1), %bl
+    mov %bl, kbd_event_scancode+2(%rip)
+    movzwl input_event_buffer+8(%rip), %eax
+    and $0xF, %eax
+    mov hex_digits(%rip,%rax,1), %bl
+    mov %bl, kbd_event_scancode+3(%rip)
+
+    movzbq input_event_buffer+10(%rip), %rax
+    mov %rax, %rdx
+    shr $4, %rdx
+    mov hex_digits(%rip,%rdx,1), %bl
+    mov %bl, kbd_event_ascii(%rip)
+    movzbq input_event_buffer+10(%rip), %rax
+    and $0xF, %rax
+    mov hex_digits(%rip,%rax,1), %bl
+    mov %bl, kbd_event_ascii+1(%rip)
+    movzbq input_event_buffer+10(%rip), %rax
+    mov %al, %bl
+    cmp $32, %al
+    jb input_ascii_not_printable
+    cmp $126, %al
+    ja input_ascii_not_printable
+    jmp input_ascii_store
+
+input_ascii_not_printable:
+    mov $'.', %bl
+
+input_ascii_store:
+    mov %bl, kbd_event_char(%rip)
+
+    movzbq input_event_buffer+11(%rip), %rax
+    mov %rax, %rdx
+    shr $4, %rdx
+    mov hex_digits(%rip,%rdx,1), %bl
+    mov %bl, kbd_event_mods(%rip)
+    movzbq input_event_buffer+11(%rip), %rax
+    and $0xF, %rax
+    mov hex_digits(%rip,%rax,1), %bl
+    mov %bl, kbd_event_mods+1(%rip)
+
+    movzbq input_event_buffer+12(%rip), %rax
+    test %al, %al
+    jz input_pressed_up
+    mov $'D', %bl
+    jmp input_pressed_store
+
+input_pressed_up:
+    mov $'U', %bl
+
+input_pressed_store:
+    mov %bl, kbd_event_pressed(%rip)
+
+    mov $1, %rax
+    mov $1, %rdi
+    lea kbd_event_msg(%rip), %rsi
+    mov $(kbd_event_msg_end - kbd_event_msg), %rdx
+    int $0x80
+
+    dec %r10d
+    jz input_close
+    jmp input_read_loop
+
+input_close:
+    mov $3, %rax            # SYS_close
+    mov %r15d, %edi
+    int $0x80
+
+input_demo_done:
+
     mov %r13, %r14          # select prefix based on original argument (0..2)
 
 2:
@@ -128,7 +244,49 @@ print_loop:
     xor %rdi, %rdi
     int $0x80
 
+    .section .data
+input_device_path:
+    .ascii "/dev/input/kbd\0"
+
+msg_input_intro:
+    .ascii "[input_demo] waiting for keyboard events (3 samples)\n"
+msg_input_intro_end:
+
+msg_input_open_fail:
+    .ascii "[input_demo] failed to open /dev/input/kbd\n"
+msg_input_open_fail_end:
+
+kbd_event_msg:
+    .ascii "kbd event: scancode=0x"
+kbd_event_scancode:
+    .ascii "0000"
+kbd_event_mid1:
+    .ascii " ascii=0x"
+kbd_event_ascii:
+    .ascii "00"
+kbd_event_mid2:
+    .ascii " ('"
+kbd_event_char:
+    .byte '.'
+kbd_event_mid3:
+    .ascii "') mods=0x"
+kbd_event_mods:
+    .ascii "00"
+kbd_event_mid4:
+    .ascii " pressed="
+kbd_event_pressed:
+    .byte ' '
+kbd_event_endline:
+    .ascii "\n"
+kbd_event_msg_end:
+
+input_event_buffer:
+    .space 16
+
     .section .rodata
+hex_digits:
+    .ascii "0123456789ABCDEF"
+
 prefixes:
     .quad prefix0
     .quad prefix0_end - prefix0

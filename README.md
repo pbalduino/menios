@@ -66,6 +66,7 @@ During boot, meniOS schedules three priority-tier instances of the embedded `use
 - touches a second stack page to prove lazy stack mapping before returning,
 - creates an anonymous pipe, forks, and round-trips a payload from parent to child,
 - exercises `sleep`/`yield` scheduling while printing status banners from low/normal/high priority contexts, and
+- samples `/dev/input/kbd`, printing three keyboard events so you can verify the user-facing input stream, and
 - terminates through `SYS_exit` once the loop completes.
 
 On the kernel side, `user_demo_launch()` probes the SATA disk, dumps the first sector over serial, mounts the FAT32 root at `/`, and walks the top two directory levels via the VFS helpers. Check the `[user_demo]`, `user_demo_fs`, and `user_demo_launch` lines in `com1.log` to confirm that the syscall path, fork/exec, pipes, and filesystem stack are all healthy. If you need quieter serial output, toggle the verbose syscall traces in `src/kernel/syscall/syscall.c` (search for `serial_printf` inside `syscall_write_handler`).
