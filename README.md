@@ -93,6 +93,7 @@ Expect the log to show the `[user_demo]` messages on screen and in `com1.log`, c
 - [x] ELF loader for user programs
 - [x] Per-process virtual memory with kernel/user separation
 - [x] Kernel block device abstraction layer (Issue #114)
+- [x] DMA-friendly allocation helpers (Issue #115)
 
 ### 🔥 **Ready to Implement** (Dependencies Met)
 - [x] **File descriptor management and pipes** (Issue #96)

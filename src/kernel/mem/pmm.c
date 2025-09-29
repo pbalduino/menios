@@ -573,9 +573,20 @@ void set_page_row_free(uintptr_t physical_address) {
   page_bitmap[index] = PAGE_FREE;
 }
 
-phys_addr_t pmm_alloc_pages(size_t page_count) {
+static phys_addr_t pmm_alloc_internal(size_t page_count,
+                                      size_t alignment,
+                                      phys_addr_t max_phys_addr) {
   if(page_count == 0) {
     return 0;
+  }
+
+  if(alignment < PAGE_SIZE) {
+    alignment = PAGE_SIZE;
+  }
+
+  size_t alignment_pages = (alignment + PAGE_SIZE - 1) / PAGE_SIZE;
+  if(alignment_pages == 0) {
+    alignment_pages = 1;
   }
 
   size_t run_length = 0;
@@ -599,8 +610,27 @@ phys_addr_t pmm_alloc_pages(size_t page_count) {
 
         run_length++;
 
-        if(run_length == page_count) {
-          phys_addr_t base = run_start * PAGE_SIZE;
+        if(run_length >= page_count) {
+          size_t run_end = page_number + 1; // exclusive
+          size_t candidate = run_start;
+          if(alignment_pages > 1) {
+            size_t aligned = ((run_start + alignment_pages - 1) / alignment_pages) * alignment_pages;
+            if(aligned + page_count <= run_end) {
+              candidate = aligned;
+            } else {
+              // alignment pushes beyond current run; keep extended run
+              continue;
+            }
+          }
+
+          phys_addr_t base = (phys_addr_t)candidate * PAGE_SIZE;
+          phys_addr_t span = (phys_addr_t)page_count * PAGE_SIZE;
+          if(span == 0) {
+            return 0;
+          }
+          if(base > max_phys_addr || (span - 1) > (max_phys_addr - base)) {
+            continue;
+          }
 
           for(size_t page = 0; page < page_count; page++) {
             set_page_used(base + (page * PAGE_SIZE));
@@ -615,6 +645,16 @@ phys_addr_t pmm_alloc_pages(size_t page_count) {
   }
 
   return 0;
+}
+
+phys_addr_t pmm_alloc_pages(size_t page_count) {
+  return pmm_alloc_internal(page_count, PAGE_SIZE, UINT64_MAX);
+}
+
+phys_addr_t pmm_alloc_aligned_pages(size_t page_count,
+                                    size_t alignment,
+                                    phys_addr_t max_phys_addr) {
+  return pmm_alloc_internal(page_count, alignment, max_phys_addr);
 }
 
 void pmm_free_pages(phys_addr_t base_address, size_t page_count) {

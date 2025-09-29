@@ -184,7 +184,7 @@ void _start() {
   logk("Enabling interruptions\n");
   enable_interrupts();
 
-  user_demo_launch();
+  // user_demo_launch();
 
   printf("menios# ");
 

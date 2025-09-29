@@ -147,6 +147,9 @@ void pmm_set_pagetable_root(virt_addr_t root_vaddr);
 
 void set_page_used(phys_addr_t physical_address);
 phys_addr_t pmm_alloc_pages(size_t page_count);
+phys_addr_t pmm_alloc_aligned_pages(size_t page_count,
+                                    size_t alignment,
+                                    phys_addr_t max_phys_addr);
 void pmm_free_pages(phys_addr_t base_address, size_t page_count);
 
 bool pmm_mark_page_user(virt_addr_t vaddr);

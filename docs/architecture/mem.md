@@ -19,6 +19,9 @@ This note collects the decisions we have made around memory management in meniOS
   3. Capture the HHDM offset so we can translate physical↔virtual addresses via `physical_to_virtual()` / `virtual_to_physical()`.
   4. Record the kernel's current CR3 so we know the original PML4 and can clone it for new address spaces.
 * Allocation helpers (`pmm_alloc_pages`, `pmm_free_pages`) operate on contiguous runs of pages. There is no buddy allocator yet; the bitmap search is linear.
+* DMA-aware helpers (`pmm_alloc_aligned_pages`) can reserve contiguous spans under a
+  caller-specified physical ceiling and alignment, used by `dma_buffer_alloc`
+  to provide device-friendly buffers.
 
 ## Kernel Virtual Address Layout
 

@@ -1,5 +1,47 @@
 [
   {
+    "title": "Implement AHCI interrupt service path",
+    "github_issue": {
+      "number": 117,
+      "url": "https://github.com/pbalduino/menios/issues/117",
+      "state": "OPEN"
+    },
+    "labels": [
+      "enhancement"
+    ],
+    "assignees": [
+      "pbalduino"
+    ]
+  },
+  {
+    "title": "Implement PCI/AHCI controller discovery and initialization",
+    "github_issue": {
+      "number": 116,
+      "url": "https://github.com/pbalduino/menios/issues/116",
+      "state": "OPEN"
+    },
+    "labels": [
+      "enhancement"
+    ],
+    "assignees": [
+      "pbalduino"
+    ]
+  },
+  {
+    "title": "Implement DMA-friendly allocation helpers",
+    "github_issue": {
+      "number": 115,
+      "url": "https://github.com/pbalduino/menios/issues/115",
+      "state": "CLOSED"
+    },
+    "labels": [
+      "enhancement"
+    ],
+    "assignees": [
+      "pbalduino"
+    ]
+  },
+  {
     "title": "Implement kernel block device abstraction layer",
     "github_issue": {
       "number": 114,
