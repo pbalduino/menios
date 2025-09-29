@@ -4,16 +4,18 @@
 
 ## 📊 **Progress Assessment**
 
-**✅ Foundation Complete!** The core kernel infrastructure needed for userspace applications is now solidly implemented:
+**✅ Core kernel and storage stack are operational.**
+- Physical and virtual memory management with copy-on-write fork/exec and `mmap`/`munmap`
+- Preemptive scheduler, kernel threads, sleep/yield, and full Ring 3 syscall path
+- File descriptors, CLOEXEC, anonymous pipes, and libc syscall shims (`read`, `write`, `open`, `close`, `lseek`, `dup`, `fcntl`)
+- PCI/AHCI DMA driver, block cache, GPT scanning, FAT32 filesystem driver, and VFS mount at `/`
+- Embedded user demo exercises pipes, fork, filesystem reads, and priority scheduling with serial diagnostics
 
-- ✅ **Memory Management**: Physical/virtual memory, kernel heap, mmap/munmap (Issues #35, #57, #89)
-- ✅ **Process Scheduling**: Preemptive userland scheduler with time slicing (Issue #34)
-- ✅ **Synchronization**: Mutexes and condition variables (Issues #36, #40)
-- ✅ **User Mode Infrastructure**: Ring 3 transitions, syscall interface, ELF loader
-- ✅ **Process Management**: File descriptors, fork/exec process creation (Issues #96, #93)
-- ✅ **Threading Foundation**: Kernel threading infrastructure complete (Issue #108)
-
-**🔥 Ready for Next Phase**: With the foundation complete, we can now tackle application-level infrastructure!
+**🟡 Focus now shifts to userland runtime and device interfaces.**
+- pthread API, thread-safe libc, and advanced synchronization for multithreaded apps
+- Signals, timers, shared memory, futex/message IPC, and process coordination
+- Writable filesystem path, framebuffer protocol, input/audio device interfaces, and Doom-specific services
+- Cross-compilation toolchain and SDK needed to build and ship userspace binaries
 
 ## 🏗️ **Remaining Infrastructure for Doom**
 
@@ -42,100 +44,102 @@ Complete multithreading infrastructure for modern applications:
 - **Impact**: Multithreaded applications foundation - ENABLED
 
 #### **pthread API Implementation** (Issue #109)
-- ✅ **Status**: Ready to implement (kernel threading complete)
+- 🟡 **Status**: Ready to implement (kernel threading complete)
 - **Scope**: Full POSIX threading API (create/join/exit, attributes, TSD)
 - **Impact**: Standard threading interface for applications
 
 #### **Thread-Safe C Library** (Issue #110)
-- **Dependencies**: Issue #109 (pthread API)
+- ⏳ **Status**: Pending pthread API (#109)
 - **Scope**: Thread-safe malloc, stdio, errno, locale functions
 - **Impact**: Enables safe multithreaded programming
 
 #### **Advanced pthread Synchronization** (Issue #111)
-- **Dependencies**: Issue #109 (pthread API)
+- ⏳ **Status**: Pending pthread API (#109)
 - **Scope**: Barriers, spinlocks, reader-writer locks, robust mutexes
 - **Impact**: High-performance synchronization for complex applications
 
-### **Phase 3: Advanced IPC** (READY TO IMPLEMENT!)
+### **Phase 3: Advanced IPC** (In Progress)
 Inter-process communication for complex applications:
 
 #### **Pipes and FIFOs** (Issue #102)
-- ✅ **Status**: Ready to implement (file descriptors complete, condition variables complete)
-- **Scope**: pipe(), mkfifo(), bidirectional communication
-- **Impact**: Shell operations, process communication
+- ✅ **Status**: COMPLETE – anonymous pipes live in `src/kernel/fs/pipe.c`; `sys_pipe` installs read/write descriptors with blocking semantics
+- **Impact**: Shell pipelines, parent/child hand-off, and Doom's streaming needs
 
 #### **UNIX Signals** (Issue #103)
-- ✅ **Status**: Ready to implement (fork/exec complete, waiting on Issue #101 timers)
+- 🟡 **Status**: Ready to implement once timer services (#101) land
 - **Scope**: Signal delivery, handlers, masks, default actions
-- **Impact**: Process control, error handling, graceful shutdown
+- **Impact**: Process control, crash handling, cooperative shutdown
 
 #### **Shared Memory** (Issue #104)
-- ✅ **Status**: Ready to implement (VM manager complete)
-- **Scope**: shmget/shmat/shmdt for high-performance IPC
-- **Impact**: Fast inter-process data sharing
+- 🟡 **Status**: Ready to implement (VM manager complete, `mmap` groundwork done)
+- **Scope**: `shmget`/`shmat`/`shmdt` APIs plus VFS hooks for POSIX shared memory
+- **Impact**: Fast inter-process data sharing for render/audio pipelines
 
-### **Phase 4: File System & Storage**
+#### **Futex & Message IPC** (Issues #105-#107)
+- 🔜 **Status**: Planned follow-ups after shared memory
+- **Scope**: Futex-style wakeups, message queues, and cross-process synchronization
+- **Impact**: Efficient event loops, sound mixer coordination, microkernel services
+
+### **Phase 4: File System & Storage** (Complete, write support pending)
 Persistent storage for game assets and save files:
 
 #### **Block Device Driver** (Issue #62)
-- **Scope**: AHCI/ATA or RAM-backed disk with DMA support
-- **Impact**: Hardware interface for storage devices
+- ✅ **Status**: COMPLETE – PCI/AHCI DMA driver with interrupts and port discovery
+- **Impact**: Direct disk access for boot media and asset streaming
 
 #### **Block Cache System** (Issue #63)
-- **Dependencies**: Issue #62 (block device)
-- **Scope**: Buffer management, write-back cache, performance optimization
-- **Impact**: Efficient disk I/O operations
+- ✅ **Status**: COMPLETE – Global LRU cache to avoid redundant SATA transfers
+- **Impact**: Faster filesystem traversal and reduced DMA pressure
 
 #### **Filesystem Library** (Issue #64)
-- **Dependencies**: Issue #63 (block cache)
-- **Scope**: FAT32/ext2/simple FS implementation
-- **Impact**: Structured file storage and retrieval
+- ✅ **Status**: COMPLETE – GPT-aware FAT32 parser with long filename support
+- **Impact**: Structured file storage and retrieval from install media
 
 #### **VFS Layer** (Issue #65)
-- **Dependencies**: Issue #64 (filesystem library)
-- **Scope**: Virtual File System abstraction layer
-- **Impact**: Uniform interface for different filesystems
+- ✅ **Status**: COMPLETE – Path normalization, mount table, and per-file buffering
+- **Impact**: Uniform namespace for block devices, pipes, framebuffer, and more
 
 #### **File I/O Syscalls** (Issue #60)
-- ✅ **Status**: Ready to implement (file descriptors complete, waiting on VFS)
-- **Scope**: open/read/write/lseek/close and directory operations
-- **Impact**: Userspace file access for loading WAD files
+- ✅ **Status**: COMPLETE – `open`/`read`/`write`/`lseek`/`close` available to userland
+- **Impact**: Loading WAD files, configuration, and runtime assets
+
+#### **Filesystem Write Support** (Issue #61)
+- 🟡 **Status**: Planned – extend FAT32/VFS to support file creation, write-back, and save-game persistence
+- **Impact**: Doom save files, config serialization, mod support
 
 ### **Phase 5: Graphics & Input**
 Visual output and user interaction:
 
 #### **Userspace Graphics Interface** (Issue #31)
-- ✅ **Status**: Ready to implement (file descriptors complete)
-- **Scope**: Framebuffer interface, double buffering, palette control
-- **Requirements**: 320×200 paletted or 640×480 8/32-bit modes for Doom
-- **Impact**: Visual output for games and applications
+- 🟡 **Status**: Scoped – waiting on descriptor-backed framebuffer device node
+- **Scope**: Framebuffer mapping, double buffering, palette control
+- **Impact**: Doom rendering pipeline and general GUI support
 
 #### **Input Subsystem** (Issue #32)
-- ✅ **Status**: Ready to implement (file descriptors complete)
-- **Scope**: Userspace keyboard/mouse interface, event queue system
-- **Requirements**: Character device or event queue using PS/2 driver
-- **Impact**: User interaction and game controls
+- 🟡 **Status**: Scoped – PS/2 driver ready; need event queue and character device surface
+- **Scope**: Userspace keyboard/mouse interface, focus management
+- **Impact**: Game controls, shell interaction, debugging tools
 
 #### **Audio Subsystem** (Issue #33)
-- ✅ **Status**: Ready to implement (file descriptors complete)
+- 🟡 **Status**: Scoped – dependent on timers and streaming syscalls
 - **Scope**: PCM output, mixer/stream syscalls, timer-driven audio
-- **Requirements**: 8-bit/16-bit audio buffers for Doom sound
-- **Impact**: Game audio and sound effects
+- **Impact**: Doom sound effects and music playback
 
 ### **Phase 6: Toolchain and Build Flow**
 Development environment for building applications:
 
 #### **Cross-Compiler Toolchain** (Issue #29)
+- 🟡 **Status**: Design under discussion; requires libc ABI decisions
 - **Scope**: binutils + GCC/Clang targeting meniOS userland ABI
 - **Impact**: Compiling applications for meniOS
 
 #### **C Runtime and libc**
-- **Dependencies**: Threading support (Issues #109, #110)
-- **Scope**: crt0, libc subset, dynamic vs static linking decisions
+- 🟡 **Status**: Blocked on pthread API (#109) and thread-safe libc work (#110)
+- **Scope**: `crt0`, libc subset, dynamic vs static linking decisions
 - **Impact**: Standard library support for applications
 
 #### **Userspace SDK**
-- **Dependencies**: Cross-compiler toolchain
+- 🔜 **Status**: Planned once toolchain solidifies
 - **Scope**: Headers, linker scripts, build system integration
 - **Impact**: Reproducible builds for Doom and other applications
 
@@ -168,33 +172,32 @@ Development environment for building applications:
 
 ## 📈 **Updated Timeline Estimates**
 
-### **Short Term (3-6 months)**
-- ✅ Foundation complete!
-- Complete Phase 1: Process & I/O Management (#96, #89, #93)
-- Begin Phase 2: Threading Support (#108, #109)
+### **Short Term (0-3 months)**
+- Ship pthread API and thread-safe libc foundations (#109, #110)
+- Add thread-aware syscalls, profiling hooks, and scheduler tooling (#112, #113)
+- Implement timer services and UNIX signals (#101, #103)
 
-### **Medium Term (6-12 months)**
-- Complete threading infrastructure (#108-#113)
-- Implement file system support (#62-#65, #60)
-- Basic graphics and input (#31, #32)
+### **Medium Term (3-9 months)**
+- Deliver shared memory and futex/message IPC primitives (#104-#107)
+- Enable filesystem write support and VFS updates for save games (#61)
+- Expose framebuffer, input, and audio interfaces to userland (#31-#33)
 
-### **Long Term (12+ months)**
-- Audio subsystem (#33)
-- Cross-compiler toolchain (#29)
-- Full userspace SDK
-- **Doom port and integration**
+### **Long Term (9+ months)**
+- Package cross-compiler toolchain and userspace SDK (#29)
+- Stand up networking stack and sockets (#67-#73)
+- Integrate Doom assets, rendering, audio, and save-game flows on meniOS
 
 ## 🚀 **Immediate Next Steps**
 
-**Ready to implement now** (no blocking dependencies):
-1. **#89** - Memory mapping syscalls (mmap/munmap)
-2. **#96** - File descriptor management
-3. **#108** - Kernel threading infrastructure
+**Ready to implement now** (dependencies cleared):
+1. **#109** – pthread API skeleton and thread lifecycle helpers
+2. **#110** – Thread-safe libc (malloc/stdio/errno hardening)
+3. **#113** – Thread-aware syscalls and scheduler inspection hooks
 
 **High impact for applications**:
-4. **#93** - Fork/exec process creation (after #96)
-5. **#109** - pthread API (after #108)
-6. **#102** - Pipes (after #96)
+4. **#103/#101** – UNIX signals built atop the timer service
+5. **#104** – Shared memory primitives for high-bandwidth IPC
+6. **#31** – Userspace framebuffer interface to unblock rendering
 
 ## 🎯 **Success Criteria**
 

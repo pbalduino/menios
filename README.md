@@ -10,38 +10,30 @@ A hobby operating system kernel written in C and Assembly, targeting x86-64 arch
 
 ## Current Status
 
-MeniOS has made significant progress with core kernel functionality now solidly implemented. The system boots with Limine bootloader and provides:
+MeniOS now boots via the Limine bootloader, initializes the x86-64 platform, and brings up a fully interactive kernel with userland processes:
 
 ### ✅ **Completed Core Infrastructure**
-- **✅ Memory Management**: Physical memory mapping, virtual memory allocation, and kernel heap management (Issues #35, #57)
-- **✅ Process Scheduling**: Preemptive userland scheduler with kernel threads and time slicing (Issue #34)
-- **✅ Synchronization**: Blocking mutexes, condition variables, semaphores, and read-write locks with scheduler integration (Issues #36, #37, #39, #40)
-- **Console System**: ANSI escape sequence support with scrolling and color output
-- **Input/Output**: PS/2 keyboard driver with buffered input
-- **Debugging**: Page fault and GPF handlers for system diagnostics
-- **Testing**: Unit test framework using Unity for kernel components
-- **Privilege Setup**: Ring 3 GDT selectors, 64-bit TSS, and user-mode entry trampoline
-- **Syscalls**: INT 0x80 dispatcher with initial `write(1, …)` and `exit(status)` support
-- **User Demo**: Kernel launches Ring 3 thread with ELF loader exercising full syscall path
-- **Memory Protection**: Kernel/user separation with per-process page tables
+- **Memory & Protection**: Physical memory discovery, virtual memory manager, kernel heap, per-process page tables, copy-on-write fork, lazy stack growth, and `mmap`/`munmap` (Issues #34, #35, #57, #89, #93)
+- **Scheduling & Processes**: Preemptive kernel scheduler with kernel threads, sleep/yield, priority classes, fork/exec lifecycle, and Ring 3 entry trampoline (Issues #34, #93, #108)
+- **Syscalls & Descriptors**: INT 0x80 dispatcher covering `read`, `write`, `open`, `close`, `lseek`, `mmap`, `munmap`, `pipe`, `dup`, `dup2`, `fcntl`, `yield`, `sleep`, and `exit`; per-process descriptor tables with CLOEXEC, stdin ring buffer, and serial/framebuffer streams (Issues #60, #89, #96, #102)
+- **Storage & VFS**: PCI/AHCI DMA driver, global block cache, GPT discovery, FAT32 filesystem driver, and VFS namespace mounted at `/` for userland access (Issues #62-#65, #114-#115)
+- **IPC & Device I/O**: Anonymous pipes, ANSI console with scrollback and color, PS/2 keyboard input routed into stdin, serial logging, framebuffer console, and synchronization primitives (Issues #36, #37, #39, #40, #102)
+- **Userland & Diagnostics**: ELF loader, multi-process user demo that exercises pipes and filesystem reads, SATA/FAT32 directory listing, Unity-based regression tests, page fault and GPF handlers for debugging
 
 ### 🚧 **Next Major Milestones**
-With the strong foundation now in place, the next high-priority developments are:
+1. **pthread API & libc hardening** (Issues #109, #110) – expose kernel threads to user programs with a POSIX surface
+2. **Thread-aware syscalls & tooling** (Issues #112, #113) – scheduler introspection, thread IDs, and blocking semantics across the syscall suite
+3. **Signals & timers** (Issues #101, #103) – UNIX signal delivery, masking, and timer facilities for process control
+4. **Shared memory & IPC expansion** (Issues #104-#107) – shared regions, message queues, and futex-style primitives
+5. **Userspace device interfaces** (Issues #31-#33, #61) – framebuffer protocol, input event queues, audio streaming, and filesystem write support for Doom assets
 
-1. **File Descriptor Management** (Issue #96) - Foundation for all I/O operations
-2. **Memory Mapping Syscalls** (Issue #89) - mmap/munmap for userspace allocators
-3. **Fork/Exec Process Creation** (Issue #93) - Full process lifecycle management
-4. **Threading Support** (Issues #108-#113) - Complete multithreading infrastructure
-5. **Advanced IPC** (Issues #102-#107) - Pipes, signals, shared memory, and microkernel IPC
-
-### 🆕 **Threading Support Added**
-A complete threading roadmap has been designed with 6 new issues:
-- **#108**: Kernel threading infrastructure
-- **#109**: pthread API and POSIX threading support
-- **#110**: Thread-safe C library (libc)
-- **#111**: Advanced pthread synchronization primitives
-- **#112**: Thread debugging and profiling support
-- **#113**: Thread-aware system calls and kernel integration
+### 🧵 **Threading Roadmap**
+- ✅ **#108**: Kernel threading infrastructure (thread control blocks, scheduler integration, stack management)
+- 🚧 **#109**: pthread API and POSIX semantics for userland threading
+- ⏳ **#110**: Thread-safe libc (malloc/stdio/errno coordination)
+- ⏳ **#111**: Advanced pthread synchronization primitives (barriers, reader-writer locks, robust mutexes)
+- ⏳ **#112**: Thread debugging and profiling utilities
+- ⏳ **#113**: Thread-aware system calls and kernel integration
 
 ## Quick Start
 
@@ -69,67 +61,42 @@ All generated artifacts now live under `build/` (`build/bin` for boot assets, `b
 
 ### Verify the User Demo
 
-During boot, meniOS schedules the embedded `user_demo` ELF immediately after hardware probing. The program now:
+During boot, meniOS schedules three priority-tier instances of the embedded `user_demo` ELF right after hardware probing. The user program now:
 
-- forces the stack to grow across an 8 KiB boundary (exercising lazy stack paging),
-- emits three `write(1, …)` syscalls with status messages, and
-- exits with status 42 via `SYS_exit`.
+- touches a second stack page to prove lazy stack mapping before returning,
+- creates an anonymous pipe, forks, and round-trips a payload from parent to child,
+- exercises `sleep`/`yield` scheduling while printing status banners from low/normal/high priority contexts, and
+- terminates through `SYS_exit` once the loop completes.
 
-Expect the log to show the `[user_demo]` messages on screen and in `com1.log`, confirming that the INT 0x80 path, lazy stack allocation, and non-zero exit codes work. If you need quieter serial output, toggle the verbose syscall traces in `src/kernel/syscall/syscall.c` (search for `serial_printf` inside `syscall_write_handler`).
+On the kernel side, `user_demo_launch()` probes the SATA disk, dumps the first sector over serial, mounts the FAT32 root at `/`, and walks the top two directory levels via the VFS helpers. Check the `[user_demo]`, `user_demo_fs`, and `user_demo_launch` lines in `com1.log` to confirm that the syscall path, fork/exec, pipes, and filesystem stack are all healthy. If you need quieter serial output, toggle the verbose syscall traces in `src/kernel/syscall/syscall.c` (search for `serial_printf` inside `syscall_write_handler`).
 
 ## Development Progress
 
 ### ✅ **Major Milestones Completed**
-- [x] **Foundation Complete**: Memory management, scheduling, and synchronization (Issues #34, #35, #36, #40, #57)
-- [x] Integration with Limine bootloader v10
-- [x] Physical memory mapping and management with virtual memory allocation
-- [x] Kernel malloc implementation with heap management
-- [x] Preemptive scheduler with kernel threads and time slicing
-- [x] Mutex implementation with blocking and scheduler integration
-- [x] Condition variables for advanced synchronization
-- [x] ANSI console with scrolling and color support
-- [x] Complete vsprintk function with all format specifiers
-- [x] PS/2 keyboard driver with proper input handling
-- [x] Virtual-to-physical address translation (page table walking)
-- [x] Ring 3 user mode infrastructure with syscall interface
-- [x] ELF loader for user programs
-- [x] Per-process virtual memory with kernel/user separation
-- [x] Kernel block device abstraction layer (Issue #114)
-- [x] SATA/AHCI DMA block driver with interrupt completion (Issue #62)
-- [x] DMA-friendly allocation helpers (Issue #115)
-- [x] Global block cache for block devices (Issue #63)
-- [x] Kernel VFS layer backed by FAT32 filesystem (Issue #65)
-- [x] GPT-aware FAT32 filesystem mounting and file access (Issue #64)
-- [x] Filesystem syscalls (`open`/`read`/`write`/`lseek`/`close`) (Issue #60)
+- **Kernel foundation**: Memory management, scheduler, synchronization primitives, and Limine v10 boot flow (Issues #34-#40, #57)
+- **Virtual memory & processes**: Copy-on-write fork/exec, per-process page tables, user-mode entry, and lazy stack paging (Issues #89, #93)
+- **Syscall & descriptor stack**: File descriptors, CLOEXEC handling, `open`/`read`/`write`/`lseek`, `mmap`/`munmap`, `pipe`, `dup`/`dup2`, `fcntl`, `sleep`, and `yield` (Issues #60, #89, #96, #102)
+- **Storage pipeline**: PCI/AHCI DMA driver, block cache, GPT scan, FAT32 filesystem driver, and VFS mount rooted at `/` (Issues #62-#65, #114-#115)
+- **Userland integration**: ELF loader, libc syscall shims, stdin ring buffer, Unity regression tests, and comprehensive serial diagnostics
 
-### 🔥 **Ready to Implement** (Dependencies Met)
-- [x] **File descriptor management and pipes** (Issue #96)
-- [x] Stdin routed through descriptor table for interactive user input
-- [x] **Memory mapping syscalls (mmap/munmap)** (Issue #89) - Enabled by completed VM work
-- [x] **Kernel threading infrastructure** (Issue #108)
-- [x] **Fork/exec process creation** (Issue #93) - Enabled by VM and file descriptor work
-
-### 🚧 **In Progress & Planned**
-- [ ] **Threading Support**: Complete pthread API and multithreading (Issues #108-#113)
-- [ ] **Advanced IPC**: Signals, shared memory, microkernel IPC (Issues #102-#107)
-- [ ] **Filesystem**: Block cache and write support (Issues #60, #63)
-- [ ] **Networking**: Complete TCP/IP stack (Issues #67-#73)
-- [ ] **Graphics**: Framebuffer interface and input subsystem (Issues #31-#33)
+### 🚧 **Active Development & Near-Term Focus**
+- **Threading APIs**: pthread surface, thread-safe libc, and advanced synchronization (Issues #109-#111)
+- **Thread observability**: Thread-aware syscalls, debugging hooks, and scheduling metrics (Issues #112-#113)
+- **Signals & IPC**: Timers, UNIX signals, shared memory, pipes enhancements, and futex/message primitives (Issues #101-#107)
+- **Userspace device interfaces**: Writable filesystem path, framebuffer protocol, input events, and audio streaming (Issues #31-#33, #61)
+- **Toolchain & SDK**: Cross-compiler, crt0, libc packaging, and build tooling for user apps (Issue #29)
+- **Networking stack**: TCP/IP layers, sockets, and driver support (Issues #67-#73)
 
 ### Road to Doom 🎮
 
-**Foundation ✅ COMPLETE**: The core kernel infrastructure needed for userspace applications is now solid!
+The core kernel and storage stack are online; Doom's remaining blockers are in userland infrastructure:
+- Multi-threaded runtime: pthread API, thread-safe libc, and signal handling
+- Rich IPC: shared memory, event queues, and synchronization primitives
+- Device surfaces: framebuffer blitting, input, and audio interfaces exposed to Ring 3
+- Filesystem write path: save-game and configuration support atop the existing FAT32 VFS
+- Toolchain: cross-compilation and SDK to build the Doom port against meniOS headers
 
-Remaining major components for Doom:
-- **File System**: VFS layer, write support, file I/O syscalls
-- **Graphics**: Framebuffer interface, double buffering, palette control
-- **Input**: Userspace keyboard/mouse drivers and event system
-- **Audio**: PCM output, mixing, streaming syscalls
-- **Toolchain**: Cross-compiler, libc subset, build system
-
-See [`road_to_doom.md`](road_to_doom.md) for the complete roadmap and [`tasks.json`](tasks.json) for detailed task tracking.
-
-**📊 Progress Assessment**: With 5 major foundation issues completed and 64 remaining issues, meniOS is now positioned for rapid feature development. The completed memory management and synchronization work enables parallel development of process management, threading, and I/O systems.
+See [`road_to_doom.md`](road_to_doom.md) and [`tasks.json`](tasks.json) for the detailed roadmap and dependency tracking.
 
 ## Architecture Overview
 
@@ -156,16 +123,16 @@ See [`road_to_doom.md`](road_to_doom.md) for the complete roadmap and [`tasks.js
 │                              │                             │
 │  ┌─────────────────┐  ┌─────────────────┐  ┌──────────────┐ │
 │  │ Debug/Diag      │  │ File System     │  │ Hardware     │ │
-│  │ • Page Faults ✅│  │ • VFS (Planned) │  │ • Interrupts │ │
-│  │ • GPF Handler ✅│  │ • Block Drivers │  │ • Timers     │ │
-│  │ • Unit Tests ✅ │  │ • File I/O      │  │ • Hardware   │ │
+│  │ • Page Faults ✅│  │ • VFS ✅        │  │ • Interrupts │ │
+│  │ • GPF Handler ✅│  │ • Block Drivers ✅│ │ • Timers     │ │
+│  │ • Unit Tests ✅ │  │ • File I/O (RO) │  │ • Hardware   │ │
 │  └─────────────────┘  └─────────────────┘  └──────────────┘ │
 │                                                             │
 │  ┌─────────────────────────────────────────────────────────┐ │
-│  │            🆕 Threading Support (Planned)               │ │
-│  │  • Kernel threading infrastructure (#108)              │ │
-│  │  • pthread API (#109) • Thread-safe libc (#110)       │ │
-│  │  • Advanced synchronization (#111) • Debugging (#112) │ │
+│  │            Threading Roadmap                           │ │
+│  │  • Kernel threading infrastructure ✅ (#108)           │ │
+│  │  • pthread API / thread-safe libc 🚧 (#109/#110)       │ │
+│  │  • Advanced sync & tooling 🚧 (#111-#113)              │ │
 │  └─────────────────────────────────────────────────────────┘ │
 └─────────────────────────────┬───────────────────────────────┘
                               │ Hardware Abstraction
@@ -179,17 +146,19 @@ See [`road_to_doom.md`](road_to_doom.md) for the complete roadmap and [`tasks.js
 ## Known Issues and Limitations
 
 ### Current Limitations
-- **Filesystem**: No persistent storage or file I/O capabilities yet (Issues #60, #62-#65)
-- **Limited hardware support**: Only basic PS/2 keyboard, VGA framebuffer
-- **No network stack**: No networking capabilities (Issues #67-#73)
-- **Graphics**: Basic framebuffer, no hardware acceleration
-- **Audio**: No audio subsystem implemented yet
+- **Filesystem**: FAT32 stack is read-only; no create/write/unlink path yet (Issue #61)
+- **Threading**: No pthread API or thread-safe libc exposed to userland (Issues #109-#111)
+- **Signals & IPC**: UNIX signals, timers, and shared memory are not implemented (Issues #101-#107)
+- **Device interfaces**: Userland cannot yet access framebuffer/input/audio via character devices (Issues #31-#33)
+- **Networking**: TCP/IP stack, sockets, and drivers remain to be written (Issues #67-#73)
+- **Tooling**: No official cross-compiler or SDK packaged for meniOS user apps (Issue #29)
 
 ### Active Development Areas
-- **Threading**: Complete multithreading support in development (Issues #108-#113)
-- **IPC**: Advanced inter-process communication planned (Issues #102-#107)
-- **File I/O**: File descriptor management and filesystem support (Issues #96, #60, #62-#65)
-- **Process Management**: Fork/exec and full process lifecycle (Issue #93)
+- Threading APIs and libc hardening (Issues #109-#113)
+- Signals, timers, shared memory, and futex/message IPC (Issues #101-#107)
+- Filesystem write support and userland device access (Issues #31-#33, #61)
+- Toolchain and SDK preparation (Issue #29)
+- Networking stack design (Issues #67-#73)
 
 ### Testing Environment
 - **QEMU only**: Primary testing on QEMU emulator, real hardware testing limited
@@ -200,7 +169,7 @@ See [`road_to_doom.md`](road_to_doom.md) for the complete roadmap and [`tasks.js
 
 - **`src/`** - Kernel source code (C and Assembly)
 - **`include/`** - Header files
-- **`tests/`** - Unit tests using Unity framework
+- **`test/`** - Unit tests using Unity framework
 - **`build/`** - Build artifacts and bootloader assets
 - **`docs/`** - Architecture documentation and design decisions
 - **`tasks.json`** - Detailed task tracking with GitHub issue integration
@@ -214,7 +183,7 @@ We welcome contributions from developers of all skill levels! 🚀
 
 - **New Contributors**: Start with our [Contributing Guide](CONTRIBUTING.md) for a complete development workflow
 - **Find Tasks**: Check [GitHub Issues](https://github.com/pbalduino/menios/issues) or browse [`tasks.json`](tasks.json) for detailed task tracking
-- **High Priority**: Issues #89, #96, #108 are ready to implement with no blocking dependencies
+- **High Priority**: Issues #109 (pthread API), #110 (thread-safe libc), #103/#104 (signals & shared memory), and #31 (framebuffer interface) are ready with dependencies cleared
 - **Report Issues**: Use our issue templates to report bugs or request features
 - **Security Issues**: Please review our [Security Policy](SECURITY.md) for responsible disclosure
 - **Code Style**: Follow the guidelines in [`CODING.md`](CODING.md)
