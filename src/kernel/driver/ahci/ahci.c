@@ -408,6 +408,20 @@ static void ahci_port_init(ahci_port_t* port, ahci_controller_t* controller, uin
 }
 
 static bool ahci_port_device_present(ahci_port_t* port) {
+  volatile ahci_hba_port_t* regs = port->regs;
+
+  uint32_t cmd = regs->cmd;
+  cmd |= (1u << 1); // SUD - Spin-up
+  cmd |= (1u << 2); // POD - Power on
+  regs->cmd = cmd;
+
+  uint32_t sctl = regs->sctl;
+  regs->sctl = (sctl & ~0xFu) | 0x1u;
+  for(volatile uint32_t i = 0; i < 1000; i++) {
+    asm volatile("pause");
+  }
+  regs->sctl = (sctl & ~0xFu);
+
   if(!ahci_port_wait_link_active(port, AHCI_LINK_WAIT_NS)) {
 #if AHCI_VERBOSE_LOG
     serial_printf("ahci: ctrl %02x:%02x.%u port %u link inactive (ssts=0x%08x)\n",
@@ -415,12 +429,12 @@ static bool ahci_port_device_present(ahci_port_t* port) {
                   port->controller->device,
                   port->controller->function,
                   port->index,
-                  port->regs->ssts);
+                  regs->ssts);
 #endif
     return false;
   }
 
-  uint32_t sig = port->regs->sig;
+  uint32_t sig = regs->sig;
   if(sig == SATA_SIG_ATAPI || sig == SATA_SIG_PM || sig == SATA_SIG_SEMB) {
     serial_printf("ahci: ctrl %02x:%02x.%u port %u unsupported device signature 0x%08x\n",
                   port->controller->bus,

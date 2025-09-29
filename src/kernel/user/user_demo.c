@@ -66,8 +66,6 @@ void user_demo_launch(void) {
     return;
   }
 
-  user_demo_block_probe();
-
   serial_printf("user_demo_launch: scheduling %lu user demo processes\n",
                 (unsigned long)USER_DEMO_COUNT);
 
@@ -92,4 +90,6 @@ void user_demo_launch(void) {
 
     proc_execute(proc);
   }
+
+  user_demo_block_probe();
 }
