@@ -974,6 +974,19 @@ static void ahci_scan_bus(void) {
           continue;
         }
 
+#if AHCI_VERBOSE_LOG
+        uint32_t class_reg = pci_config_read(pci_bus, pci_device, pci_function, PCI_CONFIG_CLASSREV);
+        serial_printf("ahci: inspect %02x:%02x.%u vendor=0x%04x device=0x%04x class=0x%02x subclass=0x%02x prog_if=0x%02x\n",
+                      pci_bus,
+                      pci_device,
+                      pci_function,
+                      vendor_device & 0xFFFF,
+                      (vendor_device >> 16) & 0xFFFF,
+                      (class_reg >> 24) & 0xFF,
+                      (class_reg >> 16) & 0xFF,
+                      (class_reg >> 8) & 0xFF);
+#endif
+
         if(!ahci_is_candidate(pci_bus, pci_device, pci_function)) {
           continue;
         }
@@ -987,6 +1000,14 @@ static void ahci_scan_bus(void) {
         }
 
         uint32_t intr_line = pci_config_read(pci_bus, pci_device, pci_function, PCI_CONFIG_INTERRUPT_LINE);
+#if AHCI_VERBOSE_LOG
+        serial_printf("ahci: candidate controller %02x:%02x.%u BAR5=0x%08x intr=0x%08x\n",
+                      pci_bus,
+                      pci_device,
+                      pci_function,
+                      bar5,
+                      intr_line);
+#endif
         uint8_t irq_line = (uint8_t)(intr_line & 0xFF);
         uint8_t irq_pin = (uint8_t)((intr_line >> 8) & 0xFF);
 
