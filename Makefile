@@ -324,16 +324,18 @@ ifeq ($(OS_NAME),linux)
 			$$file \
 			test/unity.c \
 			test/stubs.c \
+			src/kernel/file.c \
+			src/kernel/fs/vfs.c \
+			src/kernel/syscall/syscall.c \
 			src/kernel/mem/pmm.c \
 			src/kernel/console/vprintk.c \
 			src/kernel/console/ansi.c \
-			src/kernel/mem/kmalloc.c \
 			src/kernel/proc/kmutex.c \
 			src/kernel/timer/tsc.c \
 			src/libc/itoa.c \
 			src/libc/string.c \
 			-o "$$file".bin ; \
-		echo "Testing $(.c:.bin=$$file)" ; \
+		echo "Testing $$file" ; \
 		"$$file".bin ; \
 		rm "$$file".bin ; \
 	done;

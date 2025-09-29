@@ -20,6 +20,8 @@ typedef struct vfs_fs_driver_t {
   bool (*list)(void* fs_ctx, const char* path, vfs_dir_iter_t iter, void* context);
   bool (*read)(void* fs_ctx, const char* path, size_t offset, void* buffer, size_t length, size_t* bytes_read);
   bool (*read_all)(void* fs_ctx, const char* path, void** out_buffer, size_t* out_size);
+  int (*open)(void* fs_ctx, const char* path, int flags, file_t** out_file);
+  int (*unlink)(void* fs_ctx, const char* path);
   void (*destroy)(void* fs_ctx);
 } vfs_fs_driver_t;
 
@@ -30,7 +32,7 @@ bool vfs_mount_root(const vfs_fs_driver_t* driver, void* fs_ctx);
 bool vfs_list(const char* path, vfs_dir_iter_t iter, void* context);
 bool vfs_read(const char* path, size_t offset, void* buffer, size_t length, size_t* bytes_read);
 bool vfs_read_all(const char* path, void** out_buffer, size_t* out_size);
-file_t* vfs_open(const char* path);
+int vfs_open(const char* path, int flags, file_t** out_file);
 
 bool vfs_mount_fat32_root(block_device_t* device);
 

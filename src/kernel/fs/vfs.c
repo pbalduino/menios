@@ -4,6 +4,7 @@
 #include <stddef.h>
 #include <stdint.h>
 #include <string.h>
+#include <sys/fcntl.h>
 #include <unistd.h>
 
 #include <kernel/block_device.h>
@@ -366,20 +367,20 @@ static const file_ops_t vfs_file_ops = {
   .seek = vfs_file_seek_impl,
 };
 
-file_t* vfs_open(const char* path) {
+static int vfs_open_buffered(const char* path, file_t** out_file) {
   void* data = NULL;
   size_t size = 0;
   if(!vfs_read_all(path, &data, &size)) {
     if(data) {
       kfree(data);
     }
-    return NULL;
+    return -ENOENT;
   }
 
   vfs_file_buffer_t* ctx = kmalloc(sizeof(vfs_file_buffer_t));
   if(ctx == NULL) {
     kfree(data);
-    return NULL;
+    return -ENOMEM;
   }
 
   ctx->data = (uint8_t*)data;
@@ -392,9 +393,49 @@ file_t* vfs_open(const char* path) {
       kfree(ctx->data);
     }
     kfree(ctx);
-    return NULL;
+    return -ENOMEM;
   }
-  return file;
+
+  *out_file = file;
+  return 0;
+}
+
+int vfs_open(const char* path, int flags, file_t** out_file) {
+  if(path == NULL || out_file == NULL) {
+    return -EINVAL;
+  }
+
+  *out_file = NULL;
+
+  const vfs_fs_driver_t* driver = NULL;
+  void* fs_ctx = NULL;
+  char relative[128];
+
+  if(!vfs_resolve(path, &driver, &fs_ctx, relative, sizeof(relative))) {
+    return -ENOENT;
+  }
+
+  if(driver->open) {
+    int rc = driver->open(fs_ctx, relative, flags, out_file);
+    if(rc != -ENOSYS) {
+      return rc;
+    }
+  }
+
+  int accmode = flags & O_ACCMODE;
+  if(accmode == O_WRONLY || accmode == O_RDWR) {
+    return -EROFS;
+  }
+
+  if(flags & (O_CREAT | O_TRUNC | O_APPEND | O_EXCL)) {
+    return -EROFS;
+  }
+
+  if(flags & O_DIRECTORY) {
+    return -ENOSYS;
+  }
+
+  return vfs_open_buffered(path, out_file);
 }
 
 static bool fat32_list_adapter(void* fs_ctx, const char* path, vfs_dir_iter_t iter, void* context) {
@@ -440,6 +481,8 @@ static const vfs_fs_driver_t fat32_driver = {
   .list = fat32_list_adapter,
   .read = fat32_read_adapter,
   .read_all = fat32_read_all_adapter,
+  .open = NULL,
+  .unlink = NULL,
   .destroy = fat32_destroy_adapter,
 };
 

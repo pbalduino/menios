@@ -160,15 +160,10 @@ static uint64_t syscall_open_handler(syscall_frame_t* frame) {
     install_flags |= FD_FLAG_CLOEXEC;
   }
 
-  int unsupported = flags & ~(O_RDONLY | O_CLOEXEC);
-  if(unsupported != 0) {
-    frame->rax = (uint64_t)(-ENOSYS);
-    return frame->rax;
-  }
-
-  file_t* file = vfs_open(path);
-  if(file == NULL) {
-    frame->rax = (uint64_t)(-ENOENT);
+  file_t* file = NULL;
+  int rc = vfs_open(path, flags, &file);
+  if(rc < 0) {
+    frame->rax = (uint64_t)rc;
     return frame->rax;
   }
 

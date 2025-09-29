@@ -1,5 +1,12 @@
+#include <kernel/condvar.h>
+#include <kernel/file.h>
+#include <kernel/fs.h>
+#include <kernel/mman.h>
 #include <kernel/mutex.h>
 #include <kernel/proc.h>
+#include <kernel/syscall.h>
+#include <kernel/thread.h>
+#include <errno.h>
 #include <stdarg.h>
 #include <stdint.h>
 #include <stdbool.h>
@@ -22,6 +29,7 @@
 #endif
 
 proc_info_p current;
+proc_info_t kernel_process_info;
 
 void disable_interrupts() {}
 
@@ -53,6 +61,10 @@ void proc_mark_ready(proc_info_p proc) {
   if(proc) {
     proc->state = PROC_STATE_READY;
   }
+}
+
+void proc_switch(void* frame) {
+  (void)frame;
 }
 
 void memzero(void* s, uint64_t n) {
@@ -108,4 +120,158 @@ void logk(const char* fmt, ...) {
   va_start(args, fmt);
   vdiscard(fmt, args);
   va_end(args);
+}
+
+void serial_putchar(char ch) {
+  (void)ch;
+}
+
+void fb_putchar(char ch) {
+  (void)ch;
+}
+
+void kcondvar_wait(kcondvar_t* cond, kmutex_t* lock) {
+  (void)cond;
+  (void)lock;
+}
+
+void kcondvar_signal(kcondvar_t* cond) {
+  (void)cond;
+}
+
+void kcondvar_broadcast(kcondvar_t* cond) {
+  (void)cond;
+}
+
+bool fs_mount_fat32_first(block_device_t* device, fs_mount_t** out_mount) {
+  (void)device;
+  (void)out_mount;
+  return false;
+}
+
+bool fs_mount_fat32_partition(block_device_t* device, uint32_t partition_index, fs_mount_t** out_mount) {
+  (void)device;
+  (void)partition_index;
+  (void)out_mount;
+  return false;
+}
+
+void fs_unmount(fs_mount_t* mount) {
+  (void)mount;
+}
+
+bool fs_list_directory(const fs_mount_t* mount, const char* path, fs_dir_iter_t iter, void* context) {
+  (void)mount;
+  (void)path;
+  (void)iter;
+  (void)context;
+  return false;
+}
+
+bool fs_file_read(const fs_mount_t* mount,
+                  const char* path,
+                  size_t offset,
+                  void* buffer,
+                  size_t length,
+                  size_t* bytes_read) {
+  (void)mount;
+  (void)path;
+  (void)offset;
+  (void)buffer;
+  (void)length;
+  (void)bytes_read;
+  return false;
+}
+
+bool fs_file_read_all(const fs_mount_t* mount,
+                      const char* path,
+                      void** out_buffer,
+                      size_t* out_size) {
+  (void)mount;
+  (void)path;
+  (void)out_buffer;
+  (void)out_size;
+  return false;
+}
+
+int pipe_create(file_t** read_end, file_t** write_end) {
+  if(read_end) {
+    *read_end = NULL;
+  }
+  if(write_end) {
+    *write_end = NULL;
+  }
+  return -ENOSYS;
+}
+
+void* kmalloc(size_t size) {
+  return malloc(size);
+}
+
+void kfree(void* ptr) {
+  free(ptr);
+}
+
+void* krealloc(void* ptr, size_t size) {
+  if(size == 0) {
+    free(ptr);
+    return NULL;
+  }
+  void* new_ptr = malloc(size);
+  if(new_ptr == NULL) {
+    return NULL;
+  }
+  if(ptr) {
+    free(ptr);
+  }
+  return new_ptr;
+}
+
+void* kcalloc(size_t nelem, size_t elsize) {
+  size_t total = nelem * elsize;
+  void* ptr = malloc(total);
+  if(ptr) {
+    memset(ptr, 0, total);
+  }
+  return ptr;
+}
+
+void* kmmap(void* addr, size_t length, int prot, int flags, int fd, off_t offset) {
+  (void)addr;
+  (void)length;
+  (void)prot;
+  (void)flags;
+  (void)fd;
+  (void)offset;
+  if(current) {
+    current->errno = ENOSYS;
+  }
+  return MAP_FAILED;
+}
+
+int kmunmap(void* addr, size_t len) {
+  (void)addr;
+  (void)len;
+  return -ENOSYS;
+}
+
+proc_info_p proc_fork(proc_info_p parent, const syscall_frame_t* frame, int* err) {
+  (void)parent;
+  (void)frame;
+  if(err) {
+    *err = -ENOSYS;
+  }
+  return NULL;
+}
+
+int proc_exec_image(proc_info_p proc, const uint8_t* image, size_t size, syscall_frame_t* frame) {
+  (void)proc;
+  (void)image;
+  (void)size;
+  (void)frame;
+  return -ENOSYS;
+}
+
+void proc_exit(int status) {
+  (void)status;
 }

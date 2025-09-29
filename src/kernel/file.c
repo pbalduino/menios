@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/fcntl.h>
 
 #include <kernel/condvar.h>
 #include <kernel/file.h>
@@ -23,6 +24,7 @@ static const file_ops_t serial_file_ops;
 static const file_ops_t framebuffer_file_ops;
 static const file_ops_t stdin_file_ops;
 
+#ifdef MENIOS_KERNEL
 static FILE kernel_stdin_stream = { .reserved = FD_STDIN };
 static FILE kernel_stdout_stream = { .reserved = FD_STDOUT };
 static FILE kernel_stderr_stream = { .reserved = FD_STDERR };
@@ -30,6 +32,7 @@ static FILE kernel_stderr_stream = { .reserved = FD_STDERR };
 FILE* stdin = &kernel_stdin_stream;
 FILE* stdout = &kernel_stdout_stream;
 FILE* stderr = &kernel_stderr_stream;
+#endif
 
 static file_t* serial_stdout_file = NULL;
 static file_t* serial_stderr_file = NULL;
@@ -493,6 +496,7 @@ static const file_ops_t stdin_file_ops = {
   .seek = NULL,
 };
 
+#ifdef MENIOS_KERNEL
 static void install_standard_streams(void) {
   proc_file_table_init(&kernel_process_info);
 
@@ -516,15 +520,19 @@ static void install_standard_streams(void) {
     file_unref(serial_stderr_file);
   }
 }
+#endif
 
 void file_system_init(void) {
+#ifdef MENIOS_KERNEL
   install_standard_streams();
+#endif
 }
 
 static struct proc_info_t* stream_owner(void) {
   return owning_proc();
 }
 
+#ifdef MENIOS_KERNEL
 int dup2(int oldfd, int newfd) {
   return proc_file_dup(stream_owner(), oldfd, newfd, false);
 }
@@ -560,9 +568,9 @@ FILE* fopen(const char* filename, const char* mode) {
     file = file_create(&framebuffer_file_ops, NULL, FILE_MODE_WRITE);
     file_mode = FILE_MODE_WRITE;
   } else if(read && !write) {
-    file = vfs_open(filename);
-    if(file == NULL) {
-      set_errno(ENOENT);
+    int rc = vfs_open(filename, O_RDONLY, &file);
+    if(rc < 0) {
+      set_errno(-rc);
       return NULL;
     }
     file_mode = FILE_MODE_READ;
@@ -631,3 +639,4 @@ FILE* freopen(const char* filename, const char* mode, FILE* stream) {
 fclose(new_stream);
   return stream;
 }
+#endif

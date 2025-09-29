@@ -39,13 +39,21 @@ configuration files and, eventually, user binaries from persistent storage.
 - The FAT32 mount plugs into the VFS dispatcher declared in `include/kernel/vfs.h`.
   `vfs_mount_fat32_root()` discovers the first GPT partition, registers it at
   the `/` mountpoint, and exposes generic helpers such as `vfs_list()` and
-  `vfs_open()`.
+  `vfs_open()`. The open helper now returns `int` error codes and fills an
+  output `file_t*`, rejecting write/create flags (`-EROFS`) while falling back
+  to a read-only, buffered view when the filesystem driver does not offer a
+  native `open` implementation.
 - The VFS layer feeds the existing file-descriptor subsystem (`file.c`), so
   `fopen("/path", "r")` transparently loads data from the mounted FAT32 volume
   while other sources (serial, framebuffer) continue to use bespoke handlers.
 - Userspace now reaches the filesystem via the usual Unix syscalls: `open`
   installs descriptors backed by the VFS, `read`/`write` reuse the existing file
-  helpers, and `lseek` walks the per-file offsets maintained by `vfs_open()`.
+  helpers, and `lseek` walks the per-file offsets maintained by the buffered
+  `vfs_open()` context.
+- Regression coverage exercises the syscall dispatcher and VFS bridge end to
+  end: a Unity harness issues `SYS_OPEN`/`SYS_READ`/`SYS_LSEEK`/`SYS_CLOSE`
+  requests, validating descriptor allocation, stream positioning, and error
+  propagation for missing files or unsupported write flags.
 
 ## Limitations and Follow-up Work
 
