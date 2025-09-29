@@ -136,6 +136,20 @@ digraph IssueDependencies {
         issue135 [label="#135: Code coverage\nreporting (Gcov)", fillcolor="#DDDAAA"];
     }
 
+    subgraph cluster_devices {
+        label="Device Filesystem & /dev";
+        style=filled;
+        fillcolor="#F0E68C";
+
+        issue136 [label="#136: Device filesystem\ninfrastructure", fillcolor="#DAA520"];
+        issue137 [label="#137: /dev/null and\n/dev/zero devices", fillcolor="#DAA520"];
+        issue138 [label="#138: /dev/console and\nterminal devices", fillcolor="#DAA520"];
+        issue139 [label="#139: /dev/random and\n/dev/urandom", fillcolor="#DAA520"];
+        issue140 [label="#140: /dev/kbd0 and\n/dev/fb0 devices", fillcolor="#DAA520"];
+        issue141 [label="#141: /dev/sda block\ndevices", fillcolor="#DAA520"];
+        issue142 [label="#142: /dev/ttyS0 serial\ndevice", fillcolor="#DAA520"];
+    }
+
     subgraph cluster_storage {
         label="Additional Storage Drivers";
         style=filled;
@@ -262,7 +276,7 @@ digraph IssueDependencies {
 
     // Graphics and userspace
     issue31 [label="#31: graphics/\nframebuffer", fillcolor="#DEB887"];
-    issue32 [label="#32: input\nsubsystem", fillcolor="#DEB887"];
+    issue32 [label="#32: input\nsubsystem", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED
     issue33 [label="#33: audio\nsubsystem", fillcolor="#DEB887"];
 
     issue96 -> issue31 [style=dashed, color=gray];
@@ -311,6 +325,22 @@ digraph IssueDependencies {
     issue122 -> issue126 [color=cyan, penwidth=2];
     issue125 -> issue32 [color=cyan, label="USB input"];
     issue126 -> issue63 [color=cyan, label="USB storage"];
+
+    // Device filesystem dependencies (NEW)
+    issue96 -> issue136 [color=gold, penwidth=2, label="file descriptors"];
+    issue60 -> issue136 [color=gold, penwidth=2, label="VFS integration"];
+    issue136 -> issue137 [color=gold, penwidth=2];
+    issue136 -> issue138 [color=gold, penwidth=2];
+    issue136 -> issue139 [color=gold, penwidth=2];
+    issue136 -> issue140 [color=gold, penwidth=2];
+    issue136 -> issue141 [color=gold, penwidth=2];
+    issue136 -> issue142 [color=gold, penwidth=2];
+
+    // Device hardware integration
+    issue31 -> issue140 [color=gold, label="framebuffer integration"];
+    issue32 -> issue140 [color=gold, label="keyboard integration"];
+    issue62 -> issue141 [color=gold, label="AHCI integration"];
+    issue31 -> issue138 [color=gold, label="console integration"];
 
     // Critical path highlighting (filesystem complete, threading ready)
     edge [color=red, penwidth=3];

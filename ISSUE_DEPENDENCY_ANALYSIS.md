@@ -116,7 +116,7 @@ USB Support:
                                     ↓                       ↓
                               #125 (USB HID)           #124 (USB hub)
                                     ↓                       ↓
-                              #32 (input)            #126 (USB storage)
+                              ✅ #32 (input)         #126 (USB storage)
                                                            ↓
                                                     #63 (block cache)
 ```
@@ -192,7 +192,7 @@ Unity Test Framework (existing) → #134 (Unicode testing) → #135 (code covera
 - **Filesystem**: #62→#63→#64→#65→#60
 - **SMP**: #80→#81→#82→#83→#84
 - **Advanced Memory**: #87→#88→#90→#91→#95
-- **Hardware**: #31, #32, #33
+- **Hardware**: #31, ✅ #32, #33
 
 ## 🔴 Current Blocking Relationships
 
@@ -283,6 +283,7 @@ With the strong foundation now in place, meniOS is well-positioned for rapid dev
 2. **Track B**: Threading infrastructure (#108, #109, #113)
 3. **Track C**: Advanced features (#101, #102, #103)
 4. **Track D**: Unicode support (#127, #128, #129, #130)
+5. **Track E**: Testing & quality assurance (#135 for immediate impact)
 
 This parallel approach could significantly accelerate development and enable running sophisticated applications sooner than the original sequential timeline suggested.
 

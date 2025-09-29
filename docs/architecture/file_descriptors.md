@@ -16,7 +16,9 @@ opaque `file_t` handles with reference counting and close-on-exec semantics.
   and installs a ring-buffer-backed stdin plus two serial-backed streams for
   stdout and stderr. Consoles and logging go through these descriptors rather
   than hard-coded serial writes, while keystrokes arriving from the PS/2 driver
-  are pushed into stdin so user processes can `read()` them.
+  are pushed into stdin so user processes can `read()` them. A dedicated
+  `/dev/input/kbd` character device exposes timestamped key events for
+  applications that need structured input rather than raw bytes.
 - **Syscall surface** – the dispatcher wires up `read`, `write`, `close`,
   `dup`, `dup2`, `fcntl`, and `pipe`. Kernel helpers validate descriptors and
   translate return codes into errno values for userspace.

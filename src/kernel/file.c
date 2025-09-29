@@ -9,6 +9,7 @@
 #include <kernel/condvar.h>
 #include <kernel/file.h>
 #include <kernel/framebuffer.h>
+#include <kernel/input/keyboard.h>
 #include <kernel/heap.h>
 #include <kernel/mutex.h>
 #include <kernel/proc.h>
@@ -501,6 +502,7 @@ static void install_standard_streams(void) {
   proc_file_table_init(&kernel_process_info);
 
   stdin_buffer_init();
+  keyboard_device_init();
 
   stdin_stream_file = file_create(&stdin_file_ops, NULL, FILE_MODE_READ);
   if(stdin_stream_file != NULL) {
@@ -567,6 +569,9 @@ FILE* fopen(const char* filename, const char* mode) {
   } else if(strcmp(filename, "/dev/fb/0") == 0 && write) {
     file = file_create(&framebuffer_file_ops, NULL, FILE_MODE_WRITE);
     file_mode = FILE_MODE_WRITE;
+  } else if(strcmp(filename, "/dev/input/kbd") == 0 && read && !write) {
+    file = keyboard_device_open();
+    file_mode = FILE_MODE_READ;
   } else if(read && !write) {
     int rc = vfs_open(filename, O_RDONLY, &file);
     if(rc < 0) {

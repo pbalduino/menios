@@ -3,7 +3,9 @@
 #include <kernel/driver/ps2kb.h>
 #include <kernel/driver/ps2.h>
 #include <kernel/file.h>
+#include <kernel/input/keyboard.h>
 #include <kernel/kernel.h>
+#include <kernel/tsc.h>
 #include <kernel/serial.h>
 #include <kernel/idt.h>
 
@@ -31,6 +33,10 @@ static volatile uint8_t buffer_tail;
 
 static bool left_shift;
 static bool right_shift;
+static bool left_ctrl;
+static bool right_ctrl;
+static bool left_alt;
+static bool right_alt;
 static bool caps_lock;
 static bool extended_code;
 static bool pic_remapped;
@@ -144,6 +150,38 @@ static char translate_scancode(uint8_t code) {
   return base;
 }
 
+static uint8_t current_modifiers(void) {
+  uint8_t mods = 0;
+  if(left_shift) {
+    mods |= KBD_MOD_LEFT_SHIFT;
+  }
+  if(right_shift) {
+    mods |= KBD_MOD_RIGHT_SHIFT;
+  }
+  if(left_ctrl || right_ctrl) {
+    mods |= KBD_MOD_CTRL;
+  }
+  if(left_alt || right_alt) {
+    mods |= KBD_MOD_ALT;
+  }
+  if(caps_lock) {
+    mods |= KBD_MOD_CAPS_LOCK;
+  }
+  return mods;
+}
+
+static void push_keyboard_event(uint16_t scancode, bool pressed, uint8_t ascii) {
+  keyboard_event_t event = {
+    .timestamp_ns = ns_from_boot(),
+    .scancode = scancode,
+    .ascii = ascii,
+    .modifiers = current_modifiers(),
+    .pressed = pressed ? 1u : 0u,
+    .reserved = {0, 0, 0},
+  };
+  keyboard_device_enqueue(&event);
+}
+
 static inline void io_wait(void) {
   outb(0x80, 0);
 }
@@ -191,46 +229,67 @@ static void irq_eoi(void) {
 }
 
 void ps2kb_handler() {
-  uint8_t scancode = inb(PS2_DATA_PORT);
+  uint8_t raw = inb(PS2_DATA_PORT);
 
-  if(scancode == 0xE0) {
+  if(raw == 0xE0) {
     extended_code = true;
     irq_eoi();
     return;
   }
 
-  if(scancode == 0xE1) {
+  if(raw == 0xE1) {
     // Pause/Break sequence, ignore for now
     extended_code = false;
     irq_eoi();
     return;
   }
 
-  if(scancode == 0xFA || scancode == 0xFE) {
+  if(raw == 0xFA || raw == 0xFE) {
     // ACK or RESEND - ignore
     irq_eoi();
     return;
   }
 
-  bool release = (scancode & 0x80) != 0;
-  uint8_t code = scancode & 0x7F;
+  bool is_extended = extended_code;
+  extended_code = false;
 
-  if(extended_code) {
-    extended_code = false;
-    if(!release) {
-      switch(code) {
-        case 0x48: // Up
-          buffer_push('\x1b'); buffer_push('['); buffer_push('A'); break;
-        case 0x50: // Down
-          buffer_push('\x1b'); buffer_push('['); buffer_push('B'); break;
-        case 0x4B: // Left
-          buffer_push('\x1b'); buffer_push('['); buffer_push('D'); break;
-        case 0x4D: // Right
-          buffer_push('\x1b'); buffer_push('['); buffer_push('C'); break;
-        default:
-          break;
-      }
+  bool release = (raw & 0x80) != 0;
+  uint8_t code = raw & 0x7F;
+  uint16_t scancode = (uint16_t)code | (is_extended ? 0x0100u : 0u);
+  uint8_t ascii = 0;
+
+  if(is_extended) {
+    switch(code) {
+      case 0x1D: // Right Control
+        right_ctrl = !release;
+        break;
+      case 0x38: // Right Alt
+        right_alt = !release;
+        break;
+      case 0x48: // Up Arrow
+        if(!release) {
+          buffer_push('\x1b'); buffer_push('['); buffer_push('A');
+        }
+        break;
+      case 0x50: // Down Arrow
+        if(!release) {
+          buffer_push('\x1b'); buffer_push('['); buffer_push('B');
+        }
+        break;
+      case 0x4B: // Left Arrow
+        if(!release) {
+          buffer_push('\x1b'); buffer_push('['); buffer_push('D');
+        }
+        break;
+      case 0x4D: // Right Arrow
+        if(!release) {
+          buffer_push('\x1b'); buffer_push('['); buffer_push('C');
+        }
+        break;
+      default:
+        break;
     }
+    push_keyboard_event(scancode, !release, ascii);
     irq_eoi();
     return;
   }
@@ -238,16 +297,29 @@ void ps2kb_handler() {
   switch(code) {
     case 0x2A: // Left Shift
       left_shift = !release;
+      push_keyboard_event(scancode, !release, ascii);
       irq_eoi();
       return;
     case 0x36: // Right Shift
       right_shift = !release;
+      push_keyboard_event(scancode, !release, ascii);
+      irq_eoi();
+      return;
+    case 0x1D: // Left Control
+      left_ctrl = !release;
+      push_keyboard_event(scancode, !release, ascii);
+      irq_eoi();
+      return;
+    case 0x38: // Left Alt
+      left_alt = !release;
+      push_keyboard_event(scancode, !release, ascii);
       irq_eoi();
       return;
     case 0x3A: // Caps Lock
       if(!release) {
         caps_lock = !caps_lock;
       }
+      push_keyboard_event(scancode, !release, ascii);
       irq_eoi();
       return;
     default:
@@ -257,10 +329,12 @@ void ps2kb_handler() {
   if(!release) {
     char ch = translate_scancode(code);
     if(ch != 0) {
+      ascii = (uint8_t)ch;
       buffer_push((uint8_t)ch);
     }
   }
 
+  push_keyboard_event(scancode, !release, ascii);
   irq_eoi();
 }
 
@@ -276,7 +350,10 @@ static bool ps2_read_byte(uint8_t *out) {
 
 void ps2kb_start(void) {
   buffer_head = buffer_tail = 0;
-  left_shift = right_shift = caps_lock = false;
+  left_shift = right_shift = false;
+  left_ctrl = right_ctrl = false;
+  left_alt = right_alt = false;
+  caps_lock = false;
   extended_code = false;
 
   pic_remap();

@@ -1,5 +1,244 @@
 [
   {
+    "title": "Add code coverage reporting to unit tests with Gcov integration",
+    "github_issue": {
+      "number": 135,
+      "url": "https://github.com/pbalduino/menios/issues/135",
+      "state": "OPEN"
+    },
+    "labels": [
+      "enhancement",
+      "good first issue"
+    ],
+    "assignees": []
+  },
+  {
+    "title": "Create comprehensive Unicode test suite and validation",
+    "github_issue": {
+      "number": 134,
+      "url": "https://github.com/pbalduino/menios/issues/134",
+      "state": "OPEN"
+    },
+    "labels": [
+      "enhancement",
+      "good first issue"
+    ],
+    "assignees": []
+  },
+  {
+    "title": "Add locale and internationalization (i18n) framework",
+    "github_issue": {
+      "number": 133,
+      "url": "https://github.com/pbalduino/menios/issues/133",
+      "state": "OPEN"
+    },
+    "labels": [
+      "enhancement",
+      "nice to have"
+    ],
+    "assignees": []
+  },
+  {
+    "title": "Update filesystem and VFS for Unicode filename support",
+    "github_issue": {
+      "number": 132,
+      "url": "https://github.com/pbalduino/menios/issues/132",
+      "state": "OPEN"
+    },
+    "labels": [
+      "enhancement"
+    ],
+    "assignees": []
+  },
+  {
+    "title": "Add Unicode normalization and text processing utilities",
+    "github_issue": {
+      "number": 131,
+      "url": "https://github.com/pbalduino/menios/issues/131",
+      "state": "OPEN"
+    },
+    "labels": [
+      "enhancement",
+      "nice to have"
+    ],
+    "assignees": []
+  },
+  {
+    "title": "Add Unicode support to keyboard input processing",
+    "github_issue": {
+      "number": 130,
+      "url": "https://github.com/pbalduino/menios/issues/130",
+      "state": "OPEN"
+    },
+    "labels": [
+      "enhancement"
+    ],
+    "assignees": []
+  },
+  {
+    "title": "Implement Unicode text rendering in framebuffer",
+    "github_issue": {
+      "number": 129,
+      "url": "https://github.com/pbalduino/menios/issues/129",
+      "state": "OPEN"
+    },
+    "labels": [
+      "enhancement"
+    ],
+    "assignees": []
+  },
+  {
+    "title": "Convert BDF fonts to Unicode-capable font system",
+    "github_issue": {
+      "number": 128,
+      "url": "https://github.com/pbalduino/menios/issues/128",
+      "state": "OPEN"
+    },
+    "labels": [
+      "enhancement"
+    ],
+    "assignees": []
+  },
+  {
+    "title": "Implement UTF-8 decoding and encoding utilities",
+    "github_issue": {
+      "number": 127,
+      "url": "https://github.com/pbalduino/menios/issues/127",
+      "state": "OPEN"
+    },
+    "labels": [
+      "enhancement",
+      "good first issue"
+    ],
+    "assignees": []
+  },
+  {
+    "title": "Implement USB mass storage class driver",
+    "github_issue": {
+      "number": 126,
+      "url": "https://github.com/pbalduino/menios/issues/126",
+      "state": "OPEN"
+    },
+    "labels": [
+      "enhancement"
+    ],
+    "assignees": [
+      "pbalduino"
+    ]
+  },
+  {
+    "title": "Implement USB HID class driver for keyboards and mice",
+    "github_issue": {
+      "number": 125,
+      "url": "https://github.com/pbalduino/menios/issues/125",
+      "state": "OPEN"
+    },
+    "labels": [
+      "enhancement"
+    ],
+    "assignees": [
+      "pbalduino"
+    ]
+  },
+  {
+    "title": "Implement USB hub driver and port management",
+    "github_issue": {
+      "number": 124,
+      "url": "https://github.com/pbalduino/menios/issues/124",
+      "state": "OPEN"
+    },
+    "labels": [
+      "enhancement"
+    ],
+    "assignees": [
+      "pbalduino"
+    ]
+  },
+  {
+    "title": "Implement USB transfer management and URB processing",
+    "github_issue": {
+      "number": 123,
+      "url": "https://github.com/pbalduino/menios/issues/123",
+      "state": "OPEN"
+    },
+    "labels": [
+      "enhancement"
+    ],
+    "assignees": [
+      "pbalduino"
+    ]
+  },
+  {
+    "title": "Implement USB core device management and enumeration",
+    "github_issue": {
+      "number": 122,
+      "url": "https://github.com/pbalduino/menios/issues/122",
+      "state": "OPEN"
+    },
+    "labels": [
+      "enhancement"
+    ],
+    "assignees": [
+      "pbalduino"
+    ]
+  },
+  {
+    "title": "Implement USB host controller infrastructure (xHCI/EHCI)",
+    "github_issue": {
+      "number": 121,
+      "url": "https://github.com/pbalduino/menios/issues/121",
+      "state": "OPEN"
+    },
+    "labels": [
+      "enhancement"
+    ],
+    "assignees": [
+      "pbalduino"
+    ]
+  },
+  {
+    "title": "Implement IDE interrupt handling and I/O completion",
+    "github_issue": {
+      "number": 120,
+      "url": "https://github.com/pbalduino/menios/issues/120",
+      "state": "OPEN"
+    },
+    "labels": [
+      "enhancement"
+    ],
+    "assignees": [
+      "pbalduino"
+    ]
+  },
+  {
+    "title": "Implement IDE device initialization and identification",
+    "github_issue": {
+      "number": 119,
+      "url": "https://github.com/pbalduino/menios/issues/119",
+      "state": "OPEN"
+    },
+    "labels": [
+      "enhancement"
+    ],
+    "assignees": [
+      "pbalduino"
+    ]
+  },
+  {
+    "title": "Implement IDE/PATA controller driver",
+    "github_issue": {
+      "number": 118,
+      "url": "https://github.com/pbalduino/menios/issues/118",
+      "state": "OPEN"
+    },
+    "labels": [
+      "enhancement"
+    ],
+    "assignees": [
+      "pbalduino"
+    ]
+  },
+  {
     "title": "Implement AHCI interrupt service path",
     "github_issue": {
       "number": 117,
@@ -1164,7 +1403,7 @@
     "github_issue": {
       "number": 32,
       "url": "https://github.com/pbalduino/menios/issues/32",
-      "state": "OPEN"
+      "state": "CLOSED"
     },
     "labels": [
       "enhancement"

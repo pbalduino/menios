@@ -8,6 +8,7 @@
 #include <unistd.h>
 
 #include <kernel/block_device.h>
+#include <kernel/input/keyboard.h>
 #include <kernel/fs.h>
 #include <kernel/heap.h>
 #include <kernel/mutex.h>
@@ -406,6 +407,15 @@ int vfs_open(const char* path, int flags, file_t** out_file) {
   }
 
   *out_file = NULL;
+
+  if(strcmp(path, "/dev/input/kbd") == 0) {
+    file_t* dev = keyboard_device_open();
+    if(dev == NULL) {
+      return -ENOMEM;
+    }
+    *out_file = dev;
+    return 0;
+  }
 
   const vfs_fs_driver_t* driver = NULL;
   void* fs_ctx = NULL;
