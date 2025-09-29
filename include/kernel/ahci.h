@@ -10,6 +10,9 @@ extern "C" {
 #include <stddef.h>
 #include <kernel/pmm.h>
 
+struct ahci_port_t;
+typedef struct ahci_port_t ahci_port_t;
+
 typedef struct ahci_controller_t {
   uint8_t      bus;
   uint8_t      device;
@@ -20,6 +23,8 @@ typedef struct ahci_controller_t {
   uint8_t      irq_line;
   uint8_t      irq_pin;
   bool         irq_configured;
+  ahci_port_t* ports;
+  size_t       port_count;
   struct ahci_controller_t* next;
 } ahci_controller_t;
 

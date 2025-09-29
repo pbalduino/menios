@@ -26,19 +26,20 @@ to higher layers.
 2. Storage drivers (e.g., the AHCI PCI controller) discover hardware, obtain
    memory-mapped register ranges, and allocate bookkeeping structures.
 3. Once a driver is ready, it allocates a `block_device_t`, populates metadata
-   and callbacks, and registers it with the block core.
-3. Higher-level subsystems—block cache, filesystem implementations, ramdisks—can
+  and callbacks, and registers it with the block core.
+4. The AHCI driver provisions one DMA command slot per active SATA port, keeps a
+   pre-allocated bounce buffer for 512 KiB transfers, submits READ/WRITE DMA
+   commands, and acknowledges completions through the shared IRQ path.
+5. Higher-level subsystems—block cache, filesystem implementations, ramdisks—can
    discover available devices and issue read/write requests through the unified
    API.
 
 ## Next Steps
 
-- The AHCI controller driver now maps BAR5, enables AHCI mode, and routes the
-  controller's legacy INTx line through the IOAPIC. Port interrupts are
-  acknowledged and cleared in the shared handler, paving the way for command
-  submission and DMA-backed transfers (Issue #117).
-- Follow up with DMA engine setup and command submission so the driver can
-  service real read/write requests (Issue #62).
+- SATA disks are now exposed as `sataN` block devices backed by DMA reads and
+  writes, with interrupts unmasking completion on vector `0x40`. The driver
+  currently serialises commands per port and stages data through a bounce buffer
+  to keep the PRDT layout simple (Issue #62).
 - Integrate the block layer with the upcoming block cache (Issue #63).
 - Extend the API with asynchronous I/O and request queues once drivers require
   higher throughput.
