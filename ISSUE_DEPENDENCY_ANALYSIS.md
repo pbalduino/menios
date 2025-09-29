@@ -32,6 +32,16 @@ These issues form the backbone of the system and should be prioritized:
 17. **#112** - Thread debugging and profiling support
 18. **#113** - Thread-aware system calls and kernel integration
 
+### 🆕 Tier 5: Unicode & Internationalization (NEW!)
+19. **#127** - UTF-8 encoding/decoding utilities (foundation)
+20. **#128** - Unicode font system (BDF conversion)
+21. **#129** - Unicode text rendering in framebuffer
+22. **#130** - Unicode keyboard input processing
+23. **#131** - Unicode normalization and text processing
+24. **#132** - Filesystem Unicode filename support
+25. **#133** - Locale/i18n framework
+26. **#134** - Unicode testing and validation
+
 ## 📊 Updated Dependency Categories
 
 ### Memory Management Chain ✅ (Foundation Complete!)
@@ -79,6 +89,33 @@ These issues form the backbone of the system and should be prioritized:
 #67 (network driver) → #68 (Ethernet/ARP) → #69 (IPv4/ICMP) → #70 (UDP/TCP) → #71 (socket API)
                                                                                       ↓
                                                                               #105 (Unix sockets)
+```
+
+### 🆕 Unicode Support Chain (NEW!)
+```
+Phase 1: Foundation
+#127 (UTF-8 utilities) → #128 (Unicode fonts) → #129 (text rendering)
+                      ↓                              ↓
+Phase 2: Enhanced    #131 (normalization)    #130 (keyboard input)
+                           ↓                        ↓
+Phase 3: System      #132 (filesystem) → #133 (locale/i18n)
+                           ↓                        ↓
+Phase 4: Testing     #134 (comprehensive testing) ←──────────┘
+```
+
+### Hardware Driver Expansion
+```
+IDE Storage:
+#114 (block abstraction) → #118 (IDE/PATA) → #119 (IDE init) → #120 (IDE interrupts)
+
+USB Support:
+#121 (USB host controller) → #122 (USB device mgmt) → #123 (USB transfers)
+                                    ↓                       ↓
+                              #125 (USB HID)           #124 (USB hub)
+                                    ↓                       ↓
+                              #32 (input)            #126 (USB storage)
+                                                           ↓
+                                                    #63 (block cache)
 ```
 
 ### Filesystem Stack
@@ -153,6 +190,7 @@ These issues form the backbone of the system and should be prioritized:
 - **#96 (file descriptors)** ✅ - No blocking dependencies
 - **#93 (fork/exec)** ✅ - Dependencies: #57 (CLOSED), #96 (ready)
 - **#108 (kernel threading)** ✅ - Dependencies: #34 (CLOSED), #36 (CLOSED), #57 (CLOSED)
+- **#127 (UTF-8 utilities)** ✅ - No dependencies, ready to start immediately!
 
 ### Cannot Start Until Complete:
 - **#109 (pthread API)** blocks on: #108 (kernel threading)
@@ -163,9 +201,11 @@ These issues form the backbone of the system and should be prioritized:
 
 ### Parallel Development Opportunities:
 - **Threading** (#108-#113) can develop after Phase 2
+- **Unicode Support** (#127-#134) can develop independently - start with #127!
 - **Networking stack** (#67-#73) can develop independently after basic kernel
 - **SMP support** (#80-#84) can develop in parallel with IPC
 - **Filesystem** (#62-#65) can develop independently
+- **Hardware drivers** (#118-#126) can develop in parallel
 - **jemalloc research** (#87-#92) can happen in parallel
 
 ## 🎯 Recommended Focus Areas
@@ -174,6 +214,7 @@ These issues form the backbone of the system and should be prioritized:
 1. **#89** - mmap/munmap syscalls (ready to implement)
 2. **#96** - File descriptor management (ready to implement)
 3. **#108** - Kernel threading infrastructure (ready to implement)
+4. **#127** - UTF-8 utilities (ready to implement, no dependencies!)
 
 ### For Maximum Impact:
 1. **Complete Phase 2** (#89, #96, #93, #101, #102) - Essential for applications
@@ -187,6 +228,11 @@ These issues form the backbone of the system and should be prioritized:
 4. **Threading**: #108 → #109 (for advanced editors)
 5. **Terminal**: Terminal subsystem (new issue needed)
 
+### For Unicode & International Support:
+1. **Phase 1**: #127 (UTF-8 utilities) → #128 (fonts) → #129 (rendering)
+2. **Phase 2**: #130 (keyboard input) + #131 (normalization)
+3. **Phase 3**: #132 (filesystem) → #133 (locale/i18n) → #134 (testing)
+
 ### For Microkernel Vision:
 1. **Complete Phases 1-3** first (foundation + threading)
 2. **Transition**: #106 → #107 (microkernel IPC + security)
@@ -199,14 +245,17 @@ These issues form the backbone of the system and should be prioritized:
 - Core scheduling (#34)
 - Basic synchronization (#36, #40)
 
-### 🔥 **Ready to Implement (3 issues)**:
+### 🔥 **Ready to Implement (4 issues)**:
 - #89 (mmap/munmap)
 - #96 (file descriptors)
 - #108 (kernel threading)
+- #127 (UTF-8 utilities)
 
-### 📋 **Total Remaining**: ~64 open issues
+### 📋 **Total Remaining**: ~78 open issues
 
 ### 🎯 **Threading Support**: 6 new issues created (#108-#113)
+
+### 🆕 **Unicode Support**: 8 new issues created (#127-#134)
 
 ## 💡 **Updated Strategy**
 
@@ -216,6 +265,7 @@ With the strong foundation now in place, meniOS is well-positioned for rapid dev
 1. **Track A**: File I/O and processes (#96, #89, #93)
 2. **Track B**: Threading infrastructure (#108, #109, #113)
 3. **Track C**: Advanced features (#101, #102, #103)
+4. **Track D**: Unicode support (#127, #128, #129, #130)
 
 This parallel approach could significantly accelerate development and enable running sophisticated applications sooner than the original sequential timeline suggested.
 

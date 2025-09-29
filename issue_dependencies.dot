@@ -113,6 +113,44 @@ digraph IssueDependencies {
         issue101 [label="#101: LAPIC/HPET\ntimer integration", fillcolor="#F0E68C"];
     }
 
+    subgraph cluster_unicode {
+        label="Unicode & Internationalization";
+        style=filled;
+        fillcolor="#F0F8FF";
+
+        issue127 [label="#127: UTF-8 encoding/\ndecoding utilities", fillcolor="#E6F3FF"];
+        issue128 [label="#128: Unicode font\nsystem (BDF conversion)", fillcolor="#E6F3FF"];
+        issue129 [label="#129: Unicode text\nrendering (framebuffer)", fillcolor="#E6F3FF"];
+        issue130 [label="#130: Unicode keyboard\ninput processing", fillcolor="#E6F3FF"];
+        issue131 [label="#131: Unicode\nnormalization & processing", fillcolor="#E6F3FF"];
+        issue132 [label="#132: Filesystem\nUnicode filename support", fillcolor="#E6F3FF"];
+        issue133 [label="#133: Locale/i18n\nframework", fillcolor="#E6F3FF"];
+        issue134 [label="#134: Unicode testing\nand validation", fillcolor="#E6F3FF"];
+    }
+
+    subgraph cluster_storage {
+        label="Additional Storage Drivers";
+        style=filled;
+        fillcolor="#FFEFD5";
+
+        issue118 [label="#118: IDE/PATA\ncontroller driver", fillcolor="#F5DEB3"];
+        issue119 [label="#119: IDE device\ninitialization", fillcolor="#F5DEB3"];
+        issue120 [label="#120: IDE interrupt\nhandling", fillcolor="#F5DEB3"];
+    }
+
+    subgraph cluster_usb {
+        label="USB Support";
+        style=filled;
+        fillcolor="#E0FFFF";
+
+        issue121 [label="#121: USB host\ncontroller (xHCI/EHCI)", fillcolor="#AFEEEE"];
+        issue122 [label="#122: USB device\nmanagement", fillcolor="#AFEEEE"];
+        issue123 [label="#123: USB transfer\nmanagement", fillcolor="#AFEEEE"];
+        issue124 [label="#124: USB hub\ndriver", fillcolor="#AFEEEE"];
+        issue125 [label="#125: USB HID\nclass driver", fillcolor="#AFEEEE"];
+        issue126 [label="#126: USB mass\nstorage class", fillcolor="#AFEEEE"];
+    }
+
     // Foundation dependencies (completed foundations)
     issue35 -> issue57 [style=dashed, color=gray];
     issue57 -> issue89 [style=dashed, color=gray];
@@ -223,12 +261,50 @@ digraph IssueDependencies {
     issue96 -> issue32 [style=dashed, color=gray];
     issue96 -> issue33 [style=dashed, color=gray];
 
+    // Unicode dependencies (NEW)
+    issue127 -> issue128 [color=green, penwidth=2];
+    issue127 -> issue129 [color=green, penwidth=2];
+    issue127 -> issue130 [color=green, penwidth=2];
+    issue127 -> issue131 [color=green, penwidth=2];
+    issue127 -> issue132 [color=green, penwidth=2];
+    issue128 -> issue129 [color=green, penwidth=2];
+    issue129 -> issue130 [color=green, penwidth=2];
+    issue131 -> issue132 [color=green, penwidth=2];
+    issue131 -> issue133 [color=green, penwidth=2];
+    issue127 -> issue134 [color=green, penwidth=1];
+    issue128 -> issue134 [color=green, penwidth=1];
+    issue129 -> issue134 [color=green, penwidth=1];
+    issue130 -> issue134 [color=green, penwidth=1];
+    issue131 -> issue134 [color=green, penwidth=1];
+    issue132 -> issue134 [color=green, penwidth=1];
+    issue133 -> issue134 [color=green, penwidth=1];
+
+    // Integration dependencies
+    issue31 -> issue129 [color=green, label="framebuffer integration"];
+    issue32 -> issue130 [color=green, label="input integration"];
+    issue60 -> issue132 [color=green, label="filesystem integration"];
+
+    // IDE storage dependencies
+    issue118 -> issue119 [color=brown, penwidth=2];
+    issue119 -> issue120 [color=brown, penwidth=2];
+    issue114 -> issue118 [color=brown, style=dashed];
+
+    // USB dependencies
+    issue121 -> issue122 [color=cyan, penwidth=2];
+    issue122 -> issue123 [color=cyan, penwidth=2];
+    issue123 -> issue124 [color=cyan, penwidth=2];
+    issue122 -> issue125 [color=cyan, penwidth=2];
+    issue122 -> issue126 [color=cyan, penwidth=2];
+    issue125 -> issue32 [color=cyan, label="USB input"];
+    issue126 -> issue63 [color=cyan, label="USB storage"];
+
     // Critical path highlighting (filesystem complete, threading ready)
     edge [color=red, penwidth=3];
     issue89 -> issue95 [label="CRITICAL", style=dashed];
     issue96 -> issue102 [label="CRITICAL", style=dashed];
     issue108 -> issue109 [label="THREADING CRITICAL"];
     issue60 -> issue31 [label="GRAPHICS READY", color=purple];
+    issue127 -> issue128 [label="UNICODE START", color=green];
 
     // Legend
     subgraph cluster_legend {
@@ -239,5 +315,8 @@ digraph IssueDependencies {
         legend_open [label="Open Issue", fillcolor="#FFE6E6"];
         legend_closed [label="Closed Issue", fillcolor="#90EE90", style="filled,dashed"];
         legend_threading [label="New Threading", fillcolor="#B3E5FC"];
+        legend_unicode [label="Unicode Support", fillcolor="#E6F3FF"];
+        legend_ide [label="IDE Storage", fillcolor="#F5DEB3"];
+        legend_usb [label="USB Support", fillcolor="#AFEEEE"];
     }
 }

@@ -6,13 +6,13 @@
 
 <a rel="me" href="https://bolha.us/@p_balduino">Mastodon</a>
 
-A hobby operating system kernel written in C and Assembly, targeting x86-64 architecture. The ultimate goal is to run Doom in userland! 🎯
+A hobby operating system kernel written in C and Assembly, targeting x86-64 architecture. The ultimate goal is to run Doom in userland!
 
 ## Current Status
 
 MeniOS now boots via the Limine bootloader, initializes the x86-64 platform, and brings up a fully interactive kernel with userland processes:
 
-### ✅ **Completed Core Infrastructure**
+### Completed Core Infrastructure
 - **Memory & Protection**: Physical memory discovery, virtual memory manager, kernel heap, per-process page tables, copy-on-write fork, lazy stack growth, and `mmap`/`munmap` (Issues #34, #35, #57, #89, #93)
 - **Scheduling & Processes**: Preemptive kernel scheduler with kernel threads, sleep/yield, priority classes, fork/exec lifecycle, and Ring 3 entry trampoline (Issues #34, #93, #108)
 - **Syscalls & Descriptors**: INT 0x80 dispatcher covering `read`, `write`, `open`, `close`, `lseek`, `mmap`, `munmap`, `pipe`, `dup`, `dup2`, `fcntl`, `yield`, `sleep`, and `exit`; per-process descriptor tables with CLOEXEC, stdin ring buffer, and serial/framebuffer streams (Issues #60, #89, #96, #102)
@@ -20,20 +20,20 @@ MeniOS now boots via the Limine bootloader, initializes the x86-64 platform, and
 - **IPC & Device I/O**: Anonymous pipes, ANSI console with scrollback and color, PS/2 keyboard input routed into stdin, serial logging, framebuffer console, and synchronization primitives (Issues #36, #37, #39, #40, #102)
 - **Userland & Diagnostics**: ELF loader, multi-process user demo that exercises pipes and filesystem reads, SATA/FAT32 directory listing, Unity-based regression tests, page fault and GPF handlers for debugging
 
-### 🚧 **Next Major Milestones**
+### Next Major Milestones
 1. **pthread API & libc hardening** (Issues #109, #110) – expose kernel threads to user programs with a POSIX surface
 2. **Thread-aware syscalls & tooling** (Issues #112, #113) – scheduler introspection, thread IDs, and blocking semantics across the syscall suite
 3. **Signals & timers** (Issues #101, #103) – UNIX signal delivery, masking, and timer facilities for process control
 4. **Shared memory & IPC expansion** (Issues #104-#107) – shared regions, message queues, and futex-style primitives
 5. **Userspace device interfaces** (Issues #31-#33, #61) – framebuffer protocol, input event queues, audio streaming, and filesystem write support for Doom assets
 
-### 🧵 **Threading Roadmap**
-- ✅ **#108**: Kernel threading infrastructure (thread control blocks, scheduler integration, stack management)
-- 🚧 **#109**: pthread API and POSIX semantics for userland threading
-- ⏳ **#110**: Thread-safe libc (malloc/stdio/errno coordination)
-- ⏳ **#111**: Advanced pthread synchronization primitives (barriers, reader-writer locks, robust mutexes)
-- ⏳ **#112**: Thread debugging and profiling utilities
-- ⏳ **#113**: Thread-aware system calls and kernel integration
+### Threading Roadmap
+- **#108** (Done): Kernel threading infrastructure (thread control blocks, scheduler integration, stack management)
+- **#109** (In progress): pthread API and POSIX semantics for userland threading
+- **#110** (Planned): Thread-safe libc (malloc/stdio/errno coordination)
+- **#111** (Planned): Advanced pthread synchronization primitives (barriers, reader-writer locks, robust mutexes)
+- **#112** (Planned): Thread debugging and profiling utilities
+- **#113** (Planned): Thread-aware system calls and kernel integration
 
 ## Quick Start
 
@@ -72,14 +72,14 @@ On the kernel side, `user_demo_launch()` probes the SATA disk, dumps the first s
 
 ## Development Progress
 
-### ✅ **Major Milestones Completed**
+### Major Milestones Completed
 - **Kernel foundation**: Memory management, scheduler, synchronization primitives, and Limine v10 boot flow (Issues #34-#40, #57)
 - **Virtual memory & processes**: Copy-on-write fork/exec, per-process page tables, user-mode entry, and lazy stack paging (Issues #89, #93)
 - **Syscall & descriptor stack**: File descriptors, CLOEXEC handling, `open`/`read`/`write`/`lseek`, `mmap`/`munmap`, `pipe`, `dup`/`dup2`, `fcntl`, `sleep`, and `yield` (Issues #60, #89, #96, #102)
 - **Storage pipeline**: PCI/AHCI DMA driver, block cache, GPT scan, FAT32 filesystem driver, and VFS mount rooted at `/` (Issues #62-#65, #114-#115)
 - **Userland integration**: ELF loader, libc syscall shims, stdin ring buffer, Unity regression tests, and comprehensive serial diagnostics
 
-### 🚧 **Active Development & Near-Term Focus**
+### Active Development & Near-Term Focus
 - **Threading APIs**: pthread surface, thread-safe libc, and advanced synchronization (Issues #109-#111)
 - **Thread observability**: Thread-aware syscalls, debugging hooks, and scheduling metrics (Issues #112-#113)
 - **Signals & IPC**: Timers, UNIX signals, shared memory, pipes enhancements, and futex/message primitives (Issues #101-#107)
@@ -87,7 +87,7 @@ On the kernel side, `user_demo_launch()` probes the SATA disk, dumps the first s
 - **Toolchain & SDK**: Cross-compiler, crt0, libc packaging, and build tooling for user apps (Issue #29)
 - **Networking stack**: TCP/IP layers, sockets, and driver support (Issues #67-#73)
 
-### Road to Doom 🎮
+### Road to Doom
 
 The core kernel and storage stack are online; Doom's remaining blockers are in userland infrastructure:
 - Multi-threaded runtime: pthread API, thread-safe libc, and signal handling
@@ -104,40 +104,42 @@ See [`road_to_doom.md`](road_to_doom.md) and [`tasks.json`](tasks.json) for the 
 ┌─────────────────────────────────────────────────────────────┐
 │                    USERLAND (In Development)                │
 │  ┌─────────┐  ┌─────────┐  ┌─────────┐  ┌─────────────────┐ │
-│  │  Doom   │  │ Shell   │  │ Games   │  │  Applications   │ │
+│  │  Doom   │  │  Shell  │  │  Games  │  │  Applications   │ │
 │  └─────────┘  └─────────┘  └─────────┘  └─────────────────┘ │
-│                              │                             │
-│                        ┌─────────┐                        │
-│                        │  libc   │  (Threading Support)   │
-│                        └─────────┘                        │
+│                              │                              │
+│                        ┌─────────┐                          │
+│                        │  libc   │  (Threading Support)     │
+│                        └─────────┘                          │
 └─────────────────────────────┬───────────────────────────────┘
-                              │ Syscall Interface ✅
+                              │ Syscall Interface [OK]        │
 ┌─────────────────────────────┴───────────────────────────────┐
-│                      KERNEL SPACE ✅                       │
-│  ┌─────────────────┐  ┌─────────────────┐  ┌──────────────┐ │
-│  │ Process Mgmt ✅ │  │ Memory Mgmt ✅  │  │ I/O Subsys   │ │
-│  │ • Scheduler ✅  │  │ • Virtual Mem ✅│  │ • Console ✅ │ │
-│  │ • Kernel Threads│  │ • Physical Mem ✅│  │ • PS/2 Input │ │
-│  │ • Sync Prims ✅ │  │ • Page Tables ✅│  │ • Framebuffer│ │
+│                      KERNEL SPACE [OK]                      │
+│  ┌─────────────────┐  ┌─────┴───────────┐  ┌──────────────┐ │
+│  │ Process Mgmt    │  │ Memory Mgmt     │  │ I/O Subsys   │ │
+│  │ Status: [OK]    │  │ Status: [OK]    │  │ Status: [OK] │ │
+│  │ • Scheduler     │  │ • Virtual Mem   │  │ • Console    │ │
+│  │ • Threads       │  │ • Physical Mem  │  │ • PS/2 Input │ │
+│  │ • Sync Prims    │  │ • Page Tables   │  │ • Framebuffer│ │
 │  └─────────────────┘  └─────────────────┘  └──────────────┘ │
-│                              │                             │
+│                              │                              │
 │  ┌─────────────────┐  ┌─────────────────┐  ┌──────────────┐ │
 │  │ Debug/Diag      │  │ File System     │  │ Hardware     │ │
-│  │ • Page Faults ✅│  │ • VFS ✅        │  │ • Interrupts │ │
-│  │ • GPF Handler ✅│  │ • Block Drivers ✅│ │ • Timers     │ │
-│  │ • Unit Tests ✅ │  │ • File I/O (RO) │  │ • Hardware   │ │
+│  │ Status: [OK]    │  │ Status: [OK]    │  │ Status: [WIP]│ │
+│  │ • Page Faults   │  │ • VFS           │  │ • Interrupts │ │
+│  │ • GPF Handler   │  │ • Block Drivers │  │ • Timers     │ │
+│  │ • Unit Tests    │  │ • File I/O (RO) │  │ • Devices    │ │
 │  └─────────────────┘  └─────────────────┘  └──────────────┘ │
 │                                                             │
-│  ┌─────────────────────────────────────────────────────────┐ │
-│  │            Threading Roadmap                           │ │
-│  │  • Kernel threading infrastructure ✅ (#108)           │ │
-│  │  • pthread API / thread-safe libc 🚧 (#109/#110)       │ │
-│  │  • Advanced sync & tooling 🚧 (#111-#113)              │ │
-│  └─────────────────────────────────────────────────────────┘ │
+│  ┌────────────────────────────────────────────────────────┐ │
+│  │                   Threading Roadmap                    │ │
+│  │  • Kernel threading infrastructure [OK]                │ │
+│  │  • pthread API and thread-safe libc [WIP]              │ │
+│  │  • Advanced sync and tooling [WIP]                     │ │
+│  └────────────────────────────────────────────────────────┘ │
 └─────────────────────────────┬───────────────────────────────┘
-                              │ Hardware Abstraction
+                              │ Hardware Abstraction [WIP]    │
 ┌─────────────────────────────┴───────────────────────────────┐
-│                         HARDWARE                           │
+│                         HARDWARE                            │
 │    CPU    │    RAM    │   Storage   │  Graphics  │  Input   │
 │   x86-64  │   4GB+    │    Disk     │    VGA     │   PS/2   │
 └─────────────────────────────────────────────────────────────┘
@@ -179,7 +181,7 @@ See [`road_to_doom.md`](road_to_doom.md) and [`tasks.json`](tasks.json) for the 
 
 ## Contributing
 
-We welcome contributions from developers of all skill levels! 🚀
+We welcome contributions from developers of all skill levels!
 
 - **New Contributors**: Start with our [Contributing Guide](CONTRIBUTING.md) for a complete development workflow
 - **Find Tasks**: Check [GitHub Issues](https://github.com/pbalduino/menios/issues) or browse [`tasks.json`](tasks.json) for detailed task tracking
