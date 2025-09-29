@@ -25,7 +25,7 @@ MeniOS now boots via the Limine bootloader, initializes the x86-64 platform, and
 2. **Thread-aware syscalls & tooling** (Issues #112, #113) – scheduler introspection, thread IDs, and blocking semantics across the syscall suite
 3. **Signals & timers** (Issues #101, #103) – UNIX signal delivery, masking, and timer facilities for process control
 4. **Shared memory & IPC expansion** (Issues #104-#107) – shared regions, message queues, and futex-style primitives
-5. **Userspace device interfaces** (Issues #31-#33, #61) – framebuffer protocol, input event queues, audio streaming, and filesystem write support for Doom assets
+5. **Userspace device interfaces** (Issues #33, #61) – input event queues, audio streaming, and filesystem write support for Doom assets now that the framebuffer protocol (`SYS_FB_GETINFO`/`SYS_FB_MAP`/`SYS_FB_FLIP`) is in place
 
 ### Threading Roadmap
 - **#108** (Done): Kernel threading infrastructure (thread control blocks, scheduler integration, stack management)
@@ -84,7 +84,7 @@ On the kernel side, `user_demo_launch()` probes the SATA disk, dumps the first s
 - **Threading APIs**: pthread surface, thread-safe libc, and advanced synchronization (Issues #109-#111)
 - **Thread observability**: Thread-aware syscalls, debugging hooks, and scheduling metrics (Issues #112-#113)
 - **Signals & IPC**: Timers, UNIX signals, shared memory, pipes enhancements, and futex/message primitives (Issues #101-#107)
-- **Userspace device interfaces**: Writable filesystem path, framebuffer protocol (`SYS_FB_GETINFO`/`SYS_FB_MAP`/`SYS_FB_FLIP`), input events, and audio streaming (Issues #31-#33, #61)
+- **Userspace device interfaces**: Writable filesystem path, framebuffer protocol (`SYS_FB_GETINFO`/`SYS_FB_MAP`/`SYS_FB_FLIP`), input events, and audio streaming (Issues #33, #61)
 - **Toolchain & SDK**: Cross-compiler, crt0, libc packaging, and build tooling for user apps (Issue #29)
 - **Networking stack**: TCP/IP layers, sockets, and driver support (Issues #67-#73)
 
@@ -152,14 +152,14 @@ See [`road_to_doom.md`](road_to_doom.md) and [`tasks.json`](tasks.json) for the 
 - **Filesystem**: FAT32 stack is read-only; no create/write/unlink path yet (Issue #61)
 - **Threading**: No pthread API or thread-safe libc exposed to userland (Issues #109-#111)
 - **Signals & IPC**: UNIX signals, timers, and shared memory are not implemented (Issues #101-#107)
-- **Device interfaces**: Userland cannot yet access framebuffer/input/audio via character devices (Issues #31-#33)
+- **Device interfaces**: Userland cannot yet access audio via character devices; framebuffer mapping now lands a double-buffered staging area (Issue #33)
 - **Networking**: TCP/IP stack, sockets, and drivers remain to be written (Issues #67-#73)
 - **Tooling**: No official cross-compiler or SDK packaged for meniOS user apps (Issue #29)
 
 ### Active Development Areas
 - Threading APIs and libc hardening (Issues #109-#113)
 - Signals, timers, shared memory, and futex/message IPC (Issues #101-#107)
-- Filesystem write support and userland device access (Issues #31-#33, #61)
+- Filesystem write support and userland device access (Issues #33, #61)
 - Toolchain and SDK preparation (Issue #29)
 - Networking stack design (Issues #67-#73)
 
@@ -186,7 +186,7 @@ We welcome contributions from developers of all skill levels!
 
 - **New Contributors**: Start with our [Contributing Guide](CONTRIBUTING.md) for a complete development workflow
 - **Find Tasks**: Check [GitHub Issues](https://github.com/pbalduino/menios/issues) or browse [`tasks.json`](tasks.json) for detailed task tracking
-- **High Priority**: Issues #109 (pthread API), #110 (thread-safe libc), #103/#104 (signals & shared memory), and #31 (framebuffer interface) are ready with dependencies cleared
+- **High Priority**: Issues #109 (pthread API), #110 (thread-safe libc), and #103/#104 (signals & shared memory) are ready with dependencies cleared
 - **Report Issues**: Use our issue templates to report bugs or request features
 - **Security Issues**: Please review our [Security Policy](SECURITY.md) for responsible disclosure
 - **Code Style**: Follow the guidelines in [`CODING.md`](CODING.md)

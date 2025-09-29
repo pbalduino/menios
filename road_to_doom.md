@@ -111,7 +111,7 @@ Persistent storage for game assets and save files:
 Visual output and user interaction:
 
 #### **Userspace Graphics Interface** (Issue #31)
-- 🟡 **Status**: Prototype – framebuffer info/map/flip syscalls provide double-buffered staging; mode switching & palette control still TODO
+- 🟢 **Status**: COMPLETE – framebuffer info/map/flip syscalls expose a double-buffered staging surface for userland rendering; follow-up work will add mode switching & palette control as separate tasks
 - **Scope**: Framebuffer mapping, double buffering, palette control
 - **Impact**: Doom rendering pipeline and general GUI support
 
