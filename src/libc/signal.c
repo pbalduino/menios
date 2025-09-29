@@ -7,8 +7,6 @@
 #define __MENIOS_STR(x) #x
 #define __MENIOS_XSTR(x) __MENIOS_STR(x)
 
-typedef void (*handler_t)(int);
-
 __attribute__((noreturn, naked)) void __menios_sigreturn_trampoline(void) {
   __asm__ volatile(
     "mov %rsp, %rdi\n\t"
@@ -23,11 +21,11 @@ __attribute__((noreturn, naked)) void __menios_sigreturn_trampoline(void) {
   );
 }
 
-handler_t signal(int sig, handler_t handler) {
-  register uint64_t rax asm("rax") = SYS_SIGNAL;
+int sigaction(int sig, const struct sigaction* act, struct sigaction* oldact) {
+  register uint64_t rax asm("rax") = SYS_SIGACTION;
   register uint64_t rdi asm("rdi") = (uint64_t)sig;
-  register uint64_t rsi asm("rsi") = (uint64_t)handler;
-  register uint64_t rdx asm("rdx") = (uint64_t)&__menios_sigreturn_trampoline;
+  register uint64_t rsi asm("rsi") = (uint64_t)act;
+  register uint64_t rdx asm("rdx") = (uint64_t)oldact;
 
   asm volatile("int $0x80"
                : "+a"(rax)
@@ -36,11 +34,53 @@ handler_t signal(int sig, handler_t handler) {
 
   if((int64_t)rax < 0) {
     errno = (int)(-((int64_t)rax));
+    return -1;
+  }
+
+  errno = 0;
+  return 0;
+}
+
+int sigprocmask(int how, const sigset_t* set, sigset_t* oldset) {
+  register uint64_t rax asm("rax") = SYS_SIGPROCMASK;
+  register uint64_t rdi asm("rdi") = (uint64_t)how;
+  register uint64_t rsi asm("rsi") = (uint64_t)set;
+  register uint64_t rdx asm("rdx") = (uint64_t)oldset;
+
+  asm volatile("int $0x80"
+               : "+a"(rax)
+               : "D"(rdi), "S"(rsi), "d"(rdx)
+               : "rcx", "r11", "memory");
+
+  if((int64_t)rax < 0) {
+    errno = (int)(-((int64_t)rax));
+    return -1;
+  }
+
+  errno = 0;
+  return 0;
+}
+
+sighandler_t signal(int sig, sighandler_t handler) {
+  struct sigaction act;
+  struct sigaction old;
+
+  if(handler == SIG_ERR) {
+    errno = EINVAL;
+    return SIG_ERR;
+  }
+
+  sigemptyset(&act.sa_mask);
+  act.sa_handler = handler;
+  act.sa_flags = SA_RESTART;
+  act.sa_restorer = __menios_sigreturn_trampoline;
+
+  if(sigaction(sig, &act, &old) < 0) {
     return SIG_ERR;
   }
 
   errno = 0;
-  return (handler_t)rax;
+  return old.sa_handler;
 }
 
 int sigreturn(void* frame) {

@@ -46,6 +46,19 @@ static scheduler_queue_t ready_queues[PROC_PRIORITY_COUNT];
 static proc_info_p sleep_queue_head = NULL;
 static uint32_t scheduler_actions = 0;
 
+typedef enum {
+  SIGNAL_BEHAVIOR_IGNORE,
+  SIGNAL_BEHAVIOR_TERMINATE,
+  SIGNAL_BEHAVIOR_STOP,
+  SIGNAL_BEHAVIOR_CONTINUE
+} signal_behavior_t;
+
+static signal_behavior_t signal_default_behavior(int sig);
+static void proc_transition_to_stopped(proc_info_p proc, int sig);
+static void proc_resume_from_stop(proc_info_p proc, int sig);
+static void proc_signal_parent(proc_info_p proc);
+static void proc_init_signal_state(proc_info_p proc);
+
 #define SCHED_ACTION_FORCE (1u << 0)
 #define SCHED_ACTION_SLEEP (1u << 1)
 
@@ -74,6 +87,24 @@ static inline uint64_t proc_kernel_stack_top(proc_info_p proc) {
 static void scheduler_sleep_enqueue(proc_info_p proc);
 static void scheduler_cleanup_process(proc_info_p proc);
 
+static void proc_init_signal_state(proc_info_p proc) {
+  if(proc == NULL) {
+    return;
+  }
+
+  proc->signal_pending = 0;
+  proc->signal_mask = 0;
+  proc->signal_depth = 0;
+  proc->stop_signal = 0;
+
+  for(int sig = 0; sig < NSIG; sig++) {
+    proc->signal_actions[sig].handler = SIG_DFL;
+    proc->signal_actions[sig].mask = 0;
+    proc->signal_actions[sig].flags = 0;
+    proc->signal_actions[sig].restorer = NULL;
+  }
+}
+
 static inline uint64_t scheduler_now_us(void) {
   return unix_time_us();
 }
@@ -98,9 +129,7 @@ static void proc_release_user_memory(proc_info_p proc) {
                   proc->vm_region_count);
   }
   proc->user_segment_count = 0;
-  proc->signal_pending = 0;
-  proc->signal_mask = 0;
-  proc->handling_signal = 0;
+  proc_init_signal_state(proc);
   proc->fb_map_base = NULL;
   proc->fb_map_size = 0;
   proc->fb_map_flags = 0;
@@ -176,6 +205,10 @@ static proc_info_p ready_queue_pop_at_priority(uint8_t priority) {
       continue;
     }
 
+    if(proc->state == PROC_STATE_STOPPED) {
+      continue;
+    }
+
     return proc;
   }
 
@@ -229,26 +262,67 @@ static void scheduler_wake_sleepers(uint64_t now) {
       scheduler_cleanup_process(proc);
       continue;
     }
+    if(proc->state == PROC_STATE_STOPPED) {
+      continue;
+    }
     proc->state = PROC_STATE_READY;
     proc->time_slice_remaining_us = proc->quantum_us;
     ready_queue_push(proc);
   }
 }
 
-static int next_pending_signal(proc_info_p proc) {
+static signal_behavior_t signal_default_behavior(int sig) {
+  switch(sig) {
+    case SIGCHLD:
+      return SIGNAL_BEHAVIOR_IGNORE;
+    case SIGCONT:
+      return SIGNAL_BEHAVIOR_CONTINUE;
+    case SIGSTOP:
+    case SIGTSTP:
+    case SIGTTIN:
+    case SIGTTOU:
+      return SIGNAL_BEHAVIOR_STOP;
+    default:
+      return SIGNAL_BEHAVIOR_TERMINATE;
+  }
+}
+
+static void proc_signal_parent(proc_info_p proc) {
+  if(proc == NULL || proc->parent == NULL || proc->parent == &kernel_process_info) {
+    return;
+  }
+
+  struct signal_action_t* action = &proc->parent->signal_actions[SIGCHLD];
+  if((action->flags & SA_NOCLDSTOP) && proc->state != PROC_STATE_TERMINATED) {
+    return;
+  }
+
+  proc_send_signal(proc->parent, SIGCHLD);
+}
+
+static void proc_transition_to_stopped(proc_info_p proc, int sig) {
   if(proc == NULL) {
-    return 0;
+    return;
   }
-  uint32_t deliverable = proc->signal_pending & ~proc->signal_mask;
-  if(deliverable == 0) {
-    return 0;
+
+  proc->stop_signal = (uint8_t)sig;
+  proc->state = PROC_STATE_STOPPED;
+  proc->time_slice_remaining_us = 0;
+  scheduler_actions |= SCHED_ACTION_FORCE;
+  proc_signal_parent(proc);
+}
+
+static void proc_resume_from_stop(proc_info_p proc, int sig) {
+  (void)sig;
+  if(proc == NULL) {
+    return;
   }
-  for(int sig = 1; sig < NSIG; sig++) {
-    if(deliverable & (1u << sig)) {
-      return sig;
-    }
+
+  if(proc->state == PROC_STATE_STOPPED) {
+    proc->stop_signal = 0;
+    proc_mark_ready(proc);
+    proc_signal_parent(proc);
   }
-  return 0;
 }
 
 bool proc_process_pending_signals(cpu_state_p frame) {
@@ -261,47 +335,90 @@ bool proc_process_pending_signals(cpu_state_p frame) {
     if(!current->user_mode) {
       break;
     }
-    if(current->handling_signal) {
+
+    sigset_t pending = current->signal_pending;
+    if(pending == 0) {
       break;
     }
 
-    int sig = next_pending_signal(current);
+    sigset_t blocked = current->signal_mask & ~SIG_UNBLOCKABLE_MASK;
+    sigset_t deliverable = pending & ~blocked;
+    deliverable |= (pending & SIG_UNBLOCKABLE_MASK);
+    if(deliverable == 0) {
+      break;
+    }
+
+    int sig = 0;
+    for(int candidate = 1; candidate < NSIG; candidate++) {
+      if(deliverable & SIGBIT(candidate)) {
+        sig = candidate;
+        break;
+      }
+    }
+
     if(sig == 0) {
       break;
     }
 
     processed = true;
-    current->signal_pending &= ~(1u << sig);
+    current->signal_pending &= ~SIGBIT(sig);
 
     if(sig == SIGKILL) {
       proc_exit(128 + sig);
-      break;
+      return true;
     }
 
-    void* handler = current->signal_handlers[sig];
+    if(sig == SIGSTOP) {
+      proc_transition_to_stopped(current, sig);
+      return true;
+    }
+
+    if(sig == SIGCONT) {
+      proc_resume_from_stop(current, sig);
+    }
+
+    struct signal_action_t* action = &current->signal_actions[sig];
+    sighandler_t handler = action->handler;
+    uint32_t flags = action->flags;
+
     if(handler == SIG_IGN) {
       continue;
     }
 
-    if(handler == SIG_DFL || handler == NULL) {
-      proc_exit(128 + sig);
-      break;
+    if(handler == SIG_DFL) {
+      signal_behavior_t behavior = signal_default_behavior(sig);
+      switch(behavior) {
+        case SIGNAL_BEHAVIOR_TERMINATE:
+          proc_exit(128 + sig);
+          return true;
+        case SIGNAL_BEHAVIOR_STOP:
+          proc_transition_to_stopped(current, sig);
+          return true;
+        case SIGNAL_BEHAVIOR_CONTINUE:
+          proc_resume_from_stop(current, sig);
+          continue;
+        case SIGNAL_BEHAVIOR_IGNORE:
+        default:
+          continue;
+      }
     }
 
-    if(current->signal_restorer == NULL) {
+    if(action->restorer == NULL) {
       proc_exit(128 + sig);
-      break;
+      return true;
     }
 
     signal_frame_t sigframe;
     sigframe.saved_state = *frame;
     sigframe.saved_mask = current->signal_mask;
     sigframe.sig = (uint32_t)sig;
+    sigframe.flags = flags;
+    sigframe.depth = current->signal_depth;
 
     uint64_t frame_addr = (frame->rsp - sizeof(signal_frame_t)) & ~0xFULL;
     if(!proc_user_buffer_accessible(current, (void*)frame_addr, sizeof(signal_frame_t), true)) {
       proc_exit(128 + sig);
-      break;
+      return true;
     }
 
     memcpy((void*)frame_addr, &sigframe, sizeof(sigframe));
@@ -309,17 +426,28 @@ bool proc_process_pending_signals(cpu_state_p frame) {
     uint64_t new_sp = frame_addr - sizeof(uint64_t);
     if(!proc_user_buffer_accessible(current, (void*)new_sp, sizeof(uint64_t), true)) {
       proc_exit(128 + sig);
-      break;
+      return true;
     }
 
-    *((uint64_t*)new_sp) = (uint64_t)current->signal_restorer;
+    *((uint64_t*)new_sp) = (uint64_t)action->restorer;
 
     frame->rsp = new_sp;
     frame->rip = (uint64_t)handler;
     frame->rdi = (uint64_t)sig;
     frame->rsi = frame_addr;
-    current->signal_mask |= (1u << sig);
-    current->handling_signal = (uint8_t)sig;
+
+    sigset_t new_mask = current->signal_mask | action->mask;
+    if((flags & SA_NODEFER) == 0) {
+      new_mask |= SIGBIT(sig);
+    }
+    new_mask &= ~SIG_UNBLOCKABLE_MASK;
+
+    current->signal_mask = new_mask;
+    current->signal_depth++;
+
+    if(flags & SA_RESETHAND) {
+      action->handler = SIG_DFL;
+    }
 
     if(current->cpu_state != NULL) {
       memcpy(current->cpu_state, frame, sizeof(cpu_state_t));
@@ -513,13 +641,7 @@ void proc_create(proc_info_p proc, const char* name, void (*entrypoint)(void *),
   proc->fb_map_base = NULL;
   proc->fb_map_size = 0;
   proc->fb_map_flags = 0;
-  proc->signal_pending = 0;
-  proc->signal_mask = 0;
-  proc->signal_restorer = NULL;
-  proc->handling_signal = 0;
-  for(int sig = 0; sig < NSIG; sig++) {
-    proc->signal_handlers[sig] = SIG_DFL;
-  }
+  proc_init_signal_state(proc);
   proc->dispatch_count = 0;
   proc->exec_time = 0;
   proc->last_dispatch_us = 0;
@@ -677,10 +799,6 @@ int proc_send_signal(proc_info_p proc, int sig) {
     return -ESRCH;
   }
 
-  if(sig == SIGSTOP) {
-    return -ENOSYS;
-  }
-
   if(sig == SIGKILL) {
     if(proc == current) {
       proc_exit(128 + sig);
@@ -693,7 +811,16 @@ int proc_send_signal(proc_info_p proc, int sig) {
     return 0;
   }
 
-  proc->signal_pending |= (1u << sig);
+  proc->signal_pending |= SIGBIT(sig);
+
+  if(sig == SIGSTOP) {
+    scheduler_actions |= SCHED_ACTION_FORCE;
+    return 0;
+  }
+
+  if(sig == SIGCONT && proc->state == PROC_STATE_STOPPED) {
+    proc_resume_from_stop(proc, sig);
+  }
 
   if(proc != current) {
     if(proc->state == PROC_STATE_SLEEPING || proc->state == PROC_STATE_WAITING) {
@@ -705,6 +832,87 @@ int proc_send_signal(proc_info_p proc, int sig) {
     scheduler_actions |= SCHED_ACTION_FORCE;
   }
 
+  return 0;
+}
+
+int proc_install_sigaction(proc_info_p proc, int sig, const struct sigaction* act, struct sigaction* oldact) {
+  if(proc == NULL) {
+    return -ESRCH;
+  }
+  if(sig <= 0 || sig >= NSIG) {
+    return -EINVAL;
+  }
+
+  struct signal_action_t* action = &proc->signal_actions[sig];
+
+  if(oldact) {
+    oldact->sa_handler = action->handler;
+    oldact->sa_mask = action->mask;
+    oldact->sa_flags = action->flags;
+    oldact->sa_restorer = action->restorer;
+  }
+
+  if(act == NULL) {
+    return 0;
+  }
+
+  if(sig == SIGKILL || sig == SIGSTOP) {
+    if(act->sa_handler != SIG_DFL || act->sa_mask != 0 || act->sa_flags != 0) {
+      return -EINVAL;
+    }
+  }
+
+  if(act->sa_handler == SIG_ERR) {
+    return -EINVAL;
+  }
+
+  if(act->sa_handler != SIG_DFL && act->sa_handler != SIG_IGN && act->sa_restorer == NULL) {
+    return -EINVAL;
+  }
+
+  action->handler = act->sa_handler;
+  action->mask = act->sa_mask & ~SIG_UNBLOCKABLE_MASK;
+  action->flags = act->sa_flags;
+  action->restorer = act->sa_restorer;
+
+  if(action->handler == SIG_DFL) {
+    action->restorer = NULL;
+  }
+
+  if(action->handler == SIG_IGN) {
+    proc->signal_pending &= ~SIGBIT(sig);
+  }
+
+  return 0;
+}
+
+int proc_update_signal_mask(proc_info_p proc, int how, sigset_t set, sigset_t* oldset) {
+  if(proc == NULL) {
+    return -ESRCH;
+  }
+
+  if(oldset) {
+    *oldset = proc->signal_mask;
+  }
+
+  sigset_t sanitized = set & ~SIG_UNBLOCKABLE_MASK;
+  sigset_t mask = proc->signal_mask;
+
+  switch(how) {
+    case SIG_BLOCK:
+      mask |= sanitized;
+      break;
+    case SIG_UNBLOCK:
+      mask &= ~sanitized;
+      break;
+    case SIG_SETMASK:
+      mask = sanitized;
+      break;
+    default:
+      return -EINVAL;
+  }
+
+  proc->signal_mask = mask;
   return 0;
 }
 
@@ -855,12 +1063,12 @@ proc_info_p proc_fork(proc_info_p parent, const syscall_frame_t* frame, int* err
 
   child->user_segment_count = 0;
   child->vm_region_count = 0;
-  child->signal_pending = 0;
+  proc_init_signal_state(child);
   child->signal_mask = parent->signal_mask;
-  child->signal_restorer = parent->signal_restorer;
-  child->handling_signal = 0;
+  child->signal_depth = parent->signal_depth;
+  child->stop_signal = parent->stop_signal;
   for(int sig = 0; sig < NSIG; sig++) {
-    child->signal_handlers[sig] = parent->signal_handlers[sig];
+    child->signal_actions[sig] = parent->signal_actions[sig];
   }
 
   if(!vm_clone(child, parent)) {
@@ -1057,13 +1265,7 @@ void proc_create_user(proc_info_p proc, const char* name, const void* code_blob,
   proc->mmap_base = user_mmap_base(proc->pid);
   proc->mmap_next = proc->mmap_base;
   proc->mmap_limit = user_mmap_limit(proc->pid);
-  proc->signal_pending = 0;
-  proc->signal_mask = 0;
-  proc->signal_restorer = NULL;
-  proc->handling_signal = 0;
-  for(int sig = 0; sig < NSIG; sig++) {
-    proc->signal_handlers[sig] = SIG_DFL;
-  }
+  proc_init_signal_state(proc);
 
   if(!vm_region_add(proc,
                     stack_base_vaddr,

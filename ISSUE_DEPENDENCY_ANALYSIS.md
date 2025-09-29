@@ -21,7 +21,7 @@ These issues form the backbone of the system and should be prioritized:
 ### Tier 3: IPC Foundation (PARTIALLY COMPLETE)
 9. **#102** - pipes (pipe/mkfifo)
 10. **#40** - condition variables (CLOSED)
-11. **#103** - UNIX signals
+11. **#103** - UNIX signals (handler/mask pipeline implemented)
 12. **#104** - shared memory (shmget/shmat/shmdt)
 
 ### Tier 4: Threading Support (PARTIALLY COMPLETE)
@@ -271,7 +271,7 @@ Phase 6: Shell                                 #54 (mosh shell)
 ### Phase 4: Advanced IPC (READY TO START)
 **Goal**: Full IPC suite for applications
 - #40: condition variables (CLOSED)
-- #103: UNIX signals
+- #103: UNIX signals (handlers + sigaction/sigprocmask complete)
 - #104: shared memory
 - #105: Unix domain sockets
 - #94: signal handling system
@@ -310,7 +310,7 @@ Phase 6: Shell                                 #54 (mosh shell)
 - **#147 (procfs)** - Dependencies: #65 (VFS - CLOSED), process management (CLOSED) - ready!
 - **#148 (ext2)** - Dependencies: #62-#65 (storage stack - CLOSED) - ready!
 - **#102 (pipes)** - Basic IPC implementation
-- **#103 (UNIX signals)** - Process control mechanism
+- **#103 (UNIX signals)** - Process control mechanism (handlers delivered; siginfo/rt signals TBD)
 
 ### Cannot Start Until Complete:
 - **#150 (zombie/orphan handling)** blocks on: #149 (wait/waitpid)
@@ -361,7 +361,7 @@ Phase 6: Shell                                 #54 (mosh shell)
 9. **#136** - Device filesystem infrastructure (ready to implement!)
 10. **#147** - procfs (system introspection and debugging)
 11. **#102** - pipes implementation (basic IPC ready)
-12. **#103** - UNIX signals (process control ready)
+12. **#103** - UNIX signals (process control ready: sigaction/masks live)
 
 ### For Maximum Impact:
 1. **Complete Threading APIs** (#109, #110, #113) - Enable modern multithreaded applications
@@ -438,7 +438,7 @@ Phase 6: Shell                                 #54 (mosh shell)
 - #143 (PS/2 mouse) - Input expansion
 - #148 (ext2) - Better persistent storage (1-2 weeks)
 - #102 (pipes) - Basic IPC
-- #103 (UNIX signals) - Process control
+- #103 (UNIX signals) - Process control (handlers, masks, stoppable signals)
 
 ### **Project Status**:
 - **Total Issues**: 147 issues (highest #154, some numbers skipped)

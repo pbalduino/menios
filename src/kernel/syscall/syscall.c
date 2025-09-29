@@ -36,6 +36,8 @@ static uint64_t syscall_fb_flip_handler(syscall_frame_t* frame);
 static uint64_t syscall_kill_handler(syscall_frame_t* frame);
 static uint64_t syscall_signal_handler(syscall_frame_t* frame);
 static uint64_t syscall_sigreturn_handler(syscall_frame_t* frame);
+static uint64_t syscall_sigaction_handler(syscall_frame_t* frame);
+static uint64_t syscall_sigprocmask_handler(syscall_frame_t* frame);
 
 static syscall_handler_t syscall_table[SYSCALL_MAX];
 
@@ -70,6 +72,8 @@ void syscall_init(void) {
   syscall_register(SYS_KILL, syscall_kill_handler);
   syscall_register(SYS_SIGNAL, syscall_signal_handler);
   syscall_register(SYS_SIGRETURN, syscall_sigreturn_handler);
+  syscall_register(SYS_SIGACTION, syscall_sigaction_handler);
+  syscall_register(SYS_SIGPROCMASK, syscall_sigprocmask_handler);
   syscall_register(SYS_FCNTL, syscall_fcntl_handler);
   syscall_register(SYS_FB_GETINFO, syscall_fb_getinfo_handler);
   syscall_register(SYS_FB_MAP, syscall_fb_map_handler);
@@ -555,38 +559,26 @@ static uint64_t syscall_signal_handler(syscall_frame_t* frame) {
   }
 
   int sig = (int)frame->rdi;
-  void* handler = (void*)frame->rsi;
-  void* restorer = (void*)frame->rdx;
+  struct sigaction new_action;
+  struct sigaction old_action;
 
-  if(sig <= 0 || sig >= NSIG) {
+  new_action.sa_handler = (sighandler_t)frame->rsi;
+  new_action.sa_mask = 0;
+  new_action.sa_flags = SA_RESTART;
+  new_action.sa_restorer = (void(*)(void))frame->rdx;
+
+  if(new_action.sa_handler == SIG_ERR) {
     frame->rax = (uint64_t)(-EINVAL);
     return frame->rax;
   }
 
-  if(handler == SIG_ERR) {
-    frame->rax = (uint64_t)(-EINVAL);
+  int rc = proc_install_sigaction(current, sig, &new_action, &old_action);
+  if(rc < 0) {
+    frame->rax = (uint64_t)rc;
     return frame->rax;
   }
 
-  if(sig == SIGKILL || sig == SIGSTOP) {
-    frame->rax = (uint64_t)(-EINVAL);
-    return frame->rax;
-  }
-
-  if(restorer == NULL) {
-    frame->rax = (uint64_t)(-EINVAL);
-    return frame->rax;
-  }
-
-  void* previous = current->signal_handlers[sig];
-  current->signal_handlers[sig] = handler;
-  current->signal_restorer = restorer;
-
-  if(handler == SIG_IGN) {
-    current->signal_pending &= ~(1u << sig);
-  }
-
-  frame->rax = (uint64_t)previous;
+  frame->rax = (uint64_t)old_action.sa_handler;
   return frame->rax;
 }
 
@@ -615,10 +607,105 @@ static uint64_t syscall_sigreturn_handler(syscall_frame_t* frame) {
     memcpy(current->cpu_state, &sigframe.saved_state, sizeof(cpu_state_t));
   }
 
-  current->signal_mask = sigframe.saved_mask;
-  current->handling_signal = 0;
+  current->signal_mask = sigframe.saved_mask & ~SIG_UNBLOCKABLE_MASK;
+  current->signal_depth = (uint8_t)sigframe.depth;
 
   proc_process_pending_signals((cpu_state_p)frame);
 
+  return frame->rax;
+}
+
+static uint64_t syscall_sigaction_handler(syscall_frame_t* frame) {
+  if(current == NULL) {
+    frame->rax = (uint64_t)(-EINVAL);
+    return frame->rax;
+  }
+
+  int sig = (int)frame->rdi;
+  const struct sigaction* user_act = (const struct sigaction*)frame->rsi;
+  struct sigaction* user_old = (struct sigaction*)frame->rdx;
+
+  struct sigaction act;
+  struct sigaction old;
+  struct sigaction* act_ptr = NULL;
+  struct sigaction* old_ptr = NULL;
+
+  if(user_act != NULL) {
+    if(!proc_user_buffer_accessible(current, user_act, sizeof(struct sigaction), false)) {
+      frame->rax = (uint64_t)(-EFAULT);
+      return frame->rax;
+    }
+    memcpy(&act, user_act, sizeof(struct sigaction));
+    act_ptr = &act;
+  }
+
+  if(user_old != NULL) {
+    old_ptr = &old;
+  }
+
+  int rc = proc_install_sigaction(current, sig, act_ptr, old_ptr);
+  if(rc < 0) {
+    frame->rax = (uint64_t)rc;
+    return frame->rax;
+  }
+
+  if(user_old != NULL) {
+    if(!proc_user_buffer_accessible(current, user_old, sizeof(struct sigaction), true)) {
+      frame->rax = (uint64_t)(-EFAULT);
+      return frame->rax;
+    }
+    memcpy(user_old, &old, sizeof(struct sigaction));
+  }
+
+  frame->rax = 0;
+  return frame->rax;
+}
+
+static uint64_t syscall_sigprocmask_handler(syscall_frame_t* frame) {
+  if(current == NULL) {
+    frame->rax = (uint64_t)(-EINVAL);
+    return frame->rax;
+  }
+
+  int how = (int)frame->rdi;
+  const sigset_t* user_set = (const sigset_t*)frame->rsi;
+  sigset_t* user_old = (sigset_t*)frame->rdx;
+
+  sigset_t set = 0;
+  sigset_t old = 0;
+  sigset_t* old_ptr = NULL;
+
+  if(user_set != NULL) {
+    if(!proc_user_buffer_accessible(current, user_set, sizeof(sigset_t), false)) {
+      frame->rax = (uint64_t)(-EFAULT);
+      return frame->rax;
+    }
+    memcpy(&set, user_set, sizeof(sigset_t));
+  }
+
+  if(user_old != NULL) {
+    old_ptr = &old;
+  }
+
+  int rc = 0;
+  if(user_set != NULL) {
+    rc = proc_update_signal_mask(current, how, set, old_ptr);
+    if(rc < 0) {
+      frame->rax = (uint64_t)rc;
+      return frame->rax;
+    }
+  } else if(old_ptr != NULL) {
+    *old_ptr = current->signal_mask;
+  }
+
+  if(user_old != NULL) {
+    if(!proc_user_buffer_accessible(current, user_old, sizeof(sigset_t), true)) {
+      frame->rax = (uint64_t)(-EFAULT);
+      return frame->rax;
+    }
+    memcpy(user_old, &old, sizeof(sigset_t));
+  }
+
+  frame->rax = 0;
   return frame->rax;
 }

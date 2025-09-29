@@ -66,7 +66,7 @@ Inter-process communication for complex applications:
 - **Impact**: Shell pipelines, parent/child hand-off, and Doom's streaming needs
 
 -#### **UNIX Signals** (Issue #103)
-- 🟢 **Status**: Prototype+ – `kill(2)` plus user `signal()`/`sigreturn` handlers; advanced masks, `SIGSTOP`, and delivery nuances remain TODO
+- 🟢 **Status**: Handler-ready – `kill(2)`, `sigaction(2)`, `sigprocmask(2)`, and user trampolines with basic `SIGSTOP`/`SIGCONT` transitions; queued delivery semantics (info blocks, siginfo) still pending
 - **Scope**: Signal delivery, handlers, masks, default actions
 - **Impact**: Process control, crash handling, cooperative shutdown
 

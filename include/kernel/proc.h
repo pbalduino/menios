@@ -37,6 +37,7 @@ struct syscall_frame_t;
 #define PROC_STATE_RUNNING    2
 #define PROC_STATE_WAITING    3
 #define PROC_STATE_SLEEPING   4
+#define PROC_STATE_STOPPED    5
 #define PROC_STATE_TERMINATED 7
 
 #define PROC_PRIO_IDLE    0
@@ -130,11 +131,16 @@ typedef struct proc_info_t {
   void*        fb_map_base;
   size_t       fb_map_size;
   uint32_t     fb_map_flags;
-  uint32_t     signal_pending;
-  uint32_t     signal_mask;
-  void*        signal_handlers[NSIG];
-  void*        signal_restorer;
-  uint8_t      handling_signal;
+  sigset_t     signal_pending;
+  sigset_t     signal_mask;
+  struct signal_action_t {
+    sighandler_t handler;
+    sigset_t     mask;
+    uint32_t     flags;
+    void*        restorer;
+  } signal_actions[NSIG];
+  uint8_t      signal_depth;
+  uint8_t      stop_signal;
 } proc_info_t;
 
 typedef proc_info_t* proc_info_p;
@@ -162,12 +168,16 @@ int proc_exec_image(proc_info_p proc, const uint8_t* image, size_t size, struct 
 proc_info_p proc_find(uint32_t pid);
 int proc_send_signal(proc_info_p proc, int sig);
 bool proc_process_pending_signals(cpu_state_p frame);
+int proc_install_sigaction(proc_info_p proc, int sig, const struct sigaction* act, struct sigaction* oldact);
+int proc_update_signal_mask(proc_info_p proc, int how, sigset_t set, sigset_t* oldset);
 bool proc_user_buffer_accessible(proc_info_p proc, const void* buffer, size_t length, bool write);
 
 typedef struct signal_frame_t {
   cpu_state_t saved_state;
-  uint32_t    saved_mask;
+  sigset_t    saved_mask;
   uint32_t    sig;
+  uint32_t    flags;
+  uint32_t    depth;
 } signal_frame_t;
 
 #ifdef __cplusplus

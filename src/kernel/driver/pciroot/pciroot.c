@@ -20,7 +20,7 @@ void pciroot_start(void) {
   }
 
   serial_printf("found ACPI table: %s\n", uacpi_status_to_string(ret));
-  logk(uacpi_status_to_string(ret));
+  // logk(uacpi_status_to_string(ret));
 
   acpi_mcfg_t* mcfg = (acpi_mcfg_t*)tbl.ptr;
 
