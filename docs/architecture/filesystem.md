@@ -50,9 +50,8 @@ configuration files and, eventually, user binaries from persistent storage.
   out of scope for now.
 - Only the primary GPT is consulted. Mirroring, MBR fallbacks, and partition
   attributes are not validated yet.
-- The implementation reads entire clusters into temporary buffers. A block cache
-  (Issue #63) will reduce the number of DMA transactions and enable sharing data
-  between consumers.
+- The global block cache (Issue #63) keeps frequently accessed sectors resident,
+  so repeated directory walks avoid redundant DMA transactions.
 - There is no generic mount manager; callers track their own `fs_mount_t`
   handles. The upcoming VFS layer (Issue #65) should centralize mount tables
   and expose filesystem namespaces.

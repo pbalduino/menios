@@ -18,6 +18,11 @@ to higher layers.
 - **Synchronous helpers** – Kernel clients can use
   `block_device_read()`/`block_device_write()` and `block_device_flush()` to
   issue simple operations without worrying about the driver details.
+- **Block cache** – `block_cache.c` tracks a small LRU of recently accessed
+  sectors (currently 256 entries) and performs write-through updates. Reads hit
+  the cache first and fall back to the driver on a miss; successful reads or
+  writes refresh the cached copy. Devices with sector sizes larger than 4 KiB
+  bypass the cache automatically.
 
 ## Initialization Flow
 
@@ -40,7 +45,8 @@ to higher layers.
   writes, with interrupts unmasking completion on vector `0x40`. During boot the
   VFS mounts the FAT32 volume at `/`, and `user_demo_launch()` logs a
   depth-limited directory tree to the serial console as a smoke test.
-- Integrate the block layer with the upcoming block cache (Issue #63) to avoid
-  re-reading clusters for filesystem consumers.
+- Block cache already reduces redundant reads for FAT32 and future filesystems;
+  once write-back policies are needed we can extend the current write-through
+  implementation.
 - Extend the API with asynchronous I/O and request queues once drivers require
   higher throughput.

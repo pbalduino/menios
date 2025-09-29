@@ -1,4 +1,5 @@
 #include <kernel/block_device.h>
+#include <kernel/block_cache.h>
 #include <kernel/heap.h>
 #include <kernel/mutex.h>
 #include <kernel/serial.h>
@@ -11,6 +12,7 @@ static bool block_device_initialized = false;
 
 void block_device_system_init(void) {
   kmutex_init(&block_device_lock);
+  block_cache_init();
   block_device_head = NULL;
   block_device_initialized = true;
 }
@@ -55,6 +57,8 @@ void block_device_unregister(block_device_t* device) {
   if(!block_device_initialized || device == NULL) {
     return;
   }
+
+  block_cache_invalidate_device(device);
 
   kmutex_lock(&block_device_lock);
   block_device_t** prev = &block_device_head;
@@ -112,7 +116,14 @@ bool block_device_read(block_device_t* device, uint64_t lba, void* buffer, size_
   if(lba + block_count > device->block_count) {
     return false;
   }
-  return device->ops->read_blocks(device, lba, buffer, block_count);
+  if(block_cache_try_read(device, lba, buffer, block_count)) {
+    return true;
+  }
+  bool ok = device->ops->read_blocks(device, lba, buffer, block_count);
+  if(ok) {
+    block_cache_store(device, lba, buffer, block_count);
+  }
+  return ok;
 }
 
 bool block_device_write(block_device_t* device, uint64_t lba, const void* buffer, size_t block_count) {
@@ -125,12 +136,20 @@ bool block_device_write(block_device_t* device, uint64_t lba, const void* buffer
   if(lba + block_count > device->block_count) {
     return false;
   }
-  return device->ops->write_blocks(device, lba, buffer, block_count);
+  if(!device->ops->write_blocks) {
+    return false;
+  }
+  bool ok = device->ops->write_blocks(device, lba, buffer, block_count);
+  if(ok) {
+    block_cache_update(device, lba, buffer, block_count);
+  }
+  return ok;
 }
 
 bool block_device_flush(block_device_t* device) {
   if(device == NULL || device->ops == NULL || device->ops->flush == NULL) {
     return true;
   }
+  block_cache_flush_device(device);
   return device->ops->flush(device);
 }

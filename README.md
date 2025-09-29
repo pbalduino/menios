@@ -95,6 +95,7 @@ Expect the log to show the `[user_demo]` messages on screen and in `com1.log`, c
 - [x] Kernel block device abstraction layer (Issue #114)
 - [x] SATA/AHCI DMA block driver with interrupt completion (Issue #62)
 - [x] DMA-friendly allocation helpers (Issue #115)
+- [x] Global block cache for block devices (Issue #63)
 - [x] Kernel VFS layer backed by FAT32 filesystem (Issue #65)
 - [x] GPT-aware FAT32 filesystem mounting and file access (Issue #64)
 
