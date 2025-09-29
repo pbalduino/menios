@@ -58,6 +58,12 @@ These issues form the backbone of the system and should be prioritized:
 35. **#143** - PS/2 mouse driver and input support
 36. **#144** - USB mouse support through HID class driver
 
+### 🆕 Tier 9: Virtual & Special Filesystems (NEW!)
+37. **#145** - tmpfs/ramfs (in-memory filesystem for /tmp)
+38. **#146** - devfs (device filesystem for /dev hierarchy)
+39. **#147** - procfs (process information filesystem for /proc)
+40. **#148** - ext2 filesystem support (read-only initially)
+
 ## 📊 Updated Dependency Categories
 
 ### Memory Management Chain (CORE COMPLETE!)
@@ -169,6 +175,25 @@ Phase 2: USB Support                                  Mouse events
 #125 (USB HID) ──────────→ #144 (USB mouse) ──────────────┘
 ```
 
+### 🆕 Virtual Filesystems Chain (NEW!)
+```
+Phase 1: Foundation (VFS infrastructure ready)
+#65 (VFS - CLOSED) ──┐
+#96 (file descriptors - CLOSED) ──┐
+                                  ↓
+Phase 2: In-Memory FS        #145 (tmpfs/ramfs) → /tmp for temporary files
+                                  ↓
+Phase 3: Device FS           #146 (devfs) → Integrates with #136-#142 (/dev hierarchy)
+                                  ↓         Exposes devices as files
+                                  ↓
+Phase 4: Process Info        #147 (procfs) → /proc for system introspection
+                                  ↓         Process monitoring/debugging
+                                  ↓
+Phase 5: Block FS            #148 (ext2) → Better persistent storage
+#62 (block driver) ──────────────┘         Alternative to FAT32
+#63 (block cache) ───────────────┘         Native Linux filesystem
+```
+
 ### Filesystem Stack (COMPLETE!)
 ```
 #62 (block driver - CLOSED) → #63 (block cache - CLOSED) → #64 (filesystem lib - CLOSED) → #65 (VFS - CLOSED) → #60 (syscalls - CLOSED)
@@ -242,6 +267,10 @@ Phase 2: USB Support                                  Mouse events
 - **#127 (UTF-8 utilities)** - No dependencies, ready to start immediately!
 - **#135 (code coverage)** - Can start with existing Unity tests, no blocking dependencies
 - **#136 (device filesystem)** - Dependencies: #96 (CLOSED), #60 (CLOSED) - ready!
+- **#145 (tmpfs/ramfs)** - Dependencies: #65 (VFS - CLOSED), #96 (CLOSED) - ready!
+- **#146 (devfs)** - Dependencies: #65 (VFS - CLOSED), #96 (CLOSED) - ready!
+- **#147 (procfs)** - Dependencies: #65 (VFS - CLOSED), process management (CLOSED) - ready!
+- **#148 (ext2)** - Dependencies: #62-#65 (storage stack - CLOSED) - ready!
 - **#102 (pipes)** - Basic IPC implementation
 - **#103 (UNIX signals)** - Process control mechanism
 
@@ -260,6 +289,11 @@ Phase 2: USB Support                                  Mouse events
 - **Code Coverage** (#135) can develop immediately with existing Unity tests
 - **Device Filesystem** (#136-#142) can start now with #136!
 - **Mouse Input** (#143-#144) can develop independently from keyboard input
+- **Virtual Filesystems** (#145-#148) can start immediately - VFS ready!
+  - #145 (tmpfs) - Quick win, good first issue
+  - #146 (devfs) - Integrates with device infrastructure
+  - #147 (procfs) - System introspection
+  - #148 (ext2) - Better persistent storage
 - **Storage Systems** - PCI/AHCI infrastructure (#114-#120) active development
 - **USB Infrastructure** (#121-#126) can develop independently
 - **Networking stack** (#67-#73) can develop independently
@@ -269,12 +303,15 @@ Phase 2: USB Support                                  Mouse events
 ## 🎯 Recommended Focus Areas
 
 ### Immediate Next Steps (Ready Now!)
-1. **#109** - pthread API and POSIX threading (foundation complete)
-2. **#127** - UTF-8 utilities (ready to implement, no dependencies!)
-3. **#135** - Code coverage with Gcov (ready to implement, existing Unity tests!)
-4. **#136** - Device filesystem infrastructure (ready to implement!)
-5. **#102** - pipes implementation (basic IPC ready)
-6. **#103** - UNIX signals (process control ready)
+1. **#145** - tmpfs/ramfs (quick win, good first issue, enables /tmp)
+2. **#109** - pthread API and POSIX threading (foundation complete)
+3. **#146** - devfs (device filesystem, unblocks hardware device access)
+4. **#127** - UTF-8 utilities (ready to implement, no dependencies!)
+5. **#135** - Code coverage with Gcov (ready to implement, existing Unity tests!)
+6. **#136** - Device filesystem infrastructure (ready to implement!)
+7. **#147** - procfs (system introspection and debugging)
+8. **#102** - pipes implementation (basic IPC ready)
+9. **#103** - UNIX signals (process control ready)
 
 ### For Maximum Impact:
 1. **Complete Threading APIs** (#109, #110, #113) - Enable modern multithreaded applications
@@ -309,6 +346,12 @@ Phase 2: USB Support                                  Mouse events
 1. **Phase 1**: #143 (PS/2 mouse driver) → #32 (input subsystem integration)
 2. **Phase 2**: #144 (USB mouse via HID) → #125 (USB HID driver) → Mouse events
 
+### For Virtual Filesystems & System Services:
+1. **Phase 1**: #145 (tmpfs/ramfs) → /tmp for temporary files (2-3 days)
+2. **Phase 2**: #146 (devfs) → /dev for device access (3-5 days, integrates with #136-#142)
+3. **Phase 3**: #147 (procfs) → /proc for system monitoring (4-6 days)
+4. **Phase 4**: #148 (ext2) → Better persistent storage (1-2 weeks)
+
 ### For Microkernel Vision:
 1. **Complete Phases 1-3** first (foundation + threading)
 2. **Transition**: #106 → #107 (microkernel IPC + security)
@@ -324,35 +367,43 @@ Phase 2: USB Support                                  Mouse events
 - **Hardware**: PCI/AHCI controller (#114-#117), input subsystem (#32), framebuffer interface (#31)
 
 ### **Ready to Implement (High Impact)**:
+- #145 (tmpfs/ramfs) - Quick win, enables /tmp (2-3 days)
+- #146 (devfs) - Device filesystem for /dev (3-5 days)
+- #147 (procfs) - System introspection (4-6 days)
 - #109 (pthread API) - Threading foundation complete
 - #127 (UTF-8 utilities) - No dependencies
 - #135 (code coverage) - Quality assurance
 - #136 (device filesystem) - Hardware access
 - #137 (null/zero devices) - Good first issue
 - #143 (PS/2 mouse) - Input expansion
-- #101 (LAPIC/HPET timers) *(CLOSED)* - Core timing
+- #148 (ext2) - Better persistent storage (1-2 weeks)
 - #102 (pipes) - Basic IPC
 - #103 (UNIX signals) - Process control
 
 ### **Project Status**:
-- **Total Issues**: 137 issues (highest #144, some numbers skipped)
-- **Closed**: 56 issues (major systems operational)
-- **Open**: 81 issues (organized by priority tiers)
-- **Major Completions**: Memory, scheduling, processes, storage, basic threading, framebuffer
-- **Active Development**: Threading APIs, device filesystem, mouse input, hardware drivers, advanced IPC
+- **Total Issues**: 140 issues (highest #148, some numbers skipped)
+- **Closed**: 57 issues (major systems operational including #101 timers)
+- **Open**: 83 issues (organized by priority tiers)
+- **Major Completions**: Memory, scheduling, processes, storage, basic threading, framebuffer, timers
+- **Active Development**: Virtual filesystems, threading APIs, device filesystem, mouse input, hardware drivers, advanced IPC
 
 ## **Current Development Strategy**
 
 With core kernel infrastructure operational, meniOS has strong foundations for advanced features. Major systems like memory management, scheduling, processes, and storage are complete and functional.
 
 **Recommended immediate development tracks:**
-1. **Threading APIs** (#109, #110, #113) - Enable multithreaded applications
-2. **Advanced IPC** (#102, #103, #104) - Complete process communication
-3. **Unicode Support** (#127, #128, #129, #130) - International text handling
-4. **Device Infrastructure** (#136, #137, #138) - Hardware access layer
-5. **Mouse Input** (#143, #144) - Complete input subsystem with mouse support
-6. **Quality Assurance** (#135) - Code coverage and testing improvements
-7. **Hardware Drivers** (ongoing #118-#126) - USB and storage expansion
+1. **Virtual Filesystems** (#145, #146, #147, #148) - Essential system services
+   - tmpfs for /tmp (quick win)
+   - devfs for /dev (hardware access)
+   - procfs for /proc (debugging)
+   - ext2 for better persistent storage
+2. **Threading APIs** (#109, #110, #113) - Enable multithreaded applications
+3. **Advanced IPC** (#102, #103, #104) - Complete process communication
+4. **Unicode Support** (#127, #128, #129, #130) - International text handling
+5. **Device Infrastructure** (#136, #137, #138) - Hardware access layer
+6. **Mouse Input** (#143, #144) - Complete input subsystem with mouse support
+7. **Quality Assurance** (#135) - Code coverage and testing improvements
+8. **Hardware Drivers** (ongoing #118-#126) - USB and storage expansion
 
 This parallel approach leverages the completed foundation to enable sophisticated userland applications including text editors, shells, and eventually Doom.
 

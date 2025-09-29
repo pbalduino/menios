@@ -1,5 +1,63 @@
 [
   {
+    "title": "Implement ext2 filesystem support (read-only initially)",
+    "github_issue": {
+      "number": 148,
+      "url": "https://github.com/pbalduino/menios/issues/148",
+      "state": "OPEN"
+    },
+    "labels": [
+      "enhancement",
+      "nice to have"
+    ],
+    "assignees": [
+      "pbalduino"
+    ]
+  },
+  {
+    "title": "Implement procfs (process information filesystem)",
+    "github_issue": {
+      "number": 147,
+      "url": "https://github.com/pbalduino/menios/issues/147",
+      "state": "OPEN"
+    },
+    "labels": [
+      "enhancement"
+    ],
+    "assignees": [
+      "pbalduino"
+    ]
+  },
+  {
+    "title": "Implement devfs (device filesystem) for /dev hierarchy",
+    "github_issue": {
+      "number": 146,
+      "url": "https://github.com/pbalduino/menios/issues/146",
+      "state": "OPEN"
+    },
+    "labels": [
+      "enhancement"
+    ],
+    "assignees": [
+      "pbalduino"
+    ]
+  },
+  {
+    "title": "Implement tmpfs/ramfs (in-memory filesystem)",
+    "github_issue": {
+      "number": 145,
+      "url": "https://github.com/pbalduino/menios/issues/145",
+      "state": "OPEN"
+    },
+    "labels": [
+      "enhancement",
+      "good first issue"
+    ],
+    "assignees": [
+      "pbalduino"
+    ]
+  },
+  {
     "title": "Implement USB mouse support through HID class driver",
     "github_issue": {
       "number": 144,
