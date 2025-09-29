@@ -1,5 +1,7 @@
 # MeniOS
 
+> Current release: **0.0.4**
+
 <img alt="image" src="https://github.com/user-attachments/assets/90634816-da18-4e3c-8132-bba2ea291940">
 
 <a rel="me" href="https://bolha.us/@p_balduino">Mastodon</a>
