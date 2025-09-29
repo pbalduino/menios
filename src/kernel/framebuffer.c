@@ -9,6 +9,7 @@
 #include <kernel/kernel.h>
 #include <kernel/pmm.h>
 #include <kernel/serial.h>
+#include <kernel/spinlock.h>
 
 #include <stdbool.h>
 #include <stdint.h>
@@ -57,6 +58,8 @@ static uint64_t saved_cursor_row;
 static uint32_t saved_cursor_col;
 static struct limine_framebuffer *framebuffer;
 static FILE* fb_d;
+static size_t fb_surface_bytes;
+static spinlock_t fb_surface_lock;
 
 static console_cell_t console_buffer[SCROLLBACK_LINES][MAX_COLS];
 static uint64_t row_versions[SCROLLBACK_LINES];
@@ -253,6 +256,8 @@ void fb_init() {
 
   framebuffer = framebuffer_request.response->framebuffers[0];
 
+  spinlock_init(&fb_surface_lock);
+
   uintptr_t fb_raw = (uintptr_t)framebuffer->address;
   virt_addr_t hhdm = get_kernel_offset();
 
@@ -297,6 +302,7 @@ void fb_init() {
       }
     }
   }
+  fb_surface_bytes = (size_t)framebuffer->pitch * framebuffer->height;
   active = true;
 
   char_line_width = 8;
@@ -799,6 +805,43 @@ void fb_list_modes() {
       putchar('|');
     }
   }
+}
+
+void fb_get_info(fb_mode_info_t* info) {
+  if(info == NULL || framebuffer == NULL) {
+    return;
+  }
+
+  info->width = framebuffer->width;
+  info->height = framebuffer->height;
+  info->pitch = framebuffer->pitch;
+  info->bpp = framebuffer->bpp;
+  info->flags = FB_INFO_FLAG_DOUBLE_BUFFER;
+  info->reserved = 0;
+  info->buffer_size = fb_surface_bytes;
+}
+
+void fb_copy_frontbuffer(void* dest, size_t length) {
+  if(dest == NULL || framebuffer == NULL || length == 0) {
+    return;
+  }
+
+  size_t bytes = length < fb_surface_bytes ? length : fb_surface_bytes;
+  spinlock_lock(&fb_surface_lock);
+  memcpy(dest, framebuffer->address, bytes);
+  spinlock_unlock(&fb_surface_lock);
+}
+
+bool fb_present_user_buffer(const void* buffer, size_t length) {
+  if(buffer == NULL || framebuffer == NULL || length == 0) {
+    return false;
+  }
+
+  size_t bytes = length < fb_surface_bytes ? length : fb_surface_bytes;
+  spinlock_lock(&fb_surface_lock);
+  memcpy(framebuffer->address, buffer, bytes);
+  spinlock_unlock(&fb_surface_lock);
+  return true;
 }
 
 void set_foreground_color(uint32_t color) {

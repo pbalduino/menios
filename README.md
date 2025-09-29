@@ -84,7 +84,7 @@ On the kernel side, `user_demo_launch()` probes the SATA disk, dumps the first s
 - **Threading APIs**: pthread surface, thread-safe libc, and advanced synchronization (Issues #109-#111)
 - **Thread observability**: Thread-aware syscalls, debugging hooks, and scheduling metrics (Issues #112-#113)
 - **Signals & IPC**: Timers, UNIX signals, shared memory, pipes enhancements, and futex/message primitives (Issues #101-#107)
-- **Userspace device interfaces**: Writable filesystem path, framebuffer protocol, input events, and audio streaming (Issues #31-#33, #61)
+- **Userspace device interfaces**: Writable filesystem path, framebuffer protocol (`SYS_FB_GETINFO`/`SYS_FB_MAP`/`SYS_FB_FLIP`), input events, and audio streaming (Issues #31-#33, #61)
 - **Toolchain & SDK**: Cross-compiler, crt0, libc packaging, and build tooling for user apps (Issue #29)
 - **Networking stack**: TCP/IP layers, sockets, and driver support (Issues #67-#73)
 

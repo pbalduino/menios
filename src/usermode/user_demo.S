@@ -1,5 +1,9 @@
     .section .text
-    .globl _start
+.globl _start
+
+.equ SYS_FB_GETINFO, 200
+.equ SYS_FB_MAP,     201
+.equ SYS_FB_FLIP,    202
 
 _start:
     mov $0x43, %rax
@@ -194,6 +198,8 @@ input_close:
 
 input_demo_done:
 
+    call framebuffer_demo
+
     mov %r13, %r14          # select prefix based on original argument (0..2)
 
 2:
@@ -245,6 +251,90 @@ print_loop:
     xor %rdi, %rdi
     int $0x80
 
+framebuffer_demo:
+    push %rbx
+    push %rbp
+    push %r12
+    push %r13
+    push %r14
+    push %r15
+
+    mov $SYS_FB_GETINFO, %rax
+    lea fb_info(%rip), %rdi
+    int $0x80
+    cmp $0, %rax
+    jl fb_demo_cleanup
+
+    mov $SYS_FB_MAP, %rax
+    int $0x80
+    cmp $0, %rax
+    jl fb_demo_cleanup
+    mov %rax, %r12
+    mov %rax, fb_buffer_ptr(%rip)
+
+    mov fb_info+12(%rip), %eax   # bpp
+    cmp $32, %eax
+    jne fb_demo_present
+
+    mov $1, %rax
+    mov $1, %rdi
+    lea msg_fb_demo(%rip), %rsi
+    mov $(msg_fb_demo_end - msg_fb_demo), %rdx
+    int $0x80
+
+    mov fb_info+4(%rip), %r14d   # height
+    mov fb_info(%rip), %r15d     # width
+    mov fb_info+8(%rip), %ebx    # pitch
+    xor %r10d, %r10d             # row index
+
+fb_row_loop:
+    cmp %r14d, %r10d
+    jle fb_demo_present
+
+    mov %r10d, %eax
+    imul %ebx, %eax
+    mov %eax, %r11d
+    mov %r12, %r13
+    add %r11, %r13
+
+    xor %r9d, %r9d               # column index
+fb_col_loop:
+    cmp %r15d, %r9d
+    jle fb_row_next
+
+    mov %r9d, %edx
+    shl $2, %edx
+
+    mov %r10d, %ecx
+    shl $16, %ecx
+    mov %r9d, %eax
+    shl $8, %eax
+    or %ecx, %eax
+    or $0x000000FF, %eax
+    mov %eax, (%r13,%rdx)
+
+    inc %r9d
+    jmp fb_col_loop
+
+fb_row_next:
+    inc %r10d
+    jmp fb_row_loop
+
+fb_demo_present:
+    mov $SYS_FB_FLIP, %rax
+    mov fb_buffer_ptr(%rip), %rdi
+    xor %rsi, %rsi
+    int $0x80
+
+fb_demo_cleanup:
+    pop %r15
+    pop %r14
+    pop %r13
+    pop %r12
+    pop %rbp
+    pop %rbx
+    ret
+
     .section .data
 input_device_path:
     .ascii "/dev/input/kbd\0"
@@ -256,6 +346,10 @@ msg_input_intro_end:
 msg_input_open_fail:
     .ascii "[input_demo] failed to open /dev/input/kbd\n"
 msg_input_open_fail_end:
+
+msg_fb_demo:
+    .ascii "[user_demo] drawing framebuffer gradient\n"
+msg_fb_demo_end:
 
 kbd_event_msg:
     .ascii "kbd event: scancode=0x"
@@ -352,5 +446,12 @@ msg_fork_child_end:
     .balign 8
 pipe_fds:
     .space 8
+
+    .balign 8
+fb_info:
+    .space 32
+
+fb_buffer_ptr:
+    .quad 0
 pipe_buffer:
     .space 64

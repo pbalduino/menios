@@ -126,6 +126,9 @@ typedef struct proc_info_t {
   void(*entrypoint)(void*);
   void*        arguments;
   file_descriptor_entry_t files[PROC_MAX_FILES];
+  void*        fb_map_base;
+  size_t       fb_map_size;
+  uint32_t     fb_map_flags;
 } proc_info_t;
 
 typedef proc_info_t* proc_info_p;
@@ -150,6 +153,7 @@ void proc_request_sleep(uint64_t duration_us);
 void proc_mark_ready(proc_info_p proc);
 proc_info_p proc_fork(proc_info_p parent, const struct syscall_frame_t* frame, int* err_out);
 int proc_exec_image(proc_info_p proc, const uint8_t* image, size_t size, struct syscall_frame_t* frame);
+bool proc_user_buffer_accessible(proc_info_p proc, const void* buffer, size_t length, bool write);
 
 #ifdef __cplusplus
 }

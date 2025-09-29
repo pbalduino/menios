@@ -2,6 +2,7 @@
 #define _KERNEL_FRAMEBUFFER_H 1
 
 #include <types.h>
+#include <uapi/fb.h>
 
 #define FB_BLACK        0x000000
 #define FB_DARK_RED     0x7f0000
@@ -37,5 +38,8 @@ void fb_init();
 void fb_putpixel(uint32_t x, uint32_t y, uint32_t rgb);
 int fb_putchar(int c);
 void fb_list_modes();
+void fb_get_info(fb_mode_info_t* info);
+void fb_copy_frontbuffer(void* dest, size_t length);
+bool fb_present_user_buffer(const void* buffer, size_t length);
 
 #endif

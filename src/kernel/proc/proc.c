@@ -11,6 +11,7 @@
 #include <kernel/user/elf_loader.h>
 #include <kernel/syscall.h>
 #include <kernel/vm.h>
+#include <kernel/vm_region.h>
 #include <errno.h>
 #include <stdio.h>
 #include <string.h>
@@ -96,6 +97,9 @@ static void proc_release_user_memory(proc_info_p proc) {
                   proc->vm_region_count);
   }
   proc->user_segment_count = 0;
+  proc->fb_map_base = NULL;
+  proc->fb_map_size = 0;
+  proc->fb_map_flags = 0;
 }
 
 static void proc_free_resources(proc_info_p proc) {
@@ -400,6 +404,9 @@ void proc_create(proc_info_p proc, const char* name, void (*entrypoint)(void *),
   proc->mmap_base = 0;
   proc->mmap_next = 0;
   proc->mmap_limit = 0;
+  proc->fb_map_base = NULL;
+  proc->fb_map_size = 0;
+  proc->fb_map_flags = 0;
   proc->dispatch_count = 0;
   proc->exec_time = 0;
   proc->last_dispatch_us = 0;
@@ -478,6 +485,53 @@ void proc_unregister_user_segment(proc_info_p proc, phys_addr_t phys, size_t pag
       break;
     }
   }
+}
+
+bool proc_user_buffer_accessible(proc_info_p proc, const void* buffer, size_t length, bool write) {
+  if(proc == NULL || buffer == NULL) {
+    return false;
+  }
+
+  if(length == 0) {
+    return true;
+  }
+
+  virt_addr_t start = (virt_addr_t)buffer;
+  virt_addr_t end;
+  if(length > (size_t)(UINT64_MAX - start)) {
+    return false;
+  }
+  end = start + length;
+
+  uint32_t required = VM_REGION_FLAG_USER | VM_REGION_FLAG_READ;
+  if(write) {
+    required |= VM_REGION_FLAG_WRITE;
+  }
+
+  virt_addr_t cursor = start;
+  while(cursor < end) {
+    vm_region_t* region = vm_region_find(proc, cursor);
+    if(region == NULL) {
+      return false;
+    }
+
+    if((region->flags & required) != required) {
+      return false;
+    }
+
+    virt_addr_t region_end = region->base + region->length;
+    if(region_end <= cursor) {
+      return false;
+    }
+
+    if(region_end >= end) {
+      return true;
+    }
+
+    cursor = region_end;
+  }
+
+  return true;
 }
 
 void scheduler_set_quantum(uint8_t priority, uint64_t quantum_us) {
@@ -592,6 +646,9 @@ proc_info_p proc_fork(proc_info_p parent, const syscall_frame_t* frame, int* err
   child->mmap_base = parent->mmap_base;
   child->mmap_next = parent->mmap_next;
   child->mmap_limit = parent->mmap_limit;
+  child->fb_map_base = parent->fb_map_base;
+  child->fb_map_size = parent->fb_map_size;
+  child->fb_map_flags = parent->fb_map_flags;
   child->errno = 0;
   child->exit_code = 0;
   child->sleep_until = 0;

@@ -23,6 +23,9 @@ extern "C" {
 #define SYS_EXECVE 59
 #define SYS_EXIT   60
 #define SYS_FCNTL  72
+#define SYS_FB_GETINFO 200
+#define SYS_FB_MAP     201
+#define SYS_FB_FLIP    202
 
 typedef struct syscall_frame_t {
   uint64_t r15;

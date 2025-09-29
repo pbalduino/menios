@@ -111,7 +111,7 @@ Persistent storage for game assets and save files:
 Visual output and user interaction:
 
 #### **Userspace Graphics Interface** (Issue #31)
-- 🟡 **Status**: Scoped – waiting on descriptor-backed framebuffer device node
+- 🟡 **Status**: Prototype – framebuffer info/map/flip syscalls provide double-buffered staging; mode switching & palette control still TODO
 - **Scope**: Framebuffer mapping, double buffering, palette control
 - **Impact**: Doom rendering pipeline and general GUI support
 

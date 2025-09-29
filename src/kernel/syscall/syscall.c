@@ -1,12 +1,14 @@
 #include <errno.h>
 #include <kernel/console.h>
 #include <kernel/file.h>
+#include <kernel/framebuffer.h>
 #include <kernel/mman.h>
 #include <kernel/proc.h>
 #include <kernel/serial.h>
 #include <kernel/syscall.h>
 #include <kernel/vfs.h>
 #include <sys/fcntl.h>
+#include <string.h>
 
 #define SYSCALL_MAX 256
 
@@ -27,6 +29,9 @@ static uint64_t syscall_yield_handler(syscall_frame_t* frame);
 static uint64_t syscall_sleep_handler(syscall_frame_t* frame);
 static uint64_t syscall_exit_handler(syscall_frame_t* frame);
 static uint64_t syscall_fcntl_handler(syscall_frame_t* frame);
+static uint64_t syscall_fb_getinfo_handler(syscall_frame_t* frame);
+static uint64_t syscall_fb_map_handler(syscall_frame_t* frame);
+static uint64_t syscall_fb_flip_handler(syscall_frame_t* frame);
 
 static syscall_handler_t syscall_table[SYSCALL_MAX];
 
@@ -59,6 +64,9 @@ void syscall_init(void) {
   syscall_register(SYS_SLEEP, syscall_sleep_handler);
   syscall_register(SYS_EXIT, syscall_exit_handler);
   syscall_register(SYS_FCNTL, syscall_fcntl_handler);
+  syscall_register(SYS_FB_GETINFO, syscall_fb_getinfo_handler);
+  syscall_register(SYS_FB_MAP, syscall_fb_map_handler);
+  syscall_register(SYS_FB_FLIP, syscall_fb_flip_handler);
 
   serial_printf("syscall_init: initialized dispatcher (INT 0x80)\n");
 }
@@ -396,4 +404,113 @@ static uint64_t syscall_fcntl_handler(syscall_frame_t* frame) {
       frame->rax = (uint64_t)(-ENOSYS);
       return frame->rax;
   }
+}
+
+static uint64_t syscall_fb_getinfo_handler(syscall_frame_t* frame) {
+  if(current == NULL || !current->user_mode) {
+    frame->rax = (uint64_t)(-EPERM);
+    return frame->rax;
+  }
+
+  fb_mode_info_t info = {0};
+  fb_get_info(&info);
+  if(info.buffer_size == 0) {
+    frame->rax = (uint64_t)(-ENODEV);
+    return frame->rax;
+  }
+
+  void* user_ptr = (void*)frame->rdi;
+  if(user_ptr == NULL) {
+    frame->rax = (uint64_t)(-EINVAL);
+    return frame->rax;
+  }
+
+  if(!proc_user_buffer_accessible(current, user_ptr, sizeof(info), true)) {
+    frame->rax = (uint64_t)(-EFAULT);
+    return frame->rax;
+  }
+
+  memcpy(user_ptr, &info, sizeof(info));
+  frame->rax = 0;
+  return frame->rax;
+}
+
+static uint64_t syscall_fb_map_handler(syscall_frame_t* frame) {
+  (void)frame;
+
+  if(current == NULL || !current->user_mode) {
+    frame->rax = (uint64_t)(-EPERM);
+    return frame->rax;
+  }
+
+  fb_mode_info_t info = {0};
+  fb_get_info(&info);
+  if(info.buffer_size == 0) {
+    frame->rax = (uint64_t)(-ENODEV);
+    return frame->rax;
+  }
+
+  if(current->fb_map_base != NULL && current->fb_map_size == info.buffer_size) {
+    fb_copy_frontbuffer(current->fb_map_base, current->fb_map_size);
+    frame->rax = (uint64_t)current->fb_map_base;
+    return frame->rax;
+  }
+
+  void* mapped = kmmap(NULL,
+                       (size_t)info.buffer_size,
+                       PROT_READ | PROT_WRITE,
+                       MAP_PRIVATE | MAP_ANONYMOUS,
+                       -1,
+                       0);
+  if(mapped == MAP_FAILED) {
+    int err = current->errno ? current->errno : ENOMEM;
+    frame->rax = (uint64_t)(-err);
+    return frame->rax;
+  }
+
+  current->fb_map_base = mapped;
+  current->fb_map_size = (size_t)info.buffer_size;
+  current->fb_map_flags = 0;
+  fb_copy_frontbuffer(mapped, current->fb_map_size);
+
+  frame->rax = (uint64_t)mapped;
+  return frame->rax;
+}
+
+static uint64_t syscall_fb_flip_handler(syscall_frame_t* frame) {
+  if(current == NULL || !current->user_mode) {
+    frame->rax = (uint64_t)(-EPERM);
+    return frame->rax;
+  }
+
+  void* buffer = (void*)frame->rdi;
+  uint64_t flags = frame->rsi;
+  (void)flags;
+
+  if(buffer == NULL) {
+    buffer = current->fb_map_base;
+  }
+
+  if(buffer == NULL || current->fb_map_base == NULL || current->fb_map_size == 0) {
+    frame->rax = (uint64_t)(-EINVAL);
+    return frame->rax;
+  }
+
+  if(buffer != current->fb_map_base) {
+    frame->rax = (uint64_t)(-EINVAL);
+    return frame->rax;
+  }
+
+  if(!proc_user_buffer_accessible(current, buffer, current->fb_map_size, false)) {
+    frame->rax = (uint64_t)(-EFAULT);
+    return frame->rax;
+  }
+
+  if(!fb_present_user_buffer(buffer, current->fb_map_size)) {
+    frame->rax = (uint64_t)(-EIO);
+    return frame->rax;
+  }
+
+  frame->rax = 0;
+  return frame->rax;
 }
