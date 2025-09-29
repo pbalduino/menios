@@ -37,7 +37,7 @@ _start:
     lea msg_fork_child(%rip), %rsi
     mov $(msg_fork_child_end - msg_fork_child), %rdx
     mov $1, %rax
-    mov $1, %rdi
+    mov $2, %rdi
     int $0x80
 
     mov $1, %rax            # emit pipe payload prefix
@@ -74,13 +74,13 @@ _start:
     lea msg_fork_parent(%rip), %rsi
     mov $(msg_fork_parent_end - msg_fork_parent), %rdx
     mov $1, %rax
-    mov $1, %rdi
+    mov $2, %rdi
     int $0x80
 
     lea msg_input_intro(%rip), %rsi
     mov $(msg_input_intro_end - msg_input_intro), %rdx
     mov $1, %rax
-    mov $1, %rdi
+    mov $2, %rdi
     int $0x80
 
     mov $2, %rax            # SYS_open
@@ -101,6 +101,7 @@ _start:
 
 input_open_ok:
     mov $3, %r10d           # collect three events
+    lea hex_digits(%rip), %r12
 
 input_read_loop:
     mov $0, %rax            # SYS_read
@@ -114,31 +115,31 @@ input_read_loop:
     movzwl input_event_buffer+8(%rip), %eax
     mov %eax, %edx
     shr $12, %edx
-    mov hex_digits(%rip,%rdx,1), %bl
+    mov (%r12,%rdx,1), %bl
     mov %bl, kbd_event_scancode(%rip)
     movzwl input_event_buffer+8(%rip), %eax
     shr $8, %eax
     and $0xF, %eax
-    mov hex_digits(%rip,%rax,1), %bl
+    mov (%r12,%rax,1), %bl
     mov %bl, kbd_event_scancode+1(%rip)
     movzwl input_event_buffer+8(%rip), %eax
     shr $4, %eax
     and $0xF, %eax
-    mov hex_digits(%rip,%rax,1), %bl
+    mov (%r12,%rax,1), %bl
     mov %bl, kbd_event_scancode+2(%rip)
     movzwl input_event_buffer+8(%rip), %eax
     and $0xF, %eax
-    mov hex_digits(%rip,%rax,1), %bl
+    mov (%r12,%rax,1), %bl
     mov %bl, kbd_event_scancode+3(%rip)
 
     movzbq input_event_buffer+10(%rip), %rax
     mov %rax, %rdx
     shr $4, %rdx
-    mov hex_digits(%rip,%rdx,1), %bl
+    mov (%r12,%rdx,1), %bl
     mov %bl, kbd_event_ascii(%rip)
     movzbq input_event_buffer+10(%rip), %rax
     and $0xF, %rax
-    mov hex_digits(%rip,%rax,1), %bl
+    mov (%r12,%rax,1), %bl
     mov %bl, kbd_event_ascii+1(%rip)
     movzbq input_event_buffer+10(%rip), %rax
     mov %al, %bl
@@ -157,11 +158,11 @@ input_ascii_store:
     movzbq input_event_buffer+11(%rip), %rax
     mov %rax, %rdx
     shr $4, %rdx
-    mov hex_digits(%rip,%rdx,1), %bl
+    mov (%r12,%rdx,1), %bl
     mov %bl, kbd_event_mods(%rip)
     movzbq input_event_buffer+11(%rip), %rax
     and $0xF, %rax
-    mov hex_digits(%rip,%rax,1), %bl
+    mov (%r12,%rax,1), %bl
     mov %bl, kbd_event_mods+1(%rip)
 
     movzbq input_event_buffer+12(%rip), %rax
