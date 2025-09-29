@@ -151,9 +151,9 @@ Phase 1: Foundation
 Phase 2: Virtual Devices                #137 (null/zero) ──┐
                          │            ↓                    │
 Phase 3: Hardware        │      #138 (console/tty) ──┐    │
-#31 (framebuffer) ───────┼──→   #140 (kbd/fb devices) │    │
-#32 (keyboard) ──────────┘      #141 (block devices) ──┼───┤
-#62 (AHCI) ──────────────────→   #142 (serial device) ──┘   │
+#31 (framebuffer - CLOSED) ──┼──→   #140 (kbd/fb devices) │    │
+#32 (keyboard - CLOSED) ─────┘      #141 (block devices) ──┼───┤
+#62 (AHCI - CLOSED) ─────────────→   #142 (serial device) ──┘   │
                          │                                  │
 Phase 4: Advanced                #139 (random devices) ─────┤
                                                             │
@@ -232,7 +232,7 @@ Phase 2: USB Support                                  Mouse events
 - **Filesystem**: #62→#63→#64→#65→#60 (COMPLETE!)
 - **SMP**: #80→#81→#82→#83→#84
 - **Advanced Memory**: #87→#88→#90→#91→#95
-- **Hardware**: #31, #32 (CLOSED), #33
+- **Hardware**: #31 (CLOSED), #32 (CLOSED), #33
 
 ## 🔴 Current Blocking Relationships
 
@@ -290,6 +290,13 @@ Phase 2: USB Support                                  Mouse events
 4. **Threading**: #108 (CLOSED) → #109 (pthread API - ready)
 5. **Device I/O**: #136 → #138 (console/terminal devices)
 
+### For Graphical Applications (like Doom):
+1. **Graphics**: #31 (CLOSED) - Framebuffer syscalls (getinfo/map/flip) - COMPLETE
+2. **Input**: #32 (CLOSED) - Keyboard support COMPLETE, #143/#144 - Mouse support pending
+3. **Audio**: #33 - Audio subsystem for sound effects and music
+4. **File I/O**: #60 (CLOSED) + #61 - Read/write for assets and save games
+5. **Memory**: #89 (CLOSED) + #95 - Large allocations for game data
+
 ### For Unicode & International Support:
 1. **Phase 1**: #127 (UTF-8 utilities) → #128 (fonts) → #129 (rendering)
 2. **Phase 2**: #130 (keyboard input) + #131 (normalization)
@@ -316,7 +323,7 @@ Phase 2: USB Support                                  Mouse events
 - **Process Management**: File descriptors (#96), mmap/munmap (#89), fork/exec (#93)
 - **Storage Stack**: Block drivers (#62), cache (#63), filesystems (#64), VFS (#65), syscalls (#60)
 - **Threading Foundation**: Kernel threading infrastructure (#108)
-- **Hardware**: PCI/AHCI controller (#114-#117), input subsystem (#32)
+- **Hardware**: PCI/AHCI controller (#114-#117), input subsystem (#32), framebuffer interface (#31)
 
 ### **Ready to Implement (High Impact)**:
 - #109 (pthread API) - Threading foundation complete
@@ -331,9 +338,9 @@ Phase 2: USB Support                                  Mouse events
 
 ### **Project Status**:
 - **Total Issues**: 137 issues (highest #144, some numbers skipped)
-- **Closed**: 55 issues (major systems operational)
-- **Open**: 82 issues (organized by priority tiers)
-- **Major Completions**: Memory, scheduling, processes, storage, basic threading
+- **Closed**: 56 issues (major systems operational)
+- **Open**: 81 issues (organized by priority tiers)
+- **Major Completions**: Memory, scheduling, processes, storage, basic threading, framebuffer
 - **Active Development**: Threading APIs, device filesystem, mouse input, hardware drivers, advanced IPC
 
 ## **Current Development Strategy**
