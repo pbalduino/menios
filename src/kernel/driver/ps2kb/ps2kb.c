@@ -1,3 +1,4 @@
+#include <kernel/apic.h>
 #include <kernel/console.h>
 #include <kernel/driver.h>
 #include <kernel/driver/ps2kb.h>
@@ -40,6 +41,8 @@ static bool right_alt;
 static bool caps_lock;
 static bool extended_code;
 static bool pic_remapped;
+static bool ps2kb_started;
+static uint32_t ps2kb_debug_events;
 
 static const char scancode_unshift[128] = {
   0,  27, '1', '2', '3', '4', '5', '6', '7', '8',     /* 9 */
@@ -228,25 +231,42 @@ static void irq_eoi(void) {
   outb(PIC1_COMM, 0x20);
 }
 
+static inline void keyboard_ack_irq(void) {
+  irq_eoi();
+  apic_send_eoi();
+}
+
 void ps2kb_handler() {
   uint8_t raw = inb(PS2_DATA_PORT);
 
   if(raw == 0xE0) {
+    if(ps2kb_debug_events < 32) {
+      serial_printf("ps2kb_handler: raw=0x%02x (E0 prefix)\n", raw);
+      ps2kb_debug_events++;
+    }
     extended_code = true;
-    irq_eoi();
+    keyboard_ack_irq();
     return;
   }
 
   if(raw == 0xE1) {
     // Pause/Break sequence, ignore for now
+    if(ps2kb_debug_events < 32) {
+      serial_printf("ps2kb_handler: raw=0x%02x (E1 prefix)\n", raw);
+      ps2kb_debug_events++;
+    }
     extended_code = false;
-    irq_eoi();
+    keyboard_ack_irq();
     return;
   }
 
   if(raw == 0xFA || raw == 0xFE) {
     // ACK or RESEND - ignore
-    irq_eoi();
+    if(ps2kb_debug_events < 32) {
+      serial_printf("ps2kb_handler: raw=0x%02x (ack/resend)\n", raw);
+      ps2kb_debug_events++;
+    }
+    keyboard_ack_irq();
     return;
   }
 
@@ -257,6 +277,15 @@ void ps2kb_handler() {
   uint8_t code = raw & 0x7F;
   uint16_t scancode = (uint16_t)code | (is_extended ? 0x0100u : 0u);
   uint8_t ascii = 0;
+
+  if(ps2kb_debug_events < 32) {
+    serial_printf("ps2kb_handler: raw=0x%02x code=0x%02x%s release=%s\n",
+                  raw,
+                  code,
+                  is_extended ? " (extended)" : "",
+                  release ? "yes" : "no");
+    ps2kb_debug_events++;
+  }
 
   if(is_extended) {
     switch(code) {
@@ -290,7 +319,7 @@ void ps2kb_handler() {
         break;
     }
     push_keyboard_event(scancode, !release, ascii);
-    irq_eoi();
+    keyboard_ack_irq();
     return;
   }
 
@@ -298,29 +327,29 @@ void ps2kb_handler() {
     case 0x2A: // Left Shift
       left_shift = !release;
       push_keyboard_event(scancode, !release, ascii);
-      irq_eoi();
+      keyboard_ack_irq();
       return;
     case 0x36: // Right Shift
       right_shift = !release;
       push_keyboard_event(scancode, !release, ascii);
-      irq_eoi();
+      keyboard_ack_irq();
       return;
     case 0x1D: // Left Control
       left_ctrl = !release;
       push_keyboard_event(scancode, !release, ascii);
-      irq_eoi();
+      keyboard_ack_irq();
       return;
     case 0x38: // Left Alt
       left_alt = !release;
       push_keyboard_event(scancode, !release, ascii);
-      irq_eoi();
+      keyboard_ack_irq();
       return;
     case 0x3A: // Caps Lock
       if(!release) {
         caps_lock = !caps_lock;
       }
       push_keyboard_event(scancode, !release, ascii);
-      irq_eoi();
+      keyboard_ack_irq();
       return;
     default:
       break;
@@ -335,7 +364,7 @@ void ps2kb_handler() {
   }
 
   push_keyboard_event(scancode, !release, ascii);
-  irq_eoi();
+  keyboard_ack_irq();
 }
 
 static bool ps2_read_byte(uint8_t *out) {
@@ -349,12 +378,17 @@ static bool ps2_read_byte(uint8_t *out) {
 }
 
 void ps2kb_start(void) {
+  if(ps2kb_started) {
+    return;
+  }
+
   buffer_head = buffer_tail = 0;
   left_shift = right_shift = false;
   left_ctrl = right_ctrl = false;
   left_alt = right_alt = false;
   caps_lock = false;
   extended_code = false;
+  ps2kb_debug_events = 0;
 
   pic_remap();
 
@@ -405,15 +439,21 @@ void ps2kb_start(void) {
   }
 
   uint8_t mask = inb(PIC1_DATA);
-  mask &= ~(1 << 1);
+  mask |= (1 << 1); // keep PIC IRQ1 masked when IOAPIC handles the line
   outb(PIC1_DATA, mask);
 
+  if(!apic_configure_irq(1, ISR_KEYBOARD, false, false)) {
+    serial_printf("ps2kb_start: failed to route keyboard interrupt through IOAPIC\n");
+  }
+
   serial_printf("ps2kb_start: PS/2 keyboard initialised\n");
+  ps2kb_started = true;
 }
 
 void ps2kb_shutdown(void) {
   ps2_wait_write();
   ps2_write_command(PS2_DISABLE_FIRST_PORT);
+  ps2kb_started = false;
 }
 
 static uint8_t ps2kb_read(void) {
@@ -443,6 +483,7 @@ static struct driver_t ps2kb_driver = {
 void ps2kb_init(void) {
   serial_printf("ps2kb_init: Registering driver '%s' for HID '%s'\n", ps2kb_driver.name, ps2kb_driver.hid);
   driver_register(&ps2kb_driver);
+  ps2kb_start();
 }
 
 int kgetchar(void) {

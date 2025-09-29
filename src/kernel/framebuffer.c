@@ -7,6 +7,7 @@
 #include <kernel/fonts.h>
 #include <kernel/framebuffer.h>
 #include <kernel/kernel.h>
+#include <kernel/pmm.h>
 #include <kernel/serial.h>
 
 #include <stdbool.h>
@@ -251,6 +252,51 @@ void fb_init() {
   }
 
   framebuffer = framebuffer_request.response->framebuffers[0];
+
+  uintptr_t fb_raw = (uintptr_t)framebuffer->address;
+  virt_addr_t hhdm = get_kernel_offset();
+
+  serial_printf("fb_init: raw=%p width=%u height=%u pitch=%u\n",
+                (void*)fb_raw,
+                framebuffer->width,
+                framebuffer->height,
+                framebuffer->pitch);
+
+  virt_addr_t fb_virt = fb_raw >= hhdm
+                          ? (virt_addr_t)fb_raw
+                          : physical_to_virtual((phys_addr_t)fb_raw);
+
+  phys_addr_t fb_phys = fb_raw >= hhdm
+                          ? (phys_addr_t)(fb_raw - hhdm)
+                          : (phys_addr_t)fb_raw;
+
+  serial_printf("fb_init: virt=%p phys=%p hhdm=%p\n",
+                (void*)fb_virt,
+                (void*)fb_phys,
+                (void*)hhdm);
+
+  if(fb_raw < hhdm) {
+    framebuffer->address = (void*)fb_virt;
+  }
+
+  virt_addr_t fb_map_base = fb_virt & ~((virt_addr_t)PAGE_SIZE - 1);
+  phys_addr_t fb_phys_base = fb_phys & ~((phys_addr_t)PAGE_SIZE - 1);
+
+  if(virtual_to_physical(fb_map_base) == PHYS_ADDR_INVALID) {
+    size_t fb_bytes = framebuffer->pitch * framebuffer->height;
+    size_t fb_offset = (size_t)(fb_phys - fb_phys_base);
+    size_t fb_total = fb_bytes + fb_offset;
+    size_t fb_pages = (fb_total + PAGE_SIZE - 1) / PAGE_SIZE;
+
+    for(size_t page = 0; page < fb_pages; page++) {
+      phys_addr_t phys = fb_phys_base + (phys_addr_t)(page * PAGE_SIZE);
+      virt_addr_t virt = fb_map_base + (virt_addr_t)(page * PAGE_SIZE);
+      if(!pmm_map_page(virt, phys, true, false)) {
+        serial_error("framebuffer: failed to map page\n");
+        halt();
+      }
+    }
+  }
   active = true;
 
   char_line_width = 8;
@@ -307,8 +353,17 @@ inline bool fb_active() {
 }
 
 void fb_putpixel(uint32_t x, uint32_t y, uint32_t rgb) {
+  if(!framebuffer || !framebuffer->address) {
+    return;
+  }
+
+  if(x >= framebuffer->width || y >= framebuffer->height) {
+    return;
+  }
+
   uint32_t *fb_ptr = framebuffer->address;
-  fb_ptr[y * (framebuffer->pitch / 4) + x] = rgb;
+  size_t stride = framebuffer->pitch / sizeof(uint32_t);
+  fb_ptr[y * stride + x] = rgb;
 }
 
 static uint64_t max_viewport_row(void) {
