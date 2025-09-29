@@ -45,6 +45,7 @@
 #define AHCI_MAX_PRDT_ENTRIES     8u
 #define AHCI_PRDT_MAX_BYTES       (4u * 1024u * 1024u)
 #define AHCI_BOUNCE_BUFFER_BYTES  (512u * 1024u)
+#define AHCI_LINK_WAIT_NS         (200ull * 1000ull * 1000ull)
 #define AHCI_READY_TIMEOUT_NS   (500ull * 1000ull * 1000ull)
 #define AHCI_COMMAND_TIMEOUT_NS (5ull * 1000ull * 1000ull * 1000ull)
 
@@ -213,6 +214,7 @@ static bool ahci_port_issue_command(ahci_port_t* port,
 static bool ahci_port_wait_ready(ahci_port_t* port, uint64_t timeout_ns);
 static bool ahci_port_wait_complete(ahci_port_t* port, uint32_t slot_mask, uint64_t timeout_ns, bool* fatal_error);
 static void ahci_port_register_device(ahci_port_t* port, uint32_t device_index);
+static bool ahci_port_wait_link_active(ahci_port_t* port, uint64_t timeout_ns);
 
 static const block_device_ops_t ahci_block_ops = {
   .read_blocks = ahci_port_read,
@@ -406,11 +408,15 @@ static void ahci_port_init(ahci_port_t* port, ahci_controller_t* controller, uin
 }
 
 static bool ahci_port_device_present(ahci_port_t* port) {
-  uint32_t ssts = port->regs->ssts;
-  uint32_t det = ssts & 0x0Fu;
-  uint32_t ipm = (ssts >> 8) & 0x0Fu;
-
-  if(det != HBA_PxSSTS_DET_PRESENT || ipm != HBA_PxSSTS_IPM_ACTIVE) {
+  if(!ahci_port_wait_link_active(port, AHCI_LINK_WAIT_NS)) {
+#if AHCI_VERBOSE_LOG
+    serial_printf("ahci: ctrl %02x:%02x.%u port %u link inactive (ssts=0x%08x)\n",
+                  port->controller->bus,
+                  port->controller->device,
+                  port->controller->function,
+                  port->index,
+                  port->regs->ssts);
+#endif
     return false;
   }
 
@@ -435,6 +441,26 @@ static void ahci_port_clear_interrupts(ahci_port_t* port) {
     port->regs->is = pending;
   }
   hba->is = (1u << port->index);
+}
+
+static bool ahci_port_wait_link_active(ahci_port_t* port, uint64_t timeout_ns) {
+  useconds_t start = ns_from_boot();
+
+  while(true) {
+    uint32_t ssts = port->regs->ssts;
+    uint32_t det = ssts & 0x0Fu;
+    uint32_t ipm = (ssts >> 8) & 0x0Fu;
+
+    if(det == HBA_PxSSTS_DET_PRESENT && ipm == HBA_PxSSTS_IPM_ACTIVE) {
+      return true;
+    }
+
+    if(((uint64_t)ns_from_boot() - (uint64_t)start) > timeout_ns) {
+      return false;
+    }
+
+    asm volatile("pause");
+  }
 }
 
 static void ahci_port_stop(ahci_port_t* port) {
