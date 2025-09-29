@@ -349,6 +349,7 @@ digraph IssueDependencies {
     issue108 -> issue109 [label="THREADING CRITICAL"];
     issue60 -> issue31 [label="GRAPHICS READY", color=purple];
     issue127 -> issue128 [label="UNICODE START", color=green];
+    issue136 -> issue137 [label="DEVICES START", color=gold];
 
     // Legend
     subgraph cluster_legend {
@@ -361,6 +362,7 @@ digraph IssueDependencies {
         legend_threading [label="New Threading", fillcolor="#B3E5FC"];
         legend_unicode [label="Unicode Support", fillcolor="#E6F3FF"];
         legend_testing [label="Testing & QA", fillcolor="#DDDAAA"];
+        legend_devices [label="Device Filesystem", fillcolor="#DAA520"];
         legend_ide [label="IDE Storage", fillcolor="#F5DEB3"];
         legend_usb [label="USB Support", fillcolor="#AFEEEE"];
     }

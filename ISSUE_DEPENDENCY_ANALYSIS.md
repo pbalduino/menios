@@ -45,6 +45,15 @@ These issues form the backbone of the system and should be prioritized:
 ### 🆕 Tier 6: Testing & Quality Assurance (NEW!)
 27. **#135** - Code coverage reporting with Gcov integration
 
+### 🆕 Tier 7: Device Filesystem & /dev (NEW!)
+28. **#136** - Device filesystem infrastructure (foundation)
+29. **#137** - /dev/null and /dev/zero virtual devices
+30. **#138** - /dev/console and terminal devices
+31. **#139** - /dev/random and /dev/urandom entropy devices
+32. **#140** - /dev/kbd0 and /dev/fb0 hardware devices
+33. **#141** - /dev/sda block devices for storage
+34. **#142** - /dev/ttyS0 serial device interface
+
 ## 📊 Updated Dependency Categories
 
 ### Memory Management Chain ✅ (Foundation Complete!)
@@ -129,6 +138,24 @@ Unity Test Framework (existing) → #134 (Unicode testing) → #135 (code covera
                                                            (improves all components)
 ```
 
+### 🆕 Device Filesystem Chain (NEW!)
+```
+Phase 1: Foundation
+#96 (file descriptors) ──┐
+#60 (VFS layer) ─────────┼──→ #136 (device filesystem infrastructure)
+                         │            ↓
+Phase 2: Virtual Devices                #137 (null/zero) ──┐
+                         │            ↓                    │
+Phase 3: Hardware        │      #138 (console/tty) ──┐    │
+#31 (framebuffer) ───────┼──→   #140 (kbd/fb devices) │    │
+#32 (keyboard) ──────────┘      #141 (block devices) ──┼───┤
+#62 (AHCI) ──────────────────→   #142 (serial device) ──┘   │
+                         │                                  │
+Phase 4: Advanced                #139 (random devices) ─────┤
+                                                            │
+Phase 5: Complete /dev System ←─────────────────────────────┘
+```
+
 ### Filesystem Stack
 ```
 #62 (block driver) → #63 (block cache) → #64 (filesystem lib) → #65 (VFS) → #60 (syscalls)
@@ -203,6 +230,7 @@ Unity Test Framework (existing) → #134 (Unicode testing) → #135 (code covera
 - **#108 (kernel threading)** ✅ - Dependencies: #34 (CLOSED), #36 (CLOSED), #57 (CLOSED)
 - **#127 (UTF-8 utilities)** ✅ - No dependencies, ready to start immediately!
 - **#135 (code coverage)** ✅ - Can start with existing Unity tests, no blocking dependencies
+- **#136 (device filesystem)** ✅ - Dependencies: #96 (file descriptors), #60 (VFS) - both ready!
 
 ### Cannot Start Until Complete:
 - **#109 (pthread API)** blocks on: #108 (kernel threading)
@@ -215,6 +243,7 @@ Unity Test Framework (existing) → #134 (Unicode testing) → #135 (code covera
 - **Threading** (#108-#113) can develop after Phase 2
 - **Unicode Support** (#127-#134) can develop independently - start with #127!
 - **Code Coverage** (#135) can develop immediately with existing Unity tests
+- **Device Filesystem** (#136-#142) can start now with #136!
 - **Networking stack** (#67-#73) can develop independently after basic kernel
 - **SMP support** (#80-#84) can develop in parallel with IPC
 - **Filesystem** (#62-#65) can develop independently
@@ -229,6 +258,7 @@ Unity Test Framework (existing) → #134 (Unicode testing) → #135 (code covera
 3. **#108** - Kernel threading infrastructure (ready to implement)
 4. **#127** - UTF-8 utilities (ready to implement, no dependencies!)
 5. **#135** - Code coverage with Gcov (ready to implement, existing Unity tests!)
+6. **#136** - Device filesystem infrastructure (ready to implement!)
 
 ### For Maximum Impact:
 1. **Complete Phase 2** (#89, #96, #93, #101, #102) - Essential for applications
@@ -247,6 +277,11 @@ Unity Test Framework (existing) → #134 (Unicode testing) → #135 (code covera
 2. **Phase 2**: #130 (keyboard input) + #131 (normalization)
 3. **Phase 3**: #132 (filesystem) → #133 (locale/i18n) → #134 (testing)
 
+### For Device Filesystem & Hardware Access:
+1. **Phase 1**: #136 (device infrastructure) → #137 (null/zero)
+2. **Phase 2**: #138 (console) + #140 (kbd/fb) + #141 (block devices)
+3. **Phase 3**: #139 (random) + #142 (serial) → Complete /dev system
+
 ### For Microkernel Vision:
 1. **Complete Phases 1-3** first (foundation + threading)
 2. **Transition**: #106 → #107 (microkernel IPC + security)
@@ -259,20 +294,23 @@ Unity Test Framework (existing) → #134 (Unicode testing) → #135 (code covera
 - Core scheduling (#34)
 - Basic synchronization (#36, #40)
 
-### 🔥 **Ready to Implement (5 issues)**:
+### 🔥 **Ready to Implement (6 issues)**:
 - #89 (mmap/munmap)
 - #96 (file descriptors)
 - #108 (kernel threading)
 - #127 (UTF-8 utilities)
 - #135 (code coverage)
+- #136 (device filesystem)
 
-### 📋 **Total Remaining**: ~79 open issues
+### 📋 **Total Remaining**: ~86 open issues
 
 ### 🎯 **Threading Support**: 6 new issues created (#108-#113)
 
 ### 🆕 **Unicode Support**: 8 new issues created (#127-#134)
 
 ### 🆕 **Testing & QA**: 1 new issue created (#135)
+
+### 🆕 **Device Filesystem**: 7 new issues created (#136-#142)
 
 ## 💡 **Updated Strategy**
 
@@ -284,6 +322,7 @@ With the strong foundation now in place, meniOS is well-positioned for rapid dev
 3. **Track C**: Advanced features (#101, #102, #103)
 4. **Track D**: Unicode support (#127, #128, #129, #130)
 5. **Track E**: Testing & quality assurance (#135 for immediate impact)
+6. **Track F**: Device filesystem & hardware access (#136, #137, #138)
 
 This parallel approach could significantly accelerate development and enable running sophisticated applications sooner than the original sequential timeline suggested.
 
