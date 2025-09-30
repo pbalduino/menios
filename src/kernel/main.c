@@ -169,6 +169,8 @@ void _start() {
 
   apic_init();
 
+  serial_enable_irq();
+
   timer_init();
   
   scheduler_init();

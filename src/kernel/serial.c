@@ -45,6 +45,7 @@ bool serial_debug = false;
 
 static spinlock_t serial_printf_lock;
 static serial_rx_state_t serial_rx_state = {0};
+static bool serial_irq_configured = false;
 
 static inline uint8_t serial_port_in(uint8_t offset) {
   return inb((uint16_t)(SERIAL_COM1_BASE + offset));
@@ -164,21 +165,42 @@ void serial_init() {
   (void)serial_port_in(SERIAL_REG_IIR);
   (void)serial_port_in(SERIAL_REG_MSR);
 
-  // Enable receive interrupts
-  serial_port_out(SERIAL_REG_IER, 0x01);
+  spinlock_init(&serial_printf_lock);
+  serial_puts("- Initing serial communication\n");
+  serial_puts(".OK\n");
+}
 
-  // Unmask IRQ4 on the legacy PIC path
+void serial_enable_irq(void) {
+  serial_buffer_init();
+
+  if(serial_irq_configured) {
+    serial_port_out(SERIAL_REG_IER, 0x01);
+    return;
+  }
+
+  // Ensure modem control lines stay asserted
+  serial_port_out(SERIAL_REG_MCR, 0x0B);
+
+  // Clear any pending status
+  (void)serial_port_in(SERIAL_REG_LSR);
+  (void)serial_port_in(SERIAL_REG_DATA);
+  (void)serial_port_in(SERIAL_REG_IIR);
+  (void)serial_port_in(SERIAL_REG_MSR);
+
+  // Route IRQ4 through the IOAPIC
+  if(!apic_configure_irq(SERIAL_IRQ_GSI, ISR_SERIAL, false, false)) {
+    serial_puts("serial_enable_irq: failed to route COM1 interrupt\n");
+    serial_port_out(SERIAL_REG_IER, 0x00);
+    return;
+  }
+
+  // Unmask IRQ4 on the PIC for legacy passthrough
   uint8_t pic_mask = inb(PIC1_DATA_PORT);
   pic_mask &= (uint8_t)~(1u << 4);
   outb(PIC1_DATA_PORT, pic_mask);
 
-  if(!apic_configure_irq(SERIAL_IRQ_GSI, ISR_SERIAL, false, false)) {
-    serial_puts("serial_init: failed to route COM1 interrupt\n");
-  }
-
-  spinlock_init(&serial_printf_lock);
-  serial_puts("- Initing serial communication\n");
-  serial_puts(".OK\n");
+  serial_port_out(SERIAL_REG_IER, 0x01);
+  serial_irq_configured = true;
 }
 
 int serial_putchar(int ch) {
