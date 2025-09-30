@@ -1,0 +1,34 @@
+digraph RoadmapOfRoadmaps {
+    rankdir=LR;
+    node [shape=box, style=rounded, fontname="Arial", fontsize=10];
+
+    doom    [label="Road to Doom\n(docs/roads/road_to_doom.md)"];
+    shell   [label="Road to Shell\n(docs/roads/road_to_shell.md)"];
+    sqlite  [label="Road to SQLite\n(docs/roads/road_to_sqlite.md)"];
+    gcc     [label="Road to GCC Toolchain\n(docs/roads/road_to_gcc.md)"];
+    multi   [label="Road to Multi-User\n(docs/roads/road_to_multiuser.md)"];
+    gfx     [label="Road to Graphic Interface\n(docs/roads/road_to_graphic_interface.md)"];
+    micro   [label="Road to Microkernel\n(docs/roads/road_to_microkernel.md)"];
+
+    shell -> doom   [label="tooling for" , fontname="Arial", fontsize=9];
+    shell -> sqlite [label="CLI support" , fontname="Arial", fontsize=9];
+    shell -> multi  [label="login shells" , fontname="Arial", fontsize=9];
+
+    gcc   -> doom   [label="build WAD tools", fontname="Arial", fontsize=9];
+    gcc   -> sqlite [label="build SQLite", fontname="Arial", fontsize=9];
+    gcc   -> shell  [label="compile shell add-ons", fontname="Arial", fontsize=9];
+
+    doom  -> gfx    [label="needs UI", fontname="Arial", fontsize=9];
+    doom  -> sqlite [label="save data", fontname="Arial", fontsize=9];
+    doom  -> shell  [label="developer workflow", fontname="Arial", fontsize=9];
+
+    sqlite -> gcc   [label="requires toolchain", fontname="Arial", fontsize=9];
+
+    multi -> shell  [label="login interface", fontname="Arial", fontsize=9];
+    multi -> sqlite [label="user DB config", fontname="Arial", fontsize=9];
+
+    micro -> gcc    [label="user servers", fontname="Arial", fontsize=9];
+    micro -> shell  [label="service control", fontname="Arial", fontsize=9];
+
+    gfx -> doom     [label="drawing APIs", fontname="Arial", fontsize=9];
+}
