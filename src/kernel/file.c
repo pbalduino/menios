@@ -18,6 +18,7 @@
 #include <kernel/serial.h>
 #include <kernel/spinlock.h>
 #include <kernel/tty.h>
+#include <kernel/vga_text.h>
 #include <kernel/vfs.h>
 
 #define FD_STDIN   0
@@ -504,6 +505,9 @@ static void install_standard_streams(void) {
 void file_system_init(void) {
 #ifdef MENIOS_KERNEL
   char_device_system_init();
+  if(!char_device_register(vga_text_char_device())) {
+    serial_printf("file_system_init: failed to register /dev/vga/0\n");
+  }
   if(!char_device_register(tty_char_device())) {
     serial_printf("file_system_init: failed to register /dev/tty0\n");
   }

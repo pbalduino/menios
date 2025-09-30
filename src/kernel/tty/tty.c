@@ -10,6 +10,7 @@
 #include <kernel/serial.h>
 #include <kernel/spinlock.h>
 #include <kernel/tty.h>
+#include <kernel/vga_text.h>
 
 #define TTY_INPUT_BUFFER_SIZE 4096
 #define TTY_LINE_BUFFER_SIZE 512
@@ -60,6 +61,7 @@ char_device_t* tty_char_device(void) {
 }
 
 static void tty_output_char(char ch) {
+  vga_text_putc(ch);
   fb_putchar((uint8_t)ch);
   serial_putchar((uint8_t)ch);
 }
@@ -94,6 +96,7 @@ void tty_system_init(void) {
     return;
   }
 
+  vga_text_init();
   spinlock_init(&default_tty.buffer_lock);
   kmutex_init(&default_tty.wait_lock);
   kcondvar_init(&default_tty.data_available);

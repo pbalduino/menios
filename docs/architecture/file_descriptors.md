@@ -19,6 +19,13 @@ opaque `file_t` handles with reference counting and close-on-exec semantics.
   are pushed into stdin so user processes can `read()` them. A dedicated
   `/dev/input/kbd` character device exposes timestamped key events for
   applications that need structured input rather than raw bytes.
+- **Character device registry** – Issue #170 introduced `char_device_register()`
+  so `/dev` nodes such as `/dev/tty0`, `/dev/console`, `/dev/ttyS0`,
+  `/dev/input/kbd`, `/dev/fb/0`, and the new `/dev/vga/0` are all resolved
+  through a common open path. Kernel subsystems provide an open callback and
+  the registry validates access modes before handing back a `file_t`. This
+  keeps the filesystem, syscalls, and device drivers decoupled while matching
+  traditional Unix semantics.
 - **Syscall surface** – the dispatcher wires up `read`, `write`, `close`,
   `dup`, `dup2`, `fcntl`, and `pipe`. Kernel helpers validate descriptors and
   translate return codes into errno values for userspace.
