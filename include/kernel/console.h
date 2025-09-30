@@ -4,6 +4,8 @@
 #include <stdarg.h>
 #include <types.h>
 
+#include <kernel/file.h>
+
 #define FLAG_LEFT  0x01 // The '-' flag
 #define FLAG_SIGN  0x02 // The '+' flag
 #define FLAG_SPACE 0x04 // The ' ' flag
@@ -33,5 +35,7 @@ void logk(const char* format, ...);
 void errk(const char* format, ...);
 
 int kputchar(int ch);
+
+file_t* console_device_open(void);
 
 #endif

@@ -12,6 +12,8 @@ desktops, and hardware-accelerated rendering.
   with double-buffered staging (#31).
 - Input stack delivers keyboard events via `/dev/input/kbd` (#32); mouse support
   is pending (#143/#144).
+- `/dev/console` multiplexes framebuffer output with serial logging for terminal
+  apps (#138).
 - PID 1 `init` supervisor is in place (#153/#154), enabling userland services to
   launch at boot and supervise graphical daemons.
 

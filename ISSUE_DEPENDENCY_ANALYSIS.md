@@ -48,7 +48,7 @@ These issues form the backbone of the system and should be prioritized:
 ### 🆕 Tier 7: Device Filesystem & /dev (NEW!)
 28. **#136** - Device filesystem infrastructure (foundation)
 29. **#137** - /dev/null and /dev/zero virtual devices
-30. **#138** - /dev/console and terminal devices
+30. **#138** - /dev/console and terminal devices (CLOSED)
 31. **#139** - /dev/random and /dev/urandom entropy devices
 32. **#140** - /dev/kbd0 and /dev/fb0 hardware devices
 33. **#141** - /dev/sda block devices for storage
@@ -200,7 +200,7 @@ Phase 1: Foundation
                          │            ↓
 Phase 2: Virtual Devices                #137 (null/zero) ──┐
                          │            ↓                    │
-Phase 3: Hardware        │      #138 (console/tty) ──┐    │
+Phase 3: Hardware        │      #138 (console/tty - CLOSED) ──┐    │
 #31 (framebuffer - CLOSED) ──┼──→   #140 (kbd/fb devices) │    │
 #32 (keyboard - CLOSED) ─────┘      #141 (block devices) ──┼───┤
 #62 (AHCI - CLOSED) ─────────────→   #142 (serial device) ──┘   │
@@ -517,7 +517,7 @@ All phases ───────────────→ #178 (security audit
 
 ### For Device Filesystem & Hardware Access:
 1. **Phase 1**: #136 (device infrastructure) → #137 (null/zero)
-2. **Phase 2**: #138 (console) + #140 (kbd/fb) + #141 (block devices)
+2. **Phase 2**: #138 (console - CLOSED) + #140 (kbd/fb) + #141 (block devices)
 3. **Phase 3**: #139 (random) + #142 (serial) → Complete /dev system
 
 ### For Mouse Input Support:

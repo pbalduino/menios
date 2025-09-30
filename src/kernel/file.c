@@ -7,6 +7,7 @@
 #include <sys/fcntl.h>
 
 #include <kernel/condvar.h>
+#include <kernel/console.h>
 #include <kernel/file.h>
 #include <kernel/framebuffer.h>
 #include <kernel/input/keyboard.h>
@@ -35,8 +36,6 @@ FILE* stdout = &kernel_stdout_stream;
 FILE* stderr = &kernel_stderr_stream;
 #endif
 
-static file_t* serial_stdout_file = NULL;
-static file_t* serial_stderr_file = NULL;
 static file_t* stdin_stream_file  = NULL;
 
 #define STDIN_BUFFER_SIZE 256
@@ -510,16 +509,16 @@ static void install_standard_streams(void) {
     file_unref(stdin_stream_file);
   }
 
-  serial_stdout_file = file_create(&serial_file_ops, NULL, FILE_MODE_WRITE);
-  if(serial_stdout_file != NULL) {
-    proc_file_install_at(&kernel_process_info, FD_STDOUT, serial_stdout_file, 0);
-    file_unref(serial_stdout_file);
+  file_t* console_out = console_device_open();
+  if(console_out != NULL) {
+    proc_file_install_at(&kernel_process_info, FD_STDOUT, console_out, 0);
+    file_unref(console_out);
   }
 
-  serial_stderr_file = file_create(&serial_file_ops, NULL, FILE_MODE_WRITE);
-  if(serial_stderr_file != NULL) {
-    proc_file_install_at(&kernel_process_info, FD_STDERR, serial_stderr_file, 0);
-    file_unref(serial_stderr_file);
+  file_t* console_err = console_device_open();
+  if(console_err != NULL) {
+    proc_file_install_at(&kernel_process_info, FD_STDERR, console_err, 0);
+    file_unref(console_err);
   }
 }
 #endif
@@ -566,6 +565,9 @@ FILE* fopen(const char* filename, const char* mode) {
   if(strcmp(filename, "/dev/ttyS0") == 0 && write) {
     file = file_create(&serial_file_ops, NULL, FILE_MODE_WRITE);
     file_mode = FILE_MODE_WRITE;
+  } else if(strcmp(filename, "/dev/console") == 0 && (read || write)) {
+    file = console_device_open();
+    file_mode = FILE_MODE_READ | FILE_MODE_WRITE;
   } else if(strcmp(filename, "/dev/fb/0") == 0 && write) {
     file = file_create(&framebuffer_file_ops, NULL, FILE_MODE_WRITE);
     file_mode = FILE_MODE_WRITE;

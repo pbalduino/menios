@@ -10,6 +10,7 @@ process control, pipelines, and user-friendly tooling.
 - **Filesystem/navigation**: VFS read-only path ready; `getcwd(2)`/`chdir(2)` now live (#151 ✅).
 - **Pipes & signals**: Anonymous pipes implemented (#102 ✅); signal delivery prototype ready (#103 🟡).
 - **Input**: Keyboard events surfaced via `/dev/input/kbd`; mouse pending (#32 ✅, #143/#144 🟡).
+- **Terminal I/O**: `/dev/console` now bridges VGA output with serial logging and keyboard input (#138 ✅).
 
 Remaining core pieces: shell REPL & execution pipeline (#161-#165), and
 quality-of-life features (history, completion, job control).
