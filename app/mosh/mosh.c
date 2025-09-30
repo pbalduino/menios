@@ -111,8 +111,8 @@ static void sys_exit(int code) {
   while(true) { }
 }
 
-static void attach_console(void) {
-  static const char device[] = "/dev/console";
+static void attach_tty(void) {
+  static const char device[] = "/dev/tty0";
   int fd = sys_open(device, O_RDWR, 0);
   if(fd < 0) {
     return;
@@ -489,7 +489,7 @@ static void run_command(int argc, char* argv[]) {
 }
 
 int main(void) {
-  attach_console();
+  attach_tty();
   ensure_default_environment();
 
   char cwd[MOSH_MAX_PATH_LEN];

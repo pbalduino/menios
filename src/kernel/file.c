@@ -451,6 +451,9 @@ FILE* fopen(const char* filename, const char* mode) {
   if(strcmp(filename, "/dev/ttyS0") == 0 && write) {
     file = file_create(&serial_file_ops, NULL, FILE_MODE_WRITE);
     file_mode = FILE_MODE_WRITE;
+  } else if(strcmp(filename, "/dev/tty0") == 0 && (read || write)) {
+    file = tty_device_open();
+    file_mode = FILE_MODE_READ | FILE_MODE_WRITE;
   } else if(strcmp(filename, "/dev/console") == 0 && (read || write)) {
     file = console_device_open();
     file_mode = FILE_MODE_READ | FILE_MODE_WRITE;
