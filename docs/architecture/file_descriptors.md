@@ -21,7 +21,7 @@ opaque `file_t` handles with reference counting and close-on-exec semantics.
   applications that need structured input rather than raw bytes.
 - **Character device registry** – Issue #170 introduced `char_device_register()`
   so `/dev` nodes such as `/dev/tty0`, `/dev/console`, `/dev/ttyS0`,
-  `/dev/input/kbd`, `/dev/fb/0`, `/dev/vga/0`, and `/dev/zero` are all resolved
+  `/dev/input/kbd`, `/dev/fb/0`, `/dev/vga/0`, `/dev/null`, and `/dev/zero` are all resolved
   through a common open path. Kernel subsystems provide an open callback and
   the registry validates access modes before handing back a `file_t`. This
   keeps the filesystem, syscalls, and device drivers decoupled while matching
