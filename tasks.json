@@ -1,5 +1,73 @@
 [
   {
+    "title": "Character device infrastructure",
+    "github_issue": {
+      "number": 170,
+      "url": "https://github.com/pbalduino/menios/issues/170",
+      "state": "OPEN"
+    },
+    "labels": [
+      "drivers"
+    ],
+    "assignees": []
+  },
+  {
+    "title": "TTY subsystem",
+    "github_issue": {
+      "number": 169,
+      "url": "https://github.com/pbalduino/menios/issues/169",
+      "state": "OPEN"
+    },
+    "labels": [
+      "drivers"
+    ],
+    "assignees": [
+      "pbalduino"
+    ]
+  },
+  {
+    "title": "Console/VGA driver infrastructure",
+    "github_issue": {
+      "number": 168,
+      "url": "https://github.com/pbalduino/menios/issues/168",
+      "state": "OPEN"
+    },
+    "labels": [
+      "drivers"
+    ],
+    "assignees": [
+      "pbalduino"
+    ]
+  },
+  {
+    "title": "Implement /dev/zero device",
+    "github_issue": {
+      "number": 167,
+      "url": "https://github.com/pbalduino/menios/issues/167",
+      "state": "OPEN"
+    },
+    "labels": [
+      "devfs"
+    ],
+    "assignees": [
+      "pbalduino"
+    ]
+  },
+  {
+    "title": "Hook shell I/O to virtual terminals/VGA",
+    "github_issue": {
+      "number": 166,
+      "url": "https://github.com/pbalduino/menios/issues/166",
+      "state": "OPEN"
+    },
+    "labels": [
+      "mosh"
+    ],
+    "assignees": [
+      "pbalduino"
+    ]
+  },
+  {
     "title": "Implement pipe support for mosh shell (|)",
     "github_issue": {
       "number": 165,
@@ -162,21 +230,22 @@
     ]
   },
   {
-    "title": "Implement boot integration to start init as PID 1",
+    "title": "Implement ext2 filesystem support (read-only initially)",
     "github_issue": {
       "number": 154,
       "url": "https://github.com/pbalduino/menios/issues/154",
       "state": "CLOSED"
     },
     "labels": [
-      "enhancement"
+      "enhancement",
+      "nice to have"
     ],
     "assignees": [
       "pbalduino"
     ]
   },
   {
-    "title": "Implement barebone init program for process supervision",
+    "title": "Implement procfs process information filesystem for /proc",
     "github_issue": {
       "number": 153,
       "url": "https://github.com/pbalduino/menios/issues/153",
@@ -190,7 +259,7 @@
     ]
   },
   {
-    "title": "Implement environment variables support (getenv/setenv/unsetenv)",
+    "title": "Implement devfs device filesystem for /dev hierarchy",
     "github_issue": {
       "number": 152,
       "url": "https://github.com/pbalduino/menios/issues/152",
@@ -204,28 +273,92 @@
     ]
   },
   {
-    "title": "Implement getcwd and chdir syscalls for directory navigation",
+    "title": "Implement tmpfs/ramfs in-memory filesystem for /tmp",
     "github_issue": {
       "number": 151,
       "url": "https://github.com/pbalduino/menios/issues/151",
       "state": "CLOSED"
     },
     "labels": [
-      "enhancement"
+      "enhancement",
+      "good first issue"
     ],
     "assignees": [
       "pbalduino"
     ]
   },
   {
-    "title": "Implement process zombie state and orphan reparenting to init",
+    "title": "Integrate init into boot sequence and update user_demo_launch",
     "github_issue": {
       "number": 150,
       "url": "https://github.com/pbalduino/menios/issues/150",
       "state": "CLOSED"
     },
     "labels": [
-      "enhancement"
+      "enhancement",
+      "init"
+    ],
+    "assignees": [
+      "pbalduino"
+    ]
+  },
+  {
+    "title": "Implement barebone init program (PID 1) for process supervision",
+    "github_issue": {
+      "number": 149,
+      "url": "https://github.com/pbalduino/menios/issues/149",
+      "state": "CLOSED"
+    },
+    "labels": [
+      "enhancement",
+      "init"
+    ],
+    "assignees": [
+      "pbalduino"
+    ]
+  },
+  {
+    "title": "Implement environment variables support (getenv/setenv/environ)",
+    "github_issue": {
+      "number": 148,
+      "url": "https://github.com/pbalduino/menios/issues/148",
+      "state": "OPEN"
+    },
+    "labels": [
+      "enhancement",
+      "good first issue",
+      "init"
+    ],
+    "assignees": [
+      "pbalduino"
+    ]
+  },
+  {
+    "title": "Implement getcwd and chdir syscalls for working directory management",
+    "github_issue": {
+      "number": 147,
+      "url": "https://github.com/pbalduino/menios/issues/147",
+      "state": "OPEN"
+    },
+    "labels": [
+      "enhancement",
+      "good first issue",
+      "init"
+    ],
+    "assignees": [
+      "pbalduino"
+    ]
+  },
+  {
+    "title": "Implement zombie process state and orphan reparenting to init",
+    "github_issue": {
+      "number": 146,
+      "url": "https://github.com/pbalduino/menios/issues/146",
+      "state": "OPEN"
+    },
+    "labels": [
+      "enhancement",
+      "init"
     ],
     "assignees": [
       "pbalduino"
@@ -234,71 +367,14 @@
   {
     "title": "Implement wait/waitpid syscall for process synchronization",
     "github_issue": {
-      "number": 149,
-      "url": "https://github.com/pbalduino/menios/issues/149",
-      "state": "CLOSED"
-    },
-    "labels": [
-      "enhancement",
-      "good first issue"
-    ],
-    "assignees": [
-      "pbalduino"
-    ]
-  },
-  {
-    "title": "Implement ext2 filesystem support (read-only initially)",
-    "github_issue": {
-      "number": 148,
-      "url": "https://github.com/pbalduino/menios/issues/148",
-      "state": "OPEN"
-    },
-    "labels": [
-      "enhancement",
-      "nice to have"
-    ],
-    "assignees": [
-      "pbalduino"
-    ]
-  },
-  {
-    "title": "Implement procfs (process information filesystem)",
-    "github_issue": {
-      "number": 147,
-      "url": "https://github.com/pbalduino/menios/issues/147",
-      "state": "OPEN"
-    },
-    "labels": [
-      "enhancement"
-    ],
-    "assignees": [
-      "pbalduino"
-    ]
-  },
-  {
-    "title": "Implement devfs (device filesystem) for /dev hierarchy",
-    "github_issue": {
-      "number": 146,
-      "url": "https://github.com/pbalduino/menios/issues/146",
-      "state": "OPEN"
-    },
-    "labels": [
-      "enhancement"
-    ],
-    "assignees": [
-      "pbalduino"
-    ]
-  },
-  {
-    "title": "Implement tmpfs/ramfs (in-memory filesystem)",
-    "github_issue": {
       "number": 145,
       "url": "https://github.com/pbalduino/menios/issues/145",
       "state": "OPEN"
     },
     "labels": [
       "enhancement",
-      "good first issue"
+      "good first issue",
+      "init"
     ],
     "assignees": [
       "pbalduino"

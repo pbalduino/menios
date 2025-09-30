@@ -58,49 +58,53 @@ These issues form the backbone of the system and should be prioritized:
 35. **#143** - PS/2 mouse driver and input support
 36. **#144** - USB mouse support through HID class driver
 
-### 🆕 Tier 9: Virtual & Special Filesystems (NEW!)
-37. **#145** - tmpfs/ramfs (in-memory filesystem for /tmp)
-38. **#146** - devfs (device filesystem for /dev hierarchy)
-39. **#147** - procfs (process information filesystem for /proc)
-40. **#148** - ext2 filesystem support (read-only initially)
+### 🆕 Tier 9: init & Shell Infrastructure (NEW!)
+37. **#145** - wait/waitpid syscall (process synchronization)
+38. **#146** - Process zombie state and orphan reparenting
+39. **#147** - getcwd/chdir syscalls (directory navigation)
+40. **#148** - Environment variables support (getenv/setenv/unsetenv)
+41. **#149** - Barebone init program (PID 1 process supervisor - CLOSED)
+42. **#150** - Boot integration to start init as PID 1 (CLOSED)
 
-### 🆕 Tier 10: init & Shell Infrastructure (NEW!)
-41. **#149** - wait/waitpid syscall (process synchronization - CLOSED)
-42. **#150** - Process zombie state and orphan reparenting (CLOSED)
-43. **#151** - getcwd/chdir syscalls (directory navigation - CLOSED)
-44. **#152** - Environment variables support (getenv/setenv/unsetenv - CLOSED)
-45. **#153** - Barebone init program (PID 1 process supervisor - CLOSED)
-46. **#154** - Boot integration to start init as PID 1 (CLOSED)
+### 🆕 Tier 10: Virtual & Special Filesystems (NEW!)
+43. **#151** - tmpfs/ramfs (in-memory filesystem for /tmp - CLOSED)
+44. **#152** - devfs (device filesystem for /dev hierarchy - CLOSED)
+45. **#153** - procfs (process information filesystem for /proc - CLOSED)
+46. **#154** - ext2 filesystem support (read-only initially - CLOSED)
 
 ### Tier 11: mosh Shell Core Components
-47. **#161** - Basic REPL and command parsing (read/parse/execute loop - CLOSED)
-48. **#162** - Command execution (fork/exec/wait infrastructure - CLOSED)
-49. **#163** - Built-in commands (cd/pwd/exit/export)
-50. **#164** - Basic I/O redirection (>, <, >>)
-51. **#165** - Pipe support (|)
+47. **#155** - Scripting support (if/while/for/functions)
+48. **#156** - Command history (up/down arrows)
+49. **#157** - Tab completion
+50. **#158** - Job control (bg/fg/Ctrl-Z)
+51. **#159** - Advanced redirection (2>&1, here-docs)
+52. **#160** - Line editing keys (Ctrl+L/K/U/A/E/R)
+53. **#161** - Basic REPL and command parsing (read/parse/execute loop - CLOSED)
+54. **#162** - Command execution (fork/exec/wait infrastructure - CLOSED)
+55. **#163** - Built-in commands (cd/pwd/exit/export)
+56. **#164** - Basic I/O redirection (>, <, >>)
+57. **#165** - Pipe support (|)
+58. **#166** - Hook shell I/O to virtual terminals/VGA (TTY devices, ANSI codes)
 
-### Tier 12: mosh Shell Advanced Features
-52. **#156** - Command history (up/down arrows)
-53. **#157** - Tab completion
-54. **#160** - Line editing keys (Ctrl+L/K/U/A/E/R)
-55. **#155** - Scripting support (if/while/for/functions)
-56. **#158** - Job control (bg/fg/Ctrl-Z)
-57. **#159** - Advanced redirection (2>&1, here-docs)
+### Tier 12: Terminal Infrastructure (NEW!)
+59. **#168** - Console/VGA driver infrastructure (text mode, 80×25)
+60. **#169** - TTY subsystem (line discipline, virtual terminals, ioctl)
+61. **#170** - Character device infrastructure (foundation for streaming devices)
 
-### Tier 13: Multi-User System Infrastructure (Future)
-58. **#166** - User/group database infrastructure (/etc/passwd, /etc/group)
-59. **#167** - Process credentials (UID/GID per process)
-60. **#168** - User database parsing and management
-61. **#169** - Login program and authentication
-62. **#170** - Session management and getty
-63. **#171** - File system permission bits (owner/group/other)
-64. **#172** - VFS permission checking
-65. **#173** - Security syscalls (getuid/setuid family)
-66. **#174** - Update all syscalls for permission checks
-67. **#175** - User management utilities (useradd, passwd, chmod)
-68. **#176** - su and sudo implementation
-69. **#177** - Resource limits (ulimit/getrlimit/setrlimit)
-70. **#178** - Security testing and audit
+### Tier 13: Multi-User System Infrastructure (Future - Not Yet Created)
+62. **TBD** - User/group database infrastructure (/etc/passwd, /etc/group)
+63. **TBD** - Process credentials (UID/GID per process)
+64. **TBD** - User database parsing and management
+65. **TBD** - Login program and authentication
+66. **TBD** - Session management and getty
+67. **TBD** - File system permission bits (owner/group/other)
+68. **TBD** - VFS permission checking
+69. **TBD** - Security syscalls (getuid/setuid family)
+70. **TBD** - Update all syscalls for permission checks
+71. **TBD** - User management utilities (useradd, passwd, chmod)
+72. **TBD** - su and sudo implementation
+73. **TBD** - Resource limits (ulimit/getrlimit/setrlimit)
+74. **TBD** - Security testing and audit
 
 **Note:** Multi-user support is LOW PRIORITY - implement after shell and core applications are working. See `docs/roads/road_to_multiuser.md` for full details.
 
@@ -221,38 +225,38 @@ Phase 1: Foundation (VFS infrastructure ready)
 #65 (VFS - CLOSED) ──┐
 #96 (file descriptors - CLOSED) ──┐
                                   ↓
-Phase 2: In-Memory FS        #145 (tmpfs/ramfs) → /tmp for temporary files
+Phase 2: In-Memory FS        #151 (tmpfs/ramfs - CLOSED) → /tmp for temporary files
                                   ↓
-Phase 3: Device FS           #146 (devfs) → Integrates with #136-#142 (/dev hierarchy)
-                                  ↓         Exposes devices as files
+Phase 3: Device FS           #152 (devfs - CLOSED) → Integrates with #136-#142 (/dev hierarchy)
+                                  ↓                   Exposes devices as files
                                   ↓
-Phase 4: Process Info        #147 (procfs) → /proc for system introspection
-                                  ↓         Process monitoring/debugging
+Phase 4: Process Info        #153 (procfs - CLOSED) → /proc for system introspection
+                                  ↓                    Process monitoring/debugging
                                   ↓
-Phase 5: Block FS            #148 (ext2) → Better persistent storage
-#62 (block driver) ──────────────┘         Alternative to FAT32
-#63 (block cache) ───────────────┘         Native Linux filesystem
+Phase 5: Block FS            #154 (ext2 - CLOSED) → Better persistent storage
+#62 (block driver) ──────────────┘                  Alternative to FAT32
+#63 (block cache) ───────────────┘                  Native Linux filesystem
 ```
 
 ### 🆕 init & Shell Chain (NEW!)
 ```
 Phase 1: Process Synchronization
 #93 (fork/exec - CLOSED) ──┐
-#60 (syscalls - CLOSED) ────┼──→ #149 (wait/waitpid - CLOSED) → Process can wait for children
+#60 (syscalls - CLOSED) ────┼──→ #145 (wait/waitpid) → Process can wait for children
                             │            ↓
-Phase 2: Zombie Handling    │      #150 (zombie state + orphan reparenting - CLOSED)
-                            │            ↓                Parent reaps children
-                            │            ↓                Orphans go to init
+Phase 2: Zombie Handling    │      #146 (zombie state + orphan reparenting)
+                            │            ↓              Parent reaps children
+                            │            ↓              Orphans go to init
 Phase 3: Shell Support      │            ↓
-#65 (VFS - CLOSED) ─────────┼──→   #151 (getcwd/chdir - CLOSED) → Directory navigation
+#65 (VFS - CLOSED) ─────────┼──→   #147 (getcwd/chdir) → Directory navigation
                             │            ↓
-                            └──→   #152 (environment vars - CLOSED) → PATH, HOME, etc.
+                            └──→   #148 (environment vars) → PATH, HOME, etc.
                                          ↓
-Phase 4: init Program                    ├──→ #153 (init program - CLOSED)
-#149 (wait/waitpid - CLOSED) ─────────────────────┘         ↓  Reaps zombies
-#150 (zombie handling - CLOSED) ────────────────────────┘  Supervises processes
+Phase 4: init Program                    ├──→ #149 (init program - CLOSED)
+#145 (wait/waitpid) ──────────────────────────┘         ↓  Reaps zombies
+#146 (zombie handling) ───────────────────────────┘  Supervises processes
                                                     ↓
-Phase 5: Boot Integration                    #154 (boot init as PID 1 - CLOSED)
+Phase 5: Boot Integration                    #150 (boot init as PID 1 - CLOSED)
                                                     ↓  Start init at boot (DONE)
                                                     ↓
 ```
@@ -260,9 +264,9 @@ Phase 5: Boot Integration                    #154 (boot init as PID 1 - CLOSED)
 ### mosh Shell Component Chain
 ```
 Phase 1: Core Infrastructure (Tier 11 - Critical)
-#149 (wait - CLOSED) ──┐
-#151 (getcwd/chdir - CLOSED) ────┼──→ #161 (REPL & parsing - CLOSED) → Read, parse, tokenize commands
-#152 (environment - CLOSED) ─────┘          ↓
+#145 (wait) ──────────────────┐
+#147 (getcwd/chdir) ──────────┼──→ #161 (REPL & parsing - CLOSED) → Read, parse, tokenize commands
+#148 (environment) ───────────┘          ↓
                                    ↓
                                #162 (command execution - CLOSED) → fork/exec/wait/PATH lookup
                                    ↓
@@ -272,12 +276,16 @@ Phase 2: I/O & Pipes (Tier 11 - High Priority)
 #96 (file descriptors - CLOSED) → #164 (basic redirection) → >, <, >>
 #102 (pipes) ────────────────────→ #165 (pipe support) → cmd1 | cmd2 | cmd3
 
-Phase 3: Usability Features (Tier 12 - Quality of Life)
-Terminal support ─────→ #156 (command history) → Up/down arrows, Ctrl+R
+Phase 3: Terminal Integration (Tier 12 - Essential)
+#170 (char device infra) ──→ #168 (VGA driver) ──→ #169 (TTY subsystem) ──→ #166 (shell VT/VGA) → Full terminal
+                         └──→ #137 (/dev/null/zero) ─┘                                        experience
+
+Phase 4: Usability Features (Tier 11 - Quality of Life)
+#169 (TTY) ───────────→ #156 (command history) → Up/down arrows, Ctrl+R
                     ├─→ #157 (tab completion) → Complete commands/files
                     └─→ #160 (line editing) → Ctrl+L/K/U/A/E/R
 
-Phase 4: Advanced Features (Tier 12 - Optional)
+Phase 5: Advanced Features (Tier 11 - Optional)
 #155 (scripting) → if/while/for/functions
 #158 (job control) → bg/fg/Ctrl-Z/process groups
 #159 (advanced redirection) → 2>&1, here-docs, <<EOF
@@ -386,32 +394,44 @@ All phases ───────────────→ #178 (security audit
 ## 🔴 Current Blocking Relationships
 
 ### Ready to Start (Dependencies Met):
-- **#151 (getcwd/chdir - CLOSED)** - Directory navigation delivered
-- **#152 (environment vars - CLOSED)** - PATH/HOME plumbing delivered
+- **#161 (REPL - CLOSED)** - Shell parsing delivered
+- **#162 (command exec - CLOSED)** - Shell execution delivered
+- **#163 (built-ins)** - Ready: cd/pwd/exit/export commands
+- **#164 (basic redirection)** - Ready: >, <, >> operators
+- **#165 (pipe support)** - Needs: #102 (pipes syscall)
+- **#170 (char device infra)** - Ready: foundation for all streaming devices
+- **#137 (/dev/null and /dev/zero)** - Needs: #170 (char device), #152 (devfs - CLOSED)
+- **#168 (VGA driver)** - Ready: text mode console support
+- **#169 (TTY subsystem)** - Needs: #168 (VGA), #170 (char device)
+- **#166 (shell VT/VGA)** - Needs: #169 (TTY), #168 (VGA)
 - **#109 (pthread API)** - Dependencies met: #108 (CLOSED)
 - **#110 (thread-safe libc)** - Can start in parallel with #109
 - **#127 (UTF-8 utilities)** - No dependencies, ready to start immediately!
 - **#135 (code coverage)** - Can start with existing Unity tests, no blocking dependencies
 - **#136 (device filesystem)** - Dependencies: #96 (CLOSED), #60 (CLOSED) - ready!
-- **#145 (tmpfs/ramfs)** - Dependencies: #65 (VFS - CLOSED), #96 (CLOSED) - ready!
-- **#146 (devfs)** - Dependencies: #65 (VFS - CLOSED), #96 (CLOSED) - ready!
-- **#147 (procfs)** - Dependencies: #65 (VFS - CLOSED), process management (CLOSED) - ready!
-- **#148 (ext2)** - Dependencies: #62-#65 (storage stack - CLOSED) - ready!
+- **#145 (wait/waitpid)** - Process synchronization syscall
+- **#146 (zombie/orphan)** - Zombie process state and reparenting
+- **#147 (getcwd/chdir)** - Directory navigation syscalls
+- **#148 (environment vars)** - Environment variable support
 - **#102 (pipes)** - Basic IPC implementation
 - **#103 (UNIX signals)** - Process control mechanism (handlers delivered; siginfo/rt signals TBD)
 
 ### Cannot Start Until Complete:
-- **Shell Core Components:**
-  - **#162 (command execution)** blocks on: #161 (REPL/parsing)
-  - **#163 (built-ins)** blocks on: #161 (REPL/parsing)
-  - **#164 (basic redirection)** blocks on: #161 (REPL/parsing)
-  - **#165 (pipe support)** blocks on: #102 (pipes syscall), #161 (REPL/parsing)
+- **Shell Core Components:** (Most unblocked!)
+  - **#163 (built-ins)** - Ready now (REPL/exec complete)
+  - **#164 (basic redirection)** - Ready now (REPL/exec complete)
+  - **#165 (pipe support)** blocks on: #102 (pipes syscall)
+  - **#166 (shell VT/VGA)** blocks on: #169 (TTY), #168 (VGA)
+- **Terminal Infrastructure:**
+  - **#137 (/dev/null+zero)** blocks on: #170 (char device)
+  - **#169 (TTY subsystem)** blocks on: #168 (VGA), #170 (char device)
+  - **#166 (shell VT/VGA)** blocks on: #169 (TTY)
 - **Shell Advanced Features:**
-  - **#156 (command history)** blocks on: #161 (REPL/parsing)
-  - **#157 (tab completion)** blocks on: #161 (REPL/parsing)
-  - **#160 (line editing)** blocks on: #161 (REPL/parsing)
-  - **#155 (scripting)** blocks on: #161-#165 (core shell complete)
-  - **#158 (job control)** blocks on: #161-#165 (core shell complete)
+  - **#156 (command history)** blocks on: #169 (TTY) for raw mode
+  - **#157 (tab completion)** blocks on: #163 (built-ins) for context
+  - **#160 (line editing)** blocks on: #169 (TTY) for raw mode
+  - **#155 (scripting)** blocks on: #163-#165 (core shell complete)
+  - **#158 (job control)** blocks on: #103 (signals), #163-#165 (core shell)
   - **#159 (advanced redirection)** blocks on: #164 (basic redirection)
 - **Other Systems:**
   - **#106 (microkernel IPC)** blocks on: #101 (timers - CLOSED), #104 (shared memory)
@@ -423,20 +443,23 @@ All phases ───────────────→ #178 (security audit
   - **#113 (thread-aware syscalls)** blocks on: #109 (pthread API)
 
 ### Parallel Development Opportunities:
-- **mosh Shell** (#161-#165) progressing - REPL and exec complete; continue toward built-ins and I/O
+- **mosh Shell** (#163-#166) progressing - REPL and exec complete; continue toward built-ins and I/O
   - Sequential: ✅ #161 (REPL) → ✅ #162 (exec) → #163 (built-ins) → #164 (redirection) → #165 (pipes)
+  - Terminal: #170 (char dev) → #168 (VGA) → #169 (TTY) → #166 (shell integration)
   - Quality of life: #156 (history), #157 (tab), #160 (editing)
   - Advanced: #155 (scripting), #158 (job control), #159 (advanced redirection)
+- **Init & Process Management** (#145-#148) - Process lifecycle syscalls
+  - #145 (wait/waitpid), #146 (zombie/orphan), #147 (getcwd/chdir), #148 (environment)
 - **Threading APIs** (#109-#113) can start immediately - foundation complete!
 - **Unicode Support** (#127-#134) can develop independently - start with #127!
 - **Code Coverage** (#135) can develop immediately with existing Unity tests
 - **Device Filesystem** (#136-#142) can start now with #136!
 - **Mouse Input** (#143-#144) can develop independently from keyboard input
-- **Virtual Filesystems** (#145-#148) can start immediately - VFS ready!
-  - #145 (tmpfs) - Quick win, good first issue
-  - #146 (devfs) - Integrates with device infrastructure
-  - #147 (procfs) - System introspection
-  - #148 (ext2) - Better persistent storage
+- **Virtual Filesystems** (✅ #151-#154 COMPLETE!)
+  - ✅ #151 (tmpfs - CLOSED)
+  - ✅ #152 (devfs - CLOSED)
+  - ✅ #153 (procfs - CLOSED)
+  - ✅ #154 (ext2 - CLOSED)
 - **Storage Systems** - PCI/AHCI infrastructure (#114-#120) active development
 - **USB Infrastructure** (#121-#126) can develop independently
 - **Networking stack** (#67-#73) can develop independently
@@ -446,15 +469,27 @@ All phases ───────────────→ #178 (security audit
 ## 🎯 Recommended Focus Areas
 
 ### Immediate Next Steps (Ready Now!)
-1. **#145** - tmpfs/ramfs (quick win, good first issue, enables /tmp)
-2. **#109** - pthread API and POSIX threading (foundation complete)
-3. **#146** - devfs (device filesystem, unblocks hardware device access)
-4. **#127** - UTF-8 utilities (ready to implement, no dependencies!)
-5. **#135** - Code coverage with Gcov (ready to implement, existing Unity tests!)
-6. **#136** - Device filesystem infrastructure (ready to implement!)
-7. **#147** - procfs (system introspection and debugging)
-8. **#102** - pipes implementation (needed for #165 pipe support)
-9. **#103** - UNIX signals (process control ready: sigaction/masks live)
+
+**Top Priority - Shell Completion (1-2 weeks):**
+1. **#163** - Built-in commands (cd/pwd/exit/export) - 2-3 days
+2. **#164** - Basic I/O redirection (>, <, >>) - 2-3 days
+3. **#102** - Pipes syscall implementation - 3-4 days
+4. **#165** - Pipe support in shell (cmd1 | cmd2) - 2-3 days
+   → **Result: Working shell with pipes!**
+
+**High Priority - Terminal Support (1-2 weeks):**
+5. **#170** - Character device infrastructure - 3-5 days
+6. **#168** - VGA driver (text mode) - 3-5 days
+7. **#169** - TTY subsystem (line discipline, ioctl) - 1-2 weeks
+8. **#166** - Hook shell to VT/VGA - 2-3 days
+9. **#167** - /dev/zero device - 1-2 days
+   → **Result: Full terminal experience!**
+
+**Parallel Tracks (Can start anytime):**
+10. **#145** - tmpfs/ramfs (quick win, enables /tmp) - 2-3 days
+11. **#146** - devfs (device filesystem) - 3-5 days
+12. **#109** - pthread API (foundation complete) - 1-2 weeks
+13. **#127** - UTF-8 utilities (no dependencies) - 1 week
 
 ### For Maximum Impact:
 1. **Complete Threading APIs** (#109, #110, #113) - Enable modern multithreaded applications
@@ -590,13 +625,24 @@ All phases ───────────────→ #178 (security audit
 - #103 (UNIX signals) - Process control (handlers, masks, stoppable signals)
 
 ### **Project Status**:
-- **Total Issues**: 178 issues planned (highest #178, includes future multi-user system)
-- **Created Issues**: 165 issues (highest #165)
-- **Closed**: 59 issues (major systems operational including wait/waitpid, zombies, init, boot)
-- **Open**: 106 issues (organized by priority tiers)
-- **Planned**: 13 issues for multi-user system (Tier 13 - #166-#178)
-- **Major Completions**: Memory, scheduling, processes, storage, threading foundation, framebuffer, timers, signals, init supervisor
-- **Active Development**: mosh shell (11 new issues), virtual filesystems, threading APIs, device filesystem, mouse input, hardware drivers, advanced IPC
+- **Total Issues**: 170 issues created (highest #170, note: #167 closed as duplicate)
+- **Closed**: 60 issues (including #149, #150, #151-#154, #161, #162, #167)
+- **Open**: 110 issues (organized by priority tiers)
+- **Planned**: 13 issues for multi-user system (Tier 13 - to be created)
+- **Major Completions**:
+  - Core kernel: Memory, scheduling, processes, storage, threading foundation
+  - Hardware: Framebuffer, keyboard input, timers, signals
+  - Filesystems: tmpfs, devfs, procfs, ext2 (all read-only or complete)
+  - Process management: Init supervisor, boot integration
+  - Shell: REPL and command execution
+- **Active Development**:
+  - **mosh shell** (core: #163-#165 built-ins/I/O/pipes; terminal: #168-#170 VGA/TTY/char dev; advanced: #155-#160)
+  - **Process lifecycle** (#145-#148: wait/waitpid, zombies, getcwd/chdir, environment)
+  - **Terminal infrastructure** (#166, #168-#170: VGA driver, TTY, character devices)
+  - **Device filesystem** (#136-#142: /dev hierarchy devices)
+  - **Threading APIs** (#109-#113: pthread, thread-safe libc)
+  - **Mouse input** (#143-#144: PS/2 and USB mouse)
+  - **Advanced IPC** (#102-#107: pipes, signals, shared memory)
 - **Future Development**: Multi-user system infrastructure (see `docs/roads/road_to_multiuser.md`)
 
 ## **Current Development Strategy**
@@ -604,12 +650,13 @@ All phases ───────────────→ #178 (security audit
 With core kernel infrastructure operational, meniOS has strong foundations for advanced features. Major systems like memory management, scheduling, processes, and storage are complete and functional.
 
 **Recommended immediate development tracks:**
-1. **mosh Shell** (#161-#165) - REPL and exec online; continue toward usability (TOP PRIORITY)
-   - Built-in commands (2-3 days)
-   - I/O redirection (2-3 days)
-   - Pipe support (3-4 days)
-   - Quality of life: history, tab completion, line editing (1-2 weeks)
-   - **Result: Working interactive shell with pipes in ~2 weeks, full-featured in 4-6 weeks**
+1. **mosh Shell** (#163-#166) - REPL and exec DONE; continue toward usability (TOP PRIORITY)
+   - Built-in commands (#163) - 2-3 days
+   - I/O redirection (#164) - 2-3 days
+   - Pipe support (#102, #165) - 5-7 days total
+   - Terminal integration (#170, #168, #169, #166) - 2-3 weeks
+   - Quality of life: history, tab completion, line editing (#156, #157, #160) - 1-2 weeks
+   - **Result: Working shell with pipes in ~2 weeks, full terminal in 4 weeks, polished in 6 weeks**
 2. **Virtual Filesystems** (#145, #146, #147, #148) - Essential system services
    - tmpfs for /tmp (quick win)
    - devfs for /dev (hardware access)

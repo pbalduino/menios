@@ -334,37 +334,37 @@
 ## Implementation Roadmap
 
 ### Month 1: Foundation
-- **Week 1-2:** User/Group infrastructure (#166, #167, #168)
+- **Week 1-2:** User/Group infrastructure (3 issues TBD)
   - User/group databases
   - Process credentials
   - Basic UID/GID support
-- **Week 3-4:** Authentication system (#169, #170)
+- **Week 3-4:** Authentication system (2 issues TBD)
   - Login program
   - Password hashing
   - Session management
 
 ### Month 2: Permissions
-- **Week 1-2:** File system permissions (#171, #172)
+- **Week 1-2:** File system permissions (2 issues TBD)
   - Inode permission bits
   - VFS permission checking
   - FAT32 mount options
-- **Week 3-4:** Security syscalls (#173, #174)
+- **Week 3-4:** Security syscalls (2 issues TBD)
   - getuid/setuid family
   - Permission check updates
 
 ### Month 3: User Tools
-- **Week 1-2:** User management utilities (#175)
+- **Week 1-2:** User management utilities (1 issue TBD)
   - useradd, passwd, id, etc.
   - chmod, chown utilities
-- **Week 3-4:** su/sudo implementation (#176)
+- **Week 3-4:** su/sudo implementation (1 issue TBD)
   - Switch user mechanism
   - Privilege elevation
 
 ### Month 4: Polish and Testing
-- **Week 1-2:** Resource limits (#177)
+- **Week 1-2:** Resource limits (1 issue TBD)
   - ulimit support
   - Quota system (optional)
-- **Week 3-4:** Security testing and hardening (#178)
+- **Week 3-4:** Security testing and hardening (1 issue TBD)
   - Comprehensive testing
   - Security audit
   - Bug fixes
@@ -379,20 +379,22 @@
 - **#152** - Environment variables - USER, HOME, etc.
 - **#153** - init program (CLOSED) - needs to spawn getty/login
 
-### New Issues Needed
-- **#166** - User/group database infrastructure
-- **#167** - Process credentials (UID/GID)
-- **#168** - User database parsing (/etc/passwd, /etc/group, /etc/shadow)
-- **#169** - Login program and authentication
-- **#170** - Session management and getty
-- **#171** - File system permission bits
-- **#172** - VFS permission checking
-- **#173** - Security syscalls (getuid/setuid family)
-- **#174** - Update all syscalls for permission checks
-- **#175** - User management utilities (useradd, passwd, chmod, etc.)
-- **#176** - su and sudo implementation
-- **#177** - Resource limits (ulimit/getrlimit/setrlimit)
-- **#178** - Security testing and audit
+### New Issues Needed (Not Yet Created)
+- **TBD** - User/group database infrastructure
+- **TBD** - Process credentials (UID/GID)
+- **TBD** - User database parsing (/etc/passwd, /etc/group, /etc/shadow)
+- **TBD** - Login program and authentication
+- **TBD** - Session management and getty
+- **TBD** - File system permission bits
+- **TBD** - VFS permission checking
+- **TBD** - Security syscalls (getuid/setuid family)
+- **TBD** - Update all syscalls for permission checks
+- **TBD** - User management utilities (useradd, passwd, chmod, etc.)
+- **TBD** - su and sudo implementation
+- **TBD** - Resource limits (ulimit/getrlimit/setrlimit)
+- **TBD** - Security testing and audit
+
+**Note**: These issues will be created when multi-user development begins. Issue numbers #166-#170 are currently used for shell terminal integration.
 
 ## Success Criteria
 
