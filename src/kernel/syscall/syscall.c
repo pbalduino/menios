@@ -7,6 +7,7 @@
 #include <kernel/serial.h>
 #include <kernel/syscall.h>
 #include <kernel/vfs.h>
+#include <kernel/tty.h>
 #include <uapi/signal.h>
 #include <sys/fcntl.h>
 #include <string.h>
@@ -198,8 +199,24 @@ static uint64_t syscall_open_handler(syscall_frame_t* frame) {
   }
 
   file_t* file = NULL;
-  int rc = vfs_open(path, flags, &file);
-  if(rc < 0) {
+  int rc = 0;
+
+  if(strcmp(path, "/dev/tty0") == 0) {
+    file = tty_device_open();
+  } else if(strcmp(path, "/dev/console") == 0) {
+    file = console_device_open();
+  } else {
+    rc = vfs_open(path, flags, &file);
+  }
+
+  if(file == NULL) {
+    if(rc == 0) {
+      int err = (current && current->errno) ? current->errno : ENOMEM;
+      rc = -err;
+    }
+  }
+
+  if(rc < 0 || file == NULL) {
     frame->rax = (uint64_t)rc;
     return frame->rax;
   }
