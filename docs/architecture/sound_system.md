@@ -72,7 +72,7 @@ the architecture assumes:
 - `/dev/mix0` – control interface for mixer settings
 - `/dev/audio*` – compatibility aliases for simple streaming clients
 
-Devices are registered via devfs (#146) once that infrastructure lands.
+Devices are registered via devfs (#152) once that infrastructure lands.
 
 ### Syscalls
 
@@ -111,7 +111,7 @@ userland servers later.
 
 1. Implement core audio driver and mixer skeleton (#33)
 2. Land shared memory primitives (#104) for zero-copy queueing
-3. Deliver devfs (#146) to publish device nodes
+3. Deliver devfs (#152) to publish device nodes
 4. Add procfs (#147) for runtime observability
 5. Expose higher-level APIs (ALSA-like library) once libc is thread-safe (#110)
 

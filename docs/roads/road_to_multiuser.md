@@ -12,10 +12,10 @@
 - No resource isolation between users
 
 ### Recent Foundations
-- **Process lifecycle plumbing** is in place: `waitpid`/zombie reparenting (#149/#150) mean a login manager can supervise user shells without leaking PIDs
-- **`init` now runs as PID 1** (#153/#154), giving us a natural parent for login/getty daemons and future service managers
+- **Process lifecycle plumbing** is in place: `waitpid`/zombie reparenting (#145/#146) mean a login manager can supervise user shells without leaking PIDs
+- **`init` now runs as PID 1** (#149/#150), giving us a natural parent for login/getty daemons and future service managers
 - **Signal delivery primitives** (#103) allow clean termination of user sessions, a prerequisite for secure logouts
-- `getcwd`/`chdir` (#151) now keeps per-process working directories; environment handling (#152) supplies HOME/PATH defaults for login shells
+- `getcwd`/`chdir` (#147) now keeps per-process working directories; environment handling (#148) supplies HOME/PATH defaults for login shells
 
 ## Multi-User System Requirements
 
@@ -230,7 +230,7 @@
 **Estimated Effort:** 2-3 days
 
 #### Environment Variables
-**Already Planned:** #152 - Environment variables
+**Already Planned:** #148 - Environment variables
 
 **Additional for Multi-User:**
 - `USER` - current username
@@ -238,7 +238,7 @@
 - `LOGNAME` - login name
 - Set automatically on login
 
-**Estimated Effort:** 1 day (extends #152)
+**Estimated Effort:** 1 day (extends #148)
 
 ### Phase 7: Resource Limits and Quotas
 
@@ -376,7 +376,7 @@
 - **#65** - VFS layer (CLOSED) - needs permission checking added
 - **#93** - fork/exec (CLOSED) - needs credential inheritance
 - **#148** - ext2 filesystem - native permission support
-- **#152** - Environment variables - USER, HOME, etc.
+- **#148** - Environment variables - USER, HOME, etc.
 - **#153** - init program (CLOSED) - needs to spawn getty/login
 
 ### New Issues Needed (Not Yet Created)
@@ -452,7 +452,7 @@ Multi-user support is not needed for:
 - Single-developer use case
 
 **When to Implement:**
-- After shell is complete (#151-#165)
+- After shell is complete (#147-#165)
 - After filesystem infrastructure is solid (#145-#148)
 - After core applications work
 - When preparing for production deployment

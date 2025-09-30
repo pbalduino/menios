@@ -60,7 +60,7 @@ These issues form the backbone of the system and should be prioritized:
 
 ### 🆕 Tier 9: init & Shell Infrastructure (NEW!)
 37. **#145** - wait/waitpid syscall (process synchronization)
-38. **#146** - Process zombie state and orphan reparenting
+38. **#146** - Process zombie state and orphan reparenting (CLOSED)
 39. **#147** - getcwd/chdir syscalls (directory navigation)
 40. **#148** - Environment variables support (getenv/setenv/unsetenv)
 41. **#149** - Barebone init program (PID 1 process supervisor - CLOSED)
@@ -244,7 +244,7 @@ Phase 1: Process Synchronization
 #93 (fork/exec - CLOSED) ──┐
 #60 (syscalls - CLOSED) ────┼──→ #145 (wait/waitpid) → Process can wait for children
                             │            ↓
-Phase 2: Zombie Handling    │      #146 (zombie state + orphan reparenting)
+Phase 2: Zombie Handling    │      #146 (zombie state + orphan reparenting - CLOSED)
                             │            ↓              Parent reaps children
                             │            ↓              Orphans go to init
 Phase 3: Shell Support      │            ↓
@@ -254,7 +254,7 @@ Phase 3: Shell Support      │            ↓
                                          ↓
 Phase 4: init Program                    ├──→ #149 (init program - CLOSED)
 #145 (wait/waitpid) ──────────────────────────┘         ↓  Reaps zombies
-#146 (zombie handling) ───────────────────────────┘  Supervises processes
+#146 (zombie handling - CLOSED) ───────────────────┘  Supervises processes
                                                     ↓
 Phase 5: Boot Integration                    #150 (boot init as PID 1 - CLOSED)
                                                     ↓  Start init at boot (DONE)
@@ -410,7 +410,7 @@ All phases ───────────────→ #178 (security audit
 - **#135 (code coverage)** - Can start with existing Unity tests, no blocking dependencies
 - **#136 (device filesystem)** - Dependencies: #96 (CLOSED), #60 (CLOSED) - ready!
 - **#145 (wait/waitpid)** - Process synchronization syscall
-- **#146 (zombie/orphan)** - Zombie process state and reparenting
+- **#146 (zombie/orphan - CLOSED)** - Zombie process state and reparenting
 - **#147 (getcwd/chdir)** - Directory navigation syscalls
 - **#148 (environment vars)** - Environment variable support
 - **#102 (pipes)** - Basic IPC implementation
@@ -449,7 +449,7 @@ All phases ───────────────→ #178 (security audit
   - Quality of life: #156 (history), #157 (tab), #160 (editing)
   - Advanced: #155 (scripting), #158 (job control), #159 (advanced redirection)
 - **Init & Process Management** (#145-#148) - Process lifecycle syscalls
-  - #145 (wait/waitpid), #146 (zombie/orphan), #147 (getcwd/chdir), #148 (environment)
+  - #145 (wait/waitpid - CLOSED), #146 (zombie/orphan - CLOSED), #147 (getcwd/chdir), #148 (environment)
 - **Threading APIs** (#109-#113) can start immediately - foundation complete!
 - **Unicode Support** (#127-#134) can develop independently - start with #127!
 - **Code Coverage** (#135) can develop immediately with existing Unity tests
@@ -486,8 +486,8 @@ All phases ───────────────→ #178 (security audit
    → **Result: Full terminal experience!**
 
 **Parallel Tracks (Can start anytime):**
-10. **#145** - tmpfs/ramfs (quick win, enables /tmp) - 2-3 days
-11. **#146** - devfs (device filesystem) - 3-5 days
+10. **#151** - tmpfs/ramfs (quick win, enables /tmp - CLOSED)
+11. **#152** - devfs (device filesystem - CLOSED)
 12. **#109** - pthread API (foundation complete) - 1-2 weeks
 13. **#127** - UTF-8 utilities (no dependencies) - 1 week
 
@@ -525,21 +525,21 @@ All phases ───────────────→ #178 (security audit
 2. **Phase 2**: #144 (USB mouse via HID) → #125 (USB HID driver) → Mouse events
 
 ### For Virtual Filesystems & System Services:
-1. **Phase 1**: #145 (tmpfs/ramfs) → /tmp for temporary files (2-3 days)
-2. **Phase 2**: #146 (devfs) → /dev for device access (3-5 days, integrates with #136-#142)
-3. **Phase 3**: #147 (procfs) → /proc for system monitoring (4-6 days)
-4. **Phase 4**: #148 (ext2) → Better persistent storage (1-2 weeks)
+1. **Phase 1**: #151 (tmpfs/ramfs - CLOSED) → /tmp for temporary files
+2. **Phase 2**: #152 (devfs - CLOSED) → /dev for device access (integrates with #136-#142)
+3. **Phase 3**: #153 (procfs - CLOSED) → /proc for system monitoring
+4. **Phase 4**: #154 (ext2 - CLOSED) → Better persistent storage
 
 ### For mosh Shell (Interactive System):
 **Prerequisites (COMPLETE):**
-- #149 (wait/waitpid - CLOSED)
-- #150 (zombie handling - CLOSED)
-- #153 (init program - CLOSED)
-- #154 (boot integration - CLOSED)
+- #145 (wait/waitpid - CLOSED)
+- #146 (zombie handling - CLOSED)
+- #149 (init program - CLOSED)
+- #150 (boot integration - CLOSED)
 
 **Phase 1: Shell Prerequisites (Week 1 - COMPLETE)**
-1. #151 (getcwd/chdir - CLOSED)
-2. #152 (environment variables - CLOSED)
+1. #147 (getcwd/chdir - CLOSED)
+2. #148 (environment variables - CLOSED)
 
 **Phase 2: Core Shell (Week 2-3 - Tier 11 - 2-3 weeks)**
 3. #161 (REPL & parsing) - 2-3 days
@@ -566,7 +566,7 @@ All phases ───────────────→ #178 (security audit
 ### For Multi-User System (Future - 4-6 months):
 **Prerequisites:**
 - mosh shell complete (#161-#165)
-- File system infrastructure solid (#145-#148)
+- File system infrastructure solid (#151-#154)
 - Core applications working
 
 **Phase 1: User Infrastructure (Month 1)**
@@ -610,10 +610,10 @@ All phases ───────────────→ #178 (security audit
 - **Hardware**: PCI/AHCI controller (#114-#117), input subsystem (#32), framebuffer interface (#31)
 
 ### **Ready to Implement (High Impact)**:
-- #152 (environment vars - CLOSED) - PATH lookup delivered
-- #145 (tmpfs/ramfs) - Quick win, enables /tmp (2-3 days)
-- #146 (devfs) - Device filesystem for /dev (3-5 days)
-- #147 (procfs) - System introspection (4-6 days)
+- #148 (environment vars) - PATH/HOME defaults for userland
+- #151 (tmpfs/ramfs - CLOSED) - In-memory /tmp landing
+- #152 (devfs - CLOSED) - Device filesystem for /dev
+- #153 (procfs - CLOSED) - System introspection surface
 - #109 (pthread API) - Threading foundation complete
 - #127 (UTF-8 utilities) - No dependencies
 - #135 (code coverage) - Quality assurance
@@ -657,7 +657,7 @@ With core kernel infrastructure operational, meniOS has strong foundations for a
    - Terminal integration (#170, #168, #169, #166) - 2-3 weeks
    - Quality of life: history, tab completion, line editing (#156, #157, #160) - 1-2 weeks
    - **Result: Working shell with pipes in ~2 weeks, full terminal in 4 weeks, polished in 6 weeks**
-2. **Virtual Filesystems** (#145, #146, #147, #148) - Essential system services
+2. **Virtual Filesystems** (#151, #152, #153, #154) - Essential system services
    - tmpfs for /tmp (quick win)
    - devfs for /dev (hardware access)
    - procfs for /proc (debugging)

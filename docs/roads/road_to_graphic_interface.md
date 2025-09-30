@@ -40,7 +40,7 @@ desktops, and hardware-accelerated rendering.
 - Introduce keyboard layout switching and modifier tracking.
 
 ### Phase 3: Surface Abstraction (2-4 months)
-- Design a `/dev/fb/*` hierarchy via devfs (#146) exposing multiple logical
+- Design a `/dev/fb/*` hierarchy via devfs (#152) exposing multiple logical
   surfaces.
 - Add `SYS_FB_CREATE_SURFACE` / `SYS_FB_DESTROY` to allocate off-screen buffers.
 - Support blit operations (copy, fill, alpha blend) in kernel or trusted
@@ -67,7 +67,7 @@ desktops, and hardware-accelerated rendering.
 
 ## Key Dependencies
 
-- **Devfs** (#146) and **procfs** (#147) for device discovery and telemetry.
+- **Devfs** (#152) and **procfs** (#153) for device discovery and telemetry.
 - **Shared memory** (#104) and **futex/message IPC** (#105-#107) for efficient
   compositor-client communication.
 - **Thread-safe libc** (#110) and **pthread API** (#109) to support

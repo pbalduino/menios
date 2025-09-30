@@ -17,12 +17,12 @@ command-line client for userland applications.
 
 1. **Writable Filesystem Path**
    - #61 – Filesystem write support (FAT32 write-back or ext2 port) *(BLOCKER)*
-   - #145 – tmpfs/ramfs for ephemeral databases (optional but desirable)
-   - #146/#147 – devfs/procfs for device discovery and monitoring (secondary)
+   - #151 – tmpfs/ramfs for ephemeral databases (optional but desirable)
+   - #152/#153 – devfs/procfs for device discovery and monitoring (secondary)
 
 2. **Userland Environment**
-   - #152 – Environment variables (`PATH`, `TMPDIR`)
-   - #151 – Working directory navigation (DONE)
+   - #148 – Environment variables (`PATH`, `TMPDIR`)
+   - #147 – Working directory navigation (DONE)
    - Shell roadmap (#161-#165) to launch the SQLite CLI conveniently
 
 3. **libc & Toolchain**
@@ -37,11 +37,11 @@ command-line client for userland applications.
 ## Implementation Phases
 
 ### Phase 0 – Foundations (In Progress)
-- Complete shell prerequisites to ease userland testing (#152).
-- Land filesystem write support (#61) and/or tmpfs (#145).
+- Complete shell prerequisites to ease userland testing (#148).
+- Land filesystem write support (#61) and/or tmpfs (#151).
 
 ### Phase 1 – Writable Storage Layer (2-3 weeks)
-1. Implement write path for FAT32 or bring up ext2 (#148) for better metadata.
+1. Implement write path for FAT32 or bring up ext2 (#154) for better metadata.
 2. Add basic locking hooks in VFS to prevent concurrent clobbering.
 3. Provide `fsync`/`fdatasync` stubs or document limitations (SQLite relies on
    durable writes).
@@ -73,15 +73,15 @@ command-line client for userland applications.
 ## Dependency Summary
 
 ```
-Storage Write Path (#61/#145/#148) ─┐
+Storage Write Path (#61/#151/#154) ─┐
 Thread-safe libc & pthreads (#109/#110) ─┼─> SQLite Build (#29 toolchain)
-Shell & env vars (#152, #161-#165) ──────┘        ↓
+Shell & env vars (#148, #161-#165) ──────┘        ↓
                                         Build integration + tests → sqlite3 CLI
 ```
 
 ## Immediate Next Steps
 
-1. Prioritize filesystem write capability (#61) or ext2 port (#148).
+1. Prioritize filesystem write capability (#61) or ext2 port (#154).
 2. Begin pthread/libc hardening (#109/#110) to ensure SQLite’s mutex layer works.
 3. Flesh out shell tooling (#161-#165) to provide a friendly CLI environment for SQLite.
 

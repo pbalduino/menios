@@ -5,9 +5,9 @@ process control, pipelines, and user-friendly tooling.
 
 ## Current Status
 
-- **Boot & supervision**: PID 1 init supervises children (#153/#154 ✅).
-- **Process lifecycle**: wait/waitpid and zombie reparenting in place (#149/#150 ✅).
-- **Filesystem/navigation**: VFS read-only path ready; `getcwd(2)`/`chdir(2)` now live (#151 ✅).
+- **Boot & supervision**: PID 1 init supervises children (#149/#150 ✅).
+- **Process lifecycle**: wait/waitpid and zombie reparenting in place (#145/#146 ✅).
+- **Filesystem/navigation**: VFS read-only path ready; `getcwd(2)`/`chdir(2)` now live (#147 ✅).
 - **Pipes & signals**: Anonymous pipes implemented (#102 ✅); signal delivery prototype ready (#103 🟡).
 - **Input**: Keyboard events surfaced via `/dev/input/kbd`; mouse pending (#32 ✅, #143/#144 🟡).
 - **Terminal I/O**: `/dev/console` now bridges VGA output with serial logging and keyboard input (#138 ✅).
@@ -18,14 +18,14 @@ quality-of-life features (history, completion, job control).
 ## Milestones & Timeline
 
 ### Phase 0 – Foundations (COMPLETE)
-- #149 wait/waitpid
-- #150 zombie handling
-- #153 init supervisor
-- #154 boot integration
-- #151 getcwd/chdir
+- #145 wait/waitpid
+- #146 zombie handling
+- #149 init supervisor
+- #150 boot integration
+- #147 getcwd/chdir
 
 ### Phase 1 – Shell Prerequisites (Week 1 – COMPLETE)
-1. **#152 Environment variables (DONE)**
+1. **#148 Environment variables (DONE)**
    - `getenv/setenv/unsetenv` syscalls wired; PATH/HOME ready for shell
 
 ### Phase 2 – Core Shell (Week 2-3)
@@ -52,8 +52,8 @@ quality-of-life features (history, completion, job control).
 
 ```
 Init/Supervision (DONE) ─┐
-Filesystem navigation (#151 - DONE) ─┼──→ #161 (REPL)
-Environment variables (#152 - DONE) ──┤       ↓
+Filesystem navigation (#147 - DONE) ─┼──→ #161 (REPL)
+Environment variables (#148 - DONE) ──┤       ↓
 Pipes (#102), Signals (#103) ────────┴──→ #162 (exec) → #163 (built-ins) → #164 (redir) → #165 (pipes)
                                                    ↓
                                     QoL (#156,#157,#160) → Advanced (#155,#158,#159)
@@ -69,7 +69,7 @@ Pipes (#102), Signals (#103) ────────┴──→ #162 (exec) �
 
 - **Road to Doom**: Shell is a prerequisite for userland tooling before larger
   apps can ship.
-- **Road to Multi-user**: Completed shell (#152-#165) is the foundation for
+- **Road to Multi-user**: Completed shell (#147-#165) is the foundation for
   login sessions and user isolation.
 - **Device filesystem (devfs/procfs)** will later surface `/dev/tty*` and
   `/proc/*` nodes for richer shell utilities.
