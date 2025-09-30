@@ -81,6 +81,8 @@ void tty_handle_input_char(uint8_t ch) {
     ch = '\n';
   }
 
+  serial_printf("tty_handle_input_char: ch=0x%02x\n", ch);
+
   bool notify = false;
   char out_seq[3];
   size_t out_len = 0;
@@ -128,6 +130,19 @@ void tty_handle_input_char(uint8_t ch) {
   if(notify) {
     kcondvar_broadcast(&default_tty.data_available);
   }
+}
+
+void tty_push_bytes(const uint8_t* data, size_t length) {
+  if(!default_tty.initialized) {
+    tty_system_init();
+  }
+
+  spinlock_lock(&default_tty.buffer_lock);
+  for(size_t idx = 0; idx < length; idx++) {
+    tty_queue_push_byte_locked(&default_tty, data[idx]);
+  }
+  spinlock_unlock(&default_tty.buffer_lock);
+  kcondvar_broadcast(&default_tty.data_available);
 }
 
 static int64_t tty_read_impl(file_t* file, void* buffer, size_t length) {

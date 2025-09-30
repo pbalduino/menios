@@ -7,6 +7,7 @@
 #include <kernel/proc.h>
 #include <kernel/serial.h>
 #include <kernel/driver/ps2kb.h>
+#include <kernel/tty.h>
 
 static int64_t console_read(file_t* file, void* buffer, size_t length) {
   (void)file;
@@ -45,10 +46,7 @@ static int64_t console_write(file_t* file, const void* buffer, size_t length) {
   }
 
   const uint8_t* data = (const uint8_t*)buffer;
-  for(size_t i = 0; i < length; i++) {
-    fb_putchar(data[i]);
-    serial_putchar(data[i]);
-  }
+  tty_push_bytes(data, length);
   return (int64_t)length;
 }
 
