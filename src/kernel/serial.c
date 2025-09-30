@@ -5,6 +5,7 @@
 #include <sys/errno.h>
 
 #include <kernel/apic.h>
+#include <kernel/idt.h>
 #include <kernel/condvar.h>
 #include <kernel/console.h>
 #include <kernel/kernel.h>
