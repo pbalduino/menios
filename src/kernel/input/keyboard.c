@@ -91,7 +91,7 @@ void keyboard_device_enqueue(const keyboard_event_t* event) {
     keyboard_device_init();
   }
 
-  bool was_empty = queue_push(&keyboard_queue, event);
+  (void)queue_push(&keyboard_queue, event);
   kcondvar_signal(&keyboard_queue.waiters);
 }
 
