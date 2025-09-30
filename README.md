@@ -14,7 +14,7 @@ MeniOS now boots via the Limine bootloader, initializes the x86-64 platform, and
 
 ### Completed Core Infrastructure
 - **Memory & Protection**: Physical memory discovery, virtual memory manager, kernel heap, per-process page tables, copy-on-write fork, lazy stack growth, and `mmap`/`munmap` (Issues #34, #35, #57, #89, #93)
-- **Scheduling & Processes**: Preemptive kernel scheduler with kernel threads, sleep/yield, priority classes, fork/exec lifecycle, wait/waitpid reaping, and Ring 3 entry trampoline (Issues #34, #93, #108, #149)
+- **Scheduling & Processes**: Preemptive kernel scheduler with kernel threads, sleep/yield, priority classes, fork/exec lifecycle, wait/waitpid reaping, zombie reparenting, and Ring 3 entry trampoline (Issues #34, #93, #108, #149, #150)
 - **Syscalls & Descriptors**: INT 0x80 dispatcher covering `read`, `write`, `open`, `close`, `lseek`, `mmap`, `munmap`, `pipe`, `dup`, `dup2`, `kill`, `signal`, `sigaction`, `sigprocmask`, `sigreturn`, `waitpid`, `fcntl`, `yield`, `sleep`, and `exit`; per-process descriptor tables with CLOEXEC, stdin ring buffer, and serial/framebuffer streams (Issues #60, #89, #96, #102, #103, #149)
 - **Storage & VFS**: PCI/AHCI DMA driver, global block cache, GPT discovery, FAT32 filesystem driver, and VFS namespace mounted at `/` for userland access (Issues #62-#65, #114-#115)
 - **IPC & Device I/O**: Anonymous pipes, ANSI console with scrollback and color, PS/2 keyboard input routed into stdin with `/dev/input/kbd` events, serial logging, framebuffer console, and synchronization primitives (Issues #36, #37, #39, #40, #102)

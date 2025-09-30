@@ -75,6 +75,11 @@ Inter-process communication for complex applications:
 - **Scope**: Baseline POSIX wait semantics (blocking only)
 - **Impact**: Enables init/shell supervision trees, graceful worker shutdown, and leak-free process lifecycles
 
+#### **Zombie Reparenting** (Issue #150)
+- ✅ **Status**: COMPLETE – exiting parents reassign remaining children to init/kernel reaper; orphaned zombies continue delivering `SIGCHLD`
+- **Scope**: Adopt orphans, maintain exit status, keep process table bounded until init reaps them
+- **Impact**: Allows init to supervise long-lived services without leaking PIDs
+
 #### **Shared Memory** (Issue #104)
 - 🟡 **Status**: Ready to implement (VM manager complete, `mmap` groundwork done)
 - **Scope**: `shmget`/`shmat`/`shmdt` APIs plus VFS hooks for POSIX shared memory

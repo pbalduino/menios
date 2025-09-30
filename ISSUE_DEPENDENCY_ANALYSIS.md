@@ -66,7 +66,7 @@ These issues form the backbone of the system and should be prioritized:
 
 ### 🆕 Tier 10: init & Shell Infrastructure (NEW!)
 41. **#149** - wait/waitpid syscall (process synchronization - CLOSED)
-42. **#150** - Process zombie state and orphan reparenting
+42. **#150** - Process zombie state and orphan reparenting (CLOSED)
 43. **#151** - getcwd/chdir syscalls (directory navigation)
 44. **#152** - Environment variables support (getenv/setenv/unsetenv)
 45. **#153** - Barebone init program (PID 1 process supervisor)
@@ -209,7 +209,7 @@ Phase 1: Process Synchronization
 #93 (fork/exec - CLOSED) ──┐
 #60 (syscalls - CLOSED) ────┼──→ #149 (wait/waitpid - CLOSED) → Process can wait for children
                             │            ↓
-Phase 2: Zombie Handling    │      #150 (zombie state + orphan reparenting)
+Phase 2: Zombie Handling    │      #150 (zombie state + orphan reparenting - CLOSED)
                             │            ↓                Parent reaps children
                             │            ↓                Orphans go to init
 Phase 3: Shell Support      │            ↓
@@ -219,7 +219,7 @@ Phase 3: Shell Support      │            ↓
                                          ↓
 Phase 4: init Program                    ├──→ #153 (init program)
 #149 (wait/waitpid - CLOSED) ─────────────────────┘         ↓  Reaps zombies
-#150 (zombie handling) ──────────────────────────────┘  Supervises processes
+#150 (zombie handling - CLOSED) ────────────────────────┘  Supervises processes
                                                     ↓
 Phase 5: Boot Integration                    #154 (boot init as PID 1)
                                                     ↓  Start init at boot
@@ -312,8 +312,7 @@ Phase 6: Shell                                 #54 (mosh shell)
 - **#103 (UNIX signals)** - Process control mechanism (handlers delivered; siginfo/rt signals TBD)
 
 ### Cannot Start Until Complete:
-- **#150 (zombie/orphan handling)** blocks on: #149 (wait/waitpid - CLOSED)
-- **#153 (init program)** blocks on: #149 (wait/waitpid - CLOSED), #150 (zombie handling)
+- **#153 (init program)** blocks on: #149 (wait/waitpid - CLOSED), #150 (zombie handling - CLOSED)
 - **#154 (boot init as PID 1)** blocks on: #153 (init program)
 - **#54 (mosh shell)** blocks on: #149 (wait - CLOSED), #151 (chdir), #152 (env), #153 (init), #154 (boot)
 - **#106 (microkernel IPC)** blocks on: #101 (timers - CLOSED), #104 (shared memory)
@@ -328,7 +327,7 @@ Phase 6: Shell                                 #54 (mosh shell)
 - **init & Shell** (#149-#154, #54) can start immediately - wait/waitpid is done, paving the way for the remaining tasks!
   - #151 (getcwd/chdir) - Directory navigation (1 day)
   - #152 (environment vars) - PATH, HOME, etc. (2-3 days)
-  - Sequential: #150 → #153 → #154 → #54 (mosh)
+  - Sequential: #153 → #154 → #54 (mosh)  *(#150 zombie handling complete)*
 - **Threading APIs** (#109-#113) can start immediately - foundation complete!
 - **Unicode Support** (#127-#134) can develop independently - start with #127!
 - **Code Coverage** (#135) can develop immediately with existing Unity tests
@@ -400,7 +399,7 @@ Phase 6: Shell                                 #54 (mosh shell)
 4. **Phase 4**: #148 (ext2) → Better persistent storage (1-2 weeks)
 
 ### For init & Shell (Interactive System):
-1. **Week 1**: #149 (wait/waitpid - CLOSED) → #150 (zombie handling - 1-2 days)
+1. **Week 1**: #149 (wait/waitpid - CLOSED) → #150 (zombie handling - DONE)
 2. **Week 1-2**: #151 (getcwd/chdir - 1 day) + #152 (environment vars - 2-3 days) in parallel
 3. **Week 2**: #153 (init program - 2 days) → #154 (boot integration - 1 day)
 4. **Week 3-4**: #54 (mosh shell - 1-2 weeks) → Basic interactive shell

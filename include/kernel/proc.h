@@ -155,6 +155,7 @@ typedef proc_info_t* proc_info_p;
 extern proc_info_t kernel_process_info;
 extern proc_info_p procs[PROC_MAX];
 extern proc_info_p current;
+extern proc_info_p init_process;
 
 void scheduler_init();
 void proc_create(proc_info_p proc, const char* name, void (*entrypoint)(void *), void* arg);
@@ -178,6 +179,7 @@ bool proc_process_pending_signals(cpu_state_p frame);
 int proc_install_sigaction(proc_info_p proc, int sig, const struct sigaction* act, struct sigaction* oldact);
 int proc_update_signal_mask(proc_info_p proc, int how, sigset_t set, sigset_t* oldset);
 int proc_waitpid(proc_info_p parent, int pid, int options, int* status_out);
+void proc_register_init(proc_info_p proc);
 bool proc_user_buffer_accessible(proc_info_p proc, const void* buffer, size_t length, bool write);
 
 typedef struct signal_frame_t {

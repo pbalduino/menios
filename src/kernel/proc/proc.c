@@ -38,6 +38,7 @@ proc_info_p procs[PROC_MAX] = {
 };
 
 proc_info_p current = &kernel_process_info;
+proc_info_p init_process = &kernel_process_info;
 
 typedef struct scheduler_queue_t {
   proc_info_p head;
@@ -165,6 +166,34 @@ static proc_info_p proc_find_zombie_child(proc_info_p parent, int pid) {
   }
 
   return NULL;
+}
+
+void proc_register_init(proc_info_p proc) {
+  if(proc == NULL) {
+    return;
+  }
+  init_process = proc;
+}
+
+static void proc_reparent_children(proc_info_p parent, proc_info_p new_parent) {
+  if(parent == NULL || parent->first_child == NULL || new_parent == NULL || parent == new_parent) {
+    return;
+  }
+
+  proc_info_p child = parent->first_child;
+  parent->first_child = NULL;
+  parent->children_count = 0;
+
+  while(child) {
+    proc_info_p next = child->sibling_next;
+    child->parent = new_parent;
+    child->sibling_next = NULL;
+    proc_add_child(new_parent, child);
+    if(child->state == PROC_STATE_ZOMBIE) {
+      proc_signal_parent(child);
+    }
+    child = next;
+  }
 }
 
 static inline uint64_t scheduler_now_us(void) {
@@ -755,6 +784,10 @@ void proc_create(proc_info_p proc, const char* name, void (*entrypoint)(void *),
   proc->user_segment_count = 0;
   proc_set_priority(proc, PROC_PRIO_NORMAL);
   proc->time_slice_remaining_us = proc->quantum_us;
+
+  if(proc->parent && proc->parent != proc) {
+    proc_add_child(proc->parent, proc);
+  }
 }
 
 static inline virt_addr_t user_code_base(uint32_t pid) {
@@ -1358,6 +1391,10 @@ void proc_create_user(proc_info_p proc, const char* name, const void* code_blob,
   proc->mmap_limit = user_mmap_limit(proc->pid);
   proc_init_signal_state(proc);
 
+  if(proc->pid == 1) {
+    proc_register_init(proc);
+  }
+
   if(!vm_region_add(proc,
                     stack_base_vaddr,
                     PROC_USER_STACK_SIZE,
@@ -1514,6 +1551,14 @@ void proc_exit(int code) {
   serial_printf("proc_exit: Process %s exited with code %d\n", proc->name, code);
 
   proc_info_p parent = proc->parent;
+
+  proc_info_p adoptive = init_process ? init_process : &kernel_process_info;
+  if(adoptive == proc) {
+    adoptive = &kernel_process_info;
+  }
+  if(proc_has_children(proc)) {
+    proc_reparent_children(proc, adoptive);
+  }
 
   if(parent == NULL || parent == &kernel_process_info) {
     proc->state = PROC_STATE_TERMINATED;
