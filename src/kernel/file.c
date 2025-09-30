@@ -357,6 +357,11 @@ file_descriptor_t fd_get(int fd) {
   return kernel_process_info.files[fd].file;
 }
 
+static int64_t serial_read_impl(file_t* file, void* buffer, size_t length) {
+  (void)file;
+  return serial_read(buffer, length);
+}
+
 static int64_t serial_write_impl(file_t* file, const void* buffer, size_t length) {
   (void)file;
   const char* data = (const char*)buffer;
@@ -381,7 +386,7 @@ static int64_t framebuffer_write_impl(file_t* file, const void* buffer, size_t l
 }
 
 static const file_ops_t serial_file_ops = {
-  .read = NULL,
+  .read = serial_read_impl,
   .write = serial_write_impl,
   .close = serial_close_noop,
   .seek = NULL,
@@ -408,11 +413,11 @@ static int console_char_open(char_device_t* device, uint32_t mode, file_t** out_
 
 static int serial_char_open(char_device_t* device, uint32_t mode, file_t** out_file) {
   (void)device;
-  if((mode & FILE_MODE_WRITE) == 0) {
-    return -EACCES;
+  if((mode & (FILE_MODE_READ | FILE_MODE_WRITE)) == 0) {
+    mode |= FILE_MODE_READ;
   }
 
-  file_t* file = file_create(&serial_file_ops, NULL, FILE_MODE_WRITE);
+  file_t* file = file_create(&serial_file_ops, NULL, mode);
   if(file == NULL) {
     return -ENOMEM;
   }
@@ -463,7 +468,7 @@ static char_device_t console_char_device = {
 
 static char_device_t serial_char_device = {
   .name = "/dev/ttyS0",
-  .supported_modes = FILE_MODE_WRITE,
+  .supported_modes = FILE_MODE_READ | FILE_MODE_WRITE,
   .ops = &serial_char_ops,
   .driver_ctx = NULL,
   .next = NULL,

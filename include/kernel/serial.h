@@ -3,6 +3,7 @@
 
 #include <stdarg.h>
 #include <stdbool.h>
+#include <stddef.h>
 
 #ifdef MENIOS_KERNEL
 void serial_init();
@@ -10,6 +11,7 @@ int serial_putchar(int ch);
 int serial_puts(const char* text);
 int serial_printf(const char* format, ...);
 int serial_vprintf(const char *format, va_list args);
+int64_t serial_read(void* buffer, size_t length);
 
 #define serial_line(a) serial_printf("%s: [%s:%d] %s\n", __func__, __FILE__, __LINE__, a)
 #define serial_log(a) serial_printf("[INFO] %s[%d]: %s\n", __FILE__, __LINE__, a)
