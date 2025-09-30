@@ -15,8 +15,7 @@ desktops, and hardware-accelerated rendering.
 - `/dev/console` multiplexes framebuffer output with serial logging for terminal
   apps (#138).
 - Shell now redirects STDIN/STDOUT to `/dev/console`, giving live VGA output (#166).
-- Character device registry (#170) and VGA text driver (#168) expose `/dev/vga/0`, so console output no
-  longer depends on the framebuffer helper alone.
+- Character device registry (#170 ✅) and VGA text driver (#168 ✅) expose `/dev/vga/0`, so console output no longer depends on the framebuffer helper alone.
 - `/dev/zero` (#167) now comes from the same character-device infrastructure, so userland can rely on the
   conventional zero source.
 - TTY subsystem now provides canonical terminal I/O and `/dev/tty0` (#169).

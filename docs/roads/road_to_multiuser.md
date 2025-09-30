@@ -395,7 +395,7 @@
 - **TBD** - Resource limits (ulimit/getrlimit/setrlimit)
 - **TBD** - Security testing and audit
 
-**Note**: These issues will be created when multi-user development begins. Issue numbers #166-#170 are currently used for shell terminal integration.
+**Note**: These issues will be created when multi-user development begins. Issue numbers #166-#170 were reserved for shell terminal integration and are now delivered.
 
 ## Success Criteria
 

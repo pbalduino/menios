@@ -47,7 +47,7 @@ These issues form the backbone of the system and should be prioritized:
 
 ### 🆕 Tier 7: Device Filesystem & /dev (NEW!)
 28. **#136** - Device filesystem infrastructure (foundation)
-29. **#137** - /dev/null and /dev/zero virtual devices
+29. **#137** - /dev/null and /dev/zero virtual devices (CLOSED)
 30. **#138** - /dev/console and terminal devices (CLOSED)
 31. **#139** - /dev/random and /dev/urandom entropy devices
 32. **#140** - /dev/kbd0 and /dev/fb0 hardware devices
@@ -87,9 +87,9 @@ These issues form the backbone of the system and should be prioritized:
 58. **#166** - Hook shell I/O to virtual terminals/VGA (TTY devices, ANSI codes - CLOSED)
 
 ### Tier 12: Terminal Infrastructure (NEW!)
-59. **#168** - Console/VGA driver infrastructure (text mode, 80×25)
+59. **#168** - Console/VGA driver infrastructure (text mode, 80×25 - CLOSED)
 60. **#169** - TTY subsystem (line discipline, virtual terminals, ioctl - CLOSED)
-61. **#170** - Character device infrastructure (foundation for streaming devices)
+61. **#170** - Character device infrastructure (foundation for streaming devices - CLOSED)
 
 ### Tier 13: Multi-User System Infrastructure (Future - Not Yet Created)
 62. **TBD** - User/group database infrastructure (/etc/passwd, /etc/group)
@@ -198,7 +198,7 @@ Phase 1: Foundation
 #96 (file descriptors) ──┐
 #60 (VFS layer) ─────────┼──→ #136 (device filesystem infrastructure)
                          │            ↓
-Phase 2: Virtual Devices                #137 (null/zero) ──┐
+Phase 2: Virtual Devices                #137 (null/zero - CLOSED) ──┐
                          │            ↓                    │
 Phase 3: Hardware        │      #138 (console/tty - CLOSED) ──┐    │
 #31 (framebuffer - CLOSED) ──┼──→   #140 (kbd/fb devices) │    │
@@ -277,8 +277,8 @@ Phase 2: I/O & Pipes (Tier 11 - High Priority)
 #102 (pipes) ────────────────────→ #165 (pipe support) → cmd1 | cmd2 | cmd3
 
 Phase 3: Terminal Integration (Tier 12 - Essential)
-#170 (char device infra) ──→ #168 (VGA driver) ──→ #169 (TTY subsystem - CLOSED) ──→ #166 (shell VT/VGA - CLOSED) → Console bridge in place
-                         └──→ #137 (/dev/null/zero) ─┘                                              (full VT stack pending)
+#170 (char device infra - CLOSED) ──→ #168 (VGA driver - CLOSED) ──→ #169 (TTY subsystem - CLOSED) ──→ #166 (shell VT/VGA - CLOSED) → Console bridge in place
+                         └──→ #137 (/dev/null/zero - CLOSED) ─┘                                      (full VT stack pending)
 
 Phase 4: Usability Features (Tier 11 - Quality of Life)
 #169 (TTY - CLOSED) ──→ #156 (command history) → Up/down arrows, Ctrl+R
@@ -399,11 +399,11 @@ All phases ───────────────→ #178 (security audit
 - **#163 (built-ins)** - Ready: cd/pwd/exit/export commands
 - **#164 (basic redirection)** - Ready: >, <, >> operators
 - **#165 (pipe support)** - Needs: #102 (pipes syscall)
-- **#170 (char device infra)** - Ready: foundation for all streaming devices
-- **#137 (/dev/null and /dev/zero)** - Needs: #170 (char device), #152 (devfs - CLOSED)
-- **#168 (VGA driver)** - Ready: text mode console support
+- **#170 (char device infra - CLOSED)** - Foundation for all streaming devices delivered
+- **#137 (/dev/null and /dev/zero - CLOSED)** - Available via the new char-device stack and devfs mount
+- **#168 (VGA driver - CLOSED)** - Text mode console support landed
 - **#169 (TTY subsystem - CLOSED)** - Canonical input, echo, and `/dev/tty0`
-- **#166 (shell VT/VGA - CLOSED)** - Initial console bridge in place (full VT awaits #168/#170)
+- **#166 (shell VT/VGA - CLOSED)** - Initial console bridge in place (full VT improvements can now iterate atop #168/#170, both CLOSED)
 - **#109 (pthread API)** - Dependencies met: #108 (CLOSED)
 - **#110 (thread-safe libc)** - Can start in parallel with #109
 - **#127 (UTF-8 utilities)** - No dependencies, ready to start immediately!
@@ -421,10 +421,10 @@ All phases ───────────────→ #178 (security audit
   - **#163 (built-ins)** - Ready now (REPL/exec complete)
   - **#164 (basic redirection)** - Ready now (REPL/exec complete)
   - **#165 (pipe support)** blocks on: #102 (pipes syscall)
-  - **#166 (shell VT/VGA - CLOSED)** now uses /dev/console; richer VT work continues in #168/#170
+  - **#166 (shell VT/VGA - CLOSED)** now uses /dev/console; richer VT work can build atop #168/#170 (both CLOSED)
 - **Terminal Infrastructure:**
-  - **#137 (/dev/null+zero)** blocks on: #170 (char device)
-  - **#169 (TTY subsystem - CLOSED)** delivered canonical input; advanced VT work continues under #168/#170
+  - **#137 (/dev/null+zero - CLOSED)** delivered on top of #170 (char device - CLOSED)
+  - **#169 (TTY subsystem - CLOSED)** delivered canonical input; any new VT features will spin off beyond #168/#170
   - **#166 (shell VT/VGA - CLOSED)** complete for console output; backed by new TTY layer (#169)
 - **Shell Advanced Features:**
   - **#156 (command history)** builds on #169 (TTY - CLOSED) for raw mode switching
@@ -445,7 +445,7 @@ All phases ───────────────→ #178 (security audit
 ### Parallel Development Opportunities:
 - **mosh Shell** (#163-#166) progressing - REPL/exec/TTY hookup complete; continue toward built-ins and I/O
   - Sequential: ✅ #161 (REPL) → ✅ #162 (exec) → #163 (built-ins) → #164 (redirection) → #165 (pipes)
-  - Terminal: #170 (char dev) → #168 (VGA) → #166 (shell integration - CLOSED, runs atop #169 TTY)
+  - Terminal: (#170 char dev - CLOSED) → (#168 VGA - CLOSED) → #166 (shell integration - CLOSED, runs atop #169 TTY)
   - Quality of life: #156 (history), #157 (tab), #160 (editing)
   - Advanced: #155 (scripting), #158 (job control), #159 (advanced redirection)
 - **Init & Process Management** (#145-#148) - Process lifecycle syscalls
@@ -478,8 +478,8 @@ All phases ───────────────→ #178 (security audit
    → **Result: Working shell with pipes!**
 
 **High Priority - Terminal Support (1-2 weeks):**
-5. **#170** - Character device infrastructure - 3-5 days
-6. **#168** - VGA driver (text mode) - 3-5 days
+5. **#170** - Character device infrastructure - CLOSED (foundation for the `/dev` stack)
+6. **#168** - VGA driver (text mode) - CLOSED
 7. **#169** - TTY subsystem - CLOSED (canonical input, `/dev/tty0`)
 8. **#166** - Hook shell to VT/VGA - CLOSED
 9. **#167** - /dev/zero device - 1-2 days
@@ -516,7 +516,7 @@ All phases ───────────────→ #178 (security audit
 3. **Phase 3**: #132 (filesystem) → #133 (locale/i18n) → #134 (testing)
 
 ### For Device Filesystem & Hardware Access:
-1. **Phase 1**: #136 (device infrastructure) → #137 (null/zero)
+1. **Phase 1**: #136 (device infrastructure) → #137 (null/zero - CLOSED)
 2. **Phase 2**: #138 (console - CLOSED) + #140 (kbd/fb) + #141 (block devices)
 3. **Phase 3**: #139 (random) + #142 (serial) → Complete /dev system
 
@@ -618,7 +618,6 @@ All phases ───────────────→ #178 (security audit
 - #127 (UTF-8 utilities) - No dependencies
 - #135 (code coverage) - Quality assurance
 - #136 (device filesystem) - Hardware access
-- #137 (null/zero devices) - Good first issue
 - #143 (PS/2 mouse) - Input expansion
 - #148 (ext2) - Better persistent storage (1-2 weeks)
 - #102 (pipes) - Basic IPC (high priority for shell)
@@ -626,7 +625,7 @@ All phases ───────────────→ #178 (security audit
 
 ### **Project Status**:
 - **Total Issues**: 170 issues created (highest #170, note: #167 closed as duplicate)
-- **Closed**: 71 issues (including #103, #138, #146, #149-#154, #161-#162, #166-#167, #169)
+- **Closed**: 74 issues (including #103, #137-#138, #146, #149-#154, #161-#162, #166-#170)
 - **Open**: 99 issues (organized by priority tiers)
 - **Planned**: 13 issues for multi-user system (Tier 13 - to be created)
 - **Major Completions**:
@@ -640,7 +639,7 @@ All phases ───────────────→ #178 (security audit
 - **Active Development**:
   - **mosh shell** (core: #163-#165 built-ins/I/O/pipes; terminal: #168-#170 VGA/TTY/char dev; advanced: #155-#160)
   - **Process lifecycle** (#145-#148: wait/waitpid, zombies, getcwd/chdir, environment)
-  - **Terminal infrastructure** (#168-#170: VGA driver, TTY, character devices)
+- **Terminal infrastructure** (#168/#170 CLOSED alongside #169 TTY)
   - **Device filesystem** (#136-#142: /dev hierarchy devices)
   - **Threading APIs** (#109-#113: pthread, thread-safe libc)
   - **Mouse input** (#143-#144: PS/2 and USB mouse)
@@ -656,7 +655,7 @@ With core kernel infrastructure operational, meniOS has strong foundations for a
    - Built-in commands (#163) - 2-3 days
    - I/O redirection (#164) - 2-3 days
    - Pipe support (#102, #165) - 5-7 days total
-   - VGA driver integration (#168, #170) - 1-2 weeks
+   - VGA driver integration (#168, #170) - COMPLETE
    - Quality of life: history, tab completion, line editing (#156, #157, #160) - 1-2 weeks
    - **Result: Working shell with pipes in ~2 weeks, full VGA in 3-4 weeks, polished in 5-6 weeks**
 2. **Virtual Filesystems** ✅ COMPLETE (#151-#154 all CLOSED)
@@ -667,7 +666,7 @@ With core kernel infrastructure operational, meniOS has strong foundations for a
 3. **Threading APIs** (#109, #110, #113) - Enable multithreaded applications
 4. **Advanced IPC** (#102, #104, #105) - Complete process communication (✅ signals done)
 5. **Unicode Support** (#127, #128, #129, #130) - International text handling
-6. **Device Infrastructure** (#136, #137, #170) - Hardware access layer
+6. **Device Infrastructure** (#136 open; #137/#170 CLOSED) - Hardware access layer
 7. **Mouse Input** (#143, #144) - Complete input subsystem with mouse support
 8. **Quality Assurance** (#135) - Code coverage and testing improvements
 9. **Hardware Drivers** (ongoing #118-#126) - USB and storage expansion
