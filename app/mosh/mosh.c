@@ -127,6 +127,19 @@ static void attach_tty(void) {
   }
 }
 
+static long sys_getenv(const char* name, char* buffer, size_t size);
+
+static bool should_attach_tty(void) {
+  char value[8];
+  long rc = sys_getenv("MOSH_ATTACH_TTY", value, sizeof(value));
+  if(rc <= 0) {
+    return false;
+  }
+
+  char ch = value[0];
+  return (ch == '1' || ch == 't' || ch == 'T' || ch == 'y' || ch == 'Y');
+}
+
 static pid_t sys_waitpid(pid_t pid, int* status, int options) {
   return (pid_t)syscall3(SYS_WAITPID, pid, (long)status, options);
 }
@@ -489,7 +502,9 @@ static void run_command(int argc, char* argv[]) {
 }
 
 int main(void) {
-  attach_tty();
+  if(should_attach_tty()) {
+    attach_tty();
+  }
   ensure_default_environment();
 
   char cwd[MOSH_MAX_PATH_LEN];

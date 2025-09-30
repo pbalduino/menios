@@ -8,7 +8,7 @@
 #include <unistd.h>
 
 #include <kernel/block_device.h>
-#include <kernel/input/keyboard.h>
+#include <kernel/char_device.h>
 #include <kernel/fs.h>
 #include <kernel/heap.h>
 #include <kernel/mutex.h>
@@ -512,13 +512,22 @@ int vfs_open(const char* path, int flags, file_t** out_file) {
 
   *out_file = NULL;
 
-  if(strcmp(path, "/dev/input/kbd") == 0) {
-    file_t* dev = keyboard_device_open();
-    if(dev == NULL) {
-      return -ENOMEM;
-    }
-    *out_file = dev;
+  uint32_t requested_mode = 0;
+  int accmode = flags & O_ACCMODE;
+  if(accmode == O_WRONLY) {
+    requested_mode = FILE_MODE_WRITE;
+  } else if(accmode == O_RDWR) {
+    requested_mode = FILE_MODE_READ | FILE_MODE_WRITE;
+  } else {
+    requested_mode = FILE_MODE_READ;
+  }
+
+  int dev_rc = char_device_open(path, requested_mode, out_file);
+  if(dev_rc == 0) {
     return 0;
+  }
+  if(dev_rc != -ENODEV) {
+    return dev_rc;
   }
 
   const vfs_fs_driver_t* driver = NULL;
@@ -536,7 +545,6 @@ int vfs_open(const char* path, int flags, file_t** out_file) {
     }
   }
 
-  int accmode = flags & O_ACCMODE;
   if(accmode == O_WRONLY || accmode == O_RDWR) {
     return -EROFS;
   }

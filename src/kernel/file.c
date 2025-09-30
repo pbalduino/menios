@@ -8,6 +8,7 @@
 
 #include <kernel/condvar.h>
 #include <kernel/console.h>
+#include <kernel/char_device.h>
 #include <kernel/file.h>
 #include <kernel/framebuffer.h>
 #include <kernel/input/keyboard.h>
@@ -390,6 +391,97 @@ static const file_ops_t framebuffer_file_ops = {
   .seek = NULL,
 };
 
+static int console_char_open(char_device_t* device, uint32_t mode, file_t** out_file) {
+  (void)device;
+  (void)mode;
+
+  file_t* file = console_device_open();
+  if(file == NULL) {
+    return -ENOMEM;
+  }
+  *out_file = file;
+  return 0;
+}
+
+static int serial_char_open(char_device_t* device, uint32_t mode, file_t** out_file) {
+  (void)device;
+  if((mode & FILE_MODE_WRITE) == 0) {
+    return -EACCES;
+  }
+
+  file_t* file = file_create(&serial_file_ops, NULL, FILE_MODE_WRITE);
+  if(file == NULL) {
+    return -ENOMEM;
+  }
+  *out_file = file;
+  return 0;
+}
+
+static int framebuffer_char_open(char_device_t* device, uint32_t mode, file_t** out_file) {
+  (void)device;
+  if((mode & FILE_MODE_WRITE) == 0) {
+    return -EACCES;
+  }
+
+  file_t* file = file_create(&framebuffer_file_ops, NULL, FILE_MODE_WRITE);
+  if(file == NULL) {
+    return -ENOMEM;
+  }
+  *out_file = file;
+  return 0;
+}
+
+static int keyboard_char_open(char_device_t* device, uint32_t mode, file_t** out_file) {
+  (void)device;
+  if((mode & FILE_MODE_READ) == 0) {
+    return -EACCES;
+  }
+
+  file_t* file = keyboard_device_open();
+  if(file == NULL) {
+    return -ENOMEM;
+  }
+  *out_file = file;
+  return 0;
+}
+
+static const char_device_ops_t console_char_ops = { .open = console_char_open };
+static const char_device_ops_t serial_char_ops = { .open = serial_char_open };
+static const char_device_ops_t framebuffer_char_ops = { .open = framebuffer_char_open };
+static const char_device_ops_t keyboard_char_ops = { .open = keyboard_char_open };
+
+static char_device_t console_char_device = {
+  .name = "/dev/console",
+  .supported_modes = FILE_MODE_READ | FILE_MODE_WRITE,
+  .ops = &console_char_ops,
+  .driver_ctx = NULL,
+  .next = NULL,
+};
+
+static char_device_t serial_char_device = {
+  .name = "/dev/ttyS0",
+  .supported_modes = FILE_MODE_WRITE,
+  .ops = &serial_char_ops,
+  .driver_ctx = NULL,
+  .next = NULL,
+};
+
+static char_device_t framebuffer_char_device = {
+  .name = "/dev/fb/0",
+  .supported_modes = FILE_MODE_WRITE,
+  .ops = &framebuffer_char_ops,
+  .driver_ctx = NULL,
+  .next = NULL,
+};
+
+static char_device_t keyboard_char_device = {
+  .name = "/dev/input/kbd",
+  .supported_modes = FILE_MODE_READ,
+  .ops = &keyboard_char_ops,
+  .driver_ctx = NULL,
+  .next = NULL,
+};
+
 #ifdef MENIOS_KERNEL
 static void install_standard_streams(void) {
   proc_file_table_init(&kernel_process_info);
@@ -411,6 +503,22 @@ static void install_standard_streams(void) {
 
 void file_system_init(void) {
 #ifdef MENIOS_KERNEL
+  char_device_system_init();
+  if(!char_device_register(tty_char_device())) {
+    serial_printf("file_system_init: failed to register /dev/tty0\n");
+  }
+  if(!char_device_register(&console_char_device)) {
+    serial_printf("file_system_init: failed to register /dev/console\n");
+  }
+  if(!char_device_register(&serial_char_device)) {
+    serial_printf("file_system_init: failed to register /dev/ttyS0\n");
+  }
+  if(!char_device_register(&framebuffer_char_device)) {
+    serial_printf("file_system_init: failed to register /dev/fb/0\n");
+  }
+  if(!char_device_register(&keyboard_char_device)) {
+    serial_printf("file_system_init: failed to register /dev/input/kbd\n");
+  }
   install_standard_streams();
 #endif
 }
@@ -447,24 +555,21 @@ FILE* fopen(const char* filename, const char* mode) {
 
   file_t* file = NULL;
   uint32_t file_mode = 0;
+  if(read) {
+    file_mode |= FILE_MODE_READ;
+  }
+  if(write) {
+    file_mode |= FILE_MODE_WRITE;
+  }
 
-  if(strcmp(filename, "/dev/ttyS0") == 0 && write) {
-    file = file_create(&serial_file_ops, NULL, FILE_MODE_WRITE);
-    file_mode = FILE_MODE_WRITE;
-  } else if(strcmp(filename, "/dev/tty0") == 0 && (read || write)) {
-    file = tty_device_open();
-    file_mode = FILE_MODE_READ | FILE_MODE_WRITE;
-  } else if(strcmp(filename, "/dev/console") == 0 && (read || write)) {
-    file = console_device_open();
-    file_mode = FILE_MODE_READ | FILE_MODE_WRITE;
-  } else if(strcmp(filename, "/dev/fb/0") == 0 && write) {
-    file = file_create(&framebuffer_file_ops, NULL, FILE_MODE_WRITE);
-    file_mode = FILE_MODE_WRITE;
-  } else if(strcmp(filename, "/dev/input/kbd") == 0 && read && !write) {
-    file = keyboard_device_open();
-    file_mode = FILE_MODE_READ;
+  int rc = char_device_open(filename, file_mode, &file);
+  if(rc == 0) {
+    // char device handled successfully
+  } else if(rc != -ENODEV) {
+    set_errno(-rc);
+    return NULL;
   } else if(read && !write) {
-    int rc = vfs_open(filename, O_RDONLY, &file);
+    rc = vfs_open(filename, O_RDONLY, &file);
     if(rc < 0) {
       set_errno(-rc);
       return NULL;
@@ -472,10 +577,6 @@ FILE* fopen(const char* filename, const char* mode) {
     file_mode = FILE_MODE_READ;
   } else {
     set_errno(ENOSYS);
-    return NULL;
-  }
-
-  if(file == NULL) {
     return NULL;
   }
 

@@ -1,4 +1,5 @@
 #include <errno.h>
+#include <kernel/char_device.h>
 #include <kernel/console.h>
 #include <kernel/file.h>
 #include <kernel/framebuffer.h>
@@ -198,26 +199,30 @@ static uint64_t syscall_open_handler(syscall_frame_t* frame) {
     install_flags |= FD_FLAG_CLOEXEC;
   }
 
-  file_t* file = NULL;
-  int rc = 0;
-
-  if(strcmp(path, "/dev/tty0") == 0) {
-    file = tty_device_open();
-  } else if(strcmp(path, "/dev/console") == 0) {
-    file = console_device_open();
+  uint32_t requested_mode = 0;
+  int accmode = flags & O_ACCMODE;
+  if(accmode == O_WRONLY) {
+    requested_mode = FILE_MODE_WRITE;
+  } else if(accmode == O_RDWR) {
+    requested_mode = FILE_MODE_READ | FILE_MODE_WRITE;
   } else {
+    requested_mode = FILE_MODE_READ;
+  }
+
+  file_t* file = NULL;
+  int rc = char_device_open(path, requested_mode, &file);
+
+  if(rc == -ENODEV) {
     rc = vfs_open(path, flags, &file);
   }
 
-  if(file == NULL) {
-    if(rc == 0) {
-      int err = (current && current->errno) ? current->errno : ENOMEM;
-      rc = -err;
-    }
-  }
-
   if(rc < 0 || file == NULL) {
-    frame->rax = (uint64_t)rc;
+    if(file == NULL && rc >= 0) {
+      int err = (current && current->errno) ? -current->errno : -ENOMEM;
+      frame->rax = (uint64_t)err;
+    } else {
+      frame->rax = (uint64_t)rc;
+    }
     return frame->rax;
   }
 
