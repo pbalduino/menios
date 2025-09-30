@@ -364,6 +364,11 @@ run:
 	$(call assert_tools,$(QEMU_X86_64))
 	$(QEMU_X86_64) $(QEMU_OPTS)
 
+.PHONY: run-headless
+run-headless:
+	$(call assert_tools,$(QEMU_X86_64))
+	$(QEMU_X86_64) $(QEMU_OPTS) -display none
+
 .PHONY: test
 test: docker
 	@set -eux
