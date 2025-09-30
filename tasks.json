@@ -1,5 +1,167 @@
 [
   {
+    "title": "Implement pipe support for mosh shell (|)",
+    "github_issue": {
+      "number": 165,
+      "url": "https://github.com/pbalduino/menios/issues/165",
+      "state": "OPEN"
+    },
+    "labels": [
+      "enhancement",
+      "mosh"
+    ],
+    "assignees": [
+      "pbalduino"
+    ]
+  },
+  {
+    "title": "Implement basic I/O redirection for mosh shell (> and <)",
+    "github_issue": {
+      "number": 164,
+      "url": "https://github.com/pbalduino/menios/issues/164",
+      "state": "OPEN"
+    },
+    "labels": [
+      "enhancement",
+      "mosh"
+    ],
+    "assignees": [
+      "pbalduino"
+    ]
+  },
+  {
+    "title": "Implement built-in commands for mosh shell (cd/pwd/exit/export)",
+    "github_issue": {
+      "number": 163,
+      "url": "https://github.com/pbalduino/menios/issues/163",
+      "state": "OPEN"
+    },
+    "labels": [
+      "enhancement",
+      "mosh"
+    ],
+    "assignees": [
+      "pbalduino"
+    ]
+  },
+  {
+    "title": "Implement command execution (fork/exec/wait) for mosh shell",
+    "github_issue": {
+      "number": 162,
+      "url": "https://github.com/pbalduino/menios/issues/162",
+      "state": "OPEN"
+    },
+    "labels": [
+      "enhancement",
+      "mosh"
+    ],
+    "assignees": [
+      "pbalduino"
+    ]
+  },
+  {
+    "title": "Implement basic REPL and command parsing for mosh shell",
+    "github_issue": {
+      "number": 161,
+      "url": "https://github.com/pbalduino/menios/issues/161",
+      "state": "OPEN"
+    },
+    "labels": [
+      "enhancement",
+      "mosh"
+    ],
+    "assignees": [
+      "pbalduino"
+    ]
+  },
+  {
+    "title": "Add line editing keys to mosh shell (Ctrl+L/K/U/A/E/R/etc)",
+    "github_issue": {
+      "number": 160,
+      "url": "https://github.com/pbalduino/menios/issues/160",
+      "state": "OPEN"
+    },
+    "labels": [
+      "enhancement"
+    ],
+    "assignees": [
+      "pbalduino"
+    ]
+  },
+  {
+    "title": "Add advanced redirection to mosh shell (2>&1, here-docs, etc)",
+    "github_issue": {
+      "number": 159,
+      "url": "https://github.com/pbalduino/menios/issues/159",
+      "state": "OPEN"
+    },
+    "labels": [
+      "enhancement",
+      "nice to have"
+    ],
+    "assignees": [
+      "pbalduino"
+    ]
+  },
+  {
+    "title": "Add job control to mosh shell (bg/fg/Ctrl-Z)",
+    "github_issue": {
+      "number": 158,
+      "url": "https://github.com/pbalduino/menios/issues/158",
+      "state": "OPEN"
+    },
+    "labels": [
+      "enhancement",
+      "nice to have"
+    ],
+    "assignees": [
+      "pbalduino"
+    ]
+  },
+  {
+    "title": "Add tab completion to mosh shell",
+    "github_issue": {
+      "number": 157,
+      "url": "https://github.com/pbalduino/menios/issues/157",
+      "state": "OPEN"
+    },
+    "labels": [
+      "enhancement"
+    ],
+    "assignees": [
+      "pbalduino"
+    ]
+  },
+  {
+    "title": "Add command history to mosh shell (up/down arrows)",
+    "github_issue": {
+      "number": 156,
+      "url": "https://github.com/pbalduino/menios/issues/156",
+      "state": "OPEN"
+    },
+    "labels": [
+      "enhancement"
+    ],
+    "assignees": [
+      "pbalduino"
+    ]
+  },
+  {
+    "title": "Add scripting support to mosh shell (if/while/for/functions)",
+    "github_issue": {
+      "number": 155,
+      "url": "https://github.com/pbalduino/menios/issues/155",
+      "state": "OPEN"
+    },
+    "labels": [
+      "enhancement",
+      "nice to have"
+    ],
+    "assignees": [
+      "pbalduino"
+    ]
+  },
+  {
     "title": "Implement boot integration to start init as PID 1",
     "github_issue": {
       "number": 154,

@@ -71,7 +71,38 @@ These issues form the backbone of the system and should be prioritized:
 44. **#152** - Environment variables support (getenv/setenv/unsetenv)
 45. **#153** - Barebone init program (PID 1 process supervisor - CLOSED)
 46. **#154** - Boot integration to start init as PID 1 (CLOSED)
-47. **#54** - mosh shell (depends on init infrastructure)
+
+### Tier 11: mosh Shell Core Components
+47. **#161** - Basic REPL and command parsing (read/parse/execute loop)
+48. **#162** - Command execution (fork/exec/wait infrastructure)
+49. **#163** - Built-in commands (cd/pwd/exit/export)
+50. **#164** - Basic I/O redirection (>, <, >>)
+51. **#165** - Pipe support (|)
+
+### Tier 12: mosh Shell Advanced Features
+52. **#156** - Command history (up/down arrows)
+53. **#157** - Tab completion
+54. **#160** - Line editing keys (Ctrl+L/K/U/A/E/R)
+55. **#155** - Scripting support (if/while/for/functions)
+56. **#158** - Job control (bg/fg/Ctrl-Z)
+57. **#159** - Advanced redirection (2>&1, here-docs)
+
+### Tier 13: Multi-User System Infrastructure (Future)
+58. **#166** - User/group database infrastructure (/etc/passwd, /etc/group)
+59. **#167** - Process credentials (UID/GID per process)
+60. **#168** - User database parsing and management
+61. **#169** - Login program and authentication
+62. **#170** - Session management and getty
+63. **#171** - File system permission bits (owner/group/other)
+64. **#172** - VFS permission checking
+65. **#173** - Security syscalls (getuid/setuid family)
+66. **#174** - Update all syscalls for permission checks
+67. **#175** - User management utilities (useradd, passwd, chmod)
+68. **#176** - su and sudo implementation
+69. **#177** - Resource limits (ulimit/getrlimit/setrlimit)
+70. **#178** - Security testing and audit
+
+**Note:** Multi-user support is LOW PRIORITY - implement after shell and core applications are working. See `road_to_multiuser.md` for full details.
 
 ## 📊 Updated Dependency Categories
 
@@ -224,9 +255,32 @@ Phase 4: init Program                    ├──→ #153 (init program - CLOSE
 Phase 5: Boot Integration                    #154 (boot init as PID 1 - CLOSED)
                                                     ↓  Start init at boot (DONE)
                                                     ↓
-Phase 6: Shell                                 #54 (mosh shell)
-#149 (wait - CLOSED) + #151 (chdir) + #152 (env) ────────────┘  Interactive shell
-#153 (init - CLOSED) + #154 (boot - CLOSED) ──────────────────────────┘  Spawned by init
+```
+
+### mosh Shell Component Chain
+```
+Phase 1: Core Infrastructure (Tier 11 - Critical)
+#149 (wait - CLOSED) ──┐
+#151 (getcwd/chdir) ────┼──→ #161 (REPL & parsing) → Read, parse, tokenize commands
+#152 (environment) ─────┘          ↓
+                                   ↓
+                              #162 (command execution) → fork/exec/wait/PATH lookup
+                                   ↓
+                              #163 (built-ins) → cd/pwd/exit/export
+
+Phase 2: I/O & Pipes (Tier 11 - High Priority)
+#96 (file descriptors - CLOSED) → #164 (basic redirection) → >, <, >>
+#102 (pipes) ────────────────────→ #165 (pipe support) → cmd1 | cmd2 | cmd3
+
+Phase 3: Usability Features (Tier 12 - Quality of Life)
+Terminal support ─────→ #156 (command history) → Up/down arrows, Ctrl+R
+                    ├─→ #157 (tab completion) → Complete commands/files
+                    └─→ #160 (line editing) → Ctrl+L/K/U/A/E/R
+
+Phase 4: Advanced Features (Tier 12 - Optional)
+#155 (scripting) → if/while/for/functions
+#158 (job control) → bg/fg/Ctrl-Z/process groups
+#159 (advanced redirection) → 2>&1, here-docs, <<EOF
 ```
 
 ### Filesystem Stack (COMPLETE!)
@@ -234,6 +288,41 @@ Phase 6: Shell                                 #54 (mosh shell)
 #62 (block driver - CLOSED) → #63 (block cache - CLOSED) → #64 (filesystem lib - CLOSED) → #65 (VFS - CLOSED) → #60 (syscalls - CLOSED)
                                                                                                                                 ↓
                                                                                                                       #96 (file descriptors - CLOSED)
+```
+
+### Multi-User System Chain (Tier 13 - Future)
+```
+Phase 1: User Infrastructure
+#60 (file I/O - CLOSED) ──┐
+                          ├──→ #166 (user/group database) → /etc/passwd, /etc/group, /etc/shadow
+                          │          ↓
+#93 (fork/exec - CLOSED) ─┼──→ #167 (process credentials) → UID/GID per process
+                          │          ↓
+                          └──→ #168 (database parsing) → Read user/group data
+
+Phase 2: Authentication
+#167 (credentials) ───────→ #169 (login program) → Username/password auth
+                                    ↓
+                               #170 (session management) → Getty, TTY allocation
+
+Phase 3: File Permissions
+#65 (VFS - CLOSED) ───────→ #171 (permission bits) → Owner/group/other rwx
+                                    ↓
+#167 (credentials) ───────→ #172 (permission checking) → Enforce access control
+
+Phase 4: Security Syscalls
+#167 (credentials) ───────→ #173 (security syscalls) → getuid/setuid family
+                                    ↓
+                               #174 (syscall updates) → Permission checks everywhere
+
+Phase 5: User Tools
+#168 (database) ──────────→ #175 (user utilities) → useradd, passwd, chmod
+#173 (security) ──────────→ #176 (su/sudo) → Privilege elevation
+
+Phase 6: Resource Control
+#167 (credentials) ───────→ #177 (resource limits) → ulimit, quotas
+                                    ↓
+All phases ───────────────→ #178 (security audit) → Testing and hardening
 ```
 
 ## 🏗️ Updated Implementation Phases
@@ -299,6 +388,7 @@ Phase 6: Shell                                 #54 (mosh shell)
 ### Ready to Start (Dependencies Met):
 - **#151 (getcwd/chdir)** - Dependencies: #65 (VFS - CLOSED) - ready!
 - **#152 (environment vars)** - No dependencies, ready to start!
+- **#161 (REPL/parsing)** - Dependencies: #149 (CLOSED), #151, #152 - ready once #151/#152 done!
 - **#109 (pthread API)** - Dependencies met: #108 (CLOSED)
 - **#110 (thread-safe libc)** - Can start in parallel with #109
 - **#127 (UTF-8 utilities)** - No dependencies, ready to start immediately!
@@ -312,20 +402,34 @@ Phase 6: Shell                                 #54 (mosh shell)
 - **#103 (UNIX signals)** - Process control mechanism (handlers delivered; siginfo/rt signals TBD)
 
 ### Cannot Start Until Complete:
-- **#54 (mosh shell)** blocks on: #149 (wait - CLOSED), #151 (chdir), #152 (env)
-- **#106 (microkernel IPC)** blocks on: #101 (timers - CLOSED), #104 (shared memory)
-- **#107 (capability security)** blocks on: #106 (microkernel IPC)
-- **#105 (Unix sockets)** blocks on: #71 (socket API)
-- **#95 (userspace malloc)** blocks on: #89 (CLOSED) - ready!
-- **#111 (advanced pthread sync)** blocks on: #109 (pthread API)
-- **#112 (thread debugging)** blocks on: #109 (pthread API)
-- **#113 (thread-aware syscalls)** blocks on: #109 (pthread API)
+- **Shell Core Components:**
+  - **#162 (command execution)** blocks on: #161 (REPL/parsing), #152 (environment for PATH)
+  - **#163 (built-ins)** blocks on: #151 (getcwd/chdir), #152 (environment)
+  - **#164 (basic redirection)** blocks on: #161 (REPL/parsing)
+  - **#165 (pipe support)** blocks on: #102 (pipes syscall), #161 (REPL/parsing)
+- **Shell Advanced Features:**
+  - **#156 (command history)** blocks on: #161 (REPL/parsing)
+  - **#157 (tab completion)** blocks on: #161 (REPL/parsing), #151 (getcwd/chdir)
+  - **#160 (line editing)** blocks on: #161 (REPL/parsing)
+  - **#155 (scripting)** blocks on: #161-#165 (core shell complete)
+  - **#158 (job control)** blocks on: #161-#165 (core shell complete)
+  - **#159 (advanced redirection)** blocks on: #164 (basic redirection)
+- **Other Systems:**
+  - **#106 (microkernel IPC)** blocks on: #101 (timers - CLOSED), #104 (shared memory)
+  - **#107 (capability security)** blocks on: #106 (microkernel IPC)
+  - **#105 (Unix sockets)** blocks on: #71 (socket API)
+  - **#95 (userspace malloc)** blocks on: #89 (CLOSED) - ready!
+  - **#111 (advanced pthread sync)** blocks on: #109 (pthread API)
+  - **#112 (thread debugging)** blocks on: #109 (pthread API)
+  - **#113 (thread-aware syscalls)** blocks on: #109 (pthread API)
 
 ### Parallel Development Opportunities:
-- **init & Shell** (#149-#154, #54) can start immediately - init supervisor and boot integration complete!
+- **mosh Shell** (#151-#152, #161-#165) can start immediately - init complete, ready for shell!
   - #151 (getcwd/chdir) - Directory navigation (1 day)
   - #152 (environment vars) - PATH, HOME, etc. (2-3 days)
-  - Sequential: #54 (mosh)  *(#150, #153, #154 complete)*
+  - Sequential: #161 (REPL) → #162 (exec) → #163 (built-ins) → #164 (redirection) → #165 (pipes)
+  - Quality of life: #156 (history), #157 (tab), #160 (editing)
+  - Advanced: #155 (scripting), #158 (job control), #159 (advanced redirection)
 - **Threading APIs** (#109-#113) can start immediately - foundation complete!
 - **Unicode Support** (#127-#134) can develop independently - start with #127!
 - **Code Coverage** (#135) can develop immediately with existing Unity tests
@@ -345,16 +449,17 @@ Phase 6: Shell                                 #54 (mosh shell)
 ## 🎯 Recommended Focus Areas
 
 ### Immediate Next Steps (Ready Now!)
-1. **#151** - getcwd/chdir syscalls (essential for shell - 1 day)
-2. **#152** - Environment variables (PATH lookup - 2-3 days)
-3. **#145** - tmpfs/ramfs (quick win, good first issue, enables /tmp)
-4. **#109** - pthread API and POSIX threading (foundation complete)
-5. **#146** - devfs (device filesystem, unblocks hardware device access)
-6. **#127** - UTF-8 utilities (ready to implement, no dependencies!)
-7. **#135** - Code coverage with Gcov (ready to implement, existing Unity tests!)
-8. **#136** - Device filesystem infrastructure (ready to implement!)
-9. **#147** - procfs (system introspection and debugging)
-11. **#102** - pipes implementation (basic IPC ready)
+1. **#151** - getcwd/chdir syscalls (CRITICAL for shell - 1 day)
+2. **#152** - Environment variables (CRITICAL for shell PATH - 2-3 days)
+3. **#161** - REPL and parsing (shell foundation - 2-3 days) - ready after #151/#152
+4. **#145** - tmpfs/ramfs (quick win, good first issue, enables /tmp)
+5. **#109** - pthread API and POSIX threading (foundation complete)
+6. **#146** - devfs (device filesystem, unblocks hardware device access)
+7. **#127** - UTF-8 utilities (ready to implement, no dependencies!)
+8. **#135** - Code coverage with Gcov (ready to implement, existing Unity tests!)
+9. **#136** - Device filesystem infrastructure (ready to implement!)
+10. **#147** - procfs (system introspection and debugging)
+11. **#102** - pipes implementation (needed for #165 pipe support)
 12. **#103** - UNIX signals (process control ready: sigaction/masks live)
 
 ### For Maximum Impact:
@@ -396,12 +501,70 @@ Phase 6: Shell                                 #54 (mosh shell)
 3. **Phase 3**: #147 (procfs) → /proc for system monitoring (4-6 days)
 4. **Phase 4**: #148 (ext2) → Better persistent storage (1-2 weeks)
 
-### For init & Shell (Interactive System):
-1. **Week 1**: #149 (wait/waitpid - CLOSED) → #150 (zombie handling - DONE)
-2. **Week 1-2**: #151 (getcwd/chdir - 1 day) + #152 (environment vars - 2-3 days) in parallel
-3. **Week 2**: #154 (boot integration - DONE)
-4. **Week 3-4**: #54 (mosh shell - 1-2 weeks) → Basic interactive shell
-5. **Result**: Single-user system with process supervision and interactive shell
+### For mosh Shell (Interactive System):
+**Prerequisites (COMPLETE):**
+- #149 (wait/waitpid - CLOSED)
+- #150 (zombie handling - CLOSED)
+- #153 (init program - CLOSED)
+- #154 (boot integration - CLOSED)
+
+**Phase 1: Shell Prerequisites (Week 1 - 3-4 days)**
+1. #151 (getcwd/chdir) - 1 day
+2. #152 (environment variables) - 2-3 days
+
+**Phase 2: Core Shell (Week 2-3 - Tier 11 - 2-3 weeks)**
+3. #161 (REPL & parsing) - 2-3 days
+4. #162 (command execution) - 2-3 days
+5. #163 (built-in commands) - 2-3 days
+6. #164 (basic I/O redirection) - 2-3 days
+7. #165 (pipe support) - 3-4 days
+**Milestone: Basic working shell with pipes**
+
+**Phase 3: Quality of Life (Week 4-5 - Tier 12 - 1-2 weeks)**
+8. #156 (command history) - 3-5 days
+9. #157 (tab completion) - 4-6 days
+10. #160 (line editing keys) - 4-6 days
+**Milestone: Comfortable interactive shell**
+
+**Phase 4: Advanced Features (Week 6+ - Tier 12 - Optional)**
+11. #155 (scripting) - 1-2 weeks
+12. #158 (job control) - 1-2 weeks
+13. #159 (advanced redirection) - 3-5 days
+**Milestone: Full-featured shell**
+
+**Result**: Working interactive shell in 2-3 weeks, full-featured in 4-6 weeks
+
+### For Multi-User System (Future - 4-6 months):
+**Prerequisites:**
+- mosh shell complete (#151-#165)
+- File system infrastructure solid (#145-#148)
+- Core applications working
+
+**Phase 1: User Infrastructure (Month 1)**
+1. #166 (user/group database) - 3-5 days
+2. #167 (process credentials) - 3-5 days
+3. #168 (database parsing) - 3-5 days
+4. #169 (login program) - 1-2 weeks
+5. #170 (session management) - 1 week
+
+**Phase 2: Permissions (Month 2)**
+6. #171 (permission bits) - 1 week
+7. #172 (VFS permission checking) - 1-2 weeks
+8. #173 (security syscalls) - 1 week
+9. #174 (syscall updates) - 2-3 weeks
+
+**Phase 3: User Tools (Month 3)**
+10. #175 (user utilities) - 2-3 weeks
+11. #176 (su/sudo) - 1-2 weeks
+
+**Phase 4: Security (Month 4)**
+12. #177 (resource limits) - 1-2 weeks
+13. #178 (security audit) - 2-3 weeks
+
+**Result**: Proper multi-user operating system with authentication, permissions, and user isolation
+
+**Priority**: LOW - implement after shell and core applications work
+**Details**: See `road_to_multiuser.md` for comprehensive documentation
 
 ### For Microkernel Vision:
 1. **Complete Phases 1-3** first (foundation + threading)
@@ -434,22 +597,30 @@ Phase 6: Shell                                 #54 (mosh shell)
 - #103 (UNIX signals) - Process control (handlers, masks, stoppable signals)
 
 ### **Project Status**:
-- **Total Issues**: 147 issues (highest #154, some numbers skipped)
-- **Closed**: 57 issues (major systems operational including #101 timers)
-- **Open**: 90 issues (organized by priority tiers)
-- **Major Completions**: Memory, scheduling, processes, storage, basic threading, framebuffer, timers
-- **Active Development**: init & shell, virtual filesystems, threading APIs, device filesystem, mouse input, hardware drivers, advanced IPC
+- **Total Issues**: 178 issues planned (highest #178, includes future multi-user system)
+- **Created Issues**: 165 issues (highest #165)
+- **Closed**: 59 issues (major systems operational including wait/waitpid, zombies, init, boot)
+- **Open**: 106 issues (organized by priority tiers)
+- **Planned**: 13 issues for multi-user system (Tier 13 - #166-#178)
+- **Major Completions**: Memory, scheduling, processes, storage, threading foundation, framebuffer, timers, signals, init supervisor
+- **Active Development**: mosh shell (11 new issues), virtual filesystems, threading APIs, device filesystem, mouse input, hardware drivers, advanced IPC
+- **Future Development**: Multi-user system infrastructure (see `road_to_multiuser.md`)
 
 ## **Current Development Strategy**
 
 With core kernel infrastructure operational, meniOS has strong foundations for advanced features. Major systems like memory management, scheduling, processes, and storage are complete and functional.
 
 **Recommended immediate development tracks:**
-1. **init & Shell** (#149-#154, #54) - wait/waitpid, zombie handling, init supervisor, and boot integration complete; focus shifts to shell prerequisites (TOP PRIORITY)
+1. **mosh Shell** (#151-#152, #161-#165) - init complete, now building the shell! (TOP PRIORITY)
    - getcwd/chdir syscalls (1 day)
    - environment variables (2-3 days)
-   - mosh shell (1-2 weeks)
-   - **Result: Working interactive shell once remaining plumbing lands**
+   - REPL and parsing (2-3 days)
+   - Command execution (2-3 days)
+   - Built-in commands (2-3 days)
+   - I/O redirection (2-3 days)
+   - Pipe support (3-4 days)
+   - Quality of life: history, tab completion, line editing (1-2 weeks)
+   - **Result: Working interactive shell with pipes in 2-3 weeks, full-featured in 4-6 weeks**
 2. **Virtual Filesystems** (#145, #146, #147, #148) - Essential system services
    - tmpfs for /tmp (quick win)
    - devfs for /dev (hardware access)
@@ -463,6 +634,11 @@ With core kernel infrastructure operational, meniOS has strong foundations for a
 8. **Quality Assurance** (#135) - Code coverage and testing improvements
 9. **Hardware Drivers** (ongoing #118-#126) - USB and storage expansion
 
+**Future Tracks (Post-Shell):**
+10. **Multi-User System** (#166-#178) - Authentication, permissions, user isolation (4-6 months)
+    - See `road_to_multiuser.md` for comprehensive roadmap
+    - LOW PRIORITY - implement after shell and core applications
+
 This parallel approach leverages the completed foundation to enable sophisticated userland applications including text editors, shells, and eventually Doom.
 
-**Major Achievement**: Core kernel systems are operational with a complete storage stack, process management, and threading foundation ready for userland APIs.
+**Major Achievement**: Core kernel systems are operational with a complete storage stack, process management, init supervisor, and threading foundation ready for userland APIs and applications.
