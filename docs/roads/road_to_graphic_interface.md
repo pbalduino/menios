@@ -17,6 +17,8 @@ desktops, and hardware-accelerated rendering.
 - Shell now redirects STDIN/STDOUT to `/dev/console`, giving live VGA output (#166).
 - Character device registry (#170) and VGA text driver (#168) expose `/dev/vga/0`, so console output no
   longer depends on the framebuffer helper alone.
+- `/dev/zero` (#167) now comes from the same character-device infrastructure, so userland can rely on the
+  conventional zero source.
 - TTY subsystem now provides canonical terminal I/O and `/dev/tty0` (#169).
 - PID 1 `init` supervisor is in place (#153/#154), enabling userland services to
   launch at boot and supervise graphical daemons.

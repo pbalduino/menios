@@ -19,6 +19,7 @@
 #include <kernel/spinlock.h>
 #include <kernel/tty.h>
 #include <kernel/vga_text.h>
+#include <kernel/zero_device.h>
 #include <kernel/vfs.h>
 
 #define FD_STDIN   0
@@ -507,6 +508,9 @@ void file_system_init(void) {
   char_device_system_init();
   if(!char_device_register(vga_text_char_device())) {
     serial_printf("file_system_init: failed to register /dev/vga/0\n");
+  }
+  if(!char_device_register(zero_char_device())) {
+    serial_printf("file_system_init: failed to register /dev/zero\n");
   }
   if(!char_device_register(tty_char_device())) {
     serial_printf("file_system_init: failed to register /dev/tty0\n");
