@@ -30,7 +30,9 @@ proc_info_t kernel_process_info = {
   .priority = PROC_PRIO_IDLE,
   .stack_base = NULL,
   .state = PROC_STATE_READY,
-  .wait_state = { .pid = -1, .options = 0, .waiting = false }
+  .wait_state = { .pid = -1, .options = 0, .waiting = false },
+  .cwd = "/",
+  .cwd_len = 1
 };
 
 proc_info_p procs[PROC_MAX] = {
@@ -61,6 +63,8 @@ static void proc_transition_to_stopped(proc_info_p proc, int sig);
 static void proc_resume_from_stop(proc_info_p proc, int sig);
 static void proc_signal_parent(proc_info_p proc);
 static void proc_init_signal_state(proc_info_p proc);
+static void proc_set_cwd_internal(proc_info_p proc, const char* path);
+static void proc_copy_cwd(proc_info_p proc, const proc_info_p parent);
 
 #define SCHED_ACTION_FORCE (1u << 0)
 #define SCHED_ACTION_SLEEP (1u << 1)
@@ -109,6 +113,36 @@ static void proc_init_signal_state(proc_info_p proc) {
     proc->signal_actions[sig].flags = 0;
     proc->signal_actions[sig].restorer = NULL;
   }
+}
+
+static void proc_set_cwd_internal(proc_info_p proc, const char* path) {
+  if(proc == NULL || path == NULL) {
+    return;
+  }
+
+  size_t len = strnlen(path, VFS_MAX_PATH - 1);
+  memcpy(proc->cwd, path, len);
+  proc->cwd[len] = '\0';
+  proc->cwd_len = (uint16_t)len;
+}
+
+static void proc_copy_cwd(proc_info_p proc, const proc_info_p parent) {
+  if(proc == NULL) {
+    return;
+  }
+
+  if(parent != NULL && parent->cwd_len > 0) {
+    proc_set_cwd_internal(proc, parent->cwd);
+  } else {
+    proc_set_cwd_internal(proc, "/");
+  }
+}
+
+void proc_update_cwd(proc_info_p proc, const char* path) {
+  if(proc == NULL || path == NULL) {
+    return;
+  }
+  proc_set_cwd_internal(proc, path);
 }
 
 static void proc_add_child(proc_info_p parent, proc_info_p child) {
@@ -733,6 +767,7 @@ void proc_create(proc_info_p proc, const char* name, void (*entrypoint)(void *),
     parent = init_process;
   }
   proc->parent = parent;
+  proc_copy_cwd(proc, parent);
   proc->pid = last_pid++;
   proc_file_table_init(proc);
   if(current != NULL) {
@@ -1148,6 +1183,7 @@ proc_info_p proc_fork(proc_info_p parent, const syscall_frame_t* frame, int* err
   child->pid = last_pid++;
   strncpy(child->name, parent->name, sizeof(child->name) - 1);
   child->name[sizeof(child->name) - 1] = '\0';
+  proc_copy_cwd(child, parent);
   child->user_mode = parent->user_mode;
   child->user_stack_base_vaddr = parent->user_stack_base_vaddr;
   child->user_stack_size = parent->user_stack_size;

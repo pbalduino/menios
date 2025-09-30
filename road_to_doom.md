@@ -103,7 +103,7 @@ Glue to launch user-facing services and prepare for a shell-driven environment.
 - **Impact**: Consistent UNIX-style process tree with `init` as the adoption point for orphans
 
 #### **getcwd/chdir Syscalls** (Issue #151)
-- 🟡 **Status**: Ready to implement – VFS already exposes directory metadata
+- ✅ **Status**: COMPLETE – per-process working directory tracked with `getcwd(2)`/`chdir(2)`
 - **Impact**: Enables shell navigation and path-sensitive tooling
 
 #### **Environment Variables** (Issue #152)
@@ -211,7 +211,7 @@ Development environment for building applications:
 ### **Medium Term (3-9 months)**
 - Deliver shared memory and futex/message IPC primitives (#104-#107)
 - Enable filesystem write support and VFS updates for save games (#61)
-- Flesh out shell environment and launch tooling once directory/env plumbing lands (#151, #152)
+- Flesh out shell environment and launch tooling once environment plumbing lands (#152)
 - Extend input/audio interfaces for gameplay (#32, #33, #143-#144)
 
 ### **Long Term (9+ months)**
@@ -222,11 +222,10 @@ Development environment for building applications:
 ## 🚀 **Immediate Next Steps**
 
 **Ready to implement now** (dependencies cleared):
-1. **#151** – `getcwd`/`chdir` syscalls for shell navigation
-2. **#152** – Environment-variable support for PATH/HOME configuration
-3. **#109** – pthread API skeleton and thread lifecycle helpers
-4. **#110** – Thread-safe libc (malloc/stdio/errno hardening)
-5. **#113** – Thread-aware syscalls and scheduler inspection hooks
+1. **#152** – Environment-variable support for PATH/HOME configuration
+2. **#109** – pthread API skeleton and thread lifecycle helpers
+3. **#110** – Thread-safe libc (malloc/stdio/errno hardening)
+4. **#113** – Thread-aware syscalls and scheduler inspection hooks
 
 **High impact for applications**:
 6. **#103** – UNIX signals built atop the timer service

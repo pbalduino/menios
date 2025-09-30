@@ -13,6 +13,8 @@ extern "C" {
 #include <kernel/file.h>
 #include <kernel/block_device.h>
 
+#define VFS_MAX_PATH 256
+
 typedef fs_dir_entry_t vfs_dir_entry_t;
 typedef fs_dir_iter_t  vfs_dir_iter_t;
 
@@ -33,6 +35,8 @@ bool vfs_list(const char* path, vfs_dir_iter_t iter, void* context);
 bool vfs_read(const char* path, size_t offset, void* buffer, size_t length, size_t* bytes_read);
 bool vfs_read_all(const char* path, void** out_buffer, size_t* out_size);
 int vfs_open(const char* path, int flags, file_t** out_file);
+int vfs_normalize_user_path(const char* path, char* out, size_t out_size);
+int vfs_path_is_directory(const char* path);
 
 bool vfs_mount_fat32_root(block_device_t* device);
 

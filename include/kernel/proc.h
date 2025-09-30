@@ -9,6 +9,7 @@ extern "C" {
 #include <kernel/file.h>
 #include <kernel/vm_region.h>
 #include <uapi/signal.h>
+#include <kernel/vfs.h>
 
 struct syscall_frame_t;
 
@@ -133,6 +134,8 @@ typedef struct proc_info_t {
   void*        fb_map_base;
   size_t       fb_map_size;
   uint32_t     fb_map_flags;
+  char         cwd[VFS_MAX_PATH];
+  uint16_t     cwd_len;
   sigset_t     signal_pending;
   sigset_t     signal_mask;
   struct signal_action_t {
@@ -181,6 +184,7 @@ int proc_update_signal_mask(proc_info_p proc, int how, sigset_t set, sigset_t* o
 int proc_waitpid(proc_info_p parent, int pid, int options, int* status_out);
 void proc_register_init(proc_info_p proc);
 bool proc_user_buffer_accessible(proc_info_p proc, const void* buffer, size_t length, bool write);
+void proc_update_cwd(proc_info_p proc, const char* path);
 
 typedef struct signal_frame_t {
   cpu_state_t saved_state;

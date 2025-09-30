@@ -12,10 +12,11 @@
 #include <kernel/fs.h>
 #include <kernel/heap.h>
 #include <kernel/mutex.h>
+#include <kernel/proc.h>
 #include <kernel/serial.h>
 
 typedef struct vfs_mount_entry_t {
-  char                        path[128];
+  char                        path[VFS_MAX_PATH];
   size_t                      path_len;
   const vfs_fs_driver_t*      driver;
   void*                       fs_ctx;
@@ -34,17 +35,66 @@ static vfs_mount_entry_t* vfs_mounts = NULL;
 static kmutex_t           vfs_lock;
 static bool               vfs_initialized = false;
 
-static bool vfs_normalize_path(const char* path, char* out, size_t out_size, size_t* out_len) {
-  if(path == NULL || out == NULL || out_size == 0) {
+static bool vfs_canonicalize(const char* input, char* out, size_t out_size, size_t* out_len) {
+  if(input == NULL || out == NULL || out_size == 0) {
     return false;
   }
 
-  size_t len = strlen(path);
-  if(len == 0) {
-    if(out_size < 2) {
+  char temp[VFS_MAX_PATH];
+  size_t input_len = strnlen(input, sizeof(temp));
+  if(input_len >= sizeof(temp)) {
+    return false;
+  }
+  memcpy(temp, input, input_len + 1);
+
+  char* components[64];
+  size_t depth = 0;
+
+  char* cursor = temp;
+  while(*cursor != '\0') {
+    while(*cursor == '/') {
+      cursor++;
+    }
+    if(*cursor == '\0') {
+      break;
+    }
+
+    char* start = cursor;
+    while(*cursor != '\0' && *cursor != '/') {
+      cursor++;
+    }
+    if(*cursor == '/') {
+      *cursor = '\0';
+      cursor++;
+    }
+
+    if(strcmp(start, ".") == 0) {
+      continue;
+    }
+
+    if(strcmp(start, "..") == 0) {
+      if(depth > 0) {
+        depth--;
+      }
+      continue;
+    }
+
+    if(depth >= (sizeof(components) / sizeof(components[0]))) {
       return false;
     }
-    out[0] = '/';
+    components[depth++] = start;
+  }
+
+  size_t pos = 0;
+  if(pos >= out_size) {
+    return false;
+  }
+  out[pos++] = '/';
+
+  if(depth == 0) {
+    if(pos >= out_size) {
+      return false;
+    }
     out[1] = '\0';
     if(out_len) {
       *out_len = 1;
@@ -52,42 +102,96 @@ static bool vfs_normalize_path(const char* path, char* out, size_t out_size, siz
     return true;
   }
 
-  size_t pos = 0;
-  if(path[0] != '/') {
-    if(out_size < len + 2) {
+  for(size_t i = 0; i < depth; i++) {
+    const char* comp = components[i];
+    size_t comp_len = strlen(comp);
+    if(pos + comp_len >= out_size) {
       return false;
     }
-    out[pos++] = '/';
-  }
-
-  for(size_t i = 0; i < len && pos + 1 < out_size; i++) {
-    char ch = path[i];
-    if(ch == '\\') {
-      ch = '/';
+    memcpy(out + pos, comp, comp_len);
+    pos += comp_len;
+    if(i + 1 < depth) {
+      if(pos >= out_size) {
+        return false;
+      }
+      out[pos++] = '/';
     }
-    if(pos > 0 && out[pos - 1] == '/' && ch == '/') {
-      continue;
-    }
-    out[pos++] = ch;
-  }
-
-  if(pos == 0) {
-    out[pos++] = '/';
-  }
-
-  if(pos > 1 && out[pos - 1] == '/') {
-    pos--;
   }
 
   if(pos >= out_size) {
     return false;
   }
-
   out[pos] = '\0';
   if(out_len) {
     *out_len = pos;
   }
   return true;
+}
+
+static bool vfs_normalize_path(const char* path, char* out, size_t out_size, size_t* out_len) {
+  if(path == NULL || out == NULL || out_size == 0) {
+    return false;
+  }
+
+  char combined[VFS_MAX_PATH];
+
+  if(path[0] == '/' || path[0] == '\\') {
+    size_t len = strnlen(path, sizeof(combined));
+    if(len >= sizeof(combined)) {
+      return false;
+    }
+    for(size_t i = 0; i <= len; i++) {
+      char ch = path[i];
+      if(ch == '\\') {
+        ch = '/';
+      }
+      combined[i] = ch;
+    }
+  } else {
+    proc_info_p base_proc = current ? current : &kernel_process_info;
+    const char* base = (base_proc && base_proc->cwd_len > 0) ? base_proc->cwd : "/";
+    size_t base_len = strnlen(base, sizeof(combined));
+    if(base_len >= sizeof(combined)) {
+      return false;
+    }
+
+    size_t rel_len = strnlen(path, sizeof(combined));
+    if(rel_len >= sizeof(combined)) {
+      return false;
+    }
+
+    size_t pos = 0;
+    memcpy(combined, base, base_len);
+    pos += base_len;
+
+    bool need_slash = (pos > 0 && combined[pos - 1] != '/');
+    if(need_slash) {
+      if(pos + 1 >= sizeof(combined)) {
+        return false;
+      }
+      combined[pos++] = '/';
+    }
+
+    if(rel_len > 0) {
+      if(pos + rel_len >= sizeof(combined)) {
+        return false;
+      }
+      for(size_t i = 0; i < rel_len; i++) {
+        char ch = path[i];
+        combined[pos++] = (ch == '\\') ? '/' : ch;
+      }
+    }
+
+    if(pos == 0) {
+      combined[pos++] = '/';
+    }
+    if(pos >= sizeof(combined)) {
+      return false;
+    }
+    combined[pos] = '\0';
+  }
+
+  return vfs_canonicalize(combined, out, out_size, out_len);
 }
 
 bool vfs_init(void) {
@@ -159,7 +263,7 @@ bool vfs_mount(const char* path, const vfs_fs_driver_t* driver, void* fs_ctx) {
     return false;
   }
 
-  char normalized[128];
+  char normalized[VFS_MAX_PATH];
   size_t norm_len = 0;
   if(!vfs_normalize_path(path, normalized, sizeof(normalized), &norm_len)) {
     return false;
@@ -205,7 +309,7 @@ static bool vfs_resolve(const char* path,
     return false;
   }
 
-  char normalized[128];
+  char normalized[VFS_MAX_PATH];
   size_t norm_len = 0;
   if(!vfs_normalize_path(path, normalized, sizeof(normalized), &norm_len)) {
     return false;
@@ -251,7 +355,7 @@ static bool vfs_resolve(const char* path,
 bool vfs_list(const char* path, vfs_dir_iter_t iter, void* context) {
   const vfs_fs_driver_t* driver = NULL;
   void* fs_ctx = NULL;
-  char relative[128];
+  char relative[VFS_MAX_PATH];
 
   if(!vfs_resolve(path, &driver, &fs_ctx, relative, sizeof(relative))) {
     return false;
@@ -266,7 +370,7 @@ bool vfs_list(const char* path, vfs_dir_iter_t iter, void* context) {
 bool vfs_read(const char* path, size_t offset, void* buffer, size_t length, size_t* bytes_read) {
   const vfs_fs_driver_t* driver = NULL;
   void* fs_ctx = NULL;
-  char relative[128];
+  char relative[VFS_MAX_PATH];
 
   if(!vfs_resolve(path, &driver, &fs_ctx, relative, sizeof(relative))) {
     return false;
@@ -280,7 +384,7 @@ bool vfs_read(const char* path, size_t offset, void* buffer, size_t length, size
 bool vfs_read_all(const char* path, void** out_buffer, size_t* out_size) {
   const vfs_fs_driver_t* driver = NULL;
   void* fs_ctx = NULL;
-  char relative[128];
+  char relative[VFS_MAX_PATH];
 
   if(!vfs_resolve(path, &driver, &fs_ctx, relative, sizeof(relative))) {
     return false;
@@ -419,7 +523,7 @@ int vfs_open(const char* path, int flags, file_t** out_file) {
 
   const vfs_fs_driver_t* driver = NULL;
   void* fs_ctx = NULL;
-  char relative[128];
+  char relative[VFS_MAX_PATH];
 
   if(!vfs_resolve(path, &driver, &fs_ctx, relative, sizeof(relative))) {
     return -ENOENT;
@@ -446,6 +550,54 @@ int vfs_open(const char* path, int flags, file_t** out_file) {
   }
 
   return vfs_open_buffered(path, out_file);
+}
+
+int vfs_normalize_user_path(const char* path, char* out, size_t out_size) {
+  if(path == NULL || out == NULL || out_size == 0) {
+    return -EFAULT;
+  }
+
+  size_t path_len = strnlen(path, VFS_MAX_PATH);
+  if(path_len == 0) {
+    return -ENOENT;
+  }
+  if(path_len >= VFS_MAX_PATH) {
+    return -ENAMETOOLONG;
+  }
+
+  size_t out_len = 0;
+  if(!vfs_normalize_path(path, out, out_size, &out_len)) {
+    return -ENAMETOOLONG;
+  }
+
+  return 0;
+}
+
+static bool vfs_probe_iter(const fs_dir_entry_t* entry, void* context) {
+  (void)entry;
+  (void)context;
+  return false;
+}
+
+int vfs_path_is_directory(const char* path) {
+  const vfs_fs_driver_t* driver = NULL;
+  void* fs_ctx = NULL;
+  char relative[VFS_MAX_PATH];
+
+  if(!vfs_resolve(path, &driver, &fs_ctx, relative, sizeof(relative))) {
+    return -ENOENT;
+  }
+
+  if(driver->list == NULL) {
+    return -ENOTDIR;
+  }
+
+  bool ok = driver->list(fs_ctx, relative, vfs_probe_iter, NULL);
+  if(!ok) {
+    return -ENOTDIR;
+  }
+
+  return 0;
 }
 
 static bool fat32_list_adapter(void* fs_ctx, const char* path, vfs_dir_iter_t iter, void* context) {

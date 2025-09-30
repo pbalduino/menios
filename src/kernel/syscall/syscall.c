@@ -39,6 +39,8 @@ static uint64_t syscall_sigreturn_handler(syscall_frame_t* frame);
 static uint64_t syscall_sigaction_handler(syscall_frame_t* frame);
 static uint64_t syscall_sigprocmask_handler(syscall_frame_t* frame);
 static uint64_t syscall_waitpid_handler(syscall_frame_t* frame);
+static uint64_t syscall_getcwd_handler(syscall_frame_t* frame);
+static uint64_t syscall_chdir_handler(syscall_frame_t* frame);
 
 static syscall_handler_t syscall_table[SYSCALL_MAX];
 
@@ -76,6 +78,8 @@ void syscall_init(void) {
   syscall_register(SYS_SIGACTION, syscall_sigaction_handler);
   syscall_register(SYS_SIGPROCMASK, syscall_sigprocmask_handler);
   syscall_register(SYS_WAITPID, syscall_waitpid_handler);
+  syscall_register(SYS_GETCWD, syscall_getcwd_handler);
+  syscall_register(SYS_CHDIR, syscall_chdir_handler);
   syscall_register(SYS_FCNTL, syscall_fcntl_handler);
   syscall_register(SYS_FB_GETINFO, syscall_fb_getinfo_handler);
   syscall_register(SYS_FB_MAP, syscall_fb_map_handler);
@@ -740,5 +744,57 @@ static uint64_t syscall_waitpid_handler(syscall_frame_t* frame) {
   }
 
   frame->rax = (uint64_t)rc;
+  return frame->rax;
+}
+
+static uint64_t syscall_getcwd_handler(syscall_frame_t* frame) {
+  char* buffer = (char*)frame->rdi;
+  size_t size = (size_t)frame->rsi;
+
+  if(buffer == NULL || size == 0) {
+    frame->rax = (uint64_t)(-EINVAL);
+    return frame->rax;
+  }
+
+  proc_info_p proc = current ? current : &kernel_process_info;
+  size_t length = proc->cwd_len;
+  if(length + 1 > size) {
+    frame->rax = (uint64_t)(-ERANGE);
+    return frame->rax;
+  }
+
+  memcpy(buffer, proc->cwd, length + 1);
+  frame->rax = (uint64_t)(uintptr_t)buffer;
+  return frame->rax;
+}
+
+static uint64_t syscall_chdir_handler(syscall_frame_t* frame) {
+  if(current == NULL) {
+    frame->rax = (uint64_t)(-EINVAL);
+    return frame->rax;
+  }
+
+  const char* path = (const char*)frame->rdi;
+  if(path == NULL) {
+    frame->rax = (uint64_t)(-EFAULT);
+    return frame->rax;
+  }
+
+  char normalized[VFS_MAX_PATH];
+  int rc = vfs_normalize_user_path(path, normalized, sizeof(normalized));
+  if(rc < 0) {
+    frame->rax = (uint64_t)rc;
+    return frame->rax;
+  }
+
+  rc = vfs_path_is_directory(normalized);
+  if(rc < 0) {
+    frame->rax = (uint64_t)rc;
+    return frame->rax;
+  }
+
+  proc_update_cwd(current, normalized);
+
+  frame->rax = 0;
   return frame->rax;
 }

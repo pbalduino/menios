@@ -23,6 +23,8 @@ off_t lseek(int fd, off_t offset, int whence);
 int kill(pid_t pid, int sig);
 pid_t waitpid(pid_t pid, int* status, int options);
 pid_t wait(int* status);
+int chdir(const char* path);
+char* getcwd(char* buffer, size_t size);
 
 int brk(void *addr);
 

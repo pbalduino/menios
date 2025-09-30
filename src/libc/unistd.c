@@ -182,4 +182,41 @@ pid_t wait(int* status) {
   return waitpid(-1, status, 0);
 }
 
+int chdir(const char* path) {
+  register uint64_t rax asm("rax") = SYS_CHDIR;
+  register const char* rdi asm("rdi") = path;
+
+  asm volatile("int $0x80"
+               : "+a"(rax)
+               : "D"(rdi)
+               : "rcx", "r11", "memory");
+
+  if((int64_t)rax < 0) {
+    errno = (int)(-((int64_t)rax));
+    return -1;
+  }
+
+  errno = 0;
+  return 0;
+}
+
+char* getcwd(char* buffer, size_t size) {
+  register uint64_t rax asm("rax") = SYS_GETCWD;
+  register char* rdi asm("rdi") = buffer;
+  register size_t rsi asm("rsi") = size;
+
+  asm volatile("int $0x80"
+               : "+a"(rax)
+               : "D"(rdi), "S"(rsi)
+               : "rcx", "r11", "memory");
+
+  if((int64_t)rax < 0) {
+    errno = (int)(-((int64_t)rax));
+    return NULL;
+  }
+
+  errno = 0;
+  return (char*)(uintptr_t)rax;
+}
+
 #endif
