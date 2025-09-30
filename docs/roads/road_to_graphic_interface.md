@@ -15,6 +15,8 @@ desktops, and hardware-accelerated rendering.
 - `/dev/console` multiplexes framebuffer output with serial logging for terminal
   apps (#138).
 - Shell now redirects STDIN/STDOUT to `/dev/console`, giving live VGA output (#166).
+- Character device registry (#170) and VGA text driver (#168) expose `/dev/vga/0`, so console output no
+  longer depends on the framebuffer helper alone.
 - TTY subsystem now provides canonical terminal I/O and `/dev/tty0` (#169).
 - PID 1 `init` supervisor is in place (#153/#154), enabling userland services to
   launch at boot and supervise graphical daemons.
