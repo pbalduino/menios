@@ -36,6 +36,11 @@ USER_ELF_OBJ = $(OBJDIR)/usermode/user_demo_elf.o
 USER_ELF_SYMBOL := $(subst .,_,$(subst /,_,$(USER_ELF)))
 OBJS += $(USER_ELF_OBJ)
 
+INIT_ELF = $(OBJDIR)/usermode/init.elf
+INIT_ELF_OBJ = $(OBJDIR)/usermode/init_elf.o
+INIT_ELF_SYMBOL := $(subst .,_,$(subst /,_,$(INIT_ELF)))
+OBJS += $(INIT_ELF_OBJ)
+
 -include $(OBJS:.o=.d)
 
 override CFLAGS += \
@@ -212,6 +217,27 @@ ifeq ($(OS_NAME),linux)
 		--redefine-sym _binary_$(USER_ELF_SYMBOL)_start=user_demo_elf_start \
 		--redefine-sym _binary_$(USER_ELF_SYMBOL)_end=user_demo_elf_end \
 		--redefine-sym _binary_$(USER_ELF_SYMBOL)_size=user_demo_elf_size \
+		$< $@
+else
+	$(DOCKER) run --rm -it --mount type=bind,source=$$(pwd),target=/mnt $(DOCKER_IMAGE) /bin/sh -c "cd /mnt && make $@"
+endif
+
+$(INIT_ELF): src/usermode/init.S linker/user_elf.ld
+ifeq ($(OS_NAME),linux)
+	@mkdir -p $(OBJDIR)/usermode
+	$(GCC) -nostdlib -nostartfiles -ffreestanding -c src/usermode/init.S -o $(OBJDIR)/usermode/init.o
+	$(LD) -nostdlib -static -T linker/user_elf.ld -o $@ $(OBJDIR)/usermode/init.o
+else
+	$(DOCKER) run --rm -it --mount type=bind,source=$$(pwd),target=/mnt $(DOCKER_IMAGE) /bin/sh -c "cd /mnt && make $@"
+endif
+
+$(INIT_ELF_OBJ): $(INIT_ELF)
+ifeq ($(OS_NAME),linux)
+	@mkdir -p $(OBJDIR)/usermode
+	$(OBJCOPY) --input binary --output elf64-x86-64 --binary-architecture i386:x86-64 \
+		--redefine-sym _binary_$(INIT_ELF_SYMBOL)_start=init_elf_start \
+		--redefine-sym _binary_$(INIT_ELF_SYMBOL)_end=init_elf_end \
+		--redefine-sym _binary_$(INIT_ELF_SYMBOL)_size=init_elf_size \
 		$< $@
 else
 	$(DOCKER) run --rm -it --mount type=bind,source=$$(pwd),target=/mnt $(DOCKER_IMAGE) /bin/sh -c "cd /mnt && make $@"

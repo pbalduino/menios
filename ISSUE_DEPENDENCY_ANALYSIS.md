@@ -69,8 +69,8 @@ These issues form the backbone of the system and should be prioritized:
 42. **#150** - Process zombie state and orphan reparenting (CLOSED)
 43. **#151** - getcwd/chdir syscalls (directory navigation)
 44. **#152** - Environment variables support (getenv/setenv/unsetenv)
-45. **#153** - Barebone init program (PID 1 process supervisor)
-46. **#154** - Boot integration to start init as PID 1
+45. **#153** - Barebone init program (PID 1 process supervisor - CLOSED)
+46. **#154** - Boot integration to start init as PID 1 (CLOSED)
 47. **#54** - mosh shell (depends on init infrastructure)
 
 ## 📊 Updated Dependency Categories
@@ -217,16 +217,16 @@ Phase 3: Shell Support      │            ↓
                             │            ↓
                             └──→   #152 (environment vars) → PATH, HOME, etc.
                                          ↓
-Phase 4: init Program                    ├──→ #153 (init program)
+Phase 4: init Program                    ├──→ #153 (init program - CLOSED)
 #149 (wait/waitpid - CLOSED) ─────────────────────┘         ↓  Reaps zombies
 #150 (zombie handling - CLOSED) ────────────────────────┘  Supervises processes
                                                     ↓
-Phase 5: Boot Integration                    #154 (boot init as PID 1)
-                                                    ↓  Start init at boot
+Phase 5: Boot Integration                    #154 (boot init as PID 1 - CLOSED)
+                                                    ↓  Start init at boot (DONE)
                                                     ↓
 Phase 6: Shell                                 #54 (mosh shell)
 #149 (wait - CLOSED) + #151 (chdir) + #152 (env) ────────────┘  Interactive shell
-#153 (init) + #154 (boot) ──────────────────────────┘  Spawned by init
+#153 (init - CLOSED) + #154 (boot - CLOSED) ──────────────────────────┘  Spawned by init
 ```
 
 ### Filesystem Stack (COMPLETE!)
@@ -312,9 +312,7 @@ Phase 6: Shell                                 #54 (mosh shell)
 - **#103 (UNIX signals)** - Process control mechanism (handlers delivered; siginfo/rt signals TBD)
 
 ### Cannot Start Until Complete:
-- **#153 (init program)** blocks on: #149 (wait/waitpid - CLOSED), #150 (zombie handling - CLOSED)
-- **#154 (boot init as PID 1)** blocks on: #153 (init program)
-- **#54 (mosh shell)** blocks on: #149 (wait - CLOSED), #151 (chdir), #152 (env), #153 (init), #154 (boot)
+- **#54 (mosh shell)** blocks on: #149 (wait - CLOSED), #151 (chdir), #152 (env)
 - **#106 (microkernel IPC)** blocks on: #101 (timers - CLOSED), #104 (shared memory)
 - **#107 (capability security)** blocks on: #106 (microkernel IPC)
 - **#105 (Unix sockets)** blocks on: #71 (socket API)
@@ -324,10 +322,10 @@ Phase 6: Shell                                 #54 (mosh shell)
 - **#113 (thread-aware syscalls)** blocks on: #109 (pthread API)
 
 ### Parallel Development Opportunities:
-- **init & Shell** (#149-#154, #54) can start immediately - wait/waitpid is done, paving the way for the remaining tasks!
+- **init & Shell** (#149-#154, #54) can start immediately - init supervisor and boot integration complete!
   - #151 (getcwd/chdir) - Directory navigation (1 day)
   - #152 (environment vars) - PATH, HOME, etc. (2-3 days)
-  - Sequential: #153 → #154 → #54 (mosh)  *(#150 zombie handling complete)*
+  - Sequential: #54 (mosh)  *(#150, #153, #154 complete)*
 - **Threading APIs** (#109-#113) can start immediately - foundation complete!
 - **Unicode Support** (#127-#134) can develop independently - start with #127!
 - **Code Coverage** (#135) can develop immediately with existing Unity tests
@@ -401,7 +399,7 @@ Phase 6: Shell                                 #54 (mosh shell)
 ### For init & Shell (Interactive System):
 1. **Week 1**: #149 (wait/waitpid - CLOSED) → #150 (zombie handling - DONE)
 2. **Week 1-2**: #151 (getcwd/chdir - 1 day) + #152 (environment vars - 2-3 days) in parallel
-3. **Week 2**: #153 (init program - 2 days) → #154 (boot integration - 1 day)
+3. **Week 2**: #154 (boot integration - DONE)
 4. **Week 3-4**: #54 (mosh shell - 1-2 weeks) → Basic interactive shell
 5. **Result**: Single-user system with process supervision and interactive shell
 
@@ -447,15 +445,11 @@ Phase 6: Shell                                 #54 (mosh shell)
 With core kernel infrastructure operational, meniOS has strong foundations for advanced features. Major systems like memory management, scheduling, processes, and storage are complete and functional.
 
 **Recommended immediate development tracks:**
-1. **init & Shell** (#149-#154, #54) - wait/waitpid complete; focus now on zombies, init, and shell (TOP PRIORITY)
-   - wait/waitpid syscall (DONE)
+1. **init & Shell** (#149-#154, #54) - wait/waitpid, zombie handling, init supervisor, and boot integration complete; focus shifts to shell prerequisites (TOP PRIORITY)
    - getcwd/chdir syscalls (1 day)
    - environment variables (2-3 days)
-   - zombie handling (1-2 days)
-   - init program (2 days)
-   - boot integration (1 day)
    - mosh shell (1-2 weeks)
-   - **Result: Working interactive shell in 3-4 weeks**
+   - **Result: Working interactive shell once remaining plumbing lands**
 2. **Virtual Filesystems** (#145, #146, #147, #148) - Essential system services
    - tmpfs for /tmp (quick win)
    - devfs for /dev (hardware access)

@@ -728,7 +728,11 @@ void proc_create(proc_info_p proc, const char* name, void (*entrypoint)(void *),
   memset(proc->name, 0, sizeof(proc->name));
   strncpy(proc->name, name, sizeof(proc->name) - 1);
   proc->children_count = 0;
-  proc->parent = current;
+  proc_info_p parent = current;
+  if(parent == &kernel_process_info && init_process != &kernel_process_info) {
+    parent = init_process;
+  }
+  proc->parent = parent;
   proc->pid = last_pid++;
   proc_file_table_init(proc);
   if(current != NULL) {
@@ -785,8 +789,8 @@ void proc_create(proc_info_p proc, const char* name, void (*entrypoint)(void *),
   proc_set_priority(proc, PROC_PRIO_NORMAL);
   proc->time_slice_remaining_us = proc->quantum_us;
 
-  if(proc->parent && proc->parent != proc) {
-    proc_add_child(proc->parent, proc);
+  if(parent && parent != proc) {
+    proc_add_child(parent, proc);
   }
 }
 

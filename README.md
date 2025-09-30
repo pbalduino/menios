@@ -59,9 +59,15 @@ make build run
 This will build the kernel, create a bootable image, and launch it in QEMU.
 All generated artifacts now live under `build/` (`build/bin` for boot assets, `build/obj` for intermediates), keeping the repository tree clean. When the kernel reaches `halt()` the QEMU instance exits automatically via the debug-exit device, so `make run` returns to your shell without manual intervention. The default `QEMU_OPTS` wire an AHCI controller (`-device ahci`) with the disk attached to `ahci.0`, ensuring the kernel exercises its SATA/AHCI path during every run.
 
-### Verify the User Demo
+### Init Supervisor
 
-During boot, meniOS schedules three priority-tier instances of the embedded `user_demo` ELF right after hardware probing. The user program now:
+meniOS now launches a minimal `init` supervisor as PID 1 during every boot. The supervisor announces itself in `com1.log` as `[init] pid 1 supervisor online` and then loops on `waitpid()` so that orphaned children are reparented correctly and zombie processes are reaped automatically. Any kernel-launched user processes created after `init` comes online are adopted under PID 1, matching traditional UNIX semantics and preparing the ground for a real shell to take over.
+
+### User Demo (Optional Diagnostic)
+
+The legacy `user_demo_launch()` helper is still available for exercising the syscall, filesystem, and input stacks, but it no longer runs automatically now that `init` owns PID 1. To inspect the demo you can temporarily re-enable `user_demo_launch()` in `_start()` or call it from ad-hoc diagnostic code while developing.
+
+When enabled, the helper schedules three priority-tier instances of the embedded `user_demo` ELF right after hardware probing. The user program:
 
 - touches a second stack page to prove lazy stack mapping before returning,
 - creates an anonymous pipe, forks, and round-trips a payload from parent to child,

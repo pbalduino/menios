@@ -184,10 +184,10 @@ void _start() {
 
   hardware_init();
 
+  user_init_launch();
+
   logk("Enabling interruptions\n");
   enable_interrupts();
-
-  user_demo_launch();
 
   printf("menios# ");
 
