@@ -117,9 +117,10 @@ QEMU_OPTS = -smp cpus=2,maxcpus=4,sockets=1,dies=1,clusters=1,cores=2 \
 	-drive file=$(IMAGE_NAME).hdd,if=none,id=hd0 \
 	-usb \
 	-device usb-ehci,id=ehci \
+	-device usb-kbd \
 	-device usb-mouse \
-	-serial file:$(QEMU_LOG_FILE) \
-	-monitor stdio \
+	-serial stdio \
+	-monitor none \
 	-d int \
 	-M hpet=on \
 	-rtc base=utc,clock=host \

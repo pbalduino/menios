@@ -15,6 +15,7 @@
 
 #define IOAPIC_REG_ENTRYCOUNT 1
 
+#define LAPIC_ID            0x020
 #define LAPIC_SVR           0x0f0
 #define LAPIC_EOI           0x0b0
 #define LAPIC_TIMER_DIV     0x3e0

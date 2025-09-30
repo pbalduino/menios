@@ -8,6 +8,7 @@
 #include <kernel/heap.h>
 #include <kernel/mutex.h>
 #include <kernel/proc.h>
+#include <kernel/serial.h>
 #include <kernel/spinlock.h>
 
 #define KEYBOARD_EVENT_CAPACITY 128
@@ -37,6 +38,14 @@ static bool queue_pop(keyboard_queue_t* queue, keyboard_event_t* out) {
     *out = queue->events[queue->tail];
     queue->tail = (queue->tail + 1) % KEYBOARD_EVENT_CAPACITY;
     has_event = true;
+    serial_printf("keyboard_queue: pop scancode=0x%03x ascii=0x%02x pressed=%u head=%lu tail=%lu\n",
+                  (unsigned)out->scancode,
+                  (unsigned)out->ascii,
+                  (unsigned)out->pressed,
+                  (unsigned long)queue->head,
+                  (unsigned long)queue->tail);
+  } else {
+    serial_printf("keyboard_queue: pop attempted on empty queue\n");
   }
   spinlock_unlock(&queue->lock);
   return has_event;
@@ -48,25 +57,36 @@ static bool queue_push(keyboard_queue_t* queue, const keyboard_event_t* event) {
   was_empty = queue_empty(queue);
   size_t next = (queue->head + 1) % KEYBOARD_EVENT_CAPACITY;
   if(next == queue->tail) {
+    serial_printf("keyboard_queue: overflow, dropping tail scancode=0x%03x\n",
+                  (unsigned)queue->events[queue->tail].scancode);
     queue->tail = (queue->tail + 1) % KEYBOARD_EVENT_CAPACITY;
   }
   queue->events[queue->head] = *event;
   queue->head = next;
+  serial_printf("keyboard_queue: push scancode=0x%03x ascii=0x%02x pressed=%u new_head=%lu tail=%lu\n",
+                (unsigned)event->scancode,
+                (unsigned)event->ascii,
+                (unsigned)event->pressed,
+                (unsigned long)queue->head,
+                (unsigned long)queue->tail);
   spinlock_unlock(&queue->lock);
   return was_empty;
 }
 
 void keyboard_device_init(void) {
   if(keyboard_queue.initialized) {
+    serial_printf("keyboard_device_init: already initialized\n");
     return;
   }
 
+  serial_printf("keyboard_device_init: initializing queue\n");
   spinlock_init(&keyboard_queue.lock);
   kmutex_init(&keyboard_queue.wait_lock);
   kcondvar_init(&keyboard_queue.waiters);
   keyboard_queue.head = 0;
   keyboard_queue.tail = 0;
   keyboard_queue.initialized = true;
+  serial_printf("keyboard_device_init: done\n");
 }
 
 void keyboard_device_reset(void) {
@@ -74,6 +94,7 @@ void keyboard_device_reset(void) {
     keyboard_device_init();
   }
 
+  serial_printf("keyboard_device_reset: resetting queue\n");
   kmutex_lock(&keyboard_queue.wait_lock);
   spinlock_lock(&keyboard_queue.lock);
   keyboard_queue.head = 0;
@@ -84,6 +105,7 @@ void keyboard_device_reset(void) {
 
 void keyboard_device_enqueue(const keyboard_event_t* event) {
   if(event == NULL) {
+    serial_printf("keyboard_device_enqueue: NULL event\n");
     return;
   }
 
@@ -91,7 +113,12 @@ void keyboard_device_enqueue(const keyboard_event_t* event) {
     keyboard_device_init();
   }
 
-  (void)queue_push(&keyboard_queue, event);
+  bool was_empty = queue_push(&keyboard_queue, event);
+  serial_printf("keyboard_device_enqueue: event scancode=0x%03x ascii=0x%02x pressed=%u was_empty=%s\n",
+                (unsigned)event->scancode,
+                (unsigned)event->ascii,
+                (unsigned)event->pressed,
+                was_empty ? "yes" : "no");
   kcondvar_signal(&keyboard_queue.waiters);
 }
 
@@ -124,10 +151,17 @@ static int64_t keyboard_device_read(file_t* file, void* buffer, size_t length) {
     keyboard_event_t evt;
     if(queue_pop(&keyboard_queue, &evt)) {
       out[consumed++] = evt;
+      serial_printf("keyboard_device_read: immediate pop scancode=0x%03x ascii=0x%02x pressed=%u consumed=%lu/%lu\n",
+                    (unsigned)evt.scancode,
+                    (unsigned)evt.ascii,
+                    (unsigned)evt.pressed,
+                    (unsigned long)consumed,
+                    (unsigned long)max_events);
       continue;
     }
 
     if(consumed > 0) {
+      serial_printf("keyboard_device_read: partial read satisfied consumed=%lu\n", (unsigned long)consumed);
       break;
     }
 
@@ -136,11 +170,19 @@ static int64_t keyboard_device_read(file_t* file, void* buffer, size_t length) {
       if(queue_pop(&keyboard_queue, &evt)) {
         kmutex_unlock(&keyboard_queue.wait_lock);
         out[consumed++] = evt;
+        serial_printf("keyboard_device_read: waited event scancode=0x%03x ascii=0x%02x pressed=%u\n",
+                      (unsigned)evt.scancode,
+                      (unsigned)evt.ascii,
+                      (unsigned)evt.pressed);
         break;
       }
+      serial_printf("keyboard_device_read: waiting on condvar\n");
       kcondvar_wait(&keyboard_queue.waiters, &keyboard_queue.wait_lock);
     }
   }
+
+  serial_printf("keyboard_device_read: returning bytes=%lu\n",
+                (unsigned long)(consumed * sizeof(keyboard_event_t)));
 
   return (int64_t)(consumed * sizeof(keyboard_event_t));
 }
@@ -158,6 +200,7 @@ file_t* keyboard_device_open(void) {
   }
 
   file_t* file = file_create(&keyboard_file_ops, NULL, FILE_MODE_READ);
+  serial_printf("keyboard_device_open: file=%p\n", (void*)file);
   if(file == NULL && current != NULL && current->errno == 0) {
     current->errno = ENOMEM;
   }

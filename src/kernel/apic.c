@@ -27,6 +27,7 @@ static struct acpi_madt *madt;
 static struct acpi_entry_hdr *liststart;
 static struct acpi_entry_hdr *listend;
 static void *lapicaddr;
+static uint32_t bootstrap_lapic_id;
 
 static size_t overridecount;
 static size_t iocount;
@@ -143,6 +144,12 @@ void apic_init() {
   serial_printf("acpi_init: local APIC address: %p\n", paddr);
 
   lapicaddr = (void*)physical_to_virtual((uintptr_t)paddr);
+  bootstrap_lapic_id = 0;
+  if(lapicaddr != NULL) {
+    uint32_t lapic_id_reg = read_lapic((uintptr_t)lapicaddr + LAPIC_ID);
+    bootstrap_lapic_id = lapic_id_reg >> 24;
+    serial_printf("acpi_init: local APIC ID: %u\n", (unsigned)bootstrap_lapic_id);
+  }
 
   ioapics = (ioapicdesc_t*)kmalloc(sizeof(ioapicdesc_t) * iocount);
 
@@ -202,13 +209,14 @@ bool apic_configure_irq(uint32_t gsi,
              polarity,
              trigger_mode,
              0,            // unmask entry
-             0);           // target CPU 0
+             (uint8_t)bootstrap_lapic_id); // route to bootstrap CPU
 
-  serial_printf("apic_configure_irq: GSI %u routed to vector 0x%02x (level=%s, active_low=%s)\n",
+  serial_printf("apic_configure_irq: GSI %u routed to vector 0x%02x (level=%s, active_low=%s, target=%u)\n",
                 gsi,
                 (unsigned)vector,
                 level_triggered ? "yes" : "no",
-                active_low ? "yes" : "no");
+                active_low ? "yes" : "no",
+                (unsigned)bootstrap_lapic_id);
 
   return true;
 }
