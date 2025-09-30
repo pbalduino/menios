@@ -665,11 +665,26 @@ void proc_switch(void* arg) {
   }
 
   memcpy(frame, current->cpu_state, sizeof(cpu_state_t));
-  if(frame->cs == 0) {
-    frame->cs = current->user_mode ? USER_CODE_SEGMENT : KERNEL_CODE_SEGMENT;
-  }
-  if(frame->ss == 0) {
-    frame->ss = current->user_mode ? USER_DATA_SEGMENT : KERNEL_DATA_SEGMENT;
+
+  uint16_t cs = (uint16_t)(frame->cs & 0xffff);
+  switch(cs & 0x3) {
+    case 0:
+      frame->cs = KERNEL_CODE_SEGMENT;
+      frame->ss = KERNEL_DATA_SEGMENT;
+      break;
+    case 3:
+      frame->cs = USER_CODE_SEGMENT;
+      frame->ss = USER_DATA_SEGMENT;
+      break;
+    default:
+      if(current->user_mode) {
+        frame->cs = USER_CODE_SEGMENT;
+        frame->ss = USER_DATA_SEGMENT;
+      } else {
+        frame->cs = KERNEL_CODE_SEGMENT;
+        frame->ss = KERNEL_DATA_SEGMENT;
+      }
+      break;
   }
 
   proc_process_pending_signals(frame);
