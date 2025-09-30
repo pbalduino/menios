@@ -59,6 +59,5 @@ int  proc_file_dup(struct proc_info_t* proc, int oldfd, int newfd, bool cloexec)
 typedef file_t* file_descriptor_t;
 file_descriptor_t fd_get(int fd);
 int pipe_create(file_t** read_end, file_t** write_end);
-void stdin_enqueue_char(uint8_t ch);
 
 #endif

@@ -16,6 +16,7 @@
 - **`init` now runs as PID 1** (#149/#150), giving us a natural parent for login/getty daemons and future service managers
 - **Signal delivery primitives** (#103) allow clean termination of user sessions, a prerequisite for secure logouts
 - `getcwd`/`chdir` (#147) now keeps per-process working directories; environment handling (#148) supplies HOME/PATH defaults for login shells
+- **TTY subsystem** (#169) delivers canonical input and echo, paving the way for login prompts on virtual terminals
 
 ## Multi-User System Requirements
 

@@ -16,6 +16,7 @@
 #include <kernel/proc.h>
 #include <kernel/serial.h>
 #include <kernel/spinlock.h>
+#include <kernel/tty.h>
 #include <kernel/vfs.h>
 
 #define FD_STDIN   0
@@ -24,7 +25,6 @@
 
 static const file_ops_t serial_file_ops;
 static const file_ops_t framebuffer_file_ops;
-static const file_ops_t stdin_file_ops;
 
 #ifdef MENIOS_KERNEL
 static FILE kernel_stdin_stream = { .reserved = FD_STDIN };
@@ -35,22 +35,6 @@ FILE* stdin = &kernel_stdin_stream;
 FILE* stdout = &kernel_stdout_stream;
 FILE* stderr = &kernel_stderr_stream;
 #endif
-
-static file_t* stdin_stream_file  = NULL;
-
-#define STDIN_BUFFER_SIZE 256
-
-typedef struct stdin_ring_buffer_t {
-  spinlock_t lock;
-  kmutex_t   wait_lock;
-  kcondvar_t waiters;
-  uint8_t    data[STDIN_BUFFER_SIZE];
-  size_t     head;
-  size_t     tail;
-} stdin_ring_buffer_t;
-
-static stdin_ring_buffer_t stdin_buffer;
-static bool stdin_initialized = false;
 
 static struct proc_info_t* owning_proc(void) {
   if(current != NULL) {
@@ -63,89 +47,6 @@ static inline void set_errno(int err) {
   if(current) {
     current->errno = err;
   }
-}
-
-static inline void stdin_buffer_init(void) {
-  spinlock_init(&stdin_buffer.lock);
-  kmutex_init(&stdin_buffer.wait_lock);
-  kcondvar_init(&stdin_buffer.waiters);
-  stdin_buffer.head = 0;
-  stdin_buffer.tail = 0;
-  stdin_initialized = true;
-}
-
-static bool stdin_buffer_pop(uint8_t* ch) {
-  bool result = false;
-  spinlock_lock(&stdin_buffer.lock);
-  if(stdin_buffer.head != stdin_buffer.tail) {
-    *ch = stdin_buffer.data[stdin_buffer.tail];
-    stdin_buffer.tail = (stdin_buffer.tail + 1) % STDIN_BUFFER_SIZE;
-    result = true;
-  }
-  spinlock_unlock(&stdin_buffer.lock);
-  return result;
-}
-
-static bool stdin_buffer_push(uint8_t ch) {
-  bool was_empty;
-  spinlock_lock(&stdin_buffer.lock);
-  was_empty = (stdin_buffer.head == stdin_buffer.tail);
-  size_t next = (stdin_buffer.head + 1) % STDIN_BUFFER_SIZE;
-  if(next == stdin_buffer.tail) {
-    stdin_buffer.tail = (stdin_buffer.tail + 1) % STDIN_BUFFER_SIZE;
-  }
-  stdin_buffer.data[stdin_buffer.head] = ch;
-  stdin_buffer.head = next;
-  spinlock_unlock(&stdin_buffer.lock);
-  return was_empty;
-}
-
-static int64_t stdin_read_impl(file_t* file, void* buffer, size_t length) {
-  (void)file;
-
-  if(buffer == NULL) {
-    set_errno(EINVAL);
-    return -EINVAL;
-  }
-
-  if(length == 0) {
-    return 0;
-  }
-
-  uint8_t* out = (uint8_t*)buffer;
-  size_t total = 0;
-
-  while(total < length) {
-    uint8_t ch = 0;
-    if(stdin_buffer_pop(&ch)) {
-      out[total++] = ch;
-      continue;
-    }
-
-    if(total > 0) {
-      break;
-    }
-
-    kmutex_lock(&stdin_buffer.wait_lock);
-    for(;;) {
-      if(stdin_buffer_pop(&ch)) {
-        kmutex_unlock(&stdin_buffer.wait_lock);
-        out[total++] = ch;
-        break;
-      }
-      kcondvar_wait(&stdin_buffer.waiters, &stdin_buffer.wait_lock);
-    }
-  }
-
-  return (int64_t)total;
-}
-
-void stdin_enqueue_char(uint8_t ch) {
-  if(!stdin_initialized) {
-    return;
-  }
-  (void)stdin_buffer_push(ch);
-  kcondvar_signal(&stdin_buffer.waiters);
 }
 
 file_t* file_create(const file_ops_t* ops, void* private_data, uint32_t mode) {
@@ -489,36 +390,21 @@ static const file_ops_t framebuffer_file_ops = {
   .seek = NULL,
 };
 
-static const file_ops_t stdin_file_ops = {
-  .read = stdin_read_impl,
-  .write = NULL,
-  .close = serial_close_noop,
-  .seek = NULL,
-};
-
 #ifdef MENIOS_KERNEL
 static void install_standard_streams(void) {
   proc_file_table_init(&kernel_process_info);
 
-  stdin_buffer_init();
+  tty_system_init();
   keyboard_device_init();
 
-  stdin_stream_file = file_create(&stdin_file_ops, NULL, FILE_MODE_READ);
-  if(stdin_stream_file != NULL) {
-    proc_file_install_at(&kernel_process_info, FD_STDIN, stdin_stream_file, 0);
-    file_unref(stdin_stream_file);
-  }
-
-  file_t* console_out = console_device_open();
-  if(console_out != NULL) {
-    proc_file_install_at(&kernel_process_info, FD_STDOUT, console_out, 0);
-    file_unref(console_out);
-  }
-
-  file_t* console_err = console_device_open();
-  if(console_err != NULL) {
-    proc_file_install_at(&kernel_process_info, FD_STDERR, console_err, 0);
-    file_unref(console_err);
+  file_t* tty_file = tty_device_open();
+  if(tty_file != NULL) {
+    proc_file_install_at(&kernel_process_info, FD_STDIN, tty_file, 0);
+    file_ref(tty_file);
+    proc_file_install_at(&kernel_process_info, FD_STDOUT, tty_file, 0);
+    file_ref(tty_file);
+    proc_file_install_at(&kernel_process_info, FD_STDERR, tty_file, 0);
+    file_unref(tty_file);
   }
 }
 #endif

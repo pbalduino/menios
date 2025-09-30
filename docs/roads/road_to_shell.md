@@ -10,6 +10,7 @@ process control, pipelines, and user-friendly tooling.
 - **Filesystem/navigation**: VFS read-only path ready; `getcwd(2)`/`chdir(2)` now live (#147 ✅).
 - **Pipes & signals**: Anonymous pipes implemented (#102 ✅); signal delivery prototype ready (#103 🟡).
 - **Input**: Keyboard events surfaced via `/dev/input/kbd`; mouse pending (#32 ✅, #143/#144 🟡).
+- **TTY**: Canonical line discipline, echo, and `/dev/tty0` delivered (#169 ✅).
 - **Terminal I/O**: `/dev/console` bridges VGA + serial, and mosh auto-attaches on launch (#138/#166 ✅).
 
 Remaining core pieces: shell REPL & execution pipeline (#161-#165), and
@@ -32,9 +33,10 @@ quality-of-life features (history, completion, job control).
 2. **#161 REPL & parsing (DONE)** – line reader, tokenizer, command AST
 3. **#162 Command execution (DONE)** – PATH lookup, fork/exec workflow
 4. **#166 Console hookup (DONE)** – attach STDIN/OUT to `/dev/console`
-5. **#163 Built-in commands (2-3 days)** – `cd`, `pwd`, `exit`, `env`
-6. **#164 Basic redirection (2-3 days)** – `>`, `>>`, `<` via `dup2`
-7. **#165 Pipe support (3-4 days)** – pipelines using existing `pipe(2)`
+5. **#169 TTY subsystem (DONE)** – canonical input, backspace handling, `/dev/tty0`
+6. **#163 Built-in commands (2-3 days)** – `cd`, `pwd`, `exit`, `env`
+7. **#164 Basic redirection (2-3 days)** – `>`, `>>`, `<` via `dup2`
+8. **#165 Pipe support (3-4 days)** – pipelines using existing `pipe(2)`
 🔹 *Milestone*: Usable shell with pipelines and redirection
 
 ### Phase 3 – Quality of Life (Week 4-5)
@@ -56,15 +58,16 @@ Init/Supervision (DONE) ─┐
 Filesystem navigation (#147 - DONE) ─┼──→ #161 (REPL)
 Environment variables (#148 - DONE) ──┤       ↓
 Pipes (#102), Signals (#103) ────────┴──→ #162 (exec) → #163 (built-ins) → #164 (redir) → #165 (pipes)
+TTY layer (#169 - DONE) ───────────────────────────────────────────────────────→ #166 (console integration)
                                                    ↓
                                     QoL (#156,#157,#160) → Advanced (#155,#158,#159)
 ```
 
 ## Immediate Focus
 
-1. **#161 REPL** – start the shell core.
-2. **#162 Command execution** – tie REPL to process launching.
-3. **#163 Built-ins** – wire `cd`, `pwd`, `exit`, `env`.
+1. **#163 Built-ins** – wire `cd`, `pwd`, `exit`, `env`.
+2. **#164 Redirection** – introduce `>`, `>>`, `<` using `dup2`.
+3. **#165 Pipes** – connect commands via `pipe(2)` once the syscall (#102) lands.
 
 ## Integration with Other Roadmaps
 
@@ -82,6 +85,6 @@ Pipes (#102), Signals (#103) ────────┴──→ #162 (exec) �
 - Handles signals (Ctrl+C, Ctrl+Z in later phases) gracefully.
 - Provides history, completion, and editing for day-to-day usability.
 
-Progress snapshot: 8/12 shell tasks complete (Phase 0 + `getcwd/chdir` +
-environment variables + REPL + command execution). Next stop: built-ins,
+Progress snapshot: Foundations, `getcwd/chdir`, environment, console/TTY
+integration, REPL, and command execution are complete. Next stop: built-ins,
 redirection, and pipelines.

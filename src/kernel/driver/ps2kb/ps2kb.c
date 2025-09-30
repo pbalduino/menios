@@ -3,12 +3,12 @@
 #include <kernel/driver.h>
 #include <kernel/driver/ps2kb.h>
 #include <kernel/driver/ps2.h>
-#include <kernel/file.h>
 #include <kernel/input/keyboard.h>
 #include <kernel/kernel.h>
 #include <kernel/tsc.h>
 #include <kernel/serial.h>
 #include <kernel/idt.h>
+#include <kernel/tty.h>
 
 #include <uacpi/acpi.h>
 #include <uacpi/tables.h>

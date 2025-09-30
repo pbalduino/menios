@@ -88,7 +88,7 @@ These issues form the backbone of the system and should be prioritized:
 
 ### Tier 12: Terminal Infrastructure (NEW!)
 59. **#168** - Console/VGA driver infrastructure (text mode, 80×25)
-60. **#169** - TTY subsystem (line discipline, virtual terminals, ioctl)
+60. **#169** - TTY subsystem (line discipline, virtual terminals, ioctl - CLOSED)
 61. **#170** - Character device infrastructure (foundation for streaming devices)
 
 ### Tier 13: Multi-User System Infrastructure (Future - Not Yet Created)
@@ -277,11 +277,11 @@ Phase 2: I/O & Pipes (Tier 11 - High Priority)
 #102 (pipes) ────────────────────→ #165 (pipe support) → cmd1 | cmd2 | cmd3
 
 Phase 3: Terminal Integration (Tier 12 - Essential)
-#170 (char device infra) ──→ #168 (VGA driver) ──→ #169 (TTY subsystem) ──→ #166 (shell VT/VGA - CLOSED) → Console bridge in place
+#170 (char device infra) ──→ #168 (VGA driver) ──→ #169 (TTY subsystem - CLOSED) ──→ #166 (shell VT/VGA - CLOSED) → Console bridge in place
                          └──→ #137 (/dev/null/zero) ─┘                                              (full VT stack pending)
 
 Phase 4: Usability Features (Tier 11 - Quality of Life)
-#169 (TTY) ───────────→ #156 (command history) → Up/down arrows, Ctrl+R
+#169 (TTY - CLOSED) ──→ #156 (command history) → Up/down arrows, Ctrl+R
                     ├─→ #157 (tab completion) → Complete commands/files
                     └─→ #160 (line editing) → Ctrl+L/K/U/A/E/R
 
@@ -402,8 +402,8 @@ All phases ───────────────→ #178 (security audit
 - **#170 (char device infra)** - Ready: foundation for all streaming devices
 - **#137 (/dev/null and /dev/zero)** - Needs: #170 (char device), #152 (devfs - CLOSED)
 - **#168 (VGA driver)** - Ready: text mode console support
-- **#169 (TTY subsystem)** - Needs: #168 (VGA), #170 (char device)
-- **#166 (shell VT/VGA - CLOSED)** - Initial console bridge in place (full VT awaits #168/#169)
+- **#169 (TTY subsystem - CLOSED)** - Canonical input, echo, and `/dev/tty0`
+- **#166 (shell VT/VGA - CLOSED)** - Initial console bridge in place (full VT awaits #168/#170)
 - **#109 (pthread API)** - Dependencies met: #108 (CLOSED)
 - **#110 (thread-safe libc)** - Can start in parallel with #109
 - **#127 (UTF-8 utilities)** - No dependencies, ready to start immediately!
@@ -421,15 +421,15 @@ All phases ───────────────→ #178 (security audit
   - **#163 (built-ins)** - Ready now (REPL/exec complete)
   - **#164 (basic redirection)** - Ready now (REPL/exec complete)
   - **#165 (pipe support)** blocks on: #102 (pipes syscall)
-  - **#166 (shell VT/VGA - CLOSED)** now uses /dev/console; richer VT work continues in #168/#169
+  - **#166 (shell VT/VGA - CLOSED)** now uses /dev/console; richer VT work continues in #168/#170
 - **Terminal Infrastructure:**
   - **#137 (/dev/null+zero)** blocks on: #170 (char device)
-  - **#169 (TTY subsystem)** blocks on: #168 (VGA), #170 (char device)
-  - **#166 (shell VT/VGA - CLOSED)** complete for console output; TTY features follow in #169
+  - **#169 (TTY subsystem - CLOSED)** delivered canonical input; advanced VT work continues under #168/#170
+  - **#166 (shell VT/VGA - CLOSED)** complete for console output; backed by new TTY layer (#169)
 - **Shell Advanced Features:**
-  - **#156 (command history)** blocks on: #169 (TTY) for raw mode
+  - **#156 (command history)** builds on #169 (TTY - CLOSED) for raw mode switching
   - **#157 (tab completion)** blocks on: #163 (built-ins) for context
-  - **#160 (line editing)** blocks on: #169 (TTY) for raw mode
+  - **#160 (line editing)** can now target the raw mode exposed by #169 (TTY - CLOSED)
   - **#155 (scripting)** blocks on: #163-#165 (core shell complete)
   - **#158 (job control)** blocks on: #103 (signals), #163-#165 (core shell)
   - **#159 (advanced redirection)** blocks on: #164 (basic redirection)
@@ -443,9 +443,9 @@ All phases ───────────────→ #178 (security audit
   - **#113 (thread-aware syscalls)** blocks on: #109 (pthread API)
 
 ### Parallel Development Opportunities:
-- **mosh Shell** (#163-#166) progressing - REPL/exec/console hookup complete; continue toward built-ins and I/O
+- **mosh Shell** (#163-#166) progressing - REPL/exec/TTY hookup complete; continue toward built-ins and I/O
   - Sequential: ✅ #161 (REPL) → ✅ #162 (exec) → #163 (built-ins) → #164 (redirection) → #165 (pipes)
-  - Terminal: #170 (char dev) → #168 (VGA) → #169 (TTY) → #166 (shell integration - CLOSED)
+  - Terminal: #170 (char dev) → #168 (VGA) → #166 (shell integration - CLOSED, runs atop #169 TTY)
   - Quality of life: #156 (history), #157 (tab), #160 (editing)
   - Advanced: #155 (scripting), #158 (job control), #159 (advanced redirection)
 - **Init & Process Management** (#145-#148) - Process lifecycle syscalls
@@ -480,7 +480,7 @@ All phases ───────────────→ #178 (security audit
 **High Priority - Terminal Support (1-2 weeks):**
 5. **#170** - Character device infrastructure - 3-5 days
 6. **#168** - VGA driver (text mode) - 3-5 days
-7. **#169** - TTY subsystem (line discipline, ioctl) - 1-2 weeks
+7. **#169** - TTY subsystem - CLOSED (canonical input, `/dev/tty0`)
 8. **#166** - Hook shell to VT/VGA - CLOSED
 9. **#167** - /dev/zero device - 1-2 days
    → **Result: Full terminal experience!**
@@ -654,7 +654,7 @@ With core kernel infrastructure operational, meniOS has strong foundations for a
    - Built-in commands (#163) - 2-3 days
    - I/O redirection (#164) - 2-3 days
    - Pipe support (#102, #165) - 5-7 days total
-   - Terminal integration (#170, #168, #169) - 2-3 weeks
+   - Terminal integration (#170, #168) - 2-3 weeks
    - Quality of life: history, tab completion, line editing (#156, #157, #160) - 1-2 weeks
    - **Result: Working shell with pipes in ~2 weeks, full terminal in 4 weeks, polished in 6 weeks**
 2. **Virtual Filesystems** (#151, #152, #153, #154) - Essential system services
