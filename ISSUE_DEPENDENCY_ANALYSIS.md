@@ -102,7 +102,7 @@ These issues form the backbone of the system and should be prioritized:
 69. **#177** - Resource limits (ulimit/getrlimit/setrlimit)
 70. **#178** - Security testing and audit
 
-**Note:** Multi-user support is LOW PRIORITY - implement after shell and core applications are working. See `road_to_multiuser.md` for full details.
+**Note:** Multi-user support is LOW PRIORITY - implement after shell and core applications are working. See `docs/roads/road_to_multiuser.md` for full details.
 
 ## 📊 Updated Dependency Categories
 
@@ -562,7 +562,7 @@ All phases ───────────────→ #178 (security audit
 **Result**: Proper multi-user operating system with authentication, permissions, and user isolation
 
 **Priority**: LOW - implement after shell and core applications work
-**Details**: See `road_to_multiuser.md` for comprehensive documentation
+**Details**: See `docs/roads/road_to_multiuser.md` for comprehensive documentation
 
 ### For Microkernel Vision:
 1. **Complete Phases 1-3** first (foundation + threading)
@@ -601,7 +601,7 @@ All phases ───────────────→ #178 (security audit
 - **Planned**: 13 issues for multi-user system (Tier 13 - #166-#178)
 - **Major Completions**: Memory, scheduling, processes, storage, threading foundation, framebuffer, timers, signals, init supervisor
 - **Active Development**: mosh shell (11 new issues), virtual filesystems, threading APIs, device filesystem, mouse input, hardware drivers, advanced IPC
-- **Future Development**: Multi-user system infrastructure (see `road_to_multiuser.md`)
+- **Future Development**: Multi-user system infrastructure (see `docs/roads/road_to_multiuser.md`)
 
 ## **Current Development Strategy**
 
@@ -632,7 +632,7 @@ With core kernel infrastructure operational, meniOS has strong foundations for a
 
 **Future Tracks (Post-Shell):**
 10. **Multi-User System** (#166-#178) - Authentication, permissions, user isolation (4-6 months)
-    - See `road_to_multiuser.md` for comprehensive roadmap
+    - See `docs/roads/road_to_multiuser.md` for comprehensive roadmap
     - LOW PRIORITY - implement after shell and core applications
 
 This parallel approach leverages the completed foundation to enable sophisticated userland applications including text editors, shells, and eventually Doom.

@@ -103,7 +103,7 @@ The core kernel and storage stack are online; Doom's remaining blockers are in u
 - Filesystem write path: save-game and configuration support atop the existing FAT32 VFS
 - Toolchain: cross-compilation and SDK to build the Doom port against meniOS headers
 
-See [`road_to_doom.md`](road_to_doom.md) and [`tasks.json`](tasks.json) for the detailed roadmap and dependency tracking.
+See [`road_to_doom.md`](docs/roads/road_to_doom.md) and [`tasks.json`](tasks.json) for the detailed roadmap and dependency tracking.
 
 ## Architecture Overview
 
