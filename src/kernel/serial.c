@@ -4,7 +4,6 @@
 #include <stdlib.h>
 #include <sys/errno.h>
 
-#include <arch/386.h>
 #include <kernel/apic.h>
 #include <kernel/condvar.h>
 #include <kernel/console.h>
@@ -250,4 +249,3 @@ int64_t serial_read(void* buffer, size_t length) {
 
   return (int64_t)total;
 }
-
