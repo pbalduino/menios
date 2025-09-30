@@ -29,6 +29,8 @@ void user_init_launch(void) {
   memset(proc, 0, sizeof(proc_info_t));
 
   proc_create_user(proc, "init", init_elf_start, code_size, NULL);
+  proc_env_set(proc, "PATH", "/bin", false);
+  proc_env_set(proc, "HOME", "/", false);
   proc_set_priority(proc, PROC_PRIO_NORMAL);
   serial_printf("user_init_launch: queued init process pid %u\n", proc->pid);
   proc_execute(proc);

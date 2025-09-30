@@ -41,6 +41,11 @@ INIT_ELF_OBJ = $(OBJDIR)/usermode/init_elf.o
 INIT_ELF_SYMBOL := $(subst .,_,$(subst /,_,$(INIT_ELF)))
 OBJS += $(INIT_ELF_OBJ)
 
+MOSH_ELF = $(OBJDIR)/usermode/mosh.elf
+MOSH_ELF_OBJ = $(OBJDIR)/usermode/mosh_elf.o
+MOSH_ELF_SYMBOL := $(subst .,_,$(subst /,_,$(MOSH_ELF)))
+OBJS += $(MOSH_ELF_OBJ)
+
 -include $(OBJS:.o=.d)
 
 override CFLAGS += \
@@ -238,6 +243,27 @@ ifeq ($(OS_NAME),linux)
 		--redefine-sym _binary_$(INIT_ELF_SYMBOL)_start=init_elf_start \
 		--redefine-sym _binary_$(INIT_ELF_SYMBOL)_end=init_elf_end \
 		--redefine-sym _binary_$(INIT_ELF_SYMBOL)_size=init_elf_size \
+		$< $@
+else
+	$(DOCKER) run --rm -it --mount type=bind,source=$$(pwd),target=/mnt $(DOCKER_IMAGE) /bin/sh -c "cd /mnt && make $@"
+endif
+
+$(MOSH_ELF): app/mosh/mosh.c linker/user_elf.ld $(USER_ELF_OBJ)
+ifeq ($(OS_NAME),linux)
+	@mkdir -p $(OBJDIR)/usermode
+	$(GCC) -nostdlib -nostartfiles -ffreestanding -I./include -c app/mosh/mosh.c -o $(OBJDIR)/usermode/mosh.o
+	$(LD) -nostdlib -static -T linker/user_elf.ld -o $@ $(OBJDIR)/usermode/mosh.o $(USER_ELF_OBJ)
+else
+	$(DOCKER) run --rm -it --mount type=bind,source=$$(pwd),target=/mnt $(DOCKER_IMAGE) /bin/sh -c "cd /mnt && make $@"
+endif
+
+$(MOSH_ELF_OBJ): $(MOSH_ELF)
+ifeq ($(OS_NAME),linux)
+	@mkdir -p $(OBJDIR)/usermode
+	$(OBJCOPY) --input binary --output elf64-x86-64 --binary-architecture i386:x86-64 \
+		--redefine-sym _binary_$(MOSH_ELF_SYMBOL)_start=mosh_elf_start \
+		--redefine-sym _binary_$(MOSH_ELF_SYMBOL)_end=mosh_elf_end \
+		--redefine-sym _binary_$(MOSH_ELF_SYMBOL)_size=mosh_elf_size \
 		$< $@
 else
 	$(DOCKER) run --rm -it --mount type=bind,source=$$(pwd),target=/mnt $(DOCKER_IMAGE) /bin/sh -c "cd /mnt && make $@"

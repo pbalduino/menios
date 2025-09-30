@@ -73,8 +73,8 @@ These issues form the backbone of the system and should be prioritized:
 46. **#154** - Boot integration to start init as PID 1 (CLOSED)
 
 ### Tier 11: mosh Shell Core Components
-47. **#161** - Basic REPL and command parsing (read/parse/execute loop)
-48. **#162** - Command execution (fork/exec/wait infrastructure)
+47. **#161** - Basic REPL and command parsing (read/parse/execute loop - CLOSED)
+48. **#162** - Command execution (fork/exec/wait infrastructure - CLOSED)
 49. **#163** - Built-in commands (cd/pwd/exit/export)
 50. **#164** - Basic I/O redirection (>, <, >>)
 51. **#165** - Pipe support (|)
@@ -261,10 +261,10 @@ Phase 5: Boot Integration                    #154 (boot init as PID 1 - CLOSED)
 ```
 Phase 1: Core Infrastructure (Tier 11 - Critical)
 #149 (wait - CLOSED) ──┐
-#151 (getcwd/chdir - CLOSED) ────┼──→ #161 (REPL & parsing) → Read, parse, tokenize commands
+#151 (getcwd/chdir - CLOSED) ────┼──→ #161 (REPL & parsing - CLOSED) → Read, parse, tokenize commands
 #152 (environment - CLOSED) ─────┘          ↓
                                    ↓
-                              #162 (command execution) → fork/exec/wait/PATH lookup
+                               #162 (command execution - CLOSED) → fork/exec/wait/PATH lookup
                                    ↓
                               #163 (built-ins) → cd/pwd/exit/export
 
@@ -388,7 +388,6 @@ All phases ───────────────→ #178 (security audit
 ### Ready to Start (Dependencies Met):
 - **#151 (getcwd/chdir - CLOSED)** - Directory navigation delivered
 - **#152 (environment vars - CLOSED)** - PATH/HOME plumbing delivered
-- **#161 (REPL/parsing)** - Dependencies: #149 (CLOSED), #151 (CLOSED), #152 (CLOSED) – ready to begin
 - **#109 (pthread API)** - Dependencies met: #108 (CLOSED)
 - **#110 (thread-safe libc)** - Can start in parallel with #109
 - **#127 (UTF-8 utilities)** - No dependencies, ready to start immediately!
@@ -424,8 +423,8 @@ All phases ───────────────→ #178 (security audit
   - **#113 (thread-aware syscalls)** blocks on: #109 (pthread API)
 
 ### Parallel Development Opportunities:
-- **mosh Shell** (#161-#165) can start immediately - init, cwd, and environment plumbing done!
-  - Sequential: #161 (REPL) → #162 (exec) → #163 (built-ins) → #164 (redirection) → #165 (pipes)
+- **mosh Shell** (#161-#165) progressing - REPL and exec complete; continue toward built-ins and I/O
+  - Sequential: ✅ #161 (REPL) → ✅ #162 (exec) → #163 (built-ins) → #164 (redirection) → #165 (pipes)
   - Quality of life: #156 (history), #157 (tab), #160 (editing)
   - Advanced: #155 (scripting), #158 (job control), #159 (advanced redirection)
 - **Threading APIs** (#109-#113) can start immediately - foundation complete!
@@ -447,16 +446,15 @@ All phases ───────────────→ #178 (security audit
 ## 🎯 Recommended Focus Areas
 
 ### Immediate Next Steps (Ready Now!)
-1. **#161** - REPL and parsing (shell foundation - 2-3 days)
-2. **#145** - tmpfs/ramfs (quick win, good first issue, enables /tmp)
-3. **#109** - pthread API and POSIX threading (foundation complete)
-4. **#146** - devfs (device filesystem, unblocks hardware device access)
-5. **#127** - UTF-8 utilities (ready to implement, no dependencies!)
-6. **#135** - Code coverage with Gcov (ready to implement, existing Unity tests!)
-7. **#136** - Device filesystem infrastructure (ready to implement!)
-8. **#147** - procfs (system introspection and debugging)
-9. **#102** - pipes implementation (needed for #165 pipe support)
-10. **#103** - UNIX signals (process control ready: sigaction/masks live)
+1. **#145** - tmpfs/ramfs (quick win, good first issue, enables /tmp)
+2. **#109** - pthread API and POSIX threading (foundation complete)
+3. **#146** - devfs (device filesystem, unblocks hardware device access)
+4. **#127** - UTF-8 utilities (ready to implement, no dependencies!)
+5. **#135** - Code coverage with Gcov (ready to implement, existing Unity tests!)
+6. **#136** - Device filesystem infrastructure (ready to implement!)
+7. **#147** - procfs (system introspection and debugging)
+8. **#102** - pipes implementation (needed for #165 pipe support)
+9. **#103** - UNIX signals (process control ready: sigaction/masks live)
 
 ### For Maximum Impact:
 1. **Complete Threading APIs** (#109, #110, #113) - Enable modern multithreaded applications
@@ -606,14 +604,12 @@ All phases ───────────────→ #178 (security audit
 With core kernel infrastructure operational, meniOS has strong foundations for advanced features. Major systems like memory management, scheduling, processes, and storage are complete and functional.
 
 **Recommended immediate development tracks:**
-1. **mosh Shell** (#161-#165) - init, cwd, and environment plumbing complete (TOP PRIORITY)
-   - REPL and parsing (2-3 days)
-   - Command execution (2-3 days)
+1. **mosh Shell** (#161-#165) - REPL and exec online; continue toward usability (TOP PRIORITY)
    - Built-in commands (2-3 days)
    - I/O redirection (2-3 days)
    - Pipe support (3-4 days)
    - Quality of life: history, tab completion, line editing (1-2 weeks)
-   - **Result: Working interactive shell with pipes in 2-3 weeks, full-featured in 4-6 weeks**
+   - **Result: Working interactive shell with pipes in ~2 weeks, full-featured in 4-6 weeks**
 2. **Virtual Filesystems** (#145, #146, #147, #148) - Essential system services
    - tmpfs for /tmp (quick win)
    - devfs for /dev (hardware access)

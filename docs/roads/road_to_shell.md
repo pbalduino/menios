@@ -28,8 +28,8 @@ quality-of-life features (history, completion, job control).
    - `getenv/setenv/unsetenv` syscalls wired; PATH/HOME ready for shell
 
 ### Phase 2 – Core Shell (Week 2-3)
-2. **#161 REPL & parsing (2-3 days)** – line reader, tokenizer, command AST
-3. **#162 Command execution (2-3 days)** – PATH lookup, fork/exec workflow
+2. **#161 REPL & parsing (DONE)** – line reader, tokenizer, command AST
+3. **#162 Command execution (DONE)** – PATH lookup, fork/exec workflow
 4. **#163 Built-in commands (2-3 days)** – `cd`, `pwd`, `exit`, `env`
 5. **#164 Basic redirection (2-3 days)** – `>`, `>>`, `<` via `dup2`
 6. **#165 Pipe support (3-4 days)** – pipelines using existing `pipe(2)`
@@ -80,6 +80,6 @@ Pipes (#102), Signals (#103) ────────┴──→ #162 (exec) �
 - Handles signals (Ctrl+C, Ctrl+Z in later phases) gracefully.
 - Provides history, completion, and editing for day-to-day usability.
 
-Progress snapshot: 6/12 shell tasks complete (Phase 0 + `getcwd/chdir` +
-environment variables). Next stop: REPL implementation to kick off the core
-shell pipeline.
+Progress snapshot: 8/12 shell tasks complete (Phase 0 + `getcwd/chdir` +
+environment variables + REPL + command execution). Next stop: built-ins,
+redirection, and pipelines.

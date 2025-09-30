@@ -185,15 +185,13 @@ void _start() {
   hardware_init();
 
   user_init_launch();
+  user_mosh_launch();
 
   logk("Enabling interruptions\n");
   enable_interrupts();
 
-  printf("menios# ");
-
-  while(true){
-    int ch = kgetchar();
-    kputchar(ch);
+  while(true) {
+    halt();
   }
 
   logk("Bye\n");

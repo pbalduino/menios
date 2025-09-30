@@ -9,6 +9,7 @@ extern "C" {
 
 void user_mode_enter(void (*entrypoint)(void*), void* user_stack_top, uint64_t arg);
 void user_init_launch(void);
+void user_mosh_launch(void);
 void user_demo_launch(void);
 
 #ifdef __cplusplus

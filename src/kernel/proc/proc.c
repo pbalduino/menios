@@ -960,6 +960,7 @@ void proc_create(proc_info_p proc, const char* name, void (*entrypoint)(void *),
   memset(proc->name, 0, sizeof(proc->name));
   strncpy(proc->name, name, sizeof(proc->name) - 1);
   proc->children_count = 0;
+  proc_env_init(proc);
   proc_info_p parent = current;
   if(parent == &kernel_process_info && init_process != &kernel_process_info) {
     parent = init_process;
@@ -1379,6 +1380,7 @@ proc_info_p proc_fork(proc_info_p parent, const syscall_frame_t* frame, int* err
   memset(child, 0, sizeof(proc_info_t));
   proc_file_table_init(child);
   proc_file_table_clone(child, parent);
+  proc_env_init(child);
   if(!proc_env_clone(child, parent)) {
     if(err_out) {
       *err_out = -ENOMEM;
