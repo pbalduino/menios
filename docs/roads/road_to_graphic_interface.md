@@ -14,6 +14,7 @@ desktops, and hardware-accelerated rendering.
   is pending (#143/#144).
 - `/dev/console` multiplexes framebuffer output with serial logging for terminal
   apps (#138).
+- Shell now redirects STDIN/STDOUT to `/dev/console`, giving live VGA output (#166).
 - PID 1 `init` supervisor is in place (#153/#154), enabling userland services to
   launch at boot and supervise graphical daemons.
 

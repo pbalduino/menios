@@ -10,7 +10,7 @@ process control, pipelines, and user-friendly tooling.
 - **Filesystem/navigation**: VFS read-only path ready; `getcwd(2)`/`chdir(2)` now live (#147 ✅).
 - **Pipes & signals**: Anonymous pipes implemented (#102 ✅); signal delivery prototype ready (#103 🟡).
 - **Input**: Keyboard events surfaced via `/dev/input/kbd`; mouse pending (#32 ✅, #143/#144 🟡).
-- **Terminal I/O**: `/dev/console` now bridges VGA output with serial logging and keyboard input (#138 ✅).
+- **Terminal I/O**: `/dev/console` bridges VGA + serial, and mosh auto-attaches on launch (#138/#166 ✅).
 
 Remaining core pieces: shell REPL & execution pipeline (#161-#165), and
 quality-of-life features (history, completion, job control).
@@ -31,9 +31,10 @@ quality-of-life features (history, completion, job control).
 ### Phase 2 – Core Shell (Week 2-3)
 2. **#161 REPL & parsing (DONE)** – line reader, tokenizer, command AST
 3. **#162 Command execution (DONE)** – PATH lookup, fork/exec workflow
-4. **#163 Built-in commands (2-3 days)** – `cd`, `pwd`, `exit`, `env`
-5. **#164 Basic redirection (2-3 days)** – `>`, `>>`, `<` via `dup2`
-6. **#165 Pipe support (3-4 days)** – pipelines using existing `pipe(2)`
+4. **#166 Console hookup (DONE)** – attach STDIN/OUT to `/dev/console`
+5. **#163 Built-in commands (2-3 days)** – `cd`, `pwd`, `exit`, `env`
+6. **#164 Basic redirection (2-3 days)** – `>`, `>>`, `<` via `dup2`
+7. **#165 Pipe support (3-4 days)** – pipelines using existing `pipe(2)`
 🔹 *Milestone*: Usable shell with pipelines and redirection
 
 ### Phase 3 – Quality of Life (Week 4-5)

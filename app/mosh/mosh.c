@@ -18,6 +18,7 @@ typedef int pid_t;
 #define SYS_EXECVE  59
 #define SYS_EXIT    60
 #define SYS_KILL    62
+#define SYS_DUP2    33
 #define SYS_WAITPID 67
 #define SYS_GETCWD  79
 #define SYS_CHDIR   80
@@ -26,6 +27,8 @@ typedef int pid_t;
 #define SYS_UNSETENV 83
 
 #define O_RDONLY    0x0
+#define O_WRONLY    0x1
+#define O_RDWR      0x2
 
 #define MOSH_MAX_LINE        512
 #define MOSH_MAX_ARGS        16
@@ -91,6 +94,10 @@ static int sys_close(int fd) {
   return (int)syscall1(SYS_CLOSE, fd);
 }
 
+static int sys_dup2(int oldfd, int newfd) {
+  return (int)syscall2(SYS_DUP2, oldfd, newfd);
+}
+
 static pid_t sys_fork(void) {
   return (pid_t)syscall0(SYS_FORK);
 }
@@ -102,6 +109,22 @@ static int sys_execve(const void* image, size_t size) {
 static void sys_exit(int code) {
   syscall1(SYS_EXIT, code);
   while(true) { }
+}
+
+static void attach_console(void) {
+  static const char device[] = "/dev/console";
+  int fd = sys_open(device, O_RDWR, 0);
+  if(fd < 0) {
+    return;
+  }
+
+  sys_dup2(fd, STDIN_FD);
+  sys_dup2(fd, STDOUT_FD);
+  sys_dup2(fd, STDERR_FD);
+
+  if(fd > STDERR_FD) {
+    sys_close(fd);
+  }
 }
 
 static pid_t sys_waitpid(pid_t pid, int* status, int options) {
@@ -466,6 +489,7 @@ static void run_command(int argc, char* argv[]) {
 }
 
 int main(void) {
+  attach_console();
   ensure_default_environment();
 
   char cwd[MOSH_MAX_PATH_LEN];
