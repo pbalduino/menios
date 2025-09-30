@@ -21,7 +21,7 @@ These issues form the backbone of the system and should be prioritized:
 ### Tier 3: IPC Foundation (PARTIALLY COMPLETE)
 9. **#102** - pipes (pipe/mkfifo)
 10. **#40** - condition variables (CLOSED)
-11. **#103** - UNIX signals (handler/mask pipeline implemented)
+11. **#103** - UNIX signals (CLOSED - handler/mask/delivery complete)
 12. **#104** - shared memory (shmget/shmat/shmdt)
 
 ### Tier 4: Threading Support (PARTIALLY COMPLETE)
@@ -137,7 +137,7 @@ These issues form the backbone of the system and should be prioritized:
                                                                      ↓
                        #88 (TLS) ──→ #109 ──→ #111 (advanced pthread sync)
                                                      ↓
-                       #94 (signals) ──→ #109 ──→ #112 (debugging/profiling)
+                       #103 (signals - CLOSED) ──→ #109 ──→ #112 (debugging/profiling)
                                                      ↓
                        #108 ──→ #113 (thread-aware syscalls)
 ```
@@ -365,15 +365,15 @@ All phases ───────────────→ #178 (security audit
 
 **Status**: Foundation complete, userland threading APIs ready to implement.
 
-### Phase 4: Advanced IPC (READY TO START)
+### Phase 4: Advanced IPC (IN PROGRESS)
 **Goal**: Full IPC suite for applications
 - #40: condition variables (CLOSED)
-- #103: UNIX signals (handlers + sigaction/sigprocmask complete)
-- #104: shared memory
-- #105: Unix domain sockets
-- #94: signal handling system
+- #103: UNIX signals (CLOSED - complete signal delivery system)
+- #102: pipes (in progress)
+- #104: shared memory (ready to start)
+- #105: Unix domain sockets (ready to start)
 
-**Status**: Prerequisites met, ready for implementation.
+**Status**: Signal foundation complete, pipes and shared memory next.
 
 ### Phase 5: Microkernel Transition (Advanced)
 **Goal**: Microkernel architecture
@@ -414,7 +414,7 @@ All phases ───────────────→ #178 (security audit
 - **#147 (getcwd/chdir)** - Directory navigation syscalls
 - **#148 (environment vars)** - Environment variable support
 - **#102 (pipes)** - Basic IPC implementation
-- **#103 (UNIX signals)** - Process control mechanism (handlers delivered; siginfo/rt signals TBD)
+- **#103 (UNIX signals - CLOSED)** - Process control mechanism (handlers delivered; siginfo/rt signals complete)
 
 ### Cannot Start Until Complete:
 - **Shell Core Components:** (Most unblocked!)
@@ -431,7 +431,7 @@ All phases ───────────────→ #178 (security audit
   - **#157 (tab completion)** blocks on: #163 (built-ins) for context
   - **#160 (line editing)** can now target the raw mode exposed by #169 (TTY - CLOSED)
   - **#155 (scripting)** blocks on: #163-#165 (core shell complete)
-  - **#158 (job control)** blocks on: #103 (signals), #163-#165 (core shell)
+  - **#158 (job control)** blocks on: #163-#165 (core shell) - signals ready (#103 CLOSED)
   - **#159 (advanced redirection)** blocks on: #164 (basic redirection)
 - **Other Systems:**
   - **#106 (microkernel IPC)** blocks on: #101 (timers - CLOSED), #104 (shared memory)
@@ -493,15 +493,15 @@ All phases ───────────────→ #178 (security audit
 
 ### For Maximum Impact:
 1. **Complete Threading APIs** (#109, #110, #113) - Enable modern multithreaded applications
-2. **Implement Advanced IPC** (#102, #103, #104) - Complete process communication
+2. **Implement Advanced IPC** (#102, #104, #105) - Complete process communication (signals done ✅)
 3. **Add Unicode Support** (#127, #128, #129) - International text handling
 
 ### For Running Applications (like text editors):
 1. **File I/O**: #96 (CLOSED) → #60 (CLOSED) with filesystem chain (COMPLETE)
-2. **Process management**: #93 (CLOSED) → #94 (signals - ready)
+2. **Process management**: #93 (CLOSED) → #103 (signals - CLOSED) ✅
 3. **Memory**: #89 (CLOSED) → #95 (userspace malloc - ready)
 4. **Threading**: #108 (CLOSED) → #109 (pthread API - ready)
-5. **Device I/O**: #136 → #138 (console/terminal devices)
+5. **Device I/O**: #136 → #138 (console/terminal - CLOSED) ✅
 
 ### For Graphical Applications (like Doom):
 1. **Graphics**: #31 (CLOSED) - Framebuffer syscalls (getinfo/map/flip) - COMPLETE
@@ -621,20 +621,22 @@ All phases ───────────────→ #178 (security audit
 - #137 (null/zero devices) - Good first issue
 - #143 (PS/2 mouse) - Input expansion
 - #148 (ext2) - Better persistent storage (1-2 weeks)
-- #102 (pipes) - Basic IPC
-- #103 (UNIX signals) - Process control (handlers, masks, stoppable signals)
+- #102 (pipes) - Basic IPC (high priority for shell)
+- #104 (shared memory) - High-performance IPC (ready to start)
 
 ### **Project Status**:
 - **Total Issues**: 170 issues created (highest #170, note: #167 closed as duplicate)
-- **Closed**: 60 issues (including #149, #150, #151-#154, #161, #162, #167)
-- **Open**: 110 issues (organized by priority tiers)
+- **Closed**: 71 issues (including #103, #138, #146, #149-#154, #161-#162, #166-#167, #169)
+- **Open**: 99 issues (organized by priority tiers)
 - **Planned**: 13 issues for multi-user system (Tier 13 - to be created)
 - **Major Completions**:
   - Core kernel: Memory, scheduling, processes, storage, threading foundation
-  - Hardware: Framebuffer, keyboard input, timers, signals
-  - Filesystems: tmpfs, devfs, procfs, ext2 (all read-only or complete)
-  - Process management: Init supervisor, boot integration
-  - Shell: REPL and command execution
+  - Hardware: Framebuffer, keyboard input, timers
+  - IPC: Signals (complete), pipes (in progress), condition variables
+  - Filesystems: tmpfs, devfs, procfs, ext2 (all complete)
+  - Process management: Init supervisor, boot integration, wait/waitpid, zombie handling
+  - Shell: REPL, command execution, console bridge with TTY
+  - Terminal: TTY subsystem with canonical input and /dev/tty0
 - **Active Development**:
   - **mosh shell** (core: #163-#165 built-ins/I/O/pipes; terminal: #168-#170 VGA/TTY/char dev; advanced: #155-#160)
   - **Process lifecycle** (#145-#148: wait/waitpid, zombies, getcwd/chdir, environment)
@@ -650,22 +652,22 @@ All phases ───────────────→ #178 (security audit
 With core kernel infrastructure operational, meniOS has strong foundations for advanced features. Major systems like memory management, scheduling, processes, and storage are complete and functional.
 
 **Recommended immediate development tracks:**
-1. **mosh Shell** (#163-#166) - REPL/exec/console DONE; continue toward usability (TOP PRIORITY)
+1. **mosh Shell** (#163-#165) - REPL/exec/console/TTY DONE; continue toward usability (TOP PRIORITY)
    - Built-in commands (#163) - 2-3 days
    - I/O redirection (#164) - 2-3 days
    - Pipe support (#102, #165) - 5-7 days total
-   - Terminal integration (#170, #168) - 2-3 weeks
+   - VGA driver integration (#168, #170) - 1-2 weeks
    - Quality of life: history, tab completion, line editing (#156, #157, #160) - 1-2 weeks
-   - **Result: Working shell with pipes in ~2 weeks, full terminal in 4 weeks, polished in 6 weeks**
-2. **Virtual Filesystems** (#151, #152, #153, #154) - Essential system services
-   - tmpfs for /tmp (quick win)
-   - devfs for /dev (hardware access)
-   - procfs for /proc (debugging)
-   - ext2 for better persistent storage
+   - **Result: Working shell with pipes in ~2 weeks, full VGA in 3-4 weeks, polished in 5-6 weeks**
+2. **Virtual Filesystems** ✅ COMPLETE (#151-#154 all CLOSED)
+   - ✅ tmpfs for /tmp
+   - ✅ devfs for /dev
+   - ✅ procfs for /proc
+   - ✅ ext2 for persistent storage
 3. **Threading APIs** (#109, #110, #113) - Enable multithreaded applications
-4. **Advanced IPC** (#102, #103, #104) - Complete process communication
+4. **Advanced IPC** (#102, #104, #105) - Complete process communication (✅ signals done)
 5. **Unicode Support** (#127, #128, #129, #130) - International text handling
-6. **Device Infrastructure** (#136, #137, #138) - Hardware access layer
+6. **Device Infrastructure** (#136, #137, #170) - Hardware access layer
 7. **Mouse Input** (#143, #144) - Complete input subsystem with mouse support
 8. **Quality Assurance** (#135) - Code coverage and testing improvements
 9. **Hardware Drivers** (ongoing #118-#126) - USB and storage expansion

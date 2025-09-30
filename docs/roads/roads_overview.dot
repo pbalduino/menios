@@ -1,34 +1,130 @@
-digraph RoadmapOfRoadmaps {
-    rankdir=LR;
-    node [shape=box, style=rounded, fontname="Arial", fontsize=10];
+digraph MeniOSRoadmap {
+    rankdir=TB;
+    bgcolor="#f0f4f8";
 
-    doom    [label="Road to Doom\n(docs/roads/road_to_doom.md)"];
-    shell   [label="Road to Shell\n(docs/roads/road_to_shell.md)"];
-    sqlite  [label="Road to SQLite\n(docs/roads/road_to_sqlite.md)"];
-    gcc     [label="Road to GCC Toolchain\n(docs/roads/road_to_gcc.md)"];
-    multi   [label="Road to Multi-User\n(docs/roads/road_to_multiuser.md)"];
-    gfx     [label="Road to Graphic Interface\n(docs/roads/road_to_graphic_interface.md)"];
-    micro   [label="Road to Microkernel\n(docs/roads/road_to_microkernel.md)"];
+    // Graph styling
+    graph [splines=ortho, nodesep=1.2, ranksep=1.5, fontname="Arial"];
+    node [fontname="Arial", fontsize=11];
+    edge [fontname="Arial", fontsize=9, penwidth=2];
 
-    shell -> doom   [label="tooling for" , fontname="Arial", fontsize=9];
-    shell -> sqlite [label="CLI support" , fontname="Arial", fontsize=9];
-    shell -> multi  [label="login shells" , fontname="Arial", fontsize=9];
+    // Legend box
+    legend [shape=plaintext, label=<
+        <table border="1" cellborder="0" cellspacing="0" cellpadding="6" bgcolor="white">
+            <tr><td colspan="2" bgcolor="#34495e"><font color="white"><b>MAP LEGEND</b></font></td></tr>
+            <tr><td>✅</td><td align="left">Completed</td></tr>
+            <tr><td>🚧</td><td align="left">In Progress</td></tr>
+            <tr><td>🔮</td><td align="left">Future Goal</td></tr>
+            <tr><td>📍</td><td align="left">You Are Here!</td></tr>
+        </table>
+    >];
 
-    gcc   -> doom   [label="build WAD tools", fontname="Arial", fontsize=9];
-    gcc   -> sqlite [label="build SQLite", fontname="Arial", fontsize=9];
-    gcc   -> shell  [label="compile shell add-ons", fontname="Arial", fontsize=9];
+    // Current Location - Shell (where we are now)
+    shell [shape=box, style="rounded,filled,bold", fillcolor="#27ae60", color="#229954", penwidth=3,
+           label=<
+        <table border="0" cellborder="0" cellspacing="0" cellpadding="8">
+            <tr><td><font point-size="16"><b>📍 mosh Shell</b></font></td></tr>
+            <tr><td><font point-size="10" color="#1e8449">🚧 IN PROGRESS</font></td></tr>
+            <tr><td><font point-size="9">REPL ✅ | Exec ✅ | Console ✅</font></td></tr>
+            <tr><td><font point-size="9">Next: Built-ins, I/O, Pipes</font></td></tr>
+            <tr><td><font point-size="8" color="#145a32">~2-3 weeks to completion</font></td></tr>
+        </table>
+    >];
 
-    doom  -> gfx    [label="needs UI", fontname="Arial", fontsize=9];
-    doom  -> sqlite [label="save data", fontname="Arial", fontsize=9];
-    doom  -> shell  [label="developer workflow", fontname="Arial", fontsize=9];
+    // Near-term Goals (1-3 months)
+    doom [shape=box, style="rounded,filled", fillcolor="#3498db", color="#2471a3",
+          label=<
+        <table border="0" cellborder="0" cellspacing="0" cellpadding="8">
+            <tr><td><font point-size="14"><b>🎮 Doom</b></font></td></tr>
+            <tr><td><font point-size="9">Threading • Mouse • Audio</font></td></tr>
+            <tr><td><font point-size="8" color="#1a5490">4-9 months</font></td></tr>
+        </table>
+    >];
 
-    sqlite -> gcc   [label="requires toolchain", fontname="Arial", fontsize=9];
+    gcc [shape=box, style="rounded,filled", fillcolor="#e67e22", color="#ca6f1e",
+         label=<
+        <table border="0" cellborder="0" cellspacing="0" cellpadding="8">
+            <tr><td><font point-size="14"><b>🔧 GCC Toolchain</b></font></td></tr>
+            <tr><td><font point-size="9">Cross-compiler • Binutils</font></td></tr>
+            <tr><td><font point-size="8" color="#a04000">1-2 months</font></td></tr>
+        </table>
+    >];
 
-    multi -> shell  [label="login interface", fontname="Arial", fontsize=9];
-    multi -> sqlite [label="user DB config", fontname="Arial", fontsize=9];
+    // Mid-term Goals (3-6 months)
+    sqlite [shape=box, style="rounded,filled", fillcolor="#9b59b6", color="#7d3c98",
+            label=<
+        <table border="0" cellborder="0" cellspacing="0" cellpadding="8">
+            <tr><td><font point-size="14"><b>💾 SQLite</b></font></td></tr>
+            <tr><td><font point-size="9">Database Engine</font></td></tr>
+            <tr><td><font point-size="8" color="#5b2c6f">6-8 months</font></td></tr>
+        </table>
+    >];
 
-    micro -> gcc    [label="user servers", fontname="Arial", fontsize=9];
-    micro -> shell  [label="service control", fontname="Arial", fontsize=9];
+    gfx [shape=box, style="rounded,filled", fillcolor="#e74c3c", color="#c0392b",
+         label=<
+        <table border="0" cellborder="0" cellspacing="0" cellpadding="8">
+            <tr><td><font point-size="14"><b>🖼️  Graphic UI</b></font></td></tr>
+            <tr><td><font point-size="9">Window Manager • Widgets</font></td></tr>
+            <tr><td><font point-size="8" color="#922b21">8-12 months</font></td></tr>
+        </table>
+    >];
 
-    gfx -> doom     [label="drawing APIs", fontname="Arial", fontsize=9];
+    // Long-term Goals (6+ months)
+    multi [shape=box, style="rounded,filled", fillcolor="#95a5a6", color="#707b7c",
+           label=<
+        <table border="0" cellborder="0" cellspacing="0" cellpadding="8">
+            <tr><td><font point-size="14"><b>👥 Multi-User</b></font></td></tr>
+            <tr><td><font point-size="9">🔮 LOW PRIORITY</font></td></tr>
+            <tr><td><font point-size="9">Auth • Permissions • Login</font></td></tr>
+            <tr><td><font point-size="8" color="#566573">4-6 months</font></td></tr>
+        </table>
+    >];
+
+    micro [shape=box, style="rounded,filled", fillcolor="#95a5a6", color="#707b7c",
+           label=<
+        <table border="0" cellborder="0" cellspacing="0" cellpadding="8">
+            <tr><td><font point-size="14"><b>⚙️  Microkernel</b></font></td></tr>
+            <tr><td><font point-size="9">🔮 ADVANCED</font></td></tr>
+            <tr><td><font point-size="9">IPC • Capabilities • Servers</font></td></tr>
+            <tr><td><font point-size="8" color="#566573">12+ months</font></td></tr>
+        </table>
+    >];
+
+    // Foundation node (completed)
+    foundation [shape=box, style="rounded,filled", fillcolor="#bdc3c7", color="#7f8c8d",
+                label=<
+        <table border="0" cellborder="0" cellspacing="0" cellpadding="6">
+            <tr><td><font point-size="12"><b>✅ Kernel Foundation</b></font></td></tr>
+            <tr><td><font point-size="8">Memory • Scheduler • Storage • Init</font></td></tr>
+        </table>
+    >];
+
+    // Road connections with labels (styled like highway signs)
+    foundation -> shell [label="  Base Camp  ", color="#27ae60", penwidth=3, fontcolor="#145a32"];
+
+    shell -> doom [label="  Commands &\n  Tooling  ", color="#3498db", style="bold", fontcolor="#1a5490"];
+    shell -> sqlite [label="  CLI\n  Interface  ", color="#9b59b6", fontcolor="#5b2c6f"];
+    shell -> gcc [label="  Build\n  Scripts  ", color="#e67e22", fontcolor="#a04000"];
+
+    gcc -> doom [label="  Compile\n  Port  ", color="#3498db", style="dashed", fontcolor="#1a5490"];
+    gcc -> sqlite [label="  Build\n  Engine  ", color="#9b59b6", style="dashed", fontcolor="#5b2c6f"];
+
+    doom -> gfx [label="  UI\n  Framework  ", color="#e74c3c", fontcolor="#922b21"];
+    sqlite -> multi [label="  User\n  Database  ", color="#95a5a6", style="dotted", fontcolor="#566573"];
+
+    shell -> multi [label="  Login\n  Shell  ", color="#95a5a6", style="dotted", fontcolor="#566573"];
+    gfx -> multi [label="  Multi-user\n  Display  ", color="#95a5a6", style="dotted", fontcolor="#566573"];
+
+    multi -> micro [label="  Security\n  Model  ", color="#95a5a6", style="dotted", fontcolor="#566573"];
+    gcc -> micro [label="  User\n  Servers  ", color="#95a5a6", style="dotted", fontcolor="#566573"];
+
+    // Arrange nodes
+    {rank=same; legend;}
+    {rank=same; foundation;}
+    {rank=same; shell;}
+    {rank=same; doom; gcc;}
+    {rank=same; sqlite; gfx;}
+    {rank=same; multi; micro;}
+
+    // Position legend separately
+    legend -> foundation [style=invis];
 }

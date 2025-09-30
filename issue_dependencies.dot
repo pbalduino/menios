@@ -62,7 +62,7 @@ digraph IssueDependencies {
         fillcolor="#F5F0FF";
 
         issue102 [label="#102: pipes\n(pipe/mkfifo)", fillcolor="#E6E6FA"];
-        issue103 [label="#103: UNIX signals", fillcolor="#E6E6FA"];
+        issue103 [label="#103: UNIX signals", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED
         issue104 [label="#104: shared memory\n(shmget/shmat)", fillcolor="#E6E6FA"];
         issue105 [label="#105: Unix domain\nsockets", fillcolor="#E6E6FA"];
         issue106 [label="#106: microkernel\nIPC", fillcolor="#DDA0DD"];
@@ -110,7 +110,7 @@ digraph IssueDependencies {
         style=filled;
         fillcolor="#FFFAF0";
 
-        issue101 [label="#101: LAPIC/HPET\ntimer integration", fillcolor="#F0E68C"];
+        issue101 [label="#101: LAPIC/HPET\ntimer integration", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED
     }
 
     subgraph cluster_unicode {
@@ -143,25 +143,58 @@ digraph IssueDependencies {
 
         issue136 [label="#136: Device filesystem\ninfrastructure", fillcolor="#DAA520"];
         issue137 [label="#137: /dev/null and\n/dev/zero devices", fillcolor="#DAA520"];
-        issue138 [label="#138: /dev/console and\nterminal devices", fillcolor="#DAA520"];
+        issue138 [label="#138: /dev/console and\nterminal devices", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED
         issue139 [label="#139: /dev/random and\n/dev/urandom", fillcolor="#DAA520"];
         issue140 [label="#140: /dev/kbd0 and\n/dev/fb0 devices", fillcolor="#DAA520"];
         issue141 [label="#141: /dev/sda block\ndevices", fillcolor="#DAA520"];
         issue142 [label="#142: /dev/ttyS0 serial\ndevice", fillcolor="#DAA520"];
     }
 
-    subgraph cluster_init_shell {
-        label="Init & Shell";
+    subgraph cluster_process_mgmt {
+        label="Process Management & Init";
         style=filled;
         fillcolor="#FFE6F0";
 
-        issue149 [label="#149: wait/waitpid", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED
-        issue150 [label="#150: zombie reparenting", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED
-        issue151 [label="#151: getcwd/chdir", fillcolor="#FFDAB9"];
-        issue152 [label="#152: environment vars", fillcolor="#FFDAB9"];
-        issue153 [label="#153: init supervisor", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED
-        issue154 [label="#154: boot init as PID 1", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED
-        issue54  [label="#54: mosh shell", fillcolor="#FFDAB9"];
+        issue145 [label="#145: wait/waitpid\nsyscall", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED
+        issue146 [label="#146: zombie state\norphan reparenting", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED
+        issue147 [label="#147: getcwd/chdir\nsyscalls", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED
+        issue148 [label="#148: environment\nvariables", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED
+        issue149 [label="#149: init program\n(PID 1)", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED
+        issue150 [label="#150: boot init\nintegration", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED
+    }
+
+    subgraph cluster_filesystems {
+        label="Virtual Filesystems";
+        style=filled;
+        fillcolor="#E8F5E9";
+
+        issue151 [label="#151: tmpfs/ramfs\n(in-memory FS)", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED
+        issue152 [label="#152: devfs\n(device FS)", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED
+        issue153 [label="#153: procfs\n(process info FS)", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED
+        issue154 [label="#154: ext2\nfilesystem", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED
+    }
+
+    subgraph cluster_shell {
+        label="mosh Shell";
+        style=filled;
+        fillcolor="#FFF3E0";
+
+        issue161 [label="#161: REPL\ncommand parsing", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED
+        issue162 [label="#162: command exec\n(fork/exec/wait)", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED
+        issue163 [label="#163: built-in\ncommands", fillcolor="#FFE082"];
+        issue164 [label="#164: basic I/O\nredirection", fillcolor="#FFE082"];
+        issue165 [label="#165: pipe support\n(|)", fillcolor="#FFE082"];
+        issue166 [label="#166: shell VT/VGA\nintegration", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED
+    }
+
+    subgraph cluster_terminal {
+        label="Terminal Infrastructure";
+        style=filled;
+        fillcolor="#E1F5FE";
+
+        issue168 [label="#168: VGA driver\n(text mode)", fillcolor="#B3E5FC"];
+        issue169 [label="#169: TTY subsystem\n(line discipline)", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED
+        issue170 [label="#170: character device\ninfrastructure", fillcolor="#B3E5FC"];
     }
 
     subgraph cluster_storage {
@@ -262,7 +295,7 @@ digraph IssueDependencies {
     // Cross-cutting dependencies
     issue57 -> issue58 [label="#58: VM integration", style=dashed, color=gray];
     issue57 -> issue56 [label="#56: lazy allocation", style=dashed, color=gray];
-    issue60 -> issue54 [label="#54: shell evolution"];
+    issue60 -> issue161 [label="filesystem enables shell", style=dashed, color=gray];
     issue71 -> issue72 [label="#72: network utils"];
     issue72 -> issue73 [label="#73: advanced networking"];
 
@@ -289,7 +322,7 @@ digraph IssueDependencies {
     issue65 -> issue60 [style=dashed, color=gray];
 
     // Graphics and userspace
-    issue31 [label="#31: graphics/\nframebuffer", fillcolor="#DEB887"];
+    issue31 [label="#31: graphics/\nframebuffer", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED
     issue32 [label="#32: input\nsubsystem", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED
     issue33 [label="#33: audio\nsubsystem", fillcolor="#DEB887"];
 
@@ -363,9 +396,24 @@ digraph IssueDependencies {
     issue150 -> issue153 [color=red, penwidth=2];
     issue149 -> issue153 [color=red, style=dashed];
     issue153 -> issue154 [color=red, penwidth=2];
-    issue151 -> issue54  [color=red];
-    issue152 -> issue54  [color=red];
-    issue154 -> issue54  [color=red, penwidth=2];
+    issue151 -> issue161 [color=red, label="tmpfs for shell", style=dashed];
+    issue152 -> issue161 [color=red, label="devfs for shell", style=dashed];
+    issue154 -> issue161 [color=red, penwidth=2, label="ext2 for shell", style=dashed];
+
+    // Shell component dependencies
+    issue93 -> issue161 [color=orange, style=dashed, label="fork/exec"];
+    issue145 -> issue162 [color=orange, style=dashed, label="wait/waitpid"];
+    issue161 -> issue162 [color=orange, penwidth=2];
+    issue162 -> issue163 [color=orange, penwidth=2];
+    issue163 -> issue164 [color=orange, penwidth=2];
+    issue164 -> issue165 [color=orange, penwidth=2];
+
+    // Terminal infrastructure dependencies
+    issue170 -> issue168 [color=teal, penwidth=2];
+    issue170 -> issue169 [color=teal, penwidth=2, style=dashed];
+    issue168 -> issue166 [color=teal, penwidth=2];
+    issue169 -> issue166 [color=teal, penwidth=2, style=dashed];
+    issue162 -> issue166 [color=teal, label="shell needs terminal", style=dashed];
 
     // Critical path highlighting (filesystem complete, threading ready)
     edge [color=red, penwidth=3];
@@ -389,7 +437,9 @@ digraph IssueDependencies {
         legend_testing [label="Testing & QA", fillcolor="#DDDAAA"];
         legend_devices [label="Device Filesystem", fillcolor="#DAA520"];
         legend_ide [label="IDE Storage", fillcolor="#F5DEB3"];
-        legend_init [label="Init & Shell", fillcolor="#FFE6F0"];
+        legend_init [label="Init & Process Mgmt", fillcolor="#FFE6F0"];
+        legend_shell [label="mosh Shell", fillcolor="#FFE082"];
+        legend_terminal [label="Terminal Infrastructure", fillcolor="#B3E5FC"];
         legend_usb [label="USB Support", fillcolor="#AFEEEE"];
     }
 }
