@@ -31,6 +31,9 @@ extern "C" {
 #define SYS_FCNTL       72
 #define SYS_GETCWD      79
 #define SYS_CHDIR       80
+#define SYS_GETENV      81
+#define SYS_SETENV      82
+#define SYS_UNSETENV    83
 #define SYS_FB_GETINFO 200
 #define SYS_FB_MAP     201
 #define SYS_FB_FLIP    202

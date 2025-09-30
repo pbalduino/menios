@@ -65,6 +65,11 @@ static void proc_signal_parent(proc_info_p proc);
 static void proc_init_signal_state(proc_info_p proc);
 static void proc_set_cwd_internal(proc_info_p proc, const char* path);
 static void proc_copy_cwd(proc_info_p proc, const proc_info_p parent);
+static void proc_env_init(proc_info_p proc);
+static bool proc_env_clone(proc_info_p proc, const proc_info_p parent);
+static void proc_env_cleanup(proc_info_p proc);
+static int proc_env_find_index(const proc_info_p proc, const char* name);
+static bool proc_env_valid_name(const char* name, size_t* len_out);
 
 #define SCHED_ACTION_FORCE (1u << 0)
 #define SCHED_ACTION_SLEEP (1u << 1)
@@ -138,11 +143,203 @@ static void proc_copy_cwd(proc_info_p proc, const proc_info_p parent) {
   }
 }
 
+static void proc_env_init(proc_info_p proc) {
+  if(proc == NULL) {
+    return;
+  }
+
+  for(size_t i = 0; i < PROC_ENV_MAX_ENTRIES; i++) {
+    proc->env[i].key = NULL;
+    proc->env[i].value = NULL;
+  }
+  proc->env_count = 0;
+}
+
+static void proc_env_cleanup(proc_info_p proc) {
+  if(proc == NULL) {
+    return;
+  }
+
+  for(uint16_t i = 0; i < proc->env_count; i++) {
+    if(proc->env[i].key) {
+      kfree(proc->env[i].key);
+      proc->env[i].key = NULL;
+    }
+    if(proc->env[i].value) {
+      kfree(proc->env[i].value);
+      proc->env[i].value = NULL;
+    }
+  }
+  proc->env_count = 0;
+}
+
+static bool proc_env_valid_name(const char* name, size_t* len_out) {
+  if(name == NULL) {
+    return false;
+  }
+
+  size_t len = strnlen(name, PROC_ENV_NAME_MAX);
+  if(len == 0 || len >= PROC_ENV_NAME_MAX) {
+    return false;
+  }
+
+  for(size_t i = 0; i < len; i++) {
+    if(name[i] == '=') {
+      return false;
+    }
+  }
+
+  if(len_out) {
+    *len_out = len;
+  }
+  return true;
+}
+
+static int proc_env_find_index(const proc_info_p proc, const char* name) {
+  if(proc == NULL || name == NULL) {
+    return -1;
+  }
+
+  for(uint16_t i = 0; i < proc->env_count; i++) {
+    if(proc->env[i].key && strcmp(proc->env[i].key, name) == 0) {
+      return (int)i;
+    }
+  }
+
+  return -1;
+}
+
+static bool proc_env_clone(proc_info_p proc, const proc_info_p parent) {
+  if(proc == NULL) {
+    return false;
+  }
+
+  proc_env_init(proc);
+
+  if(parent == NULL) {
+    return true;
+  }
+
+  for(uint16_t i = 0; i < parent->env_count; i++) {
+    const char* key = parent->env[i].key;
+    const char* value = parent->env[i].value ? parent->env[i].value : "";
+    if(proc_env_set(proc, key, value, true) < 0) {
+      proc_env_cleanup(proc);
+      return false;
+    }
+  }
+
+  return true;
+}
+
 void proc_update_cwd(proc_info_p proc, const char* path) {
   if(proc == NULL || path == NULL) {
     return;
   }
   proc_set_cwd_internal(proc, path);
+}
+
+const char* proc_env_get(proc_info_p proc, const char* name) {
+  if(proc == NULL || name == NULL) {
+    return NULL;
+  }
+
+  int index = proc_env_find_index(proc, name);
+  if(index < 0) {
+    return NULL;
+  }
+
+  return proc->env[index].value;
+}
+
+int proc_env_set(proc_info_p proc, const char* name, const char* value, bool overwrite) {
+  if(proc == NULL || name == NULL) {
+    return -EINVAL;
+  }
+
+  size_t name_len = 0;
+  if(!proc_env_valid_name(name, &name_len)) {
+    return -EINVAL;
+  }
+
+  if(value == NULL) {
+    value = "";
+  }
+
+  size_t value_len = strnlen(value, PROC_ENV_VALUE_MAX);
+  if(value_len >= PROC_ENV_VALUE_MAX) {
+    return -E2BIG;
+  }
+
+  int index = proc_env_find_index(proc, name);
+  if(index >= 0) {
+    if(!overwrite) {
+      return 0;
+    }
+
+    char* new_value = kmalloc(value_len + 1);
+    if(new_value == NULL) {
+      return -ENOMEM;
+    }
+    memcpy(new_value, value, value_len + 1);
+
+    if(proc->env[index].value) {
+      kfree(proc->env[index].value);
+    }
+    proc->env[index].value = new_value;
+    return 0;
+  }
+
+  if(proc->env_count >= PROC_ENV_MAX_ENTRIES) {
+    return -ENOMEM;
+  }
+
+  char* key_copy = kmalloc(name_len + 1);
+  if(key_copy == NULL) {
+    return -ENOMEM;
+  }
+  memcpy(key_copy, name, name_len + 1);
+
+  char* value_copy = kmalloc(value_len + 1);
+  if(value_copy == NULL) {
+    kfree(key_copy);
+    return -ENOMEM;
+  }
+  memcpy(value_copy, value, value_len + 1);
+
+  proc->env[proc->env_count].key = key_copy;
+  proc->env[proc->env_count].value = value_copy;
+  proc->env_count++;
+  return 0;
+}
+
+int proc_env_unset(proc_info_p proc, const char* name) {
+  if(proc == NULL || name == NULL) {
+    return -EINVAL;
+  }
+
+  int index = proc_env_find_index(proc, name);
+  if(index < 0) {
+    return 0;
+  }
+
+  if(proc->env[index].key) {
+    kfree(proc->env[index].key);
+  }
+  if(proc->env[index].value) {
+    kfree(proc->env[index].value);
+  }
+
+  if(index < (int)(proc->env_count - 1)) {
+    memmove(&proc->env[index],
+            &proc->env[index + 1],
+            (proc->env_count - index - 1) * sizeof(proc->env[0]));
+  }
+
+  proc->env_count--;
+  proc->env[proc->env_count].key = NULL;
+  proc->env[proc->env_count].value = NULL;
+  return 0;
 }
 
 static void proc_add_child(proc_info_p parent, proc_info_p child) {
@@ -269,6 +466,7 @@ static void proc_free_resources(proc_info_p proc) {
   }
 
   proc_release_user_memory(proc);
+  proc_env_cleanup(proc);
   proc_file_table_cleanup(proc);
 
   if(proc->address_space_root) {
@@ -767,6 +965,9 @@ void proc_create(proc_info_p proc, const char* name, void (*entrypoint)(void *),
     parent = init_process;
   }
   proc->parent = parent;
+  if(!proc_env_clone(proc, parent)) {
+    serial_printf("proc_create: failed to clone environment for process %s\n", name);
+  }
   proc_copy_cwd(proc, parent);
   proc->pid = last_pid++;
   proc_file_table_init(proc);
@@ -1178,6 +1379,13 @@ proc_info_p proc_fork(proc_info_p parent, const syscall_frame_t* frame, int* err
   memset(child, 0, sizeof(proc_info_t));
   proc_file_table_init(child);
   proc_file_table_clone(child, parent);
+  if(!proc_env_clone(child, parent)) {
+    if(err_out) {
+      *err_out = -ENOMEM;
+    }
+    proc_free_resources(child);
+    return NULL;
+  }
 
   child->parent = parent;
   child->pid = last_pid++;

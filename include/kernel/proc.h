@@ -59,6 +59,10 @@ struct syscall_frame_t;
 #define PROC_MAX_USER_SEGMENTS 256
 #define PROC_MAX_VM_REGIONS 32
 
+#define PROC_ENV_MAX_ENTRIES 64
+#define PROC_ENV_NAME_MAX    64
+#define PROC_ENV_VALUE_MAX   256
+
 typedef struct proc_user_segment_t {
   phys_addr_t phys;
   size_t      pages;
@@ -136,6 +140,11 @@ typedef struct proc_info_t {
   uint32_t     fb_map_flags;
   char         cwd[VFS_MAX_PATH];
   uint16_t     cwd_len;
+  struct {
+    char* key;
+    char* value;
+  }            env[PROC_ENV_MAX_ENTRIES];
+  uint16_t     env_count;
   sigset_t     signal_pending;
   sigset_t     signal_mask;
   struct signal_action_t {
@@ -185,6 +194,9 @@ int proc_waitpid(proc_info_p parent, int pid, int options, int* status_out);
 void proc_register_init(proc_info_p proc);
 bool proc_user_buffer_accessible(proc_info_p proc, const void* buffer, size_t length, bool write);
 void proc_update_cwd(proc_info_p proc, const char* path);
+const char* proc_env_get(proc_info_p proc, const char* name);
+int proc_env_set(proc_info_p proc, const char* name, const char* value, bool overwrite);
+int proc_env_unset(proc_info_p proc, const char* name);
 
 typedef struct signal_frame_t {
   cpu_state_t saved_state;

@@ -190,6 +190,21 @@ char*	strcpy(char *dst, const char *src) {
   return original;
 }
 
+char* strchr(const char* s, int c) {
+  while(*s) {
+    if(*s == (char)c) {
+      return (char*)s;
+    }
+    s++;
+  }
+
+  if(c == 0) {
+    return (char*)s;
+  }
+
+  return NULL;
+}
+
 /**
  * Copies up to size characters from source string to destination buffer
  * @param dst Pointer to the destination buffer

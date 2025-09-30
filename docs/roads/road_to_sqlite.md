@@ -81,9 +81,9 @@ Shell & env vars (#152, #161-#165) ──────┘        ↓
 
 ## Immediate Next Steps
 
-1. Finish environment-variable support (#152) for shell + build scripts.
-2. Prioritize filesystem write capability (#61) or ext2 port (#148).
-3. Begin pthread/libc hardening (#109/#110) to ensure SQLite’s mutex layer works.
+1. Prioritize filesystem write capability (#61) or ext2 port (#148).
+2. Begin pthread/libc hardening (#109/#110) to ensure SQLite’s mutex layer works.
+3. Flesh out shell tooling (#161-#165) to provide a friendly CLI environment for SQLite.
 
 ## Success Criteria
 

@@ -107,7 +107,7 @@ Glue to launch user-facing services and prepare for a shell-driven environment.
 - **Impact**: Enables shell navigation and path-sensitive tooling
 
 #### **Environment Variables** (Issue #152)
-- 🟡 **Status**: Ready to implement – no outstanding prerequisites
+- ✅ **Status**: COMPLETE – `getenv(3)`, `setenv(3)`, and `unsetenv(3)` wired through new syscalls
 - **Impact**: Provides PATH/HOME/configuration scaffolding for shell scripts and Doom launchers
 
 ### **Phase 4: File System & Storage** (Complete, write support pending)
@@ -211,7 +211,7 @@ Development environment for building applications:
 ### **Medium Term (3-9 months)**
 - Deliver shared memory and futex/message IPC primitives (#104-#107)
 - Enable filesystem write support and VFS updates for save games (#61)
-- Flesh out shell environment and launch tooling once environment plumbing lands (#152)
+- Flesh out shell environment and launch tooling (#161-#165)
 - Extend input/audio interfaces for gameplay (#32, #33, #143-#144)
 
 ### **Long Term (9+ months)**
@@ -222,15 +222,14 @@ Development environment for building applications:
 ## 🚀 **Immediate Next Steps**
 
 **Ready to implement now** (dependencies cleared):
-1. **#152** – Environment-variable support for PATH/HOME configuration
-2. **#109** – pthread API skeleton and thread lifecycle helpers
-3. **#110** – Thread-safe libc (malloc/stdio/errno hardening)
-4. **#113** – Thread-aware syscalls and scheduler inspection hooks
+1. **#109** – pthread API skeleton and thread lifecycle helpers
+2. **#110** – Thread-safe libc (malloc/stdio/errno hardening)
+3. **#113** – Thread-aware syscalls and scheduler inspection hooks
 
 **High impact for applications**:
-6. **#103** – UNIX signals built atop the timer service
-7. **#104** – Shared memory primitives for high-bandwidth IPC
-8. **#33** – Audio subsystem for playback in userland
+1. **#103** – UNIX signals built atop the timer service
+2. **#104** – Shared memory primitives for high-bandwidth IPC
+3. **#33** – Audio subsystem for playback in userland
 
 ## 🎯 **Success Criteria**
 

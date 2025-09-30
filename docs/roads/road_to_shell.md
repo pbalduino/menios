@@ -11,9 +11,8 @@ process control, pipelines, and user-friendly tooling.
 - **Pipes & signals**: Anonymous pipes implemented (#102 ✅); signal delivery prototype ready (#103 🟡).
 - **Input**: Keyboard events surfaced via `/dev/input/kbd`; mouse pending (#32 ✅, #143/#144 🟡).
 
-Remaining core pieces: environment variables (#152), shell REPL & execution
-pipeline (#161-#165), and quality-of-life features (history, completion, job
-control).
+Remaining core pieces: shell REPL & execution pipeline (#161-#165), and
+quality-of-life features (history, completion, job control).
 
 ## Milestones & Timeline
 
@@ -24,10 +23,9 @@ control).
 - #154 boot integration
 - #151 getcwd/chdir
 
-### Phase 1 – Shell Prerequisites (Week 1)
-1. **#152 Environment variables (2-3 days)**
-   - Implement `getenv/setenv/unsetenv`
-   - Seed PATH/HOME when init execs the shell
+### Phase 1 – Shell Prerequisites (Week 1 – COMPLETE)
+1. **#152 Environment variables (DONE)**
+   - `getenv/setenv/unsetenv` syscalls wired; PATH/HOME ready for shell
 
 ### Phase 2 – Core Shell (Week 2-3)
 2. **#161 REPL & parsing (2-3 days)** – line reader, tokenizer, command AST
@@ -54,7 +52,7 @@ control).
 ```
 Init/Supervision (DONE) ─┐
 Filesystem navigation (#151 - DONE) ─┼──→ #161 (REPL)
-Environment variables (#152) ────────┤       ↓
+Environment variables (#152 - DONE) ──┤       ↓
 Pipes (#102), Signals (#103) ────────┴──→ #162 (exec) → #163 (built-ins) → #164 (redir) → #165 (pipes)
                                                    ↓
                                     QoL (#156,#157,#160) → Advanced (#155,#158,#159)
@@ -62,10 +60,9 @@ Pipes (#102), Signals (#103) ────────┴──→ #162 (exec) �
 
 ## Immediate Focus
 
-1. **#152 Environment variables** – unblock command execution by providing
-   PATH/HOME/PS1.
-2. **#161 REPL** – start the shell core.
-3. **#162 Command execution** – tie REPL to process launching.
+1. **#161 REPL** – start the shell core.
+2. **#162 Command execution** – tie REPL to process launching.
+3. **#163 Built-ins** – wire `cd`, `pwd`, `exit`, `env`.
 
 ## Integration with Other Roadmaps
 
@@ -83,5 +80,6 @@ Pipes (#102), Signals (#103) ────────┴──→ #162 (exec) �
 - Handles signals (Ctrl+C, Ctrl+Z in later phases) gracefully.
 - Provides history, completion, and editing for day-to-day usability.
 
-Progress snapshot: 5/12 shell tasks complete (Phase 0 + `getcwd/chdir`). Next
-stop: environment variable support to kick off the REPL work.
+Progress snapshot: 6/12 shell tasks complete (Phase 0 + `getcwd/chdir` +
+environment variables). Next stop: REPL implementation to kick off the core
+shell pipeline.

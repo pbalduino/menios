@@ -41,6 +41,9 @@ static uint64_t syscall_sigprocmask_handler(syscall_frame_t* frame);
 static uint64_t syscall_waitpid_handler(syscall_frame_t* frame);
 static uint64_t syscall_getcwd_handler(syscall_frame_t* frame);
 static uint64_t syscall_chdir_handler(syscall_frame_t* frame);
+static uint64_t syscall_getenv_handler(syscall_frame_t* frame);
+static uint64_t syscall_setenv_handler(syscall_frame_t* frame);
+static uint64_t syscall_unsetenv_handler(syscall_frame_t* frame);
 
 static syscall_handler_t syscall_table[SYSCALL_MAX];
 
@@ -80,6 +83,9 @@ void syscall_init(void) {
   syscall_register(SYS_WAITPID, syscall_waitpid_handler);
   syscall_register(SYS_GETCWD, syscall_getcwd_handler);
   syscall_register(SYS_CHDIR, syscall_chdir_handler);
+  syscall_register(SYS_GETENV, syscall_getenv_handler);
+  syscall_register(SYS_SETENV, syscall_setenv_handler);
+  syscall_register(SYS_UNSETENV, syscall_unsetenv_handler);
   syscall_register(SYS_FCNTL, syscall_fcntl_handler);
   syscall_register(SYS_FB_GETINFO, syscall_fb_getinfo_handler);
   syscall_register(SYS_FB_MAP, syscall_fb_map_handler);
@@ -796,5 +802,134 @@ static uint64_t syscall_chdir_handler(syscall_frame_t* frame) {
   proc_update_cwd(current, normalized);
 
   frame->rax = 0;
+  return frame->rax;
+}
+
+static uint64_t syscall_getenv_handler(syscall_frame_t* frame) {
+  proc_info_p proc = current ? current : &kernel_process_info;
+
+  const char* name = (const char*)frame->rdi;
+  char* buffer = (char*)frame->rsi;
+  size_t size = (size_t)frame->rdx;
+
+  if(name == NULL || buffer == NULL || size == 0) {
+    frame->rax = (uint64_t)(-EINVAL);
+    return frame->rax;
+  }
+
+  size_t name_len = strnlen(name, PROC_ENV_NAME_MAX);
+  if(name_len == 0 || name_len >= PROC_ENV_NAME_MAX) {
+    frame->rax = (uint64_t)(-EINVAL);
+    return frame->rax;
+  }
+  for(size_t i = 0; i < name_len; i++) {
+    if(name[i] == '=') {
+      frame->rax = (uint64_t)(-EINVAL);
+      return frame->rax;
+    }
+  }
+
+  if(!proc_user_buffer_accessible(proc, buffer, size, true)) {
+    frame->rax = (uint64_t)(-EFAULT);
+    return frame->rax;
+  }
+
+  const char* value = proc_env_get(proc, name);
+  if(value == NULL) {
+    frame->rax = 0;
+    return frame->rax;
+  }
+
+  size_t value_len = strlen(value);
+  if(value_len + 1 > size) {
+    frame->rax = (uint64_t)(-ERANGE);
+    return frame->rax;
+  }
+
+  memcpy(buffer, value, value_len + 1);
+  frame->rax = (uint64_t)(uintptr_t)buffer;
+  return frame->rax;
+}
+
+static uint64_t syscall_setenv_handler(syscall_frame_t* frame) {
+  if(current == NULL) {
+    frame->rax = (uint64_t)(-EINVAL);
+    return frame->rax;
+  }
+
+  const char* name = (const char*)frame->rdi;
+  const char* value = (const char*)frame->rsi;
+  int overwrite = (int)frame->rdx;
+
+  if(name == NULL) {
+    frame->rax = (uint64_t)(-EFAULT);
+    return frame->rax;
+  }
+
+  size_t name_len = strnlen(name, PROC_ENV_NAME_MAX);
+  if(name_len == 0 || name_len >= PROC_ENV_NAME_MAX) {
+    frame->rax = (uint64_t)(-EINVAL);
+    return frame->rax;
+  }
+  for(size_t i = 0; i < name_len; i++) {
+    if(name[i] == '=') {
+      frame->rax = (uint64_t)(-EINVAL);
+      return frame->rax;
+    }
+  }
+
+  char name_copy[PROC_ENV_NAME_MAX];
+  memcpy(name_copy, name, name_len);
+  name_copy[name_len] = '\0';
+
+  char value_copy[PROC_ENV_VALUE_MAX];
+  size_t value_len = 0;
+  if(value != NULL) {
+    value_len = strnlen(value, PROC_ENV_VALUE_MAX);
+    if(value_len >= PROC_ENV_VALUE_MAX) {
+      frame->rax = (uint64_t)(-E2BIG);
+      return frame->rax;
+    }
+    memcpy(value_copy, value, value_len);
+    value_copy[value_len] = '\0';
+  } else {
+    value_copy[0] = '\0';
+  }
+
+  int rc = proc_env_set(current, name_copy, value_copy, overwrite != 0);
+  frame->rax = (uint64_t)rc;
+  return frame->rax;
+}
+
+static uint64_t syscall_unsetenv_handler(syscall_frame_t* frame) {
+  if(current == NULL) {
+    frame->rax = (uint64_t)(-EINVAL);
+    return frame->rax;
+  }
+
+  const char* name = (const char*)frame->rdi;
+  if(name == NULL) {
+    frame->rax = (uint64_t)(-EFAULT);
+    return frame->rax;
+  }
+
+  size_t name_len = strnlen(name, PROC_ENV_NAME_MAX);
+  if(name_len == 0 || name_len >= PROC_ENV_NAME_MAX) {
+    frame->rax = (uint64_t)(-EINVAL);
+    return frame->rax;
+  }
+  for(size_t i = 0; i < name_len; i++) {
+    if(name[i] == '=') {
+      frame->rax = (uint64_t)(-EINVAL);
+      return frame->rax;
+    }
+  }
+
+  char name_copy[PROC_ENV_NAME_MAX];
+  memcpy(name_copy, name, name_len);
+  name_copy[name_len] = '\0';
+
+  int rc = proc_env_unset(current, name_copy);
+  frame->rax = (uint64_t)rc;
   return frame->rax;
 }

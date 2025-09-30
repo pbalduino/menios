@@ -15,7 +15,7 @@
 - **Process lifecycle plumbing** is in place: `waitpid`/zombie reparenting (#149/#150) mean a login manager can supervise user shells without leaking PIDs
 - **`init` now runs as PID 1** (#153/#154), giving us a natural parent for login/getty daemons and future service managers
 - **Signal delivery primitives** (#103) allow clean termination of user sessions, a prerequisite for secure logouts
-- `getcwd`/`chdir` (#151) now keeps per-process working directories; upcoming environment handling (#152) will provide HOME/PATH defaults
+- `getcwd`/`chdir` (#151) now keeps per-process working directories; environment handling (#152) supplies HOME/PATH defaults for login shells
 
 ## Multi-User System Requirements
 
