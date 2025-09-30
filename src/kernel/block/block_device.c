@@ -153,3 +153,17 @@ bool block_device_flush(block_device_t* device) {
   block_cache_flush_device(device);
   return device->ops->flush(device);
 }
+
+void block_device_for_each(block_device_iter_t iter, void* context) {
+  if(iter == NULL || !block_device_initialized) {
+    return;
+  }
+
+  kmutex_lock(&block_device_lock);
+  for(block_device_t* node = block_device_head; node != NULL; node = node->next) {
+    if(!iter(node, context)) {
+      break;
+    }
+  }
+  kmutex_unlock(&block_device_lock);
+}

@@ -129,3 +129,17 @@ int char_device_open(const char* name, uint32_t mode, file_t** out_file) {
 
   return rc;
 }
+
+void char_device_for_each(char_device_iter_t iter, void* context) {
+  if(!char_device_initialized || iter == NULL) {
+    return;
+  }
+
+  kmutex_lock(&char_device_lock);
+  for(char_device_t* node = char_device_head; node != NULL; node = node->next) {
+    if(!iter(node, context)) {
+      break;
+    }
+  }
+  kmutex_unlock(&char_device_lock);
+}

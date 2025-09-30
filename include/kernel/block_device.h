@@ -38,6 +38,7 @@ block_device_t* block_device_next(block_device_t* current);
 bool block_device_read(block_device_t* device, uint64_t lba, void* buffer, size_t block_count);
 bool block_device_write(block_device_t* device, uint64_t lba, const void* buffer, size_t block_count);
 bool block_device_flush(block_device_t* device);
+void block_device_for_each(block_device_iter_t iter, void* context);
 
 #ifdef __cplusplus
 }

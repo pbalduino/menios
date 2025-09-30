@@ -31,6 +31,8 @@ bool char_device_register(char_device_t* device);
 void char_device_unregister(char_device_t* device);
 char_device_t* char_device_lookup(const char* name);
 int char_device_open(const char* name, uint32_t mode, file_t** out_file);
+typedef bool (*char_device_iter_t)(char_device_t* device, void* context);
+void char_device_for_each(char_device_iter_t iter, void* context);
 
 #ifdef __cplusplus
 }

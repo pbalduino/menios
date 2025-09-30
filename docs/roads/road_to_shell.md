@@ -75,7 +75,8 @@ TTY layer (#169 - DONE) ──────────────────�
   apps can ship.
 - **Road to Multi-user**: Completed shell (#147-#165) is the foundation for
   login sessions and user isolation.
-- **Device filesystem (devfs/procfs)** will later surface `/dev/tty*` and
+- **Device filesystem (devfs/procfs)** now surfaces `/dev/*` nodes (devfs #136
+  delivered) while procfs remains on the roadmap for richer shell utilities.
   `/proc/*` nodes for richer shell utilities.
 
 ## Success Criteria
