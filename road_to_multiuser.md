@@ -11,6 +11,12 @@
 - All processes run with full privileges
 - No resource isolation between users
 
+### Recent Foundations
+- **Process lifecycle plumbing** is in place: `waitpid`/zombie reparenting (#149/#150) mean a login manager can supervise user shells without leaking PIDs
+- **`init` now runs as PID 1** (#153/#154), giving us a natural parent for login/getty daemons and future service managers
+- **Signal delivery primitives** (#103) allow clean termination of user sessions, a prerequisite for secure logouts
+- Upcoming work on `getcwd`/`chdir` (#151) and environment handling (#152) will provide per-user shells with proper HOME/PATH defaults
+
 ## Multi-User System Requirements
 
 ### Phase 1: User and Group Infrastructure
@@ -73,7 +79,7 @@
    - Secure password storage
 
 3. Getty/Terminal management
-   - Spawn login on TTY devices
+   - Spawn login on TTY devices from PID 1 `init`
    - Handle multiple simultaneous logins
    - TTY allocation and management
 

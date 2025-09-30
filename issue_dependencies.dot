@@ -52,8 +52,8 @@ digraph IssueDependencies {
         fillcolor="#FFF8DC";
 
         issue96 [label="#96: File descriptor\nmanagement", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED
-        issue60 [label="#60: Filesystem\nsyscalls", fillcolor="#FFE4B5"];
-        issue65 [label="#65: VFS layer", fillcolor="#FFE4B5"];
+        issue60 [label="#60: Filesystem\nsyscalls", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED
+        issue65 [label="#65: VFS layer", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED
     }
 
     subgraph cluster_ipc {
@@ -148,6 +148,20 @@ digraph IssueDependencies {
         issue140 [label="#140: /dev/kbd0 and\n/dev/fb0 devices", fillcolor="#DAA520"];
         issue141 [label="#141: /dev/sda block\ndevices", fillcolor="#DAA520"];
         issue142 [label="#142: /dev/ttyS0 serial\ndevice", fillcolor="#DAA520"];
+    }
+
+    subgraph cluster_init_shell {
+        label="Init & Shell";
+        style=filled;
+        fillcolor="#FFE6F0";
+
+        issue149 [label="#149: wait/waitpid", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED
+        issue150 [label="#150: zombie reparenting", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED
+        issue151 [label="#151: getcwd/chdir", fillcolor="#FFDAB9"];
+        issue152 [label="#152: environment vars", fillcolor="#FFDAB9"];
+        issue153 [label="#153: init supervisor", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED
+        issue154 [label="#154: boot init as PID 1", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED
+        issue54  [label="#54: mosh shell", fillcolor="#FFDAB9"];
     }
 
     subgraph cluster_storage {
@@ -342,6 +356,17 @@ digraph IssueDependencies {
     issue62 -> issue141 [color=gold, label="AHCI integration"];
     issue31 -> issue138 [color=gold, label="console integration"];
 
+    // Init & shell dependencies
+    issue34 -> issue149 [color=red, style=dashed];
+    issue93 -> issue149 [color=red, style=dashed];
+    issue149 -> issue150 [color=red, penwidth=2];
+    issue150 -> issue153 [color=red, penwidth=2];
+    issue149 -> issue153 [color=red, style=dashed];
+    issue153 -> issue154 [color=red, penwidth=2];
+    issue151 -> issue54  [color=red];
+    issue152 -> issue54  [color=red];
+    issue154 -> issue54  [color=red, penwidth=2];
+
     // Critical path highlighting (filesystem complete, threading ready)
     edge [color=red, penwidth=3];
     issue89 -> issue95 [label="CRITICAL", style=dashed];
@@ -364,6 +389,7 @@ digraph IssueDependencies {
         legend_testing [label="Testing & QA", fillcolor="#DDDAAA"];
         legend_devices [label="Device Filesystem", fillcolor="#DAA520"];
         legend_ide [label="IDE Storage", fillcolor="#F5DEB3"];
+        legend_init [label="Init & Shell", fillcolor="#FFE6F0"];
         legend_usb [label="USB Support", fillcolor="#AFEEEE"];
     }
 }

@@ -10,6 +10,7 @@
 - File descriptors, CLOEXEC, anonymous pipes, and libc syscall shims (`read`, `write`, `open`, `close`, `lseek`, `dup`, `fcntl`)
 - PCI/AHCI DMA driver, block cache, GPT scanning, FAT32 filesystem driver, and VFS mount at `/`
 - Embedded user demo exercises pipes, fork, filesystem reads, and priority scheduling with serial diagnostics
+- Minimal `init` supervisor now boots as PID 1, reaping zombies and supervising orphaned children (#153, #154)
 
 **🟡 Focus now shifts to userland runtime and device interfaces.**
 - pthread API, thread-safe libc, and advanced synchronization for multithreaded apps
@@ -89,6 +90,25 @@ Inter-process communication for complex applications:
 - 🔜 **Status**: Planned follow-ups after shared memory
 - **Scope**: Futex-style wakeups, message queues, and cross-process synchronization
 - **Impact**: Efficient event loops, sound mixer coordination, microkernel services
+
+### **Phase 3b: Init & Shell Infrastructure**
+Glue to launch user-facing services and prepare for a shell-driven environment.
+
+#### **Init Supervisor** (Issue #153)
+- ✅ **Status**: COMPLETE – dedicated PID 1 process loops on `waitpid()` and emits supervision logs
+- **Impact**: Central reaper for zombies, foundation for service supervision, and future shell parent
+
+#### **Boot Integration** (Issue #154)
+- ✅ **Status**: COMPLETE – kernel now launches `init` during bootstrap; legacy demos are optional diagnostics
+- **Impact**: Consistent UNIX-style process tree with `init` as the adoption point for orphans
+
+#### **getcwd/chdir Syscalls** (Issue #151)
+- 🟡 **Status**: Ready to implement – VFS already exposes directory metadata
+- **Impact**: Enables shell navigation and path-sensitive tooling
+
+#### **Environment Variables** (Issue #152)
+- 🟡 **Status**: Ready to implement – no outstanding prerequisites
+- **Impact**: Provides PATH/HOME/configuration scaffolding for shell scripts and Doom launchers
 
 ### **Phase 4: File System & Storage** (Complete, write support pending)
 Persistent storage for game assets and save files:
@@ -191,7 +211,8 @@ Development environment for building applications:
 ### **Medium Term (3-9 months)**
 - Deliver shared memory and futex/message IPC primitives (#104-#107)
 - Enable filesystem write support and VFS updates for save games (#61)
-- Expose framebuffer, input, and audio interfaces to userland (#31-#33)
+- Flesh out shell environment and launch tooling once directory/env plumbing lands (#151, #152)
+- Extend input/audio interfaces for gameplay (#32, #33, #143-#144)
 
 ### **Long Term (9+ months)**
 - Package cross-compiler toolchain and userspace SDK (#29)
@@ -201,14 +222,16 @@ Development environment for building applications:
 ## 🚀 **Immediate Next Steps**
 
 **Ready to implement now** (dependencies cleared):
-1. **#109** – pthread API skeleton and thread lifecycle helpers
-2. **#110** – Thread-safe libc (malloc/stdio/errno hardening)
-3. **#113** – Thread-aware syscalls and scheduler inspection hooks
+1. **#151** – `getcwd`/`chdir` syscalls for shell navigation
+2. **#152** – Environment-variable support for PATH/HOME configuration
+3. **#109** – pthread API skeleton and thread lifecycle helpers
+4. **#110** – Thread-safe libc (malloc/stdio/errno hardening)
+5. **#113** – Thread-aware syscalls and scheduler inspection hooks
 
 **High impact for applications**:
-4. **#103** – UNIX signals built atop the timer service
-5. **#104** – Shared memory primitives for high-bandwidth IPC
-6. **#33** – Audio subsystem for playback in userland
+6. **#103** – UNIX signals built atop the timer service
+7. **#104** – Shared memory primitives for high-bandwidth IPC
+8. **#33** – Audio subsystem for playback in userland
 
 ## 🎯 **Success Criteria**
 

@@ -12,6 +12,14 @@ meniOS currently follows a monolithic kernel design where:
 - Network stack is kernel-resident
 - All kernel services share the same address space
 
+### Recent Progress
+
+Several groundwork issues aligned with a future microkernel design are already complete:
+- **Process reparenting & waitpid** (#149, #150) ensure zombies are reaped and orphans flow to a supervisor
+- **Dedicated init supervisor** now starts as PID 1 (#153, #154), giving us a natural userspace service manager to grow into
+- **Signal delivery prototype** (#103) and **kill(2)** provide the control path a process manager needs for restarts
+- These pieces mean the kernel can already hand scheduling/teardown duties to a small userspace monitor once IPC and drivers migrate outward
+
 ## Microkernel Conversion Challenges
 
 ### Major Architectural Changes Required
@@ -36,6 +44,12 @@ meniOS currently follows a monolithic kernel design where:
 - Each runs as separate userspace process
 
 ## Technical Implementation Steps
+
+### Prerequisite Foundations (COMPLETE)
+
+- Stand up `init`/PID 1 supervision (DONE – Issues #153/#154)
+- Finalise process lifecycle controls (DONE – Issues #149/#150/#103)
+- Outcome: kernel can safely delegate service ownership to a userspace manager once IPC exists
 
 ### Phase 1: IPC Foundation (3-4 months)
 
@@ -120,6 +134,7 @@ capability_t grant_capability(pid_t process, resource_id_t resource);
 
 **Full conversion: 12-18 months**
 
+- **Already complete**: PID 1 supervision, waitpid/zombie plumbing, and basic signal routing (#149/#150/#153/#154/#103)
 - **3-4 months**: IPC and basic microkernel core
 - **4-6 months**: Driver framework and migration
 - **4-6 months**: Service migration (filesystem, network)
@@ -132,6 +147,7 @@ capability_t grant_capability(pid_t process, resource_id_t resource);
 - Move non-critical drivers first
 - Keep monolithic option available
 - Incremental testing at each step
+- Promote the existing PID 1 init process into the first userspace service manager, then expand its responsibilities as drivers move out
 
 ### 2. Hybrid Phase
 - Run some services in userspace
@@ -170,6 +186,7 @@ struct capability {
 
 ```
 Userspace:
+├── Init / Service Manager (current PID 1)
 ├── File Server
 ├── Network Server
 ├── Device Drivers
