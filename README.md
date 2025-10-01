@@ -8,6 +8,9 @@
 
 A hobby operating system kernel written in C and Assembly, targeting x86-64 architecture. The ultimate goal is to run Doom in userland! 🎯
 
+If you are tracking the steps toward a usable shell, see
+[Road to Shell Readiness](docs/road_to_shell.md) for the current checklist.
+
 ## Current Status
 
 MeniOS has made significant progress with core kernel functionality now solidly implemented. The system boots with Limine bootloader and provides:

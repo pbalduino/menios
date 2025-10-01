@@ -20,7 +20,6 @@ void pciroot_start(void) {
   }
 
   serial_printf("found ACPI table: %s\n", uacpi_status_to_string(ret));
-  logk(uacpi_status_to_string(ret));
 
   acpi_mcfg_t* mcfg = (acpi_mcfg_t*)tbl.ptr;
 
@@ -54,6 +53,5 @@ static struct driver_t pciroot_driver = {
 };
 
 void pciroot_init(void) {
-  serial_printf("ps2kb_init: Registering driver '%s' for HID '%s'\n", pciroot_driver.name, pciroot_driver.hid);
   driver_register(&pciroot_driver);
 }

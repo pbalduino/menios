@@ -3,6 +3,7 @@ IMAGE_NAME = menios
 
 DOCKER = $(shell which docker)
 DOCKER_IMAGE = $(IMAGE_NAME):$(GIT_BRANCH)
+DOCKER_RUN_FLAGS := $(shell if [ -t 1 ]; then printf -- "-it"; fi)
 
 ARCH ?= x86-64
 GCC_DIR = /usr/bin
@@ -35,6 +36,11 @@ USER_ELF = $(OBJDIR)/usermode/user_demo.elf
 USER_ELF_OBJ = $(OBJDIR)/usermode/user_demo_elf.o
 USER_ELF_SYMBOL := $(subst .,_,$(subst /,_,$(USER_ELF)))
 OBJS += $(USER_ELF_OBJ)
+
+INIT_ELF = $(OBJDIR)/usermode/init.elf
+INIT_ELF_OBJ = $(OBJDIR)/usermode/init_elf.o
+INIT_ELF_SYMBOL := $(subst .,_,$(subst /,_,$(INIT_ELF)))
+OBJS += $(INIT_ELF_OBJ)
 
 -include $(OBJS:.o=.d)
 
@@ -186,14 +192,14 @@ endif
 ifeq ($(OS_NAME),linux)
 	$(GCC) $(GCC_KERNEL_OPTS) -c $< -o $@
 else
-	$(DOCKER) run --rm -it --mount type=bind,source=$$(pwd),target=/mnt $(DOCKER_IMAGE) /bin/sh -c "cd /mnt && make build"
+	$(DOCKER) run --rm $(DOCKER_RUN_FLAGS) --mount type=bind,source=$$(pwd),target=/mnt $(DOCKER_IMAGE) /bin/sh -c "cd /mnt && make build"
 endif
 
 %.o: %.S
 ifeq ($(OS_NAME),linux)
 	$(GCC) $(GCC_KERNEL_OPTS) -c $< -o $@
 else
-	$(DOCKER) run --rm -it --mount type=bind,source=$$(pwd),target=/mnt $(DOCKER_IMAGE) /bin/sh -c "cd /mnt && make build"
+	$(DOCKER) run --rm $(DOCKER_RUN_FLAGS) --mount type=bind,source=$$(pwd),target=/mnt $(DOCKER_IMAGE) /bin/sh -c "cd /mnt && make build"
 endif
 
 $(USER_ELF): src/usermode/user_demo.S linker/user_elf.ld
@@ -202,7 +208,7 @@ ifeq ($(OS_NAME),linux)
 	$(GCC) -nostdlib -nostartfiles -ffreestanding -c src/usermode/user_demo.S -o $(OBJDIR)/usermode/user_demo.o
 	$(LD) -nostdlib -static -T linker/user_elf.ld -o $@ $(OBJDIR)/usermode/user_demo.o
 else
-	$(DOCKER) run --rm -it --mount type=bind,source=$$(pwd),target=/mnt $(DOCKER_IMAGE) /bin/sh -c "cd /mnt && make $@"
+	$(DOCKER) run --rm $(DOCKER_RUN_FLAGS) --mount type=bind,source=$$(pwd),target=/mnt $(DOCKER_IMAGE) /bin/sh -c "cd /mnt && make $@"
 endif
 
 $(USER_ELF_OBJ): $(USER_ELF)
@@ -214,7 +220,28 @@ ifeq ($(OS_NAME),linux)
 		--redefine-sym _binary_$(USER_ELF_SYMBOL)_size=user_demo_elf_size \
 		$< $@
 else
-	$(DOCKER) run --rm -it --mount type=bind,source=$$(pwd),target=/mnt $(DOCKER_IMAGE) /bin/sh -c "cd /mnt && make $@"
+	$(DOCKER) run --rm $(DOCKER_RUN_FLAGS) --mount type=bind,source=$$(pwd),target=/mnt $(DOCKER_IMAGE) /bin/sh -c "cd /mnt && make $@"
+endif
+
+$(INIT_ELF): src/usermode/init.S linker/user_elf.ld
+ifeq ($(OS_NAME),linux)
+	@mkdir -p $(OBJDIR)/usermode
+	$(GCC) -nostdlib -nostartfiles -ffreestanding -c src/usermode/init.S -o $(OBJDIR)/usermode/init.o
+	$(LD) -nostdlib -static -T linker/user_elf.ld -o $@ $(OBJDIR)/usermode/init.o
+else
+	$(DOCKER) run --rm $(DOCKER_RUN_FLAGS) --mount type=bind,source=$$(pwd),target=/mnt $(DOCKER_IMAGE) /bin/sh -c "cd /mnt && make $@"
+endif
+
+$(INIT_ELF_OBJ): $(INIT_ELF)
+ifeq ($(OS_NAME),linux)
+	@mkdir -p $(OBJDIR)/usermode
+	$(OBJCOPY) --input binary --output elf64-x86-64 --binary-architecture i386:x86-64 \
+		--redefine-sym _binary_$(INIT_ELF_SYMBOL)_start=init_elf_start \
+		--redefine-sym _binary_$(INIT_ELF_SYMBOL)_end=init_elf_end \
+		--redefine-sym _binary_$(INIT_ELF_SYMBOL)_size=init_elf_size \
+		$< $@
+else
+	$(DOCKER) run --rm $(DOCKER_RUN_FLAGS) --mount type=bind,source=$$(pwd),target=/mnt $(DOCKER_IMAGE) /bin/sh -c "cd /mnt && make $@"
 endif
 
 $(OBJDIR)/usermode:
@@ -303,7 +330,7 @@ ifeq ($(OS_NAME),linux)
         $(OUTPUT_DIR) -o $(IMAGE_NAME).iso
 	$(OUTPUT_DIR)/limine bios-install $(IMAGE_NAME).iso
 else
-	$(DOCKER) run --rm -it --mount type=bind,source=$$(pwd),target=/mnt $(DOCKER_IMAGE) /bin/sh -c "cd /mnt && make build"
+	$(DOCKER) run --rm $(DOCKER_RUN_FLAGS) --mount type=bind,source=$$(pwd),target=/mnt $(DOCKER_IMAGE) /bin/sh -c "cd /mnt && make build"
 endif
 
 .PHONY: run
@@ -341,12 +368,12 @@ ifeq ($(OS_NAME),linux)
 	done;
 else
 	@echo "Testing inside Docker"
-	$(DOCKER) run --rm -it --mount type=bind,source=$$(pwd),target=/mnt $(DOCKER_IMAGE) /bin/sh -c "cd /mnt && make test"
+	$(DOCKER) run --rm $(DOCKER_RUN_FLAGS) --mount type=bind,source=$$(pwd),target=/mnt $(DOCKER_IMAGE) /bin/sh -c "cd /mnt && make test"
 endif
 
 .PHONY: shell
 shell:
-	$(DOCKER) run --rm -it --mount type=bind,source=$$(pwd),target=/mnt $(DOCKER_IMAGE) /bin/sh -c "cd /mnt && /bin/bash"
+	$(DOCKER) run --rm $(DOCKER_RUN_FLAGS) --mount type=bind,source=$$(pwd),target=/mnt $(DOCKER_IMAGE) /bin/sh -c "cd /mnt && /bin/bash"
 
 .PHONY: build-apps
 build-apps:
