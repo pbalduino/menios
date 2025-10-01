@@ -14,6 +14,10 @@
 #define STDOUT_FILENO  1
 #define STDERR_FILENO  2
 
+#define O_RDONLY 0x0000
+#define O_WRONLY 0x0001
+#define O_RDWR   0x0002
+
 static inline long syscall0(long number) {
   long ret;
   asm volatile("int $0x80" : "=a"(ret) : "a"(number) : "rcx", "r11", "memory");
@@ -59,6 +63,29 @@ static void sleep_us(uint64_t usec) {
   syscall2(SYS_SLEEP, (long)usec, 0);
 }
 
+static void bind_stdio(void) {
+  static char tty_path[] = "/dev/tty0";
+  long fd = syscall3(SYS_OPEN, (long)tty_path, O_RDWR, 0);
+  if(fd < 0) {
+    write_str(STDERR_FILENO, "[init] failed to open /dev/tty0\n");
+    return;
+  }
+
+  for(long target = STDIN_FILENO; target <= STDERR_FILENO; target++) {
+    if(fd == target) {
+      continue;
+    }
+    long rc = syscall2(SYS_DUP2, fd, target);
+    if(rc < 0) {
+      write_str(STDERR_FILENO, "[init] dup2 failed\n");
+    }
+  }
+
+  if(fd > STDERR_FILENO) {
+    syscall1(SYS_CLOSE, fd);
+  }
+}
+
 static long exec_program(char* path) {
   char* argv[] = { path, NULL };
   char* envp[] = { NULL };
@@ -81,6 +108,7 @@ static void run_shell(void) {
 }
 
 void _start(void) {
+  bind_stdio();
   write_str(STDOUT_FILENO, "[init] meniOS init process online\n");
 
   long pid = syscall0(SYS_FORK);

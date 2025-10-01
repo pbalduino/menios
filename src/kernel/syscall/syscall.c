@@ -32,6 +32,9 @@ static uint64_t syscall_fcntl_handler(syscall_frame_t* frame);
 static syscall_handler_t syscall_table[SYSCALL_MAX];
 
 #define SYSCALL_PATH_MAX 256
+#define EXECVE_MAX_ARGS   64
+#define EXECVE_MAX_ENVP   64
+#define EXECVE_MAX_STRING 4096
 
 static bool copy_user_string(const char* user_ptr, char* dest, size_t capacity) {
   if(current == NULL || user_ptr == NULL || dest == NULL || capacity == 0) {
@@ -52,6 +55,153 @@ static bool copy_user_string(const char* user_ptr, char* dest, size_t capacity) 
   }
 
   dest[capacity - 1] = '\0';
+  return false;
+}
+
+static void free_string_vector(char** vector, size_t count) {
+  if(vector == NULL) {
+    return;
+  }
+  for(size_t i = 0; i < count; i++) {
+    if(vector[i]) {
+      kfree(vector[i]);
+    }
+  }
+  kfree(vector);
+}
+
+static char* duplicate_user_string(const char* user_ptr) {
+  if(user_ptr == NULL) {
+    return NULL;
+  }
+
+  size_t capacity = 64;
+  char* buffer = kmalloc(capacity);
+  if(buffer == NULL) {
+    return NULL;
+  }
+
+  size_t len = 0;
+  while(true) {
+    if(len >= EXECVE_MAX_STRING) {
+      kfree(buffer);
+      return NULL;
+    }
+
+    if(!proc_user_buffer_accessible(current, user_ptr + len, 1)) {
+      kfree(buffer);
+      return NULL;
+    }
+
+    char ch = user_ptr[len];
+    if(len + 1 >= capacity) {
+      size_t new_capacity = capacity * 2;
+      char* resized = krealloc(buffer, new_capacity);
+      if(resized == NULL) {
+        kfree(buffer);
+        return NULL;
+      }
+      buffer = resized;
+      capacity = new_capacity;
+    }
+
+    buffer[len++] = ch;
+    if(ch == '\0') {
+      break;
+    }
+  }
+
+  return buffer;
+}
+
+static bool clone_user_vector(const char* const* user_vec,
+                              size_t max_entries,
+                              char*** out_vec,
+                              size_t* out_count,
+                              int* err_out) {
+  if(out_vec == NULL || out_count == NULL) {
+    return false;
+  }
+
+  *out_vec = NULL;
+  *out_count = 0;
+
+  if(err_out) {
+    *err_out = 0;
+  }
+
+  if(user_vec == NULL) {
+    return true;
+  }
+
+  size_t capacity = 8;
+  char** vector = kmalloc(capacity * sizeof(char*));
+  if(vector == NULL) {
+    return false;
+  }
+
+  size_t count = 0;
+  bool success = false;
+
+  for(size_t i = 0; i < max_entries; i++) {
+    if(!proc_user_buffer_accessible(current, user_vec + i, sizeof(char*))) {
+      if(err_out) {
+        *err_out = -EFAULT;
+      }
+      goto out;
+    }
+
+    const char* entry = user_vec[i];
+    if(entry == NULL) {
+      success = true;
+      break;
+    }
+
+    char* dup = duplicate_user_string(entry);
+    if(dup == NULL) {
+      if(err_out) {
+        *err_out = -EFAULT;
+      }
+      goto out;
+    }
+
+    if(count == capacity) {
+      size_t new_capacity = capacity * 2;
+      char** resized = krealloc(vector, new_capacity * sizeof(char*));
+      if(resized == NULL) {
+        kfree(dup);
+        if(err_out) {
+          *err_out = -ENOMEM;
+        }
+        goto out;
+      }
+      vector = resized;
+      capacity = new_capacity;
+    }
+
+    vector[count++] = dup;
+  }
+
+  if(!success) {
+    if(proc_user_buffer_accessible(current, user_vec + max_entries, sizeof(char*)) &&
+       user_vec[max_entries] == NULL) {
+      success = true;
+    } else if(err_out) {
+      *err_out = -E2BIG;
+    }
+  }
+
+out:
+  if(success) {
+    *out_vec = vector;
+    *out_count = count;
+    return true;
+  }
+
+  free_string_vector(vector, count);
+  if(err_out && *err_out == 0) {
+    *err_out = -EFAULT;
+  }
   return false;
 }
 
@@ -351,9 +501,6 @@ static uint64_t syscall_execve_handler(syscall_frame_t* frame) {
   }
 
   const char* user_path = (const char*)frame->rdi;
-  (void)frame->rsi; // argv (unused for now)
-  (void)frame->rdx; // envp (unused for now)
-
   if(user_path == NULL) {
     frame->rax = (uint64_t)(-EFAULT);
     return frame->rax;
@@ -368,12 +515,45 @@ static uint64_t syscall_execve_handler(syscall_frame_t* frame) {
     return frame->rax;
   }
 
+  char** argv = NULL;
+  size_t argc = 0;
+  int vector_err = 0;
+  if(!clone_user_vector((const char* const*)frame->rsi,
+                        EXECVE_MAX_ARGS,
+                        &argv,
+                        &argc,
+                        &vector_err)) {
+    free_string_vector(argv, argc);
+    if(current) {
+      current->errno = vector_err ? -vector_err : EFAULT;
+    }
+    frame->rax = (uint64_t)(vector_err ? vector_err : -EFAULT);
+    return frame->rax;
+  }
+
+  char** envp = NULL;
+  size_t envc = 0;
+  if(!clone_user_vector((const char* const*)frame->rdx,
+                        EXECVE_MAX_ENVP,
+                        &envp,
+                        &envc,
+                        &vector_err)) {
+    free_string_vector(argv, argc);
+    if(current) {
+      current->errno = vector_err ? -vector_err : EFAULT;
+    }
+    frame->rax = (uint64_t)(vector_err ? vector_err : -EFAULT);
+    return frame->rax;
+  }
+
   void* image = NULL;
   size_t size = 0;
   if(!vfs_read_all(path, &image, &size) || image == NULL || size == 0) {
     if(image != NULL) {
       kfree(image);
     }
+    free_string_vector(argv, argc);
+    free_string_vector(envp, envc);
     if(current) {
       current->errno = ENOENT;
     }
@@ -383,6 +563,8 @@ static uint64_t syscall_execve_handler(syscall_frame_t* frame) {
 
   if(size > (32 * 1024 * 1024)) {
     kfree(image);
+    free_string_vector(argv, argc);
+    free_string_vector(envp, envc);
     if(current) {
       current->errno = EFBIG;
     }
@@ -390,8 +572,17 @@ static uint64_t syscall_execve_handler(syscall_frame_t* frame) {
     return frame->rax;
   }
 
-  int err = proc_exec_image(current, image, size, frame);
+  proc_exec_args_t exec_args = {
+    .argc = argc,
+    .argv = argv,
+    .envc = envc,
+    .envp = envp,
+  };
+
+  int err = proc_exec_image(current, image, size, frame, &exec_args);
   kfree(image);
+  free_string_vector(argv, argc);
+  free_string_vector(envp, envc);
   frame->rax = (uint64_t)err;
   return frame->rax;
 }

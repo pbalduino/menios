@@ -10,10 +10,12 @@ work, and relationships.
 **Status:** In progress
 
 - [x] Boot-time launcher (`user_init_launch`) queues a dedicated init process.
-- [ ] Minimal init ELF prints a banner so the boot sequence confirms PID 1 is
-      running (stdout still needs to be re-bound to `/dev/tty0`).
-- [ ] Provide default environment variables (`PATH`, `HOME`), chdir to `/` and
-      dup `/dev/tty0` onto the standard streams.
+- [x] Minimal init ELF prints a banner so the boot sequence confirms PID 1 is
+      running (stdio now targets `/dev/tty0`).
+- [x] Bind PID 1 standard streams to `/dev/tty0` so init and userland output is
+      visible on the console.
+- [ ] Provide default environment variables (`PATH`, `HOME`) and chdir to `/`
+      before launching userland.
 - [x] Replace the temporary idle loop with logic that `execve`s the next stage
       (boots `/bin/mosh` with a `/bin/user_demo` fallback while supervision work
       continues).
@@ -46,6 +48,8 @@ work, and relationships.
 
 - [x] Kernel exposes `fork()`/`execve()` (see `proc_fork`, `proc_exec_image`,
       and the filesystem-backed syscall path).
+- [x] `proc_exec_image()` seeds `argc`/`argv`/`envp` on the new user stack so
+      freshly executed programs observe the expected SysV ABI entry contract.
 - [ ] Add regression tests that spawn a child, exec a trivial ELF, and verify
       `waitpid()` semantics.
 - [ ] Audit file-descriptor cloning (`CLOEXEC`, controlling terminal) and env
@@ -55,10 +59,10 @@ work, and relationships.
 
 - [x] `/bin/mosh` now ships as a freestanding ELF that prints a prompt, accepts
       user input on stdin, and handles simple built-ins (`help`, `exit`).
-- [ ] Bind PID 1’s stdio to `/dev/tty0` so init’s banner and mosh’s prompt land
-      on the console.
-- [ ] Extend mosh to resolve and execute binaries once exec/argv/env handling is
-      complete.
+- [x] PID 1 now routes stdio to `/dev/tty0`, so the init banner and mosh prompt
+      land on the visible console.
+- [x] mosh resolves commands (defaulting to `/bin/<name>`), forks, and calls
+      `execve()` using the new argument/environment plumbing.
 
 ---
 

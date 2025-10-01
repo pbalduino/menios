@@ -7,6 +7,8 @@
 #define SYS_CLOSE  3
 #define SYS_DUP2   33
 #define SYS_SLEEP  35
+#define SYS_FORK   57
+#define SYS_EXECVE 59
 #define SYS_EXIT   60
 
 #define STDIN_FILENO   0
@@ -106,6 +108,95 @@ static bool handle_builtin(const char* line) {
   return false;
 }
 
+static bool contains_slash(const char* text) {
+  for(size_t i = 0; text[i] != '\0'; i++) {
+    if(text[i] == '/') {
+      return true;
+    }
+  }
+  return false;
+}
+
+static const char* resolve_path(const char* command, char* buffer, size_t capacity) {
+  if(command == NULL || command[0] == '\0') {
+    return NULL;
+  }
+
+  if(contains_slash(command)) {
+    return command;
+  }
+
+  static const char prefix[] = "/bin/";
+  size_t prefix_len = sizeof(prefix) - 1;
+  size_t cmd_len = str_len(command);
+
+  if(prefix_len + cmd_len + 1 > capacity) {
+    return NULL;
+  }
+
+  for(size_t i = 0; i < prefix_len; i++) {
+    buffer[i] = prefix[i];
+  }
+  for(size_t i = 0; i < cmd_len; i++) {
+    buffer[prefix_len + i] = command[i];
+  }
+  buffer[prefix_len + cmd_len] = '\0';
+  return buffer;
+}
+
+static void launch_command(char* line) {
+  static char exec_path[256];
+  char* argv[16];
+  size_t argc = 0;
+
+  char* cursor = line;
+  while(*cursor != '\0' && argc < (sizeof(argv) / sizeof(argv[0])) - 1) {
+    while(*cursor == ' ' || *cursor == '\t') {
+      cursor++;
+    }
+    if(*cursor == '\0') {
+      break;
+    }
+    argv[argc++] = cursor;
+    while(*cursor != '\0' && *cursor != ' ' && *cursor != '\t') {
+      cursor++;
+    }
+    if(*cursor == '\0') {
+      break;
+    }
+    *cursor++ = '\0';
+  }
+  argv[argc] = NULL;
+
+  if(argc == 0) {
+    return;
+  }
+
+  const char* path = resolve_path(argv[0], exec_path, sizeof(exec_path));
+  if(path == NULL) {
+    write_str(STDERR_FILENO, "mosh: command name too long\n");
+    return;
+  }
+
+  long pid = syscall0(SYS_FORK);
+  if(pid < 0) {
+    write_str(STDERR_FILENO, "mosh: fork failed\n");
+    return;
+  }
+
+  if(pid == 0) {
+    char* envp[] = { NULL };
+    long rc = syscall3(SYS_EXECVE, (long)path, (long)argv, (long)envp);
+    if(rc < 0) {
+      write_str(STDERR_FILENO, "mosh: exec failed\n");
+    }
+    syscall1(SYS_EXIT, 1);
+    return;
+  }
+
+  write_str(STDOUT_FILENO, "[mosh] launched\n");
+}
+
 static void shell_loop(void) {
   static char line_buffer[256];
 
@@ -123,7 +214,7 @@ static void shell_loop(void) {
       continue;
     }
 
-    write_str(STDOUT_FILENO, "mosh: command lookup not implemented yet\n");
+    launch_command(line_buffer);
   }
 }
 

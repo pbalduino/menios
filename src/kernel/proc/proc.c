@@ -648,7 +648,15 @@ proc_info_p proc_fork(proc_info_p parent, const syscall_frame_t* frame, int* err
   return child;
 }
 
-int proc_exec_image(proc_info_p proc, const uint8_t* image, size_t size, syscall_frame_t* frame) {
+static bool proc_setup_exec_stack(proc_info_p proc,
+                                 syscall_frame_t* frame,
+                                 const proc_exec_args_t* args);
+
+int proc_exec_image(proc_info_p proc,
+                    const uint8_t* image,
+                    size_t size,
+                    syscall_frame_t* frame,
+                    const proc_exec_args_t* args) {
   if(proc == NULL || image == NULL || size == 0 || frame == NULL) {
     return -EINVAL;
   }
@@ -781,6 +789,11 @@ int proc_exec_image(proc_info_p proc, const uint8_t* image, size_t size, syscall
     }
   }
 
+  if(!proc_setup_exec_stack(proc, frame, args)) {
+    result = -EFAULT;
+    goto fail;
+  }
+
   memcpy(proc->cpu_state, frame, sizeof(syscall_frame_t));
 
   return 0;
@@ -792,6 +805,136 @@ fail:
   }
   kfree(elf_copy);
   return result;
+}
+
+static bool proc_setup_exec_stack(proc_info_p proc,
+                                 syscall_frame_t* frame,
+                                 const proc_exec_args_t* args) {
+  if(proc == NULL || frame == NULL) {
+    return false;
+  }
+
+  if(args == NULL) {
+    frame->rdi = 0;
+    frame->rsi = 0;
+    frame->rdx = 0;
+    return true;
+  }
+
+  size_t argc = args->argc;
+  size_t envc = args->envc;
+  char** argv = args->argv;
+  char** envp = args->envp;
+
+  uintptr_t sp = frame->rsp;
+  uintptr_t stack_base = proc->user_stack_base_vaddr;
+
+  uintptr_t* argv_ptrs = NULL;
+  uintptr_t* envp_ptrs = NULL;
+
+  if(argc > 0) {
+    argv_ptrs = kmalloc(sizeof(uintptr_t) * argc);
+    if(argv_ptrs == NULL) {
+      return false;
+    }
+  }
+
+  if(envc > 0) {
+    envp_ptrs = kmalloc(sizeof(uintptr_t) * envc);
+    if(envp_ptrs == NULL) {
+      kfree(argv_ptrs);
+      return false;
+    }
+  }
+
+  for(size_t i = 0; i < envc; i++) {
+    const char* str = envp ? envp[i] : NULL;
+    if(str == NULL) {
+      envp_ptrs[i] = 0;
+      continue;
+    }
+    size_t len = strlen(str) + 1;
+    if(sp < stack_base + len) {
+      if(argv_ptrs) {
+        kfree(argv_ptrs);
+      }
+      if(envp_ptrs) {
+        kfree(envp_ptrs);
+      }
+      return false;
+    }
+    sp -= len;
+    memcpy((void*)sp, str, len);
+    envp_ptrs[i] = sp;
+  }
+
+  for(size_t i = 0; i < argc; i++) {
+    const char* str = argv ? argv[i] : NULL;
+    if(str == NULL) {
+      argv_ptrs[i] = 0;
+      continue;
+    }
+    size_t len = strlen(str) + 1;
+    if(sp < stack_base + len) {
+      if(argv_ptrs) {
+        kfree(argv_ptrs);
+      }
+      if(envp_ptrs) {
+        kfree(envp_ptrs);
+      }
+      return false;
+    }
+    sp -= len;
+    memcpy((void*)sp, str, len);
+    argv_ptrs[i] = sp;
+  }
+
+  sp &= ~((uintptr_t)0xf);
+
+  if(sp < stack_base + sizeof(uintptr_t)) {
+    if(argv_ptrs) {
+      kfree(argv_ptrs);
+    }
+    if(envp_ptrs) {
+      kfree(envp_ptrs);
+    }
+    return false;
+  }
+
+  sp -= sizeof(uintptr_t);
+  *((uintptr_t*)sp) = 0;
+  for(size_t i = envc; i > 0; i--) {
+    sp -= sizeof(uintptr_t);
+    *((uintptr_t*)sp) = envp_ptrs ? envp_ptrs[i - 1] : 0;
+  }
+  uintptr_t envp_user = sp;
+
+  sp -= sizeof(uintptr_t);
+  *((uintptr_t*)sp) = 0;
+  for(size_t i = argc; i > 0; i--) {
+    sp -= sizeof(uintptr_t);
+    *((uintptr_t*)sp) = argv_ptrs ? argv_ptrs[i - 1] : 0;
+  }
+  uintptr_t argv_user = sp;
+
+  sp &= ~((uintptr_t)0xf);
+
+  sp -= sizeof(uintptr_t);
+  *((uintptr_t*)sp) = argc;
+
+  frame->rsp = sp;
+  frame->rdi = argc;
+  frame->rsi = argv_user;
+  frame->rdx = envp_user;
+
+  if(argv_ptrs) {
+    kfree(argv_ptrs);
+  }
+  if(envp_ptrs) {
+    kfree(envp_ptrs);
+  }
+
+  return true;
 }
 
 bool proc_user_buffer_accessible(proc_info_p proc, const void* ptr, size_t length) {

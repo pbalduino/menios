@@ -264,11 +264,16 @@ proc_info_p proc_fork(proc_info_p parent, const syscall_frame_t* frame, int* err
   return NULL;
 }
 
-int proc_exec_image(proc_info_p proc, const uint8_t* image, size_t size, syscall_frame_t* frame) {
+int proc_exec_image(proc_info_p proc,
+                    const uint8_t* image,
+                    size_t size,
+                    syscall_frame_t* frame,
+                    const proc_exec_args_t* args) {
   (void)proc;
   (void)image;
   (void)size;
   (void)frame;
+  (void)args;
   return -ENOSYS;
 }
 
