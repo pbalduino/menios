@@ -223,10 +223,10 @@ else
 	$(DOCKER) run --rm $(DOCKER_RUN_FLAGS) --mount type=bind,source=$$(pwd),target=/mnt $(DOCKER_IMAGE) /bin/sh -c "cd /mnt && make $@"
 endif
 
-$(INIT_ELF): src/usermode/init.S linker/user_elf.ld
+$(INIT_ELF): src/usermode/init.c linker/user_elf.ld
 ifeq ($(OS_NAME),linux)
 	@mkdir -p $(OBJDIR)/usermode
-	$(GCC) -nostdlib -nostartfiles -ffreestanding -c src/usermode/init.S -o $(OBJDIR)/usermode/init.o
+	$(GCC) -nostdlib -nostartfiles -ffreestanding -I./include -c src/usermode/init.c -o $(OBJDIR)/usermode/init.o
 	$(LD) -nostdlib -static -T linker/user_elf.ld -o $@ $(OBJDIR)/usermode/init.o
 else
 	$(DOCKER) run --rm $(DOCKER_RUN_FLAGS) --mount type=bind,source=$$(pwd),target=/mnt $(DOCKER_IMAGE) /bin/sh -c "cd /mnt && make $@"
@@ -274,6 +274,8 @@ ifeq ($(OS_NAME),linux)
 	# cp ./src/kernel/driver/ps2kb/ps2kb_handler.o  $(KERNEL_OBJ)
 
 	cp $(OBJS) $(KERNEL_OBJ)
+	@mkdir -p $(OUTPUT_DIR)/bin
+	cp build/obj/usermode/user_demo.elf $(OUTPUT_DIR)/bin/user_demo
 
 	$(LD) $(LDFLAGS) -o $(KERNEL) $$(find -L $(KERNEL_OBJ) -type f -name '*.o')
 
@@ -313,12 +315,14 @@ ifeq ($(OS_NAME),linux)
 	sgdisk $(IMAGE_NAME).hdd -n 1:2048:4095 -t 1:ef02
 	sgdisk $(IMAGE_NAME).hdd -n 2:4096 -t 2:ef00
 	mformat -F -i $(IMAGE_NAME).hdd@@2M
-	mmd -i $(IMAGE_NAME).hdd@@2M ::/EFI ::/EFI/BOOT ::/limine ::/boot ::/boot/limine
+	mmd -i $(IMAGE_NAME).hdd@@2M ::/EFI ::/EFI/BOOT ::/limine ::/boot ::/boot/limine > /dev/null 2>&1 || true
+	mmd -i $(IMAGE_NAME).hdd@@2M ::/bin > /dev/null 2>&1 || true
 	mcopy -i $(IMAGE_NAME).hdd@@2M $(KERNEL) limine.conf $(OUTPUT_DIR)/limine-bios.sys ::/
 	mcopy -i $(IMAGE_NAME).hdd@@2M $(OUTPUT_DIR)/limine-bios.sys ::/limine/
 	mcopy -i $(IMAGE_NAME).hdd@@2M $(OUTPUT_DIR)/limine-bios.sys ::/boot/
 	mcopy -i $(IMAGE_NAME).hdd@@2M $(OUTPUT_DIR)/limine-bios.sys ::/boot/limine/
 	mcopy -i $(IMAGE_NAME).hdd@@2M $(OUTPUT_DIR)/EFI/BOOT/BOOTX64.EFI ::/EFI/BOOT
+	mcopy -i $(IMAGE_NAME).hdd@@2M $(OUTPUT_DIR)/bin/user_demo ::/bin/user_demo
 	$(OUTPUT_DIR)/limine bios-install $(IMAGE_NAME).hdd 1
 
 	@echo Building ISO

@@ -14,8 +14,10 @@ work, and relationships.
       running.
 - [ ] Provide default environment variables (`PATH`, `HOME`), chdir to `/` and
       dup `/dev/tty0` onto the standard streams.
-- [ ] Replace the temporary idle loop with logic that `execve`s the next stage
+- [x] Replace the temporary idle loop with logic that `execve`s the next stage
       (user demo today, `mosh` tomorrow) and respawns it if it exits.
+- [x] Mount the FAT32 root filesystem so `/bin` is available before launching
+      the shell payload.
 
 ## #146 – Device Filesystem (`/dev`)
 
