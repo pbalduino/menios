@@ -10,8 +10,8 @@ work, and relationships.
 **Status:** In progress
 
 - [x] Boot-time launcher (`user_init_launch`) queues a dedicated init process.
-- [x] Minimal init ELF prints a banner so the boot sequence confirms PID 1 is
-      running.
+- [ ] Minimal init ELF prints a banner so the boot sequence confirms PID 1 is
+      running (stdout still needs to be re-bound to `/dev/tty0`).
 - [ ] Provide default environment variables (`PATH`, `HOME`), chdir to `/` and
       dup `/dev/tty0` onto the standard streams.
 - [x] Replace the temporary idle loop with logic that `execve`s the next stage
@@ -43,8 +43,8 @@ work, and relationships.
 
 **Status:** Available, needs hardening
 
-- [x] Kernel already exposes `fork()` and `execve()` (see `proc_fork` and
-      `proc_execve`).
+- [x] Kernel exposes `fork()`/`execve()` (see `proc_fork`, `proc_exec_image`,
+      and the filesystem-backed syscall path).
 - [ ] Add regression tests that spawn a child, exec a trivial ELF, and verify
       `waitpid()` semantics.
 - [ ] Audit file-descriptor cloning (`CLOEXEC`, controlling terminal) and env

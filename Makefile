@@ -114,7 +114,7 @@ QEMU_OPTS = -smp cpus=2,maxcpus=4,sockets=1,dies=1,clusters=1,cores=2 \
 	-usb \
 	-device usb-ehci,id=ehci \
 	-device usb-mouse \
-	-serial file:$(QEMU_LOG_FILE) \
+	-serial file:$(QEMU_LOG_FILE),append=on \
 	-monitor stdio \
 	-d int \
 	-M hpet=on \

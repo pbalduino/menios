@@ -794,6 +794,42 @@ fail:
   return result;
 }
 
+bool proc_user_buffer_accessible(proc_info_p proc, const void* ptr, size_t length) {
+  if(proc == NULL || ptr == NULL) {
+    return false;
+  }
+
+  if(length == 0) {
+    return true;
+  }
+
+  uintptr_t start = (uintptr_t)ptr;
+  uintptr_t last = start;
+  if(__builtin_add_overflow(start, length - 1, &last)) {
+    return false;
+  }
+
+  for(size_t i = 0; i < proc->vm_region_count; i++) {
+    vm_region_t* region = &proc->vm_regions[i];
+    if((region->flags & VM_REGION_FLAG_USER) == 0) {
+      continue;
+    }
+
+    virt_addr_t committed_start = region->committed_base;
+    virt_addr_t committed_end = region->committed_top;
+
+    if(committed_start >= committed_end) {
+      continue;
+    }
+
+    if(start >= committed_start && last < committed_end) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
 void proc_create_user(proc_info_p proc, const char* name, const void* code_blob, size_t code_size, void* arg) {
   proc_create(proc, name, NULL, arg);
 

@@ -790,7 +790,7 @@
     "github_issue": {
       "number": 61,
       "url": "https://github.com/pbalduino/menios/issues/61",
-      "state": "OPEN"
+      "state": "CLOSED"
     },
     "labels": [
       "enhancement"
@@ -878,6 +878,20 @@
     },
     "labels": [
       "enhancement"
+    ],
+    "assignees": [
+      "pbalduino"
+    ]
+  },
+  {
+    "title": "Audit and refresh roadmap documentation to reflect current kernel status",
+    "github_issue": {
+      "number": null,
+      "url": "",
+      "state": "OPEN"
+    },
+    "labels": [
+      "documentation"
     ],
     "assignees": [
       "pbalduino"
@@ -1066,7 +1080,7 @@
     "github_issue": {
       "number": 39,
       "url": "https://github.com/pbalduino/menios/issues/39",
-      "state": "OPEN"
+      "state": "CLOSED"
     },
     "labels": [
       "enhancement"
@@ -1094,7 +1108,7 @@
     "github_issue": {
       "number": 37,
       "url": "https://github.com/pbalduino/menios/issues/37",
-      "state": "OPEN"
+      "state": "CLOSED"
     },
     "labels": [
       "enhancement"
@@ -1164,7 +1178,7 @@
     "github_issue": {
       "number": 32,
       "url": "https://github.com/pbalduino/menios/issues/32",
-      "state": "OPEN"
+      "state": "CLOSED"
     },
     "labels": [
       "enhancement"
@@ -1178,7 +1192,7 @@
     "github_issue": {
       "number": 31,
       "url": "https://github.com/pbalduino/menios/issues/31",
-      "state": "OPEN"
+      "state": "CLOSED"
     },
     "labels": [
       "enhancement"
@@ -1192,7 +1206,7 @@
     "github_issue": {
       "number": 30,
       "url": "https://github.com/pbalduino/menios/issues/30",
-      "state": "OPEN"
+      "state": "CLOSED"
     },
     "labels": [
       "enhancement"
@@ -1338,7 +1352,7 @@
     "github_issue": {
       "number": 19,
       "url": "https://github.com/pbalduino/menios/issues/19",
-      "state": "OPEN"
+      "state": "CLOSED"
     },
     "labels": [
       "enhancement",

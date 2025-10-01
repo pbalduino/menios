@@ -150,6 +150,7 @@ void proc_request_sleep(uint64_t duration_us);
 void proc_mark_ready(proc_info_p proc);
 proc_info_p proc_fork(proc_info_p parent, const struct syscall_frame_t* frame, int* err_out);
 int proc_exec_image(proc_info_p proc, const uint8_t* image, size_t size, struct syscall_frame_t* frame);
+bool proc_user_buffer_accessible(proc_info_p proc, const void* ptr, size_t length);
 
 #ifdef __cplusplus
 }

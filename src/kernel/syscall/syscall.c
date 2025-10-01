@@ -1,6 +1,7 @@
 #include <errno.h>
 #include <kernel/console.h>
 #include <kernel/file.h>
+#include <kernel/heap.h>
 #include <kernel/mman.h>
 #include <kernel/proc.h>
 #include <kernel/serial.h>
@@ -29,6 +30,30 @@ static uint64_t syscall_exit_handler(syscall_frame_t* frame);
 static uint64_t syscall_fcntl_handler(syscall_frame_t* frame);
 
 static syscall_handler_t syscall_table[SYSCALL_MAX];
+
+#define SYSCALL_PATH_MAX 256
+
+static bool copy_user_string(const char* user_ptr, char* dest, size_t capacity) {
+  if(current == NULL || user_ptr == NULL || dest == NULL || capacity == 0) {
+    return false;
+  }
+
+  size_t copied = 0;
+  while(copied < capacity) {
+    if(!proc_user_buffer_accessible(current, user_ptr + copied, 1)) {
+      return false;
+    }
+
+    char ch = user_ptr[copied];
+    dest[copied++] = ch;
+    if(ch == '\0') {
+      return true;
+    }
+  }
+
+  dest[capacity - 1] = '\0';
+  return false;
+}
 
 static void syscall_register(uint64_t number, syscall_handler_t handler) {
   if(number >= SYSCALL_MAX) {
@@ -320,15 +345,53 @@ static uint64_t syscall_fork_handler(syscall_frame_t* frame) {
 }
 
 static uint64_t syscall_execve_handler(syscall_frame_t* frame) {
-  const uint8_t* image = (const uint8_t*)frame->rdi;
-  size_t size = (size_t)frame->rsi;
-
-  if(image == NULL || size == 0 || size > (32 * 1024 * 1024)) {
+  if(current == NULL) {
     frame->rax = (uint64_t)(-EINVAL);
     return frame->rax;
   }
 
+  const char* user_path = (const char*)frame->rdi;
+  (void)frame->rsi; // argv (unused for now)
+  (void)frame->rdx; // envp (unused for now)
+
+  if(user_path == NULL) {
+    frame->rax = (uint64_t)(-EFAULT);
+    return frame->rax;
+  }
+
+  char path[SYSCALL_PATH_MAX];
+  if(!copy_user_string(user_path, path, sizeof(path))) {
+    if(current) {
+      current->errno = EFAULT;
+    }
+    frame->rax = (uint64_t)(-EFAULT);
+    return frame->rax;
+  }
+
+  void* image = NULL;
+  size_t size = 0;
+  if(!vfs_read_all(path, &image, &size) || image == NULL || size == 0) {
+    if(image != NULL) {
+      kfree(image);
+    }
+    if(current) {
+      current->errno = ENOENT;
+    }
+    frame->rax = (uint64_t)(-ENOENT);
+    return frame->rax;
+  }
+
+  if(size > (32 * 1024 * 1024)) {
+    kfree(image);
+    if(current) {
+      current->errno = EFBIG;
+    }
+    frame->rax = (uint64_t)(-EFBIG);
+    return frame->rax;
+  }
+
   int err = proc_exec_image(current, image, size, frame);
+  kfree(image);
   frame->rax = (uint64_t)err;
   return frame->rax;
 }
