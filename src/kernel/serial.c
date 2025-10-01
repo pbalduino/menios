@@ -381,5 +381,3 @@ int serial_printf(const char* format, ...) {
   va_end(list);
   return result;
 }
-
-*** End Patch
