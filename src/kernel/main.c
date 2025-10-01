@@ -6,7 +6,7 @@
  *
  * Author: Plínio Balduino
  * License: MIT License
- * Copyright (c) 2020-2024 Plínio Balduino
+ * Copyright (c) 2020-2025 Plínio Balduino
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy 
  * of this software and associated documentation files (the “Software”), to 
@@ -116,7 +116,6 @@ void boot_graphics_init() {
   logk("Testing console..OK\n");
   logk("Screen mode: %lu x %lu x %d\n", fb_width(), fb_height(), fb_bpp());
   logk("Available modes: %lu\n", fb_mode_count());
-  // fb_list_modes();
 }
 
 void turn_off() {
@@ -170,18 +169,6 @@ void _start() {
   
   scheduler_init();
 
-  // init_services();
-
-  // enable_interrupts();
-
-  // rtc_time_t time;
-  // rtc_time(&time);
-
-  // TODO: CPUs
-  // smp_init();
-  // TODO: Show hardware
-  // TODO: Filesystem
-
   hardware_init();
 
   user_init_launch();
@@ -189,18 +176,8 @@ void _start() {
   logk("Enabling interruptions\n");
   enable_interrupts();
 
-  printf("menios# ");
-
-  while(true){
-    int ch = kgetchar();
-    kputchar(ch);
-  }
-
   logk("Bye\n");
   serial_log("Bye\n");
-
-  // ktread_join(&clock);
   
   halt();
-  // turn_off();
 }
