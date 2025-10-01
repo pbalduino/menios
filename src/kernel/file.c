@@ -9,6 +9,7 @@
 #include <kernel/condvar.h>
 #include <kernel/file.h>
 #include <kernel/devfs.h>
+#include <kernel/tmpfs.h>
 #include <kernel/framebuffer.h>
 #include <kernel/heap.h>
 #include <kernel/mutex.h>
@@ -548,6 +549,9 @@ void file_system_init(void) {
   install_standard_streams();
   if(!devfs_mount()) {
     serial_printf("file_system_init: failed to mount devfs\n");
+  }
+  if(!tmpfs_mount()) {
+    serial_printf("file_system_init: failed to mount tmpfs\n");
   }
 #endif
 }

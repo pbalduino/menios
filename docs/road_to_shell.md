@@ -32,10 +32,10 @@ work, and relationships.
 
 ## #145 – In-memory `/tmp`
 
-**Status:** Not started
+**Status:** In progress
 
-- [ ] Implement a lightweight tmpfs/ramfs VFS backend for `/tmp`.
-- [ ] Mount it during boot and ensure correct permissions (`1777`).
+- [x] Implement a lightweight tmpfs/ramfs VFS backend for `/tmp`.
+- [x] Mount it during boot and ensure correct permissions (`1777`).
 - [ ] Verify shell workflows (temporary files, redirections) succeed using the
       new filesystem.
 
