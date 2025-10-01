@@ -56,6 +56,10 @@ int  proc_file_set_flags(struct proc_info_t* proc, int fd, uint32_t flags);
 int  proc_file_close(struct proc_info_t* proc, int fd);
 int  proc_file_dup(struct proc_info_t* proc, int oldfd, int newfd, bool cloexec);
 
+file_t* file_create_serial_console_file(void);
+file_t* file_create_framebuffer_console_file(void);
+file_t* file_create_tty_console_file(void);
+
 typedef file_t* file_descriptor_t;
 file_descriptor_t fd_get(int fd);
 int pipe_create(file_t** read_end, file_t** write_end);

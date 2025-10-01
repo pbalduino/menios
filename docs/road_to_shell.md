@@ -21,13 +21,14 @@ work, and relationships.
 
 ## #146 – Device Filesystem (`/dev`)
 
-**Status:** Not started
+**Status:** In progress
 
-- [ ] Implement `devfs` as a VFS driver that exposes the registered character
+- [x] Implement `devfs` as a VFS driver that exposes the registered character
       devices under `/dev` (`/dev/tty0`, `/dev/console`, `/dev/null`, etc.).
-- [ ] Ensure `open()`/`stat()` resolve device nodes and honour permissions.
-- [ ] Allow init to mount `devfs` early so user processes can rely on the
-      `/dev` hierarchy.
+- [x] Ensure `open()` resolves device nodes and honours basic read/write
+      capabilities.
+- [x] Mount `devfs` during early `file_system_init` so user processes can open
+      `/dev` paths without kernel assistance.
 
 ## #145 – In-memory `/tmp`
 

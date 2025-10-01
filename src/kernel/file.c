@@ -8,6 +8,7 @@
 
 #include <kernel/condvar.h>
 #include <kernel/file.h>
+#include <kernel/devfs.h>
 #include <kernel/framebuffer.h>
 #include <kernel/heap.h>
 #include <kernel/mutex.h>
@@ -66,6 +67,9 @@ static inline void set_errno(int err) {
 }
 
 static inline void stdin_buffer_init(void) {
+  if(stdin_initialized) {
+    return;
+  }
   spinlock_init(&stdin_buffer.lock);
   kmutex_init(&stdin_buffer.wait_lock);
   kcondvar_init(&stdin_buffer.waiters);
@@ -496,6 +500,23 @@ static const file_ops_t stdin_file_ops = {
   .seek = NULL,
 };
 
+static int64_t tty_write_impl(file_t* file, const void* buffer, size_t length) {
+  (void)file;
+  if(buffer == NULL) {
+    return -EINVAL;
+  }
+  serial_write_impl(NULL, buffer, length);
+  framebuffer_write_impl(NULL, buffer, length);
+  return (int64_t)length;
+}
+
+static const file_ops_t tty_console_file_ops = {
+  .read = stdin_read_impl,
+  .write = tty_write_impl,
+  .close = serial_close_noop,
+  .seek = NULL,
+};
+
 #ifdef MENIOS_KERNEL
 static void install_standard_streams(void) {
   proc_file_table_init(&kernel_process_info);
@@ -525,6 +546,9 @@ static void install_standard_streams(void) {
 void file_system_init(void) {
 #ifdef MENIOS_KERNEL
   install_standard_streams();
+  if(!devfs_mount()) {
+    serial_printf("file_system_init: failed to mount devfs\n");
+  }
 #endif
 }
 
@@ -535,6 +559,19 @@ static struct proc_info_t* stream_owner(void) {
 #ifdef MENIOS_KERNEL
 int dup2(int oldfd, int newfd) {
   return proc_file_dup(stream_owner(), oldfd, newfd, false);
+}
+
+file_t* file_create_serial_console_file(void) {
+  return file_create(&serial_file_ops, NULL, FILE_MODE_WRITE);
+}
+
+file_t* file_create_framebuffer_console_file(void) {
+  return file_create(&framebuffer_file_ops, NULL, FILE_MODE_WRITE);
+}
+
+file_t* file_create_tty_console_file(void) {
+  stdin_buffer_init();
+  return file_create(&tty_console_file_ops, NULL, FILE_MODE_READ | FILE_MODE_WRITE);
 }
 
 FILE* fopen(const char* filename, const char* mode) {
