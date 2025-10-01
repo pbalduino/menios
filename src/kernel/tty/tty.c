@@ -178,8 +178,10 @@ void tty_push_bytes(const uint8_t* data, size_t length) {
   kcondvar_broadcast(&default_tty.data_available);
 }
 
-static int64_t tty_read_impl(file_t* file, void* buffer, size_t length) {
-  (void)file;
+static int64_t tty_read_common(void* buffer, size_t length) {
+  if(!default_tty.initialized) {
+    tty_system_init();
+  }
 
   if(buffer == NULL || length == 0) {
     if(current) {
@@ -220,6 +222,11 @@ static int64_t tty_read_impl(file_t* file, void* buffer, size_t length) {
   return (int64_t)total;
 }
 
+static int64_t tty_read_impl(file_t* file, void* buffer, size_t length) {
+  (void)file;
+  return tty_read_common(buffer, length);
+}
+
 static int64_t tty_write_impl(file_t* file, const void* buffer, size_t length) {
   (void)file;
   if(buffer == NULL) {
@@ -257,4 +264,8 @@ file_t* tty_device_open(void) {
     current->errno = ENOMEM;
   }
   return file;
+}
+
+int64_t tty_read(void* buffer, size_t length) {
+  return tty_read_common(buffer, length);
 }

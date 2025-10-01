@@ -11,6 +11,7 @@ void tty_system_init(void);
 file_t* tty_device_open(void);
 void tty_handle_input_char(uint8_t ch);
 void tty_push_bytes(const uint8_t* data, size_t length);
+int64_t tty_read(void* buffer, size_t length);
 
 char_device_t* tty_char_device(void);
 

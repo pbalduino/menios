@@ -6,30 +6,11 @@
 #include <kernel/framebuffer.h>
 #include <kernel/proc.h>
 #include <kernel/serial.h>
-#include <kernel/driver/ps2kb.h>
 #include <kernel/tty.h>
 
 static int64_t console_read(file_t* file, void* buffer, size_t length) {
   (void)file;
-  if(buffer == NULL || length == 0) {
-    if(current) {
-      current->errno = EINVAL;
-    }
-    return -EINVAL;
-  }
-
-  uint8_t* out = (uint8_t*)buffer;
-  size_t count = 0;
-
-  while(count < length) {
-    int ch = kgetchar();
-    out[count++] = (uint8_t)ch;
-    if(ch == '\n') {
-      break;
-    }
-  }
-
-  return (int64_t)count;
+  return tty_read(buffer, length);
 }
 
 static int64_t console_write(file_t* file, const void* buffer, size_t length) {
