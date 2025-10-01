@@ -1,5 +1,51 @@
 [
   {
+    "title": "BLOCKER: Keyboard input broken after /dev/console implementation",
+    "github_issue": {
+      "number": 173,
+      "url": "https://github.com/pbalduino/menios/issues/173",
+      "state": "OPEN"
+    },
+    "labels": [
+      "bug",
+      "mosh",
+      "devfs",
+      "drivers"
+    ],
+    "assignees": [
+      "pbalduino"
+    ]
+  },
+  {
+    "title": "Getty/login on serial console",
+    "github_issue": {
+      "number": 172,
+      "url": "https://github.com/pbalduino/menios/issues/172",
+      "state": "OPEN"
+    },
+    "labels": [
+      "init",
+      "mosh"
+    ],
+    "assignees": [
+      "pbalduino"
+    ]
+  },
+  {
+    "title": "Implement serial port interrupt-driven input",
+    "github_issue": {
+      "number": 171,
+      "url": "https://github.com/pbalduino/menios/issues/171",
+      "state": "OPEN"
+    },
+    "labels": [
+      "drivers"
+    ],
+    "assignees": [
+      "pbalduino"
+    ]
+  },
+  {
     "title": "Character device infrastructure",
     "github_issue": {
       "number": 170,
@@ -9,7 +55,9 @@
     "labels": [
       "drivers"
     ],
-    "assignees": []
+    "assignees": [
+      "pbalduino"
+    ]
   },
   {
     "title": "TTY subsystem",
@@ -390,7 +438,9 @@
     "labels": [
       "enhancement"
     ],
-    "assignees": []
+    "assignees": [
+      "pbalduino"
+    ]
   },
   {
     "title": "Implement PS/2 mouse driver and input support",
@@ -402,7 +452,9 @@
     "labels": [
       "enhancement"
     ],
-    "assignees": []
+    "assignees": [
+      "pbalduino"
+    ]
   },
   {
     "title": "Implement /dev/ttyS0 serial device interface",
@@ -412,9 +464,13 @@
       "state": "CLOSED"
     },
     "labels": [
-      "enhancement"
+      "enhancement",
+      "devfs",
+      "drivers"
     ],
-    "assignees": []
+    "assignees": [
+      "pbalduino"
+    ]
   },
   {
     "title": "Implement /dev/sda and block device interfaces for storage",
@@ -426,7 +482,9 @@
     "labels": [
       "enhancement"
     ],
-    "assignees": []
+    "assignees": [
+      "pbalduino"
+    ]
   },
   {
     "title": "Implement /dev/kbd0 and /dev/fb0 hardware device interfaces",
@@ -438,7 +496,9 @@
     "labels": [
       "enhancement"
     ],
-    "assignees": []
+    "assignees": [
+      "pbalduino"
+    ]
   },
   {
     "title": "Implement /dev/random and /dev/urandom entropy devices",
@@ -450,7 +510,9 @@
     "labels": [
       "enhancement"
     ],
-    "assignees": []
+    "assignees": [
+      "pbalduino"
+    ]
   },
   {
     "title": "Implement /dev/console and terminal device interfaces",
@@ -462,7 +524,9 @@
     "labels": [
       "enhancement"
     ],
-    "assignees": []
+    "assignees": [
+      "pbalduino"
+    ]
   },
   {
     "title": "Implement /dev/null and /dev/zero virtual devices",
@@ -475,7 +539,9 @@
       "enhancement",
       "good first issue"
     ],
-    "assignees": []
+    "assignees": [
+      "pbalduino"
+    ]
   },
   {
     "title": "Implement device filesystem infrastructure and /dev directory",
@@ -487,7 +553,9 @@
     "labels": [
       "enhancement"
     ],
-    "assignees": []
+    "assignees": [
+      "pbalduino"
+    ]
   },
   {
     "title": "Add code coverage reporting to unit tests with Gcov integration",
@@ -500,7 +568,9 @@
       "enhancement",
       "good first issue"
     ],
-    "assignees": []
+    "assignees": [
+      "pbalduino"
+    ]
   },
   {
     "title": "Create comprehensive Unicode test suite and validation",
@@ -513,7 +583,9 @@
       "enhancement",
       "good first issue"
     ],
-    "assignees": []
+    "assignees": [
+      "pbalduino"
+    ]
   },
   {
     "title": "Add locale and internationalization (i18n) framework",
@@ -526,7 +598,9 @@
       "enhancement",
       "nice to have"
     ],
-    "assignees": []
+    "assignees": [
+      "pbalduino"
+    ]
   },
   {
     "title": "Update filesystem and VFS for Unicode filename support",
@@ -538,7 +612,9 @@
     "labels": [
       "enhancement"
     ],
-    "assignees": []
+    "assignees": [
+      "pbalduino"
+    ]
   },
   {
     "title": "Add Unicode normalization and text processing utilities",
@@ -551,7 +627,9 @@
       "enhancement",
       "nice to have"
     ],
-    "assignees": []
+    "assignees": [
+      "pbalduino"
+    ]
   },
   {
     "title": "Add Unicode support to keyboard input processing",
@@ -563,7 +641,9 @@
     "labels": [
       "enhancement"
     ],
-    "assignees": []
+    "assignees": [
+      "pbalduino"
+    ]
   },
   {
     "title": "Implement Unicode text rendering in framebuffer",
@@ -575,7 +655,9 @@
     "labels": [
       "enhancement"
     ],
-    "assignees": []
+    "assignees": [
+      "pbalduino"
+    ]
   },
   {
     "title": "Convert BDF fonts to Unicode-capable font system",
@@ -587,7 +669,9 @@
     "labels": [
       "enhancement"
     ],
-    "assignees": []
+    "assignees": [
+      "pbalduino"
+    ]
   },
   {
     "title": "Implement UTF-8 decoding and encoding utilities",
@@ -600,7 +684,9 @@
       "enhancement",
       "good first issue"
     ],
-    "assignees": []
+    "assignees": [
+      "pbalduino"
+    ]
   },
   {
     "title": "Implement USB mass storage class driver",
@@ -1650,7 +1736,9 @@
     "labels": [
       "enhancement"
     ],
-    "assignees": []
+    "assignees": [
+      "pbalduino"
+    ]
   },
   {
     "title": "Implement SYS_EXIT (60) syscall",
@@ -1662,7 +1750,9 @@
     "labels": [
       "enhancement"
     ],
-    "assignees": []
+    "assignees": [
+      "pbalduino"
+    ]
   },
   {
     "title": "Implement SYS_WRITE (1) syscall",
@@ -1674,7 +1764,9 @@
     "labels": [
       "enhancement"
     ],
-    "assignees": []
+    "assignees": [
+      "pbalduino"
+    ]
   },
   {
     "title": "Implement basic syscall interface (exit and write)",
@@ -1700,7 +1792,9 @@
     "labels": [
       "enhancement"
     ],
-    "assignees": []
+    "assignees": [
+      "pbalduino"
+    ]
   },
   {
     "title": "Implement Ring 0/Ring 3 transition mechanism",
@@ -1712,7 +1806,9 @@
     "labels": [
       "enhancement"
     ],
-    "assignees": []
+    "assignees": [
+      "pbalduino"
+    ]
   },
   {
     "title": "Implement user/kernel memory protection",
@@ -1724,7 +1820,9 @@
     "labels": [
       "enhancement"
     ],
-    "assignees": []
+    "assignees": [
+      "pbalduino"
+    ]
   },
   {
     "title": "Implement TSS for privilege level transitions",
@@ -1736,7 +1834,9 @@
     "labels": [
       "enhancement"
     ],
-    "assignees": []
+    "assignees": [
+      "pbalduino"
+    ]
   },
   {
     "title": "Implement GDT user segments for Ring 3 support",
@@ -1748,7 +1848,9 @@
     "labels": [
       "enhancement"
     ],
-    "assignees": []
+    "assignees": [
+      "pbalduino"
+    ]
   },
   {
     "title": "Enable SMP (Symmetric Multiprocessing) support",
@@ -1774,7 +1876,9 @@
     "labels": [
       "enhancement"
     ],
-    "assignees": []
+    "assignees": [
+      "pbalduino"
+    ]
   },
   {
     "title": "Implement condition variables",
@@ -1954,7 +2058,9 @@
     "labels": [
       "enhancement"
     ],
-    "assignees": []
+    "assignees": [
+      "pbalduino"
+    ]
   },
   {
     "title": "Implement syscall ABI and dispatcher",
@@ -1966,7 +2072,9 @@
     "labels": [
       "enhancement"
     ],
-    "assignees": []
+    "assignees": [
+      "pbalduino"
+    ]
   },
   {
     "title": "Implement ELF loader for userland programs",
@@ -1978,7 +2086,9 @@
     "labels": [
       "enhancement"
     ],
-    "assignees": []
+    "assignees": [
+      "pbalduino"
+    ]
   },
   {
     "title": "Fix caret rendering to prevent character erasure",
@@ -1990,7 +2100,9 @@
     "labels": [
       "bug"
     ],
-    "assignees": []
+    "assignees": [
+      "pbalduino"
+    ]
   },
   {
     "title": "Optimize screen font definition and storage",
@@ -2046,7 +2158,9 @@
     "labels": [
       "bug"
     ],
-    "assignees": []
+    "assignees": [
+      "pbalduino"
+    ]
   },
   {
     "title": "Refine kthread termination flow",
@@ -2087,7 +2201,9 @@
     "labels": [
       "bug"
     ],
-    "assignees": []
+    "assignees": [
+      "pbalduino"
+    ]
   },
   {
     "title": "Update Limine bootloader to v10 binary release",
@@ -2141,7 +2257,9 @@
     "labels": [
       "bug"
     ],
-    "assignees": []
+    "assignees": [
+      "pbalduino"
+    ]
   },
   {
     "title": "Complete the vsprintk function and add tests",
@@ -2153,7 +2271,9 @@
     "labels": [
       "enhancement"
     ],
-    "assignees": []
+    "assignees": [
+      "pbalduino"
+    ]
   },
   {
     "title": "Add ANSI and scrolling to the console",
@@ -2179,7 +2299,9 @@
     "labels": [
       "bug"
     ],
-    "assignees": []
+    "assignees": [
+      "pbalduino"
+    ]
   },
   {
     "title": "Fix kmalloc to get memory from the virtual memory",
@@ -2205,7 +2327,9 @@
     "labels": [
       "bug"
     ],
-    "assignees": []
+    "assignees": [
+      "pbalduino"
+    ]
   },
   {
     "title": "Fix the PF handler to show the right data",
@@ -2217,7 +2341,9 @@
     "labels": [
       "bug"
     ],
-    "assignees": []
+    "assignees": [
+      "pbalduino"
+    ]
   },
   {
     "title": "Is this OS buildable, if yes, can I get build instructions?",

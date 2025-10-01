@@ -91,20 +91,23 @@ These issues form the backbone of the system and should be prioritized:
 60. **#169** - TTY subsystem (line discipline, virtual terminals, ioctl - CLOSED)
 61. **#170** - Character device infrastructure (foundation for streaming devices - CLOSED)
 
-### Tier 13: Multi-User System Infrastructure (Future - Not Yet Created)
-62. **TBD** - User/group database infrastructure (/etc/passwd, /etc/group)
-63. **TBD** - Process credentials (UID/GID per process)
-64. **TBD** - User database parsing and management
-65. **TBD** - Login program and authentication
-66. **TBD** - Session management and getty
-67. **TBD** - File system permission bits (owner/group/other)
-68. **TBD** - VFS permission checking
-69. **TBD** - Security syscalls (getuid/setuid family)
-70. **TBD** - Update all syscalls for permission checks
-71. **TBD** - User management utilities (useradd, passwd, chmod)
-72. **TBD** - su and sudo implementation
-73. **TBD** - Resource limits (ulimit/getrlimit/setrlimit)
-74. **TBD** - Security testing and audit
+### 🔴 Tier 13: CRITICAL BLOCKER - Keyboard Input (NEW!)
+62. **#173** - BLOCKER: Keyboard input broken after /dev/console implementation
+
+### Tier 14: Multi-User System Infrastructure (Future - Not Yet Created)
+63. **TBD** - User/group database infrastructure (/etc/passwd, /etc/group)
+64. **TBD** - Process credentials (UID/GID per process)
+65. **TBD** - User database parsing and management
+66. **TBD** - Login program and authentication
+67. **TBD** - Session management and getty
+68. **TBD** - File system permission bits (owner/group/other)
+69. **TBD** - VFS permission checking
+70. **TBD** - Security syscalls (getuid/setuid family)
+71. **TBD** - Update all syscalls for permission checks
+72. **TBD** - User management utilities (useradd, passwd, chmod)
+73. **TBD** - su and sudo implementation
+74. **TBD** - Resource limits (ulimit/getrlimit/setrlimit)
+75. **TBD** - Security testing and audit
 
 **Note:** Multi-user support is LOW PRIORITY - implement after shell and core applications are working. See `docs/roads/road_to_multiuser.md` for full details.
 
@@ -263,27 +266,30 @@ Phase 5: Boot Integration                    #150 (boot init as PID 1 - CLOSED)
 
 ### mosh Shell Component Chain
 ```
-Phase 1: Core Infrastructure (Tier 11 - Critical)
-#145 (wait) ──────────────────┐
+🔴 BLOCKER (Tier 13 - CRITICAL)
+#138 (/dev/console - CLOSED) introduced bug → #173 (keyboard input broken) ──→ BLOCKS ALL INTERACTIVE FEATURES
+                                                                           │
+Phase 1: Core Infrastructure (Tier 11 - Critical) ←───────────────────────┤
+#145 (wait) ──────────────────┐                                           │
 #147 (getcwd/chdir) ──────────┼──→ #161 (REPL & parsing - CLOSED) → Read, parse, tokenize commands
-#148 (environment) ───────────┘          ↓
-                                   ↓
+#148 (environment) ───────────┘          ↓                                │
+                                   ↓                                      │
                                #162 (command execution - CLOSED) → fork/exec/wait/PATH lookup
-                                   ↓
-                              #163 (built-ins) → cd/pwd/exit/export
+                                   ↓                                      │
+                              #163 (built-ins) ← BLOCKED BY #173 ────────┤
 
-Phase 2: I/O & Pipes (Tier 11 - High Priority)
-#96 (file descriptors - CLOSED) → #164 (basic redirection) → >, <, >>
+Phase 2: I/O & Pipes (Tier 11 - High Priority)                           │
+#96 (file descriptors - CLOSED) → #164 (basic redirection) → >, <, >>    │
 #102 (pipes) ────────────────────→ #165 (pipe support) → cmd1 | cmd2 | cmd3
 
-Phase 3: Terminal Integration (Tier 12 - Essential)
+Phase 3: Terminal Integration (Tier 12 - Essential)                      │
 #170 (char device infra - CLOSED) ──→ #168 (VGA driver - CLOSED) ──→ #169 (TTY subsystem - CLOSED) ──→ #166 (shell VT/VGA - CLOSED) → Console bridge in place
                          └──→ #137 (/dev/null/zero - CLOSED) ─┘                                      (full VT stack pending)
 
-Phase 4: Usability Features (Tier 11 - Quality of Life)
-#169 (TTY - CLOSED) ──→ #156 (command history) → Up/down arrows, Ctrl+R
-                    ├─→ #157 (tab completion) → Complete commands/files
-                    └─→ #160 (line editing) → Ctrl+L/K/U/A/E/R
+Phase 4: Usability Features (Tier 11 - Quality of Life) ←────────────────┤
+#169 (TTY - CLOSED) ──→ #156 (command history) ← BLOCKED BY #173 ────────┤
+                    ├─→ #157 (tab completion) ← BLOCKED BY #173 ──────────┤
+                    └─→ #160 (line editing) ← BLOCKED BY #173 ────────────┤
 
 Phase 5: Advanced Features (Tier 11 - Optional)
 #155 (scripting) → if/while/for/functions
@@ -393,6 +399,12 @@ All phases ───────────────→ #178 (security audit
 
 ## 🔴 Current Blocking Relationships
 
+### 🚨 CRITICAL BLOCKER - Must Fix Immediately:
+- **#173 (keyboard input broken)** - BLOCKS ALL INTERACTIVE FEATURES
+  - Introduced by: #138 (/dev/console - CLOSED)
+  - Blocks: #163, #156, #157, #160 (all shell interactivity), #172 (getty/login)
+  - **Priority: HIGHEST - System is unusable without keyboard input**
+
 ### Ready to Start (Dependencies Met):
 - **#161 (REPL - CLOSED)** - Shell parsing delivered
 - **#162 (command exec - CLOSED)** - Shell execution delivered
@@ -417,8 +429,15 @@ All phases ───────────────→ #178 (security audit
 - **#103 (UNIX signals - CLOSED)** - Process control mechanism (handlers delivered; siginfo/rt signals complete)
 
 ### Cannot Start Until Complete:
-- **Shell Core Components:** (Most unblocked!)
-  - **#163 (built-ins)** - Ready now (REPL/exec complete)
+- **🚨 CRITICAL BLOCKER - #173 (keyboard input broken):**
+  - **#163 (built-ins)** - BLOCKED (needs keyboard input for interactive use)
+  - **#156 (command history)** - BLOCKED (needs keyboard input for arrow keys)
+  - **#157 (tab completion)** - BLOCKED (needs keyboard input for tab key)
+  - **#160 (line editing)** - BLOCKED (needs keyboard input for editing keys)
+  - **#172 (getty/login)** - BLOCKED (needs keyboard input for login)
+  - **ALL INTERACTIVE FEATURES BLOCKED UNTIL #173 IS FIXED**
+- **Shell Core Components:** (Unblocked but need #173 for testing!)
+  - **#163 (built-ins)** - Ready but BLOCKED BY #173
   - **#164 (basic redirection)** - Ready now (REPL/exec complete)
   - **#165 (pipe support)** blocks on: #102 (pipes syscall)
   - **#166 (shell VT/VGA - CLOSED)** now uses /dev/console; richer VT work can build atop #168/#170 (both CLOSED)
@@ -426,10 +445,10 @@ All phases ───────────────→ #178 (security audit
   - **#137 (/dev/null+zero - CLOSED)** delivered on top of #170 (char device - CLOSED)
   - **#169 (TTY subsystem - CLOSED)** delivered canonical input; any new VT features will spin off beyond #168/#170
   - **#166 (shell VT/VGA - CLOSED)** complete for console output; backed by new TTY layer (#169)
-- **Shell Advanced Features:**
-  - **#156 (command history)** builds on #169 (TTY - CLOSED) for raw mode switching
-  - **#157 (tab completion)** blocks on: #163 (built-ins) for context
-  - **#160 (line editing)** can now target the raw mode exposed by #169 (TTY - CLOSED)
+- **Shell Advanced Features:** (All blocked by #173!)
+  - **#156 (command history)** - BLOCKED BY #173 - builds on #169 (TTY - CLOSED) for raw mode switching
+  - **#157 (tab completion)** - BLOCKED BY #173 - blocks on: #163 (built-ins) for context
+  - **#160 (line editing)** - BLOCKED BY #173 - can target the raw mode exposed by #169 (TTY - CLOSED)
   - **#155 (scripting)** blocks on: #163-#165 (core shell complete)
   - **#158 (job control)** blocks on: #163-#165 (core shell) - signals ready (#103 CLOSED)
   - **#159 (advanced redirection)** blocks on: #164 (basic redirection)
@@ -468,7 +487,17 @@ All phases ───────────────→ #178 (security audit
 
 ## 🎯 Recommended Focus Areas
 
-### Immediate Next Steps (Ready Now!)
+### 🚨 CRITICAL - Fix Keyboard Input IMMEDIATELY
+
+**BLOCKER - Must fix before ANY other work:**
+1. **#173** - Fix keyboard input after /dev/console implementation - CRITICAL
+   - Keyboard input not being captured
+   - No visual feedback on screen when typing
+   - System is completely unusable without this
+   - Blocks ALL interactive features (#163, #156, #157, #160, #172)
+   → **Result: Restore basic keyboard functionality**
+
+### Immediate Next Steps (After #173 is fixed)
 
 **Top Priority - Shell Completion (1-2 weeks):**
 1. **#163** - Built-in commands (cd/pwd/exit/export) - 2-3 days
@@ -624,10 +653,11 @@ All phases ───────────────→ #178 (security audit
 - #104 (shared memory) - High-performance IPC (ready to start)
 
 ### **Project Status**:
-- **Total Issues**: 170 issues created (highest #170, note: #167 closed as duplicate)
+- **🚨 CRITICAL BLOCKER**: #173 (keyboard input broken) - System unusable without keyboard input
+- **Total Issues**: 173 issues created (highest #173)
 - **Closed**: 74 issues (including #103, #137-#138, #146, #149-#154, #161-#162, #166-#170)
 - **Open**: 99 issues (organized by priority tiers)
-- **Planned**: 13 issues for multi-user system (Tier 13 - to be created)
+- **Planned**: 13 issues for multi-user system (Tier 14 - to be created)
 - **Major Completions**:
   - Core kernel: Memory, scheduling, processes, storage, threading foundation
   - Hardware: Framebuffer, keyboard input, timers
@@ -650,8 +680,15 @@ All phases ───────────────→ #178 (security audit
 
 With core kernel infrastructure operational, meniOS has strong foundations for advanced features. Major systems like memory management, scheduling, processes, and storage are complete and functional.
 
-**Recommended immediate development tracks:**
-1. **mosh Shell** (#163-#165) - REPL/exec/console/TTY DONE; continue toward usability (TOP PRIORITY)
+**🚨 CRITICAL BLOCKER - Fix keyboard input FIRST:**
+0. **#173 (keyboard input broken)** - System is unusable without keyboard input (HIGHEST PRIORITY)
+   - Introduced by /dev/console implementation (#138)
+   - Blocks ALL interactive features
+   - Must fix before any other development work
+   - **Estimated effort: 1-3 days**
+
+**Recommended immediate development tracks (After #173 is fixed):**
+1. **mosh Shell** (#163-#165) - REPL/exec/console/TTY DONE; continue toward usability (TOP PRIORITY after #173)
    - Built-in commands (#163) - 2-3 days
    - I/O redirection (#164) - 2-3 days
    - Pipe support (#102, #165) - 5-7 days total
