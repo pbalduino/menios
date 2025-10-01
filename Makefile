@@ -1,4 +1,6 @@
-GIT_BRANCH = $(shell git branch --show-current)
+GIT_BRANCH = $(strip $(shell git branch --show-current))
+GIT_BRANCH := $(if $(GIT_BRANCH),$(GIT_BRANCH),detached)
+
 IMAGE_NAME = menios
 
 DOCKER = $(shell which docker)
