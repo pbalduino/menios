@@ -10,7 +10,7 @@
 - ✅ **Process Scheduling**: Preemptive userland scheduler with time slicing (Issue #34)
 - ✅ **Synchronization**: Mutexes and condition variables (Issues #36, #40)
 - ✅ **User Mode Infrastructure**: Ring 3 transitions, syscall interface, ELF loader
-- ✅ **Process Management**: File descriptors, fork/exec process creation (Issues #96, #93)
+- ✅ **Process Management**: File descriptors and fork/exec process creation (Issues #96, #93) — address spaces are duplicated eagerly (no COW yet).
 - ✅ **Threading Foundation**: Kernel threading infrastructure complete (Issue #108)
 
 **🔥 Ready for Next Phase**: With the foundation complete, we can now tackle application-level infrastructure!
@@ -19,20 +19,20 @@
 
 Below is the roadmap of infrastructure we still need before a vanilla Doom port can enter userland, organized by priority and dependencies.
 
-### **Phase 1: Process & I/O Management** ✅ **COMPLETE!**
-Foundation process management infrastructure is now implemented:
+### **Phase 1: Process & I/O Management** ✅ **COMPLETE**
+Core process and memory plumbing is in tree:
 
 #### **File Descriptor Management** (Issue #96) ✅ **COMPLETE**
-- ✅ **Status**: COMPLETED - dup/dup2 operations, FD table management, close-on-exec support
-- **Impact**: Foundation for all I/O operations (files, pipes, sockets) - ENABLED
+- ✅ **Status**: dup/dup2, descriptor tables, and CLOEXEC support are implemented.
+- **Impact**: Provides the descriptor backbone needed by files, pipes, and future sockets.
 
 #### **Memory Mapping Syscalls** (Issue #89) ✅ **COMPLETE**
-- ✅ **Status**: COMPLETED - mmap/munmap for userspace memory allocation and file mapping
-- **Impact**: Userspace heap allocators and large memory allocations - ENABLED
+- ✅ **Status**: `mmap`/`munmap` back user-side allocators and file mappings.
+- **Impact**: Enables dynamic heaps, loaders, and demand-style allocation.
 
-#### **Fork/Exec Process Creation** (Issue #93) ✅ **COMPLETE**
-- ✅ **Status**: COMPLETED - Complete process lifecycle with copy-on-write memory
-- **Impact**: Running separate programs and shell operations - ENABLED
+#### **Fork/Exec Process Creation** (Issue #93) ✅ **COMPLETE (eager copy)**
+- ✅ **Status**: `fork()`/`execve()` paths are implemented; address spaces are duplicated eagerly. Copy-on-write is still on the roadmap.
+- **Impact**: Allows init, shells, and multi-process workloads to spawn child programs.
 
 ### **Phase 2: Threading Support** (HIGH PRIORITY - Foundation Complete!)
 Complete multithreading infrastructure for modern applications:
@@ -74,53 +74,45 @@ Inter-process communication for complex applications:
 - **Scope**: shmget/shmat/shmdt for high-performance IPC
 - **Impact**: Fast inter-process data sharing
 
-### **Phase 4: File System & Storage**
-Persistent storage for game assets and save files:
+### **Phase 4: File System & Storage** ✅ **MOSTLY COMPLETE**
+We can mount and read from disk images today; write support is still limited.
 
-#### **Block Device Driver** (Issue #62)
-- **Scope**: AHCI/ATA or RAM-backed disk with DMA support
-- **Impact**: Hardware interface for storage devices
+#### **Block Device Driver** (Issue #62) ✅ **COMPLETE**
+- ✅ **Status**: AHCI driver with DMA and interrupt completion ships in-tree.
+- **Impact**: Provides the hardware path for loading data off the SATA image.
 
-#### **Block Cache System** (Issue #63)
-- **Dependencies**: Issue #62 (block device)
-- **Scope**: Buffer management, write-back cache, performance optimization
-- **Impact**: Efficient disk I/O operations
+#### **Block Cache System** (Issue #63) ✅ **COMPLETE**
+- ✅ **Status**: LRU block cache (`block_cache.c`) sits in front of block devices.
+- **Impact**: Cuts down repeated DMA traffic and improves read latency.
 
-#### **Filesystem Library** (Issue #64)
-- **Dependencies**: Issue #63 (block cache)
-- **Scope**: FAT32/ext2/simple FS implementation
-- **Impact**: Structured file storage and retrieval
+#### **Filesystem Library** (Issue #64) ✅ **COMPLETE (read-only)**
+- ✅ **Status**: FAT32 support handles GPT discovery, directory walks, and file reads.
+- **Impact**: Kernel can traverse `/` and load assets from the disk image.
 
-#### **VFS Layer** (Issue #65)
-- **Dependencies**: Issue #64 (filesystem library)
-- **Scope**: Virtual File System abstraction layer
-- **Impact**: Uniform interface for different filesystems
+#### **VFS Layer** (Issue #65) ✅ **COMPLETE**
+- ✅ **Status**: Generic mount table with path resolution (`vfs.c`) fronts filesystem drivers.
+- **Impact**: Userland touches files by path regardless of the backing FS.
 
-#### **File I/O Syscalls** (Issue #60)
-- ✅ **Status**: Ready to implement (file descriptors complete, waiting on VFS)
-- **Scope**: open/read/write/lseek/close and directory operations
-- **Impact**: Userspace file access for loading WAD files
+#### **File I/O Syscalls** (Issue #60) ✅ **COMPLETE (read-focused)**
+- ✅ **Status**: `open`/`read`/`write`/`lseek`/`close` are wired through the VFS and descriptor tables.
+- **Limitation**: FS writes remain largely TODO (FAT32 is currently read-only).
+- **Impact**: Doom-sized assets can now be loaded from disk.
 
 ### **Phase 5: Graphics & Input**
 Visual output and user interaction:
 
-#### **Userspace Graphics Interface** (Issue #31)
-- ✅ **Status**: Ready to implement (file descriptors complete)
-- **Scope**: Framebuffer interface, double buffering, palette control
-- **Requirements**: 320×200 paletted or 640×480 8/32-bit modes for Doom
-- **Impact**: Visual output for games and applications
+#### **Userspace Graphics Interface** (Issue #31) ✅ **COMPLETE**
+- ✅ **Status**: `/dev/fb/0` exposes the framebuffer to userland; console writes multiplex to serial+video.
+- **Impact**: Games can blit directly to the screen today.
 
-#### **Input Subsystem** (Issue #32)
-- ✅ **Status**: Ready to implement (file descriptors complete)
-- **Scope**: Userspace keyboard/mouse interface, event queue system
-- **Requirements**: Character device or event queue using PS/2 driver
-- **Impact**: User interaction and game controls
+#### **Input Subsystem** (Issue #32) ✅ **COMPLETE**
+- ✅ **Status**: PS/2 key events flow into a userspace-readable stdin ring buffer.
+- **Impact**: Shells and future games can read input without polling hardware.
 
-#### **Audio Subsystem** (Issue #33)
-- ✅ **Status**: Ready to implement (file descriptors complete)
-- **Scope**: PCM output, mixer/stream syscalls, timer-driven audio
-- **Requirements**: 8-bit/16-bit audio buffers for Doom sound
-- **Impact**: Game audio and sound effects
+#### **Audio Subsystem** (Issue #33) 🚧 **Pending**
+- **Scope**: PCM output, mixer/stream syscalls, timer-driven audio.
+- **Requirements**: 8-bit/16-bit audio buffers for Doom sound.
+- **Impact**: Game audio and sound effects (currently missing).
 
 ### **Phase 6: Toolchain and Build Flow**
 Development environment for building applications:
@@ -169,32 +161,32 @@ Development environment for building applications:
 ## 📈 **Updated Timeline Estimates**
 
 ### **Short Term (3-6 months)**
-- ✅ Foundation complete!
-- Complete Phase 1: Process & I/O Management (#96, #89, #93)
-- Begin Phase 2: Threading Support (#108, #109)
+- Land pthread API and libc hardening (#109-#111, #110).
+- Add core IPC plumbing: pipes, signals, shared memory (#102-#104).
+- Keep roadmap docs in sync with kernel progress.
 
 ### **Medium Term (6-12 months)**
-- Complete threading infrastructure (#108-#113)
-- Implement file system support (#62-#65, #60)
-- Basic graphics and input (#31, #32)
+- Introduce audio output (#33) and network/socket layers (#67-#71).
+- Stand up the cross-compiler toolchain and SDK (#29).
 
 ### **Long Term (12+ months)**
-- Audio subsystem (#33)
-- Cross-compiler toolchain (#29)
-- Full userspace SDK
-- **Doom port and integration**
+- Optimise for SMP workloads and per-CPU data (#80-#86).
+- Deliver polished user tooling, networking extras (#72-#73), and the Doom port itself.
 
 ## 🚀 **Immediate Next Steps**
 
-**Ready to implement now** (no blocking dependencies):
-1. **#89** - Memory mapping syscalls (mmap/munmap)
-2. **#96** - File descriptor management
-3. **#108** - Kernel threading infrastructure
+**High-impact kernel work still outstanding:**
+1. **#109** – Implement the pthread API so user programs can spin up threads.
+2. **#110** – Make libc thread-safe once pthread primitives exist.
+3. **#111** – Land advanced pthread synchronization (barriers, robust locks).
+4. **#102** – Add pipes/FIFOs for shell pipelines and IPC.
+5. **#103** – Deliver UNIX signals so processes can be controlled from the shell.
+6. **#104** – Wire shared memory to back high-performance IPC (and future audio).
+7. **#33** – Bring up the audio subsystem for Doom’s sound effects/music.
+8. **#29** – Ship a cross-compiler toolchain and minimal SDK for userland builds.
 
-**High impact for applications**:
-4. **#93** - Fork/exec process creation (after #96)
-5. **#109** - pthread API (after #108)
-6. **#102** - Pipes (after #96)
+These items unlock the bulk of the remaining roadmap phases (threaded libc, IPC,
+networking) and pave the way for shipping a Doom-capable user environment.
 
 ## 🎯 **Success Criteria**
 

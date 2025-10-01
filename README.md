@@ -182,7 +182,7 @@ See [`road_to_doom.md`](road_to_doom.md) for the complete roadmap and [`tasks.js
 ## Known Issues and Limitations
 
 ### Current Limitations
-- **Filesystem**: No persistent storage or file I/O capabilities yet (Issues #60, #62-#65)
+- **Filesystem**: Read-only FAT32 and tmpfs support exist; write support and broader FS coverage are still TODO (Issues #60, #62-#65).
 - **Limited hardware support**: Only basic PS/2 keyboard, VGA framebuffer
 - **No network stack**: No networking capabilities (Issues #67-#73)
 - **Graphics**: Basic framebuffer, no hardware acceleration
