@@ -68,7 +68,8 @@ void idt_init() {
   idt_add_isr(ISR_PAGE_FAULT, &idt_pf_isr_asm_handler);
   idt_add_isr(ISR_PERIODIC_TIMER, &idt_period_timer_isr_asm_handler);
   idt_add_isr(ISR_KEYBOARD, &ps2kb_isr_handler);
-  idt_add_isr(ISR_SERIAL, &serial_isr_handler);
+  idt_add_isr(ISR_SERIAL_COM1, &serial_isr_handler_com1);
+  idt_add_isr(ISR_SERIAL_COM2, &serial_isr_handler_com2);
   idt_add_isr(ISR_AHCI, &ahci_isr_handler);
   idt_add_user_isr(ISR_SYSCALL, &syscall_isr_handler);
 

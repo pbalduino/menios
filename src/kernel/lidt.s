@@ -4,7 +4,8 @@ global idt_df_isr_asm_handler
 global idt_gpf_isr_asm_handler
 global idt_pf_isr_asm_handler
 global idt_period_timer_isr_asm_handler
-global serial_isr_handler
+global serial_isr_handler_com1
+global serial_isr_handler_com2
 global ps2kb_isr_handler
 global ahci_isr_handler
 global syscall_isr_handler
@@ -14,7 +15,8 @@ extern idt_df_isr_handler
 extern idt_gpf_isr_handler
 extern idt_pf_isr_handler
 extern timer_handler
-extern serial_irq_handler
+extern serial_irq_handler_com1
+extern serial_irq_handler_com2
 extern ps2kb_handler
 extern ahci_irq_handler
 extern syscall_dispatch
@@ -196,11 +198,21 @@ ps2kb_isr_handler:
 
   iretq                      ; Return from the interrupt
 
-serial_isr_handler:
+serial_isr_handler_com1:
   pushfq
   push rax
   push rcx
-  call serial_irq_handler
+  call serial_irq_handler_com1
+  pop rcx
+  pop rax
+  popfq
+  iretq
+
+serial_isr_handler_com2:
+  pushfq
+  push rax
+  push rcx
+  call serial_irq_handler_com2
   pop rcx
   pop rax
   popfq

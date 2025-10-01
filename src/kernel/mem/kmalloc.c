@@ -76,13 +76,13 @@ void dump_heap(heap_node_p heap, size_t size) {
 
     if(i % 16 == 0) {
       if(i != 0) {
-        serial_puts("   ");
+        serial_port_puts(SERIAL_PORT_DEBUG, "   ");
         for(size_t j = i - 15; j <= i; j++) {
           uint8_t byte = ((uint8_t*)heap)[j];
           if(byte >= 32 && byte <= 126) {
-            serial_putchar(byte);
+            serial_port_putchar(SERIAL_PORT_DEBUG, byte);
           } else {
-            serial_puts(".");
+            serial_port_puts(SERIAL_PORT_DEBUG, ".");
           }
         }
       }

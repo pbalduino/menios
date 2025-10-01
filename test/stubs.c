@@ -5,6 +5,7 @@
 #include <kernel/mutex.h>
 #include <kernel/proc.h>
 #include <kernel/syscall.h>
+#include <kernel/serial.h>
 #include <kernel/thread.h>
 #include <errno.h>
 #include <stdarg.h>
@@ -93,11 +94,61 @@ static void vdiscard(const char* fmt, va_list args) {
   (void)args;
 }
 
-void serial_printf(const char* fmt, ...) {
+bool serial_debug = false;
+
+void serial_system_init(void) {}
+void serial_enable_irq(serial_port_t port) {
+  (void)port;
+}
+void serial_poll(serial_port_t port) {
+  (void)port;
+}
+
+int serial_port_putchar(serial_port_t port, int ch) {
+  (void)port;
+  (void)ch;
+  return 0;
+}
+
+int serial_port_puts(serial_port_t port, const char* text) {
+  (void)port;
+  (void)text;
+  return 0;
+}
+
+int serial_port_vprintf(serial_port_t port, const char* fmt, va_list args) {
+  (void)port;
+  vdiscard(fmt, args);
+  return 0;
+}
+
+int serial_port_printf(serial_port_t port, const char* fmt, ...) {
+  (void)port;
   va_list args;
   va_start(args, fmt);
   vdiscard(fmt, args);
   va_end(args);
+  return 0;
+}
+
+int64_t serial_port_read(serial_port_t port, void* buffer, size_t length) {
+  (void)port;
+  (void)buffer;
+  (void)length;
+  return 0;
+}
+
+int serial_vprintf(const char* fmt, va_list args) {
+  vdiscard(fmt, args);
+  return 0;
+}
+
+int serial_printf(const char* fmt, ...) {
+  va_list args;
+  va_start(args, fmt);
+  vdiscard(fmt, args);
+  va_end(args);
+  return 0;
 }
 
 void serial_puts(const char* str) {
@@ -120,10 +171,6 @@ void logk(const char* fmt, ...) {
   va_start(args, fmt);
   vdiscard(fmt, args);
   va_end(args);
-}
-
-void serial_putchar(char ch) {
-  (void)ch;
 }
 
 void fb_putchar(char ch) {

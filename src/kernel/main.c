@@ -140,7 +140,7 @@ void _start() {
   serial_debug = true;
   tsc_init();
 
-  serial_init();
+  serial_system_init();
 
   mem_init();
 
@@ -169,7 +169,7 @@ void _start() {
 
   apic_init();
 
-  serial_enable_irq();
+  serial_enable_irq(SERIAL_PORT_CONSOLE);
 
   timer_init();
   

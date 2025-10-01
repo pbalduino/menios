@@ -23,7 +23,8 @@
 #define ISR_MACHINE_CHECK            0x12
 #define ISR_PERIODIC_TIMER           0x20
 #define ISR_KEYBOARD                 0x21
-#define ISR_SERIAL                   0x24
+#define ISR_SERIAL_COM1              0x24
+#define ISR_SERIAL_COM2              0x25
 #define ISR_AHCI                     0x40
 #define ISR_SYSCALL                  0x80
 
@@ -99,7 +100,8 @@ extern void idt_load(idt_pointer_t *idt_ptr);
 extern void idt_pf_isr_asm_handler();
 extern void idt_period_timer_isr_asm_handler();
 extern void ps2kb_isr_handler();
-extern void serial_isr_handler();
+extern void serial_isr_handler_com1();
+extern void serial_isr_handler_com2();
 extern void ahci_isr_handler();
 extern void syscall_isr_handler();
 

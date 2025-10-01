@@ -63,7 +63,7 @@ char_device_t* tty_char_device(void) {
 static void tty_output_char(char ch) {
   vga_text_putc(ch);
   fb_putchar((uint8_t)ch);
-  serial_putchar((uint8_t)ch);
+  serial_port_putchar(SERIAL_PORT_CONSOLE, (uint8_t)ch);
 }
 
 static void tty_queue_push_byte_locked(tty_state_t* tty, uint8_t ch) {
@@ -195,7 +195,7 @@ static int64_t tty_read_common(void* buffer, size_t length) {
 
   kmutex_lock(&default_tty.wait_lock);
   while(total == 0) {
-    serial_poll();
+    serial_poll(SERIAL_PORT_CONSOLE);
 
     spinlock_lock(&default_tty.buffer_lock);
     while(total < length) {
@@ -214,7 +214,7 @@ static int64_t tty_read_common(void* buffer, size_t length) {
       break;
     }
 
-    serial_poll();
+    serial_poll(SERIAL_PORT_CONSOLE);
 
     kcondvar_wait(&default_tty.data_available, &default_tty.wait_lock);
   }

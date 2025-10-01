@@ -105,7 +105,7 @@ OBJCOPY = $(GCC_DIR)/objcopy
 
 QEMU_MEMORY = size=2G,maxmem=2G
 QEMU_X86_64 = qemu-system-x86_64
-QEMU_LOG_FILE=com1.log
+QEMU_LOG_FILE=com2.log
 QEMU_OPTS = -smp cpus=2,maxcpus=4,sockets=1,dies=1,clusters=1,cores=2 \
 	-vga std \
 	-no-reboot \
@@ -120,6 +120,7 @@ QEMU_OPTS = -smp cpus=2,maxcpus=4,sockets=1,dies=1,clusters=1,cores=2 \
 	-device usb-kbd \
 	-device usb-mouse \
 	-serial stdio \
+	-serial file:$(QEMU_LOG_FILE) \
 	-monitor none \
 	-d int \
 	-M hpet=on \

@@ -357,16 +357,27 @@ file_descriptor_t fd_get(int fd) {
   return kernel_process_info.files[fd].file;
 }
 
+static inline serial_port_t serial_file_port(const file_t* file) {
+  if(file == NULL || file->private_data == NULL) {
+    return SERIAL_PORT_CONSOLE;
+  }
+  serial_port_t port = (serial_port_t)(uintptr_t)file->private_data;
+  if(port >= SERIAL_PORT_COUNT) {
+    return SERIAL_PORT_CONSOLE;
+  }
+  return port;
+}
+
 static int64_t serial_read_impl(file_t* file, void* buffer, size_t length) {
-  (void)file;
-  return serial_read(buffer, length);
+  serial_port_t port = serial_file_port(file);
+  return serial_port_read(port, buffer, length);
 }
 
 static int64_t serial_write_impl(file_t* file, const void* buffer, size_t length) {
-  (void)file;
+  serial_port_t port = serial_file_port(file);
   const char* data = (const char*)buffer;
   for(size_t idx = 0; idx < length; idx++) {
-    serial_putchar(data[idx]);
+    serial_port_putchar(port, data[idx]);
   }
   return (int64_t)length;
 }
@@ -411,18 +422,28 @@ static int console_char_open(char_device_t* device, uint32_t mode, file_t** out_
   return 0;
 }
 
-static int serial_char_open(char_device_t* device, uint32_t mode, file_t** out_file) {
-  (void)device;
+static int serial_char_open_port(serial_port_t port, uint32_t mode, file_t** out_file) {
   if((mode & (FILE_MODE_READ | FILE_MODE_WRITE)) == 0) {
     mode |= FILE_MODE_READ;
   }
 
-  file_t* file = file_create(&serial_file_ops, NULL, mode);
+  file_t* file = file_create(&serial_file_ops, (void*)(uintptr_t)port, mode);
   if(file == NULL) {
     return -ENOMEM;
   }
+  serial_enable_irq(port);
   *out_file = file;
   return 0;
+}
+
+static int serial_console_char_open(char_device_t* device, uint32_t mode, file_t** out_file) {
+  (void)device;
+  return serial_char_open_port(SERIAL_PORT_CONSOLE, mode, out_file);
+}
+
+static int serial_debug_char_open(char_device_t* device, uint32_t mode, file_t** out_file) {
+  (void)device;
+  return serial_char_open_port(SERIAL_PORT_DEBUG, mode, out_file);
 }
 
 static int framebuffer_char_open(char_device_t* device, uint32_t mode, file_t** out_file) {
@@ -454,7 +475,8 @@ static int keyboard_char_open(char_device_t* device, uint32_t mode, file_t** out
 }
 
 static const char_device_ops_t console_char_ops = { .open = console_char_open };
-static const char_device_ops_t serial_char_ops = { .open = serial_char_open };
+static const char_device_ops_t serial_console_ops = { .open = serial_console_char_open };
+static const char_device_ops_t serial_debug_ops = { .open = serial_debug_char_open };
 static const char_device_ops_t framebuffer_char_ops = { .open = framebuffer_char_open };
 static const char_device_ops_t keyboard_char_ops = { .open = keyboard_char_open };
 
@@ -466,10 +488,18 @@ static char_device_t console_char_device = {
   .next = NULL,
 };
 
-static char_device_t serial_char_device = {
+static char_device_t serial_console_device = {
   .name = "/dev/ttyS0",
   .supported_modes = FILE_MODE_READ | FILE_MODE_WRITE,
-  .ops = &serial_char_ops,
+  .ops = &serial_console_ops,
+  .driver_ctx = NULL,
+  .next = NULL,
+};
+
+static char_device_t serial_debug_device = {
+  .name = "/dev/ttyS1",
+  .supported_modes = FILE_MODE_READ | FILE_MODE_WRITE,
+  .ops = &serial_debug_ops,
   .driver_ctx = NULL,
   .next = NULL,
 };
@@ -527,8 +557,11 @@ void file_system_init(void) {
   if(!char_device_register(&console_char_device)) {
     serial_printf("file_system_init: failed to register /dev/console\n");
   }
-  if(!char_device_register(&serial_char_device)) {
+  if(!char_device_register(&serial_console_device)) {
     serial_printf("file_system_init: failed to register /dev/ttyS0\n");
+  }
+  if(!char_device_register(&serial_debug_device)) {
+    serial_printf("file_system_init: failed to register /dev/ttyS1\n");
   }
   if(!char_device_register(&framebuffer_char_device)) {
     serial_printf("file_system_init: failed to register /dev/fb/0\n");
