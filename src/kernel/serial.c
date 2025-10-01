@@ -7,6 +7,7 @@
 #include <kernel/apic.h>
 #include <kernel/condvar.h>
 #include <kernel/kernel.h>
+#include <kernel/idt.h>
 #include <kernel/mutex.h>
 #include <kernel/proc.h>
 #include <kernel/serial.h>
