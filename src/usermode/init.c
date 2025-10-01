@@ -59,15 +59,24 @@ static void sleep_us(uint64_t usec) {
   syscall2(SYS_SLEEP, (long)usec, 0);
 }
 
-static void run_shell(void) {
-  static char path[] = "/bin/user_demo";
+static long exec_program(char* path) {
   char* argv[] = { path, NULL };
   char* envp[] = { NULL };
+  return syscall3(SYS_EXECVE, (long)path, (long)argv, (long)envp);
+}
 
-  long rc = syscall3(SYS_EXECVE, (long)path, (long)argv, (long)envp);
+static void run_shell(void) {
+  static char mosh_path[] = "/bin/mosh";
+  static char fallback_path[] = "/bin/user_demo";
+
+  long rc = exec_program(mosh_path);
   if(rc < 0) {
-    write_str(STDERR_FILENO, "[init] execve(/bin/user_demo) failed\n");
-    syscall1(SYS_EXIT, 1);
+    write_str(STDERR_FILENO, "[init] execve(/bin/mosh) failed, falling back to user_demo\n");
+    rc = exec_program(fallback_path);
+    if(rc < 0) {
+      write_str(STDERR_FILENO, "[init] execve(/bin/user_demo) failed\n");
+      syscall1(SYS_EXIT, 1);
+    }
   }
 }
 

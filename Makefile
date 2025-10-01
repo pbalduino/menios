@@ -42,6 +42,8 @@ INIT_ELF_OBJ = $(OBJDIR)/usermode/init_elf.o
 INIT_ELF_SYMBOL := $(subst .,_,$(subst /,_,$(INIT_ELF)))
 OBJS += $(INIT_ELF_OBJ)
 
+MOSH_ELF = $(OBJDIR)/usermode/mosh.elf
+
 -include $(OBJS:.o=.d)
 
 override CFLAGS += \
@@ -244,6 +246,15 @@ else
 	$(DOCKER) run --rm $(DOCKER_RUN_FLAGS) --mount type=bind,source=$$(pwd),target=/mnt $(DOCKER_IMAGE) /bin/sh -c "cd /mnt && make $@"
 endif
 
+$(MOSH_ELF): app/mosh/mosh.c linker/user_elf.ld
+ifeq ($(OS_NAME),linux)
+	@mkdir -p $(OBJDIR)/usermode
+	$(GCC) -nostdlib -nostartfiles -ffreestanding -I./include -c app/mosh/mosh.c -o $(OBJDIR)/usermode/mosh.o
+	$(LD) -nostdlib -static -T linker/user_elf.ld -o $@ $(OBJDIR)/usermode/mosh.o
+else
+	$(DOCKER) run --rm $(DOCKER_RUN_FLAGS) --mount type=bind,source=$$(pwd),target=/mnt $(DOCKER_IMAGE) /bin/sh -c "cd /mnt && make $@"
+endif
+
 $(OBJDIR)/usermode:
 	@mkdir -p $@
 
@@ -252,7 +263,7 @@ $(OBJDIR)/kernel:
 
 
 .PHONY: build
-build: docker $(OBJS)
+build: docker $(OBJS) $(MOSH_ELF)
 ifeq ($(OS_NAME),linux)
 	@set -eux
 
@@ -276,6 +287,7 @@ ifeq ($(OS_NAME),linux)
 	cp $(OBJS) $(KERNEL_OBJ)
 	@mkdir -p $(OUTPUT_DIR)/bin
 	cp build/obj/usermode/user_demo.elf $(OUTPUT_DIR)/bin/user_demo
+	cp $(MOSH_ELF) $(OUTPUT_DIR)/bin/mosh
 
 	$(LD) $(LDFLAGS) -o $(KERNEL) $$(find -L $(KERNEL_OBJ) -type f -name '*.o')
 
@@ -323,6 +335,7 @@ ifeq ($(OS_NAME),linux)
 	mcopy -i $(IMAGE_NAME).hdd@@2M $(OUTPUT_DIR)/limine-bios.sys ::/boot/limine/
 	mcopy -i $(IMAGE_NAME).hdd@@2M $(OUTPUT_DIR)/EFI/BOOT/BOOTX64.EFI ::/EFI/BOOT
 	mcopy -i $(IMAGE_NAME).hdd@@2M $(OUTPUT_DIR)/bin/user_demo ::/bin/user_demo
+	mcopy -i $(IMAGE_NAME).hdd@@2M $(OUTPUT_DIR)/bin/mosh ::/bin/mosh
 	$(OUTPUT_DIR)/limine bios-install $(IMAGE_NAME).hdd 1
 
 	@echo Building ISO

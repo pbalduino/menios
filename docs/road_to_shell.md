@@ -15,13 +15,14 @@ work, and relationships.
 - [ ] Provide default environment variables (`PATH`, `HOME`), chdir to `/` and
       dup `/dev/tty0` onto the standard streams.
 - [x] Replace the temporary idle loop with logic that `execve`s the next stage
-      (user demo today, `mosh` tomorrow) and respawns it if it exits.
+      (boots `/bin/mosh` with a `/bin/user_demo` fallback while supervision work
+      continues).
 - [x] Mount the FAT32 root filesystem so `/bin` is available before launching
       the shell payload.
 
 ## #146 – Device Filesystem (`/dev`)
 
-**Status:** In progress
+**Status:** Complete
 
 - [x] Implement `devfs` as a VFS driver that exposes the registered character
       devices under `/dev` (`/dev/tty0`, `/dev/console`, `/dev/null`, etc.).
@@ -49,6 +50,15 @@ work, and relationships.
       `waitpid()` semantics.
 - [ ] Audit file-descriptor cloning (`CLOEXEC`, controlling terminal) and env
       propagation to support init’s future supervision role.
+
+## User-shell Milestone
+
+- [x] `/bin/mosh` now ships as a freestanding ELF that prints a prompt, accepts
+      user input on stdin, and handles simple built-ins (`help`, `exit`).
+- [ ] Bind PID 1’s stdio to `/dev/tty0` so init’s banner and mosh’s prompt land
+      on the console.
+- [ ] Extend mosh to resolve and execute binaries once exec/argv/env handling is
+      complete.
 
 ---
 
