@@ -101,6 +101,18 @@ static size_t serial_buffer_pop_many(uint8_t* out, size_t max_length) {
   return count;
 }
 
+static bool serial_drain_fifo(void) {
+  bool notify = false;
+
+  while(serial_port_in(SERIAL_REG_LSR) & SERIAL_LSR_DATA_READY) {
+    uint8_t ch = serial_port_in(SERIAL_REG_DATA);
+    notify = serial_buffer_push(ch) || notify;
+    tty_handle_input_char(ch);
+  }
+
+  return notify;
+}
+
 static void serial_acknowledge_irq(void) {
   (void)serial_port_in(SERIAL_REG_IIR);
   apic_send_eoi();
@@ -109,7 +121,7 @@ static void serial_acknowledge_irq(void) {
 void serial_irq_handler(void) {
   serial_buffer_init();
 
-  bool pushed = false;
+  bool notify = false;
 
   for(;;) {
     uint8_t iir = serial_port_in(SERIAL_REG_IIR);
@@ -122,11 +134,7 @@ void serial_irq_handler(void) {
       case 0x02: // Received data available
       case 0x04: // Receiver timeout
       case 0x06: // Character timeout (16550A)
-        while(serial_port_in(SERIAL_REG_LSR) & SERIAL_LSR_DATA_READY) {
-          uint8_t ch = serial_port_in(SERIAL_REG_DATA);
-          pushed = serial_buffer_push(ch) || pushed;
-          tty_handle_input_char(ch);
-        }
+        notify = serial_drain_fifo() || notify;
         break;
       case 0x03: // Line status
         (void)serial_port_in(SERIAL_REG_LSR);
@@ -137,7 +145,7 @@ void serial_irq_handler(void) {
     }
   }
 
-  if(pushed) {
+  if(notify) {
     kcondvar_broadcast(&serial_rx_state.data_available);
   }
 
@@ -202,6 +210,13 @@ void serial_enable_irq(void) {
 
   serial_port_out(SERIAL_REG_IER, 0x01);
   serial_irq_configured = true;
+}
+
+void serial_poll(void) {
+  serial_buffer_init();
+  if(serial_drain_fifo()) {
+    kcondvar_broadcast(&serial_rx_state.data_available);
+  }
 }
 
 int serial_putchar(int ch) {

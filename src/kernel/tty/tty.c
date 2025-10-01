@@ -195,6 +195,8 @@ static int64_t tty_read_common(void* buffer, size_t length) {
 
   kmutex_lock(&default_tty.wait_lock);
   while(total == 0) {
+    serial_poll();
+
     spinlock_lock(&default_tty.buffer_lock);
     while(total < length) {
       uint8_t ch;
@@ -211,6 +213,8 @@ static int64_t tty_read_common(void* buffer, size_t length) {
     if(total > 0) {
       break;
     }
+
+    serial_poll();
 
     kcondvar_wait(&default_tty.data_available, &default_tty.wait_lock);
   }

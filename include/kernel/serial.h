@@ -13,6 +13,7 @@ int serial_printf(const char* format, ...);
 int serial_vprintf(const char *format, va_list args);
 int64_t serial_read(void* buffer, size_t length);
 void serial_enable_irq(void);
+void serial_poll(void);
 
 #define serial_line(a) serial_printf("%s: [%s:%d] %s\n", __func__, __FILE__, __LINE__, a)
 #define serial_log(a) serial_printf("[INFO] %s[%d]: %s\n", __FILE__, __LINE__, a)
