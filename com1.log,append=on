@@ -10,10 +10,10 @@ tsc_calibrate: TSC frequency 1000000000 Hz
   Entry 1:  base: 52000 - size: 315392 (4d000) - type: Usable
   Entry 2:  base: 9fc00 - size: 1024 (400) - type: Reserved
   Entry 3:  base: f0000 - size: 65536 (10000) - type: Reserved
-  Entry 4:  base: 100000 - size: 2141876224 (7faa7000) - type: Usable
-  Entry 5:  base: 7fba7000 - size: 323584 (4f000) - type: Bootloader reclaimable
-  Entry 6:  base: 7fbf6000 - size: 2822144 (2b1000) - type: Kernel and modules
-  Entry 7:  base: 7fea7000 - size: 1273856 (137000) - type: Bootloader reclaimable
+  Entry 4:  base: 100000 - size: 2141855744 (7faa2000) - type: Usable
+  Entry 5:  base: 7fba2000 - size: 323584 (4f000) - type: Bootloader reclaimable
+  Entry 6:  base: 7fbf1000 - size: 2830336 (2b3000) - type: Kernel and modules
+  Entry 7:  base: 7fea4000 - size: 1286144 (13a000) - type: Bootloader reclaimable
   Entry 8:  base: 7ffde000 - size: 139264 (22000) - type: Reserved
   Entry 9:  base: b0000000 - size: 268435456 (10000000) - type: Reserved
   Entry 10:  base: fd000000 - size: 4096000 (3e8000) - type: Framebuffer
@@ -28,7 +28,7 @@ vfs: mounted /dev
 vfs: mounted /tmp
 [INFO] src/kernel/gdt.c[80]: Entering gdt_init
 [INFO] src/kernel/gdt.c[106]: Leaving gdt_init
-idt_init: idt_p @ 0xffffffff8005a1e0 - offset: ffffffff8005a1e0
+idt_init: idt_p @ 0xffffffff8005c680 - offset: ffffffff8005c680
 syscall_init: initialized dispatcher (INT 0x80)
 acpi_init: Initializing ACPI.
 acpi_init: RSDP address: 0xf52b0
@@ -55,14 +55,14 @@ uacpi_namespace_load: [vendor/uacpi/uacpi.c:415]
 uacpi_kernel_initialize: not implemented. Init level: 2
 uacpi_kernel_io_map not implemented
 uacpi_kernel_io_write not implemented - offset: 0 - width: 4 - value: 0
-uacpi_kernel_pci_read not implemented - bus: 0 device: 1f function: 0 segment: 0 - off 60 - width: 1 - value: ffff80007fbecab8
-uacpi_kernel_pci_read not implemented - bus: 0 device: 1f function: 0 segment: 0 - off 61 - width: 1 - value: ffff80007fbecab8
-uacpi_kernel_pci_read not implemented - bus: 0 device: 1f function: 0 segment: 0 - off 62 - width: 1 - value: ffff80007fbecab8
-uacpi_kernel_pci_read not implemented - bus: 0 device: 1f function: 0 segment: 0 - off 63 - width: 1 - value: ffff80007fbecab8
-uacpi_kernel_pci_read not implemented - bus: 0 device: 1f function: 0 segment: 0 - off 68 - width: 1 - value: ffff80007fbecab8
-uacpi_kernel_pci_read not implemented - bus: 0 device: 1f function: 0 segment: 0 - off 69 - width: 1 - value: ffff80007fbecab8
-uacpi_kernel_pci_read not implemented - bus: 0 device: 1f function: 0 segment: 0 - off 6a - width: 1 - value: ffff80007fbecab8
-uacpi_kernel_pci_read not implemented - bus: 0 device: 1f function: 0 segment: 0 - off 6b - width: 1 - value: ffff80007fbecab8
+uacpi_kernel_pci_read not implemented - bus: 0 device: 1f function: 0 segment: 0 - off 60 - width: 1 - value: ffff80007fbe7ac8
+uacpi_kernel_pci_read not implemented - bus: 0 device: 1f function: 0 segment: 0 - off 61 - width: 1 - value: ffff80007fbe7ac8
+uacpi_kernel_pci_read not implemented - bus: 0 device: 1f function: 0 segment: 0 - off 62 - width: 1 - value: ffff80007fbe7ac8
+uacpi_kernel_pci_read not implemented - bus: 0 device: 1f function: 0 segment: 0 - off 63 - width: 1 - value: ffff80007fbe7ac8
+uacpi_kernel_pci_read not implemented - bus: 0 device: 1f function: 0 segment: 0 - off 68 - width: 1 - value: ffff80007fbe7ac8
+uacpi_kernel_pci_read not implemented - bus: 0 device: 1f function: 0 segment: 0 - off 69 - width: 1 - value: ffff80007fbe7ac8
+uacpi_kernel_pci_read not implemented - bus: 0 device: 1f function: 0 segment: 0 - off 6a - width: 1 - value: ffff80007fbe7ac8
+uacpi_kernel_pci_read not implemented - bus: 0 device: 1f function: 0 segment: 0 - off 6b - width: 1 - value: ffff80007fbe7ac8
 uacpi_kernel_io_write not implemented - offset: 0 - width: 4 - value: 0
 uacpi_kernel_io_read not implemented
 uacpi_kernel_io_write not implemented - offset: 0 - width: 4 - value: 1
@@ -185,10 +185,2209 @@ proc_create: cs: 0 ss: 0
 user_init_launch: queued init process pid 1
 proc_execute: queued process init (priority 2)
 ahci: spurious interrupt (no controller reported pending bits)
+proc_switch: previous pid=0 state=2 slice=1000
+proc_switch: now running init(pid=1)
+proc_switch: next rip=40067c rsp=a00000 state=1
+proc_switch: loaded frame rip=40067c rsp=a00000 rax=0
+write: pid=1 fd=2 len=24 sample='[init] opened /d'
+[init] opened /dev/tty0
+write: pid=1 fd=2 len=24 sample='[init] dup2 ok t'
+[init] dup2 ok target=0
+write: pid=1 fd=2 len=24 sample='[init] dup2 ok t'
+[init] dup2 ok target=1
+write: pid=1 fd=2 len=24 sample='[init] dup2 ok t'
+[init] dup2 ok target=2
+write: pid=1 fd=2 len=25 sample='[init] tty0 dup '
+[init] tty0 dup complete
+write: pid=1 fd=2 len=25 sample='[init] opened /d'
+[init] opened /dev/ttyS0
+proc_switch: previous pid=1 state=1 slice=6000
+proc_switch: now running init(pid=1)
+proc_switch: next rip=40008c rsp=9fff50 state=1
+proc_switch: loaded frame rip=40008c rsp=9fff50 rax=19
+write: pid=1 fd=2 len=28 sample='[init] stderr ->'
+[init] stderr -> /dev/ttyS0
+write: pid=1 fd=2 len=35 sample='[init] stderr du'
+[init] stderr duplicated to serial
+write: pid=1 fd=2 len=27 sample='[init] bind_stdi'
+[init] bind_stdio finished
+write: pid=1 fd=1 len=34 sample='[init] meniOS in'
 [init] meniOS init process online
+write: pid=1 fd=2 len=28 sample='[init] _start en'
+[init] _start entering loop
+write: pid=1 fd=2 len=20 sample='[init] calling f'
+[init] calling fork
+syscall_fork: pid=1 entering
+proc_fork: parent pid=1 entering
+proc_fork: proc_info allocated
+proc_fork: stack allocated aligned=0xffffc000000bb3c0
+proc_fork: cpu_state allocated
+proc_fork: new address space=61000
+proc_fork: vm_clone complete
+proc_fork: child pid=2 rax=0 rip=40000e
+proc: parent=init(pid=1) forked child pid=2
+proc_fork: linked child pid=2
 proc_execute: queued process init (priority 2)
+proc_fork: scheduled child pid=2
+syscall_fork: returning child pid=2
+write: pid=1 fd=2 len=17 sample='[init] fork rc=2'
+[init] fork rc=2
+write: pid=1 fd=2 len=26 sample='[init] parent fo'
+[init] parent fork branch
+write: pid=1 fd=2 len=26 sample='[init] parent fo'
+[init] parent fork branch
+waitpid: caller pid=1 pid=2
+waitpid: loop result=0 status=0
+proc_request_sleep: pid=1 duration=1000
+proc_request_sleep: caller=ffffffff800414e2
+proc_switch: previous pid=1 state=4 slice=0
+proc_switch: now running init(pid=2)
+proc_switch: next rip=40000e rsp=9fffc8 state=1
+proc_switch: loaded frame rip=40000e rsp=9fffc8 rax=0
+write: pid=2 fd=2 len=17 sample='[init] fork rc=0'
+[init] fork rc=0
+write: pid=2 fd=2 len=25 sample='[init] child for'
+[init] child fork branch
+write: pid=2 fd=2 len=25 sample='[init] child for'
+[init] child fork branch
+write: pid=2 fd=2 len=26 sample='[init] entering '
+[init] entering run_shell
+write: pid=2 fd=2 len=26 sample='[init] entering '
+[init] entering run_shell
+write: pid=2 fd=1 len=22 sample='[init] launching'
+[init] launching mosh
+proc_switch: previous pid=2 state=1 slice=6000
+proc_switch: now running init(pid=1)
+proc_switch: next rip=40008c rsp=9fffc8 state=1
+proc_switch: loaded frame rip=40008c rsp=9fffc8 rax=3d
+write: pid=1 fd=2 len=21 sample='[init] waitpid r'
+[init] waitpid rc=61
+write: pid=1 fd=2 len=24 sample='[init] waitpid s'
+[init] waitpid status=0
+write: pid=1 fd=1 len=32 sample='[init] shell exi'
+[init] shell exited, restarting
+write: pid=1 fd=2 len=24 sample='[init] restartin'
+[init] restarting shell
+write: pid=1 fd=2 len=20 sample='[init] calling f'
+[init] calling fork
+syscall_fork: pid=1 entering
+proc_fork: parent pid=1 entering
+proc_fork: proc_info allocated
+proc_fork: stack allocated aligned=0xffffc000000c1ad0
+proc_fork: cpu_state allocated
+proc_fork: new address space=68000
+proc_fork: vm_clone complete
+proc_fork: child pid=3 rax=0 rip=40000e
+proc: parent=init(pid=1) forked child pid=3
+proc_fork: linked child pid=3
+proc_execute: queued process init (priority 2)
+proc_fork: scheduled child pid=3
+syscall_fork: returning child pid=3
+write: pid=1 fd=2 len=17 sample='[init] fork rc=3'
+[init] fork rc=3
+write: pid=1 fd=2 len=26 sample='[init] parent fo'
+[init] parent fork branch
+write: pid=1 fd=2 len=26 sample='[init] parent fo'
+[init] parent fork branch
+waitpid: caller pid=1 pid=3
+waitpid: loop result=0 status=0
+proc_request_sleep: pid=1 duration=1000
+proc_request_sleep: caller=ffffffff800414e2
+proc_switch: previous pid=1 state=4 slice=0
+proc_switch: now running init(pid=2)
+proc_switch: next rip=40008c rsp=9fff88 state=1
+proc_switch: loaded frame rip=40008c rsp=9fff88 rax=16
+write: pid=2 fd=2 len=22 sample='[init] launching'
+[init] launching mosh
+write: pid=2 fd=2 len=27 sample='[init] exec_prog'
+[init] exec_program called
+write: pid=2 fd=2 len=9 sample='/bin/mosh'
+/bin/moshwrite: pid=2 fd=2 len=1 sample='.'
+
+execve: pid=2 path=/bin/mosh
+execve: frame->rsi=0x9fff98 frame->rdx=0x400ed0
+execve: argc=1 envc=2
+proc_exec_image: pid=2 size=13800
+proc_exec_image: elf copied
+proc_exec_image: new_root=6f000
+proc_exec_image: file table prepared
+proc_exec_image: stack region added
+proc_exec_image: initial stack phys=70000
+proc_exec_image: initial stack mapped
+proc_exec_image: stack segment registered
+proc_exec_image: elf loaded entry=40167d
+proc_exec_image: completed successfully
+execve: proc_exec_image err=0
 ahci: spurious interrupt (no controller reported pending bits)
+write: pid=2 fd=1 len=62 sample='This is mosh, th'
 This is mosh, the meniOS shell
 Type 'help' for instructions.
 
-mosh> 
+proc_switch: previous pid=2 state=1 slice=6000
+proc_switch: now running init(pid=3)
+proc_switch: next rip=40000e rsp=9fffc8 state=1
+proc_switch: loaded frame rip=40000e rsp=9fffc8 rax=0
+write: pid=3 fd=2 len=17 sample='[init] fork rc=0'
+[init] fork rc=0
+write: pid=3 fd=2 len=25 sample='[init] child for'
+[init] child fork branch
+write: pid=3 fd=2 len=25 sample='[init] child for'
+[init] child fork branch
+write: pid=3 fd=2 len=26 sample='[init] entering '
+[init] entering run_shell
+write: pid=3 fd=2 len=26 sample='[init] entering '
+[init] entering run_shell
+write: pid=3 fd=1 len=22 sample='[init] launching'
+[init] launching mosh
+proc_switch: previous pid=3 state=1 slice=6000
+proc_switch: now running init(pid=1)
+proc_switch: next rip=40008c rsp=9fffc8 state=1
+proc_switch: loaded frame rip=40008c rsp=9fffc8 rax=3d
+write: pid=1 fd=2 len=21 sample='[init] waitpid r'
+[init] waitpid rc=61
+write: pid=1 fd=2 len=24 sample='[init] waitpid s'
+[init] waitpid status=0
+write: pid=1 fd=1 len=32 sample='[init] shell exi'
+[init] shell exited, restarting
+write: pid=1 fd=2 len=24 sample='[init] restartin'
+[init] restarting shell
+write: pid=1 fd=2 len=20 sample='[init] calling f'
+[init] calling fork
+syscall_fork: pid=1 entering
+proc_fork: parent pid=1 entering
+proc_fork: proc_info allocated
+proc_fork: stack allocated aligned=0xffffc000000c81d0
+proc_fork: cpu_state allocated
+proc_fork: new address space=61000
+proc_fork: vm_clone complete
+proc_fork: child pid=4 rax=0 rip=40000e
+proc: parent=init(pid=1) forked child pid=4
+proc_fork: linked child pid=4
+proc_execute: queued process init (priority 2)
+proc_fork: scheduled child pid=4
+syscall_fork: returning child pid=4
+write: pid=1 fd=2 len=17 sample='[init] fork rc=4'
+[init] fork rc=4
+write: pid=1 fd=2 len=26 sample='[init] parent fo'
+[init] parent fork branch
+write: pid=1 fd=2 len=26 sample='[init] parent fo'
+[init] parent fork branch
+waitpid: caller pid=1 pid=4
+waitpid: loop result=0 status=0
+proc_request_sleep: pid=1 duration=1000
+proc_request_sleep: caller=ffffffff800414e2
+proc_switch: previous pid=1 state=4 slice=0
+proc_switch: now running init(pid=2)
+proc_switch: next rip=400061 rsp=bffe18 state=1
+proc_switch: loaded frame rip=400061 rsp=bffe18 rax=3e
+write: pid=2 fd=2 len=62 sample='This is mosh, th'
+This is mosh, the meniOS shell
+Type 'help' for instructions.
+
+write: pid=2 fd=1 len=8 sample='mosh:/> '
+mosh:/> proc_switch: previous pid=2 state=3 slice=0
+proc_switch: now running init(pid=3)
+proc_switch: next rip=40008c rsp=9fff88 state=1
+proc_switch: loaded frame rip=40008c rsp=9fff88 rax=16
+write: pid=3 fd=2 len=22 sample='[init] launching'
+[init] launching mosh
+write: pid=3 fd=2 len=27 sample='[init] exec_prog'
+[init] exec_program called
+write: pid=3 fd=2 len=9 sample='/bin/mosh'
+/bin/moshwrite: pid=3 fd=2 len=1 sample='.'
+
+execve: pid=3 path=/bin/mosh
+execve: frame->rsi=0x9fff98 frame->rdx=0x400ed0
+execve: argc=1 envc=2
+proc_exec_image: pid=3 size=13800
+proc_exec_image: elf copied
+proc_exec_image: new_root=78000
+proc_exec_image: file table prepared
+proc_exec_image: stack region added
+proc_exec_image: initial stack phys=79000
+proc_exec_image: initial stack mapped
+proc_exec_image: stack segment registered
+proc_exec_image: elf loaded entry=40167d
+proc_exec_image: completed successfully
+execve: proc_exec_image err=0
+write: pid=3 fd=1 len=62 sample='This is mosh, th'
+This is mosh, the meniOS shell
+Type 'help' for instructions.
+
+proc_switch: previous pid=3 state=1 slice=6000
+proc_switch: now running init(pid=4)
+proc_switch: next rip=40000e rsp=9fffc8 state=1
+proc_switch: loaded frame rip=40000e rsp=9fffc8 rax=0
+write: pid=4 fd=2 len=17 sample='[init] fork rc=0'
+[init] fork rc=0
+write: pid=4 fd=2 len=25 sample='[init] child for'
+[init] child fork branch
+write: pid=4 fd=2 len=25 sample='[init] child for'
+[init] child fork branch
+write: pid=4 fd=2 len=26 sample='[init] entering '
+[init] entering run_shell
+write: pid=4 fd=2 len=26 sample='[init] entering '
+[init] entering run_shell
+write: pid=4 fd=1 len=22 sample='[init] launching'
+[init] launching mosh
+write: pid=4 fd=2 len=22 sample='[init] launching'
+[init] launching mosh
+write: pid=4 fd=2 len=27 sample='[init] exec_prog'
+[init] exec_program called
+write: pid=4 fd=2 len=9 sample='/bin/mosh'
+/bin/moshwrite: pid=4 fd=2 len=1 sample='.'
+
+execve: pid=4 path=/bin/mosh
+execve: frame->rsi=0x9fff98 frame->rdx=0x400ed0
+execve: argc=1 envc=2
+proc_exec_image: pid=4 size=13800
+proc_exec_image: elf copied
+proc_exec_image: new_root=68000
+proc_exec_image: file table prepared
+proc_exec_image: stack region added
+proc_exec_image: initial stack phys=69000
+proc_exec_image: initial stack mapped
+proc_exec_image: stack segment registered
+proc_exec_image: elf loaded entry=40167d
+proc_exec_image: completed successfully
+execve: proc_exec_image err=0
+write: pid=4 fd=1 len=62 sample='This is mosh, th'
+This is mosh, the meniOS shell
+Type 'help' for instructions.
+
+proc_switch: previous pid=4 state=1 slice=6000
+proc_switch: now running init(pid=1)
+proc_switch: next rip=40008c rsp=9fffc8 state=1
+proc_switch: loaded frame rip=40008c rsp=9fffc8 rax=3d
+write: pid=1 fd=2 len=21 sample='[init] waitpid r'
+[init] waitpid rc=61
+write: pid=1 fd=2 len=24 sample='[init] waitpid s'
+[init] waitpid status=0
+write: pid=1 fd=1 len=32 sample='[init] shell exi'
+[init] shell exited, restarting
+proc_switch: previous pid=1 state=1 slice=6000
+proc_switch: now running init(pid=3)
+proc_switch: next rip=400061 rsp=dffe18 state=1
+proc_switch: loaded frame rip=400061 rsp=dffe18 rax=3e
+write: pid=3 fd=2 len=62 sample='This is mosh, th'
+This is mosh, the meniOS shell
+Type 'help' for instructions.
+
+write: pid=3 fd=1 len=8 sample='mosh:/> '
+mosh:/> proc_switch: previous pid=3 state=3 slice=0
+proc_switch: now running init(pid=4)
+proc_switch: next rip=400061 rsp=fffe18 state=1
+proc_switch: loaded frame rip=400061 rsp=fffe18 rax=3e
+write: pid=4 fd=2 len=62 sample='This is mosh, th'
+This is mosh, the meniOS shell
+Type 'help' for instructions.
+
+write: pid=4 fd=1 len=8 sample='mosh:/> '
+mosh:/> proc_switch: previous pid=4 state=3 slice=0
+proc_switch: now running init(pid=1)
+proc_switch: next rip=40008c rsp=9fffa8 state=1
+proc_switch: loaded frame rip=40008c rsp=9fffa8 rax=20
+write: pid=1 fd=2 len=24 sample='[init] restartin'
+[init] restarting shell
+write: pid=1 fd=2 len=20 sample='[init] calling f'
+[init] calling fork
+syscall_fork: pid=1 entering
+proc_fork: parent pid=1 entering
+proc_fork: proc_info allocated
+proc_fork: stack allocated aligned=0xffffc000000ce8e0
+proc_fork: cpu_state allocated
+proc_fork: new address space=61000
+proc_fork: vm_clone complete
+proc_fork: child pid=5 rax=0 rip=40000e
+proc: parent=init(pid=1) forked child pid=5
+proc_fork: linked child pid=5
+proc_execute: queued process init (priority 2)
+proc_fork: scheduled child pid=5
+syscall_fork: returning child pid=5
+write: pid=1 fd=2 len=17 sample='[init] fork rc=5'
+[init] fork rc=5
+write: pid=1 fd=2 len=26 sample='[init] parent fo'
+[init] parent fork branch
+write: pid=1 fd=2 len=26 sample='[init] parent fo'
+[init] parent fork branch
+waitpid: caller pid=1 pid=5
+waitpid: loop result=0 status=0
+proc_request_sleep: pid=1 duration=1000
+proc_request_sleep: caller=ffffffff800414e2
+proc_switch: previous pid=1 state=4 slice=0
+proc_switch: now running init(pid=5)
+proc_switch: next rip=40000e rsp=9fffc8 state=1
+proc_switch: loaded frame rip=40000e rsp=9fffc8 rax=0
+write: pid=5 fd=2 len=17 sample='[init] fork rc=0'
+[init] fork rc=0
+write: pid=5 fd=2 len=25 sample='[init] child for'
+[init] child fork branch
+write: pid=5 fd=2 len=25 sample='[init] child for'
+[init] child fork branch
+write: pid=5 fd=2 len=26 sample='[init] entering '
+[init] entering run_shell
+write: pid=5 fd=2 len=26 sample='[init] entering '
+[init] entering run_shell
+write: pid=5 fd=1 len=22 sample='[init] launching'
+[init] launching mosh
+write: pid=5 fd=2 len=22 sample='[init] launching'
+[init] launching mosh
+write: pid=5 fd=2 len=27 sample='[init] exec_prog'
+[init] exec_program called
+write: pid=5 fd=2 len=9 sample='/bin/mosh'
+/bin/moshwrite: pid=5 fd=2 len=1 sample='.'
+
+execve: pid=5 path=/bin/mosh
+execve: frame->rsi=0x9fff98 frame->rdx=0x400ed0
+execve: argc=1 envc=2
+proc_exec_image: pid=5 size=13800
+proc_exec_image: elf copied
+proc_exec_image: new_root=6e000
+proc_exec_image: file table prepared
+proc_exec_image: stack region added
+proc_exec_image: initial stack phys=84000
+proc_exec_image: initial stack mapped
+proc_exec_image: stack segment registered
+proc_exec_image: elf loaded entry=40167d
+proc_exec_image: completed successfully
+execve: proc_exec_image err=0
+write: pid=5 fd=1 len=62 sample='This is mosh, th'
+This is mosh, the meniOS shell
+Type 'help' for instructions.
+
+proc_switch: previous pid=5 state=1 slice=6000
+proc_switch: now running init(pid=1)
+proc_switch: next rip=40008c rsp=9fffc8 state=1
+proc_switch: loaded frame rip=40008c rsp=9fffc8 rax=3d
+write: pid=1 fd=2 len=21 sample='[init] waitpid r'
+[init] waitpid rc=61
+write: pid=1 fd=2 len=24 sample='[init] waitpid s'
+[init] waitpid status=0
+write: pid=1 fd=1 len=32 sample='[init] shell exi'
+[init] shell exited, restarting
+proc_switch: previous pid=1 state=1 slice=6000
+proc_switch: now running init(pid=5)
+proc_switch: next rip=400061 rsp=11ffe18 state=1
+proc_switch: loaded frame rip=400061 rsp=11ffe18 rax=3e
+write: pid=5 fd=2 len=62 sample='This is mosh, th'
+This is mosh, the meniOS shell
+Type 'help' for instructions.
+
+write: pid=5 fd=1 len=8 sample='mosh:/> '
+mosh:/> proc_switch: previous pid=5 state=3 slice=0
+proc_switch: now running init(pid=1)
+proc_switch: next rip=40008c rsp=9fffa8 state=1
+proc_switch: loaded frame rip=40008c rsp=9fffa8 rax=20
+write: pid=1 fd=2 len=24 sample='[init] restartin'
+[init] restarting shell
+write: pid=1 fd=2 len=20 sample='[init] calling f'
+[init] calling fork
+syscall_fork: pid=1 entering
+proc_fork: parent pid=1 entering
+proc_fork: proc_info allocated
+proc_fork: stack allocated aligned=0xffffc000000d4fe0
+proc_fork: cpu_state allocated
+proc_fork: new address space=61000
+proc_fork: vm_clone complete
+proc_fork: child pid=6 rax=0 rip=40000e
+proc: parent=init(pid=1) forked child pid=6
+proc_fork: linked child pid=6
+proc_execute: queued process init (priority 2)
+proc_fork: scheduled child pid=6
+syscall_fork: returning child pid=6
+write: pid=1 fd=2 len=17 sample='[init] fork rc=6'
+[init] fork rc=6
+write: pid=1 fd=2 len=26 sample='[init] parent fo'
+[init] parent fork branch
+write: pid=1 fd=2 len=26 sample='[init] parent fo'
+[init] parent fork branch
+waitpid: caller pid=1 pid=6
+waitpid: loop result=0 status=0
+proc_request_sleep: pid=1 duration=1000
+proc_request_sleep: caller=ffffffff800414e2
+proc_switch: previous pid=1 state=4 slice=0
+proc_switch: now running init(pid=6)
+proc_switch: next rip=40000e rsp=9fffc8 state=1
+proc_switch: loaded frame rip=40000e rsp=9fffc8 rax=0
+write: pid=6 fd=2 len=17 sample='[init] fork rc=0'
+[init] fork rc=0
+write: pid=6 fd=2 len=25 sample='[init] child for'
+[init] child fork branch
+write: pid=6 fd=2 len=25 sample='[init] child for'
+[init] child fork branch
+write: pid=6 fd=2 len=26 sample='[init] entering '
+[init] entering run_shell
+write: pid=6 fd=2 len=26 sample='[init] entering '
+[init] entering run_shell
+write: pid=6 fd=1 len=22 sample='[init] launching'
+[init] launching mosh
+write: pid=6 fd=2 len=22 sample='[init] launching'
+[init] launching mosh
+write: pid=6 fd=2 len=27 sample='[init] exec_prog'
+[init] exec_program called
+write: pid=6 fd=2 len=9 sample='/bin/mosh'
+/bin/moshwrite: pid=6 fd=2 len=1 sample='.'
+
+execve: pid=6 path=/bin/mosh
+execve: frame->rsi=0x9fff98 frame->rdx=0x400ed0
+execve: argc=1 envc=2
+proc_exec_image: pid=6 size=13800
+proc_exec_image: elf copied
+proc_exec_image: new_root=8c000
+proc_exec_image: file table prepared
+proc_exec_image: stack region added
+proc_exec_image: initial stack phys=8d000
+proc_exec_image: initial stack mapped
+proc_exec_image: stack segment registered
+proc_exec_image: elf loaded entry=40167d
+proc_exec_image: completed successfully
+execve: proc_exec_image err=0
+write: pid=6 fd=1 len=62 sample='This is mosh, th'
+This is mosh, the meniOS shell
+Type 'help' for instructions.
+
+proc_switch: previous pid=6 state=1 slice=6000
+proc_switch: now running init(pid=1)
+proc_switch: next rip=40008c rsp=9fffc8 state=1
+proc_switch: loaded frame rip=40008c rsp=9fffc8 rax=3d
+write: pid=1 fd=2 len=21 sample='[init] waitpid r'
+[init] waitpid rc=61
+write: pid=1 fd=2 len=24 sample='[init] waitpid s'
+[init] waitpid status=0
+write: pid=1 fd=1 len=32 sample='[init] shell exi'
+[init] shell exited, restarting
+proc_switch: previous pid=1 state=1 slice=6000
+proc_switch: now running init(pid=6)
+proc_switch: next rip=400061 rsp=13ffe18 state=1
+proc_switch: loaded frame rip=400061 rsp=13ffe18 rax=3e
+write: pid=6 fd=2 len=62 sample='This is mosh, th'
+This is mosh, the meniOS shell
+Type 'help' for instructions.
+
+write: pid=6 fd=1 len=8 sample='mosh:/> '
+mosh:/> proc_switch: previous pid=6 state=3 slice=0
+proc_switch: now running init(pid=1)
+proc_switch: next rip=40008c rsp=9fffa8 state=1
+proc_switch: loaded frame rip=40008c rsp=9fffa8 rax=20
+write: pid=1 fd=2 len=24 sample='[init] restartin'
+[init] restarting shell
+write: pid=1 fd=2 len=20 sample='[init] calling f'
+[init] calling fork
+syscall_fork: pid=1 entering
+proc_fork: parent pid=1 entering
+proc_fork: proc_info allocated
+proc_fork: stack allocated aligned=0xffffc000000db6f0
+proc_fork: cpu_state allocated
+proc_fork: new address space=61000
+proc_fork: vm_clone complete
+proc_fork: child pid=7 rax=0 rip=40000e
+proc: parent=init(pid=1) forked child pid=7
+proc_fork: linked child pid=7
+proc_execute: queued process init (priority 2)
+proc_fork: scheduled child pid=7
+syscall_fork: returning child pid=7
+write: pid=1 fd=2 len=17 sample='[init] fork rc=7'
+[init] fork rc=7
+write: pid=1 fd=2 len=26 sample='[init] parent fo'
+[init] parent fork branch
+write: pid=1 fd=2 len=26 sample='[init] parent fo'
+[init] parent fork branch
+waitpid: caller pid=1 pid=7
+waitpid: loop result=0 status=0
+proc_request_sleep: pid=1 duration=1000
+proc_request_sleep: caller=ffffffff800414e2
+proc_switch: previous pid=1 state=4 slice=0
+proc_switch: now running init(pid=7)
+proc_switch: next rip=40000e rsp=9fffc8 state=1
+proc_switch: loaded frame rip=40000e rsp=9fffc8 rax=0
+write: pid=7 fd=2 len=17 sample='[init] fork rc=0'
+[init] fork rc=0
+write: pid=7 fd=2 len=25 sample='[init] child for'
+[init] child fork branch
+write: pid=7 fd=2 len=25 sample='[init] child for'
+[init] child fork branch
+write: pid=7 fd=2 len=26 sample='[init] entering '
+[init] entering run_shell
+write: pid=7 fd=2 len=26 sample='[init] entering '
+[init] entering run_shell
+write: pid=7 fd=1 len=22 sample='[init] launching'
+[init] launching mosh
+write: pid=7 fd=2 len=22 sample='[init] launching'
+[init] launching mosh
+write: pid=7 fd=2 len=27 sample='[init] exec_prog'
+[init] exec_program called
+write: pid=7 fd=2 len=9 sample='/bin/mosh'
+/bin/moshwrite: pid=7 fd=2 len=1 sample='.'
+
+execve: pid=7 path=/bin/mosh
+execve: frame->rsi=0x9fff98 frame->rdx=0x400ed0
+execve: argc=1 envc=2
+proc_exec_image: pid=7 size=13800
+proc_exec_image: elf copied
+proc_exec_image: new_root=95000
+proc_exec_image: file table prepared
+proc_exec_image: stack region added
+proc_exec_image: initial stack phys=96000
+proc_exec_image: initial stack mapped
+proc_exec_image: stack segment registered
+proc_exec_image: elf loaded entry=40167d
+proc_exec_image: completed successfully
+execve: proc_exec_image err=0
+write: pid=7 fd=1 len=62 sample='This is mosh, th'
+This is mosh, the meniOS shell
+Type 'help' for instructions.
+
+proc_switch: previous pid=7 state=1 slice=6000
+proc_switch: now running init(pid=1)
+proc_switch: next rip=40008c rsp=9fffc8 state=1
+proc_switch: loaded frame rip=40008c rsp=9fffc8 rax=3d
+write: pid=1 fd=2 len=21 sample='[init] waitpid r'
+[init] waitpid rc=61
+write: pid=1 fd=2 len=24 sample='[init] waitpid s'
+[init] waitpid status=0
+write: pid=1 fd=1 len=32 sample='[init] shell exi'
+[init] shell exited, restarting
+proc_switch: previous pid=1 state=1 slice=6000
+proc_switch: now running init(pid=7)
+proc_switch: next rip=400061 rsp=15ffe18 state=1
+proc_switch: loaded frame rip=400061 rsp=15ffe18 rax=3e
+write: pid=7 fd=2 len=62 sample='This is mosh, th'
+This is mosh, the meniOS shell
+Type 'help' for instructions.
+
+write: pid=7 fd=1 len=8 sample='mosh:/> '
+mosh:/> proc_switch: previous pid=7 state=3 slice=0
+proc_switch: now running init(pid=1)
+proc_switch: next rip=40008c rsp=9fffa8 state=1
+proc_switch: loaded frame rip=40008c rsp=9fffa8 rax=20
+write: pid=1 fd=2 len=24 sample='[init] restartin'
+[init] restarting shell
+write: pid=1 fd=2 len=20 sample='[init] calling f'
+[init] calling fork
+syscall_fork: pid=1 entering
+proc_fork: parent pid=1 entering
+proc_fork: proc_info allocated
+proc_fork: stack allocated aligned=0xffffc000000e1df0
+proc_fork: cpu_state allocated
+proc_fork: new address space=61000
+proc_fork: vm_clone complete
+proc_fork: child pid=8 rax=0 rip=40000e
+proc: parent=init(pid=1) forked child pid=8
+proc_fork: linked child pid=8
+proc_execute: queued process init (priority 2)
+proc_fork: scheduled child pid=8
+syscall_fork: returning child pid=8
+write: pid=1 fd=2 len=17 sample='[init] fork rc=8'
+[init] fork rc=8
+write: pid=1 fd=2 len=26 sample='[init] parent fo'
+[init] parent fork branch
+write: pid=1 fd=2 len=26 sample='[init] parent fo'
+[init] parent fork branch
+waitpid: caller pid=1 pid=8
+waitpid: loop result=0 status=0
+proc_request_sleep: pid=1 duration=1000
+proc_request_sleep: caller=ffffffff800414e2
+proc_switch: previous pid=1 state=4 slice=0
+proc_switch: now running init(pid=8)
+proc_switch: next rip=40000e rsp=9fffc8 state=1
+proc_switch: loaded frame rip=40000e rsp=9fffc8 rax=0
+write: pid=8 fd=2 len=17 sample='[init] fork rc=0'
+[init] fork rc=0
+write: pid=8 fd=2 len=25 sample='[init] child for'
+[init] child fork branch
+write: pid=8 fd=2 len=25 sample='[init] child for'
+[init] child fork branch
+write: pid=8 fd=2 len=26 sample='[init] entering '
+[init] entering run_shell
+write: pid=8 fd=2 len=26 sample='[init] entering '
+[init] entering run_shell
+write: pid=8 fd=1 len=22 sample='[init] launching'
+[init] launching mosh
+write: pid=8 fd=2 len=22 sample='[init] launching'
+[init] launching mosh
+write: pid=8 fd=2 len=27 sample='[init] exec_prog'
+[init] exec_program called
+write: pid=8 fd=2 len=9 sample='/bin/mosh'
+/bin/moshwrite: pid=8 fd=2 len=1 sample='.'
+
+execve: pid=8 path=/bin/mosh
+execve: frame->rsi=0x9fff98 frame->rdx=0x400ed0
+execve: argc=1 envc=2
+proc_exec_image: pid=8 size=13800
+proc_exec_image: elf copied
+proc_exec_image: new_root=9e000
+proc_exec_image: file table prepared
+proc_exec_image: stack region added
+proc_exec_image: initial stack phys=580000
+proc_exec_image: initial stack mapped
+proc_exec_image: stack segment registered
+proc_exec_image: elf loaded entry=40167d
+proc_exec_image: completed successfully
+execve: proc_exec_image err=0
+write: pid=8 fd=1 len=62 sample='This is mosh, th'
+This is mosh, the meniOS shell
+Type 'help' for instructions.
+
+proc_switch: previous pid=8 state=1 slice=6000
+proc_switch: now running init(pid=1)
+proc_switch: next rip=40008c rsp=9fffc8 state=1
+proc_switch: loaded frame rip=40008c rsp=9fffc8 rax=3d
+write: pid=1 fd=2 len=21 sample='[init] waitpid r'
+[init] waitpid rc=61
+write: pid=1 fd=2 len=24 sample='[init] waitpid s'
+[init] waitpid status=0
+write: pid=1 fd=1 len=32 sample='[init] shell exi'
+[init] shell exited, restarting
+proc_switch: previous pid=1 state=1 slice=6000
+proc_switch: now running init(pid=8)
+proc_switch: next rip=400061 rsp=17ffe18 state=1
+proc_switch: loaded frame rip=400061 rsp=17ffe18 rax=3e
+write: pid=8 fd=2 len=62 sample='This is mosh, th'
+This is mosh, the meniOS shell
+Type 'help' for instructions.
+
+write: pid=8 fd=1 len=8 sample='mosh:/> '
+mosh:/> proc_switch: previous pid=8 state=3 slice=0
+proc_switch: now running init(pid=1)
+proc_switch: next rip=40008c rsp=9fffa8 state=1
+proc_switch: loaded frame rip=40008c rsp=9fffa8 rax=20
+write: pid=1 fd=2 len=24 sample='[init] restartin'
+[init] restarting shell
+write: pid=1 fd=2 len=20 sample='[init] calling f'
+[init] calling fork
+syscall_fork: pid=1 entering
+proc_fork: parent pid=1 entering
+proc_fork: proc_info allocated
+proc_fork: stack allocated aligned=0xffffc000000e8500
+proc_fork: cpu_state allocated
+proc_fork: new address space=61000
+proc_fork: vm_clone complete
+proc_fork: child pid=9 rax=0 rip=40000e
+proc: parent=init(pid=1) forked child pid=9
+proc_fork: linked child pid=9
+proc_execute: queued process init (priority 2)
+proc_fork: scheduled child pid=9
+syscall_fork: returning child pid=9
+write: pid=1 fd=2 len=17 sample='[init] fork rc=9'
+[init] fork rc=9
+write: pid=1 fd=2 len=26 sample='[init] parent fo'
+[init] parent fork branch
+write: pid=1 fd=2 len=26 sample='[init] parent fo'
+[init] parent fork branch
+waitpid: caller pid=1 pid=9
+waitpid: loop result=0 status=0
+proc_request_sleep: pid=1 duration=1000
+proc_request_sleep: caller=ffffffff800414e2
+proc_switch: previous pid=1 state=4 slice=0
+proc_switch: now running init(pid=9)
+proc_switch: next rip=40000e rsp=9fffc8 state=1
+proc_switch: loaded frame rip=40000e rsp=9fffc8 rax=0
+write: pid=9 fd=2 len=17 sample='[init] fork rc=0'
+[init] fork rc=0
+write: pid=9 fd=2 len=25 sample='[init] child for'
+[init] child fork branch
+write: pid=9 fd=2 len=25 sample='[init] child for'
+[init] child fork branch
+write: pid=9 fd=2 len=26 sample='[init] entering '
+[init] entering run_shell
+write: pid=9 fd=2 len=26 sample='[init] entering '
+[init] entering run_shell
+write: pid=9 fd=1 len=22 sample='[init] launching'
+[init] launching mosh
+write: pid=9 fd=2 len=22 sample='[init] launching'
+[init] launching mosh
+write: pid=9 fd=2 len=27 sample='[init] exec_prog'
+[init] exec_program called
+write: pid=9 fd=2 len=9 sample='/bin/mosh'
+/bin/moshwrite: pid=9 fd=2 len=1 sample='.'
+
+execve: pid=9 path=/bin/mosh
+execve: frame->rsi=0x9fff98 frame->rdx=0x400ed0
+execve: argc=1 envc=2
+proc_exec_image: pid=9 size=13800
+proc_exec_image: elf copied
+proc_exec_image: new_root=588000
+proc_exec_image: file table prepared
+proc_exec_image: stack region added
+proc_exec_image: initial stack phys=589000
+proc_exec_image: initial stack mapped
+proc_exec_image: stack segment registered
+proc_exec_image: elf loaded entry=40167d
+proc_exec_image: completed successfully
+execve: proc_exec_image err=0
+write: pid=9 fd=1 len=62 sample='This is mosh, th'
+This is mosh, the meniOS shell
+Type 'help' for instructions.
+
+proc_switch: previous pid=9 state=1 slice=6000
+proc_switch: now running init(pid=1)
+proc_switch: next rip=40008c rsp=9fffc8 state=1
+proc_switch: loaded frame rip=40008c rsp=9fffc8 rax=3d
+write: pid=1 fd=2 len=21 sample='[init] waitpid r'
+[init] waitpid rc=61
+write: pid=1 fd=2 len=24 sample='[init] waitpid s'
+[init] waitpid status=0
+write: pid=1 fd=1 len=32 sample='[init] shell exi'
+[init] shell exited, restarting
+write: pid=1 fd=2 len=24 sample='[init] restartin'
+[init] restarting shell
+write: pid=1 fd=2 len=20 sample='[init] calling f'
+[init] calling fork
+syscall_fork: pid=1 entering
+proc_fork: parent pid=1 entering
+proc_fork: proc_info allocated
+proc_fork: stack allocated aligned=0xffffc000000eec00
+proc_fork: cpu_state allocated
+proc_fork: new address space=61000
+proc_fork: vm_clone complete
+proc_fork: child pid=10 rax=0 rip=40000e
+proc: parent=init(pid=1) forked child pid=10
+proc_fork: linked child pid=10
+proc_execute: queued process init (priority 2)
+proc_fork: scheduled child pid=10
+syscall_fork: returning child pid=10
+write: pid=1 fd=2 len=18 sample='[init] fork rc=1'
+[init] fork rc=10
+write: pid=1 fd=2 len=26 sample='[init] parent fo'
+[init] parent fork branch
+write: pid=1 fd=2 len=26 sample='[init] parent fo'
+[init] parent fork branch
+waitpid: caller pid=1 pid=10
+waitpid: loop result=0 status=0
+proc_request_sleep: pid=1 duration=1000
+proc_request_sleep: caller=ffffffff800414e2
+proc_switch: previous pid=1 state=4 slice=0
+proc_switch: now running init(pid=9)
+proc_switch: next rip=400061 rsp=19ffe18 state=1
+proc_switch: loaded frame rip=400061 rsp=19ffe18 rax=3e
+write: pid=9 fd=2 len=62 sample='This is mosh, th'
+This is mosh, the meniOS shell
+Type 'help' for instructions.
+
+write: pid=9 fd=1 len=8 sample='mosh:/> '
+mosh:/> proc_switch: previous pid=9 state=3 slice=0
+proc_switch: now running init(pid=10)
+proc_switch: next rip=40000e rsp=9fffc8 state=1
+proc_switch: loaded frame rip=40000e rsp=9fffc8 rax=0
+write: pid=10 fd=2 len=17 sample='[init] fork rc=0'
+[init] fork rc=0
+write: pid=10 fd=2 len=25 sample='[init] child for'
+[init] child fork branch
+write: pid=10 fd=2 len=25 sample='[init] child for'
+[init] child fork branch
+write: pid=10 fd=2 len=26 sample='[init] entering '
+[init] entering run_shell
+write: pid=10 fd=2 len=26 sample='[init] entering '
+[init] entering run_shell
+write: pid=10 fd=1 len=22 sample='[init] launching'
+[init] launching mosh
+write: pid=10 fd=2 len=22 sample='[init] launching'
+[init] launching mosh
+write: pid=10 fd=2 len=27 sample='[init] exec_prog'
+[init] exec_program called
+write: pid=10 fd=2 len=9 sample='/bin/mosh'
+/bin/moshwrite: pid=10 fd=2 len=1 sample='.'
+
+execve: pid=10 path=/bin/mosh
+execve: frame->rsi=0x9fff98 frame->rdx=0x400ed0
+execve: argc=1 envc=2
+proc_exec_image: pid=10 size=13800
+proc_exec_image: elf copied
+proc_exec_image: new_root=591000
+proc_exec_image: file table prepared
+proc_exec_image: stack region added
+proc_exec_image: initial stack phys=592000
+proc_exec_image: initial stack mapped
+proc_exec_image: stack segment registered
+proc_exec_image: elf loaded entry=40167d
+proc_exec_image: completed successfully
+execve: proc_exec_image err=0
+write: pid=10 fd=1 len=62 sample='This is mosh, th'
+This is mosh, the meniOS shell
+Type 'help' for instructions.
+
+proc_switch: previous pid=10 state=1 slice=6000
+proc_switch: now running init(pid=1)
+proc_switch: next rip=40008c rsp=9fffc8 state=1
+proc_switch: loaded frame rip=40008c rsp=9fffc8 rax=3d
+write: pid=1 fd=2 len=21 sample='[init] waitpid r'
+[init] waitpid rc=61
+write: pid=1 fd=2 len=24 sample='[init] waitpid s'
+[init] waitpid status=0
+write: pid=1 fd=1 len=32 sample='[init] shell exi'
+[init] shell exited, restarting
+write: pid=1 fd=2 len=24 sample='[init] restartin'
+[init] restarting shell
+write: pid=1 fd=2 len=20 sample='[init] calling f'
+[init] calling fork
+syscall_fork: pid=1 entering
+proc_fork: parent pid=1 entering
+proc_fork: proc_info allocated
+proc_fork: stack allocated aligned=0xffffc000000f5330
+proc_fork: cpu_state allocated
+proc_fork: new address space=61000
+proc_fork: vm_clone complete
+proc_fork: child pid=11 rax=0 rip=40000e
+proc: parent=init(pid=1) forked child pid=11
+proc_fork: linked child pid=11
+proc_execute: queued process init (priority 2)
+proc_fork: scheduled child pid=11
+syscall_fork: returning child pid=11
+write: pid=1 fd=2 len=18 sample='[init] fork rc=1'
+[init] fork rc=11
+write: pid=1 fd=2 len=26 sample='[init] parent fo'
+[init] parent fork branch
+write: pid=1 fd=2 len=26 sample='[init] parent fo'
+[init] parent fork branch
+waitpid: caller pid=1 pid=11
+waitpid: loop result=0 status=0
+proc_request_sleep: pid=1 duration=1000
+proc_request_sleep: caller=ffffffff800414e2
+proc_switch: previous pid=1 state=4 slice=0
+proc_switch: now running init(pid=10)
+proc_switch: next rip=400061 rsp=1bffe18 state=1
+proc_switch: loaded frame rip=400061 rsp=1bffe18 rax=3e
+write: pid=10 fd=2 len=62 sample='This is mosh, th'
+This is mosh, the meniOS shell
+Type 'help' for instructions.
+
+write: pid=10 fd=1 len=8 sample='mosh:/> '
+mosh:/> proc_switch: previous pid=10 state=3 slice=0
+proc_switch: now running init(pid=11)
+proc_switch: next rip=40000e rsp=9fffc8 state=1
+proc_switch: loaded frame rip=40000e rsp=9fffc8 rax=0
+write: pid=11 fd=2 len=17 sample='[init] fork rc=0'
+[init] fork rc=0
+write: pid=11 fd=2 len=25 sample='[init] child for'
+[init] child fork branch
+write: pid=11 fd=2 len=25 sample='[init] child for'
+[init] child fork branch
+write: pid=11 fd=2 len=26 sample='[init] entering '
+[init] entering run_shell
+write: pid=11 fd=2 len=26 sample='[init] entering '
+[init] entering run_shell
+write: pid=11 fd=1 len=22 sample='[init] launching'
+[init] launching mosh
+write: pid=11 fd=2 len=22 sample='[init] launching'
+[init] launching mosh
+write: pid=11 fd=2 len=27 sample='[init] exec_prog'
+[init] exec_program called
+write: pid=11 fd=2 len=9 sample='/bin/mosh'
+/bin/moshwrite: pid=11 fd=2 len=1 sample='.'
+
+execve: pid=11 path=/bin/mosh
+execve: frame->rsi=0x9fff98 frame->rdx=0x400ed0
+execve: argc=1 envc=2
+proc_exec_image: pid=11 size=13800
+proc_exec_image: elf copied
+proc_exec_image: new_root=59a000
+proc_exec_image: file table prepared
+proc_exec_image: stack region added
+proc_exec_image: initial stack phys=59b000
+proc_exec_image: initial stack mapped
+proc_exec_image: stack segment registered
+proc_exec_image: elf loaded entry=40167d
+proc_exec_image: completed successfully
+execve: proc_exec_image err=0
+write: pid=11 fd=1 len=62 sample='This is mosh, th'
+This is mosh, the meniOS shell
+Type 'help' for instructions.
+
+proc_switch: previous pid=11 state=1 slice=6000
+proc_switch: now running init(pid=1)
+proc_switch: next rip=40008c rsp=9fffc8 state=1
+proc_switch: loaded frame rip=40008c rsp=9fffc8 rax=3d
+write: pid=1 fd=2 len=21 sample='[init] waitpid r'
+[init] waitpid rc=61
+write: pid=1 fd=2 len=24 sample='[init] waitpid s'
+[init] waitpid status=0
+write: pid=1 fd=1 len=32 sample='[init] shell exi'
+[init] shell exited, restarting
+proc_switch: previous pid=1 state=1 slice=6000
+proc_switch: now running init(pid=11)
+proc_switch: next rip=400061 rsp=1dffe18 state=1
+proc_switch: loaded frame rip=400061 rsp=1dffe18 rax=3e
+write: pid=11 fd=2 len=62 sample='This is mosh, th'
+This is mosh, the meniOS shell
+Type 'help' for instructions.
+
+write: pid=11 fd=1 len=8 sample='mosh:/> '
+mosh:/> proc_switch: previous pid=11 state=3 slice=0
+proc_switch: now running init(pid=1)
+proc_switch: next rip=40008c rsp=9fffa8 state=1
+proc_switch: loaded frame rip=40008c rsp=9fffa8 rax=20
+write: pid=1 fd=2 len=24 sample='[init] restartin'
+[init] restarting shell
+write: pid=1 fd=2 len=20 sample='[init] calling f'
+[init] calling fork
+syscall_fork: pid=1 entering
+proc_fork: parent pid=1 entering
+proc_fork: proc_info allocated
+proc_fork: stack allocated aligned=0xffffc000000fba90
+proc_fork: cpu_state allocated
+proc_fork: new address space=61000
+proc_fork: vm_clone complete
+proc_fork: child pid=12 rax=0 rip=40000e
+proc: parent=init(pid=1) forked child pid=12
+proc_fork: linked child pid=12
+proc_execute: queued process init (priority 2)
+proc_fork: scheduled child pid=12
+syscall_fork: returning child pid=12
+write: pid=1 fd=2 len=18 sample='[init] fork rc=1'
+[init] fork rc=12
+write: pid=1 fd=2 len=26 sample='[init] parent fo'
+[init] parent fork branch
+write: pid=1 fd=2 len=26 sample='[init] parent fo'
+[init] parent fork branch
+waitpid: caller pid=1 pid=12
+waitpid: loop result=0 status=0
+proc_request_sleep: pid=1 duration=1000
+proc_request_sleep: caller=ffffffff800414e2
+proc_switch: previous pid=1 state=4 slice=0
+proc_switch: now running init(pid=12)
+proc_switch: next rip=40000e rsp=9fffc8 state=1
+proc_switch: loaded frame rip=40000e rsp=9fffc8 rax=0
+write: pid=12 fd=2 len=17 sample='[init] fork rc=0'
+[init] fork rc=0
+write: pid=12 fd=2 len=25 sample='[init] child for'
+[init] child fork branch
+write: pid=12 fd=2 len=25 sample='[init] child for'
+[init] child fork branch
+write: pid=12 fd=2 len=26 sample='[init] entering '
+[init] entering run_shell
+write: pid=12 fd=2 len=26 sample='[init] entering '
+[init] entering run_shell
+write: pid=12 fd=1 len=22 sample='[init] launching'
+[init] launching mosh
+write: pid=12 fd=2 len=22 sample='[init] launching'
+[init] launching mosh
+write: pid=12 fd=2 len=27 sample='[init] exec_prog'
+[init] exec_program called
+write: pid=12 fd=2 len=9 sample='/bin/mosh'
+/bin/moshwrite: pid=12 fd=2 len=1 sample='.'
+
+execve: pid=12 path=/bin/mosh
+execve: frame->rsi=0x9fff98 frame->rdx=0x400ed0
+execve: argc=1 envc=2
+proc_exec_image: pid=12 size=13800
+proc_exec_image: elf copied
+proc_exec_image: new_root=5a3000
+proc_exec_image: file table prepared
+proc_exec_image: stack region added
+proc_exec_image: initial stack phys=5a4000
+proc_exec_image: initial stack mapped
+proc_exec_image: stack segment registered
+proc_exec_image: elf loaded entry=40167d
+proc_exec_image: completed successfully
+execve: proc_exec_image err=0
+write: pid=12 fd=1 len=62 sample='This is mosh, th'
+This is mosh, the meniOS shell
+Type 'help' for instructions.
+
+proc_switch: previous pid=12 state=1 slice=6000
+proc_switch: now running init(pid=1)
+proc_switch: next rip=40008c rsp=9fffc8 state=1
+proc_switch: loaded frame rip=40008c rsp=9fffc8 rax=3d
+write: pid=1 fd=2 len=21 sample='[init] waitpid r'
+[init] waitpid rc=61
+write: pid=1 fd=2 len=24 sample='[init] waitpid s'
+[init] waitpid status=0
+write: pid=1 fd=1 len=32 sample='[init] shell exi'
+[init] shell exited, restarting
+proc_switch: previous pid=1 state=1 slice=6000
+proc_switch: now running init(pid=12)
+proc_switch: next rip=400061 rsp=1fffe18 state=1
+proc_switch: loaded frame rip=400061 rsp=1fffe18 rax=3e
+write: pid=12 fd=2 len=62 sample='This is mosh, th'
+This is mosh, the meniOS shell
+Type 'help' for instructions.
+
+write: pid=12 fd=1 len=8 sample='mosh:/> '
+mosh:/> proc_switch: previous pid=12 state=3 slice=0
+proc_switch: now running init(pid=1)
+proc_switch: next rip=40008c rsp=9fffa8 state=1
+proc_switch: loaded frame rip=40008c rsp=9fffa8 rax=20
+write: pid=1 fd=2 len=24 sample='[init] restartin'
+[init] restarting shell
+write: pid=1 fd=2 len=20 sample='[init] calling f'
+[init] calling fork
+syscall_fork: pid=1 entering
+proc_fork: parent pid=1 entering
+proc_fork: proc_info allocated
+proc_fork: stack allocated aligned=0xffffc000001021c0
+proc_fork: cpu_state allocated
+proc_fork: new address space=61000
+proc_fork: vm_clone complete
+proc_fork: child pid=13 rax=0 rip=40000e
+proc: parent=init(pid=1) forked child pid=13
+proc_fork: linked child pid=13
+proc_execute: queued process init (priority 2)
+proc_fork: scheduled child pid=13
+syscall_fork: returning child pid=13
+write: pid=1 fd=2 len=18 sample='[init] fork rc=1'
+[init] fork rc=13
+write: pid=1 fd=2 len=26 sample='[init] parent fo'
+[init] parent fork branch
+write: pid=1 fd=2 len=26 sample='[init] parent fo'
+[init] parent fork branch
+waitpid: caller pid=1 pid=13
+waitpid: loop result=0 status=0
+proc_request_sleep: pid=1 duration=1000
+proc_request_sleep: caller=ffffffff800414e2
+proc_switch: previous pid=1 state=4 slice=0
+proc_switch: now running init(pid=13)
+proc_switch: next rip=40000e rsp=9fffc8 state=1
+proc_switch: loaded frame rip=40000e rsp=9fffc8 rax=0
+write: pid=13 fd=2 len=17 sample='[init] fork rc=0'
+[init] fork rc=0
+write: pid=13 fd=2 len=25 sample='[init] child for'
+[init] child fork branch
+write: pid=13 fd=2 len=25 sample='[init] child for'
+[init] child fork branch
+write: pid=13 fd=2 len=26 sample='[init] entering '
+[init] entering run_shell
+write: pid=13 fd=2 len=26 sample='[init] entering '
+[init] entering run_shell
+write: pid=13 fd=1 len=22 sample='[init] launching'
+[init] launching mosh
+write: pid=13 fd=2 len=22 sample='[init] launching'
+[init] launching mosh
+write: pid=13 fd=2 len=27 sample='[init] exec_prog'
+[init] exec_program called
+write: pid=13 fd=2 len=9 sample='/bin/mosh'
+/bin/moshwrite: pid=13 fd=2 len=1 sample='.'
+
+execve: pid=13 path=/bin/mosh
+execve: frame->rsi=0x9fff98 frame->rdx=0x400ed0
+execve: argc=1 envc=2
+proc_exec_image: pid=13 size=13800
+proc_exec_image: elf copied
+proc_exec_image: new_root=5ac000
+proc_exec_image: file table prepared
+proc_exec_image: stack region added
+proc_exec_image: initial stack phys=5ad000
+proc_exec_image: initial stack mapped
+proc_exec_image: stack segment registered
+proc_exec_image: elf loaded entry=40167d
+proc_exec_image: completed successfully
+execve: proc_exec_image err=0
+write: pid=13 fd=1 len=62 sample='This is mosh, th'
+This is mosh, the meniOS shell
+Type 'help' for instructions.
+
+proc_switch: previous pid=13 state=1 slice=6000
+proc_switch: now running init(pid=1)
+proc_switch: next rip=40008c rsp=9fffc8 state=1
+proc_switch: loaded frame rip=40008c rsp=9fffc8 rax=3d
+write: pid=1 fd=2 len=21 sample='[init] waitpid r'
+[init] waitpid rc=61
+write: pid=1 fd=2 len=24 sample='[init] waitpid s'
+[init] waitpid status=0
+write: pid=1 fd=1 len=32 sample='[init] shell exi'
+[init] shell exited, restarting
+write: pid=1 fd=2 len=24 sample='[init] restartin'
+[init] restarting shell
+write: pid=1 fd=2 len=20 sample='[init] calling f'
+[init] calling fork
+syscall_fork: pid=1 entering
+proc_fork: parent pid=1 entering
+proc_fork: proc_info allocated
+proc_fork: stack allocated aligned=0xffffc000001088c0
+proc_fork: cpu_state allocated
+proc_fork: new address space=61000
+proc_fork: vm_clone complete
+proc_fork: child pid=14 rax=0 rip=40000e
+proc: parent=init(pid=1) forked child pid=14
+proc_fork: linked child pid=14
+proc_execute: queued process init (priority 2)
+proc_fork: scheduled child pid=14
+syscall_fork: returning child pid=14
+proc_switch: previous pid=1 state=1 slice=6000
+proc_switch: now running init(pid=13)
+proc_switch: next rip=400061 rsp=21ffe18 state=1
+proc_switch: loaded frame rip=400061 rsp=21ffe18 rax=3e
+write: pid=13 fd=2 len=62 sample='This is mosh, th'
+This is mosh, the meniOS shell
+Type 'help' for instructions.
+
+write: pid=13 fd=1 len=8 sample='mosh:/> '
+mosh:/> proc_switch: previous pid=13 state=3 slice=0
+proc_switch: now running init(pid=14)
+proc_switch: next rip=40000e rsp=9fffc8 state=1
+proc_switch: loaded frame rip=40000e rsp=9fffc8 rax=0
+write: pid=14 fd=2 len=17 sample='[init] fork rc=0'
+[init] fork rc=0
+write: pid=14 fd=2 len=25 sample='[init] child for'
+[init] child fork branch
+write: pid=14 fd=2 len=25 sample='[init] child for'
+[init] child fork branch
+write: pid=14 fd=2 len=26 sample='[init] entering '
+[init] entering run_shell
+write: pid=14 fd=2 len=26 sample='[init] entering '
+[init] entering run_shell
+write: pid=14 fd=1 len=22 sample='[init] launching'
+[init] launching mosh
+write: pid=14 fd=2 len=22 sample='[init] launching'
+[init] launching mosh
+write: pid=14 fd=2 len=27 sample='[init] exec_prog'
+[init] exec_program called
+write: pid=14 fd=2 len=9 sample='/bin/mosh'
+/bin/moshwrite: pid=14 fd=2 len=1 sample='.'
+
+execve: pid=14 path=/bin/mosh
+execve: frame->rsi=0x9fff98 frame->rdx=0x400ed0
+execve: argc=1 envc=2
+proc_exec_image: pid=14 size=13800
+proc_exec_image: elf copied
+proc_exec_image: new_root=5b5000
+proc_exec_image: file table prepared
+proc_exec_image: stack region added
+proc_exec_image: initial stack phys=5b6000
+proc_exec_image: initial stack mapped
+proc_exec_image: stack segment registered
+proc_exec_image: elf loaded entry=40167d
+proc_exec_image: completed successfully
+execve: proc_exec_image err=0
+write: pid=14 fd=1 len=62 sample='This is mosh, th'
+This is mosh, the meniOS shell
+Type 'help' for instructions.
+
+proc_switch: previous pid=14 state=1 slice=6000
+proc_switch: now running init(pid=1)
+proc_switch: next rip=40000e rsp=9fffc8 state=1
+proc_switch: loaded frame rip=40000e rsp=9fffc8 rax=e
+write: pid=1 fd=2 len=18 sample='[init] fork rc=1'
+[init] fork rc=14
+write: pid=1 fd=2 len=26 sample='[init] parent fo'
+[init] parent fork branch
+write: pid=1 fd=2 len=26 sample='[init] parent fo'
+[init] parent fork branch
+waitpid: caller pid=1 pid=14
+waitpid: loop result=0 status=0
+proc_request_sleep: pid=1 duration=1000
+proc_request_sleep: caller=ffffffff800414e2
+proc_switch: previous pid=1 state=4 slice=0
+proc_switch: now running init(pid=14)
+proc_switch: next rip=400061 rsp=23ffe18 state=1
+proc_switch: loaded frame rip=400061 rsp=23ffe18 rax=3e
+write: pid=14 fd=2 len=62 sample='This is mosh, th'
+This is mosh, the meniOS shell
+Type 'help' for instructions.
+
+write: pid=14 fd=1 len=8 sample='mosh:/> '
+mosh:/> proc_switch: previous pid=14 state=3 slice=0
+proc_switch: now running init(pid=1)
+proc_switch: next rip=40008c rsp=9fffc8 state=1
+proc_switch: loaded frame rip=40008c rsp=9fffc8 rax=3d
+write: pid=1 fd=2 len=21 sample='[init] waitpid r'
+[init] waitpid rc=61
+write: pid=1 fd=2 len=24 sample='[init] waitpid s'
+[init] waitpid status=0
+write: pid=1 fd=1 len=32 sample='[init] shell exi'
+[init] shell exited, restarting
+write: pid=1 fd=2 len=24 sample='[init] restartin'
+[init] restarting shell
+write: pid=1 fd=2 len=20 sample='[init] calling f'
+[init] calling fork
+syscall_fork: pid=1 entering
+proc_fork: parent pid=1 entering
+proc_fork: proc_info allocated
+proc_fork: stack allocated aligned=0xffffc0000010f020
+proc_fork: cpu_state allocated
+proc_fork: new address space=61000
+proc_fork: vm_clone complete
+proc_fork: child pid=15 rax=0 rip=40000e
+proc: parent=init(pid=1) forked child pid=15
+proc_fork: linked child pid=15
+proc_execute: queued process init (priority 2)
+proc_fork: scheduled child pid=15
+syscall_fork: returning child pid=15
+write: pid=1 fd=2 len=18 sample='[init] fork rc=1'
+[init] fork rc=15
+write: pid=1 fd=2 len=26 sample='[init] parent fo'
+[init] parent fork branch
+write: pid=1 fd=2 len=26 sample='[init] parent fo'
+[init] parent fork branch
+waitpid: caller pid=1 pid=15
+waitpid: loop result=0 status=0
+proc_request_sleep: pid=1 duration=1000
+proc_request_sleep: caller=ffffffff800414e2
+proc_switch: previous pid=1 state=4 slice=0
+proc_switch: now running init(pid=15)
+proc_switch: next rip=40000e rsp=9fffc8 state=1
+proc_switch: loaded frame rip=40000e rsp=9fffc8 rax=0
+write: pid=15 fd=2 len=17 sample='[init] fork rc=0'
+[init] fork rc=0
+write: pid=15 fd=2 len=25 sample='[init] child for'
+[init] child fork branch
+write: pid=15 fd=2 len=25 sample='[init] child for'
+[init] child fork branch
+write: pid=15 fd=2 len=26 sample='[init] entering '
+[init] entering run_shell
+write: pid=15 fd=2 len=26 sample='[init] entering '
+[init] entering run_shell
+write: pid=15 fd=1 len=22 sample='[init] launching'
+[init] launching mosh
+write: pid=15 fd=2 len=22 sample='[init] launching'
+[init] launching mosh
+write: pid=15 fd=2 len=27 sample='[init] exec_prog'
+[init] exec_program called
+write: pid=15 fd=2 len=9 sample='/bin/mosh'
+/bin/moshwrite: pid=15 fd=2 len=1 sample='.'
+
+execve: pid=15 path=/bin/mosh
+execve: frame->rsi=0x9fff98 frame->rdx=0x400ed0
+execve: argc=1 envc=2
+proc_exec_image: pid=15 size=13800
+proc_exec_image: elf copied
+proc_exec_image: new_root=5be000
+proc_exec_image: file table prepared
+proc_exec_image: stack region added
+proc_exec_image: initial stack phys=5bf000
+proc_exec_image: initial stack mapped
+proc_exec_image: stack segment registered
+proc_exec_image: elf loaded entry=40167d
+proc_exec_image: completed successfully
+execve: proc_exec_image err=0
+write: pid=15 fd=1 len=62 sample='This is mosh, th'
+This is mosh, the meniOS shell
+Type 'help' for instructions.
+
+proc_switch: previous pid=15 state=1 slice=6000
+proc_switch: now running init(pid=1)
+proc_switch: next rip=40008c rsp=9fffc8 state=1
+proc_switch: loaded frame rip=40008c rsp=9fffc8 rax=3d
+write: pid=1 fd=2 len=21 sample='[init] waitpid r'
+[init] waitpid rc=61
+write: pid=1 fd=2 len=24 sample='[init] waitpid s'
+[init] waitpid status=0
+write: pid=1 fd=1 len=32 sample='[init] shell exi'
+[init] shell exited, restarting
+write: pid=1 fd=2 len=24 sample='[init] restartin'
+[init] restarting shell
+write: pid=1 fd=2 len=20 sample='[init] calling f'
+[init] calling fork
+syscall_fork: pid=1 entering
+proc_fork: parent pid=1 entering
+proc_fork: proc_info allocated
+proc_fork: stack allocated aligned=0xffffc00000115720
+proc_fork: cpu_state allocated
+proc_fork: new address space=61000
+proc_fork: vm_clone complete
+proc_fork: child pid=16 rax=0 rip=40000e
+proc: parent=init(pid=1) forked child pid=16
+proc_fork: linked child pid=16
+proc_execute: queued process init (priority 2)
+proc_fork: scheduled child pid=16
+syscall_fork: returning child pid=16
+write: pid=1 fd=2 len=18 sample='[init] fork rc=1'
+[init] fork rc=16
+write: pid=1 fd=2 len=26 sample='[init] parent fo'
+[init] parent fork branch
+write: pid=1 fd=2 len=26 sample='[init] parent fo'
+[init] parent fork branch
+waitpid: caller pid=1 pid=16
+waitpid: loop result=0 status=0
+proc_request_sleep: pid=1 duration=1000
+proc_request_sleep: caller=ffffffff800414e2
+proc_switch: previous pid=1 state=4 slice=0
+proc_switch: now running init(pid=15)
+proc_switch: next rip=400061 rsp=25ffe18 state=1
+proc_switch: loaded frame rip=400061 rsp=25ffe18 rax=3e
+write: pid=15 fd=2 len=62 sample='This is mosh, th'
+This is mosh, the meniOS shell
+Type 'help' for instructions.
+
+write: pid=15 fd=1 len=8 sample='mosh:/> '
+mosh:/> proc_switch: previous pid=15 state=3 slice=0
+proc_switch: now running init(pid=16)
+proc_switch: next rip=40000e rsp=9fffc8 state=1
+proc_switch: loaded frame rip=40000e rsp=9fffc8 rax=0
+write: pid=16 fd=2 len=17 sample='[init] fork rc=0'
+[init] fork rc=0
+write: pid=16 fd=2 len=25 sample='[init] child for'
+[init] child fork branch
+write: pid=16 fd=2 len=25 sample='[init] child for'
+[init] child fork branch
+write: pid=16 fd=2 len=26 sample='[init] entering '
+[init] entering run_shell
+write: pid=16 fd=2 len=26 sample='[init] entering '
+[init] entering run_shell
+write: pid=16 fd=1 len=22 sample='[init] launching'
+[init] launching mosh
+write: pid=16 fd=2 len=22 sample='[init] launching'
+[init] launching mosh
+write: pid=16 fd=2 len=27 sample='[init] exec_prog'
+[init] exec_program called
+write: pid=16 fd=2 len=9 sample='/bin/mosh'
+/bin/moshwrite: pid=16 fd=2 len=1 sample='.'
+
+execve: pid=16 path=/bin/mosh
+execve: frame->rsi=0x9fff98 frame->rdx=0x400ed0
+execve: argc=1 envc=2
+proc_exec_image: pid=16 size=13800
+proc_exec_image: elf copied
+proc_exec_image: new_root=5c7000
+proc_exec_image: file table prepared
+proc_exec_image: stack region added
+proc_exec_image: initial stack phys=5c8000
+proc_exec_image: initial stack mapped
+proc_exec_image: stack segment registered
+proc_exec_image: elf loaded entry=40167d
+proc_exec_image: completed successfully
+execve: proc_exec_image err=0
+write: pid=16 fd=1 len=62 sample='This is mosh, th'
+This is mosh, the meniOS shell
+Type 'help' for instructions.
+
+proc_switch: previous pid=16 state=1 slice=6000
+proc_switch: now running init(pid=1)
+proc_switch: next rip=40008c rsp=9fffc8 state=1
+proc_switch: loaded frame rip=40008c rsp=9fffc8 rax=3d
+write: pid=1 fd=2 len=21 sample='[init] waitpid r'
+[init] waitpid rc=61
+write: pid=1 fd=2 len=24 sample='[init] waitpid s'
+[init] waitpid status=0
+write: pid=1 fd=1 len=32 sample='[init] shell exi'
+[init] shell exited, restarting
+write: pid=1 fd=2 len=24 sample='[init] restartin'
+[init] restarting shell
+write: pid=1 fd=2 len=20 sample='[init] calling f'
+[init] calling fork
+syscall_fork: pid=1 entering
+proc_fork: parent pid=1 entering
+proc_fork: proc_info allocated
+proc_fork: stack allocated aligned=0xffffc0000011be50
+proc_fork: cpu_state allocated
+proc_fork: new address space=61000
+proc_fork: vm_clone complete
+proc_fork: child pid=17 rax=0 rip=40000e
+proc: parent=init(pid=1) forked child pid=17
+proc_fork: linked child pid=17
+proc_execute: queued process init (priority 2)
+proc_fork: scheduled child pid=17
+syscall_fork: returning child pid=17
+proc_switch: previous pid=1 state=1 slice=6000
+proc_switch: now running init(pid=16)
+proc_switch: next rip=400061 rsp=27ffe18 state=1
+proc_switch: loaded frame rip=400061 rsp=27ffe18 rax=3e
+write: pid=16 fd=2 len=62 sample='This is mosh, th'
+This is mosh, the meniOS shell
+Type 'help' for instructions.
+
+write: pid=16 fd=1 len=8 sample='mosh:/> '
+mosh:/> proc_switch: previous pid=16 state=3 slice=0
+proc_switch: now running init(pid=17)
+proc_switch: next rip=40000e rsp=9fffc8 state=1
+proc_switch: loaded frame rip=40000e rsp=9fffc8 rax=0
+write: pid=17 fd=2 len=17 sample='[init] fork rc=0'
+[init] fork rc=0
+write: pid=17 fd=2 len=25 sample='[init] child for'
+[init] child fork branch
+write: pid=17 fd=2 len=25 sample='[init] child for'
+[init] child fork branch
+write: pid=17 fd=2 len=26 sample='[init] entering '
+[init] entering run_shell
+write: pid=17 fd=2 len=26 sample='[init] entering '
+[init] entering run_shell
+write: pid=17 fd=1 len=22 sample='[init] launching'
+[init] launching mosh
+write: pid=17 fd=2 len=22 sample='[init] launching'
+[init] launching mosh
+write: pid=17 fd=2 len=27 sample='[init] exec_prog'
+[init] exec_program called
+write: pid=17 fd=2 len=9 sample='/bin/mosh'
+/bin/moshwrite: pid=17 fd=2 len=1 sample='.'
+
+execve: pid=17 path=/bin/mosh
+execve: frame->rsi=0x9fff98 frame->rdx=0x400ed0
+execve: argc=1 envc=2
+proc_exec_image: pid=17 size=13800
+proc_exec_image: elf copied
+proc_exec_image: new_root=5d0000
+proc_exec_image: file table prepared
+proc_exec_image: stack region added
+proc_exec_image: initial stack phys=5d1000
+proc_exec_image: initial stack mapped
+proc_exec_image: stack segment registered
+proc_exec_image: elf loaded entry=40167d
+proc_exec_image: completed successfully
+execve: proc_exec_image err=0
+write: pid=17 fd=1 len=62 sample='This is mosh, th'
+This is mosh, the meniOS shell
+Type 'help' for instructions.
+
+proc_switch: previous pid=17 state=1 slice=6000
+proc_switch: now running init(pid=1)
+proc_switch: next rip=40000e rsp=9fffc8 state=1
+proc_switch: loaded frame rip=40000e rsp=9fffc8 rax=11
+write: pid=1 fd=2 len=18 sample='[init] fork rc=1'
+[init] fork rc=17
+write: pid=1 fd=2 len=26 sample='[init] parent fo'
+[init] parent fork branch
+write: pid=1 fd=2 len=26 sample='[init] parent fo'
+[init] parent fork branch
+waitpid: caller pid=1 pid=17
+waitpid: loop result=0 status=0
+proc_request_sleep: pid=1 duration=1000
+proc_request_sleep: caller=ffffffff800414e2
+proc_switch: previous pid=1 state=4 slice=0
+proc_switch: now running init(pid=17)
+proc_switch: next rip=400061 rsp=29ffe18 state=1
+proc_switch: loaded frame rip=400061 rsp=29ffe18 rax=3e
+write: pid=17 fd=2 len=62 sample='This is mosh, th'
+This is mosh, the meniOS shell
+Type 'help' for instructions.
+
+write: pid=17 fd=1 len=8 sample='mosh:/> '
+mosh:/> proc_switch: previous pid=17 state=3 slice=0
+proc_switch: now running init(pid=1)
+proc_switch: next rip=40008c rsp=9fffc8 state=1
+proc_switch: loaded frame rip=40008c rsp=9fffc8 rax=3d
+write: pid=1 fd=2 len=21 sample='[init] waitpid r'
+[init] waitpid rc=61
+write: pid=1 fd=2 len=24 sample='[init] waitpid s'
+[init] waitpid status=0
+write: pid=1 fd=1 len=32 sample='[init] shell exi'
+[init] shell exited, restarting
+write: pid=1 fd=2 len=24 sample='[init] restartin'
+[init] restarting shell
+write: pid=1 fd=2 len=20 sample='[init] calling f'
+[init] calling fork
+syscall_fork: pid=1 entering
+proc_fork: parent pid=1 entering
+proc_fork: proc_info allocated
+proc_fork: stack allocated aligned=0xffffc000001225b0
+proc_fork: cpu_state allocated
+proc_fork: new address space=61000
+proc_fork: vm_clone complete
+proc_fork: child pid=18 rax=0 rip=40000e
+proc: parent=init(pid=1) forked child pid=18
+proc_fork: linked child pid=18
+proc_execute: queued process init (priority 2)
+proc_fork: scheduled child pid=18
+syscall_fork: returning child pid=18
+write: pid=1 fd=2 len=18 sample='[init] fork rc=1'
+[init] fork rc=18
+write: pid=1 fd=2 len=26 sample='[init] parent fo'
+[init] parent fork branch
+write: pid=1 fd=2 len=26 sample='[init] parent fo'
+[init] parent fork branch
+waitpid: caller pid=1 pid=18
+waitpid: loop result=0 status=0
+proc_request_sleep: pid=1 duration=1000
+proc_request_sleep: caller=ffffffff800414e2
+proc_switch: previous pid=1 state=4 slice=0
+proc_switch: now running init(pid=18)
+proc_switch: next rip=40000e rsp=9fffc8 state=1
+proc_switch: loaded frame rip=40000e rsp=9fffc8 rax=0
+write: pid=18 fd=2 len=17 sample='[init] fork rc=0'
+[init] fork rc=0
+write: pid=18 fd=2 len=25 sample='[init] child for'
+[init] child fork branch
+write: pid=18 fd=2 len=25 sample='[init] child for'
+[init] child fork branch
+write: pid=18 fd=2 len=26 sample='[init] entering '
+[init] entering run_shell
+write: pid=18 fd=2 len=26 sample='[init] entering '
+[init] entering run_shell
+write: pid=18 fd=1 len=22 sample='[init] launching'
+[init] launching mosh
+write: pid=18 fd=2 len=22 sample='[init] launching'
+[init] launching mosh
+write: pid=18 fd=2 len=27 sample='[init] exec_prog'
+[init] exec_program called
+write: pid=18 fd=2 len=9 sample='/bin/mosh'
+/bin/moshwrite: pid=18 fd=2 len=1 sample='.'
+
+execve: pid=18 path=/bin/mosh
+execve: frame->rsi=0x9fff98 frame->rdx=0x400ed0
+execve: argc=1 envc=2
+proc_exec_image: pid=18 size=13800
+proc_exec_image: elf copied
+proc_exec_image: new_root=5d9000
+proc_exec_image: file table prepared
+proc_exec_image: stack region added
+proc_exec_image: initial stack phys=5da000
+proc_exec_image: initial stack mapped
+proc_exec_image: stack segment registered
+proc_exec_image: elf loaded entry=40167d
+proc_exec_image: completed successfully
+execve: proc_exec_image err=0
+write: pid=18 fd=1 len=62 sample='This is mosh, th'
+This is mosh, the meniOS shell
+Type 'help' for instructions.
+
+proc_switch: previous pid=18 state=1 slice=6000
+proc_switch: now running init(pid=1)
+proc_switch: next rip=40008c rsp=9fffc8 state=1
+proc_switch: loaded frame rip=40008c rsp=9fffc8 rax=3d
+write: pid=1 fd=2 len=21 sample='[init] waitpid r'
+[init] waitpid rc=61
+write: pid=1 fd=2 len=24 sample='[init] waitpid s'
+[init] waitpid status=0
+write: pid=1 fd=1 len=32 sample='[init] shell exi'
+[init] shell exited, restarting
+write: pid=1 fd=2 len=24 sample='[init] restartin'
+[init] restarting shell
+write: pid=1 fd=2 len=20 sample='[init] calling f'
+[init] calling fork
+syscall_fork: pid=1 entering
+proc_fork: parent pid=1 entering
+proc_fork: proc_info allocated
+proc_fork: stack allocated aligned=0xffffc00000128cb0
+proc_fork: cpu_state allocated
+proc_fork: new address space=61000
+proc_fork: vm_clone complete
+proc_fork: child pid=19 rax=0 rip=40000e
+proc: parent=init(pid=1) forked child pid=19
+proc_fork: linked child pid=19
+proc_execute: queued process init (priority 2)
+proc_fork: scheduled child pid=19
+syscall_fork: returning child pid=19
+write: pid=1 fd=2 len=18 sample='[init] fork rc=1'
+[init] fork rc=19
+write: pid=1 fd=2 len=26 sample='[init] parent fo'
+[init] parent fork branch
+write: pid=1 fd=2 len=26 sample='[init] parent fo'
+[init] parent fork branch
+waitpid: caller pid=1 pid=19
+waitpid: loop result=0 status=0
+proc_request_sleep: pid=1 duration=1000
+proc_request_sleep: caller=ffffffff800414e2
+proc_switch: previous pid=1 state=4 slice=0
+proc_switch: now running init(pid=18)
+proc_switch: next rip=400061 rsp=2bffe18 state=1
+proc_switch: loaded frame rip=400061 rsp=2bffe18 rax=3e
+write: pid=18 fd=2 len=62 sample='This is mosh, th'
+This is mosh, the meniOS shell
+Type 'help' for instructions.
+
+write: pid=18 fd=1 len=8 sample='mosh:/> '
+mosh:/> proc_switch: previous pid=18 state=3 slice=0
+proc_switch: now running init(pid=19)
+proc_switch: next rip=40000e rsp=9fffc8 state=1
+proc_switch: loaded frame rip=40000e rsp=9fffc8 rax=0
+write: pid=19 fd=2 len=17 sample='[init] fork rc=0'
+[init] fork rc=0
+write: pid=19 fd=2 len=25 sample='[init] child for'
+[init] child fork branch
+write: pid=19 fd=2 len=25 sample='[init] child for'
+[init] child fork branch
+write: pid=19 fd=2 len=26 sample='[init] entering '
+[init] entering run_shell
+write: pid=19 fd=2 len=26 sample='[init] entering '
+[init] entering run_shell
+write: pid=19 fd=1 len=22 sample='[init] launching'
+[init] launching mosh
+write: pid=19 fd=2 len=22 sample='[init] launching'
+[init] launching mosh
+write: pid=19 fd=2 len=27 sample='[init] exec_prog'
+[init] exec_program called
+write: pid=19 fd=2 len=9 sample='/bin/mosh'
+/bin/moshwrite: pid=19 fd=2 len=1 sample='.'
+
+execve: pid=19 path=/bin/mosh
+execve: frame->rsi=0x9fff98 frame->rdx=0x400ed0
+execve: argc=1 envc=2
+proc_exec_image: pid=19 size=13800
+proc_exec_image: elf copied
+proc_exec_image: new_root=5e2000
+proc_exec_image: file table prepared
+proc_exec_image: stack region added
+proc_exec_image: initial stack phys=5e3000
+proc_exec_image: initial stack mapped
+proc_exec_image: stack segment registered
+proc_exec_image: elf loaded entry=40167d
+proc_exec_image: completed successfully
+execve: proc_exec_image err=0
+write: pid=19 fd=1 len=62 sample='This is mosh, th'
+This is mosh, the meniOS shell
+Type 'help' for instructions.
+
+proc_switch: previous pid=19 state=1 slice=6000
+proc_switch: now running init(pid=1)
+proc_switch: next rip=40008c rsp=9fffc8 state=1
+proc_switch: loaded frame rip=40008c rsp=9fffc8 rax=3d
+write: pid=1 fd=2 len=21 sample='[init] waitpid r'
+[init] waitpid rc=61
+write: pid=1 fd=2 len=24 sample='[init] waitpid s'
+[init] waitpid status=0
+write: pid=1 fd=1 len=32 sample='[init] shell exi'
+[init] shell exited, restarting
+write: pid=1 fd=2 len=24 sample='[init] restartin'
+[init] restarting shell
+write: pid=1 fd=2 len=20 sample='[init] calling f'
+[init] calling fork
+syscall_fork: pid=1 entering
+proc_fork: parent pid=1 entering
+proc_fork: proc_info allocated
+proc_fork: stack allocated aligned=0xffffc0000012f3e0
+proc_fork: cpu_state allocated
+proc_fork: new address space=61000
+proc_fork: vm_clone complete
+proc_fork: child pid=20 rax=0 rip=40000e
+proc: parent=init(pid=1) forked child pid=20
+proc_fork: linked child pid=20
+proc_execute: queued process init (priority 2)
+proc_fork: scheduled child pid=20
+syscall_fork: returning child pid=20
+write: pid=1 fd=2 len=18 sample='[init] fork rc=2'
+[init] fork rc=20
+write: pid=1 fd=2 len=26 sample='[init] parent fo'
+[init] parent fork branch
+write: pid=1 fd=2 len=26 sample='[init] parent fo'
+[init] parent fork branch
+waitpid: caller pid=1 pid=20
+waitpid: loop result=0 status=0
+proc_request_sleep: pid=1 duration=1000
+proc_request_sleep: caller=ffffffff800414e2
+proc_switch: previous pid=1 state=4 slice=0
+proc_switch: now running init(pid=19)
+proc_switch: next rip=400061 rsp=2dffe18 state=1
+proc_switch: loaded frame rip=400061 rsp=2dffe18 rax=3e
+write: pid=19 fd=2 len=62 sample='This is mosh, th'
+This is mosh, the meniOS shell
+Type 'help' for instructions.
+
+write: pid=19 fd=1 len=8 sample='mosh:/> '
+mosh:/> proc_switch: previous pid=19 state=3 slice=0
+proc_switch: now running init(pid=20)
+proc_switch: next rip=40000e rsp=9fffc8 state=1
+proc_switch: loaded frame rip=40000e rsp=9fffc8 rax=0
+write: pid=20 fd=2 len=17 sample='[init] fork rc=0'
+[init] fork rc=0
+write: pid=20 fd=2 len=25 sample='[init] child for'
+[init] child fork branch
+write: pid=20 fd=2 len=25 sample='[init] child for'
+[init] child fork branch
+write: pid=20 fd=2 len=26 sample='[init] entering '
+[init] entering run_shell
+write: pid=20 fd=2 len=26 sample='[init] entering '
+[init] entering run_shell
+write: pid=20 fd=1 len=22 sample='[init] launching'
+[init] launching mosh
+write: pid=20 fd=2 len=22 sample='[init] launching'
+[init] launching mosh
+write: pid=20 fd=2 len=27 sample='[init] exec_prog'
+[init] exec_program called
+write: pid=20 fd=2 len=9 sample='/bin/mosh'
+/bin/moshwrite: pid=20 fd=2 len=1 sample='.'
+
+execve: pid=20 path=/bin/mosh
+execve: frame->rsi=0x9fff98 frame->rdx=0x400ed0
+execve: argc=1 envc=2
+proc_exec_image: pid=20 size=13800
+proc_exec_image: elf copied
+proc_exec_image: new_root=5eb000
+proc_exec_image: file table prepared
+proc_exec_image: stack region added
+proc_exec_image: initial stack phys=5ec000
+proc_exec_image: initial stack mapped
+proc_exec_image: stack segment registered
+proc_exec_image: elf loaded entry=40167d
+proc_exec_image: completed successfully
+execve: proc_exec_image err=0
+write: pid=20 fd=1 len=62 sample='This is mosh, th'
+This is mosh, the meniOS shell
+Type 'help' for instructions.
+
+proc_switch: previous pid=20 state=1 slice=6000
+proc_switch: now running init(pid=1)
+proc_switch: next rip=40008c rsp=9fffc8 state=1
+proc_switch: loaded frame rip=40008c rsp=9fffc8 rax=3d
+write: pid=1 fd=2 len=21 sample='[init] waitpid r'
+[init] waitpid rc=61
+write: pid=1 fd=2 len=24 sample='[init] waitpid s'
+[init] waitpid status=0
+write: pid=1 fd=1 len=32 sample='[init] shell exi'
+[init] shell exited, restarting
+proc_switch: previous pid=1 state=1 slice=6000
+proc_switch: now running init(pid=20)
+proc_switch: next rip=400061 rsp=2fffe18 state=1
+proc_switch: loaded frame rip=400061 rsp=2fffe18 rax=3e
+write: pid=20 fd=2 len=62 sample='This is mosh, th'
+This is mosh, the meniOS shell
+Type 'help' for instructions.
+
+write: pid=20 fd=1 len=8 sample='mosh:/> '
+mosh:/> proc_switch: previous pid=20 state=3 slice=0
+proc_switch: now running init(pid=1)
+proc_switch: next rip=40008c rsp=9fffa8 state=1
+proc_switch: loaded frame rip=40008c rsp=9fffa8 rax=20
+write: pid=1 fd=2 len=24 sample='[init] restartin'
+[init] restarting shell
+write: pid=1 fd=2 len=20 sample='[init] calling f'
+[init] calling fork
+syscall_fork: pid=1 entering
+proc_fork: parent pid=1 entering
+proc_fork: proc_info allocated
+proc_fork: stack allocated aligned=0xffffc00000135b40
+proc_fork: cpu_state allocated
+proc_fork: new address space=61000
+proc_fork: vm_clone complete
+proc_fork: child pid=21 rax=0 rip=40000e
+proc: parent=init(pid=1) forked child pid=21
+proc_fork: linked child pid=21
+proc_execute: queued process init (priority 2)
+proc_fork: scheduled child pid=21
+syscall_fork: returning child pid=21
+write: pid=1 fd=2 len=18 sample='[init] fork rc=2'
+[init] fork rc=21
+write: pid=1 fd=2 len=26 sample='[init] parent fo'
+[init] parent fork branch
+write: pid=1 fd=2 len=26 sample='[init] parent fo'
+[init] parent fork branch
+waitpid: caller pid=1 pid=21
+waitpid: loop result=0 status=0
+proc_request_sleep: pid=1 duration=1000
+proc_request_sleep: caller=ffffffff800414e2
+proc_switch: previous pid=1 state=4 slice=0
+proc_switch: now running init(pid=21)
+proc_switch: next rip=40000e rsp=9fffc8 state=1
+proc_switch: loaded frame rip=40000e rsp=9fffc8 rax=0
+write: pid=21 fd=2 len=17 sample='[init] fork rc=0'
+[init] fork rc=0
+write: pid=21 fd=2 len=25 sample='[init] child for'
+[init] child fork branch
+write: pid=21 fd=2 len=25 sample='[init] child for'
+[init] child fork branch
+write: pid=21 fd=2 len=26 sample='[init] entering '
+[init] entering run_shell
+write: pid=21 fd=2 len=26 sample='[init] entering '
+[init] entering run_shell
+write: pid=21 fd=1 len=22 sample='[init] launching'
+[init] launching mosh
+write: pid=21 fd=2 len=22 sample='[init] launching'
+[init] launching mosh
+write: pid=21 fd=2 len=27 sample='[init] exec_prog'
+[init] exec_program called
+write: pid=21 fd=2 len=9 sample='/bin/mosh'
+/bin/moshwrite: pid=21 fd=2 len=1 sample='.'
+
+execve: pid=21 path=/bin/mosh
+execve: frame->rsi=0x9fff98 frame->rdx=0x400ed0
+execve: argc=1 envc=2
+proc_exec_image: pid=21 size=13800
+proc_exec_image: elf copied
+proc_exec_image: new_root=5f4000
+proc_exec_image: file table prepared
+proc_exec_image: stack region added
+proc_exec_image: initial stack phys=5f5000
+proc_exec_image: initial stack mapped
+proc_exec_image: stack segment registered
+proc_exec_image: elf loaded entry=40167d
+proc_exec_image: completed successfully
+execve: proc_exec_image err=0
+write: pid=21 fd=1 len=62 sample='This is mosh, th'
+This is mosh, the meniOS shell
+Type 'help' for instructions.
+
+proc_switch: previous pid=21 state=1 slice=6000
+proc_switch: now running init(pid=1)
+proc_switch: next rip=40008c rsp=9fffc8 state=1
+proc_switch: loaded frame rip=40008c rsp=9fffc8 rax=3d
+write: pid=1 fd=2 len=21 sample='[init] waitpid r'
+[init] waitpid rc=61
+write: pid=1 fd=2 len=24 sample='[init] waitpid s'
+[init] waitpid status=0
+write: pid=1 fd=1 len=32 sample='[init] shell exi'
+[init] shell exited, restarting
+proc_switch: previous pid=1 state=1 slice=6000
+proc_switch: now running init(pid=21)
+proc_switch: next rip=400061 rsp=31ffe18 state=1
+proc_switch: loaded frame rip=400061 rsp=31ffe18 rax=3e
+write: pid=21 fd=2 len=62 sample='This is mosh, th'
+This is mosh, the meniOS shell
+Type 'help' for instructions.
+
+write: pid=21 fd=1 len=8 sample='mosh:/> '
+mosh:/> proc_switch: previous pid=21 state=3 slice=0
+proc_switch: now running init(pid=1)
+proc_switch: next rip=40008c rsp=9fffa8 state=1
+proc_switch: loaded frame rip=40008c rsp=9fffa8 rax=20
+write: pid=1 fd=2 len=24 sample='[init] restartin'
+[init] restarting shell
+write: pid=1 fd=2 len=20 sample='[init] calling f'
+[init] calling fork
+syscall_fork: pid=1 entering
+proc_fork: parent pid=1 entering
+proc_fork: proc_info allocated
+proc_fork: stack allocated aligned=0xffffc0000013c270
+proc_fork: cpu_state allocated
+proc_fork: new address space=61000
+proc_fork: vm_clone complete
+proc_fork: child pid=22 rax=0 rip=40000e
+proc: parent=init(pid=1) forked child pid=22
+proc_fork: linked child pid=22
+proc_execute: queued process init (priority 2)
+proc_fork: scheduled child pid=22
+syscall_fork: returning child pid=22
+write: pid=1 fd=2 len=18 sample='[init] fork rc=2'
+[init] fork rc=22
+write: pid=1 fd=2 len=26 sample='[init] parent fo'
+[init] parent fork branch
+write: pid=1 fd=2 len=26 sample='[init] parent fo'
+[init] parent fork branch
+waitpid: caller pid=1 pid=22
+waitpid: loop result=0 status=0
+proc_request_sleep: pid=1 duration=1000
+proc_request_sleep: caller=ffffffff800414e2
+proc_switch: previous pid=1 state=4 slice=0
+proc_switch: now running init(pid=22)
+proc_switch: next rip=40000e rsp=9fffc8 state=1
+proc_switch: loaded frame rip=40000e rsp=9fffc8 rax=0
+write: pid=22 fd=2 len=17 sample='[init] fork rc=0'
+[init] fork rc=0
+write: pid=22 fd=2 len=25 sample='[init] child for'
+[init] child fork branch
+write: pid=22 fd=2 len=25 sample='[init] child for'
+[init] child fork branch
+write: pid=22 fd=2 len=26 sample='[init] entering '
+[init] entering run_shell
+write: pid=22 fd=2 len=26 sample='[init] entering '
+[init] entering run_shell
+write: pid=22 fd=1 len=22 sample='[init] launching'
+[init] launching mosh
+write: pid=22 fd=2 len=22 sample='[init] launching'
+[init] launching mosh
+write: pid=22 fd=2 len=27 sample='[init] exec_prog'
+[init] exec_program called
+write: pid=22 fd=2 len=9 sample='/bin/mosh'
+/bin/moshwrite: pid=22 fd=2 len=1 sample='.'
+
+execve: pid=22 path=/bin/mosh
+execve: frame->rsi=0x9fff98 frame->rdx=0x400ed0
+execve: argc=1 envc=2
+proc_exec_image: pid=22 size=13800
+proc_exec_image: elf copied
+proc_exec_image: new_root=5fd000
+proc_exec_image: file table prepared
+proc_exec_image: stack region added
+proc_exec_image: initial stack phys=5fe000
+proc_exec_image: initial stack mapped
+proc_exec_image: stack segment registered
+proc_exec_image: elf loaded entry=40167d
+proc_exec_image: completed successfully
+execve: proc_exec_image err=0
+write: pid=22 fd=1 len=62 sample='This is mosh, th'
+This is mosh, the meniOS shell
+Type 'help' for instructions.
+
+proc_switch: previous pid=22 state=1 slice=6000
+proc_switch: now running init(pid=1)
+proc_switch: next rip=40008c rsp=9fffc8 state=1
+proc_switch: loaded frame rip=40008c rsp=9fffc8 rax=3d
+write: pid=1 fd=2 len=21 sample='[init] waitpid r'
+[init] waitpid rc=61
+write: pid=1 fd=2 len=24 sample='[init] waitpid s'
+[init] waitpid status=0
+write: pid=1 fd=1 len=32 sample='[init] shell exi'
+[init] shell exited, restarting
+write: pid=1 fd=2 len=24 sample='[init] restartin'
+[init] restarting shell
+write: pid=1 fd=2 len=20 sample='[init] calling f'
+[init] calling fork
+syscall_fork: pid=1 entering
+proc_fork: parent pid=1 entering
+proc_fork: proc_info allocated
+proc_fork: stack allocated aligned=0xffffc00000142970
+proc_fork: cpu_state allocated
+proc_fork: new address space=61000
+proc_fork: vm_clone complete
+proc_fork: child pid=23 rax=0 rip=40000e
+proc: parent=init(pid=1) forked child pid=23
+proc_fork: linked child pid=23
+proc_execute: queued process init (priority 2)
+proc_fork: scheduled child pid=23
+syscall_fork: returning child pid=23
+proc_switch: previous pid=1 state=1 slice=6000
+proc_switch: now running init(pid=22)
+proc_switch: next rip=400061 rsp=33ffe18 state=1
+proc_switch: loaded frame rip=400061 rsp=33ffe18 rax=3e
+write: pid=22 fd=2 len=62 sample='This is mosh, th'
+This is mosh, the meniOS shell
+Type 'help' for instructions.
+
+write: pid=22 fd=1 len=8 sample='mosh:/> '
+mosh:/> proc_switch: previous pid=22 state=3 slice=0
+proc_switch: now running init(pid=23)
+proc_switch: next rip=40000e rsp=9fffc8 state=1
+proc_switch: loaded frame rip=40000e rsp=9fffc8 rax=0
+write: pid=23 fd=2 len=17 sample='[init] fork rc=0'
+[init] fork rc=0
+write: pid=23 fd=2 len=25 sample='[init] child for'
+[init] child fork branch
+write: pid=23 fd=2 len=25 sample='[init] child for'
+[init] child fork branch
+write: pid=23 fd=2 len=26 sample='[init] entering '
+[init] entering run_shell
+write: pid=23 fd=2 len=26 sample='[init] entering '
+[init] entering run_shell
+write: pid=23 fd=1 len=22 sample='[init] launching'
+[init] launching mosh
+write: pid=23 fd=2 len=22 sample='[init] launching'
+[init] launching mosh
+write: pid=23 fd=2 len=27 sample='[init] exec_prog'
+[init] exec_program called
+write: pid=23 fd=2 len=9 sample='/bin/mosh'
+/bin/moshwrite: pid=23 fd=2 len=1 sample='.'
+
+execve: pid=23 path=/bin/mosh
+execve: frame->rsi=0x9fff98 frame->rdx=0x400ed0
+execve: argc=1 envc=2
+proc_exec_image: pid=23 size=13800
+proc_exec_image: elf copied
+proc_exec_image: new_root=606000
+proc_exec_image: file table prepared
+proc_exec_image: stack region added
+proc_exec_image: initial stack phys=607000
+proc_exec_image: initial stack mapped
+proc_exec_image: stack segment registered
+proc_exec_image: elf loaded entry=40167d
+proc_exec_image: completed successfully
+execve: proc_exec_image err=0
+write: pid=23 fd=1 len=62 sample='This is mosh, th'
+This is mosh, the meniOS shell
+Type 'help' for instructions.
+
+proc_switch: previous pid=23 state=1 slice=6000
+proc_switch: now running init(pid=1)
+proc_switch: next rip=40000e rsp=9fffc8 state=1
+proc_switch: loaded frame rip=40000e rsp=9fffc8 rax=17
+write: pid=1 fd=2 len=18 sample='[init] fork rc=2'
+[init] fork rc=23
+write: pid=1 fd=2 len=26 sample='[init] parent fo'
+[init] parent fork branch
+write: pid=1 fd=2 len=26 sample='[init] parent fo'
+[init] parent fork branch
+waitpid: caller pid=1 pid=23
+waitpid: loop result=0 status=0
+proc_request_sleep: pid=1 duration=1000
+proc_request_sleep: caller=ffffffff800414e2
+proc_switch: previous pid=1 state=4 slice=0
+proc_switch: now running init(pid=23)
+proc_switch: next rip=400061 rsp=35ffe18 state=1
+proc_switch: loaded frame rip=400061 rsp=35ffe18 rax=3e
+write: pid=23 fd=2 len=62 sample='This is mosh, th'
+This is mosh, the meniOS shell
+Type 'help' for instructions.
+
+write: pid=23 fd=1 len=8 sample='mosh:/> '
+mosh:/> proc_switch: previous pid=23 state=3 slice=0
+proc_switch: now running init(pid=1)
+proc_switch: next rip=40008c rsp=9fffc8 state=1
+proc_switch: loaded frame rip=40008c rsp=9fffc8 rax=3d
+write: pid=1 fd=2 len=21 sample='[init] waitpid r'
+[init] waitpid rc=61
+write: pid=1 fd=2 len=24 sample='[init] waitpid s'
+[init] waitpid status=0
+write: pid=1 fd=1 len=32 sample='[init] shell exi'
+[init] shell exited, restarting
+write: pid=1 fd=2 len=24 sample='[init] restartin'
+[init] restarting shell
+write: pid=1 fd=2 len=20 sample='[init] calling f'
+[init] calling fork
+syscall_fork: pid=1 entering
+proc_fork: parent pid=1 entering
+proc_fork: proc_info allocated
+proc_fork: stack allocated aligned=0xffffc000001490d0
+proc_fork: cpu_state allocated
+proc_fork: new address space=61000
+proc_fork: vm_clone complete
+proc_fork: child pid=24 rax=0 rip=40000e
+proc: parent=init(pid=1) forked child pid=24
+proc_fork: linked child pid=24
+proc_execute: queued process init (priority 2)
+proc_fork: scheduled child pid=24
+syscall_fork: returning child pid=24
+write: pid=1 fd=2 len=18 sample='[init] fork rc=2'
+[init] fork rc=24
+write: pid=1 fd=2 len=26 sample='[init] parent fo'
+[init] parent fork branch
+write: pid=1 fd=2 len=26 sample='[init] parent fo'
+[init] parent fork branch
+waitpid: caller pid=1 pid=24
+waitpid: loop result=0 status=0
+proc_request_sleep: pid=1 duration=1000
+proc_request_sleep: caller=ffffffff800414e2
+proc_switch: previous pid=1 state=4 slice=0
+proc_switch: now running init(pid=24)
+proc_switch: next rip=40000e rsp=9fffc8 state=1
+proc_switch: loaded frame rip=40000e rsp=9fffc8 rax=0
+write: pid=24 fd=2 len=17 sample='[init] fork rc=0'
+[init] fork rc=0
+write: pid=24 fd=2 len=25 sample='[init] child for'
+[init] child fork branch
+write: pid=24 fd=2 len=25 sample='[init] child for'
+[init] child fork branch
+write: pid=24 fd=2 len=26 sample='[init] entering '
+[init] entering run_shell
+write: pid=24 fd=2 len=26 sample='[init] entering '
+[init] entering run_shell
+write: pid=24 fd=1 len=22 sample='[init] launching'
+[init] launching mosh
+write: pid=24 fd=2 len=22 sample='[init] launching'
+[init] launching mosh
+write: pid=24 fd=2 len=27 sample='[init] exec_prog'
+[init] exec_program called
+write: pid=24 fd=2 len=9 sample='/bin/mosh'
+/bin/moshwrite: pid=24 fd=2 len=1 sample='.'
+
+execve: pid=24 path=/bin/mosh
+execve: frame->rsi=0x9fff98 frame->rdx=0x400ed0
+execve: argc=1 envc=2
+proc_exec_image: pid=24 size=13800
+proc_exec_image: elf copied
+proc_exec_image: new_root=60f000
+proc_exec_image: file table prepared
+proc_exec_image: stack region added
+proc_exec_image: initial stack phys=610000
+proc_exec_image: initial stack mapped
+proc_exec_image: stack segment registered
+proc_exec_image: elf loaded entry=40167d
+proc_exec_image: completed successfully
+execve: proc_exec_image err=0
+write: pid=24 fd=1 len=62 sample='This is mosh, th'
+This is mosh, the meniOS shell
+Type 'help' for instructions.
+
+proc_switch: previous pid=24 state=1 slice=6000
+proc_switch: now running init(pid=1)
+proc_switch: next rip=40008c rsp=9fffc8 state=1
+proc_switch: loaded frame rip=40008c rsp=9fffc8 rax=3d
+write: pid=1 fd=2 len=21 sample='[init] waitpid r'
+[init] waitpid rc=61
+write: pid=1 fd=2 len=24 sample='[init] waitpid s'
+[init] waitpid status=0
+write: pid=1 fd=1 len=32 sample='[init] shell exi'
+[init] shell exited, restarting
+write: pid=1 fd=2 len=24 sample='[init] restartin'
+[init] restarting shell
+write: pid=1 fd=2 len=20 sample='[init] calling f'
+[init] calling fork
+syscall_fork: pid=1 entering
+proc_fork: parent pid=1 entering
+proc_fork: proc_info allocated
+proc_fork: stack allocated aligned=0xffffc0000014f7d0
+proc_fork: cpu_state allocated
+proc_fork: new address space=61000
+proc_fork: vm_clone complete
+proc_fork: child pid=25 rax=0 rip=40000e
+proc: parent=init(pid=1) forked child pid=25
+proc_fork: linked child pid=25
+proc_execute: queued process init (priority 2)
+proc_fork: scheduled child pid=25
+syscall_fork: returning child pid=25
+write: pid=1 fd=2 len=18 sample='[init] fork rc=2'
+[init] fork rc=25
+write: pid=1 fd=2 len=26 sample='[init] parent fo'
+[init] parent fork branch
+write: pid=1 fd=2 len=26 sample='[init] parent fo'
+[init] parent fork branch
+waitpid: caller pid=1 pid=25
+waitpid: loop result=0 status=0
+proc_request_sleep: pid=1 duration=1000
+proc_request_sleep: caller=ffffffff800414e2
+proc_switch: previous pid=1 state=4 slice=0
+proc_switch: now running init(pid=24)
+proc_switch: next rip=400061 rsp=37ffe18 state=1
+proc_switch: loaded frame rip=400061 rsp=37ffe18 rax=3e
+write: pid=24 fd=2 len=62 sample='This is mosh, th'
+This is mosh, the meniOS shell
+Type 'help' for instructions.
+
+write: pid=24 fd=1 len=8 sample='mosh:/> '
+mosh:/> proc_switch: previous pid=24 state=3 slice=0
+proc_switch: now running init(pid=25)
+proc_switch: next rip=40000e rsp=9fffc8 state=1
+proc_switch: loaded frame rip=40000e rsp=9fffc8 rax=0
+write: pid=25 fd=2 len=17 sample='[init] fork rc=0'
+[init] fork rc=0
+write: pid=25 fd=2 len=25 sample='[init] child for'
+[init] child fork branch
+write: pid=25 fd=2 len=25 sample='[init] child for'
+[init] child fork branch
+write: pid=25 fd=2 len=26 sample='[init] entering '
+[init] entering run_shell
+write: pid=25 fd=2 len=26 sample='[init] entering '
+[init] entering run_shell
+write: pid=25 fd=1 len=22 sample='[init] launching'
+[init] launching mosh
+write: pid=25 fd=2 len=22 sample='[init] launching'
+[init] launching mosh
+write: pid=25 fd=2 len=27 sample='[init] exec_prog'
+[init] exec_program called
+write: pid=25 fd=2 len=9 sample='/bin/mosh'
+/bin/moshwrite: pid=25 fd=2 len=1 sample='.'
+
+execve: pid=25 path=/bin/mosh
+execve: frame->rsi=0x9fff98 frame->rdx=0x400ed0
+execve: argc=1 envc=2
+proc_exec_image: pid=25 size=13800
+proc_exec_image: elf copied
+proc_exec_image: new_root=618000
+proc_exec_image: file table prepared
+proc_exec_image: stack region added
+proc_exec_image: initial stack phys=619000
+proc_exec_image: initial stack mapped
+proc_exec_image: stack segment registered
+proc_exec_image: elf loaded entry=40167d
+proc_exec_image: completed successfully
+execve: proc_exec_image err=0
+write: pid=25 fd=1 len=62 sample='This is mosh, th'
+This is mosh, the meniOS shell
+Type 'help' for instructions.
+
+proc_switch: previous pid=25 state=1 slice=6000
+proc_switch: now running init(pid=1)
+proc_switch: next rip=40008c rsp=9fffc8 state=1
+proc_switch: loaded frame rip=40008c rsp=9fffc8 rax=3d
+write: pid=1 fd=2 len=21 sample='[init] waitpid r'
+[init] waitpid rc=61
+write: pid=1 fd=2 len=24 sample='[init] waitpid s'
+[init] waitpid status=0
+write: pid=1 fd=1 len=32 sample='[init] shell exi'
+[init] shell exited, restarting
+write: pid=1 fd=2 len=24 sample='[init] restartin'
+[init] restarting shell
+write: pid=1 fd=2 len=20 sample='[init] calling f'
+[init] calling fork
+syscall_fork: pid=1 entering
+proc_fork: parent pid=1 entering
+proc_fork: proc_info allocated
+proc_fork: stack allocated aligned=0xffffc00000155f00
+proc_fork: cpu_state allocated
+proc_fork: new address space=61000
+proc_fork: vm_clone complete
+proc_fork: child pid=26 rax=0 rip=40000e
+proc: parent=init(pid=1) forked child pid=26
+proc_fork: linked child pid=26
+proc_execute: queued process init (priority 2)
+proc_fork: scheduled child pid=26
+syscall_fork: returning child pid=26
+proc_switch: previous pid=1 state=1 slice=6000
+proc_switch: now running init(pid=25)
+proc_switch: next rip=400061 rsp=39ffe18 state=1
+proc_switch: loaded frame rip=400061 rsp=39ffe18 rax=3e
+write: pid=25 fd=2 len=62 sample='This is mosh, th'
+This is mosh, the meniOS shell
+Type 'help' for instructions.
+
+write: pid=25 fd=1 len=8 sample='mosh:/> '
+mosh:/> proc_switch: previous pid=25 state=3 slice=0
+proc_switch: now running init(pid=26)
+proc_switch: next rip=40000e rsp=9fffc8 state=1
+proc_switch: loaded frame rip=40000e rsp=9fffc8 rax=0
+write: pid=26 fd=2 len=17 sample='[init] fork rc=0'
+[init] fork rc=0
+write: pid=26 fd=2 len=25 sample='[init] child for'
+[init] child fork branch
+write: pid=26 fd=2 len=25 sample='[init] child for'
+[init] child fork branch
+write: pid=26 fd=2 len=26 sample='[init] entering '
+[init] entering run_shell
+write: pid=26 fd=2 len=26 sample='[init] entering '
+[init] entering run_shell
+write: pid=26 fd=1 len=22 sample='[init] launching'
+[init] launching mosh

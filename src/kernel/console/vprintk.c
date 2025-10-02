@@ -300,6 +300,77 @@ int vsprintk(char* str, const char* format, va_list args) {
                                  prefix_len);
       break;
     }
+    case 'z': {
+      // length modifier for size_t, adjust and re-process next specifier
+      length = LEN_LONGLONG;
+      pos++; // skip 'z'
+      if(format[pos] == '\0') {
+        break;
+      }
+      specifier = format[pos++];
+      switch(specifier) {
+        case 'd':
+        case 'i': {
+          int64_t value = (int64_t)va_arg(args, long long);
+          bool negative = value < 0;
+          uint64_t magnitude;
+          if(negative) {
+            magnitude = (uint64_t)(-(value + 1));
+            magnitude += 1;
+          } else {
+            magnitude = (uint64_t)value;
+          }
+          char prefix_storage[2];
+          int prefix_len = 0;
+          if(negative) {
+            prefix_storage[prefix_len++] = '-';
+          }
+          result_len = format_number(str, result_len, magnitude, 10, false, left_align, zero_pad,
+                                     precision_specified, precision, width, prefix_storage,
+                                     prefix_len);
+          continue;
+        }
+        case 'u': {
+          uint64_t value = (uint64_t)va_arg(args, size_t);
+          result_len = format_number(str, result_len, value, 10, false, left_align, zero_pad,
+                                     precision_specified, precision, width, NULL, 0);
+          continue;
+        }
+        case 'x':
+        case 'X': {
+          bool uppercase = (specifier == 'X');
+          uint64_t value = (uint64_t)va_arg(args, size_t);
+          char prefix_storage[3];
+          int prefix_len = 0;
+          if(alternate_form && value != 0) {
+            prefix_storage[prefix_len++] = '0';
+            prefix_storage[prefix_len++] = uppercase ? 'X' : 'x';
+          }
+          result_len = format_number(str, result_len, value, 16, uppercase, left_align, zero_pad,
+                                     precision_specified, precision, width,
+                                     prefix_len ? prefix_storage : NULL, prefix_len);
+          continue;
+        }
+        case 'o': {
+          uint64_t value = (uint64_t)va_arg(args, size_t);
+          char prefix_storage[2];
+          int prefix_len = 0;
+          if(alternate_form && value != 0) {
+            prefix_storage[prefix_len++] = '0';
+          }
+          result_len = format_number(str, result_len, value, 8, false, left_align, zero_pad,
+                                     precision_specified, precision, width,
+                                     prefix_len ? prefix_storage : NULL, prefix_len);
+          continue;
+        }
+        default:
+          // Unknown combination, treat as literal
+          str[result_len++] = '%';
+          str[result_len++] = 'z';
+          str[result_len++] = specifier;
+          continue;
+      }
+    }
     case 'u': {
       uint64_t value;
       if(length == LEN_LONGLONG) {

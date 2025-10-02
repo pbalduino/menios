@@ -22,6 +22,7 @@ extern "C" {
 #define SYS_FORK   57
 #define SYS_EXECVE 59
 #define SYS_EXIT   60
+#define SYS_WAITPID 61
 #define SYS_FCNTL  72
 
 typedef struct syscall_frame_t {

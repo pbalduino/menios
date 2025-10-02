@@ -1517,5 +1517,26 @@
     "assignees": [
       "pbalduino"
     ]
+  },
+  {
+    "title": "Boot shell without init supervision to diagnose fork",
+    "labels": [
+      "debug"
+    ],
+    "description": "Temporarily run /bin/mosh directly as PID 1 (no fork/waitpid). Capture serial output and verify the shell behaves, giving us a baseline before re-enabling supervision."
+  },
+  {
+    "title": "Instrument minimal fork path",
+    "labels": [
+      "debug"
+    ],
+    "description": "Add fork instrumentation while supervision is disabled: quick single fork/exit to check child RAX, CR3, and waitpid behaviour.Focus on the core fork return path before reintroducing wait loops."
+  },
+  {
+    "title": "Restore init supervision and waitpid",
+    "labels": [
+      "tracking"
+    ],
+    "description": "After the fork path is corrected, re-enable init's supervise/restart loop and waitpid sleeping. Re-run the boot sequence to confirm the child still sees pid==0 and the parent sleeps correctly."
   }
 ]

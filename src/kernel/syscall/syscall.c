@@ -28,6 +28,7 @@ static uint64_t syscall_yield_handler(syscall_frame_t* frame);
 static uint64_t syscall_sleep_handler(syscall_frame_t* frame);
 static uint64_t syscall_exit_handler(syscall_frame_t* frame);
 static uint64_t syscall_fcntl_handler(syscall_frame_t* frame);
+static uint64_t syscall_waitpid_handler(syscall_frame_t* frame);
 
 static syscall_handler_t syscall_table[SYSCALL_MAX];
 
@@ -35,6 +36,8 @@ static syscall_handler_t syscall_table[SYSCALL_MAX];
 #define EXECVE_MAX_ARGS   64
 #define EXECVE_MAX_ENVP   64
 #define EXECVE_MAX_STRING 4096
+
+#define WNOHANG 1
 
 static bool copy_user_string(const char* user_ptr, char* dest, size_t capacity) {
   if(current == NULL || user_ptr == NULL || dest == NULL || capacity == 0) {
@@ -230,6 +233,7 @@ void syscall_init(void) {
   syscall_register(SYS_DUP2, syscall_dup2_handler);
   syscall_register(SYS_FORK, syscall_fork_handler);
   syscall_register(SYS_EXECVE, syscall_execve_handler);
+  syscall_register(SYS_WAITPID, syscall_waitpid_handler);
   syscall_register(SYS_YIELD, syscall_yield_handler);
   syscall_register(SYS_SLEEP, syscall_sleep_handler);
   syscall_register(SYS_EXIT, syscall_exit_handler);
@@ -290,6 +294,26 @@ static uint64_t syscall_write_handler(syscall_frame_t* frame) {
   int fd = (int)frame->rdi;
   const void* buffer = (const void*)frame->rsi;
   size_t length = (size_t)frame->rdx;
+  size_t sample_len = length < 16 ? length : 16;
+  char sample[17];
+  if(buffer != NULL && sample_len > 0 && proc_user_buffer_accessible(current, buffer, sample_len)) {
+    for(size_t i = 0; i < sample_len; i++) {
+      char ch = ((const char*)buffer)[i];
+      if(ch < ' ' || ch > '~') {
+        sample[i] = '.';
+      } else {
+        sample[i] = ch;
+      }
+    }
+    sample[sample_len] = '\0';
+  } else {
+    sample[0] = '\0';
+  }
+  serial_printf("write: pid=%u fd=%d len=%lu sample='%s'\n",
+                current->pid,
+                fd,
+                (unsigned long)length,
+                sample);
   file_t* file = proc_file_get(current, fd, NULL);
   if(file == NULL) {
     int err = current->errno ? current->errno : EBADF;
@@ -481,8 +505,10 @@ static uint64_t syscall_dup2_handler(syscall_frame_t* frame) {
 
 static uint64_t syscall_fork_handler(syscall_frame_t* frame) {
   int err = 0;
+  serial_printf("syscall_fork: pid=%u entering\n", current ? current->pid : 0);
   proc_info_p child = proc_fork(current, frame, &err);
   if(child == NULL) {
+    serial_printf("syscall_fork: failure err=%d\n", err);
     if(err == 0) {
       err = -ENOMEM;
     }
@@ -491,6 +517,7 @@ static uint64_t syscall_fork_handler(syscall_frame_t* frame) {
   }
 
   frame->rax = (uint64_t)child->pid;
+  serial_printf("syscall_fork: returning child pid=%lu\n", frame->rax);
   return frame->rax;
 }
 
@@ -515,6 +542,9 @@ static uint64_t syscall_execve_handler(syscall_frame_t* frame) {
     return frame->rax;
   }
 
+  serial_printf("execve: pid=%u path=%s\n", current ? current->pid : 0, path);
+  serial_printf("execve: frame->rsi=%p frame->rdx=%p\n", (void*)frame->rsi, (void*)frame->rdx);
+
   char** argv = NULL;
   size_t argc = 0;
   int vector_err = 0;
@@ -523,6 +553,7 @@ static uint64_t syscall_execve_handler(syscall_frame_t* frame) {
                         &argv,
                         &argc,
                         &vector_err)) {
+    serial_printf("execve: clone_user_vector argv failed err=%d\n", vector_err);
     free_string_vector(argv, argc);
     if(current) {
       current->errno = vector_err ? -vector_err : EFAULT;
@@ -538,6 +569,7 @@ static uint64_t syscall_execve_handler(syscall_frame_t* frame) {
                         &envp,
                         &envc,
                         &vector_err)) {
+    serial_printf("execve: clone_user_vector envp failed err=%d\n", vector_err);
     free_string_vector(argv, argc);
     if(current) {
       current->errno = vector_err ? -vector_err : EFAULT;
@@ -545,10 +577,14 @@ static uint64_t syscall_execve_handler(syscall_frame_t* frame) {
     frame->rax = (uint64_t)(vector_err ? vector_err : -EFAULT);
     return frame->rax;
   }
+  serial_printf("execve: argc=%lu envc=%lu\n",
+                (unsigned long)argc,
+                (unsigned long)envc);
 
   void* image = NULL;
   size_t size = 0;
   if(!vfs_read_all(path, &image, &size) || image == NULL || size == 0) {
+    serial_printf("execve: vfs_read_all failed size=%lu\n", (unsigned long)size);
     if(image != NULL) {
       kfree(image);
     }
@@ -580,11 +616,62 @@ static uint64_t syscall_execve_handler(syscall_frame_t* frame) {
   };
 
   int err = proc_exec_image(current, image, size, frame, &exec_args);
+  serial_printf("execve: proc_exec_image err=%d\n", err);
   kfree(image);
   free_string_vector(argv, argc);
   free_string_vector(envp, envc);
   frame->rax = (uint64_t)err;
   return frame->rax;
+}
+
+static uint64_t syscall_waitpid_handler(syscall_frame_t* frame) {
+  proc_info_p caller = current;
+  if(caller == NULL) {
+    frame->rax = (uint64_t)(-EINVAL);
+    return frame->rax;
+  }
+
+  serial_printf("waitpid: caller pid=%u pid=%d\n", caller->pid, (int)frame->rdi);
+
+  int pid = (int)frame->rdi;
+  int* status_ptr = (int*)frame->rsi;
+  int options = (int)frame->rdx;
+  bool nonblock = (options & WNOHANG) != 0;
+
+  for(;;) {
+    int status = 0;
+    int result = proc_waitpid(caller, pid, &status);
+    serial_printf("waitpid: loop result=%d status=%d\n", result, status);
+
+    if(result > 0) {
+      if(status_ptr != NULL) {
+        if(!proc_user_buffer_accessible(caller, status_ptr, sizeof(int))) {
+          frame->rax = (uint64_t)(-EFAULT);
+          return frame->rax;
+        }
+        *status_ptr = status;
+      }
+      frame->rax = (uint64_t)result;
+      return frame->rax;
+    }
+
+    if(result < 0) {
+      frame->rax = (uint64_t)result;
+      return frame->rax;
+    }
+
+    if(nonblock) {
+      frame->rax = 0;
+      return frame->rax;
+    }
+
+    current = caller;
+    proc_request_sleep(1000);
+    proc_switch((void*)frame);
+    if(current != caller) {
+      return frame->rax;
+    }
+  }
 }
 
 static uint64_t syscall_yield_handler(syscall_frame_t* frame) {

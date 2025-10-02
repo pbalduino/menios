@@ -277,6 +277,13 @@ int proc_exec_image(proc_info_p proc,
   return -ENOSYS;
 }
 
+int proc_waitpid(proc_info_p parent, int pid, int* status_out) {
+  (void)parent;
+  (void)pid;
+  (void)status_out;
+  return -ENOSYS;
+}
+
 void proc_exit(int status) {
   (void)status;
 }

@@ -4,7 +4,9 @@ IMAGE_NAME = menios
 DOCKER = $(shell which docker)
 DOCKER_IMAGE = $(IMAGE_NAME):$(GIT_BRANCH)
 DOCKER_RUN_FLAGS := $(shell if [ -t 1 ]; then printf -- "-it"; fi)
+DOCKER_ENV := $(if $(EXTRA_CFLAGS),--env EXTRA_CFLAGS="$(EXTRA_CFLAGS)",)
 
+EXTRA_CFLAGS ?=
 ARCH ?= x86-64
 GCC_DIR = /usr/bin
 LIB_DIR = src/libc
@@ -70,6 +72,7 @@ override CFLAGS += \
 		-DMENIOS_KERNEL \
 		-DACPI_DEBUG_OUTPUT \
 		-DUACPI_KERNEL_INITIALIZATION
+override CFLAGS += $(EXTRA_CFLAGS)
 
 override CPPFLAGS := \
     $(CINCLUDE) \
@@ -194,14 +197,14 @@ endif
 ifeq ($(OS_NAME),linux)
 	$(GCC) $(GCC_KERNEL_OPTS) -c $< -o $@
 else
-	$(DOCKER) run --rm $(DOCKER_RUN_FLAGS) --mount type=bind,source=$$(pwd),target=/mnt $(DOCKER_IMAGE) /bin/sh -c "cd /mnt && make build"
+	$(DOCKER) run --rm $(DOCKER_RUN_FLAGS) $(DOCKER_ENV) --mount type=bind,source=$$(pwd),target=/mnt $(DOCKER_IMAGE) /bin/sh -c "cd /mnt && make build"
 endif
 
 %.o: %.S
 ifeq ($(OS_NAME),linux)
 	$(GCC) $(GCC_KERNEL_OPTS) -c $< -o $@
 else
-	$(DOCKER) run --rm $(DOCKER_RUN_FLAGS) --mount type=bind,source=$$(pwd),target=/mnt $(DOCKER_IMAGE) /bin/sh -c "cd /mnt && make build"
+	$(DOCKER) run --rm $(DOCKER_RUN_FLAGS) $(DOCKER_ENV) --mount type=bind,source=$$(pwd),target=/mnt $(DOCKER_IMAGE) /bin/sh -c "cd /mnt && make build"
 endif
 
 $(USER_ELF): src/usermode/user_demo.S linker/user_elf.ld
@@ -210,7 +213,7 @@ ifeq ($(OS_NAME),linux)
 	$(GCC) -nostdlib -nostartfiles -ffreestanding -c src/usermode/user_demo.S -o $(OBJDIR)/usermode/user_demo.o
 	$(LD) -nostdlib -static -T linker/user_elf.ld -o $@ $(OBJDIR)/usermode/user_demo.o
 else
-	$(DOCKER) run --rm $(DOCKER_RUN_FLAGS) --mount type=bind,source=$$(pwd),target=/mnt $(DOCKER_IMAGE) /bin/sh -c "cd /mnt && make $@"
+	$(DOCKER) run --rm $(DOCKER_RUN_FLAGS) $(DOCKER_ENV) --mount type=bind,source=$$(pwd),target=/mnt $(DOCKER_IMAGE) /bin/sh -c "cd /mnt && make EXTRA_CFLAGS='$(EXTRA_CFLAGS)' $@"
 endif
 
 $(USER_ELF_OBJ): $(USER_ELF)
@@ -222,16 +225,16 @@ ifeq ($(OS_NAME),linux)
 		--redefine-sym _binary_$(USER_ELF_SYMBOL)_size=user_demo_elf_size \
 		$< $@
 else
-	$(DOCKER) run --rm $(DOCKER_RUN_FLAGS) --mount type=bind,source=$$(pwd),target=/mnt $(DOCKER_IMAGE) /bin/sh -c "cd /mnt && make $@"
+	$(DOCKER) run --rm $(DOCKER_RUN_FLAGS) $(DOCKER_ENV) --mount type=bind,source=$$(pwd),target=/mnt $(DOCKER_IMAGE) /bin/sh -c "cd /mnt && make EXTRA_CFLAGS='$(EXTRA_CFLAGS)' $@"
 endif
 
 $(INIT_ELF): src/usermode/init.c linker/user_elf.ld
 ifeq ($(OS_NAME),linux)
 	@mkdir -p $(OBJDIR)/usermode
-	$(GCC) -nostdlib -nostartfiles -ffreestanding -I./include -c src/usermode/init.c -o $(OBJDIR)/usermode/init.o
+	$(GCC) -nostdlib -nostartfiles -ffreestanding -I./include $(EXTRA_CFLAGS) -c src/usermode/init.c -o $(OBJDIR)/usermode/init.o
 	$(LD) -nostdlib -static -T linker/user_elf.ld -o $@ $(OBJDIR)/usermode/init.o
 else
-	$(DOCKER) run --rm $(DOCKER_RUN_FLAGS) --mount type=bind,source=$$(pwd),target=/mnt $(DOCKER_IMAGE) /bin/sh -c "cd /mnt && make $@"
+	$(DOCKER) run --rm $(DOCKER_RUN_FLAGS) $(DOCKER_ENV) --mount type=bind,source=$$(pwd),target=/mnt $(DOCKER_IMAGE) /bin/sh -c "cd /mnt && make EXTRA_CFLAGS='$(EXTRA_CFLAGS)' $@"
 endif
 
 $(INIT_ELF_OBJ): $(INIT_ELF)
@@ -243,16 +246,16 @@ ifeq ($(OS_NAME),linux)
 		--redefine-sym _binary_$(INIT_ELF_SYMBOL)_size=init_elf_size \
 		$< $@
 else
-	$(DOCKER) run --rm $(DOCKER_RUN_FLAGS) --mount type=bind,source=$$(pwd),target=/mnt $(DOCKER_IMAGE) /bin/sh -c "cd /mnt && make $@"
+	$(DOCKER) run --rm $(DOCKER_RUN_FLAGS) $(DOCKER_ENV) --mount type=bind,source=$$(pwd),target=/mnt $(DOCKER_IMAGE) /bin/sh -c "cd /mnt && make EXTRA_CFLAGS='$(EXTRA_CFLAGS)' $@"
 endif
 
 $(MOSH_ELF): app/mosh/mosh.c linker/user_elf.ld
 ifeq ($(OS_NAME),linux)
 	@mkdir -p $(OBJDIR)/usermode
-	$(GCC) -nostdlib -nostartfiles -ffreestanding -I./include -c app/mosh/mosh.c -o $(OBJDIR)/usermode/mosh.o
+	$(GCC) -nostdlib -nostartfiles -ffreestanding -I./include $(EXTRA_CFLAGS) -c app/mosh/mosh.c -o $(OBJDIR)/usermode/mosh.o
 	$(LD) -nostdlib -static -T linker/user_elf.ld -o $@ $(OBJDIR)/usermode/mosh.o
 else
-	$(DOCKER) run --rm $(DOCKER_RUN_FLAGS) --mount type=bind,source=$$(pwd),target=/mnt $(DOCKER_IMAGE) /bin/sh -c "cd /mnt && make $@"
+	$(DOCKER) run --rm $(DOCKER_RUN_FLAGS) $(DOCKER_ENV) --mount type=bind,source=$$(pwd),target=/mnt $(DOCKER_IMAGE) /bin/sh -c "cd /mnt && make EXTRA_CFLAGS='$(EXTRA_CFLAGS)' $@"
 endif
 
 $(OBJDIR)/usermode:
@@ -347,7 +350,7 @@ ifeq ($(OS_NAME),linux)
         $(OUTPUT_DIR) -o $(IMAGE_NAME).iso
 	$(OUTPUT_DIR)/limine bios-install $(IMAGE_NAME).iso
 else
-	$(DOCKER) run --rm $(DOCKER_RUN_FLAGS) --mount type=bind,source=$$(pwd),target=/mnt $(DOCKER_IMAGE) /bin/sh -c "cd /mnt && make build"
+	$(DOCKER) run --rm $(DOCKER_RUN_FLAGS) $(DOCKER_ENV) --mount type=bind,source=$$(pwd),target=/mnt $(DOCKER_IMAGE) /bin/sh -c "cd /mnt && make build"
 endif
 
 .PHONY: run
@@ -385,12 +388,18 @@ ifeq ($(OS_NAME),linux)
 	done;
 else
 	@echo "Testing inside Docker"
-	$(DOCKER) run --rm $(DOCKER_RUN_FLAGS) --mount type=bind,source=$$(pwd),target=/mnt $(DOCKER_IMAGE) /bin/sh -c "cd /mnt && make test"
+	$(DOCKER) run --rm $(DOCKER_RUN_FLAGS) $(DOCKER_ENV) --mount type=bind,source=$$(pwd),target=/mnt $(DOCKER_IMAGE) /bin/sh -c "cd /mnt && make test"
 endif
 
 .PHONY: shell
 shell:
-	$(DOCKER) run --rm $(DOCKER_RUN_FLAGS) --mount type=bind,source=$$(pwd),target=/mnt $(DOCKER_IMAGE) /bin/sh -c "cd /mnt && /bin/bash"
+	$(DOCKER) run --rm $(DOCKER_RUN_FLAGS) $(DOCKER_ENV) --mount type=bind,source=$$(pwd),target=/mnt $(DOCKER_IMAGE) /bin/sh -c "cd /mnt && /bin/bash"
 
 .PHONY: build-apps
 build-apps:
+
+TEMP_DISABLE_SUPERVISION_FLAGS = -DTEMP_DISABLE_SUPERVISION
+
+build-temp-disable:
+	$(MAKE) EXTRA_CFLAGS=${TEMP_DISABLE_SUPERVISION_FLAGS} build
+

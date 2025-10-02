@@ -36,6 +36,7 @@ struct syscall_frame_t;
 #define PROC_STATE_RUNNING    2
 #define PROC_STATE_WAITING    3
 #define PROC_STATE_SLEEPING   4
+#define PROC_STATE_ZOMBIE     5
 #define PROC_STATE_TERMINATED 7
 
 #define PROC_PRIO_IDLE    0
@@ -111,7 +112,8 @@ typedef struct proc_info_t {
   int          errno;
   uint64_t     exec_time;
   char         name[32];
-  proc_info_p* children;
+  proc_info_p  first_child;
+  proc_info_p  sibling_next;
   cpu_state_t* cpu_state;
   void*        stack_pointer;
   uintptr_t*   stack_base;
@@ -149,6 +151,7 @@ void proc_request_yield(void);
 void proc_request_sleep(uint64_t duration_us);
 void proc_mark_ready(proc_info_p proc);
 proc_info_p proc_fork(proc_info_p parent, const struct syscall_frame_t* frame, int* err_out);
+int proc_waitpid(proc_info_p parent, int pid, int* status_out);
 typedef struct proc_exec_args_t {
   size_t argc;
   char** argv;
