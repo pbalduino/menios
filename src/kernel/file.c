@@ -71,6 +71,7 @@ static inline void stdin_buffer_init(void) {
   if(stdin_initialized) {
     return;
   }
+  serial_printf("stdin_buffer_init: initializing STDIN ring buffer\n");
   spinlock_init(&stdin_buffer.lock);
   kmutex_init(&stdin_buffer.wait_lock);
   kcondvar_init(&stdin_buffer.waiters);
@@ -124,6 +125,9 @@ static int64_t stdin_read_impl(file_t* file, void* buffer, size_t length) {
     uint8_t ch = 0;
     if(stdin_buffer_pop(&ch)) {
       out[total++] = ch;
+      serial_printf("stdin_read_impl: immediate pop ch=%u pid=%u\n",
+                    (unsigned)ch,
+                    current ? current->pid : 0);
       continue;
     }
 
@@ -132,10 +136,15 @@ static int64_t stdin_read_impl(file_t* file, void* buffer, size_t length) {
     }
 
     kmutex_lock(&stdin_buffer.wait_lock);
+    serial_printf("stdin_read_impl: pid=%u waiting on stdin condvar\n",
+                  current ? current->pid : 0);
     for(;;) {
       if(stdin_buffer_pop(&ch)) {
         kmutex_unlock(&stdin_buffer.wait_lock);
         out[total++] = ch;
+        serial_printf("stdin_read_impl: waited pop ch=%u pid=%u\n",
+                      (unsigned)ch,
+                      current ? current->pid : 0);
         break;
       }
       kcondvar_wait(&stdin_buffer.waiters, &stdin_buffer.wait_lock);
@@ -147,9 +156,10 @@ static int64_t stdin_read_impl(file_t* file, void* buffer, size_t length) {
 
 void stdin_enqueue_char(uint8_t ch) {
   if(!stdin_initialized) {
-    return;
+    stdin_buffer_init();
   }
   (void)stdin_buffer_push(ch);
+  serial_printf("stdin_enqueue_char: ch=%u\n", (unsigned)ch);
   kcondvar_signal(&stdin_buffer.waiters);
 }
 

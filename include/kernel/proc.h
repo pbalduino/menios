@@ -107,6 +107,8 @@ typedef struct proc_info_t {
   uint64_t     time_slice_remaining_us;
   uint64_t     last_dispatch_us;
   uint64_t     dispatch_count;
+  int          waitpid_target;
+  bool         waitpid_waiting;
   proc_info_p  next;
   int          exit_code;
   int          errno;

@@ -148,6 +148,10 @@ static void ready_queue_push(proc_info_p proc) {
     proc->priority = PROC_PRIO_NORMAL;
   }
 
+  serial_printf("ready_queue_push: pid=%u prio=%u state=%u\n",
+                proc->pid,
+                proc->priority,
+                proc->state);
   scheduler_queue_t* queue = &ready_queues[proc->priority];
   proc->next = NULL;
   if(queue->tail) {
@@ -172,6 +176,10 @@ static proc_info_p ready_queue_pop_at_priority(uint8_t priority) {
     }
     proc->next = NULL;
 
+    serial_printf("ready_queue_pop_at: pid=%u prio=%u state=%u\n",
+                  proc->pid,
+                  priority,
+                  proc->state);
     if(proc->state == PROC_STATE_ZOMBIE) {
       continue;
     }
@@ -329,6 +337,9 @@ void proc_switch(void* arg) {
 
   if(previous != NULL) {
     if(to_sleep) {
+      serial_printf("proc_switch: pid=%u going to SLEEP state=%u\n",
+                    previous->pid,
+                    previous->state);
       previous->state = PROC_STATE_SLEEPING;
       scheduler_sleep_enqueue(previous);
     } else if(previous->state == PROC_STATE_ZOMBIE) {
@@ -352,6 +363,9 @@ void proc_switch(void* arg) {
     next = &kernel_process_info;
   }
 
+  serial_printf("proc_switch: selected pid=%u state=%u\n",
+                next->pid,
+                next->state);
   if(previous != NULL) {
     serial_printf("proc_switch: previous pid=%u state=%u slice=%lu\n",
                   previous->pid,
@@ -395,17 +409,11 @@ void proc_switch(void* arg) {
   }
 
   memcpy(frame, current->cpu_state, sizeof(cpu_state_t));
-  serial_printf("proc_switch: loaded frame rip=%lx rsp=%lx rax=%lx\n",
+  serial_printf("proc_switch: loaded frame rip=%lx rsp=%lx rax=%lx cs=%lx\n",
                 frame->rip,
                 frame->rsp,
-                frame->rax);
-  if(current->user_mode) {
-    frame->cs = USER_CODE_SEGMENT;
-    frame->ss = USER_DATA_SEGMENT;
-  } else {
-    frame->cs = KERNEL_CODE_SEGMENT;
-    frame->ss = KERNEL_DATA_SEGMENT;
-  }
+                frame->rax,
+                frame->cs);
 
   uint64_t kernel_stack = proc_kernel_stack_top(current);
   if(kernel_stack != 0) {
@@ -450,6 +458,8 @@ void proc_create(proc_info_p proc, const char* name, void (*entrypoint)(void *),
   proc->dispatch_count = 0;
   proc->exec_time = 0;
   proc->last_dispatch_us = 0;
+  proc->waitpid_target = -1;
+  proc->waitpid_waiting = false;
 
   proc->cpu_state = kmalloc(sizeof(cpu_state_t));
   if(proc->cpu_state == NULL) {
@@ -576,7 +586,7 @@ void proc_request_sleep(uint64_t duration_us) {
   }
 
   if(duration_us == 0) {
-    proc_request_yield();
+    scheduler_actions |= SCHED_ACTION_FORCE;
     return;
   }
 
@@ -603,6 +613,9 @@ void proc_mark_ready(proc_info_p proc) {
   __asm__ volatile("pushfq; pop %0" : "=r"(flags) :: "memory");
   disable_interrupts();
 
+  serial_printf("proc_mark_ready: pid=%u state=%u -> READY\n",
+                proc->pid,
+                proc->state);
   proc->state = PROC_STATE_READY;
   proc->time_slice_remaining_us = proc->quantum_us;
   proc->sleep_until = 0;
@@ -653,6 +666,8 @@ proc_info_p proc_fork(proc_info_p parent, const syscall_frame_t* frame, int* err
   child->last_dispatch_us = 0;
   child->dispatch_count = 0;
   child->exec_time = 0;
+  child->waitpid_target = -1;
+  child->waitpid_waiting = false;
 
   child->stack_pointer = kmalloc(PROC_STACK_SIZE + 0xF);
   if(child->stack_pointer == NULL) {
@@ -1252,5 +1267,15 @@ void proc_exit(int code) {
   current->state = PROC_STATE_ZOMBIE;
   current->exit_code = code;
   serial_printf("proc_exit: Process %s exited with code %d\n", current->name, code);
+
+  proc_info_p parent = current->parent;
+  if(parent != NULL && parent->waitpid_waiting) {
+    if(parent->waitpid_target == -1 || parent->waitpid_target == (int)current->pid) {
+      parent->waitpid_waiting = false;
+      parent->waitpid_target = -1;
+      proc_mark_ready(parent);
+    }
+  }
+
   scheduler_actions |= SCHED_ACTION_FORCE;
 }

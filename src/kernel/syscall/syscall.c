@@ -646,31 +646,42 @@ static uint64_t syscall_waitpid_handler(syscall_frame_t* frame) {
     if(result > 0) {
       if(status_ptr != NULL) {
         if(!proc_user_buffer_accessible(caller, status_ptr, sizeof(int))) {
+          caller->waitpid_waiting = false;
+          caller->waitpid_target = -1;
           frame->rax = (uint64_t)(-EFAULT);
           return frame->rax;
         }
         *status_ptr = status;
       }
+      caller->waitpid_waiting = false;
+      caller->waitpid_target = -1;
       frame->rax = (uint64_t)result;
       return frame->rax;
     }
 
     if(result < 0) {
+      caller->waitpid_waiting = false;
+      caller->waitpid_target = -1;
       frame->rax = (uint64_t)result;
       return frame->rax;
     }
 
     if(nonblock) {
+      caller->waitpid_waiting = false;
+      caller->waitpid_target = -1;
       frame->rax = 0;
       return frame->rax;
     }
 
-    current = caller;
-    proc_request_sleep(1000);
+    caller->waitpid_waiting = true;
+    caller->waitpid_target = (pid <= 0) ? -1 : pid;
+    caller->state = PROC_STATE_WAITING;
+    proc_request_sleep(0);
     proc_switch((void*)frame);
     if(current != caller) {
       return frame->rax;
     }
+    caller->state = PROC_STATE_RUNNING;
   }
 }
 
