@@ -21,3 +21,4 @@ usermode
 !src/usermode/
 .zig-cache/
 zig-out/
+com1.log,append=on

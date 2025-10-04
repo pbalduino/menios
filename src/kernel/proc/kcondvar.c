@@ -1,9 +1,11 @@
 #include <errno.h>
+#include <stdbool.h>
 
 #include <kernel/condvar.h>
 #include <kernel/heap.h>
 #include <kernel/kernel.h>
 #include <kernel/proc.h>
+#include <kernel/gdt.h>
 #include <kernel/serial.h>
 #include <kernel/spinlock.h>
 
@@ -68,6 +70,17 @@ void kcondvar_wait(kcondvar_t* cv, kmutex_t* mutex) {
 
   kmutex_unlock(mutex);
 
+  uint64_t saved_cs = 0;
+  uint64_t saved_ss = 0;
+  bool restore_segments = false;
+  if(current != NULL && current->cpu_state != NULL) {
+    saved_cs = current->cpu_state->cs;
+    saved_ss = current->cpu_state->ss;
+    current->cpu_state->cs = KERNEL_CODE_SEGMENT;
+    current->cpu_state->ss = KERNEL_DATA_SEGMENT;
+    restore_segments = true;
+  }
+
   proc_request_yield();
   enable_interrupts();
   serial_printf("kcondvar_wait: pid=%u entering wait (state=%u)\n",
@@ -78,6 +91,10 @@ void kcondvar_wait(kcondvar_t* cv, kmutex_t* mutex) {
   }
   if(current != NULL) {
     current->state = PROC_STATE_RUNNING;
+    if(restore_segments) {
+      current->cpu_state->cs = saved_cs;
+      current->cpu_state->ss = saved_ss;
+    }
   }
   serial_printf("kcondvar_wait: pid=%u resumed\n", current ? current->pid : 0);
   while(kmutex_lock(mutex) != 0) {
