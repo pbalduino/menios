@@ -6,6 +6,8 @@
 
 **✅ Foundation Complete!** The core kernel infrastructure needed for userspace applications is now solidly implemented:
 
+> For an up-to-date checklist of the interactive shell milestone (PID 1 supervision, console UX, and tool availability), see [`docs/road/road_to_shell.md`](./road_to_shell.md).
+
 - ✅ **Memory Management**: Physical/virtual memory, kernel heap, mmap/munmap (Issues #35, #57, #89)
 - ✅ **Process Scheduling**: Preemptive userland scheduler with time slicing (Issue #34)
 - ✅ **Synchronization**: Mutexes and condition variables (Issues #36, #40)
@@ -20,7 +22,7 @@
 Below is the roadmap of infrastructure we still need before a vanilla Doom port can enter userland, organized by priority and dependencies.
 
 ### **Phase 1: Process & I/O Management** ✅ **COMPLETE**
-Core process and memory plumbing is in tree:
+Core process and memory plumbing is in tree, and the minimal shell milestone builds on this layer.
 
 #### **File Descriptor Management** (Issue #96) ✅ **COMPLETE**
 - ✅ **Status**: dup/dup2, descriptor tables, and CLOEXEC support are implemented.
@@ -131,6 +133,18 @@ Development environment for building applications:
 - **Scope**: Headers, linker scripts, build system integration
 - **Impact**: Reproducible builds for Doom and other applications
 
+### **Phase 7: Userland Utilities**
+Basic command-line tools for shell interaction:
+
+#### **/bin Utilities** (Issue #183)
+- **Scope**: echo, cat, env, true, false
+- **Impact**: Basic shell operations and testing
+
+#### **Process Management Tools** (Issue #187)
+- **Scope**: ps (list processes), kill (send signals)
+- **Dependencies**: Issue #103 (signals), Issue #153 (procfs helpful but not required)
+- **Impact**: Process monitoring and control from shell
+
 ## 🎮 **Doom-Specific Requirements**
 
 ### **Memory Requirements**
@@ -182,8 +196,10 @@ Development environment for building applications:
 4. **#102** – Add pipes/FIFOs for shell pipelines and IPC.
 5. **#103** – Deliver UNIX signals so processes can be controlled from the shell.
 6. **#104** – Wire shared memory to back high-performance IPC (and future audio).
-7. **#33** – Bring up the audio subsystem for Doom’s sound effects/music.
+7. **#33** – Bring up the audio subsystem for Doom's sound effects/music.
 8. **#29** – Ship a cross-compiler toolchain and minimal SDK for userland builds.
+9. **#183** – Provide basic `/bin` utilities (echo, cat, env, true, false).
+10. **#187** – Add process management tools (ps, kill).
 
 These items unlock the bulk of the remaining roadmap phases (threaded libc, IPC,
 networking) and pave the way for shipping a Doom-capable user environment.

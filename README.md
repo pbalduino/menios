@@ -9,7 +9,7 @@
 A hobby operating system kernel written in C and Assembly, targeting x86-64 architecture. The ultimate goal is to run Doom in userland! 🎯
 
 If you are tracking the steps toward a usable shell, see
-[Road to Shell Readiness](docs/road_to_shell.md) for the current checklist.
+[Road to Shell Readiness](docs/road/road_to_shell.md) for the current checklist.
 
 ## Current Status
 
@@ -130,7 +130,7 @@ Remaining major components for Doom:
 - **Audio**: PCM output, mixing, streaming syscalls
 - **Toolchain**: Cross-compiler, libc subset, build system
 
-See [`road_to_doom.md`](road_to_doom.md) for the complete roadmap and [`tasks.json`](tasks.json) for detailed task tracking.
+See [`road_to_doom.md`](docs/road/road_to_doom.md) for the complete roadmap and [`tasks.json`](tasks.json) for detailed task tracking.
 
 **📊 Progress Assessment**: With 5 major foundation issues completed and 64 remaining issues, meniOS is now positioned for rapid feature development. The completed memory management and synchronization work enables parallel development of process management, threading, and I/O systems.
 
@@ -207,7 +207,7 @@ See [`road_to_doom.md`](road_to_doom.md) for the complete roadmap and [`tasks.js
 - **`build/`** - Build artifacts and bootloader assets
 - **`docs/`** - Architecture documentation and design decisions
 - **`tasks.json`** - Detailed task tracking with GitHub issue integration
-- **`road_to_doom.md`** - Comprehensive roadmap for userland Doom support
+- **`docs/road/road_to_doom.md`** - Comprehensive roadmap for userland Doom support
 - **`issue_dependencies.dot/.png`** - Visual dependency chart of all issues
 - **`ISSUE_DEPENDENCY_ANALYSIS.md`** - Detailed dependency analysis and implementation strategy
 

@@ -102,7 +102,7 @@ The ultimate goal is running Doom in userland. Current priorities include:
 5. **Cross-compiler toolchain** for userland
 6. **Input/Audio subsystems** for gaming
 
-See [`ROAD_TO_DOOM.md`](road_to_doom.md) for the complete roadmap.
+See [`ROAD_TO_DOOM.md`](docs/road/road_to_doom.md) for the complete roadmap.
 
 ## How to Contribute
 
@@ -363,7 +363,7 @@ When reporting bugs:
 
 For new features:
 
-1. **Check the roadmap** first ([`ROAD_TO_DOOM.md`](road_to_doom.md))
+1. **Check the roadmap** first ([`ROAD_TO_DOOM.md`](docs/road/road_to_doom.md))
 2. **Open an issue** for discussion
 3. **Provide use cases** and benefits
 4. **Consider implementation complexity**
