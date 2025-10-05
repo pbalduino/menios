@@ -182,7 +182,6 @@ void _start() {
   logk("Enabling interruptions\n");
   enable_interrupts();
 
-  logk("Kernel entering idle loop\n");
   serial_log("Kernel entering idle loop\n");
 
   kernel_idle_loop();

@@ -130,19 +130,6 @@ void fb_putchar(char ch) {
   (void)ch;
 }
 
-void kcondvar_wait(kcondvar_t* cond, kmutex_t* lock) {
-  (void)cond;
-  (void)lock;
-}
-
-void kcondvar_signal(kcondvar_t* cond) {
-  (void)cond;
-}
-
-void kcondvar_broadcast(kcondvar_t* cond) {
-  (void)cond;
-}
-
 bool fs_mount_fat32_first(block_device_t* device, fs_mount_t** out_mount) {
   (void)device;
   (void)out_mount;
@@ -286,4 +273,11 @@ int proc_waitpid(proc_info_p parent, int pid, int* status_out) {
 
 void proc_exit(int status) {
   (void)status;
+}
+
+bool proc_user_buffer_accessible(proc_info_p proc, const void* ptr, size_t length) {
+  (void)proc;
+  (void)ptr;
+  (void)length;
+  return true;
 }

@@ -223,6 +223,7 @@ static void line_insert_char(line_state_t* state, char ch) {
   }
 
   size_t insert_at = state->cursor;
+  bool appending = (insert_at == state->length);
   for(size_t idx = state->length + 1; idx > insert_at; idx--) {
     state->buffer[idx] = state->buffer[idx - 1];
   }
@@ -230,7 +231,14 @@ static void line_insert_char(line_state_t* state, char ch) {
   state->length++;
   state->cursor++;
   state->buffer[state->length] = '\0';
-  line_redraw(state);
+
+  if(appending) {
+    write_char_stdout(ch);
+    state->rendered_length = state->length;
+    state->needs_carriage_return = false;
+  } else {
+    line_redraw(state);
+  }
 }
 
 static void line_backspace(line_state_t* state) {

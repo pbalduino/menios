@@ -6,7 +6,6 @@
 #include <kernel/kernel.h>
 #include <kernel/proc.h>
 #include <kernel/gdt.h>
-#include <kernel/serial.h>
 #include <kernel/spinlock.h>
 
 static inline void kcondvar_wait_cycle(void) {
@@ -83,9 +82,6 @@ void kcondvar_wait(kcondvar_t* cv, kmutex_t* mutex) {
 
   proc_request_yield();
   enable_interrupts();
-  serial_printf("kcondvar_wait: pid=%u entering wait (state=%u)\n",
-                current ? current->pid : 0,
-                current ? current->state : 0);
   while(current->state == PROC_STATE_WAITING) {
     kcondvar_wait_cycle();
   }
@@ -96,7 +92,6 @@ void kcondvar_wait(kcondvar_t* cv, kmutex_t* mutex) {
       current->cpu_state->ss = saved_ss;
     }
   }
-  serial_printf("kcondvar_wait: pid=%u resumed\n", current ? current->pid : 0);
   while(kmutex_lock(mutex) != 0) {
     proc_request_yield();
     enable_interrupts();
@@ -117,9 +112,6 @@ void kcondvar_signal(kcondvar_t* cv) {
 
   if(node != NULL) {
     if(node->proc != NULL) {
-      serial_printf("kcondvar_signal: waking pid=%u (old state=%u)\n",
-                    node->proc->pid,
-                    node->proc->state);
       if(node->proc == current) {
         node->proc->state = PROC_STATE_RUNNING;
       } else {

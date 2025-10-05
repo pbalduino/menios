@@ -366,7 +366,7 @@ ifeq ($(OS_NAME),linux)
 	@echo "Testing inside Linux"
 
 	# Skip host-unsafe tests until proper stubs land.
-	for file in $(shell find -L test -type f -name 'test_*.c' ! -name 'test_kcondvar.c' ! -name 'test_kmalloc.c'); do \
+	for file in $(shell find -L test -type f -name 'test_*.c' ! -name 'test_kmalloc.c'); do \
 		gcc -std=gnu11 -DMENIOS_NO_DEBUG -DUNITY_EXCLUDE_SETJMP_H -I./include \
 			$$file \
 			test/unity.c \
@@ -377,6 +377,7 @@ ifeq ($(OS_NAME),linux)
 			src/kernel/mem/pmm.c \
 			src/kernel/console/vprintk.c \
 			src/kernel/console/ansi.c \
+			src/kernel/proc/kcondvar.c \
 			src/kernel/proc/kmutex.c \
 			src/kernel/timer/tsc.c \
 			src/libc/itoa.c \
@@ -402,4 +403,3 @@ TEMP_DISABLE_SUPERVISION_FLAGS = -DTEMP_DISABLE_SUPERVISION
 
 build-temp-disable:
 	$(MAKE) EXTRA_CFLAGS=${TEMP_DISABLE_SUPERVISION_FLAGS} build
-
