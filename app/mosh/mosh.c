@@ -18,7 +18,7 @@
 
 #define MOSH_MAX_LINE_LENGTH 256
 #define MOSH_HISTORY_LIMIT   16
-#define MOSH_PROMPT          "mosh:/> "
+#define MOSH_PROMPT          "mosh:/>"
 
 static inline long syscall0(long number) {
   long ret;
@@ -167,7 +167,25 @@ typedef struct line_state_t {
   const char* prompt;
   size_t      prompt_len;
   bool        needs_carriage_return;
+  bool        caret_visible;
 } line_state_t;
+
+static void line_hide_caret(line_state_t* state) {
+  if(!state->caret_visible) {
+    return;
+  }
+  char fill = (state->cursor < state->length) ? state->buffer[state->cursor] : ' ';
+  write_char_stdout(fill);
+  move_cursor_left(1);
+  state->caret_visible = false;
+}
+
+static void line_render_caret(line_state_t* state) {
+  line_hide_caret(state);
+  write_char_stdout('_');
+  move_cursor_left(1);
+  state->caret_visible = true;
+}
 
 static void line_state_init(line_state_t* state, const char* prompt, char* buffer, size_t capacity) {
   state->buffer = buffer;
@@ -179,15 +197,18 @@ static void line_state_init(line_state_t* state, const char* prompt, char* buffe
   state->prompt = prompt;
   state->prompt_len = (prompt != NULL) ? str_len(prompt) : 0;
   state->needs_carriage_return = true;
+  state->caret_visible = false;
   if(state->buffer != NULL && state->total_capacity > 0) {
     state->buffer[0] = '\0';
   }
   if(state->prompt != NULL && state->prompt_len > 0) {
     write_bytes(STDOUT_FILENO, state->prompt, state->prompt_len);
   }
+  line_render_caret(state);
 }
 
 static void line_redraw(line_state_t* state) {
+  line_hide_caret(state);
   if(state->needs_carriage_return) {
     write_char_stdout('\r');
   } else {
@@ -214,6 +235,7 @@ static void line_redraw(line_state_t* state) {
   if(tail > 0) {
     move_cursor_left(tail);
   }
+  line_render_caret(state);
 }
 
 static void line_insert_char(line_state_t* state, char ch) {
@@ -235,7 +257,8 @@ static void line_insert_char(line_state_t* state, char ch) {
   if(appending) {
     write_char_stdout(ch);
     state->rendered_length = state->length;
-    state->needs_carriage_return = false;
+    state->needs_carriage_return = true;
+    line_render_caret(state);
   } else {
     line_redraw(state);
   }
@@ -276,7 +299,7 @@ static void line_cursor_left(line_state_t* state) {
     return;
   }
   state->cursor--;
-  move_cursor_left(1);
+  line_redraw(state);
 }
 
 static void line_cursor_right(line_state_t* state) {
@@ -285,7 +308,7 @@ static void line_cursor_right(line_state_t* state) {
     return;
   }
   state->cursor++;
-  move_cursor_right(1);
+  line_redraw(state);
 }
 
 static void line_cursor_home(line_state_t* state) {
@@ -434,6 +457,7 @@ static size_t read_line(const char* prompt, char* buffer, size_t capacity) {
       case ESCAPE_NONE:
         if(ch == '\n' || ch == '\r') {
           state.buffer[state.length] = '\0';
+          line_hide_caret(&state);
           write_char_stdout('\n');
           if(ch == '\r') {
             swallow_lf = true;
@@ -459,6 +483,7 @@ static size_t read_line(const char* prompt, char* buffer, size_t capacity) {
         }
         if(ch == 0x04) {
           if(state.length == 0) {
+            line_hide_caret(&state);
             return 0;
           }
           beep();
