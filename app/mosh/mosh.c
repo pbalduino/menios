@@ -6,11 +6,12 @@
 #define SYS_READ   0
 #define SYS_WRITE  1
 #define SYS_CLOSE  3
-#define SYS_DUP2   33
-#define SYS_SLEEP  35
-#define SYS_FORK   57
-#define SYS_EXECVE 59
-#define SYS_EXIT   60
+#define SYS_DUP2    33
+#define SYS_SLEEP   35
+#define SYS_FORK    57
+#define SYS_EXECVE  59
+#define SYS_EXIT    60
+#define SYS_WAITPID 61
 
 #define STDIN_FILENO   0
 #define STDOUT_FILENO  1
@@ -20,6 +21,27 @@
 #define MOSH_HISTORY_LIMIT   16
 #define MOSH_PROMPT          "mosh:/>"
 
+static char** process_envp = NULL;
+static char*  fallback_envp[] = { NULL };
+static const char DEFAULT_PATH[] = "/bin";
+
+#ifdef MOSH_TEST
+long mosh_test_syscall0(long number);
+long mosh_test_syscall1(long number, long arg1);
+long mosh_test_syscall3(long number, long arg1, long arg2, long arg3);
+
+static inline long syscall0(long number) {
+  return mosh_test_syscall0(number);
+}
+
+static inline long syscall1(long number, long arg1) {
+  return mosh_test_syscall1(number, arg1);
+}
+
+static inline long syscall3(long number, long arg1, long arg2, long arg3) {
+  return mosh_test_syscall3(number, arg1, arg2, arg3);
+}
+#else
 static inline long syscall0(long number) {
   long ret;
   asm volatile("int $0x80" : "=a"(ret) : "a"(number) : "rcx", "r11", "memory");
@@ -39,6 +61,48 @@ static inline long syscall3(long number, long arg1, long arg2, long arg3) {
                : "rcx", "r11", "memory");
   return ret;
 }
+#endif
+
+static const char* env_get(const char* key) {
+  if(process_envp == NULL || key == NULL) {
+    return NULL;
+  }
+
+  size_t key_len = str_len(key);
+  if(key_len == 0) {
+    return NULL;
+  }
+
+  for(size_t idx = 0; process_envp[idx] != NULL; idx++) {
+    const char* entry = process_envp[idx];
+    size_t pos = 0;
+    while(entry[pos] != '\0' && entry[pos] != '=') {
+      pos++;
+    }
+    if(entry[pos] != '=' || pos != key_len) {
+      continue;
+    }
+
+    bool match = true;
+    for(size_t i = 0; i < key_len; i++) {
+      if(entry[i] != key[i]) {
+        match = false;
+        break;
+      }
+    }
+    if(match) {
+      return entry + key_len + 1;
+    }
+  }
+
+  return NULL;
+}
+
+#ifdef MOSH_TEST
+void mosh_test_set_env(char** envp) {
+  process_envp = envp;
+}
+#endif
 
 static size_t str_len(const char* s) {
   size_t len = 0;
@@ -71,12 +135,23 @@ static void str_copy(char* dest, size_t capacity, const char* src) {
   dest[idx] = '\0';
 }
 
+#ifdef MOSH_TEST
+void mosh_test_write_bytes(int fd, const char* data, size_t length);
+
+static void write_bytes(int fd, const char* data, size_t length) {
+  if(data == NULL || length == 0) {
+    return;
+  }
+  mosh_test_write_bytes(fd, data, length);
+}
+#else
 static void write_bytes(int fd, const char* data, size_t length) {
   if(data == NULL || length == 0) {
     return;
   }
   syscall3(SYS_WRITE, fd, (long)data, (long)length);
 }
+#endif
 
 static void write_char_stdout(char ch) {
   char tmp[1] = { ch };
@@ -117,6 +192,32 @@ static size_t utoa(size_t value, char* out, size_t capacity) {
     }
   }
   return len;
+}
+
+static size_t itoa(int value, char* out, size_t capacity) {
+  if(capacity == 0) {
+    return 0;
+  }
+  size_t index = 0;
+  unsigned int magnitude;
+  if(value < 0) {
+    if(capacity == 1) {
+      return 0;
+    }
+    out[index++] = '-';
+    magnitude = (unsigned int)(-value);
+  } else {
+    magnitude = (unsigned int)value;
+  }
+
+  size_t written = utoa((size_t)magnitude, &out[index], capacity - index);
+  if(written == 0 && magnitude == 0) {
+    if(index < capacity) {
+      out[index++] = '0';
+      written = 1;
+    }
+  }
+  return index + written;
 }
 
 static void move_cursor_left(size_t count) {
@@ -610,35 +711,78 @@ static bool contains_slash(const char* text) {
   return false;
 }
 
-static const char* resolve_path(const char* command, char* buffer, size_t capacity) {
-  if(command == NULL || command[0] == '\0') {
-    return NULL;
+static void exec_command(char** argv, size_t argc) {
+  if(argv == NULL || argc == 0 || argv[0] == NULL) {
+    syscall1(SYS_EXIT, 0);
+    return;
   }
+
+  char** envp = (process_envp != NULL) ? process_envp : fallback_envp;
+  const char* command = argv[0];
 
   if(contains_slash(command)) {
-    return command;
+    long rc = syscall3(SYS_EXECVE, (long)command, (long)argv, (long)envp);
+    if(rc < 0) {
+      write_str(STDERR_FILENO, "mosh: exec failed\n");
+      syscall1(SYS_EXIT, 126);
+    }
+    return;
   }
 
-  static const char prefix[] = "/bin/";
-  size_t prefix_len = sizeof(prefix) - 1;
-  size_t cmd_len = str_len(command);
-
-  if(prefix_len + cmd_len + 1 > capacity) {
-    return NULL;
+  const char* path_value = env_get("PATH");
+  if(path_value == NULL || path_value[0] == '\0') {
+    path_value = DEFAULT_PATH;
   }
 
-  for(size_t i = 0; i < prefix_len; i++) {
-    buffer[i] = prefix[i];
+  size_t command_len = str_len(command);
+  static char candidate[256];
+  const char* segment = path_value;
+
+  while(true) {
+    size_t segment_len = 0;
+    while(segment[segment_len] != '\0' && segment[segment_len] != ':') {
+      segment_len++;
+    }
+    bool at_end = (segment[segment_len] == '\0');
+
+    if(segment_len == 0) {
+      long rc = syscall3(SYS_EXECVE, (long)command, (long)argv, (long)envp);
+      if(rc >= 0) {
+        return;
+      }
+    } else {
+      bool append_slash = (segment[segment_len - 1] != '/');
+      size_t required = segment_len + (append_slash ? 1 : 0) + command_len + 1;
+      if(required <= sizeof(candidate)) {
+        size_t pos = 0;
+        for(size_t i = 0; i < segment_len; i++) {
+          candidate[pos++] = segment[i];
+        }
+        if(append_slash) {
+          candidate[pos++] = '/';
+        }
+        for(size_t i = 0; i < command_len; i++) {
+          candidate[pos++] = command[i];
+        }
+        candidate[pos] = '\0';
+        long rc = syscall3(SYS_EXECVE, (long)candidate, (long)argv, (long)envp);
+        if(rc >= 0) {
+          return;
+        }
+      }
+    }
+
+    if(at_end) {
+      break;
+    }
+    segment += segment_len + 1;
   }
-  for(size_t i = 0; i < cmd_len; i++) {
-    buffer[prefix_len + i] = command[i];
-  }
-  buffer[prefix_len + cmd_len] = '\0';
-  return buffer;
+
+  write_str(STDERR_FILENO, "mosh: command not found\n");
+  syscall1(SYS_EXIT, 127);
 }
 
 static void launch_command(char* line) {
-  static char exec_path[256];
   char* argv[16];
   size_t argc = 0;
 
@@ -665,12 +809,6 @@ static void launch_command(char* line) {
     return;
   }
 
-  const char* path = resolve_path(argv[0], exec_path, sizeof(exec_path));
-  if(path == NULL) {
-    write_str(STDERR_FILENO, "mosh: command name too long\n");
-    return;
-  }
-
   long pid = syscall0(SYS_FORK);
   if(pid < 0) {
     write_str(STDERR_FILENO, "mosh: fork failed\n");
@@ -678,16 +816,32 @@ static void launch_command(char* line) {
   }
 
   if(pid == 0) {
-    char* envp[] = { NULL };
-    long rc = syscall3(SYS_EXECVE, (long)path, (long)argv, (long)envp);
-    if(rc < 0) {
-      write_str(STDERR_FILENO, "mosh: exec failed\n");
-    }
-    syscall1(SYS_EXIT, 1);
+    exec_command(argv, argc);
+    syscall1(SYS_EXIT, 127);
+  }
+
+  int status = 0;
+  long waited = syscall3(SYS_WAITPID, pid, (long)&status, 0);
+  if(waited < 0) {
+    write_str(STDERR_FILENO, "mosh: waitpid failed\n");
     return;
   }
 
-  write_str(STDOUT_FILENO, "[mosh] launched\n");
+  if(waited != pid) {
+    write_str(STDERR_FILENO, "mosh: waitpid returned unexpected pid\n");
+    return;
+  }
+
+  if(status != 0) {
+    static const char prefix[] = "mosh: process exited with status ";
+    char buffer[32];
+    size_t len = itoa(status, buffer, sizeof(buffer));
+    write_bytes(STDERR_FILENO, prefix, sizeof(prefix) - 1);
+    if(len > 0 && len <= sizeof(buffer)) {
+      write_bytes(STDERR_FILENO, buffer, len);
+    }
+    write_bytes(STDERR_FILENO, "\n", 1);
+  }
 }
 
 static void shell_loop(void) {
@@ -714,8 +868,13 @@ static void shell_loop(void) {
   }
 }
 
-void _start(void) {
+#ifndef MOSH_TEST
+void _start(uint64_t argc, char** argv, char** envp) {
+  (void)argc;
+  (void)argv;
+  process_envp = envp;
   history_reset();
   shell_loop();
   syscall1(SYS_EXIT, 0);
 }
+#endif
