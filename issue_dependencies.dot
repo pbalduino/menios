@@ -1,6 +1,8 @@
 digraph IssueDependencies {
     // Graph styling
     rankdir=TB;
+    ranksep=1.5;
+    nodesep=0.5;
     bgcolor="white";
     node [shape=box, style=filled, fontname="Arial", fontsize=10];
     edge [fontname="Arial", fontsize=8];
@@ -67,7 +69,7 @@ digraph IssueDependencies {
     subgraph cluster_shell_ux {
         label="Shell UX Features";
         style=filled;
-        fillcolor="#F0FFFF"];
+        fillcolor="#F0FFFF";
 
         issue197 [label="#197: Tab\ncompletion", fillcolor="#E0FFFF"];
         issue198 [label="#198: Ctrl+A/E\nline nav", fillcolor="#E0FFFF"];

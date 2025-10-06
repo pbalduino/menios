@@ -113,11 +113,35 @@ Expect the log to show the `[user_demo]` messages on screen and in `com1.log`, c
 - [x] **Fork/exec process creation** (Issue #93) - Enabled by VM and file descriptor work
 
 ### 🚧 **In Progress & Planned**
+
+#### **Critical Path: Toolchain (Issues #29, #192-#195)**
+- [ ] **#192**: crt0 runtime startup code (ready to start!)
+- [ ] **#193**: Minimal userland libc (syscalls, strings, memory, stdio)
+- [ ] **#194**: Syscall ABI documentation (ready to start!)
+- [ ] **#195**: Userland build system
+- [ ] **#29**: Cross-compiler toolchain integration
+
+#### **Shell Milestone (Issues #180-#188)**
+- [ ] **Environment & Utilities**: Environment variables (#148), seeding (#180), PATH search (#185)
+- [ ] **Testing & Validation**: tmpfs (#181), waitpid tests (#182), line editor coverage (#184)
+- [ ] **Utilities**: /bin tools (#183), ps/kill (#187), env (#188)
+- [ ] **Pipeline Support**: Pipeline placeholders (#186)
+
+#### **Shell UX Features (Issues #197-#201)**
+- [ ] **Keyboard Shortcuts**: Tab completion (#197), Ctrl+A/E (#198), Ctrl+R (#199), Ctrl+L (#200)
+- [ ] **Mouse Support**: Selection and copy/paste (#201, depends on #143/#144)
+
+#### **System Features**
 - [ ] **Threading Support**: Complete pthread API and multithreading (Issues #108-#113)
 - [ ] **Advanced IPC**: Signals, shared memory, microkernel IPC (Issues #102-#107)
-- [ ] **Filesystem**: Block cache and write support (Issues #60, #63)
+- [ ] **Filesystem**: FAT32 write support (#189)
 - [ ] **Networking**: Complete TCP/IP stack (Issues #67-#73)
 - [ ] **Graphics**: Framebuffer interface and input subsystem (Issues #31-#33)
+
+#### **Native Compilation (Long Term, Issues #190-#191, #196)**
+- [ ] **TCC Port**: Tiny C Compiler for meniOS (#190)
+- [ ] **binutils Port**: Assembler and linker (#191)
+- [ ] **Fish Shell**: Research modern shell porting (#196)
 
 ### Road to Doom 🎮
 
@@ -132,7 +156,14 @@ Remaining major components for Doom:
 
 See [`road_to_doom.md`](docs/road/road_to_doom.md) for the complete roadmap and [`tasks.json`](tasks.json) for detailed task tracking.
 
-**📊 Progress Assessment**: With 5 major foundation issues completed and 64 remaining issues, meniOS is now positioned for rapid feature development. The completed memory management and synchronization work enables parallel development of process management, threading, and I/O systems.
+**📊 Progress Assessment**: With 8 major foundation issues completed and 87 open issues (24 created today!), meniOS is now positioned for rapid feature development. The critical path forward is the **toolchain** (#192-#195, #29), which will enable standard C development for all userland applications.
+
+**🎯 Today's Focus**: Created comprehensive issue tracking for:
+- 🛠️ **Toolchain** (7 issues): Enable standard C development
+- 🐚 **Shell** (9 issues): Polish and complete the shell milestone
+- 🎨 **UX** (5 issues): Quality-of-life keyboard shortcuts and mouse support
+- 🐛 **Bugs** (2 issues): Pipeline and /dev/zero fixes
+- 💾 **File System** (1 issue): FAT32 write support
 
 ## Architecture Overview
 
@@ -217,7 +248,8 @@ We welcome contributions from developers of all skill levels! 🚀
 
 - **New Contributors**: Start with our [Contributing Guide](CONTRIBUTING.md) for a complete development workflow
 - **Find Tasks**: Check [GitHub Issues](https://github.com/pbalduino/menios/issues) or browse [`tasks.json`](tasks.json) for detailed task tracking
-- **High Priority**: Issues #89, #96, #108 are ready to implement with no blocking dependencies
+- **High Priority**: Issues #192, #194, #183, #184, #186, #198, #200 are ready to implement with no blocking dependencies
+- **Critical Path**: Toolchain issues (#192→#193→#195→#29) are the most important for enabling all future development
 - **Report Issues**: Use our issue templates to report bugs or request features
 - **Security Issues**: Please review our [Security Policy](SECURITY.md) for responsible disclosure
 - **Code Style**: Follow the guidelines in [`CODING.md`](CODING.md)
