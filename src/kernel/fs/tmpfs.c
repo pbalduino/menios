@@ -14,6 +14,7 @@
 #include <kernel/mutex.h>
 #include <kernel/file.h>
 #include <kernel/vfs.h>
+#include <kernel/serial.h>
 
 typedef struct tmpfs_node_t {
   char               name[128];
@@ -357,10 +358,12 @@ static int tmpfs_open(void* fs_ctx, const char* path, int flags, file_t** out_fi
     name++;
   }
   if(name[0] == '\0') {
+    serial_printf("tmpfs_open: reject path '%s' (empty)\n", path);
     return -ENOSYS;
   }
   for(const char* it = name; *it != '\0'; ++it) {
     if(*it == '/') {
+      serial_printf("tmpfs_open: reject path '%s' (nested segment)\n", path);
       return -ENOSYS;
     }
   }
@@ -373,16 +376,20 @@ static int tmpfs_open(void* fs_ctx, const char* path, int flags, file_t** out_fi
   tmpfs_node_t* node = tmpfs_find_node(ctx, name);
   if(node == NULL) {
     if(!create) {
+      serial_printf("tmpfs_open: '%s' not found\n", name);
       kmutex_unlock(&ctx->lock);
       return -ENOENT;
     }
     node = tmpfs_create_node(ctx, name);
     if(node == NULL) {
+      serial_printf("tmpfs_open: '%s' allocation failed\n", name);
       kmutex_unlock(&ctx->lock);
       return -ENOMEM;
     }
+    serial_printf("tmpfs_open: created '%s'\n", name);
   } else {
     if(create && exclusive) {
+      serial_printf("tmpfs_open: '%s' exists with O_EXCL\n", name);
       kmutex_unlock(&ctx->lock);
       return -EEXIST;
     }
@@ -423,9 +430,11 @@ static int tmpfs_open(void* fs_ctx, const char* path, int flags, file_t** out_fi
     }
     kmutex_unlock(&ctx->lock);
     kfree(state);
+    serial_printf("tmpfs_open: file_create failed for '%s'\n", name);
     return -ENOMEM;
   }
 
+  serial_printf("tmpfs_open: opened '%s' flags=0x%x\n", name, flags);
   *out_file = file;
   return 0;
 }
@@ -492,7 +501,7 @@ bool tmpfs_mount(void) {
   }
   kmutex_init(&ctx->lock);
   ctx->head = NULL;
-  if(!vfs_mount("/tmp", &tmpfs_driver, ctx)) {
+  if(!vfs_mount("/tmp", &tmpfs_driver, ctx, false)) {
     kfree(ctx);
     return false;
   }

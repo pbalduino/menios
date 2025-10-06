@@ -166,6 +166,7 @@ int proc_exec_image(proc_info_p proc,
                     size_t size,
                     struct syscall_frame_t* frame,
                     const proc_exec_args_t* args);
+int proc_kill_pid(uint32_t pid, int code);
 bool proc_user_buffer_accessible(proc_info_p proc, const void* ptr, size_t length);
 
 #ifdef __cplusplus

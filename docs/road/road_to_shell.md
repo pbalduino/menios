@@ -20,11 +20,11 @@ A release that meets this milestone must satisfy all of the following:
 | Init as PID 1 | ✅ Done | PID 1 binds stdio to `/dev/tty0` and execs `/bin/mosh` |
 | Supervision Loop | ✅ Done | `waitpid` fix keeps init blocked until child exits |
 | Device Filesystem | ✅ Done | `/dev/tty0`, `/dev/console`, `/dev/null`, `/dev/ptmx` registered |
-| Temporary FS | 🔄 In progress | tmpfs mounted at `/tmp`; redirection workflows still unverified |
+| Temporary FS | ✅ Done | tmpfs mounted at `/tmp` with read/write support validated via shell redirection |
 | Fork/Exec Runtime | ✅ Done | `fork`, `execve`, `waitpid`, descriptor cloning working |
 | Shell Prompt UX | ✅ Done | Inline caret, history navigation, prompt redraw regression tests |
 | Default Environment | ⛳ TODO | Seed `PATH`, `HOME`, `PWD`; chdir to `/` before launching shell (#180) |
-| Launchable Utilities | 🔄 In progress | `/bin/mosh` works; expand with diagnostics tools (`/bin/echo`, etc.) (#183) |
+| Launchable Utilities | ✅ Done | Added `/bin/echo`, `/bin/cat`, `/bin/env`, `/bin/true`, `/bin/false`, `/bin/ls`, `/bin/kill` (#183) |
 | Regression Coverage | 🔄 In progress | `test_mosh_line` + `test_mosh_exec` cover caret redraw and waitpid status |
 
 ## Kernel Foundations
@@ -57,8 +57,10 @@ A release that meets this milestone must satisfy all of the following:
 - [x] External commands auto-prefix with `/bin/` when no slash present.
 - [x] Forked child inherits stdio, reports failure via stderr.
 - [x] Shell waits for child completion and reports non-zero exit status.
+- [x] Basic pipelines and `<`/`>` redirection supported for foreground commands (#186).
+- [x] `Ctrl+C` aborts foreground commands and pipelines via `SYS_PROC_KILL`.
 - [ ] `PATH` search order configurable once environment support lands (#185).
-- [ ] Basic pipeline placeholders (`|`, `>`, `<`) recognized (parsing TBD) (#186).
+- [ ] Tests ensure waitpid returns correct PID and shell stays in supervision loop (#182).
 - [ ] Tests ensure waitpid returns correct PID and shell stays in supervision loop (#182).
 
 ## Blocking TODOs
@@ -71,9 +73,7 @@ A release that meets this milestone must satisfy all of the following:
    - Add a host-side unit/integration test that mounts tmpfs and confirms permissions.
 3. **Waitpid Regression Test** (#182)
    - Extend coverage beyond unit stubs to integration tests that fork/exec a dummy program and confirm init supervision stays asleep until completion.
-4. **Utility Set** (#183)
-   - Provide simple `/bin` helpers (`echo`, `cat`, `env`, `true`, `false`) to let shell demos proceed without custom binaries.
-5. **Line Editor Coverage** (#184)
+4. **Line Editor Coverage** (#184)
    - Extend `test_mosh_line` to cover delete, history navigation, and newline flows.
 
 ## Verification Matrix
@@ -90,11 +90,20 @@ A release that meets this milestone must satisfy all of the following:
 
 ## Future Enhancements (Post-Minimal Shell)
 
-- Command pipelines (`pipe`, `dup2`) once IPC primitives land (#165, #102).
-- Signal handling to interrupt running commands (CTRL+C) (#103).
+### IPC and Process Control
+- Expand pipelines to support advanced syntax (append, stderr redirection) once IPC primitives land (#165, #102).
+- Signal delivery/handling for user processes (beyond current CTRL+C kill helper) (#103).
 - Job control (background tasks, `wait` builtin) (#158).
-- Tab completion and richer readline behaviour (#157).
+- Process management utilities (`ps`, richer `kill` semantics) (#187).
+
+### Shell Usability Features
+- Tab completion for files and directories (#197).
+- Emacs-style line editing (Ctrl+A, Ctrl+E) (#198).
+- Reverse command search (Ctrl+R) (#199).
+- Clear screen shortcut (Ctrl+L) (#200).
+- Advanced tab completion for commands and arguments (#157).
+
+### System Integration
 - Login/getty integration for multiple TTYs (#175-#178).
-- Process management utilities (`ps`, `kill`) (#187).
 
 Keep this document updated whenever shell-related PRs merge or new blockers appear.  Treat the milestone as complete only when every "TODO" above is resolved and automated coverage eliminates the regressions that inspired this roadmap.

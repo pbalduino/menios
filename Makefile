@@ -50,6 +50,22 @@ CAT_ELF = $(OBJDIR)/usermode/cat.elf
 ENV_ELF = $(OBJDIR)/usermode/env.elf
 TRUE_ELF = $(OBJDIR)/usermode/true.elf
 FALSE_ELF = $(OBJDIR)/usermode/false.elf
+LS_ELF = $(OBJDIR)/usermode/ls.elf
+KILL_ELF = $(OBJDIR)/usermode/kill.elf
+
+USER_CCFLAGS = \
+	-nostdlib \
+	-nostartfiles \
+	-ffreestanding \
+	-fno-stack-check \
+	-fno-stack-protector \
+	-I./include \
+	-m64 \
+	-mno-80387 \
+	-mno-mmx \
+	-mno-red-zone \
+	-mno-sse \
+	-mno-sse2
 
 -include $(OBJS:.o=.d)
 
@@ -236,7 +252,7 @@ endif
 $(INIT_ELF): src/usermode/init.c linker/user_elf.ld
 ifeq ($(OS_NAME),linux)
 	@mkdir -p $(OBJDIR)/usermode
-	$(GCC) -nostdlib -nostartfiles -ffreestanding -I./include $(EXTRA_CFLAGS) -c src/usermode/init.c -o $(OBJDIR)/usermode/init.o
+	$(GCC) $(USER_CCFLAGS) $(EXTRA_CFLAGS) -c src/usermode/init.c -o $(OBJDIR)/usermode/init.o
 	$(LD) -nostdlib -static -T linker/user_elf.ld -o $@ $(OBJDIR)/usermode/init.o
 else
 	$(DOCKER) run --rm $(DOCKER_RUN_FLAGS) $(DOCKER_ENV) --mount type=bind,source=$$(pwd),target=/mnt $(DOCKER_IMAGE) /bin/sh -c "cd /mnt && make EXTRA_CFLAGS='$(EXTRA_CFLAGS)' $@"
@@ -257,7 +273,7 @@ endif
 $(MOSH_ELF): app/mosh/mosh.c linker/user_elf.ld
 ifeq ($(OS_NAME),linux)
 	@mkdir -p $(OBJDIR)/usermode
-	$(GCC) -nostdlib -nostartfiles -ffreestanding -I./include $(EXTRA_CFLAGS) -c app/mosh/mosh.c -o $(OBJDIR)/usermode/mosh.o
+	$(GCC) $(USER_CCFLAGS) $(EXTRA_CFLAGS) -c app/mosh/mosh.c -o $(OBJDIR)/usermode/mosh.o
 	$(LD) -nostdlib -static -T linker/user_elf.ld -o $@ $(OBJDIR)/usermode/mosh.o
 else
 	$(DOCKER) run --rm $(DOCKER_RUN_FLAGS) $(DOCKER_ENV) --mount type=bind,source=$$(pwd),target=/mnt $(DOCKER_IMAGE) /bin/sh -c "cd /mnt && make EXTRA_CFLAGS='$(EXTRA_CFLAGS)' $@"
@@ -266,7 +282,7 @@ endif
 $(ECHO_ELF): app/echo/echo.c linker/user_elf.ld
 ifeq ($(OS_NAME),linux)
 	@mkdir -p $(OBJDIR)/usermode
-	$(GCC) -nostdlib -nostartfiles -ffreestanding -I./include $(EXTRA_CFLAGS) -c app/echo/echo.c -o $(OBJDIR)/usermode/echo.o
+	$(GCC) $(USER_CCFLAGS) $(EXTRA_CFLAGS) -c app/echo/echo.c -o $(OBJDIR)/usermode/echo.o
 	$(LD) -nostdlib -static -T linker/user_elf.ld -o $@ $(OBJDIR)/usermode/echo.o
 else
 	$(DOCKER) run --rm $(DOCKER_RUN_FLAGS) $(DOCKER_ENV) --mount type=bind,source=$$(pwd),target=/mnt $(DOCKER_IMAGE) /bin/sh -c "cd /mnt && make EXTRA_CFLAGS='$(EXTRA_CFLAGS)' $@"
@@ -275,7 +291,7 @@ endif
 $(CAT_ELF): app/cat/cat.c linker/user_elf.ld
 ifeq ($(OS_NAME),linux)
 	@mkdir -p $(OBJDIR)/usermode
-	$(GCC) -nostdlib -nostartfiles -ffreestanding -I./include $(EXTRA_CFLAGS) -c app/cat/cat.c -o $(OBJDIR)/usermode/cat.o
+	$(GCC) $(USER_CCFLAGS) $(EXTRA_CFLAGS) -c app/cat/cat.c -o $(OBJDIR)/usermode/cat.o
 	$(LD) -nostdlib -static -T linker/user_elf.ld -o $@ $(OBJDIR)/usermode/cat.o
 else
 	$(DOCKER) run --rm $(DOCKER_RUN_FLAGS) $(DOCKER_ENV) --mount type=bind,source=$$(pwd),target=/mnt $(DOCKER_IMAGE) /bin/sh -c "cd /mnt && make EXTRA_CFLAGS='$(EXTRA_CFLAGS)' $@"
@@ -284,7 +300,7 @@ endif
 $(ENV_ELF): app/env/env.c linker/user_elf.ld
 ifeq ($(OS_NAME),linux)
 	@mkdir -p $(OBJDIR)/usermode
-	$(GCC) -nostdlib -nostartfiles -ffreestanding -I./include $(EXTRA_CFLAGS) -c app/env/env.c -o $(OBJDIR)/usermode/env.o
+	$(GCC) $(USER_CCFLAGS) $(EXTRA_CFLAGS) -c app/env/env.c -o $(OBJDIR)/usermode/env.o
 	$(LD) -nostdlib -static -T linker/user_elf.ld -o $@ $(OBJDIR)/usermode/env.o
 else
 	$(DOCKER) run --rm $(DOCKER_RUN_FLAGS) $(DOCKER_ENV) --mount type=bind,source=$$(pwd),target=/mnt $(DOCKER_IMAGE) /bin/sh -c "cd /mnt && make EXTRA_CFLAGS='$(EXTRA_CFLAGS)' $@"
@@ -293,7 +309,7 @@ endif
 $(TRUE_ELF): app/true/true.c linker/user_elf.ld
 ifeq ($(OS_NAME),linux)
 	@mkdir -p $(OBJDIR)/usermode
-	$(GCC) -nostdlib -nostartfiles -ffreestanding -I./include $(EXTRA_CFLAGS) -c app/true/true.c -o $(OBJDIR)/usermode/true.o
+	$(GCC) $(USER_CCFLAGS) $(EXTRA_CFLAGS) -c app/true/true.c -o $(OBJDIR)/usermode/true.o
 	$(LD) -nostdlib -static -T linker/user_elf.ld -o $@ $(OBJDIR)/usermode/true.o
 else
 	$(DOCKER) run --rm $(DOCKER_RUN_FLAGS) $(DOCKER_ENV) --mount type=bind,source=$$(pwd),target=/mnt $(DOCKER_IMAGE) /bin/sh -c "cd /mnt && make EXTRA_CFLAGS='$(EXTRA_CFLAGS)' $@"
@@ -302,8 +318,26 @@ endif
 $(FALSE_ELF): app/false/false.c linker/user_elf.ld
 ifeq ($(OS_NAME),linux)
 	@mkdir -p $(OBJDIR)/usermode
-	$(GCC) -nostdlib -nostartfiles -ffreestanding -I./include $(EXTRA_CFLAGS) -c app/false/false.c -o $(OBJDIR)/usermode/false.o
+	$(GCC) $(USER_CCFLAGS) $(EXTRA_CFLAGS) -c app/false/false.c -o $(OBJDIR)/usermode/false.o
 	$(LD) -nostdlib -static -T linker/user_elf.ld -o $@ $(OBJDIR)/usermode/false.o
+else
+	$(DOCKER) run --rm $(DOCKER_RUN_FLAGS) $(DOCKER_ENV) --mount type=bind,source=$$(pwd),target=/mnt $(DOCKER_IMAGE) /bin/sh -c "cd /mnt && make EXTRA_CFLAGS='$(EXTRA_CFLAGS)' $@"
+endif
+
+$(LS_ELF): app/ls/ls.c linker/user_elf.ld
+ifeq ($(OS_NAME),linux)
+	@mkdir -p $(OBJDIR)/usermode
+	$(GCC) $(USER_CCFLAGS) $(EXTRA_CFLAGS) -c app/ls/ls.c -o $(OBJDIR)/usermode/ls.o
+	$(LD) -nostdlib -static -T linker/user_elf.ld -o $@ $(OBJDIR)/usermode/ls.o
+else
+	$(DOCKER) run --rm $(DOCKER_RUN_FLAGS) $(DOCKER_ENV) --mount type=bind,source=$$(pwd),target=/mnt $(DOCKER_IMAGE) /bin/sh -c "cd /mnt && make EXTRA_CFLAGS='$(EXTRA_CFLAGS)' $@"
+endif
+
+$(KILL_ELF): app/kill/kill.c linker/user_elf.ld
+ifeq ($(OS_NAME),linux)
+	@mkdir -p $(OBJDIR)/usermode
+	$(GCC) $(USER_CCFLAGS) $(EXTRA_CFLAGS) -c app/kill/kill.c -o $(OBJDIR)/usermode/kill.o
+	$(LD) -nostdlib -static -T linker/user_elf.ld -o $@ $(OBJDIR)/usermode/kill.o
 else
 	$(DOCKER) run --rm $(DOCKER_RUN_FLAGS) $(DOCKER_ENV) --mount type=bind,source=$$(pwd),target=/mnt $(DOCKER_IMAGE) /bin/sh -c "cd /mnt && make EXTRA_CFLAGS='$(EXTRA_CFLAGS)' $@"
 endif
@@ -316,7 +350,7 @@ $(OBJDIR)/kernel:
 
 
 .PHONY: build
-build: docker $(OBJS) $(MOSH_ELF) $(ECHO_ELF) $(CAT_ELF) $(ENV_ELF) $(TRUE_ELF) $(FALSE_ELF)
+build: docker $(OBJS) $(MOSH_ELF) $(ECHO_ELF) $(CAT_ELF) $(ENV_ELF) $(TRUE_ELF) $(FALSE_ELF) $(LS_ELF) $(KILL_ELF)
 ifeq ($(OS_NAME),linux)
 	@set -eux
 
@@ -346,6 +380,8 @@ ifeq ($(OS_NAME),linux)
 	cp $(ENV_ELF) $(OUTPUT_DIR)/bin/env
 	cp $(TRUE_ELF) $(OUTPUT_DIR)/bin/true
 	cp $(FALSE_ELF) $(OUTPUT_DIR)/bin/false
+	cp $(LS_ELF) $(OUTPUT_DIR)/bin/ls
+	cp $(KILL_ELF) $(OUTPUT_DIR)/bin/kill
 
 	$(LD) $(LDFLAGS) -o $(KERNEL) $$(find -L $(KERNEL_OBJ) -type f -name '*.o')
 
@@ -394,6 +430,13 @@ ifeq ($(OS_NAME),linux)
 	mcopy -i $(IMAGE_NAME).hdd@@2M $(OUTPUT_DIR)/EFI/BOOT/BOOTX64.EFI ::/EFI/BOOT
 	mcopy -i $(IMAGE_NAME).hdd@@2M $(OUTPUT_DIR)/bin/user_demo ::/bin/user_demo
 	mcopy -i $(IMAGE_NAME).hdd@@2M $(OUTPUT_DIR)/bin/mosh ::/bin/mosh
+	mcopy -i $(IMAGE_NAME).hdd@@2M $(OUTPUT_DIR)/bin/echo ::/bin/echo
+	mcopy -i $(IMAGE_NAME).hdd@@2M $(OUTPUT_DIR)/bin/cat ::/bin/cat
+	mcopy -i $(IMAGE_NAME).hdd@@2M $(OUTPUT_DIR)/bin/env ::/bin/env
+	mcopy -i $(IMAGE_NAME).hdd@@2M $(OUTPUT_DIR)/bin/true ::/bin/true
+	mcopy -i $(IMAGE_NAME).hdd@@2M $(OUTPUT_DIR)/bin/false ::/bin/false
+	mcopy -i $(IMAGE_NAME).hdd@@2M $(OUTPUT_DIR)/bin/ls ::/bin/ls
+	mcopy -i $(IMAGE_NAME).hdd@@2M $(OUTPUT_DIR)/bin/kill ::/bin/kill
 	$(OUTPUT_DIR)/limine bios-install $(IMAGE_NAME).hdd 1
 
 	@echo Building ISO

@@ -105,6 +105,13 @@ static bool stdin_buffer_push(uint8_t ch) {
   return was_empty;
 }
 
+bool stdin_try_pop(uint8_t* ch) {
+  if(ch == NULL) {
+    return false;
+  }
+  return stdin_buffer_pop(ch);
+}
+
 static int64_t stdin_read_impl(file_t* file, void* buffer, size_t length) {
   (void)file;
 

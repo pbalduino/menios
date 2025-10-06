@@ -1,5 +1,6 @@
 #include <stdint.h>
 #include <stddef.h>
+#include <sys/fcntl.h>
 
 #define SYS_READ   0
 #define SYS_WRITE  1
@@ -10,8 +11,6 @@
 #define STDIN_FILENO   0
 #define STDOUT_FILENO  1
 #define STDERR_FILENO  2
-
-#define O_RDONLY 0x0000
 
 static inline long syscall0(long number) {
   long ret;

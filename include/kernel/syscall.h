@@ -23,7 +23,10 @@ extern "C" {
 #define SYS_EXECVE 59
 #define SYS_EXIT   60
 #define SYS_WAITPID 61
-#define SYS_FCNTL  72
+#define SYS_LISTDIR    62
+#define SYS_STDIN_POLL 63
+#define SYS_PROC_KILL  64
+#define SYS_FCNTL      72
 
 typedef struct syscall_frame_t {
   uint64_t r15;

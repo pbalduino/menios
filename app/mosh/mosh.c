@@ -1,29 +1,73 @@
+#include <errno.h>
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
 #include <stdio.h>
+#include <string.h>
+#include <sys/fcntl.h>
 
 #define SYS_READ   0
 #define SYS_WRITE  1
-#define SYS_CLOSE  3
+#define SYS_OPEN   2
+#define SYS_CLOSE   3
 #define SYS_DUP2    33
 #define SYS_SLEEP   35
 #define SYS_FORK    57
 #define SYS_EXECVE  59
 #define SYS_EXIT    60
 #define SYS_WAITPID 61
+#define SYS_LISTDIR    62
+#define SYS_PIPE       22
+#define SYS_STDIN_POLL 63
+#define SYS_PROC_KILL  64
 
 #define STDIN_FILENO   0
 #define STDOUT_FILENO  1
 #define STDERR_FILENO  2
 
+#define WNOHANG 1
+
 #define MOSH_MAX_LINE_LENGTH 256
+#define MOSH_MAX_PATH        256
 #define MOSH_HISTORY_LIMIT   16
 #define MOSH_PROMPT          "mosh:/>"
+
+#define MOSH_MAX_SEGMENTS    8
+#define MOSH_MAX_ARGS        16
+#define MOSH_MAX_TOKENS      128
+#define MOSH_MAX_SEQUENCES   8
 
 static char** process_envp = NULL;
 static char*  fallback_envp[] = { NULL };
 static const char DEFAULT_PATH[] = "/bin";
+static char     current_directory[MOSH_MAX_PATH];
+static char     pending_input[128];
+static size_t   pending_length = 0;
+static size_t   pending_offset = 0;
+
+static size_t str_len(const char* s);
+static bool   str_eq(const char* a, const char* b);
+static void   str_copy(char* dest, size_t capacity, const char* src);
+
+typedef struct {
+  char*  argv[MOSH_MAX_ARGS];
+  size_t argc;
+  char*  redirect_in;
+  char*  redirect_out;
+} command_segment_t;
+
+static void write_bytes(int fd, const char* data, size_t length);
+static void write_char_stdout(char ch);
+static void write_str(int fd, const char* text);
+static void exec_command(char** argv, size_t argc);
+
+static bool parse_command_segments(char* buffer, command_segment_t* segments, size_t* segment_count);
+static int  execute_pipeline(command_segment_t* segments, size_t segment_count);
+static int  wait_for_children(command_segment_t* segments, size_t segment_count, long* pids, int* statuses);
+static int  launch_pipeline(char* line);
+static int  launch_command(char* line);
+static size_t split_sequence(char* line, char* parts[], size_t max_parts);
+static char* str_find_substring(char* haystack, const char* needle);
 
 #ifdef MOSH_TEST
 long mosh_test_syscall0(long number);
@@ -59,6 +103,20 @@ static inline long syscall3(long number, long arg1, long arg2, long arg3) {
   asm volatile("int $0x80" : "=a"(ret)
                : "a"(number), "D"(arg1), "S"(arg2), "d"(arg3)
                : "rcx", "r11", "memory");
+  return ret;
+}
+#endif
+
+#ifdef MOSH_TEST
+long mosh_test_syscall2(long number, long arg1, long arg2);
+
+static inline long syscall2(long number, long arg1, long arg2) {
+  return mosh_test_syscall2(number, arg1, arg2);
+}
+#else
+static inline long syscall2(long number, long arg1, long arg2) {
+  long ret;
+  asm volatile("int $0x80" : "=a"(ret) : "a"(number), "D"(arg1), "S"(arg2) : "rcx", "r11", "memory");
   return ret;
 }
 #endif
@@ -104,6 +162,50 @@ void mosh_test_set_env(char** envp) {
 }
 #endif
 
+static char* env_find_entry(const char* key) {
+  if(process_envp == NULL || key == NULL) {
+    return NULL;
+  }
+  size_t key_len = str_len(key);
+  for(size_t idx = 0; process_envp[idx] != NULL; idx++) {
+    char* entry = process_envp[idx];
+    size_t pos = 0;
+    while(entry[pos] != '\0' && entry[pos] != '=') {
+      pos++;
+    }
+    if(entry[pos] == '=' && pos == key_len) {
+      bool match = true;
+      for(size_t i = 0; i < key_len; i++) {
+        if(entry[i] != key[i]) {
+          match = false;
+          break;
+        }
+      }
+      if(match) {
+        return entry;
+      }
+    }
+  }
+  return NULL;
+}
+
+static void env_set(const char* key, const char* value) {
+  char* entry = env_find_entry(key);
+  if(entry == NULL || value == NULL) {
+    return;
+  }
+  size_t key_len = str_len(key);
+  if(entry[key_len] != '=') {
+    return;
+  }
+  size_t value_len = str_len(value);
+  size_t idx = key_len + 1;
+  for(size_t i = 0; i < value_len; i++) {
+    entry[idx + i] = value[i];
+  }
+  entry[idx + value_len] = '\0';
+}
+
 static size_t str_len(const char* s) {
   size_t len = 0;
   while(s[len] != '\0') {
@@ -121,6 +223,17 @@ static bool str_eq(const char* a, const char* b) {
   return *a == '\0' && *b == '\0';
 }
 
+static int str_ncmp(const char* a, const char* b, size_t length) {
+  for(size_t i = 0; i < length; i++) {
+    unsigned char ca = (unsigned char)a[i];
+    unsigned char cb = (unsigned char)b[i];
+    if(ca != cb) {
+      return (int)ca - (int)cb;
+    }
+  }
+  return 0;
+}
+
 static void str_copy(char* dest, size_t capacity, const char* src) {
   if(dest == NULL || capacity == 0) {
     return;
@@ -133,6 +246,410 @@ static void str_copy(char* dest, size_t capacity, const char* src) {
     }
   }
   dest[idx] = '\0';
+}
+
+static bool build_combined_path(const char* base, const char* path, char* out, size_t capacity) {
+  if(path != NULL && path[0] == '/') {
+    str_copy(out, capacity, path);
+    return out[0] != '\0';
+  }
+
+  size_t len = 0;
+  if(base == NULL || base[0] == '\0') {
+    out[len++] = '/';
+  } else {
+    while(base[len] != '\0' && len + 1 < capacity) {
+      out[len] = base[len];
+      len++;
+    }
+    if(len == 0) {
+      out[len++] = '/';
+    }
+  }
+  if(len >= capacity) {
+    out[capacity - 1] = '\0';
+    return false;
+  }
+  out[len] = '\0';
+
+  if(path == NULL || path[0] == '\0') {
+    return true;
+  }
+
+  if(len > 1 && out[len - 1] != '/') {
+    if(len + 1 >= capacity) {
+      return false;
+    }
+    out[len++] = '/';
+    out[len] = '\0';
+  }
+
+  size_t idx = 0;
+  while(path[idx] != '\0' && len + 1 < capacity) {
+    out[len++] = path[idx++];
+  }
+  out[len] = '\0';
+  if(path[idx] != '\0') {
+    return false;
+  }
+  return true;
+}
+
+static bool canonicalize_path(const char* input, char* output, size_t capacity) {
+  if(output == NULL || capacity == 0) {
+    return false;
+  }
+  size_t out_len = 0;
+  size_t depth = 0;
+  size_t depth_pos[64];
+
+  output[out_len++] = '/';
+  output[out_len] = '\0';
+
+  size_t i = 0;
+  if(input[0] == '/') {
+    i++;
+  }
+
+  while(true) {
+    while(input[i] == '/') {
+      i++;
+    }
+    if(input[i] == '\0') {
+      break;
+    }
+    size_t start = i;
+    while(input[i] != '\0' && input[i] != '/') {
+      i++;
+    }
+    size_t seg_len = i - start;
+    if(seg_len == 0) {
+      break;
+    }
+    if(seg_len == 1 && input[start] == '.') {
+      continue;
+    }
+    if(seg_len == 2 && input[start] == '.' && input[start + 1] == '.') {
+      if(depth > 0) {
+        out_len = depth_pos[depth - 1];
+        output[out_len] = '\0';
+        depth--;
+      }
+      continue;
+    }
+    if(out_len > 1) {
+      if(out_len + 1 >= capacity) {
+        return false;
+      }
+      output[out_len++] = '/';
+    }
+    if(depth >= sizeof(depth_pos) / sizeof(depth_pos[0])) {
+      return false;
+    }
+    depth_pos[depth++] = out_len;
+    for(size_t j = 0; j < seg_len; j++) {
+      if(out_len + 1 >= capacity) {
+        return false;
+      }
+      output[out_len++] = input[start + j];
+    }
+    output[out_len] = '\0';
+  }
+
+  if(out_len == 1) {
+    output[0] = '/';
+    output[1] = '\0';
+  }
+
+  return true;
+}
+
+static bool normalize_path(const char* base, const char* path, char* out, size_t capacity) {
+  char combined[MOSH_MAX_PATH];
+  if(!build_combined_path(base, path, combined, sizeof(combined))) {
+    return false;
+  }
+  return canonicalize_path(combined, out, capacity);
+}
+
+static void init_segment(command_segment_t* segment) {
+  segment->argc = 0;
+  segment->redirect_in = NULL;
+  segment->redirect_out = NULL;
+  for(size_t i = 0; i < MOSH_MAX_ARGS; i++) {
+    segment->argv[i] = NULL;
+  }
+}
+
+static bool parse_command_segments(char* buffer, command_segment_t* segments, size_t* segment_count) {
+  if(buffer == NULL || segments == NULL || segment_count == NULL) {
+    return false;
+  }
+
+  char* tokens[MOSH_MAX_TOKENS];
+  size_t token_count = 0;
+  char* cursor = buffer;
+  while(*cursor != '\0') {
+    while(*cursor == ' ' || *cursor == '\t') {
+      cursor++;
+    }
+    if(*cursor == '\0') {
+      break;
+    }
+    if(token_count >= MOSH_MAX_TOKENS) {
+      return false;
+    }
+    tokens[token_count++] = cursor;
+    while(*cursor != '\0' && *cursor != ' ' && *cursor != '\t') {
+      cursor++;
+    }
+    if(*cursor != '\0') {
+      *cursor++ = '\0';
+    }
+  }
+
+  if(token_count == 0) {
+    return false;
+  }
+
+  size_t seg_idx = 0;
+  init_segment(&segments[0]);
+  command_segment_t* current = &segments[0];
+
+  for(size_t i = 0; i < token_count; i++) {
+    char* tok = tokens[i];
+    if(tok[0] == '\0') {
+      continue;
+    }
+
+    if(tok[0] == '|' && tok[1] == '\0') {
+      if(current->argc == 0) {
+        return false;
+      }
+      seg_idx++;
+      if(seg_idx >= MOSH_MAX_SEGMENTS) {
+        return false;
+      }
+      init_segment(&segments[seg_idx]);
+      current = &segments[seg_idx];
+      continue;
+    }
+
+    if(tok[0] == '<' && tok[1] == '\0') {
+      if(i + 1 >= token_count) {
+        return false;
+      }
+      if(current->redirect_in != NULL) {
+        return false;
+      }
+      current->redirect_in = tokens[++i];
+      continue;
+    }
+
+    if(tok[0] == '>' && tok[1] == '\0') {
+      if(i + 1 >= token_count) {
+        return false;
+      }
+      if(current->redirect_out != NULL) {
+        return false;
+      }
+      current->redirect_out = tokens[++i];
+      continue;
+    }
+
+    if(current->argc >= MOSH_MAX_ARGS - 1) {
+      return false;
+    }
+    current->argv[current->argc++] = tok;
+    current->argv[current->argc] = NULL;
+  }
+
+  if(segments[seg_idx].argc == 0) {
+    return false;
+  }
+
+  *segment_count = seg_idx + 1;
+  return true;
+}
+
+static inline void close_fd_if_needed(int fd) {
+  if(fd >= 0) {
+    syscall1(SYS_CLOSE, fd);
+  }
+}
+
+static int wait_for_children(command_segment_t* segments,
+                             size_t segment_count,
+                             long* pids,
+                             int* statuses) {
+  size_t remaining = segment_count;
+  for(size_t i = 0; i < segment_count; i++) {
+    statuses[i] = 0;
+  }
+
+  while(remaining > 0) {
+    bool progress = false;
+
+    for(size_t i = 0; i < segment_count; i++) {
+      long pid = pids[i];
+      if(pid <= 0) {
+        continue;
+      }
+
+      int status = 0;
+      long waited = syscall3(SYS_WAITPID, pid, (long)&status, WNOHANG);
+      if(waited == pid) {
+        pids[i] = -pid;
+        statuses[i] = status;
+        remaining--;
+        progress = true;
+        if(status == 127 && segments[i].argc > 0) {
+          const char prefix[] = "mosh: command not found: ";
+          write_bytes(STDOUT_FILENO, prefix, sizeof(prefix) - 1);
+          write_bytes(STDOUT_FILENO, segments[i].argv[0], str_len(segments[i].argv[0]));
+          write_bytes(STDOUT_FILENO, "\n", 1);
+        }
+        continue;
+      }
+
+      if(waited < 0 && waited != -ECHILD) {
+        write_str(STDOUT_FILENO, "mosh: waitpid failed\n");
+        pids[i] = -pid;
+        statuses[i] = (int)waited;
+        remaining--;
+        progress = true;
+      }
+    }
+
+    if(remaining == 0) {
+      break;
+    }
+
+    long polled = syscall0(SYS_STDIN_POLL);
+    if(polled >= 0) {
+      char ch = (char)polled;
+      if(ch == 3) {
+        pending_length = 0;
+        pending_offset = 0;
+        write_str(STDOUT_FILENO, "^C\n");
+        for(size_t i = 0; i < segment_count; i++) {
+          if(pids[i] > 0) {
+            syscall2(SYS_PROC_KILL, pids[i], 130);
+          }
+        }
+      } else {
+        if(pending_length + 1 < sizeof(pending_input)) {
+          pending_input[pending_length++] = ch;
+          pending_input[pending_length] = '\0';
+          write_char_stdout(ch);
+        }
+      }
+    }
+
+    if(!progress) {
+      syscall2(SYS_SLEEP, 1000, 0);
+    }
+  }
+
+  return statuses[segment_count - 1];
+}
+
+static int execute_pipeline(command_segment_t* segments, size_t segment_count) {
+  long pids[MOSH_MAX_SEGMENTS] = {0};
+  int statuses[MOSH_MAX_SEGMENTS] = {0};
+  int prev_read = -1;
+  size_t started = 0;
+
+  for(size_t i = 0; i < segment_count; i++) {
+    int pipe_fds[2] = { -1, -1 };
+    if(i + 1 < segment_count) {
+      int tmp[2];
+      long rc = syscall1(SYS_PIPE, (long)tmp);
+      if(rc < 0) {
+        write_str(STDOUT_FILENO, "mosh: failed to create pipe\n");
+        close_fd_if_needed(prev_read);
+        if(started > 0) {
+          wait_for_children(segments, started, pids, statuses);
+        }
+        return (int)rc;
+      }
+      pipe_fds[0] = tmp[0];
+      pipe_fds[1] = tmp[1];
+    }
+
+    long pid = syscall0(SYS_FORK);
+    if(pid < 0) {
+      write_str(STDOUT_FILENO, "mosh: fork failed\n");
+      close_fd_if_needed(pipe_fds[0]);
+      close_fd_if_needed(pipe_fds[1]);
+      close_fd_if_needed(prev_read);
+      if(started > 0) {
+        wait_for_children(segments, started, pids, statuses);
+      }
+      return (int)pid;
+    }
+
+    if(pid == 0) {
+      if(segments[i].redirect_in != NULL) {
+        char absolute[MOSH_MAX_PATH];
+        if(!normalize_path(current_directory, segments[i].redirect_in, absolute, sizeof(absolute))) {
+          write_str(STDOUT_FILENO, "mosh: invalid input path\n");
+          syscall1(SYS_EXIT, 1);
+        }
+        long fd = syscall3(SYS_OPEN, (long)absolute, O_RDONLY, 0);
+        if(fd < 0) {
+          write_str(STDOUT_FILENO, "mosh: failed to open input file\n");
+          syscall1(SYS_EXIT, 1);
+        }
+        syscall2(SYS_DUP2, fd, STDIN_FILENO);
+        if(fd != STDIN_FILENO) {
+          syscall1(SYS_CLOSE, fd);
+        }
+      } else if(prev_read >= 0) {
+        syscall2(SYS_DUP2, prev_read, STDIN_FILENO);
+      }
+
+      if(segments[i].redirect_out != NULL) {
+        char absolute[MOSH_MAX_PATH];
+        if(!normalize_path(current_directory, segments[i].redirect_out, absolute, sizeof(absolute))) {
+          write_str(STDOUT_FILENO, "mosh: invalid redirection path\n");
+          syscall1(SYS_EXIT, 1);
+        }
+        long fd = syscall3(SYS_OPEN, (long)absolute, O_WRONLY | O_CREAT | O_TRUNC, 0644);
+        if(fd < 0) {
+          write_str(STDOUT_FILENO, "mosh: failed to open redirection target\n");
+          syscall1(SYS_EXIT, 1);
+        }
+        syscall2(SYS_DUP2, fd, STDOUT_FILENO);
+        if(fd != STDOUT_FILENO) {
+          syscall1(SYS_CLOSE, fd);
+        }
+      } else if(pipe_fds[1] >= 0) {
+        syscall2(SYS_DUP2, pipe_fds[1], STDOUT_FILENO);
+      }
+
+      close_fd_if_needed(prev_read);
+      close_fd_if_needed(pipe_fds[0]);
+      close_fd_if_needed(pipe_fds[1]);
+
+      exec_command(segments[i].argv, segments[i].argc);
+      syscall1(SYS_EXIT, 127);
+    }
+
+    pids[started++] = pid;
+    if(prev_read >= 0) {
+      close_fd_if_needed(prev_read);
+    }
+    if(pipe_fds[1] >= 0) {
+      close_fd_if_needed(pipe_fds[1]);
+    }
+    prev_read = pipe_fds[0];
+  }
+
+  close_fd_if_needed(prev_read);
+
+  int last_status = wait_for_children(segments, segment_count, pids, statuses);
+  return last_status;
 }
 
 #ifdef MOSH_TEST
@@ -541,10 +1058,20 @@ static size_t read_line(const char* prompt, char* buffer, size_t capacity) {
   bool swallow_lf = false;
 
   while(true) {
-    int input = read_stdin_char();
-    if(input < 0) {
-      continue;
+    int input = -1;
+    if(pending_offset < pending_length) {
+      input = (unsigned char)pending_input[pending_offset++];
+      if(pending_offset >= pending_length) {
+        pending_offset = 0;
+        pending_length = 0;
+      }
+    } else {
+      input = read_stdin_char();
+      if(input < 0) {
+        continue;
+      }
     }
+
     char ch = (char)input;
 
     if(swallow_lf) {
@@ -681,22 +1208,118 @@ static size_t read_line(const char* prompt, char* buffer, size_t capacity) {
 }
 
 static bool handle_builtin(const char* line) {
-  if(str_eq(line, "")) {
+  size_t idx = 0;
+  while(line[idx] == ' ' || line[idx] == '\t') {
+    idx++;
+  }
+
+  const char* command_start = line + idx;
+  while(line[idx] != '\0' && line[idx] != ' ' && line[idx] != '\t') {
+    idx++;
+  }
+
+  size_t command_len = (size_t)(line + idx - command_start);
+  if(command_len == 0) {
     return true;
   }
 
-  if(str_eq(line, "help")) {
+  while(line[idx] == ' ' || line[idx] == '\t') {
+    idx++;
+  }
+  const char* arguments = line + idx;
+
+  if(command_len == 4 && str_ncmp(command_start, "help", 4) == 0) {
     write_str(STDOUT_FILENO,
               "Built-ins:\n"
               "  help  - show this message\n"
-              "  exit  - leave mosh\n");
+              "  exit  - leave mosh\n"
+              "  pwd   - print current directory\n"
+              "  echo  - print arguments\n"
+              "  cd    - change directory (limited)\n");
     return true;
   }
 
-  if(str_eq(line, "exit")) {
+  if(command_len == 4 && str_ncmp(command_start, "exit", 4) == 0) {
     write_str(STDOUT_FILENO, "bye\n");
     syscall1(SYS_EXIT, 0);
     return true; // Not reached
+  }
+
+  if(command_len == 3 && str_ncmp(command_start, "pwd", 3) == 0) {
+    write_str(STDOUT_FILENO, current_directory);
+    write_str(STDOUT_FILENO, "\n");
+    return true;
+  }
+
+  if(command_len == 4 && str_ncmp(command_start, "echo", 4) == 0) {
+    bool has_redirection = false;
+    for(size_t i = 0; arguments[i] != '\0'; i++) {
+      char ch = arguments[i];
+      if(ch == '>' || ch == '<' || ch == '|') {
+        has_redirection = true;
+        break;
+      }
+    }
+    if(has_redirection) {
+      return false;
+    }
+    write_str(STDOUT_FILENO, arguments);
+    write_str(STDOUT_FILENO, "\n");
+    return true;
+  }
+
+  if(command_len == 2 && str_ncmp(command_start, "cd", 2) == 0) {
+    const char* target = arguments;
+    while(*target == ' ' || *target == '\t') {
+      target++;
+    }
+    char resolved[MOSH_MAX_PATH];
+    if(target[0] == '\0') {
+      const char* home = env_get("HOME");
+      if(home == NULL || home[0] == '\0') {
+        home = "/";
+      }
+      if(!normalize_path(current_directory, home, resolved, sizeof(resolved))) {
+        write_str(STDOUT_FILENO, "mosh: cd: invalid path\n");
+        return true;
+      }
+    } else {
+      const char* extra = target;
+      size_t consumed = 0;
+      while(target[consumed] != '\0' && target[consumed] != ' ' && target[consumed] != '\t') {
+        consumed++;
+      }
+      char temp[MOSH_MAX_PATH];
+      if(consumed >= sizeof(temp)) {
+        write_str(STDOUT_FILENO, "mosh: cd: path too long\n");
+        return true;
+      }
+      for(size_t i = 0; i < consumed; i++) {
+        temp[i] = extra[i];
+      }
+      temp[consumed] = '\0';
+      if(!normalize_path(current_directory, temp, resolved, sizeof(resolved))) {
+        write_str(STDOUT_FILENO, "mosh: cd: invalid path\n");
+        return true;
+      }
+      while(target[consumed] == ' ' || target[consumed] == '\t') {
+        consumed++;
+      }
+      if(target[consumed] != '\0') {
+        write_str(STDOUT_FILENO, "mosh: cd: too many arguments\n");
+        return true;
+      }
+    }
+
+    long rc = syscall3(SYS_LISTDIR, (long)resolved, 0, 0);
+    if(rc < 0) {
+      write_str(STDOUT_FILENO, "mosh: cd: unable to access directory\n");
+      return true;
+    }
+
+    str_copy(current_directory, sizeof(current_directory), resolved);
+    env_set("PWD", current_directory);
+    return true;
   }
 
   return false;
@@ -778,61 +1401,92 @@ static void exec_command(char** argv, size_t argc) {
     segment += segment_len + 1;
   }
 
-  write_str(STDERR_FILENO, "mosh: command not found\n");
   syscall1(SYS_EXIT, 127);
 }
 
-static void launch_command(char* line) {
-  char* argv[16];
-  size_t argc = 0;
+static char* ltrim(char* text) {
+  while(*text == ' ' || *text == '\t') {
+    text++;
+  }
+  return text;
+}
 
+static void rtrim(char* text) {
+  size_t len = str_len(text);
+  while(len > 0) {
+    char ch = text[len - 1];
+    if(ch != ' ' && ch != '\t') {
+      break;
+    }
+    text[--len] = '\0';
+  }
+}
+
+static size_t split_sequence(char* line, char* parts[], size_t max_parts) {
+  size_t count = 0;
   char* cursor = line;
-  while(*cursor != '\0' && argc < (sizeof(argv) / sizeof(argv[0])) - 1) {
-    while(*cursor == ' ' || *cursor == '\t') {
-      cursor++;
-    }
+
+  while(true) {
+    cursor = ltrim(cursor);
     if(*cursor == '\0') {
       break;
     }
-    argv[argc++] = cursor;
-    while(*cursor != '\0' && *cursor != ' ' && *cursor != '\t') {
-      cursor++;
+    if(count >= max_parts) {
+      return count;
     }
-    if(*cursor == '\0') {
-      break;
+
+    char* segment_start = cursor;
+    char* op = str_find_substring(cursor, "&&");
+    if(op != NULL) {
+      *op = '\0';
+      op[1] = ' ';
+      rtrim(segment_start);
+      parts[count++] = segment_start;
+      cursor = op + 2;
+      continue;
     }
-    *cursor++ = '\0';
-  }
-  argv[argc] = NULL;
 
-  if(argc == 0) {
-    return;
+    rtrim(segment_start);
+    parts[count++] = segment_start;
+    break;
   }
 
-  long pid = syscall0(SYS_FORK);
-  if(pid < 0) {
-    write_str(STDERR_FILENO, "mosh: fork failed\n");
-    return;
+  for(size_t i = 0; i < count; i++) {
+    parts[i] = ltrim(parts[i]);
+    rtrim(parts[i]);
   }
 
-  if(pid == 0) {
-    exec_command(argv, argc);
-    syscall1(SYS_EXIT, 127);
+  return count;
+}
+
+static int launch_pipeline(char* line) {
+  command_segment_t segments[MOSH_MAX_SEGMENTS];
+  for(size_t i = 0; i < MOSH_MAX_SEGMENTS; i++) {
+    init_segment(&segments[i]);
   }
 
-  int status = 0;
-  long waited = syscall3(SYS_WAITPID, pid, (long)&status, 0);
-  if(waited < 0) {
-    write_str(STDERR_FILENO, "mosh: waitpid failed\n");
-    return;
+  char expanded[MOSH_MAX_LINE_LENGTH * 3];
+  size_t idx = 0;
+  for(size_t i = 0; line[i] != '\0' && idx + 3 < sizeof(expanded); i++) {
+    char ch = line[i];
+    if(ch == '|' || ch == '<' || ch == '>') {
+      expanded[idx++] = ' ';
+      expanded[idx++] = ch;
+      expanded[idx++] = ' ';
+    } else {
+      expanded[idx++] = ch;
+    }
+  }
+  expanded[idx] = '\0';
+
+  size_t segment_count = 0;
+  if(!parse_command_segments(expanded, segments, &segment_count)) {
+    write_str(STDOUT_FILENO, "mosh: syntax error\n");
+    return 1;
   }
 
-  if(waited != pid) {
-    write_str(STDERR_FILENO, "mosh: waitpid returned unexpected pid\n");
-    return;
-  }
-
-  if(status != 0) {
+  int status = execute_pipeline(segments, segment_count);
+  if(status > 0 && status != 127 && status != 130) {
     static const char prefix[] = "mosh: process exited with status ";
     char buffer[32];
     size_t len = itoa(status, buffer, sizeof(buffer));
@@ -842,6 +1496,31 @@ static void launch_command(char* line) {
     }
     write_bytes(STDERR_FILENO, "\n", 1);
   }
+
+  return status;
+}
+
+static int launch_command(char* line) {
+  char* parts[MOSH_MAX_SEQUENCES];
+  size_t count = split_sequence(line, parts, MOSH_MAX_SEQUENCES);
+  if(count == 0) {
+    return 0;
+  }
+
+  int last_status = 0;
+  for(size_t i = 0; i < count; i++) {
+    char* segment = ltrim(parts[i]);
+    if(segment[0] == '\0') {
+      write_str(STDOUT_FILENO, "mosh: syntax error\n");
+      return 1;
+    }
+    last_status = launch_pipeline(segment);
+    if(last_status != 0) {
+      break;
+    }
+  }
+
+  return last_status;
 }
 
 static void shell_loop(void) {
@@ -873,8 +1552,38 @@ void _start(uint64_t argc, char** argv, char** envp) {
   (void)argc;
   (void)argv;
   process_envp = envp;
+  str_copy(current_directory, sizeof(current_directory), "/");
+  const char* initial_pwd = env_get("PWD");
+  if(initial_pwd != NULL && initial_pwd[0] != '\0') {
+    if(!normalize_path("/", initial_pwd, current_directory, sizeof(current_directory))) {
+      str_copy(current_directory, sizeof(current_directory), "/");
+    }
+  }
+  env_set("PWD", current_directory);
   history_reset();
   shell_loop();
   syscall1(SYS_EXIT, 0);
 }
 #endif
+#define O_RDONLY 0x0000
+#define O_WRONLY 0x0001
+#define O_RDWR   0x0002
+#include <stddef.h>
+static char* str_find_substring(char* haystack, const char* needle) {
+  if(needle[0] == '\0') {
+    return haystack;
+  }
+
+  size_t i = 0;
+  while(haystack[i] != '\0') {
+    size_t j = 0;
+    while(needle[j] != '\0' && haystack[i + j] == needle[j]) {
+      j++;
+    }
+    if(needle[j] == '\0') {
+      return &haystack[i];
+    }
+    i++;
+  }
+  return NULL;
+}

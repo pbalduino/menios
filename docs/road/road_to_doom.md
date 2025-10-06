@@ -97,8 +97,12 @@ We can mount and read from disk images today; write support is still limited.
 
 #### **File I/O Syscalls** (Issue #60) ✅ **COMPLETE (read-focused)**
 - ✅ **Status**: `open`/`read`/`write`/`lseek`/`close` are wired through the VFS and descriptor tables.
-- **Limitation**: FS writes remain largely TODO (FAT32 is currently read-only).
+- **Limitation**: FS writes remain largely TODO (FAT32 is currently read-only - see #189).
 - **Impact**: Doom-sized assets can now be loaded from disk.
+
+#### **Filesystem Write Support** (Issue #189) 🚧 **Pending**
+- **Scope**: FAT32 write support for file creation, modification, deletion
+- **Impact**: Save games, configuration files, native compilation output
 
 ### **Phase 5: Graphics & Input**
 Visual output and user interaction:
@@ -125,11 +129,20 @@ Development environment for building applications:
 
 #### **C Runtime and libc**
 - **Dependencies**: Threading support (Issues #109, #110)
-- **Scope**: crt0, libc subset, dynamic vs static linking decisions
+- **Scope**: crt0 (#192), libc subset (#193), dynamic vs static linking decisions
 - **Impact**: Standard library support for applications
 
+#### **Syscall ABI Documentation** (Issue #194)
+- **Scope**: Formal syscall interface documentation
+- **Impact**: Developer reference for userland programming
+
+#### **Userspace Build System** (Issue #195)
+- **Dependencies**: Issues #192, #193
+- **Scope**: Dedicated build system for userland programs
+- **Impact**: Clean separation between kernel and userland builds
+
 #### **Userspace SDK**
-- **Dependencies**: Cross-compiler toolchain
+- **Dependencies**: Cross-compiler toolchain (#29)
 - **Scope**: Headers, linker scripts, build system integration
 - **Impact**: Reproducible builds for Doom and other applications
 
@@ -168,9 +181,9 @@ Basic command-line tools for shell interaction:
 - **Optional**: Gamepad support via HID interface
 
 ### **File System Requirements**
-- **WAD Loading**: Read game assets from filesystem
-- **Save Games**: Write/read save game files
-- **Configuration**: Config file support for game settings
+- **WAD Loading**: Read game assets from filesystem ✅
+- **Save Games**: Write/read save game files (#189 - FAT32 write support)
+- **Configuration**: Config file support for game settings (#189)
 
 ## 📈 **Updated Timeline Estimates**
 
@@ -190,16 +203,31 @@ Basic command-line tools for shell interaction:
 ## 🚀 **Immediate Next Steps**
 
 **High-impact kernel work still outstanding:**
-1. **#109** – Implement the pthread API so user programs can spin up threads.
-2. **#110** – Make libc thread-safe once pthread primitives exist.
-3. **#111** – Land advanced pthread synchronization (barriers, robust locks).
-4. **#102** – Add pipes/FIFOs for shell pipelines and IPC.
-5. **#103** – Deliver UNIX signals so processes can be controlled from the shell.
-6. **#104** – Wire shared memory to back high-performance IPC (and future audio).
-7. **#33** – Bring up the audio subsystem for Doom's sound effects/music.
-8. **#29** – Ship a cross-compiler toolchain and minimal SDK for userland builds.
-9. **#183** – Provide basic `/bin` utilities (echo, cat, env, true, false).
-10. **#187** – Add process management tools (ps, kill).
+
+### Toolchain (Critical Path)
+1. **#192** – Implement crt0 runtime startup code
+2. **#193** – Build minimal userland libc (syscalls, strings, memory, stdio)
+3. **#194** – Document syscall ABI specification
+4. **#195** – Separate userland build system from kernel
+5. **#29** – Complete cross-compiler toolchain integration
+
+### Threading & IPC
+6. **#109** – Implement the pthread API so user programs can spin up threads
+7. **#110** – Make libc thread-safe once pthread primitives exist
+8. **#111** – Land advanced pthread synchronization (barriers, robust locks)
+9. **#102** – Add pipes/FIFOs for shell pipelines and IPC
+10. **#103** – Deliver UNIX signals so processes can be controlled from the shell
+11. **#104** – Wire shared memory to back high-performance IPC (and future audio)
+
+### System Services
+12. **#33** – Bring up the audio subsystem for Doom's sound effects/music
+13. **#189** – Add FAT32 write support for save games and config files
+14. **#183** – Provide basic `/bin` utilities (echo, cat, env, true, false)
+15. **#187** – Add process management tools (ps, kill)
+
+### Future: Native Compilation
+16. **#190** – Port TCC (Tiny C Compiler) to meniOS
+17. **#191** – Port binutils (as, ld) for native development
 
 These items unlock the bulk of the remaining roadmap phases (threaded libc, IPC,
 networking) and pave the way for shipping a Doom-capable user environment.

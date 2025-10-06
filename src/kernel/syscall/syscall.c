@@ -8,6 +8,7 @@
 #include <kernel/syscall.h>
 #include <kernel/vfs.h>
 #include <sys/fcntl.h>
+#include <string.h>
 
 #define SYSCALL_MAX 256
 
@@ -29,6 +30,9 @@ static uint64_t syscall_sleep_handler(syscall_frame_t* frame);
 static uint64_t syscall_exit_handler(syscall_frame_t* frame);
 static uint64_t syscall_fcntl_handler(syscall_frame_t* frame);
 static uint64_t syscall_waitpid_handler(syscall_frame_t* frame);
+static uint64_t syscall_listdir_handler(syscall_frame_t* frame);
+static uint64_t syscall_stdin_poll_handler(syscall_frame_t* frame);
+static uint64_t syscall_proc_kill_handler(syscall_frame_t* frame);
 
 static syscall_handler_t syscall_table[SYSCALL_MAX];
 
@@ -115,6 +119,62 @@ static char* duplicate_user_string(const char* user_ptr) {
   }
 
   return buffer;
+}
+
+typedef struct {
+  char*  user_buffer;
+  size_t capacity;
+  size_t length;
+  int    error;
+} listdir_context_t;
+
+static bool listdir_iter_callback(const fs_dir_entry_t* entry, void* context) {
+  listdir_context_t* ctx = (listdir_context_t*)context;
+  if(ctx == NULL || entry == NULL) {
+    return false;
+  }
+
+  if(ctx->error != 0) {
+    return false;
+  }
+
+  size_t name_len = 0;
+  while(name_len < sizeof(entry->name) && entry->name[name_len] != '\0') {
+    name_len++;
+  }
+  if(name_len == 0) {
+    return true;
+  }
+
+  size_t required = name_len + 1; // newline
+  if(entry->is_directory) {
+    required += 1;
+  }
+
+  if(ctx->capacity == 0 || ctx->user_buffer == NULL) {
+    ctx->length += required;
+    return true;
+  }
+
+  if(ctx->length + required > ctx->capacity) {
+    ctx->error = -ENOSPC;
+    return false;
+  }
+
+  if(!proc_user_buffer_accessible(current, ctx->user_buffer + ctx->length, required)) {
+    ctx->error = -EFAULT;
+    return false;
+  }
+
+  char* dest = ctx->user_buffer + ctx->length;
+  memcpy(dest, entry->name, name_len);
+  size_t offset = name_len;
+  if(entry->is_directory) {
+    dest[offset++] = '/';
+  }
+  dest[offset++] = '\n';
+  ctx->length += offset;
+  return true;
 }
 
 static bool clone_user_vector(const char* const* user_vec,
@@ -234,6 +294,9 @@ void syscall_init(void) {
   syscall_register(SYS_FORK, syscall_fork_handler);
   syscall_register(SYS_EXECVE, syscall_execve_handler);
   syscall_register(SYS_WAITPID, syscall_waitpid_handler);
+  syscall_register(SYS_LISTDIR, syscall_listdir_handler);
+  syscall_register(SYS_STDIN_POLL, syscall_stdin_poll_handler);
+  syscall_register(SYS_PROC_KILL, syscall_proc_kill_handler);
   syscall_register(SYS_YIELD, syscall_yield_handler);
   syscall_register(SYS_SLEEP, syscall_sleep_handler);
   syscall_register(SYS_EXIT, syscall_exit_handler);
@@ -345,11 +408,17 @@ static uint64_t syscall_open_handler(syscall_frame_t* frame) {
     return frame->rax;
   }
 
-  const char* path = (const char*)frame->rdi;
+  const char* user_path = (const char*)frame->rdi;
   int flags = (int)frame->rsi;
   (void)frame->rdx; // mode currently unused
 
-  if(path == NULL) {
+  if(user_path == NULL) {
+    frame->rax = (uint64_t)(-EFAULT);
+    return frame->rax;
+  }
+
+  char path[SYSCALL_PATH_MAX];
+  if(!copy_user_string(user_path, path, sizeof(path))) {
     frame->rax = (uint64_t)(-EFAULT);
     return frame->rax;
   }
@@ -362,6 +431,11 @@ static uint64_t syscall_open_handler(syscall_frame_t* frame) {
   file_t* file = NULL;
   int rc = vfs_open(path, flags, &file);
   if(rc < 0) {
+    serial_printf("syscall_open: pid=%u path=%s flags=0x%x rc=%d\n",
+                  current->pid,
+                  path,
+                  flags,
+                  rc);
     frame->rax = (uint64_t)rc;
     return frame->rax;
   }
@@ -683,6 +757,72 @@ static uint64_t syscall_waitpid_handler(syscall_frame_t* frame) {
     }
     caller->state = PROC_STATE_RUNNING;
   }
+}
+
+static uint64_t syscall_listdir_handler(syscall_frame_t* frame) {
+  if(current == NULL) {
+    frame->rax = (uint64_t)(-EINVAL);
+    return frame->rax;
+  }
+
+  const char* user_path = (const char*)frame->rdi;
+  char* user_buffer = (char*)frame->rsi;
+  size_t buffer_size = (size_t)frame->rdx;
+
+  if(user_path == NULL) {
+    frame->rax = (uint64_t)(-EINVAL);
+    return frame->rax;
+  }
+
+  char path[SYSCALL_PATH_MAX];
+  if(!copy_user_string(user_path, path, sizeof(path))) {
+    frame->rax = (uint64_t)(-EFAULT);
+    return frame->rax;
+  }
+
+  bool list_only = (user_buffer == NULL || buffer_size == 0);
+  listdir_context_t ctx = {
+    .user_buffer = list_only ? NULL : user_buffer,
+    .capacity = list_only ? 0 : buffer_size,
+    .length = 0,
+    .error = 0,
+  };
+
+  bool ok = vfs_list(path, listdir_iter_callback, &ctx);
+  if(!ok && ctx.error == 0) {
+    ctx.error = -ENOENT;
+  }
+
+  if(ctx.error != 0) {
+    frame->rax = (uint64_t)ctx.error;
+    return frame->rax;
+  }
+
+  if(!list_only && ctx.length < ctx.capacity && proc_user_buffer_accessible(current, user_buffer + ctx.length, 1)) {
+    user_buffer[ctx.length] = '\0';
+  }
+
+  frame->rax = ctx.length;
+  return frame->rax;
+}
+
+static uint64_t syscall_stdin_poll_handler(syscall_frame_t* frame) {
+  (void)frame;
+  uint8_t ch = 0;
+  if(stdin_try_pop(&ch)) {
+    frame->rax = (uint64_t)ch;
+  } else {
+    frame->rax = (uint64_t)(-EAGAIN);
+  }
+  return frame->rax;
+}
+
+static uint64_t syscall_proc_kill_handler(syscall_frame_t* frame) {
+  uint32_t pid = (uint32_t)frame->rdi;
+  int code = (int)frame->rsi;
+  int rc = proc_kill_pid(pid, code);
+  frame->rax = (uint64_t)rc;
+  return frame->rax;
 }
 
 static uint64_t syscall_yield_handler(syscall_frame_t* frame) {

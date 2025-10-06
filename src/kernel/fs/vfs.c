@@ -1,6 +1,7 @@
 #include <kernel/vfs.h>
 
 #include <errno.h>
+#include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
 #include <string.h>
@@ -18,6 +19,7 @@ typedef struct vfs_mount_entry_t {
   size_t                      path_len;
   const vfs_fs_driver_t*      driver;
   void*                       fs_ctx;
+  bool                        read_only;
   struct vfs_mount_entry_t*   next;
 } vfs_mount_entry_t;
 
@@ -149,7 +151,7 @@ static vfs_mount_entry_t* vfs_find_mount_locked(const char* path, size_t path_le
   return best;
 }
 
-bool vfs_mount(const char* path, const vfs_fs_driver_t* driver, void* fs_ctx) {
+bool vfs_mount(const char* path, const vfs_fs_driver_t* driver, void* fs_ctx, bool read_only) {
   if(!vfs_initialized && !vfs_init()) {
     return false;
   }
@@ -183,6 +185,7 @@ bool vfs_mount(const char* path, const vfs_fs_driver_t* driver, void* fs_ctx) {
   entry->path_len = norm_len;
   entry->driver = driver;
   entry->fs_ctx = fs_ctx;
+  entry->read_only = read_only;
   entry->next = vfs_mounts;
   vfs_mounts = entry;
   kmutex_unlock(&vfs_lock);
@@ -191,15 +194,16 @@ bool vfs_mount(const char* path, const vfs_fs_driver_t* driver, void* fs_ctx) {
   return true;
 }
 
-bool vfs_mount_root(const vfs_fs_driver_t* driver, void* fs_ctx) {
-  return vfs_mount("/", driver, fs_ctx);
+bool vfs_mount_root(const vfs_fs_driver_t* driver, void* fs_ctx, bool read_only) {
+  return vfs_mount("/", driver, fs_ctx, read_only);
 }
 
 static bool vfs_resolve(const char* path,
                         const vfs_fs_driver_t** driver_out,
                         void** fs_ctx_out,
                         char* relative,
-                        size_t relative_size) {
+                        size_t relative_size,
+                        bool* read_only_out) {
   if(!vfs_initialized) {
     return false;
   }
@@ -224,6 +228,9 @@ static bool vfs_resolve(const char* path,
   }
   if(fs_ctx_out) {
     *fs_ctx_out = entry->fs_ctx;
+  }
+  if(read_only_out) {
+    *read_only_out = entry->read_only;
   }
 
   if(relative && relative_size > 0) {
@@ -251,15 +258,46 @@ bool vfs_list(const char* path, vfs_dir_iter_t iter, void* context) {
   const vfs_fs_driver_t* driver = NULL;
   void* fs_ctx = NULL;
   char relative[128];
+  bool read_only = true;
 
-  if(!vfs_resolve(path, &driver, &fs_ctx, relative, sizeof(relative))) {
+  if(!vfs_resolve(path, &driver, &fs_ctx, relative, sizeof(relative), &read_only)) {
     return false;
   }
 
   if(driver->list == NULL) {
     return false;
   }
-  return driver->list(fs_ctx, relative, iter, context);
+
+  bool ok = driver->list(fs_ctx, relative, iter, context);
+  if(relative[0] == '/' && relative[1] == '\0') {
+    kmutex_lock(&vfs_lock);
+    for(vfs_mount_entry_t* entry = vfs_mounts; entry != NULL; entry = entry->next) {
+      if(entry->path_len <= 1) {
+        continue;
+      }
+      const char* mount_name = entry->path + 1;
+      const char* slash = mount_name;
+      while(*slash != '\0' && *slash != '/') {
+        slash++;
+      }
+      if(*slash != '\0') {
+        continue;
+      }
+      fs_dir_entry_t mount_entry;
+      size_t name_len = strlen(mount_name);
+      if(name_len >= sizeof(mount_entry.name)) {
+        continue;
+      }
+      memcpy(mount_entry.name, mount_name, name_len + 1);
+      mount_entry.is_directory = true;
+      mount_entry.size = 0;
+      iter(&mount_entry, context);
+      ok = true;
+    }
+    kmutex_unlock(&vfs_lock);
+  }
+
+  return ok;
 }
 
 bool vfs_read(const char* path, size_t offset, void* buffer, size_t length, size_t* bytes_read) {
@@ -267,7 +305,7 @@ bool vfs_read(const char* path, size_t offset, void* buffer, size_t length, size
   void* fs_ctx = NULL;
   char relative[128];
 
-  if(!vfs_resolve(path, &driver, &fs_ctx, relative, sizeof(relative))) {
+  if(!vfs_resolve(path, &driver, &fs_ctx, relative, sizeof(relative), NULL)) {
     return false;
   }
   if(driver->read == NULL) {
@@ -281,7 +319,7 @@ bool vfs_read_all(const char* path, void** out_buffer, size_t* out_size) {
   void* fs_ctx = NULL;
   char relative[128];
 
-  if(!vfs_resolve(path, &driver, &fs_ctx, relative, sizeof(relative))) {
+  if(!vfs_resolve(path, &driver, &fs_ctx, relative, sizeof(relative), NULL)) {
     return false;
   }
   if(driver->read_all == NULL) {
@@ -411,7 +449,8 @@ int vfs_open(const char* path, int flags, file_t** out_file) {
   void* fs_ctx = NULL;
   char relative[128];
 
-  if(!vfs_resolve(path, &driver, &fs_ctx, relative, sizeof(relative))) {
+  bool read_only = true;
+  if(!vfs_resolve(path, &driver, &fs_ctx, relative, sizeof(relative), &read_only)) {
     return -ENOENT;
   }
 
@@ -423,11 +462,11 @@ int vfs_open(const char* path, int flags, file_t** out_file) {
   }
 
   int accmode = flags & O_ACCMODE;
-  if(accmode == O_WRONLY || accmode == O_RDWR) {
+  if(read_only && (accmode == O_WRONLY || accmode == O_RDWR)) {
     return -EROFS;
   }
 
-  if(flags & (O_CREAT | O_TRUNC | O_APPEND | O_EXCL)) {
+  if(read_only && (flags & (O_CREAT | O_TRUNC | O_APPEND | O_EXCL))) {
     return -EROFS;
   }
 
@@ -500,7 +539,7 @@ bool vfs_mount_fat32_root(block_device_t* device) {
     return false;
   }
 
-  if(!vfs_mount_root(&fat32_driver, mount)) {
+  if(!vfs_mount_root(&fat32_driver, mount, true)) {
     fs_unmount(mount);
     return false;
   }

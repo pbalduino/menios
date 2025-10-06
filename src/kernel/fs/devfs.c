@@ -189,5 +189,5 @@ static const vfs_fs_driver_t devfs_driver = {
 };
 
 bool devfs_mount(void) {
-  return vfs_mount("/dev", &devfs_driver, NULL);
+  return vfs_mount("/dev", &devfs_driver, NULL, true);
 }

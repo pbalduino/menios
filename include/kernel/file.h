@@ -64,5 +64,6 @@ typedef file_t* file_descriptor_t;
 file_descriptor_t fd_get(int fd);
 int pipe_create(file_t** read_end, file_t** write_end);
 void stdin_enqueue_char(uint8_t ch);
+bool stdin_try_pop(uint8_t* ch);
 
 #endif

@@ -20,6 +20,8 @@ digraph IssueDependencies {
         // Process Management (some completed)
         issue93 [label="#93: fork/exec\nprocess creation", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED
         issue34 [label="#34: Preemptive\nscheduler", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED
+        issue148 [label="#148: Environment\nvariables support", fillcolor="#FFE4B5"];
+        issue147 [label="#147: getcwd/chdir\nsyscalls", fillcolor="#FFE4B5"];
     }
 
     subgraph cluster_sync {
@@ -46,14 +48,58 @@ digraph IssueDependencies {
         issue113 [label="#113: thread-aware\nsystem calls", fillcolor="#B3E5FC"];
     }
 
+    subgraph cluster_shell {
+        label="Shell & Utilities";
+        style=filled;
+        fillcolor="#FFF5EE";
+
+        issue180 [label="#180: Environment\nseeding in init", fillcolor="#FFE4B5"];
+        issue181 [label="#181: tmpfs\nvalidation", fillcolor="#FFE4B5"];
+        issue182 [label="#182: waitpid\nregression test", fillcolor="#FFE4B5"];
+        issue183 [label="#183: /bin\nutilities", fillcolor="#FFE4B5"];
+        issue184 [label="#184: Line editor\ncoverage", fillcolor="#FFE4B5"];
+        issue185 [label="#185: PATH\nsearch", fillcolor="#FFE4B5"];
+        issue186 [label="#186: Pipeline\nplaceholders", fillcolor="#FFE4B5"];
+        issue187 [label="#187: ps/kill\nutilities", fillcolor="#FFE4B5"];
+        issue188 [label="#188: env\nutility", fillcolor="#FFE4B5"];
+    }
+
+    subgraph cluster_shell_ux {
+        label="Shell UX Features";
+        style=filled;
+        fillcolor="#F0FFFF"];
+
+        issue197 [label="#197: Tab\ncompletion", fillcolor="#E0FFFF"];
+        issue198 [label="#198: Ctrl+A/E\nline nav", fillcolor="#E0FFFF"];
+        issue199 [label="#199: Ctrl+R\nreverse search", fillcolor="#E0FFFF"];
+        issue200 [label="#200: Ctrl+L\nclear screen", fillcolor="#E0FFFF"];
+        issue201 [label="#201: Mouse\nselection", fillcolor="#E0FFFF"];
+    }
+
+    subgraph cluster_toolchain {
+        label="Toolchain & Compilation";
+        style=filled;
+        fillcolor="#FFFAEF";
+
+        issue29 [label="#29: Cross-compiler\ntoolchain", fillcolor="#FFE4B5"];
+        issue192 [label="#192: crt0\nruntime", fillcolor="#FFE4B5"];
+        issue193 [label="#193: Minimal\nlibc", fillcolor="#FFE4B5"];
+        issue194 [label="#194: Syscall\nABI docs", fillcolor="#FFE4B5"];
+        issue195 [label="#195: Userland\nbuild system", fillcolor="#FFE4B5"];
+        issue190 [label="#190: TCC\nport", fillcolor="#DDA0DD"];
+        issue191 [label="#191: binutils\nport", fillcolor="#DDA0DD"];
+        issue196 [label="#196: Fish shell\nresearch", fillcolor="#DDA0DD"];
+    }
+
     subgraph cluster_io {
         label="I/O & File System";
         style=filled;
         fillcolor="#FFF8DC";
 
         issue96 [label="#96: File descriptor\nmanagement", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED
-        issue60 [label="#60: Filesystem\nsyscalls", fillcolor="#FFE4B5"];
-        issue65 [label="#65: VFS layer", fillcolor="#FFE4B5"];
+        issue60 [label="#60: Filesystem\nsyscalls", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED
+        issue65 [label="#65: VFS layer", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED
+        issue189 [label="#189: FAT32\nwrite support", fillcolor="#FFE4B5"];
     }
 
     subgraph cluster_ipc {
@@ -69,166 +115,88 @@ digraph IssueDependencies {
         issue107 [label="#107: capability-based\nsecurity", fillcolor="#DDA0DD"];
     }
 
-    subgraph cluster_net {
-        label="Networking";
+    subgraph cluster_bugs {
+        label="Bug Fixes";
         style=filled;
-        fillcolor="#E8F8F5";
+        fillcolor="#FFE4E4";
 
-        issue67 [label="#67: Network driver\n(e1000/virtio-net)", fillcolor="#B2DFDB"];
-        issue68 [label="#68: Ethernet/ARP", fillcolor="#B2DFDB"];
-        issue69 [label="#69: IPv4/ICMP", fillcolor="#B2DFDB"];
-        issue70 [label="#70: UDP/TCP", fillcolor="#B2DFDB"];
-        issue71 [label="#71: Socket API", fillcolor="#B2DFDB"];
+        issue202 [label="#202: /dev/zero\nEOF bug", fillcolor="#FFB6C1"];
+        issue203 [label="#203: Pipeline\nhang bug", fillcolor="#FFB6C1"];
     }
 
-    subgraph cluster_smp {
-        label="SMP Support";
-        style=filled;
-        fillcolor="#FFF0F5";
-
-        issue80 [label="#80: per-CPU data", fillcolor="#FFB6C1"];
-        issue81 [label="#81: APIC/MADT\nCPU enumeration", fillcolor="#FFB6C1"];
-        issue82 [label="#82: AP startup", fillcolor="#FFB6C1"];
-        issue83 [label="#83: SMP scheduler", fillcolor="#FFB6C1"];
-        issue84 [label="#84: interrupt\ndistribution", fillcolor="#FFB6C1"];
-    }
-
-    subgraph cluster_alloc {
-        label="Advanced Allocation";
-        style=filled;
-        fillcolor="#F0FFF0";
-
-        issue87 [label="#87: jemalloc\nresearch", fillcolor="#98FB98"];
-        issue88 [label="#88: TLS\ninfrastructure", fillcolor="#98FB98"];
-        issue90 [label="#90: jemalloc-inspired\nallocator", fillcolor="#98FB98"];
-        issue91 [label="#91: jemalloc port", fillcolor="#98FB98"];
-        issue95 [label="#95: userspace\nmalloc/free", fillcolor="#98FB98"];
-    }
-
-    subgraph cluster_timers {
-        label="Timers & Hardware";
-        style=filled;
-        fillcolor="#FFFAF0";
-
-        issue101 [label="#101: LAPIC/HPET\ntimer integration", fillcolor="#F0E68C"];
-    }
-
-    // Foundation dependencies (completed foundations)
+    // Foundation dependencies
     issue35 -> issue57 [style=dashed, color=gray];
     issue57 -> issue89 [style=dashed, color=gray];
     issue57 -> issue93 [style=dashed, color=gray];
-    issue57 -> issue104 [style=dashed, color=gray];
-    issue89 -> issue95 [style=dashed, color=gray];
-    issue89 -> issue87 [style=dashed, color=gray];
-    issue97 -> issue98 [label="#98: ARM64 port"];
+    issue89 -> issue95 [label="#95: userspace malloc", style=dashed, color=gray];
 
-    // Process management dependencies
-    issue93 -> issue94 [label="#94: signals", style=dashed, color=gray];
-    issue34 -> issue36 [style=dashed, color=gray];
-    issue34 -> issue83 [style=dashed, color=gray];
-
-    // Threading dependencies (NEW)
-    issue34 -> issue108 [color=blue, penwidth=2, label="enables", style=dashed];
-    issue36 -> issue108 [color=blue, penwidth=2, label="enables", style=dashed];
-    issue57 -> issue108 [color=blue, penwidth=2, label="enables", style=dashed];
+    // Threading dependencies
+    issue34 -> issue108 [color=blue, penwidth=2, style=dashed];
+    issue36 -> issue108 [color=blue, penwidth=2, style=dashed];
+    issue57 -> issue108 [color=blue, penwidth=2, style=dashed];
     issue108 -> issue109 [color=blue, penwidth=2];
-    issue108 -> issue113 [color=blue, penwidth=2];
     issue109 -> issue110 [color=blue, penwidth=2];
     issue109 -> issue111 [color=blue, penwidth=2];
-    issue108 -> issue112 [color=blue, penwidth=2];
-    issue109 -> issue112 [color=blue, penwidth=2];
-    issue111 -> issue112 [color=blue, penwidth=2];
-    issue88 -> issue109 [color=blue, label="TLS support"];
-    issue94 -> issue109 [color=blue, label="signal integration"];
-    issue95 -> issue110 [color=blue, label="thread-safe malloc"];
+    issue108 -> issue113 [color=blue, penwidth=2];
 
-    // Synchronization chain (some completed)
-    issue36 -> issue37 [style=dashed, color=gray];
-    issue36 -> issue39 [style=dashed, color=gray];
-    issue36 -> issue40 [style=dashed, color=gray];
-    issue40 -> issue102 [style=dashed, color=gray];
-    issue40 -> issue104 [style=dashed, color=gray];
-    issue40 -> issue105 [style=dashed, color=gray];
+    // Shell milestone dependencies
+    issue148 -> issue180 [color=green, penwidth=2];
+    issue148 -> issue185 [color=green, penwidth=2];
+    issue148 -> issue188 [color=green, penwidth=2];
+    issue148 -> issue193 [color=green, penwidth=2];
+    issue145 -> issue182 [label="#145: waitpid", color=green];
+    issue149 -> issue182 [label="#149: init", color=green];
+    issue151 -> issue181 [label="#151: tmpfs", color=green];
 
-    // File descriptor dependencies (filesystem complete)
-    issue96 -> issue102 [style=dashed, color=gray];
-    issue96 -> issue105 [style=dashed, color=gray];
-    issue96 -> issue60 [style=dashed, color=gray];
+    // Toolchain dependencies
+    issue192 -> issue193 [color=orange, penwidth=2];
+    issue148 -> issue193 [color=orange];
+    issue192 -> issue195 [color=orange];
+    issue193 -> issue195 [color=orange, penwidth=2];
+    issue192 -> issue29 [color=orange];
+    issue193 -> issue29 [color=orange];
+    issue194 -> issue29 [color=orange];
+    issue195 -> issue29 [color=orange, penwidth=2];
+
+    // Native compilation dependencies
+    issue29 -> issue190 [color=purple];
+    issue193 -> issue190 [color=purple];
+    issue102 -> issue190 [color=purple];
+    issue189 -> issue190 [color=purple];
+    issue29 -> issue191 [color=purple];
+    issue193 -> issue191 [color=purple];
+    issue189 -> issue191 [color=purple];
+
+    // Shell UX dependencies
+    issue148 -> issue197 [color=cyan];
+    issue147 -> issue197 [color=cyan];
+    issue156 -> issue199 [label="#156: history", color=cyan];
+    issue143 -> issue201 [label="#143: PS/2 mouse", color=cyan];
+    issue144 -> issue201 [label="#144: USB mouse", color=cyan];
+
+    // Process tools dependencies
+    issue103 -> issue187 [color=brown];
+
+    // Bug fix relationships
+    issue137 -> issue202 [label="#137: /dev/zero", style=dotted];
+    issue102 -> issue203 [style=dotted];
+    issue165 -> issue203 [label="#165: pipeline", style=dotted];
+
+    // File system write support
+    issue60 -> issue189 [style=dashed, color=gray];
 
     // IPC dependencies
+    issue96 -> issue102 [style=dashed, color=gray];
+    issue40 -> issue102 [style=dashed, color=gray];
     issue102 -> issue106;
+    issue103 -> issue106;
     issue104 -> issue106;
-    issue101 -> issue103;
-    issue101 -> issue106;
-    issue93 -> issue103 [style=dashed, color=gray];
     issue106 -> issue107;
 
-    // Networking chain
-    issue67 -> issue68;
-    issue68 -> issue69;
-    issue69 -> issue70;
-    issue70 -> issue71;
-    issue71 -> issue105;
-
-    // SMP dependencies
-    issue80 -> issue81;
-    issue81 -> issue82;
-    issue82 -> issue83;
-    issue83 -> issue84;
-
-    // Memory allocator dependencies
-    issue87 -> issue88;
-    issue87 -> issue90;
-    issue88 -> issue91;
-    issue89 -> issue90;
-    issue89 -> issue91;
-    issue90 -> issue91;
-    issue91 -> issue92 [label="#92: benchmarking"];
-
-    // Cross-cutting dependencies
-    issue57 -> issue58 [label="#58: VM integration", style=dashed, color=gray];
-    issue57 -> issue56 [label="#56: lazy allocation", style=dashed, color=gray];
-    issue60 -> issue54 [label="#54: shell evolution"];
-    issue71 -> issue72 [label="#72: network utils"];
-    issue72 -> issue73 [label="#73: advanced networking"];
-
-    // Hardware/driver dependencies (completed filesystem stack)
-    issue114 [label="#114: block device\nabstraction layer", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED
-    issue115 [label="#115: DMA allocation\nhelpers", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED
-    issue116 [label="#116: PCI/AHCI\ncontroller init", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED
-    issue117 [label="#117: AHCI interrupt\nservice path", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED
-    issue62 [label="#62: AHCI/ATA block\ndevice driver", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED
-    issue63 [label="#63: block cache", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED
-    issue64 [label="#64: filesystem\nlibrary (FAT32)", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED
-    issue65 [label="#65: VFS layer", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED
-    issue60 [label="#60: filesystem\nsyscalls", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED
-
-    // Completed filesystem dependencies
-    issue114 -> issue62 [style=dashed, color=gray];
-    issue115 -> issue116 [style=dashed, color=gray];
-    issue116 -> issue117 [style=dashed, color=gray];
-    issue117 -> issue62 [style=dashed, color=gray];
-    issue115 -> issue62 [style=dashed, color=gray];
-    issue62 -> issue63 [style=dashed, color=gray];
-    issue63 -> issue64 [style=dashed, color=gray];
-    issue64 -> issue65 [style=dashed, color=gray];
-    issue65 -> issue60 [style=dashed, color=gray];
-
-    // Graphics and userspace
-    issue31 [label="#31: graphics/\nframebuffer", fillcolor="#DEB887"];
-    issue32 [label="#32: input\nsubsystem", fillcolor="#DEB887"];
-    issue33 [label="#33: audio\nsubsystem", fillcolor="#DEB887"];
-
-    issue96 -> issue31 [style=dashed, color=gray];
-    issue96 -> issue32 [style=dashed, color=gray];
-    issue96 -> issue33 [style=dashed, color=gray];
-
-    // Critical path highlighting (filesystem complete, threading ready)
+    // Critical path highlighting
     edge [color=red, penwidth=3];
-    issue89 -> issue95 [label="CRITICAL", style=dashed];
-    issue96 -> issue102 [label="CRITICAL", style=dashed];
-    issue108 -> issue109 [label="THREADING CRITICAL"];
-    issue60 -> issue31 [label="GRAPHICS READY", color=purple];
+    issue192 -> issue193 [label="TOOLCHAIN\nCRITICAL"];
+    issue193 -> issue29 [label="TOOLCHAIN\nCRITICAL"];
 
     // Legend
     subgraph cluster_legend {
@@ -238,6 +206,9 @@ digraph IssueDependencies {
 
         legend_open [label="Open Issue", fillcolor="#FFE6E6"];
         legend_closed [label="Closed Issue", fillcolor="#90EE90", style="filled,dashed"];
-        legend_threading [label="New Threading", fillcolor="#B3E5FC"];
+        legend_shell [label="Shell Milestone", fillcolor="#FFE4B5"];
+        legend_toolchain [label="Toolchain", fillcolor="#FFE4B5"];
+        legend_ux [label="UX Features", fillcolor="#E0FFFF"];
+        legend_bugs [label="Bugs", fillcolor="#FFB6C1"];
     }
 }

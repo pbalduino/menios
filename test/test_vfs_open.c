@@ -79,7 +79,7 @@ static const vfs_fs_driver_t fake_driver = {
 
 void setUp(void) {
   vfs_shutdown();
-  TEST_ASSERT_TRUE(vfs_mount_root(&fake_driver, NULL));
+  TEST_ASSERT_TRUE(vfs_mount_root(&fake_driver, NULL, true));
 }
 
 void tearDown(void) {

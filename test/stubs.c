@@ -265,10 +265,47 @@ int proc_exec_image(proc_info_p proc,
 }
 
 int proc_waitpid(proc_info_p parent, int pid, int* status_out) {
-  (void)parent;
-  (void)pid;
-  (void)status_out;
-  return -ENOSYS;
+  if(parent == NULL) {
+    return -ECHILD;
+  }
+
+  proc_info_p prev = NULL;
+  proc_info_p child = parent->first_child;
+
+  while(child != NULL) {
+    proc_info_p next = child->sibling_next;
+    if(pid > 0 && (int)child->pid != pid) {
+      prev = child;
+      child = next;
+      continue;
+    }
+
+    if(child->state == PROC_STATE_ZOMBIE) {
+      if(status_out != NULL) {
+        *status_out = child->exit_code;
+      }
+      if(prev != NULL) {
+        prev->sibling_next = next;
+      } else {
+        parent->first_child = next;
+      }
+      if(parent->children_count > 0) {
+        parent->children_count--;
+      }
+      child->state = PROC_STATE_TERMINATED;
+      child->sibling_next = NULL;
+      child->parent = NULL;
+      parent->waitpid_waiting = false;
+      parent->waitpid_target = -1;
+      return (int)child->pid;
+    }
+
+    parent->waitpid_waiting = true;
+    parent->waitpid_target = (pid > 0) ? pid : -1;
+    return 0;
+  }
+
+  return -ECHILD;
 }
 
 void proc_exit(int status) {
@@ -280,4 +317,10 @@ bool proc_user_buffer_accessible(proc_info_p proc, const void* ptr, size_t lengt
   (void)ptr;
   (void)length;
   return true;
+}
+
+int proc_kill_pid(uint32_t pid, int code) {
+  (void)pid;
+  (void)code;
+  return -ENOSYS;
 }

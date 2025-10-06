@@ -7,6 +7,7 @@
 #include <kernel/file.h>
 #include <kernel/heap.h>
 #include <kernel/mutex.h>
+#include <kernel/serial.h>
 
 #define PIPE_BUFFER_SIZE 4096u
 
@@ -79,6 +80,7 @@ static int64_t pipe_read_impl(file_t* file, void* buffer, size_t length) {
         kmutex_unlock(&shared->lock);
         return (int64_t)total;
       }
+      serial_printf("pipe_read: waiting (writers=%u)\n", shared->writers);
       kcondvar_wait(&shared->readable, &shared->lock);
     }
 
@@ -153,6 +155,7 @@ static int pipe_close_impl(file_t* file) {
       shared->readers--;
     }
     if(shared->readers == 0) {
+      serial_printf("pipe_close: readers=0 writers=%u\n", shared->writers);
       kcondvar_broadcast(&shared->writable);
     }
   } else {
@@ -160,6 +163,7 @@ static int pipe_close_impl(file_t* file) {
       shared->writers--;
     }
     if(shared->writers == 0) {
+      serial_printf("pipe_close: writers=0 readers=%u\n", shared->readers);
       kcondvar_broadcast(&shared->readable);
     }
   }

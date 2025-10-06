@@ -1,5 +1,1255 @@
 [
   {
+    "title": "Bug: cat /dev/zero finishes instantly instead of running continuously",
+    "github_issue": {
+      "number": 202,
+      "url": "https://github.com/pbalduino/menios/issues/202",
+      "state": "OPEN"
+    },
+    "labels": [
+      "bug",
+      "enhancement"
+    ],
+    "assignees": [
+      "pbalduino"
+    ]
+  },
+  {
+    "title": "Implement mouse selection, copy and paste in console/terminal",
+    "github_issue": {
+      "number": 201,
+      "url": "https://github.com/pbalduino/menios/issues/201",
+      "state": "OPEN"
+    },
+    "labels": [
+      "enhancement",
+      "nice to have",
+      "mosh"
+    ],
+    "assignees": [
+      "pbalduino"
+    ]
+  },
+  {
+    "title": "Add clear screen command in mosh (Ctrl+L)",
+    "github_issue": {
+      "number": 200,
+      "url": "https://github.com/pbalduino/menios/issues/200",
+      "state": "OPEN"
+    },
+    "labels": [
+      "enhancement",
+      "mosh"
+    ],
+    "assignees": [
+      "pbalduino"
+    ]
+  },
+  {
+    "title": "Implement reverse command search in mosh (Ctrl+R)",
+    "github_issue": {
+      "number": 199,
+      "url": "https://github.com/pbalduino/menios/issues/199",
+      "state": "OPEN"
+    },
+    "labels": [
+      "enhancement",
+      "mosh"
+    ],
+    "assignees": [
+      "pbalduino"
+    ]
+  },
+  {
+    "title": "Add Emacs-style line editing shortcuts to mosh (Ctrl+A, Ctrl+E)",
+    "github_issue": {
+      "number": 198,
+      "url": "https://github.com/pbalduino/menios/issues/198",
+      "state": "OPEN"
+    },
+    "labels": [
+      "enhancement",
+      "mosh"
+    ],
+    "assignees": [
+      "pbalduino"
+    ]
+  },
+  {
+    "title": "Implement tab completion for files and directories in mosh",
+    "github_issue": {
+      "number": 197,
+      "url": "https://github.com/pbalduino/menios/issues/197",
+      "state": "OPEN"
+    },
+    "labels": [
+      "enhancement",
+      "mosh"
+    ],
+    "assignees": [
+      "pbalduino"
+    ]
+  },
+  {
+    "title": "Research: Port Fish shell to meniOS",
+    "github_issue": {
+      "number": 196,
+      "url": "https://github.com/pbalduino/menios/issues/196",
+      "state": "OPEN"
+    },
+    "labels": [
+      "enhancement",
+      "nice to have"
+    ],
+    "assignees": [
+      "pbalduino"
+    ]
+  },
+  {
+    "title": "Separate userland build system from kernel",
+    "github_issue": {
+      "number": 195,
+      "url": "https://github.com/pbalduino/menios/issues/195",
+      "state": "OPEN"
+    },
+    "labels": [
+      "enhancement"
+    ],
+    "assignees": [
+      "pbalduino"
+    ]
+  },
+  {
+    "title": "Document meniOS userland syscall ABI specification",
+    "github_issue": {
+      "number": 194,
+      "url": "https://github.com/pbalduino/menios/issues/194",
+      "state": "OPEN"
+    },
+    "labels": [
+      "documentation",
+      "enhancement"
+    ],
+    "assignees": [
+      "pbalduino"
+    ]
+  },
+  {
+    "title": "Build minimal userland libc",
+    "github_issue": {
+      "number": 193,
+      "url": "https://github.com/pbalduino/menios/issues/193",
+      "state": "OPEN"
+    },
+    "labels": [
+      "enhancement"
+    ],
+    "assignees": [
+      "pbalduino"
+    ]
+  },
+  {
+    "title": "Implement crt0 runtime startup code for userland",
+    "github_issue": {
+      "number": 192,
+      "url": "https://github.com/pbalduino/menios/issues/192",
+      "state": "OPEN"
+    },
+    "labels": [
+      "enhancement"
+    ],
+    "assignees": [
+      "pbalduino"
+    ]
+  },
+  {
+    "title": "Port binutils (as, ld) to meniOS",
+    "github_issue": {
+      "number": 191,
+      "url": "https://github.com/pbalduino/menios/issues/191",
+      "state": "OPEN"
+    },
+    "labels": [
+      "enhancement",
+      "nice to have"
+    ],
+    "assignees": [
+      "pbalduino"
+    ]
+  },
+  {
+    "title": "Port TCC (Tiny C Compiler) to meniOS",
+    "github_issue": {
+      "number": 190,
+      "url": "https://github.com/pbalduino/menios/issues/190",
+      "state": "OPEN"
+    },
+    "labels": [
+      "enhancement",
+      "nice to have"
+    ],
+    "assignees": [
+      "pbalduino"
+    ]
+  },
+  {
+    "title": "Add FAT32 write support",
+    "github_issue": {
+      "number": 189,
+      "url": "https://github.com/pbalduino/menios/issues/189",
+      "state": "OPEN"
+    },
+    "labels": [
+      "enhancement"
+    ],
+    "assignees": [
+      "pbalduino"
+    ]
+  },
+  {
+    "title": "Implement /bin/env utility",
+    "github_issue": {
+      "number": 188,
+      "url": "https://github.com/pbalduino/menios/issues/188",
+      "state": "OPEN"
+    },
+    "labels": [
+      "enhancement",
+      "mosh"
+    ],
+    "assignees": [
+      "pbalduino"
+    ]
+  },
+  {
+    "title": "Implement /bin/ps and /bin/kill utilities",
+    "github_issue": {
+      "number": 187,
+      "url": "https://github.com/pbalduino/menios/issues/187",
+      "state": "OPEN"
+    },
+    "labels": [
+      "enhancement",
+      "mosh"
+    ],
+    "assignees": [
+      "pbalduino"
+    ]
+  },
+  {
+    "title": "Add pipeline placeholder recognition (|, >, <) to shell parser",
+    "github_issue": {
+      "number": 186,
+      "url": "https://github.com/pbalduino/menios/issues/186",
+      "state": "CLOSED"
+    },
+    "labels": [
+      "enhancement",
+      "mosh"
+    ],
+    "assignees": [
+      "pbalduino"
+    ]
+  },
+  {
+    "title": "Implement PATH search order configuration for shell",
+    "github_issue": {
+      "number": 185,
+      "url": "https://github.com/pbalduino/menios/issues/185",
+      "state": "CLOSED"
+    },
+    "labels": [
+      "enhancement",
+      "mosh"
+    ],
+    "assignees": [
+      "pbalduino"
+    ]
+  },
+  {
+    "title": "Extend test_mosh_line coverage (delete, history, newline)",
+    "github_issue": {
+      "number": 184,
+      "url": "https://github.com/pbalduino/menios/issues/184",
+      "state": "CLOSED"
+    },
+    "labels": [
+      "enhancement",
+      "mosh"
+    ],
+    "assignees": [
+      "pbalduino"
+    ]
+  },
+  {
+    "title": "Implement /bin utility set (echo, cat, env, true, false)",
+    "github_issue": {
+      "number": 183,
+      "url": "https://github.com/pbalduino/menios/issues/183",
+      "state": "CLOSED"
+    },
+    "labels": [
+      "enhancement",
+      "mosh"
+    ],
+    "assignees": [
+      "pbalduino"
+    ]
+  },
+  {
+    "title": "Add waitpid regression test for init supervision loop",
+    "github_issue": {
+      "number": 182,
+      "url": "https://github.com/pbalduino/menios/issues/182",
+      "state": "CLOSED"
+    },
+    "labels": [
+      "enhancement",
+      "init",
+      "mosh"
+    ],
+    "assignees": [
+      "pbalduino"
+    ]
+  },
+  {
+    "title": "Validate tmpfs from shell (create/read files in /tmp)",
+    "github_issue": {
+      "number": 181,
+      "url": "https://github.com/pbalduino/menios/issues/181",
+      "state": "CLOSED"
+    },
+    "labels": [
+      "enhancement",
+      "mosh"
+    ],
+    "assignees": [
+      "pbalduino"
+    ]
+  },
+  {
+    "title": "Seed shell environment variables (PATH, HOME, PWD) in init",
+    "github_issue": {
+      "number": 180,
+      "url": "https://github.com/pbalduino/menios/issues/180",
+      "state": "CLOSED"
+    },
+    "labels": [
+      "enhancement",
+      "init",
+      "mosh"
+    ],
+    "assignees": [
+      "pbalduino"
+    ]
+  },
+  {
+    "title": "Investigate how to add support to turnstiles",
+    "github_issue": {
+      "number": 179,
+      "url": "https://github.com/pbalduino/menios/issues/179",
+      "state": "OPEN"
+    },
+    "labels": [
+      "enhancement"
+    ],
+    "assignees": [
+      "pbalduino"
+    ]
+  },
+  {
+    "title": "Phase 4: Multi-console support (VGA + serial)",
+    "github_issue": {
+      "number": 178,
+      "url": "https://github.com/pbalduino/menios/issues/178",
+      "state": "OPEN"
+    },
+    "labels": [
+      "enhancement",
+      "init"
+    ],
+    "assignees": [
+      "pbalduino"
+    ]
+  },
+  {
+    "title": "Phase 3: Login integration with serial TTY",
+    "github_issue": {
+      "number": 177,
+      "url": "https://github.com/pbalduino/menios/issues/177",
+      "state": "OPEN"
+    },
+    "labels": [
+      "enhancement",
+      "init",
+      "mosh"
+    ],
+    "assignees": [
+      "pbalduino"
+    ]
+  },
+  {
+    "title": "Phase 2: Getty on serial ports",
+    "github_issue": {
+      "number": 176,
+      "url": "https://github.com/pbalduino/menios/issues/176",
+      "state": "OPEN"
+    },
+    "labels": [
+      "enhancement",
+      "init"
+    ],
+    "assignees": [
+      "pbalduino"
+    ]
+  },
+  {
+    "title": "Phase 1: Init configuration for multiple TTY spawns",
+    "github_issue": {
+      "number": 175,
+      "url": "https://github.com/pbalduino/menios/issues/175",
+      "state": "OPEN"
+    },
+    "labels": [
+      "enhancement",
+      "init"
+    ],
+    "assignees": [
+      "pbalduino"
+    ]
+  },
+  {
+    "title": "BLOCKER: Blank screen at boot after serial additions",
+    "github_issue": {
+      "number": 174,
+      "url": "https://github.com/pbalduino/menios/issues/174",
+      "state": "CLOSED"
+    },
+    "labels": [
+      "bug",
+      "devfs",
+      "drivers"
+    ],
+    "assignees": [
+      "pbalduino"
+    ]
+  },
+  {
+    "title": "BLOCKER: Keyboard input broken after /dev/console implementation",
+    "github_issue": {
+      "number": 173,
+      "url": "https://github.com/pbalduino/menios/issues/173",
+      "state": "CLOSED"
+    },
+    "labels": [
+      "bug",
+      "mosh",
+      "devfs",
+      "drivers"
+    ],
+    "assignees": [
+      "pbalduino"
+    ]
+  },
+  {
+    "title": "Getty/login on serial console",
+    "github_issue": {
+      "number": 172,
+      "url": "https://github.com/pbalduino/menios/issues/172",
+      "state": "OPEN"
+    },
+    "labels": [
+      "init",
+      "mosh"
+    ],
+    "assignees": [
+      "pbalduino"
+    ]
+  },
+  {
+    "title": "Implement serial port interrupt-driven input",
+    "github_issue": {
+      "number": 171,
+      "url": "https://github.com/pbalduino/menios/issues/171",
+      "state": "OPEN"
+    },
+    "labels": [
+      "drivers"
+    ],
+    "assignees": [
+      "pbalduino"
+    ]
+  },
+  {
+    "title": "Character device infrastructure",
+    "github_issue": {
+      "number": 170,
+      "url": "https://github.com/pbalduino/menios/issues/170",
+      "state": "OPEN"
+    },
+    "labels": [
+      "drivers"
+    ],
+    "assignees": [
+      "pbalduino"
+    ]
+  },
+  {
+    "title": "TTY subsystem",
+    "github_issue": {
+      "number": 169,
+      "url": "https://github.com/pbalduino/menios/issues/169",
+      "state": "OPEN"
+    },
+    "labels": [
+      "drivers"
+    ],
+    "assignees": [
+      "pbalduino"
+    ]
+  },
+  {
+    "title": "Console/VGA driver infrastructure",
+    "github_issue": {
+      "number": 168,
+      "url": "https://github.com/pbalduino/menios/issues/168",
+      "state": "OPEN"
+    },
+    "labels": [
+      "drivers"
+    ],
+    "assignees": [
+      "pbalduino"
+    ]
+  },
+  {
+    "title": "Implement /dev/zero device",
+    "github_issue": {
+      "number": 167,
+      "url": "https://github.com/pbalduino/menios/issues/167",
+      "state": "OPEN"
+    },
+    "labels": [
+      "devfs"
+    ],
+    "assignees": [
+      "pbalduino"
+    ]
+  },
+  {
+    "title": "Hook shell I/O to virtual terminals/VGA",
+    "github_issue": {
+      "number": 166,
+      "url": "https://github.com/pbalduino/menios/issues/166",
+      "state": "OPEN"
+    },
+    "labels": [
+      "mosh"
+    ],
+    "assignees": [
+      "pbalduino"
+    ]
+  },
+  {
+    "title": "Implement pipe support for mosh shell (|)",
+    "github_issue": {
+      "number": 165,
+      "url": "https://github.com/pbalduino/menios/issues/165",
+      "state": "OPEN"
+    },
+    "labels": [
+      "enhancement",
+      "mosh"
+    ],
+    "assignees": [
+      "pbalduino"
+    ]
+  },
+  {
+    "title": "Implement basic I/O redirection for mosh shell (> and <)",
+    "github_issue": {
+      "number": 164,
+      "url": "https://github.com/pbalduino/menios/issues/164",
+      "state": "OPEN"
+    },
+    "labels": [
+      "enhancement",
+      "mosh"
+    ],
+    "assignees": [
+      "pbalduino"
+    ]
+  },
+  {
+    "title": "Implement built-in commands for mosh shell (cd/pwd/exit/export)",
+    "github_issue": {
+      "number": 163,
+      "url": "https://github.com/pbalduino/menios/issues/163",
+      "state": "CLOSED"
+    },
+    "labels": [
+      "enhancement",
+      "mosh"
+    ],
+    "assignees": [
+      "pbalduino"
+    ]
+  },
+  {
+    "title": "Implement command execution (fork/exec/wait) for mosh shell",
+    "github_issue": {
+      "number": 162,
+      "url": "https://github.com/pbalduino/menios/issues/162",
+      "state": "CLOSED"
+    },
+    "labels": [
+      "enhancement",
+      "mosh"
+    ],
+    "assignees": [
+      "pbalduino"
+    ]
+  },
+  {
+    "title": "Implement basic REPL and command parsing for mosh shell",
+    "github_issue": {
+      "number": 161,
+      "url": "https://github.com/pbalduino/menios/issues/161",
+      "state": "OPEN"
+    },
+    "labels": [
+      "enhancement",
+      "mosh"
+    ],
+    "assignees": [
+      "pbalduino"
+    ]
+  },
+  {
+    "title": "Add line editing keys to mosh shell (Ctrl+L/K/U/A/E/R/etc)",
+    "github_issue": {
+      "number": 160,
+      "url": "https://github.com/pbalduino/menios/issues/160",
+      "state": "OPEN"
+    },
+    "labels": [
+      "enhancement"
+    ],
+    "assignees": [
+      "pbalduino"
+    ]
+  },
+  {
+    "title": "Add advanced redirection to mosh shell (2>&1, here-docs, etc)",
+    "github_issue": {
+      "number": 159,
+      "url": "https://github.com/pbalduino/menios/issues/159",
+      "state": "OPEN"
+    },
+    "labels": [
+      "enhancement",
+      "nice to have"
+    ],
+    "assignees": [
+      "pbalduino"
+    ]
+  },
+  {
+    "title": "Add job control to mosh shell (bg/fg/Ctrl-Z)",
+    "github_issue": {
+      "number": 158,
+      "url": "https://github.com/pbalduino/menios/issues/158",
+      "state": "OPEN"
+    },
+    "labels": [
+      "enhancement",
+      "nice to have"
+    ],
+    "assignees": [
+      "pbalduino"
+    ]
+  },
+  {
+    "title": "Add tab completion to mosh shell",
+    "github_issue": {
+      "number": 157,
+      "url": "https://github.com/pbalduino/menios/issues/157",
+      "state": "OPEN"
+    },
+    "labels": [
+      "enhancement"
+    ],
+    "assignees": [
+      "pbalduino"
+    ]
+  },
+  {
+    "title": "Add command history to mosh shell (up/down arrows)",
+    "github_issue": {
+      "number": 156,
+      "url": "https://github.com/pbalduino/menios/issues/156",
+      "state": "OPEN"
+    },
+    "labels": [
+      "enhancement"
+    ],
+    "assignees": [
+      "pbalduino"
+    ]
+  },
+  {
+    "title": "Add scripting support to mosh shell (if/while/for/functions)",
+    "github_issue": {
+      "number": 155,
+      "url": "https://github.com/pbalduino/menios/issues/155",
+      "state": "OPEN"
+    },
+    "labels": [
+      "enhancement",
+      "nice to have"
+    ],
+    "assignees": [
+      "pbalduino"
+    ]
+  },
+  {
+    "title": "Implement ext2 filesystem support (read-only initially)",
+    "github_issue": {
+      "number": 154,
+      "url": "https://github.com/pbalduino/menios/issues/154",
+      "state": "OPEN"
+    },
+    "labels": [
+      "enhancement",
+      "nice to have"
+    ],
+    "assignees": [
+      "pbalduino"
+    ]
+  },
+  {
+    "title": "Implement procfs process information filesystem for /proc",
+    "github_issue": {
+      "number": 153,
+      "url": "https://github.com/pbalduino/menios/issues/153",
+      "state": "OPEN"
+    },
+    "labels": [
+      "enhancement"
+    ],
+    "assignees": [
+      "pbalduino"
+    ]
+  },
+  {
+    "title": "Implement devfs device filesystem for /dev hierarchy",
+    "github_issue": {
+      "number": 152,
+      "url": "https://github.com/pbalduino/menios/issues/152",
+      "state": "OPEN"
+    },
+    "labels": [
+      "enhancement"
+    ],
+    "assignees": [
+      "pbalduino"
+    ]
+  },
+  {
+    "title": "Implement tmpfs/ramfs in-memory filesystem for /tmp",
+    "github_issue": {
+      "number": 151,
+      "url": "https://github.com/pbalduino/menios/issues/151",
+      "state": "OPEN"
+    },
+    "labels": [
+      "enhancement",
+      "good first issue"
+    ],
+    "assignees": [
+      "pbalduino"
+    ]
+  },
+  {
+    "title": "Integrate init into boot sequence and update user_demo_launch",
+    "github_issue": {
+      "number": 150,
+      "url": "https://github.com/pbalduino/menios/issues/150",
+      "state": "OPEN"
+    },
+    "labels": [
+      "enhancement",
+      "init"
+    ],
+    "assignees": [
+      "pbalduino"
+    ]
+  },
+  {
+    "title": "Implement barebone init program (PID 1) for process supervision",
+    "github_issue": {
+      "number": 149,
+      "url": "https://github.com/pbalduino/menios/issues/149",
+      "state": "OPEN"
+    },
+    "labels": [
+      "enhancement",
+      "init"
+    ],
+    "assignees": [
+      "pbalduino"
+    ]
+  },
+  {
+    "title": "Implement environment variables support (getenv/setenv/environ)",
+    "github_issue": {
+      "number": 148,
+      "url": "https://github.com/pbalduino/menios/issues/148",
+      "state": "OPEN"
+    },
+    "labels": [
+      "enhancement",
+      "good first issue",
+      "init"
+    ],
+    "assignees": [
+      "pbalduino"
+    ]
+  },
+  {
+    "title": "Implement getcwd and chdir syscalls for working directory management",
+    "github_issue": {
+      "number": 147,
+      "url": "https://github.com/pbalduino/menios/issues/147",
+      "state": "OPEN"
+    },
+    "labels": [
+      "enhancement",
+      "good first issue",
+      "init"
+    ],
+    "assignees": [
+      "pbalduino"
+    ]
+  },
+  {
+    "title": "Implement zombie process state and orphan reparenting to init",
+    "github_issue": {
+      "number": 146,
+      "url": "https://github.com/pbalduino/menios/issues/146",
+      "state": "OPEN"
+    },
+    "labels": [
+      "enhancement",
+      "init"
+    ],
+    "assignees": [
+      "pbalduino"
+    ]
+  },
+  {
+    "title": "Implement wait/waitpid syscall for process synchronization",
+    "github_issue": {
+      "number": 145,
+      "url": "https://github.com/pbalduino/menios/issues/145",
+      "state": "OPEN"
+    },
+    "labels": [
+      "enhancement",
+      "good first issue",
+      "init"
+    ],
+    "assignees": [
+      "pbalduino"
+    ]
+  },
+  {
+    "title": "Implement USB mouse support through HID class driver",
+    "github_issue": {
+      "number": 144,
+      "url": "https://github.com/pbalduino/menios/issues/144",
+      "state": "OPEN"
+    },
+    "labels": [
+      "enhancement"
+    ],
+    "assignees": [
+      "pbalduino"
+    ]
+  },
+  {
+    "title": "Implement PS/2 mouse driver and input support",
+    "github_issue": {
+      "number": 143,
+      "url": "https://github.com/pbalduino/menios/issues/143",
+      "state": "OPEN"
+    },
+    "labels": [
+      "enhancement"
+    ],
+    "assignees": [
+      "pbalduino"
+    ]
+  },
+  {
+    "title": "Implement /dev/ttyS0 serial device interface",
+    "github_issue": {
+      "number": 142,
+      "url": "https://github.com/pbalduino/menios/issues/142",
+      "state": "OPEN"
+    },
+    "labels": [
+      "enhancement",
+      "devfs",
+      "drivers"
+    ],
+    "assignees": [
+      "pbalduino"
+    ]
+  },
+  {
+    "title": "Implement /dev/sda and block device interfaces for storage",
+    "github_issue": {
+      "number": 141,
+      "url": "https://github.com/pbalduino/menios/issues/141",
+      "state": "OPEN"
+    },
+    "labels": [
+      "enhancement"
+    ],
+    "assignees": [
+      "pbalduino"
+    ]
+  },
+  {
+    "title": "Implement /dev/kbd0 and /dev/fb0 hardware device interfaces",
+    "github_issue": {
+      "number": 140,
+      "url": "https://github.com/pbalduino/menios/issues/140",
+      "state": "OPEN"
+    },
+    "labels": [
+      "enhancement"
+    ],
+    "assignees": [
+      "pbalduino"
+    ]
+  },
+  {
+    "title": "Implement /dev/random and /dev/urandom entropy devices",
+    "github_issue": {
+      "number": 139,
+      "url": "https://github.com/pbalduino/menios/issues/139",
+      "state": "OPEN"
+    },
+    "labels": [
+      "enhancement"
+    ],
+    "assignees": [
+      "pbalduino"
+    ]
+  },
+  {
+    "title": "Implement /dev/console and terminal device interfaces",
+    "github_issue": {
+      "number": 138,
+      "url": "https://github.com/pbalduino/menios/issues/138",
+      "state": "OPEN"
+    },
+    "labels": [
+      "enhancement"
+    ],
+    "assignees": [
+      "pbalduino"
+    ]
+  },
+  {
+    "title": "Implement /dev/null and /dev/zero virtual devices",
+    "github_issue": {
+      "number": 137,
+      "url": "https://github.com/pbalduino/menios/issues/137",
+      "state": "OPEN"
+    },
+    "labels": [
+      "enhancement",
+      "good first issue"
+    ],
+    "assignees": [
+      "pbalduino"
+    ]
+  },
+  {
+    "title": "Implement device filesystem infrastructure and /dev directory",
+    "github_issue": {
+      "number": 136,
+      "url": "https://github.com/pbalduino/menios/issues/136",
+      "state": "OPEN"
+    },
+    "labels": [
+      "enhancement"
+    ],
+    "assignees": [
+      "pbalduino"
+    ]
+  },
+  {
+    "title": "Add code coverage reporting to unit tests with Gcov integration",
+    "github_issue": {
+      "number": 135,
+      "url": "https://github.com/pbalduino/menios/issues/135",
+      "state": "OPEN"
+    },
+    "labels": [
+      "enhancement",
+      "good first issue"
+    ],
+    "assignees": [
+      "pbalduino"
+    ]
+  },
+  {
+    "title": "Create comprehensive Unicode test suite and validation",
+    "github_issue": {
+      "number": 134,
+      "url": "https://github.com/pbalduino/menios/issues/134",
+      "state": "OPEN"
+    },
+    "labels": [
+      "enhancement",
+      "good first issue"
+    ],
+    "assignees": [
+      "pbalduino"
+    ]
+  },
+  {
+    "title": "Add locale and internationalization (i18n) framework",
+    "github_issue": {
+      "number": 133,
+      "url": "https://github.com/pbalduino/menios/issues/133",
+      "state": "OPEN"
+    },
+    "labels": [
+      "enhancement",
+      "nice to have"
+    ],
+    "assignees": [
+      "pbalduino"
+    ]
+  },
+  {
+    "title": "Update filesystem and VFS for Unicode filename support",
+    "github_issue": {
+      "number": 132,
+      "url": "https://github.com/pbalduino/menios/issues/132",
+      "state": "OPEN"
+    },
+    "labels": [
+      "enhancement"
+    ],
+    "assignees": [
+      "pbalduino"
+    ]
+  },
+  {
+    "title": "Add Unicode normalization and text processing utilities",
+    "github_issue": {
+      "number": 131,
+      "url": "https://github.com/pbalduino/menios/issues/131",
+      "state": "OPEN"
+    },
+    "labels": [
+      "enhancement",
+      "nice to have"
+    ],
+    "assignees": [
+      "pbalduino"
+    ]
+  },
+  {
+    "title": "Add Unicode support to keyboard input processing",
+    "github_issue": {
+      "number": 130,
+      "url": "https://github.com/pbalduino/menios/issues/130",
+      "state": "OPEN"
+    },
+    "labels": [
+      "enhancement"
+    ],
+    "assignees": [
+      "pbalduino"
+    ]
+  },
+  {
+    "title": "Implement Unicode text rendering in framebuffer",
+    "github_issue": {
+      "number": 129,
+      "url": "https://github.com/pbalduino/menios/issues/129",
+      "state": "OPEN"
+    },
+    "labels": [
+      "enhancement"
+    ],
+    "assignees": [
+      "pbalduino"
+    ]
+  },
+  {
+    "title": "Convert BDF fonts to Unicode-capable font system",
+    "github_issue": {
+      "number": 128,
+      "url": "https://github.com/pbalduino/menios/issues/128",
+      "state": "OPEN"
+    },
+    "labels": [
+      "enhancement"
+    ],
+    "assignees": [
+      "pbalduino"
+    ]
+  },
+  {
+    "title": "Implement UTF-8 decoding and encoding utilities",
+    "github_issue": {
+      "number": 127,
+      "url": "https://github.com/pbalduino/menios/issues/127",
+      "state": "OPEN"
+    },
+    "labels": [
+      "enhancement",
+      "good first issue"
+    ],
+    "assignees": [
+      "pbalduino"
+    ]
+  },
+  {
+    "title": "Implement USB mass storage class driver",
+    "github_issue": {
+      "number": 126,
+      "url": "https://github.com/pbalduino/menios/issues/126",
+      "state": "OPEN"
+    },
+    "labels": [
+      "enhancement"
+    ],
+    "assignees": [
+      "pbalduino"
+    ]
+  },
+  {
+    "title": "Implement USB HID class driver for keyboards and mice",
+    "github_issue": {
+      "number": 125,
+      "url": "https://github.com/pbalduino/menios/issues/125",
+      "state": "OPEN"
+    },
+    "labels": [
+      "enhancement"
+    ],
+    "assignees": [
+      "pbalduino"
+    ]
+  },
+  {
+    "title": "Implement USB hub driver and port management",
+    "github_issue": {
+      "number": 124,
+      "url": "https://github.com/pbalduino/menios/issues/124",
+      "state": "OPEN"
+    },
+    "labels": [
+      "enhancement"
+    ],
+    "assignees": [
+      "pbalduino"
+    ]
+  },
+  {
+    "title": "Implement USB transfer management and URB processing",
+    "github_issue": {
+      "number": 123,
+      "url": "https://github.com/pbalduino/menios/issues/123",
+      "state": "OPEN"
+    },
+    "labels": [
+      "enhancement"
+    ],
+    "assignees": [
+      "pbalduino"
+    ]
+  },
+  {
+    "title": "Implement USB core device management and enumeration",
+    "github_issue": {
+      "number": 122,
+      "url": "https://github.com/pbalduino/menios/issues/122",
+      "state": "OPEN"
+    },
+    "labels": [
+      "enhancement"
+    ],
+    "assignees": [
+      "pbalduino"
+    ]
+  },
+  {
+    "title": "Implement USB host controller infrastructure (xHCI/EHCI)",
+    "github_issue": {
+      "number": 121,
+      "url": "https://github.com/pbalduino/menios/issues/121",
+      "state": "OPEN"
+    },
+    "labels": [
+      "enhancement"
+    ],
+    "assignees": [
+      "pbalduino"
+    ]
+  },
+  {
+    "title": "Implement IDE interrupt handling and I/O completion",
+    "github_issue": {
+      "number": 120,
+      "url": "https://github.com/pbalduino/menios/issues/120",
+      "state": "OPEN"
+    },
+    "labels": [
+      "enhancement"
+    ],
+    "assignees": [
+      "pbalduino"
+    ]
+  },
+  {
+    "title": "Implement IDE device initialization and identification",
+    "github_issue": {
+      "number": 119,
+      "url": "https://github.com/pbalduino/menios/issues/119",
+      "state": "OPEN"
+    },
+    "labels": [
+      "enhancement"
+    ],
+    "assignees": [
+      "pbalduino"
+    ]
+  },
+  {
+    "title": "Implement IDE/PATA controller driver",
+    "github_issue": {
+      "number": 118,
+      "url": "https://github.com/pbalduino/menios/issues/118",
+      "state": "OPEN"
+    },
+    "labels": [
+      "enhancement"
+    ],
+    "assignees": [
+      "pbalduino"
+    ]
+  },
+  {
     "title": "Implement AHCI interrupt service path",
     "github_issue": {
       "number": 117,
@@ -884,20 +2134,6 @@
     ]
   },
   {
-    "title": "Audit and refresh roadmap documentation to reflect current kernel status",
-    "github_issue": {
-      "number": null,
-      "url": "",
-      "state": "OPEN"
-    },
-    "labels": [
-      "documentation"
-    ],
-    "assignees": [
-      "pbalduino"
-    ]
-  },
-  {
     "title": "Evolve mosh shell to be the default userland shell for meniOS",
     "github_issue": {
       "number": 54,
@@ -935,7 +2171,9 @@
     "labels": [
       "enhancement"
     ],
-    "assignees": []
+    "assignees": [
+      "pbalduino"
+    ]
   },
   {
     "title": "Implement SYS_EXIT (60) syscall",
@@ -947,7 +2185,9 @@
     "labels": [
       "enhancement"
     ],
-    "assignees": []
+    "assignees": [
+      "pbalduino"
+    ]
   },
   {
     "title": "Implement SYS_WRITE (1) syscall",
@@ -959,7 +2199,9 @@
     "labels": [
       "enhancement"
     ],
-    "assignees": []
+    "assignees": [
+      "pbalduino"
+    ]
   },
   {
     "title": "Implement basic syscall interface (exit and write)",
@@ -985,7 +2227,9 @@
     "labels": [
       "enhancement"
     ],
-    "assignees": []
+    "assignees": [
+      "pbalduino"
+    ]
   },
   {
     "title": "Implement Ring 0/Ring 3 transition mechanism",
@@ -997,7 +2241,9 @@
     "labels": [
       "enhancement"
     ],
-    "assignees": []
+    "assignees": [
+      "pbalduino"
+    ]
   },
   {
     "title": "Implement user/kernel memory protection",
@@ -1009,7 +2255,9 @@
     "labels": [
       "enhancement"
     ],
-    "assignees": []
+    "assignees": [
+      "pbalduino"
+    ]
   },
   {
     "title": "Implement TSS for privilege level transitions",
@@ -1021,7 +2269,9 @@
     "labels": [
       "enhancement"
     ],
-    "assignees": []
+    "assignees": [
+      "pbalduino"
+    ]
   },
   {
     "title": "Implement GDT user segments for Ring 3 support",
@@ -1033,7 +2283,9 @@
     "labels": [
       "enhancement"
     ],
-    "assignees": []
+    "assignees": [
+      "pbalduino"
+    ]
   },
   {
     "title": "Enable SMP (Symmetric Multiprocessing) support",
@@ -1059,7 +2311,9 @@
     "labels": [
       "enhancement"
     ],
-    "assignees": []
+    "assignees": [
+      "pbalduino"
+    ]
   },
   {
     "title": "Implement condition variables",
@@ -1239,7 +2493,9 @@
     "labels": [
       "enhancement"
     ],
-    "assignees": []
+    "assignees": [
+      "pbalduino"
+    ]
   },
   {
     "title": "Implement syscall ABI and dispatcher",
@@ -1251,7 +2507,9 @@
     "labels": [
       "enhancement"
     ],
-    "assignees": []
+    "assignees": [
+      "pbalduino"
+    ]
   },
   {
     "title": "Implement ELF loader for userland programs",
@@ -1263,7 +2521,9 @@
     "labels": [
       "enhancement"
     ],
-    "assignees": []
+    "assignees": [
+      "pbalduino"
+    ]
   },
   {
     "title": "Fix caret rendering to prevent character erasure",
@@ -1275,7 +2535,9 @@
     "labels": [
       "bug"
     ],
-    "assignees": []
+    "assignees": [
+      "pbalduino"
+    ]
   },
   {
     "title": "Optimize screen font definition and storage",
@@ -1331,7 +2593,9 @@
     "labels": [
       "bug"
     ],
-    "assignees": []
+    "assignees": [
+      "pbalduino"
+    ]
   },
   {
     "title": "Refine kthread termination flow",
@@ -1372,7 +2636,9 @@
     "labels": [
       "bug"
     ],
-    "assignees": []
+    "assignees": [
+      "pbalduino"
+    ]
   },
   {
     "title": "Update Limine bootloader to v10 binary release",
@@ -1426,7 +2692,9 @@
     "labels": [
       "bug"
     ],
-    "assignees": []
+    "assignees": [
+      "pbalduino"
+    ]
   },
   {
     "title": "Complete the vsprintk function and add tests",
@@ -1438,7 +2706,9 @@
     "labels": [
       "enhancement"
     ],
-    "assignees": []
+    "assignees": [
+      "pbalduino"
+    ]
   },
   {
     "title": "Add ANSI and scrolling to the console",
@@ -1464,7 +2734,9 @@
     "labels": [
       "bug"
     ],
-    "assignees": []
+    "assignees": [
+      "pbalduino"
+    ]
   },
   {
     "title": "Fix kmalloc to get memory from the virtual memory",
@@ -1490,7 +2762,9 @@
     "labels": [
       "bug"
     ],
-    "assignees": []
+    "assignees": [
+      "pbalduino"
+    ]
   },
   {
     "title": "Fix the PF handler to show the right data",
@@ -1502,7 +2776,9 @@
     "labels": [
       "bug"
     ],
-    "assignees": []
+    "assignees": [
+      "pbalduino"
+    ]
   },
   {
     "title": "Is this OS buildable, if yes, can I get build instructions?",
@@ -1517,26 +2793,5 @@
     "assignees": [
       "pbalduino"
     ]
-  },
-  {
-    "title": "Boot shell without init supervision to diagnose fork",
-    "labels": [
-      "debug"
-    ],
-    "description": "Temporarily run /bin/mosh directly as PID 1 (no fork/waitpid). Capture serial output and verify the shell behaves, giving us a baseline before re-enabling supervision."
-  },
-  {
-    "title": "Instrument minimal fork path",
-    "labels": [
-      "debug"
-    ],
-    "description": "Add fork instrumentation while supervision is disabled: quick single fork/exit to check child RAX, CR3, and waitpid behaviour.Focus on the core fork return path before reintroducing wait loops."
-  },
-  {
-    "title": "Restore init supervision and waitpid",
-    "labels": [
-      "tracking"
-    ],
-    "description": "After the fork path is corrected, re-enable init's supervise/restart loop and waitpid sleeping. Re-run the boot sequence to confirm the child still sees pid==0 and the parent sleeps correctly."
   }
 ]

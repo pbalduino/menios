@@ -87,7 +87,7 @@ void setUp(void) {
   proc_file_table_init(&proc_state);
   current = &proc_state;
   vfs_shutdown();
-  TEST_ASSERT_TRUE(vfs_mount_root(&fake_driver, NULL));
+  TEST_ASSERT_TRUE(vfs_mount_root(&fake_driver, NULL, true));
   syscall_init();
 }
 

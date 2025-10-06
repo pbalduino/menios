@@ -27,8 +27,8 @@ typedef struct vfs_fs_driver_t {
 
 bool vfs_init(void);
 void vfs_shutdown(void);
-bool vfs_mount(const char* path, const vfs_fs_driver_t* driver, void* fs_ctx);
-bool vfs_mount_root(const vfs_fs_driver_t* driver, void* fs_ctx);
+bool vfs_mount(const char* path, const vfs_fs_driver_t* driver, void* fs_ctx, bool read_only);
+bool vfs_mount_root(const vfs_fs_driver_t* driver, void* fs_ctx, bool read_only);
 bool vfs_list(const char* path, vfs_dir_iter_t iter, void* context);
 bool vfs_read(const char* path, size_t offset, void* buffer, size_t length, size_t* bytes_read);
 bool vfs_read_all(const char* path, void** out_buffer, size_t* out_size);

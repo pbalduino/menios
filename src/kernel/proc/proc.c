@@ -1235,3 +1235,36 @@ void proc_exit(int code) {
 
   scheduler_actions |= SCHED_ACTION_FORCE;
 }
+
+int proc_kill_pid(uint32_t pid, int code) {
+  proc_info_p target = NULL;
+  for(size_t i = 0; i < PROC_MAX; i++) {
+    proc_info_p proc = procs[i];
+    if(proc != NULL && proc->pid == pid) {
+      target = proc;
+      break;
+    }
+  }
+
+  if(target == NULL || target == &kernel_process_info) {
+    return -ESRCH;
+  }
+
+  if(target->state == PROC_STATE_ZOMBIE || target->state == PROC_STATE_TERMINATED) {
+    return -ESRCH;
+  }
+
+  target->exit_code = code;
+  target->state = PROC_STATE_ZOMBIE;
+  proc_info_p parent = target->parent;
+  if(parent != NULL && parent->waitpid_waiting) {
+    if(parent->waitpid_target == -1 || parent->waitpid_target == (int)target->pid) {
+      parent->waitpid_waiting = false;
+      parent->waitpid_target = -1;
+      proc_mark_ready(parent);
+    }
+  }
+
+  scheduler_actions |= SCHED_ACTION_FORCE;
+  return 0;
+}

@@ -179,7 +179,7 @@ void _start() {
 
   user_init_launch();
 
-  logk("Enabling interruptions\n");
+  logk("Enabling interrupts\n");
   enable_interrupts();
 
   serial_log("Kernel entering idle loop\n");

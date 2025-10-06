@@ -19,9 +19,10 @@
 #define O_WRONLY 0x0001
 #define O_RDWR   0x0002
 
-static char env_path[] = "PATH=/bin";
-static char env_home[] = "HOME=/";
-static char* shell_envp[] = { env_path, env_home, NULL };
+static char env_path[256] = "PATH=/bin";
+static char env_home[256] = "HOME=/";
+static char env_pwd[256] = "PWD=/";
+static char* shell_envp[] = { env_path, env_home, env_pwd, NULL };
 
 static char tty_path_console[] = "/dev/tty0";
 static char tty_path_serial[] = "/dev/ttyS0";
