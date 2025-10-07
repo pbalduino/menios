@@ -6,6 +6,7 @@ extern "C" {
 #endif
 
 #include <types.h>
+#include <sys/types.h>
 
 typedef long ssize_t;
 
@@ -20,10 +21,15 @@ int dup(int fd);
 int dup2(int oldfd, int newfd);
 int pipe(int pipefd[2]);
 off_t lseek(int fd, off_t offset, int whence);
+pid_t fork(void);
+int execve(const char* path, char* const argv[], char* const envp[]);
+void _exit(int status) __attribute__((noreturn));
 
 int brk(void *addr);
 
 void *sbrk(intptr_t increment);
+
+int open(const char* path, int flags, ...);
 
 #ifdef __cplusplus
 }

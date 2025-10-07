@@ -13,9 +13,11 @@ The foundation for all userland development. Without this, we can't build proper
 | Component | Issue | Status | Priority |
 | --- | --- | --- | --- |
 | crt0 Runtime | #192 | ⛳ TODO | Critical |
-| Minimal libc | #193 | ⛳ TODO | Critical |
+| Minimal libc | #193 | ✅ DONE | Critical |
 | Syscall ABI Docs | #194 | ⛳ TODO | High |
 | Userland Build System | #195 | ⛳ TODO | Critical |
+
+Minimal libc now provides shared memory/string primitives, a simple `mmap`-backed heap (`malloc`/`free`/`aligned_alloc`), and base stdio (`printf`/`fprintf`/`sprintf`, `puts`, `perror`).
 
 **Dependencies:**
 - #192 (crt0) - No dependencies, can start now
@@ -85,11 +87,8 @@ The **shortest path** to compiling C programs for meniOS:
    - Reference documentation
    - No dependencies
 
-3. **#193** - Build libc (3-4 weeks)
-   - Requires #192, #148
-   - Syscall wrappers
-   - String/memory functions
-   - Basic stdio
+3. **#193** - Build libc (3-4 weeks) ✅ *Completed*
+  - Syscall wrappers, string/memory primitives, and basic stdio now ship with `libmeniosc`.
 
 4. **#195** - Setup build system (1 week)
    - Requires #192, #193
@@ -134,10 +133,10 @@ Test native compilation workflow
 - [ ] **#194** - Document all syscalls and ABI
 
 ### Week 3-6: Core Library
-- [ ] **#193** - Implement syscall wrappers
-- [ ] **#193** - Implement string functions
-- [ ] **#193** - Implement malloc/free
-- [ ] **#193** - Implement printf family
+- [x] **#193** - Implement syscall wrappers
+- [x] **#193** - Implement string functions
+- [x] **#193** - Implement malloc/free
+- [x] **#193** - Implement printf family
 
 ### Week 7-8: Integration
 - [ ] **#195** - Create userland Makefile

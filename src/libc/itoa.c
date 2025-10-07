@@ -1,7 +1,9 @@
 #include <stdlib.h>
 #include <string.h>
 
+#ifdef MENIOS_KERNEL
 #include <kernel/serial.h>
+#endif
 
 /**
  * Converts an unsigned 32-bit integer to a string representation

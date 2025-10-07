@@ -3,27 +3,15 @@
 #include <stddef.h>
 #include <stdint.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <sys/fcntl.h>
-
-#define SYS_READ   0
-#define SYS_WRITE  1
-#define SYS_OPEN   2
-#define SYS_CLOSE   3
-#define SYS_DUP2    33
-#define SYS_SLEEP   35
-#define SYS_FORK    57
-#define SYS_EXECVE  59
-#define SYS_EXIT    60
-#define SYS_WAITPID 61
-#define SYS_LISTDIR    62
-#define SYS_PIPE       22
-#define SYS_STDIN_POLL 63
-#define SYS_PROC_KILL  64
-
-#define STDIN_FILENO   0
-#define STDOUT_FILENO  1
-#define STDERR_FILENO  2
+#include <sys/types.h>
+#include <unistd.h>
+#include <menios/syscall.h>
+#ifndef MOSH_TEST
+#include <menios/syscall_user.h>
+#endif
 
 #define WNOHANG 1
 
@@ -60,6 +48,8 @@ static void write_bytes(int fd, const char* data, size_t length);
 static void write_char_stdout(char ch);
 static void write_str(int fd, const char* text);
 static void exec_command(char** argv, size_t argc);
+static long  mosh_fork(void);
+static long  mosh_execve(const char* path, char* const argv[], char* const envp[]);
 
 static bool parse_command_segments(char* buffer, command_segment_t* segments, size_t* segment_count);
 static int  execute_pipeline(command_segment_t* segments, size_t segment_count);
@@ -72,6 +62,7 @@ static char* str_find_substring(char* haystack, const char* needle);
 #ifdef MOSH_TEST
 long mosh_test_syscall0(long number);
 long mosh_test_syscall1(long number, long arg1);
+long mosh_test_syscall2(long number, long arg1, long arg2);
 long mosh_test_syscall3(long number, long arg1, long arg2, long arg3);
 
 static inline long syscall0(long number) {
@@ -82,42 +73,28 @@ static inline long syscall1(long number, long arg1) {
   return mosh_test_syscall1(number, arg1);
 }
 
+static inline long syscall2(long number, long arg1, long arg2) {
+  return mosh_test_syscall2(number, arg1, arg2);
+}
+
 static inline long syscall3(long number, long arg1, long arg2, long arg3) {
   return mosh_test_syscall3(number, arg1, arg2, arg3);
 }
 #else
 static inline long syscall0(long number) {
-  long ret;
-  asm volatile("int $0x80" : "=a"(ret) : "a"(number) : "rcx", "r11", "memory");
-  return ret;
+  return __menios_syscall0(number);
 }
 
 static inline long syscall1(long number, long arg1) {
-  long ret;
-  asm volatile("int $0x80" : "=a"(ret) : "a"(number), "D"(arg1) : "rcx", "r11", "memory");
-  return ret;
+  return __menios_syscall1(number, arg1);
+}
+
+static inline long syscall2(long number, long arg1, long arg2) {
+  return __menios_syscall2(number, arg1, arg2);
 }
 
 static inline long syscall3(long number, long arg1, long arg2, long arg3) {
-  long ret;
-  asm volatile("int $0x80" : "=a"(ret)
-               : "a"(number), "D"(arg1), "S"(arg2), "d"(arg3)
-               : "rcx", "r11", "memory");
-  return ret;
-}
-#endif
-
-#ifdef MOSH_TEST
-long mosh_test_syscall2(long number, long arg1, long arg2);
-
-static inline long syscall2(long number, long arg1, long arg2) {
-  return mosh_test_syscall2(number, arg1, arg2);
-}
-#else
-static inline long syscall2(long number, long arg1, long arg2) {
-  long ret;
-  asm volatile("int $0x80" : "=a"(ret) : "a"(number), "D"(arg1), "S"(arg2) : "rcx", "r11", "memory");
-  return ret;
+  return __menios_syscall3(number, arg1, arg2, arg3);
 }
 #endif
 
@@ -207,43 +184,38 @@ static void env_set(const char* key, const char* value) {
 }
 
 static size_t str_len(const char* s) {
-  size_t len = 0;
-  while(s[len] != '\0') {
-    len++;
-  }
-  return len;
+  return s ? strlen(s) : 0;
 }
 
 static bool str_eq(const char* a, const char* b) {
-  while(*a && *b) {
-    if(*a++ != *b++) {
-      return false;
-    }
+  if(a == NULL || b == NULL) {
+    return a == b;
   }
-  return *a == '\0' && *b == '\0';
+  return strcmp(a, b) == 0;
 }
 
 static int str_ncmp(const char* a, const char* b, size_t length) {
-  for(size_t i = 0; i < length; i++) {
-    unsigned char ca = (unsigned char)a[i];
-    unsigned char cb = (unsigned char)b[i];
-    if(ca != cb) {
-      return (int)ca - (int)cb;
-    }
+  if(length == 0) {
+    return 0;
   }
-  return 0;
+  if(a == NULL || b == NULL) {
+    return (a == b) ? 0 : (a == NULL ? -1 : 1);
+  }
+  return strncmp(a, b, length);
 }
 
 static void str_copy(char* dest, size_t capacity, const char* src) {
   if(dest == NULL || capacity == 0) {
     return;
   }
+  if(src == NULL) {
+    dest[0] = '\0';
+    return;
+  }
   size_t idx = 0;
-  if(src != NULL) {
-    while(idx + 1 < capacity && src[idx] != '\0') {
-      dest[idx] = src[idx];
-      idx++;
-    }
+  while(idx + 1 < capacity && src[idx] != '\0') {
+    dest[idx] = src[idx];
+    idx++;
   }
   dest[idx] = '\0';
 }
@@ -474,7 +446,7 @@ static bool parse_command_segments(char* buffer, command_segment_t* segments, si
 
 static inline void close_fd_if_needed(int fd) {
   if(fd >= 0) {
-    syscall1(SYS_CLOSE, fd);
+    close(fd);
   }
 }
 
@@ -564,7 +536,7 @@ static int execute_pipeline(command_segment_t* segments, size_t segment_count) {
     int pipe_fds[2] = { -1, -1 };
     if(i + 1 < segment_count) {
       int tmp[2];
-      long rc = syscall1(SYS_PIPE, (long)tmp);
+      int rc = pipe(tmp);
       if(rc < 0) {
         write_str(STDOUT_FILENO, "mosh: failed to create pipe\n");
         close_fd_if_needed(prev_read);
@@ -577,8 +549,8 @@ static int execute_pipeline(command_segment_t* segments, size_t segment_count) {
       pipe_fds[1] = tmp[1];
     }
 
-    long pid = syscall0(SYS_FORK);
-    if(pid < 0) {
+    long fork_rc = mosh_fork();
+    if(fork_rc < 0) {
       write_str(STDOUT_FILENO, "mosh: fork failed\n");
       close_fd_if_needed(pipe_fds[0]);
       close_fd_if_needed(pipe_fds[1]);
@@ -586,46 +558,48 @@ static int execute_pipeline(command_segment_t* segments, size_t segment_count) {
       if(started > 0) {
         wait_for_children(segments, started, pids, statuses);
       }
-      return (int)pid;
+      return (int)fork_rc;
     }
+
+    pid_t pid = (pid_t)fork_rc;
 
     if(pid == 0) {
       if(segments[i].redirect_in != NULL) {
         char absolute[MOSH_MAX_PATH];
         if(!normalize_path(current_directory, segments[i].redirect_in, absolute, sizeof(absolute))) {
           write_str(STDOUT_FILENO, "mosh: invalid input path\n");
-          syscall1(SYS_EXIT, 1);
+          _exit(1);
         }
-        long fd = syscall3(SYS_OPEN, (long)absolute, O_RDONLY, 0);
+        int fd = open(absolute, O_RDONLY);
         if(fd < 0) {
           write_str(STDOUT_FILENO, "mosh: failed to open input file\n");
-          syscall1(SYS_EXIT, 1);
+          _exit(1);
         }
-        syscall2(SYS_DUP2, fd, STDIN_FILENO);
+        dup2(fd, STDIN_FILENO);
         if(fd != STDIN_FILENO) {
-          syscall1(SYS_CLOSE, fd);
+          close(fd);
         }
       } else if(prev_read >= 0) {
-        syscall2(SYS_DUP2, prev_read, STDIN_FILENO);
+        dup2(prev_read, STDIN_FILENO);
       }
 
       if(segments[i].redirect_out != NULL) {
         char absolute[MOSH_MAX_PATH];
         if(!normalize_path(current_directory, segments[i].redirect_out, absolute, sizeof(absolute))) {
           write_str(STDOUT_FILENO, "mosh: invalid redirection path\n");
-          syscall1(SYS_EXIT, 1);
+          _exit(1);
         }
-        long fd = syscall3(SYS_OPEN, (long)absolute, O_WRONLY | O_CREAT | O_TRUNC, 0644);
+        int fd = open(absolute, O_WRONLY | O_CREAT | O_TRUNC, 0644);
         if(fd < 0) {
           write_str(STDOUT_FILENO, "mosh: failed to open redirection target\n");
-          syscall1(SYS_EXIT, 1);
+          _exit(1);
         }
-        syscall2(SYS_DUP2, fd, STDOUT_FILENO);
+        dup2(fd, STDOUT_FILENO);
         if(fd != STDOUT_FILENO) {
-          syscall1(SYS_CLOSE, fd);
+          close(fd);
         }
       } else if(pipe_fds[1] >= 0) {
-        syscall2(SYS_DUP2, pipe_fds[1], STDOUT_FILENO);
+        dup2(pipe_fds[1], STDOUT_FILENO);
       }
 
       close_fd_if_needed(prev_read);
@@ -633,10 +607,10 @@ static int execute_pipeline(command_segment_t* segments, size_t segment_count) {
       close_fd_if_needed(pipe_fds[1]);
 
       exec_command(segments[i].argv, segments[i].argc);
-      syscall1(SYS_EXIT, 127);
+      _exit(127);
     }
 
-    pids[started++] = pid;
+    pids[started++] = (long)pid;
     if(prev_read >= 0) {
       close_fd_if_needed(prev_read);
     }
@@ -666,7 +640,7 @@ static void write_bytes(int fd, const char* data, size_t length) {
   if(data == NULL || length == 0) {
     return;
   }
-  syscall3(SYS_WRITE, fd, (long)data, (long)length);
+  (void)write(fd, data, length);
 }
 #endif
 
@@ -690,50 +664,68 @@ static void beep(void) {
   write_char_stdout('\a');
 }
 
-static size_t utoa(size_t value, char* out, size_t capacity) {
-  if(capacity == 0) {
+#ifdef MOSH_TEST
+static long mosh_fork(void) {
+  return syscall0(SYS_FORK);
+}
+
+static long mosh_execve(const char* path, char* const argv[], char* const envp[]) {
+  return syscall3(SYS_EXECVE, (long)path, (long)argv, (long)envp);
+}
+#else
+static long mosh_fork(void) {
+  pid_t pid = fork();
+  return (pid < 0) ? -1 : (long)pid;
+}
+
+static long mosh_execve(const char* path, char* const argv[], char* const envp[]) {
+  return (long)execve(path, argv, envp);
+}
+#endif
+
+static size_t format_unsigned_value(size_t value, char* out, size_t capacity) {
+  if(out == NULL || capacity == 0) {
     return 0;
   }
-  size_t len = 0;
+
+  char tmp[32];
+  size_t pos = 0;
   if(value == 0) {
-    out[len++] = '0';
+    tmp[pos++] = '0';
   } else {
-    while(value > 0 && len < capacity) {
-      out[len++] = (char)('0' + (value % 10));
+    while(value > 0 && pos < sizeof(tmp)) {
+      tmp[pos++] = (char)('0' + (value % 10));
       value /= 10;
     }
-    for(size_t i = 0; i < len / 2; i++) {
-      char tmp = out[i];
-      out[i] = out[len - 1 - i];
-      out[len - 1 - i] = tmp;
-    }
   }
+
+  size_t len = 0;
+  while(pos > 0 && len + 1 < capacity) {
+    out[len++] = tmp[--pos];
+  }
+  out[len] = '\0';
   return len;
 }
 
-static size_t itoa(int value, char* out, size_t capacity) {
-  if(capacity == 0) {
+static size_t format_signed_value(int value, char* out, size_t capacity) {
+  if(out == NULL || capacity == 0) {
     return 0;
   }
+
   size_t index = 0;
-  unsigned int magnitude;
+  size_t magnitude;
   if(value < 0) {
-    if(capacity == 1) {
+    if(index + 1 >= capacity) {
+      out[0] = '\0';
       return 0;
     }
     out[index++] = '-';
-    magnitude = (unsigned int)(-value);
+    magnitude = (size_t)(-(long)value);
   } else {
-    magnitude = (unsigned int)value;
+    magnitude = (size_t)value;
   }
 
-  size_t written = utoa((size_t)magnitude, &out[index], capacity - index);
-  if(written == 0 && magnitude == 0) {
-    if(index < capacity) {
-      out[index++] = '0';
-      written = 1;
-    }
-  }
+  size_t written = format_unsigned_value(magnitude, &out[index], capacity - index);
   return index + written;
 }
 
@@ -745,7 +737,10 @@ static void move_cursor_left(size_t count) {
   size_t len = 0;
   seq[len++] = '\x1b';
   seq[len++] = '[';
-  len += utoa(count, &seq[len], sizeof(seq) - len - 1);
+  if(len + 1 >= sizeof(seq)) {
+    return;
+  }
+  len += format_unsigned_value(count, &seq[len], sizeof(seq) - len - 1);
   seq[len++] = 'D';
   write_bytes(STDOUT_FILENO, seq, len);
 }
@@ -758,7 +753,10 @@ static void move_cursor_right(size_t count) {
   size_t len = 0;
   seq[len++] = '\x1b';
   seq[len++] = '[';
-  len += utoa(count, &seq[len], sizeof(seq) - len - 1);
+  if(len + 1 >= sizeof(seq)) {
+    return;
+  }
+  len += format_unsigned_value(count, &seq[len], sizeof(seq) - len - 1);
   seq[len++] = 'C';
   write_bytes(STDOUT_FILENO, seq, len);
 }
@@ -947,7 +945,7 @@ static void line_cursor_end(line_state_t* state) {
 
 static int read_stdin_char(void) {
   char ch = 0;
-  long rc = syscall3(SYS_READ, STDIN_FILENO, (long)&ch, 1);
+  long rc = read(STDIN_FILENO, &ch, 1);
   if(rc <= 0) {
     return -1;
   }
@@ -1241,7 +1239,7 @@ static bool handle_builtin(const char* line) {
 
   if(command_len == 4 && str_ncmp(command_start, "exit", 4) == 0) {
     write_str(STDOUT_FILENO, "bye\n");
-    syscall1(SYS_EXIT, 0);
+    _exit(0);
     return true; // Not reached
   }
 
@@ -1336,7 +1334,7 @@ static bool contains_slash(const char* text) {
 
 static void exec_command(char** argv, size_t argc) {
   if(argv == NULL || argc == 0 || argv[0] == NULL) {
-    syscall1(SYS_EXIT, 0);
+    _exit(0);
     return;
   }
 
@@ -1344,10 +1342,10 @@ static void exec_command(char** argv, size_t argc) {
   const char* command = argv[0];
 
   if(contains_slash(command)) {
-    long rc = syscall3(SYS_EXECVE, (long)command, (long)argv, (long)envp);
+    long rc = mosh_execve(command, argv, envp);
     if(rc < 0) {
       write_str(STDERR_FILENO, "mosh: exec failed\n");
-      syscall1(SYS_EXIT, 126);
+      _exit(126);
     }
     return;
   }
@@ -1369,7 +1367,7 @@ static void exec_command(char** argv, size_t argc) {
     bool at_end = (segment[segment_len] == '\0');
 
     if(segment_len == 0) {
-      long rc = syscall3(SYS_EXECVE, (long)command, (long)argv, (long)envp);
+      long rc = mosh_execve(command, argv, envp);
       if(rc >= 0) {
         return;
       }
@@ -1388,7 +1386,7 @@ static void exec_command(char** argv, size_t argc) {
           candidate[pos++] = command[i];
         }
         candidate[pos] = '\0';
-        long rc = syscall3(SYS_EXECVE, (long)candidate, (long)argv, (long)envp);
+        long rc = mosh_execve(candidate, argv, envp);
         if(rc >= 0) {
           return;
         }
@@ -1401,7 +1399,7 @@ static void exec_command(char** argv, size_t argc) {
     segment += segment_len + 1;
   }
 
-  syscall1(SYS_EXIT, 127);
+  _exit(127);
 }
 
 static char* ltrim(char* text) {
@@ -1489,7 +1487,7 @@ static int launch_pipeline(char* line) {
   if(status > 0 && status != 127 && status != 130) {
     static const char prefix[] = "mosh: process exited with status ";
     char buffer[32];
-    size_t len = itoa(status, buffer, sizeof(buffer));
+    size_t len = format_signed_value(status, buffer, sizeof(buffer));
     write_bytes(STDERR_FILENO, prefix, sizeof(prefix) - 1);
     if(len > 0 && len <= sizeof(buffer)) {
       write_bytes(STDERR_FILENO, buffer, len);
@@ -1548,10 +1546,13 @@ static void shell_loop(void) {
 }
 
 #ifndef MOSH_TEST
-void _start(uint64_t argc, char** argv, char** envp) {
+int main(int argc, char** argv, char** envp) {
   (void)argc;
   (void)argv;
   process_envp = envp;
+  if(process_envp == NULL) {
+    process_envp = fallback_envp;
+  }
   str_copy(current_directory, sizeof(current_directory), "/");
   const char* initial_pwd = env_get("PWD");
   if(initial_pwd != NULL && initial_pwd[0] != '\0') {
@@ -1562,7 +1563,7 @@ void _start(uint64_t argc, char** argv, char** envp) {
   env_set("PWD", current_directory);
   history_reset();
   shell_loop();
-  syscall1(SYS_EXIT, 0);
+  return 0;
 }
 #endif
 #define O_RDONLY 0x0000

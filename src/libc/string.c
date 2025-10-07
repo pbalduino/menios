@@ -1,4 +1,5 @@
 #include <assert.h>
+#include <stdint.h>
 #include <string.h>
 #include <types.h>
 
@@ -219,3 +220,117 @@ char*	strncpy(char *dst, const char *src, size_t size) {
 typedef __attribute__((__may_alias__)) size_t WT;
 #define WS (sizeof(WT))
 #endif
+
+void* memset(void* dest, int value, size_t count) {
+  unsigned char* d = (unsigned char*)dest;
+  unsigned char byte = (unsigned char)value;
+
+#ifdef __GNUC__
+  WT pattern = 0;
+  if(count >= WS) {
+    for(size_t i = 0; i < WS; i++) {
+      pattern <<= 8;
+      pattern |= (WT)byte;
+    }
+
+    while(((uintptr_t)d & (WS - 1)) != 0 && count > 0) {
+      *d++ = byte;
+      count--;
+    }
+
+    WT* dw = (WT*)d;
+    while(count >= WS) {
+      *dw++ = pattern;
+      count -= WS;
+    }
+    d = (unsigned char*)dw;
+  }
+#endif
+
+  while(count-- > 0) {
+    *d++ = byte;
+  }
+
+  return dest;
+}
+
+void* memcpy(void* dest, const void* src, size_t count) {
+  unsigned char* d = (unsigned char*)dest;
+  const unsigned char* s = (const unsigned char*)src;
+
+#ifdef __GNUC__
+  if(count >= WS) {
+    while(((uintptr_t)d & (WS - 1)) != 0 && count > 0) {
+      *d++ = *s++;
+      count--;
+    }
+
+    if(((uintptr_t)s & (WS - 1)) == 0) {
+      WT* dw = (WT*)d;
+      const WT* sw = (const WT*)s;
+      while(count >= WS) {
+        *dw++ = *sw++;
+        count -= WS;
+      }
+      d = (unsigned char*)dw;
+      s = (const unsigned char*)sw;
+    }
+  }
+#endif
+
+  while(count-- > 0) {
+    *d++ = *s++;
+  }
+
+  return dest;
+}
+
+void* memmove(void* dest, const void* src, size_t count) {
+  unsigned char* d = (unsigned char*)dest;
+  const unsigned char* s = (const unsigned char*)src;
+
+  if(d == s || count == 0) {
+    return dest;
+  }
+
+  if(d < s) {
+    return memcpy(dest, src, count);
+  }
+
+  d += count;
+  s += count;
+  while(count-- > 0) {
+    *--d = *--s;
+  }
+
+  return dest;
+}
+
+int memcmp(const void* lhs, const void* rhs, size_t count) {
+  const unsigned char* a = (const unsigned char*)lhs;
+  const unsigned char* b = (const unsigned char*)rhs;
+
+  while(count-- > 0) {
+    if(*a != *b) {
+      return (int)(*a - *b);
+    }
+    a++;
+    b++;
+  }
+
+  return 0;
+}
+
+void* memchr(const void* ptr, int value, size_t count) {
+  const unsigned char* p = (const unsigned char*)ptr;
+  unsigned char target = (unsigned char)value;
+
+  while(count-- > 0) {
+    if(*p == target) {
+      return (void*)p;
+    }
+    p++;
+  }
+
+  return NULL;
+}

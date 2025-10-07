@@ -30,6 +30,7 @@
 
 proc_info_p current;
 proc_info_t kernel_process_info;
+proc_info_p procs[PROC_MAX] = { &kernel_process_info };
 
 void disable_interrupts() {}
 

@@ -96,4 +96,9 @@ typedef unsigned long long int uintmax_t;
 #define INTMAX_MAX INT64_MAX
 #define UINTMAX_MAX UINT64_MAX
 
+#ifndef SIZE_MAX
+#include <stddef.h>
+#define SIZE_MAX ((size_t)-1)
+#endif
+
 #endif /* _STDINT_H */

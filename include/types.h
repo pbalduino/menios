@@ -9,7 +9,7 @@ extern "C" {
 #include <stdint.h>
 #include <stdbool.h>
 
-typedef long long off_t;
+typedef long off_t;
 
 #define ROUNDDOWN(a, n)						\
 ({								\

@@ -9,6 +9,7 @@
 #include <kernel/vfs.h>
 #include <sys/fcntl.h>
 #include <string.h>
+#include <stdlib.h>
 
 #define SYSCALL_MAX 256
 
@@ -33,6 +34,7 @@ static uint64_t syscall_waitpid_handler(syscall_frame_t* frame);
 static uint64_t syscall_listdir_handler(syscall_frame_t* frame);
 static uint64_t syscall_stdin_poll_handler(syscall_frame_t* frame);
 static uint64_t syscall_proc_kill_handler(syscall_frame_t* frame);
+static uint64_t syscall_proc_list_handler(syscall_frame_t* frame);
 
 static syscall_handler_t syscall_table[SYSCALL_MAX];
 
@@ -297,6 +299,7 @@ void syscall_init(void) {
   syscall_register(SYS_LISTDIR, syscall_listdir_handler);
   syscall_register(SYS_STDIN_POLL, syscall_stdin_poll_handler);
   syscall_register(SYS_PROC_KILL, syscall_proc_kill_handler);
+  syscall_register(SYS_PROC_LIST, syscall_proc_list_handler);
   syscall_register(SYS_YIELD, syscall_yield_handler);
   syscall_register(SYS_SLEEP, syscall_sleep_handler);
   syscall_register(SYS_EXIT, syscall_exit_handler);
@@ -803,6 +806,110 @@ static uint64_t syscall_listdir_handler(syscall_frame_t* frame) {
   }
 
   frame->rax = ctx.length;
+  return frame->rax;
+}
+
+static const char* proc_state_label(proc_state_t state) {
+  switch(state) {
+    case PROC_STATE_NEW:
+      return "new";
+    case PROC_STATE_READY:
+      return "ready";
+    case PROC_STATE_RUNNING:
+      return "running";
+    case PROC_STATE_WAITING:
+      return "waiting";
+    case PROC_STATE_SLEEPING:
+      return "sleep";
+    case PROC_STATE_ZOMBIE:
+      return "zombie";
+    case PROC_STATE_TERMINATED:
+      return "terminated";
+    default:
+      return "unknown";
+  }
+}
+
+static uint64_t syscall_proc_list_handler(syscall_frame_t* frame) {
+  if(current == NULL) {
+    frame->rax = (uint64_t)(-EINVAL);
+    return frame->rax;
+  }
+
+  char* user_buffer = (char*)frame->rdi;
+  size_t capacity = (size_t)frame->rsi;
+
+  if(user_buffer == NULL || capacity == 0) {
+    frame->rax = (uint64_t)(-EINVAL);
+    return frame->rax;
+  }
+
+  char output[(PROC_MAX * 64) + 32];
+  size_t out_len = 0;
+
+  const char header[] = "PID STATE NAME\n";
+  size_t header_len = strlen(header);
+  if(header_len >= sizeof(output)) {
+    frame->rax = (uint64_t)(-ENOSPC);
+    return frame->rax;
+  }
+  memcpy(output + out_len, header, header_len);
+  out_len += header_len;
+
+  for(size_t i = 0; i < PROC_MAX; i++) {
+    proc_info_p proc = procs[i];
+    if(proc == NULL) {
+      continue;
+    }
+
+    if(proc->state == PROC_STATE_TERMINATED) {
+      continue;
+    }
+
+    const char* state = proc_state_label(proc->state);
+    const char* name = proc->name[0] != '\0' ? proc->name : "(unnamed)";
+
+    char pid_buf[32];
+    memset(pid_buf, 0, sizeof(pid_buf));
+    lutoa((uint64_t)proc->pid, pid_buf, 10);
+
+    size_t pid_len = strlen(pid_buf);
+    size_t state_len = strlen(state);
+    size_t name_len = strnlen(name, sizeof(proc->name));
+
+    size_t needed = pid_len + 1 + state_len + 1 + name_len + 1;
+    if(out_len + needed >= sizeof(output)) {
+      frame->rax = (uint64_t)(-ENOSPC);
+      return frame->rax;
+    }
+
+    char* dest = output + out_len;
+    memcpy(dest, pid_buf, pid_len);
+    dest += pid_len;
+    *dest++ = ' ';
+    memcpy(dest, state, state_len);
+    dest += state_len;
+    *dest++ = ' ';
+    memcpy(dest, name, name_len);
+    dest += name_len;
+    *dest++ = '\n';
+    out_len += needed;
+  }
+
+  if(out_len >= capacity) {
+    frame->rax = (uint64_t)(-ENOSPC);
+    return frame->rax;
+  }
+
+  if(!proc_user_buffer_accessible(current, user_buffer, out_len + 1)) {
+    frame->rax = (uint64_t)(-EFAULT);
+    return frame->rax;
+  }
+
+  memcpy(user_buffer, output, out_len);
+  user_buffer[out_len] = '\0';
+
+  frame->rax = out_len;
   return frame->rax;
 }
 

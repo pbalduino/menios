@@ -116,7 +116,7 @@ Expect the log to show the `[user_demo]` messages on screen and in `com1.log`, c
 
 #### **Critical Path: Toolchain (Issues #29, #192-#195)**
 - [ ] **#192**: crt0 runtime startup code (ready to start!)
-- [ ] **#193**: Minimal userland libc (syscalls, strings, memory, stdio)
+- [x] **#193**: Minimal userland libc (syscalls, strings, memory, stdio)
 - [ ] **#194**: Syscall ABI documentation (ready to start!)
 - [ ] **#195**: Userland build system
 - [ ] **#29**: Cross-compiler toolchain integration

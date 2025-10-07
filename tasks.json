@@ -1,5 +1,36 @@
 [
   {
+    "title": "Implement || (OR) operator for mosh shell",
+    "github_issue": {
+      "number": 204,
+      "url": "https://github.com/pbalduino/menios/issues/204",
+      "state": "OPEN"
+    },
+    "labels": [
+      "enhancement",
+      "mosh"
+    ],
+    "assignees": [
+      "pbalduino"
+    ]
+  },
+  {
+    "title": "Bug: echo hi | cat hangs and shows garbled output on Ctrl+C",
+    "github_issue": {
+      "number": 203,
+      "url": "https://github.com/pbalduino/menios/issues/203",
+      "state": "OPEN"
+    },
+    "labels": [
+      "bug",
+      "enhancement",
+      "mosh"
+    ],
+    "assignees": [
+      "pbalduino"
+    ]
+  },
+  {
     "title": "Bug: cat /dev/zero finishes instantly instead of running continuously",
     "github_issue": {
       "number": 202,
@@ -139,7 +170,7 @@
     "github_issue": {
       "number": 193,
       "url": "https://github.com/pbalduino/menios/issues/193",
-      "state": "OPEN"
+      "state": "CLOSED"
     },
     "labels": [
       "enhancement"

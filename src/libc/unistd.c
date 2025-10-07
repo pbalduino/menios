@@ -1,5 +1,6 @@
 #ifndef MENIOS_KERNEL
-#include <kernel/syscall.h>
+#include <menios/syscall.h>
+#include <menios/syscall_user.h>
 #include <stddef.h>
 #include <stdint.h>
 #include <sys/errno.h>
@@ -137,6 +138,40 @@ off_t lseek(int fd, off_t offset, int whence) {
 
   errno = 0;
   return (off_t)rax;
+}
+
+pid_t fork(void) {
+  long rc = __menios_syscall0(SYS_FORK);
+  if(rc < 0) {
+    errno = (int)(-rc);
+    return (pid_t)-1;
+  }
+
+  errno = 0;
+  return (pid_t)rc;
+}
+
+int execve(const char* path, char* const argv[], char* const envp[]) {
+  long rc = __menios_syscall3(SYS_EXECVE, (long)path, (long)argv, (long)envp);
+  if(rc < 0) {
+    errno = (int)(-rc);
+    return -1;
+  }
+
+  errno = 0;
+  return (int)rc;
+}
+
+int brk(void* addr) {
+  (void)addr;
+  errno = ENOSYS;
+  return -1;
+}
+
+void* sbrk(intptr_t increment) {
+  (void)increment;
+  errno = ENOSYS;
+  return (void*)-1;
 }
 
 #endif

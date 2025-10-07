@@ -6,27 +6,7 @@ extern "C" {
 #endif
 
 #include <types.h>
-
-#define SYS_READ    0
-#define SYS_WRITE   1
-#define SYS_OPEN    2
-#define SYS_CLOSE   3
-#define SYS_LSEEK   8
-#define SYS_MMAP    9
-#define SYS_MUNMAP 11
-#define SYS_PIPE   22
-#define SYS_YIELD  24
-#define SYS_SLEEP  35
-#define SYS_DUP    32
-#define SYS_DUP2   33
-#define SYS_FORK   57
-#define SYS_EXECVE 59
-#define SYS_EXIT   60
-#define SYS_WAITPID 61
-#define SYS_LISTDIR    62
-#define SYS_STDIN_POLL 63
-#define SYS_PROC_KILL  64
-#define SYS_FCNTL      72
+#include <menios/syscall.h>
 
 typedef struct syscall_frame_t {
   uint64_t r15;

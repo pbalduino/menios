@@ -1,0 +1,9 @@
+#ifndef MENIOS_INCLUDE_STDIO_CONSTANTS_H
+#define MENIOS_INCLUDE_STDIO_CONSTANTS_H
+
+#define EOF (-1)
+#define STDIN_FILENO 0
+#define STDOUT_FILENO 1
+#define STDERR_FILENO 2
+
+#endif

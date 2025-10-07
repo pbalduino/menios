@@ -211,8 +211,7 @@ These issues form the backbone of the system and should be prioritized:
 - **#200 (Ctrl+L)** - Start immediately!
 
 ### ⏳ Blocked, Waiting On:
-- **#193 (libc)** blocks on: #192, #148
-- **#195 (build)** blocks on: #192, #193
+- **#195 (build)** blocks on: #192 *(#193 complete)*
 - **#29 (toolchain)** blocks on: #192-#195
 - **#180 (env seed)** blocks on: #148
 - **#185 (PATH)** blocks on: #148
@@ -371,7 +370,7 @@ For contributors, issues are organized by difficulty:
 
 ### Short Term (1-3 months):
 - [ ] crt0 implemented (#192)
-- [ ] libc functional (#193)
+- [x] libc functional (#193)
 - [ ] Toolchain complete (#29)
 - [ ] Can compile simple C programs
 - [ ] /bin utilities working

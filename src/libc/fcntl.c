@@ -1,5 +1,5 @@
 #ifndef MENIOS_KERNEL
-#include <kernel/syscall.h>
+#include <menios/syscall.h>
 #include <stdarg.h>
 #include <stddef.h>
 #include <stdint.h>

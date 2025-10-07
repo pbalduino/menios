@@ -52,6 +52,7 @@ TRUE_ELF = $(OBJDIR)/usermode/true.elf
 FALSE_ELF = $(OBJDIR)/usermode/false.elf
 LS_ELF = $(OBJDIR)/usermode/ls.elf
 KILL_ELF = $(OBJDIR)/usermode/kill.elf
+PS_ELF = $(OBJDIR)/usermode/ps.elf
 
 USER_CCFLAGS = \
 	-nostdlib \
@@ -66,6 +67,35 @@ USER_CCFLAGS = \
 	-mno-red-zone \
 	-mno-sse \
 	-mno-sse2
+
+SDK_DIR        = $(BUILD_DIR)/sdk
+SDK_INCLUDE_DIR = $(SDK_DIR)/include
+SDK_LIB_DIR     = $(SDK_DIR)/lib
+SDK_BIN_DIR     = $(SDK_DIR)/bin
+SDK_OBJ_DIR     = $(SDK_DIR)/obj
+
+USERLIBC_SOURCES = \
+	user/libc/init.c \
+	user/libc/stdlib.c \
+	user/libc/stdio.c \
+	src/libc/ctype.c \
+	src/libc/errno.c \
+	src/libc/fcntl.c \
+	src/libc/itoa.c \
+	src/libc/mman.c \
+	src/libc/string.c \
+	src/libc/unistd.c
+
+CRT_SOURCES = user/crt/crt0.S
+
+USERLIBC_CFLAGS = $(USER_CCFLAGS) -Iuser/libc
+
+USERLIBC_OBJS = $(patsubst %.c,$(SDK_OBJ_DIR)/%.o,$(USERLIBC_SOURCES))
+CRT_OBJS = $(patsubst %.S,$(SDK_OBJ_DIR)/%.o,$(CRT_SOURCES))
+
+SDK_LIB = $(SDK_LIB_DIR)/libmeniosc.a
+SDK_STARTUP = $(SDK_LIB_DIR)/crt0.o
+SDK_LINKER_SCRIPT = $(SDK_LIB_DIR)/user_elf.ld
 
 -include $(OBJS:.o=.d)
 
@@ -124,6 +154,7 @@ GCC = $(GCC_DIR)/gcc
 LD = $(GCC_DIR)/ld
 NASM = $(GCC_DIR)/nasm
 OBJCOPY = $(GCC_DIR)/objcopy
+AR = $(GCC_DIR)/ar
 
 QEMU_MEMORY = size=2G,maxmem=2G
 QEMU_X86_64 = qemu-system-x86_64
@@ -214,6 +245,69 @@ else
 endif
 endif
 
+$(SDK_OBJ_DIR)/%.o: %.c
+ifeq ($(OS_NAME),linux)
+	@mkdir -p $(dir $@)
+	$(GCC) $(USERLIBC_CFLAGS) $(EXTRA_CFLAGS) -c $< -o $@
+else
+	$(DOCKER) run --rm $(DOCKER_RUN_FLAGS) $(DOCKER_ENV) --mount type=bind,source=$$(pwd),target=/mnt $(DOCKER_IMAGE) /bin/sh -c "cd /mnt && make EXTRA_CFLAGS='$(EXTRA_CFLAGS)' $@"
+endif
+
+$(SDK_OBJ_DIR)/%.o: %.S
+ifeq ($(OS_NAME),linux)
+	@mkdir -p $(dir $@)
+	$(GCC) $(USERLIBC_CFLAGS) $(EXTRA_CFLAGS) -c $< -o $@
+else
+	$(DOCKER) run --rm $(DOCKER_RUN_FLAGS) $(DOCKER_ENV) --mount type=bind,source=$$(pwd),target=/mnt $(DOCKER_IMAGE) /bin/sh -c "cd /mnt && make EXTRA_CFLAGS='$(EXTRA_CFLAGS)' $@"
+endif
+
+$(SDK_LIB): $(USERLIBC_OBJS)
+ifeq ($(OS_NAME),linux)
+	@mkdir -p $(SDK_LIB_DIR)
+	$(AR) rcs $@ $^
+else
+	$(DOCKER) run --rm $(DOCKER_RUN_FLAGS) $(DOCKER_ENV) --mount type=bind,source=$$(pwd),target=/mnt $(DOCKER_IMAGE) /bin/sh -c "cd /mnt && make EXTRA_CFLAGS='$(EXTRA_CFLAGS)' $@"
+endif
+
+$(SDK_LIB_DIR)/crt0.o: $(SDK_OBJ_DIR)/user/crt/crt0.o
+ifeq ($(OS_NAME),linux)
+	@mkdir -p $(SDK_LIB_DIR)
+	cp $< $@
+else
+	$(DOCKER) run --rm $(DOCKER_RUN_FLAGS) $(DOCKER_ENV) --mount type=bind,source=$$(pwd),target=/mnt $(DOCKER_IMAGE) /bin/sh -c "cd /mnt && make EXTRA_CFLAGS='$(EXTRA_CFLAGS)' $@"
+endif
+
+$(SDK_LINKER_SCRIPT): linker/user_elf.ld
+ifeq ($(OS_NAME),linux)
+	@mkdir -p $(SDK_LIB_DIR)
+	cp $< $@
+else
+	$(DOCKER) run --rm $(DOCKER_RUN_FLAGS) $(DOCKER_ENV) --mount type=bind,source=$$(pwd),target=/mnt $(DOCKER_IMAGE) /bin/sh -c "cd /mnt && make EXTRA_CFLAGS='$(EXTRA_CFLAGS)' $@"
+endif
+
+$(SDK_DIR)/.headers-stamp: $(shell find include -type f)
+ifeq ($(OS_NAME),linux)
+	@rm -rf $(SDK_INCLUDE_DIR)
+	@mkdir -p $(SDK_INCLUDE_DIR)
+	cp -R include/. $(SDK_INCLUDE_DIR)/
+	@touch $@
+else
+	$(DOCKER) run --rm $(DOCKER_RUN_FLAGS) $(DOCKER_ENV) --mount type=bind,source=$$(pwd),target=/mnt $(DOCKER_IMAGE) /bin/sh -c "cd /mnt && make EXTRA_CFLAGS='$(EXTRA_CFLAGS)' $@"
+endif
+
+$(SDK_DIR)/.tools-stamp: $(SDK_LIB) $(SDK_STARTUP) tools/menios-gcc.sh
+ifeq ($(OS_NAME),linux)
+	@mkdir -p $(SDK_BIN_DIR)
+	cp tools/menios-gcc.sh $(SDK_BIN_DIR)/menios-gcc
+	chmod +x $(SDK_BIN_DIR)/menios-gcc
+	@touch $@
+else
+	$(DOCKER) run --rm $(DOCKER_RUN_FLAGS) $(DOCKER_ENV) --mount type=bind,source=$$(pwd),target=/mnt $(DOCKER_IMAGE) /bin/sh -c "cd /mnt && make EXTRA_CFLAGS='$(EXTRA_CFLAGS)' $@"
+endif
+
+.PHONY: sdk
+sdk: docker $(SDK_LIB) $(SDK_STARTUP) $(SDK_LINKER_SCRIPT) $(SDK_DIR)/.headers-stamp $(SDK_DIR)/.tools-stamp
+
 %.o: %.c
 ifeq ($(OS_NAME),linux)
 	$(GCC) $(GCC_KERNEL_OPTS) -c $< -o $@
@@ -270,74 +364,74 @@ else
 	$(DOCKER) run --rm $(DOCKER_RUN_FLAGS) $(DOCKER_ENV) --mount type=bind,source=$$(pwd),target=/mnt $(DOCKER_IMAGE) /bin/sh -c "cd /mnt && make EXTRA_CFLAGS='$(EXTRA_CFLAGS)' $@"
 endif
 
-$(MOSH_ELF): app/mosh/mosh.c linker/user_elf.ld
+$(MOSH_ELF): app/mosh/mosh.c | sdk
 ifeq ($(OS_NAME),linux)
-	@mkdir -p $(OBJDIR)/usermode
-	$(GCC) $(USER_CCFLAGS) $(EXTRA_CFLAGS) -c app/mosh/mosh.c -o $(OBJDIR)/usermode/mosh.o
-	$(LD) -nostdlib -static -T linker/user_elf.ld -o $@ $(OBJDIR)/usermode/mosh.o
+	@mkdir -p $(dir $@)
+	$(SDK_BIN_DIR)/menios-gcc $(EXTRA_CFLAGS) $< -o $@
 else
 	$(DOCKER) run --rm $(DOCKER_RUN_FLAGS) $(DOCKER_ENV) --mount type=bind,source=$$(pwd),target=/mnt $(DOCKER_IMAGE) /bin/sh -c "cd /mnt && make EXTRA_CFLAGS='$(EXTRA_CFLAGS)' $@"
 endif
 
-$(ECHO_ELF): app/echo/echo.c linker/user_elf.ld
+$(ECHO_ELF): app/echo/echo.c | sdk
 ifeq ($(OS_NAME),linux)
-	@mkdir -p $(OBJDIR)/usermode
-	$(GCC) $(USER_CCFLAGS) $(EXTRA_CFLAGS) -c app/echo/echo.c -o $(OBJDIR)/usermode/echo.o
-	$(LD) -nostdlib -static -T linker/user_elf.ld -o $@ $(OBJDIR)/usermode/echo.o
+	@mkdir -p $(dir $@)
+	$(SDK_BIN_DIR)/menios-gcc $(EXTRA_CFLAGS) $< -o $@
 else
 	$(DOCKER) run --rm $(DOCKER_RUN_FLAGS) $(DOCKER_ENV) --mount type=bind,source=$$(pwd),target=/mnt $(DOCKER_IMAGE) /bin/sh -c "cd /mnt && make EXTRA_CFLAGS='$(EXTRA_CFLAGS)' $@"
 endif
 
-$(CAT_ELF): app/cat/cat.c linker/user_elf.ld
+$(CAT_ELF): app/cat/cat.c | sdk
 ifeq ($(OS_NAME),linux)
-	@mkdir -p $(OBJDIR)/usermode
-	$(GCC) $(USER_CCFLAGS) $(EXTRA_CFLAGS) -c app/cat/cat.c -o $(OBJDIR)/usermode/cat.o
-	$(LD) -nostdlib -static -T linker/user_elf.ld -o $@ $(OBJDIR)/usermode/cat.o
+	@mkdir -p $(dir $@)
+	$(SDK_BIN_DIR)/menios-gcc $(EXTRA_CFLAGS) $< -o $@
 else
 	$(DOCKER) run --rm $(DOCKER_RUN_FLAGS) $(DOCKER_ENV) --mount type=bind,source=$$(pwd),target=/mnt $(DOCKER_IMAGE) /bin/sh -c "cd /mnt && make EXTRA_CFLAGS='$(EXTRA_CFLAGS)' $@"
 endif
 
-$(ENV_ELF): app/env/env.c linker/user_elf.ld
+$(ENV_ELF): app/env/env.c | sdk
 ifeq ($(OS_NAME),linux)
-	@mkdir -p $(OBJDIR)/usermode
-	$(GCC) $(USER_CCFLAGS) $(EXTRA_CFLAGS) -c app/env/env.c -o $(OBJDIR)/usermode/env.o
-	$(LD) -nostdlib -static -T linker/user_elf.ld -o $@ $(OBJDIR)/usermode/env.o
+	@mkdir -p $(dir $@)
+	$(SDK_BIN_DIR)/menios-gcc $(EXTRA_CFLAGS) $< -o $@
 else
 	$(DOCKER) run --rm $(DOCKER_RUN_FLAGS) $(DOCKER_ENV) --mount type=bind,source=$$(pwd),target=/mnt $(DOCKER_IMAGE) /bin/sh -c "cd /mnt && make EXTRA_CFLAGS='$(EXTRA_CFLAGS)' $@"
 endif
 
-$(TRUE_ELF): app/true/true.c linker/user_elf.ld
+$(TRUE_ELF): app/true/true.c | sdk
 ifeq ($(OS_NAME),linux)
-	@mkdir -p $(OBJDIR)/usermode
-	$(GCC) $(USER_CCFLAGS) $(EXTRA_CFLAGS) -c app/true/true.c -o $(OBJDIR)/usermode/true.o
-	$(LD) -nostdlib -static -T linker/user_elf.ld -o $@ $(OBJDIR)/usermode/true.o
+	@mkdir -p $(dir $@)
+	$(SDK_BIN_DIR)/menios-gcc $(EXTRA_CFLAGS) $< -o $@
 else
 	$(DOCKER) run --rm $(DOCKER_RUN_FLAGS) $(DOCKER_ENV) --mount type=bind,source=$$(pwd),target=/mnt $(DOCKER_IMAGE) /bin/sh -c "cd /mnt && make EXTRA_CFLAGS='$(EXTRA_CFLAGS)' $@"
 endif
 
-$(FALSE_ELF): app/false/false.c linker/user_elf.ld
+$(FALSE_ELF): app/false/false.c | sdk
 ifeq ($(OS_NAME),linux)
-	@mkdir -p $(OBJDIR)/usermode
-	$(GCC) $(USER_CCFLAGS) $(EXTRA_CFLAGS) -c app/false/false.c -o $(OBJDIR)/usermode/false.o
-	$(LD) -nostdlib -static -T linker/user_elf.ld -o $@ $(OBJDIR)/usermode/false.o
+	@mkdir -p $(dir $@)
+	$(SDK_BIN_DIR)/menios-gcc $(EXTRA_CFLAGS) $< -o $@
 else
 	$(DOCKER) run --rm $(DOCKER_RUN_FLAGS) $(DOCKER_ENV) --mount type=bind,source=$$(pwd),target=/mnt $(DOCKER_IMAGE) /bin/sh -c "cd /mnt && make EXTRA_CFLAGS='$(EXTRA_CFLAGS)' $@"
 endif
 
-$(LS_ELF): app/ls/ls.c linker/user_elf.ld
+$(LS_ELF): app/ls/ls.c | sdk
 ifeq ($(OS_NAME),linux)
-	@mkdir -p $(OBJDIR)/usermode
-	$(GCC) $(USER_CCFLAGS) $(EXTRA_CFLAGS) -c app/ls/ls.c -o $(OBJDIR)/usermode/ls.o
-	$(LD) -nostdlib -static -T linker/user_elf.ld -o $@ $(OBJDIR)/usermode/ls.o
+	@mkdir -p $(dir $@)
+	$(SDK_BIN_DIR)/menios-gcc $(EXTRA_CFLAGS) $< -o $@
 else
 	$(DOCKER) run --rm $(DOCKER_RUN_FLAGS) $(DOCKER_ENV) --mount type=bind,source=$$(pwd),target=/mnt $(DOCKER_IMAGE) /bin/sh -c "cd /mnt && make EXTRA_CFLAGS='$(EXTRA_CFLAGS)' $@"
 endif
 
-$(KILL_ELF): app/kill/kill.c linker/user_elf.ld
+$(PS_ELF): app/ps/ps.c | sdk
 ifeq ($(OS_NAME),linux)
-	@mkdir -p $(OBJDIR)/usermode
-	$(GCC) $(USER_CCFLAGS) $(EXTRA_CFLAGS) -c app/kill/kill.c -o $(OBJDIR)/usermode/kill.o
-	$(LD) -nostdlib -static -T linker/user_elf.ld -o $@ $(OBJDIR)/usermode/kill.o
+	@mkdir -p $(dir $@)
+	$(SDK_BIN_DIR)/menios-gcc $(EXTRA_CFLAGS) $< -o $@
+else
+	$(DOCKER) run --rm $(DOCKER_RUN_FLAGS) $(DOCKER_ENV) --mount type=bind,source=$$(pwd),target=/mnt $(DOCKER_IMAGE) /bin/sh -c "cd /mnt && make EXTRA_CFLAGS='$(EXTRA_CFLAGS)' $@"
+endif
+
+$(KILL_ELF): app/kill/kill.c | sdk
+ifeq ($(OS_NAME),linux)
+	@mkdir -p $(dir $@)
+	$(SDK_BIN_DIR)/menios-gcc $(EXTRA_CFLAGS) $< -o $@
 else
 	$(DOCKER) run --rm $(DOCKER_RUN_FLAGS) $(DOCKER_ENV) --mount type=bind,source=$$(pwd),target=/mnt $(DOCKER_IMAGE) /bin/sh -c "cd /mnt && make EXTRA_CFLAGS='$(EXTRA_CFLAGS)' $@"
 endif
@@ -350,7 +444,7 @@ $(OBJDIR)/kernel:
 
 
 .PHONY: build
-build: docker $(OBJS) $(MOSH_ELF) $(ECHO_ELF) $(CAT_ELF) $(ENV_ELF) $(TRUE_ELF) $(FALSE_ELF) $(LS_ELF) $(KILL_ELF)
+build: sdk $(OBJS) $(MOSH_ELF) $(ECHO_ELF) $(CAT_ELF) $(ENV_ELF) $(TRUE_ELF) $(FALSE_ELF) $(LS_ELF) $(KILL_ELF) $(PS_ELF)
 ifeq ($(OS_NAME),linux)
 	@set -eux
 
@@ -382,6 +476,7 @@ ifeq ($(OS_NAME),linux)
 	cp $(FALSE_ELF) $(OUTPUT_DIR)/bin/false
 	cp $(LS_ELF) $(OUTPUT_DIR)/bin/ls
 	cp $(KILL_ELF) $(OUTPUT_DIR)/bin/kill
+	cp $(PS_ELF) $(OUTPUT_DIR)/bin/ps
 
 	$(LD) $(LDFLAGS) -o $(KERNEL) $$(find -L $(KERNEL_OBJ) -type f -name '*.o')
 
@@ -437,6 +532,7 @@ ifeq ($(OS_NAME),linux)
 	mcopy -i $(IMAGE_NAME).hdd@@2M $(OUTPUT_DIR)/bin/false ::/bin/false
 	mcopy -i $(IMAGE_NAME).hdd@@2M $(OUTPUT_DIR)/bin/ls ::/bin/ls
 	mcopy -i $(IMAGE_NAME).hdd@@2M $(OUTPUT_DIR)/bin/kill ::/bin/kill
+	mcopy -i $(IMAGE_NAME).hdd@@2M $(OUTPUT_DIR)/bin/ps ::/bin/ps
 	$(OUTPUT_DIR)/limine bios-install $(IMAGE_NAME).hdd 1
 
 	@echo Building ISO

@@ -19,7 +19,9 @@ char* lutoca(uint64_t num, char* str, int32_t base);
 void* malloc(size_t size);
 void  free(void* ptr);
 
-void *aligned_alloc( size_t alignment, size_t size );
+void *aligned_alloc(size_t alignment, size_t size);
+
+long strtol(const char* nptr, char** endptr, int base);
 
 void exit(int) __dead2;
 

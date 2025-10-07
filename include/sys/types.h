@@ -7,6 +7,7 @@ extern "C" {
 
 typedef long long int useconds_t;
 typedef long long int time_t;
+typedef long pid_t;
 
 #ifdef __cplusplus
 }

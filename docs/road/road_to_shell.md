@@ -24,7 +24,7 @@ A release that meets this milestone must satisfy all of the following:
 | Fork/Exec Runtime | ✅ Done | `fork`, `execve`, `waitpid`, descriptor cloning working |
 | Shell Prompt UX | ✅ Done | Inline caret, history navigation, prompt redraw regression tests |
 | Default Environment | ⛳ TODO | Seed `PATH`, `HOME`, `PWD`; chdir to `/` before launching shell (#180) |
-| Launchable Utilities | ✅ Done | Added `/bin/echo`, `/bin/cat`, `/bin/env`, `/bin/true`, `/bin/false`, `/bin/ls`, `/bin/kill` (#183) |
+| Launchable Utilities | ✅ Done | Added `/bin/echo`, `/bin/cat`, `/bin/env`, `/bin/true`, `/bin/false`, `/bin/ls`, `/bin/kill`, `/bin/ps` (#183/#187) |
 | Regression Coverage | 🔄 In progress | `test_mosh_line` + `test_mosh_exec` cover caret redraw and waitpid status |
 
 ## Kernel Foundations
@@ -69,8 +69,7 @@ A release that meets this milestone must satisfy all of the following:
    - Export `PATH=/bin`, `HOME=/`, `PWD=/` in init before execing the shell.
    - Add a regression test that inspects `environ` from `/bin/env` or similar.
 2. **tmpfs Validation** (#181)
-   - Run manual tests creating files in `/tmp` from the shell and reading them back.
-   - Add a host-side unit/integration test that mounts tmpfs and confirms permissions.
+   - ✅ Host-side regression (`test/test_tmpfs.c`) mounts tmpfs and verifies create/read/write through the VFS layer.
 3. **Waitpid Regression Test** (#182)
    - Extend coverage beyond unit stubs to integration tests that fork/exec a dummy program and confirm init supervision stays asleep until completion.
 4. **Line Editor Coverage** (#184)
@@ -86,7 +85,7 @@ A release that meets this milestone must satisfy all of the following:
 | History navigation | manu | 🔄 Manual only |
 | Launch external binary (`/bin/user_demo`) | manu | ✅ Manual |
 | Shell exit + respawn | manu | ✅ Manual |
-| tmpfs workflow (`cat > /tmp/foo`) | manu | ⛳ TODO |
+| tmpfs workflow (`cat > /tmp/foo`) | test/test_tmpfs.c | ✅ Covered |
 
 ## Future Enhancements (Post-Minimal Shell)
 

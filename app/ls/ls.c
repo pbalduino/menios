@@ -1,161 +1,83 @@
-#include <stdint.h>
+#include <stdbool.h>
 #include <stddef.h>
+#include <stdio.h>
+#include <string.h>
 
-#define SYS_WRITE   1
-#define SYS_LISTDIR 62
-#define SYS_EXIT    60
+#include <menios/syscall.h>
+#include <menios/syscall_user.h>
 
-#define STDOUT_FILENO 1
-#define STDERR_FILENO 2
-
-static inline long syscall1(long number, long arg1) {
-  long ret;
-  asm volatile("int $0x80" : "=a"(ret) : "a"(number), "D"(arg1) : "rcx", "r11", "memory");
-  return ret;
-}
-
-static inline long syscall3(long number, long arg1, long arg2, long arg3) {
-  long ret;
-  asm volatile("int $0x80" : "=a"(ret)
-               : "a"(number), "D"(arg1), "S"(arg2), "d"(arg3)
-               : "rcx", "r11", "memory");
-  return ret;
-}
-
-static size_t str_len(const char* s) {
-  size_t len = 0;
-  while(s[len] != '\0') {
-    len++;
-  }
-  return len;
-}
-
-static void str_copy(char* dest, size_t capacity, const char* src) {
-  if(dest == NULL || capacity == 0) {
-    return;
-  }
-  size_t idx = 0;
-  if(src != NULL) {
-    while(idx + 1 < capacity && src[idx] != '\0') {
-      dest[idx] = src[idx];
-      idx++;
-    }
-  }
-  dest[idx] = '\0';
-}
-
-static void write_str(int fd, const char* text) {
-  if(text == NULL) {
-    return;
-  }
-  size_t len = str_len(text);
-  syscall3(SYS_WRITE, fd, (long)text, (long)len);
-}
-
-static const char* get_env_value(char** envp, const char* key) {
+static const char* find_env_value(char** envp, const char* key) {
   if(envp == NULL || key == NULL) {
     return NULL;
   }
-  size_t key_len = 0;
-  while(key[key_len] != '\0') {
-    key_len++;
-  }
+  size_t key_len = strlen(key);
   for(size_t i = 0; envp[i] != NULL; i++) {
     const char* entry = envp[i];
-    size_t pos = 0;
-    while(entry[pos] != '\0' && entry[pos] != '=') {
-      pos++;
-    }
-    if(entry[pos] == '=' && pos == key_len) {
-      bool match = true;
-      for(size_t j = 0; j < key_len; j++) {
-        if(entry[j] != key[j]) {
-          match = false;
-          break;
-        }
-      }
-      if(match) {
-        return entry + key_len + 1;
-      }
+    if(strncmp(entry, key, key_len) == 0 && entry[key_len] == '=') {
+      return entry + key_len + 1;
     }
   }
   return NULL;
 }
 
-static bool normalize(const char* base, const char* path, char* out, size_t capacity) {
+static bool normalize_path(const char* base, const char* path, char* out, size_t capacity) {
   if(path != NULL && path[0] == '/') {
-    size_t idx = 0;
-    while(path[idx] != '\0' && idx + 1 < capacity) {
-      out[idx] = path[idx];
-      idx++;
+    size_t len = strlen(path);
+    if(len + 1 > capacity) {
+      return false;
     }
-    out[idx] = '\0';
-    return path[idx] == '\0';
-  }
-
-  size_t len = 0;
-  if(base == NULL || base[0] == '\0') {
-    out[len++] = '/';
-  } else {
-    while(base[len] != '\0' && len + 1 < capacity) {
-      out[len] = base[len];
-      len++;
-    }
-    if(len == 0) {
-      out[len++] = '/';
-    }
-  }
-  if(len >= capacity) {
-    out[capacity - 1] = '\0';
-    return false;
-  }
-  out[len] = '\0';
-
-  if(path == NULL || path[0] == '\0') {
+    memcpy(out, path, len + 1);
     return true;
   }
 
-  if(len > 1 && out[len - 1] != '/') {
-    if(len + 1 >= capacity) {
-      return false;
-    }
-    out[len++] = '/';
+  const char* root = (base != NULL && base[0] != '\0') ? base : "/";
+  size_t base_len = strlen(root);
+  size_t path_len = (path != NULL) ? strlen(path) : 0;
+  bool need_slash = (path_len > 0 && base_len > 0 && root[base_len - 1] != '/');
+
+  size_t total = base_len + (need_slash ? 1 : 0) + path_len;
+  if(total + 1 > capacity) {
+    return false;
   }
 
-  size_t i = 0;
-  while(path[i] != '\0' && len + 1 < capacity) {
-    out[len++] = path[i++];
+  memcpy(out, root, base_len);
+  size_t pos = base_len;
+  if(need_slash) {
+    out[pos++] = '/';
   }
-  out[len] = '\0';
-  return path[i] == '\0';
+  if(path_len > 0) {
+    memcpy(out + pos, path, path_len);
+    pos += path_len;
+  }
+  out[pos] = '\0';
+  return true;
 }
 
-void _start(uint64_t argc, char** argv, char** envp) {
-  const char* cwd = get_env_value(envp, "PWD");
+static int list_directory(const char* path) {
+  static char buffer[4096];
+  long rc = __menios_syscall3(SYS_LISTDIR, (long)path, (long)buffer, (long)sizeof(buffer) - 1);
+  if(rc < 0) {
+    fprintf(stderr, "ls: unable to list directory %s\n", path);
+    return 1;
+  }
+  buffer[rc] = '\0';
+  fputs(buffer, stdout);
+  return 0;
+}
+
+int main(int argc, char** argv, char** envp) {
+  const char* cwd = find_env_value(envp, "PWD");
   if(cwd == NULL || cwd[0] == '\0') {
     cwd = "/";
   }
 
   char path_buffer[256];
-  if(argc > 1 && argv[1] != NULL) {
-    if(!normalize(cwd, argv[1], path_buffer, sizeof(path_buffer))) {
-      write_str(STDERR_FILENO, "ls: path too long\n");
-      syscall1(SYS_EXIT, 1);
-    }
-  } else {
-    if(!normalize("/", cwd, path_buffer, sizeof(path_buffer))) {
-      str_copy(path_buffer, sizeof(path_buffer), "/");
-    }
+  const char* target = (argc > 1 && argv[1] != NULL) ? argv[1] : cwd;
+
+  if(!normalize_path(cwd, target, path_buffer, sizeof(path_buffer))) {
+    fprintf(stderr, "ls: path too long\n");
+    return 1;
   }
 
-  static char buffer[4096];
-  long rc = syscall3(SYS_LISTDIR, (long)path_buffer, (long)buffer, (long)sizeof(buffer) - 1);
-  if(rc < 0) {
-    write_str(STDERR_FILENO, "ls: unable to list directory\n");
-    syscall1(SYS_EXIT, 1);
-  }
-
-  buffer[rc] = '\0';
-  write_str(STDOUT_FILENO, buffer);
-  syscall1(SYS_EXIT, 0);
+  return list_directory(path_buffer);
 }

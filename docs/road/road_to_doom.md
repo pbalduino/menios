@@ -206,7 +206,7 @@ Basic command-line tools for shell interaction:
 
 ### Toolchain (Critical Path)
 1. **#192** – Implement crt0 runtime startup code
-2. **#193** – Build minimal userland libc (syscalls, strings, memory, stdio)
+2. **#193** – Build minimal userland libc (syscalls, strings, memory, stdio) ✅ *Completed*
 3. **#194** – Document syscall ABI specification
 4. **#195** – Separate userland build system from kernel
 5. **#29** – Complete cross-compiler toolchain integration

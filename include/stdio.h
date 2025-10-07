@@ -2,6 +2,7 @@
 #define _INCLUDE_STDIO_H_
 
 #include <stdarg.h>
+#include <stdio_constants.h>
 
 #ifndef NULL
 #define NULL ((void*)0)
