@@ -26,7 +26,10 @@
 #define MOSH_MAX_SEQUENCES   8
 
 static char** process_envp = NULL;
-static char*  fallback_envp[] = { NULL };
+static char fallback_path[] = "PATH=/bin";
+static char fallback_home[] = "HOME=/";
+static char fallback_pwd[]  = "PWD=/";
+static char*  fallback_envp[] = { fallback_path, fallback_home, fallback_pwd, NULL };
 static const char DEFAULT_PATH[] = "/bin";
 static char     current_directory[MOSH_MAX_PATH];
 static char     pending_input[128];
@@ -135,7 +138,7 @@ static const char* env_get(const char* key) {
 
 #ifdef MOSH_TEST
 void mosh_test_set_env(char** envp) {
-  process_envp = envp;
+  process_envp = (envp != NULL) ? envp : fallback_envp;
 }
 #endif
 

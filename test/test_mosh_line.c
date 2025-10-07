@@ -84,6 +84,7 @@ void setUp(void) {
 
 void tearDown(void) {}
 
+void test_default_environment_provides_path(void);
 void test_pwd_builtin_prints_path(void);
 void test_echo_builtin_emits_arguments(void);
 
@@ -155,6 +156,13 @@ void test_hide_caret_restores_character(void) {
                            "Hiding caret should rewrite underlying character");
 }
 
+void test_default_environment_provides_path(void) {
+  mosh_test_set_env(NULL);
+  TEST_ASSERT_EQUAL_STRING("/", env_get("PWD"));
+  TEST_ASSERT_EQUAL_STRING("/", env_get("HOME"));
+  TEST_ASSERT_EQUAL_STRING("/bin", env_get("PATH"));
+}
+
 int main(void) {
   UNITY_BEGIN();
 
@@ -162,6 +170,7 @@ int main(void) {
   RUN_TEST(test_delete_at_cursor_updates_buffer);
   RUN_TEST(test_history_navigation_restores_last_entry);
   RUN_TEST(test_hide_caret_restores_character);
+  RUN_TEST(test_default_environment_provides_path);
   RUN_TEST(test_pwd_builtin_prints_path);
   RUN_TEST(test_echo_builtin_emits_arguments);
 

@@ -66,8 +66,8 @@ A release that meets this milestone must satisfy all of the following:
 ## Blocking TODOs
 
 1. **Environment Seeding** (#180)
-   - Export `PATH=/bin`, `HOME=/`, `PWD=/` in init before execing the shell.
-   - Add a regression test that inspects `environ` from `/bin/env` or similar.
+   - ✅ `src/usermode/init.c` seeds `PATH=/bin`, `HOME=/`, `PWD=/` before launching mosh; fallback env in mosh mirrors the same defaults.
+   - ✅ `test/test_mosh_line.c` asserts the default environment is visible to the shell.
 2. **tmpfs Validation** (#181)
    - ✅ Host-side regression (`test/test_tmpfs.c`) mounts tmpfs and verifies create/read/write through the VFS layer.
 3. **Waitpid Regression Test** (#182)
