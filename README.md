@@ -164,11 +164,11 @@ Remaining major components for Doom:
 
 See [`road_to_doom.md`](docs/road/road_to_doom.md) for the complete roadmap and [`tasks.json`](tasks.json) for detailed task tracking.
 
-**📊 Progress Assessment**: With **38 major foundation issues completed** 🎉🎉 and ~73 open issues, meniOS is making phenomenal progress! Major recent completions include:
+**📊 Progress Assessment**: With **41 major foundation issues completed** 🎉🎉 and ~70 open issues, meniOS is making phenomenal progress! Major recent completions include:
 - ✅ **Toolchain**: crt0 (#192), libc (#193) - 2/8 complete in GCC milestone!
 - ✅ **Synchronization**: All primitives complete! (#36, #37, #39, #40) - 4/4 done!
-- ✅ **Shell Milestone**: Now tracking 30 issues comprehensively - 15/30 complete (50%)! 🎉
-- ✅ **Shell Core**: getcwd/chdir (#147) ✅, /bin/env (#188) ✅, pwd prompt (#222) ✅!
+- ✅ **Shell Milestone**: Now tracking 30 issues comprehensively - 18/30 complete (60%)! 🎉
+- ✅ **Shell UX**: History (#156) ✅, Ctrl+A/E (#198) ✅, Ctrl+L (#200) ✅, pwd prompt (#222) ✅!
 - ✅ **Threading Foundation**: Kernel threading (#108) - ready for pthread!
 - ✅ **IPC - Pipes & FIFOs**: **COMPLETE!** All 5 issues done (#102, #206-#209) - 5/5! 🎉
 - ✅ **IPC - Signals**: Delivery path working! (#103, #210-#212) - 4/6 complete! 🎉
@@ -178,12 +178,12 @@ See [`road_to_doom.md`](docs/road/road_to_doom.md) for the complete roadmap and 
 
 The critical path forward is completing the **toolchain** (#194, #195, #29), which is just 3 issues away from enabling standard C development for all userland applications!
 
-**🎯 Recent Momentum** (33 issues closed recently!):
+**🎯 Recent Momentum** (36 issues closed recently!):
 - 🛠️ **Toolchain** (2/8 in GCC milestone): crt0 ✅, libc ✅ → just need: ABI docs, build system, integration
 - 🔌 **IPC** (major progress!): Pipes & FIFOs ✅✅✅✅✅ **COMPLETE!** (#102, #206-#209), Signals #103, #210-#212 ✅ (delivery path live; Ctrl+C/advanced next), Shared Memory ✅✅✅✅✅ **COMPLETE!** (#215-#219), ioctl #220 ✅ **COMPLETE**, fast syscalls (#221)
-- 🐚 **Shell** (15/30 in Mosh milestone - 50%!): getcwd/chdir ✅, /bin/env ✅, pwd prompt ✅, core features solid!
+- 🐚 **Shell** (18/30 in Mosh milestone - 60%!): History ✅, Ctrl+A/E ✅, Ctrl+L ✅, getcwd/chdir ✅, /bin/env ✅, pwd prompt ✅!
 - 🧵 **Threading** (1/6 complete): Kernel threading ✅, pthread API ready!
-- 🎨 **UX** (Tab completion now unblocked): #197 ready to implement!
+- 🎨 **UX** (Almost done!): Only tab completion (#197), reverse search (#199), and mouse (#201) left!
 - 🐛 **Bugs** (1 remaining): Just /dev/zero EOF bug (#202)
 
 ## Architecture Overview

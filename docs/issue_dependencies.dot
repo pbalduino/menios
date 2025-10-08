@@ -72,9 +72,9 @@ digraph IssueDependencies {
         fillcolor="#F0FFFF";
 
         issue197 [label="#197: Tab\ncompletion", fillcolor="#E0FFFF"];
-        issue198 [label="#198: Ctrl+A/E\nline nav", fillcolor="#E0FFFF"];
+        issue198 [label="#198: Ctrl+A/E\nline nav", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED
         issue199 [label="#199: Ctrl+R\nreverse search", fillcolor="#E0FFFF"];
-        issue200 [label="#200: Ctrl+L\nclear screen", fillcolor="#E0FFFF"];
+        issue200 [label="#200: Ctrl+L\nclear screen", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED
         issue201 [label="#201: Mouse\nselection", fillcolor="#E0FFFF"];
         issue222 [label="#222: Current dir\nin prompt", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED
     }

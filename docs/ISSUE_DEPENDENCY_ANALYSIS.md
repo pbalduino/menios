@@ -104,10 +104,10 @@ These issues form the backbone of the system and should be prioritized:
 #147 (getcwd) ────┼──→ #222 (current dir in prompt) ✅
                   └──→ #197 (tab completion)
 
-#156 (history) ────→ #199 (Ctrl+R search)
+#156 (history) ✅ ───→ #199 (Ctrl+R search)
 
-#198 (Ctrl+A/E) - no dependencies (start now!)
-#200 (Ctrl+L) - no dependencies (start now!)
+#198 (Ctrl+A/E) ✅
+#200 (Ctrl+L) ✅
 
 #143 (PS/2 mouse) ──┐
                     ├──→ #201 (mouse selection)
@@ -299,7 +299,7 @@ These issues form the backbone of the system and should be prioritized:
 **Device Control**:
 - ✅ **#220**: ioctl syscall - COMPLETE
 
-**Shell UX**: #197-#200 (tab completion, Ctrl shortcuts) — #222 (cwd prompt) ✅
+**Shell UX**: #197-#200 (tab completion, Ctrl shortcuts) — #198 ✅, #200 ✅, #222 (cwd prompt) ✅
 
 **Timeline**: 3-5 months (tracks can run in parallel)
 
@@ -316,21 +316,19 @@ These issues form the backbone of the system and should be prioritized:
 
 ### ✅ Ready to Start NOW (No Dependencies):
 - **#194 (ABI docs)** - Start immediately! (Critical path)
-- **#198 (Ctrl+A/E)** - Start immediately!
-- **#200 (Ctrl+L)** - Start immediately!
 - **#213 (Shell Ctrl+C)** - Start immediately! (#210 ✅, #211 ✅, #212 ✅ complete!)
 - **#218 (Shared mem tests)** - Start immediately! (#217 ✅ complete!)
 
 ### ⏳ Blocked, Waiting On:
 - **#29 (toolchain)** blocks on: #194, #195
 - **#197 (tab completion)** blocks on: #147 (getcwd/chdir)
-- **#199 (Ctrl+R)** blocks on: #156 (history)
+- **#199 (Ctrl+R)** blocks on: #156 (history ✅)
 - **#201 (mouse selection)** blocks on: #143 or #144 (mouse drivers)
 - **#187 (ps/kill)** blocks on: #213 (signals)
 
 ### 🔗 Parallel Development Opportunities:
 1. **Toolchain** (#192-#195) - Critical path
-2. **Shell polish** (#183, #184, #186, #198, #200) - Parallel
+2. **Shell polish** (#183, #184, #186) - Parallel (Ctrl+A/E, Ctrl+L, history ✅)
 3. **Threading** (#108-#113) - Parallel after foundation
 4. **File system** (#189) - Parallel
 5. **Bug fixes** (#202) - Parallel
@@ -345,9 +343,7 @@ These issues form the backbone of the system and should be prioritized:
 
 **Parallel Development**:
 3. **#183** - Implement /bin utilities (C, 1-2 weeks)
-4. **#198** - Add Ctrl+A/E shortcuts (C, 1 day)
-5. **#200** - Add Ctrl+L clear screen (C, 1 day)
-6. **#184** - Extend line editor tests (C, 1 week)
+4. **#184** - Extend line editor tests (C, 1 week)
 
 ### 📅 **Next 2-4 Weeks**
 1. **#148** - Environment variables (prerequisite for many)
@@ -374,7 +370,7 @@ These issues form the backbone of the system and should be prioritized:
 - Organized into categories with clear dependencies
 - **Major completions**: #192 (crt0), #193 (libc), #148 (env vars), #180-#186 (shell milestone), #222 (cwd prompt), #37, #39 (sync primitives), #205 (I/O scheduler)
 
-### ✅ **Completed Overall** (38 foundation issues! 🚀):
+### ✅ **Completed Overall** (41 foundation issues! 🚀):
 - **Foundation memory management**: #35, #57, #89
 - **Core scheduling**: #34
 - **Synchronization (COMPLETE!)**: #36 (mutex), #37 (semaphore), #39 (rwlock), #40 (condvar)
@@ -393,12 +389,10 @@ These issues form the backbone of the system and should be prioritized:
 - **#195** - Userland build system (dependencies met: #192✅, #193✅)
 - **#188** - env utility ✅ (built-in /bin/env ships with default env dump)
 - **#197** - Tab completion (dependency met: #147✅) ✨ NOW UNBLOCKED!
-- **#198** - Ctrl+A/E shortcuts
-- **#200** - Ctrl+L clear screen
 - **#213** - Shell Ctrl+C (dependencies met: #210✅, #211✅, #212✅)
 - **#221** - Fast syscall instruction
 
-### 📋 **Total Open Issues**: ~73 issues (estimated)
+### 📋 **Total Open Issues**: ~70 issues (estimated)
 - **IPC**: 5 remaining (#105-#107, #213-#214, #221)
   - Pipes: ✅ COMPLETE! (#102 + #206-#209 = 5/5) 🎉
   - Signals: 2 remaining (#213-#214) - 4/6 complete! (#103, #210-#212) ✅✅✅✅
@@ -409,12 +403,12 @@ These issues form the backbone of the system and should be prioritized:
   - ioctl: ✅ COMPLETE! (1/1) 🎉
   - Fast syscalls: 1 (#221)
 - **Shell & utilities**: 1 remaining (#187) - now part of 30-issue Mosh milestone
-- **Shell UX**: 4 (#156, #197-#200) - #197 now unblocked; #222 ✅ completed!
+- **Shell UX**: 2 (#197, #199, #201) - history (#156) ✅, Ctrl+A/E (#198) ✅, Ctrl+L (#200) ✅, pwd prompt (#222) ✅
 - **Toolchain**: 4 remaining (#29, #194-#196) - 2/8 complete! ✅✅ (GCC milestone)
 - **Threading**: 5 remaining (#109-#113) - 1/6 complete! ✅
 - **Memory**: 1 (#95 userspace malloc)
 - **Bug fixes**: 1 (#202)
-- **Completed recently**: 33 issues (#192, #193, #148, #180-#188, #37, #39, #205, #108, #206-#212, #215-#220, #147, #102, #103, #165, #203, #222)
+- **Completed recently**: 36 issues (#192, #193, #148, #180-#188, #37, #39, #205, #108, #206-#212, #215-#220, #147, #102, #103, #165, #198, #200, #203, #222, #156)
 - **Closed duplicates**: #157, #165
 - **Previous existing**: ~64 issues
 
@@ -448,7 +442,7 @@ Week 13+:     Applications can be developed!
 
 **Track B - Shell Polish (Medium)**:
 ```
-#183, #184, #186, #198, #200 (now)
+#183, #184, #186 (now) — #198 ✅, #200 ✅
 ↓
 #148 → #180, #185, #188 (after env vars) ✅
 ```
@@ -479,8 +473,8 @@ Week 13+:     Applications can be developed!
 For contributors, issues are organized by difficulty:
 
 ### Beginner-Friendly:
-- #198 (Ctrl+A/E) - Simple keyboard shortcuts
-- #200 (Ctrl+L) - Clear screen command
+- ✅ #198 (Ctrl+A/E) - Simple keyboard shortcuts
+- ✅ #200 (Ctrl+L) - Clear screen command
 - #184 (line editor tests) - Writing tests
 
 ### Intermediate:

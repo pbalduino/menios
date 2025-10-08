@@ -225,7 +225,7 @@
     "github_issue": {
       "number": 200,
       "url": "https://github.com/pbalduino/menios/issues/200",
-      "state": "OPEN"
+      "state": "CLOSED"
     },
     "labels": [
       "enhancement",
@@ -233,7 +233,8 @@
     ],
     "assignees": [
       "pbalduino"
-    ]
+    ],
+    "notes": "Ctrl+L now emits clear screen escape and redraws prompt"
   },
   {
     "title": "Implement reverse command search in mosh (Ctrl+R)",
@@ -255,7 +256,7 @@
     "github_issue": {
       "number": 198,
       "url": "https://github.com/pbalduino/menios/issues/198",
-      "state": "OPEN"
+      "state": "CLOSED"
     },
     "labels": [
       "enhancement",
@@ -263,7 +264,8 @@
     ],
     "assignees": [
       "pbalduino"
-    ]
+    ],
+    "notes": "Added Ctrl+A and Ctrl+E bindings to jump to line start/end"
   },
   {
     "title": "Implement tab completion for files and directories in mosh",
@@ -667,14 +669,15 @@
     "github_issue": {
       "number": 156,
       "url": "https://github.com/pbalduino/menios/issues/156",
-      "state": "OPEN"
+      "state": "CLOSED"
     },
     "labels": [
       "enhancement"
     ],
     "assignees": [
       "pbalduino"
-    ]
+    ],
+    "notes": "History cursor now persists; up/down arrows recall entries across prompts"
   },
   {
     "title": "Add scripting support to mosh shell (if/while/for/functions)",

@@ -38,6 +38,12 @@ void mosh_test_write_bytes(int fd, const char* data, size_t length) {
 
 #include "../app/mosh/mosh.c"
 
+static void feed_input(const char* data, size_t length) {
+  memcpy(pending_input, data, length);
+  pending_length = length;
+  pending_offset = 0;
+}
+
 long mosh_test_syscall0(long number) {
   (void)number;
   return 0;
@@ -88,6 +94,11 @@ void test_default_environment_provides_path(void);
 void test_pwd_builtin_prints_path(void);
 void test_echo_builtin_emits_arguments(void);
 void test_env_set_expands_allocation(void);
+void test_ctrl_a_moves_cursor_to_start(void);
+void test_ctrl_e_moves_cursor_to_end(void);
+void test_ctrl_l_clears_screen(void);
+void test_history_arrow_recalls_last_entry(void);
+void test_history_cursor_resets_between_reads(void);
 
 void test_backspace_redraws_with_carriage_return(void) {
   line_state_t state;
@@ -175,6 +186,11 @@ int main(void) {
   RUN_TEST(test_pwd_builtin_prints_path);
   RUN_TEST(test_echo_builtin_emits_arguments);
   RUN_TEST(test_env_set_expands_allocation);
+  RUN_TEST(test_ctrl_a_moves_cursor_to_start);
+  RUN_TEST(test_ctrl_e_moves_cursor_to_end);
+  RUN_TEST(test_ctrl_l_clears_screen);
+  RUN_TEST(test_history_arrow_recalls_last_entry);
+  RUN_TEST(test_history_cursor_resets_between_reads);
 
   return UNITY_END();
 }
@@ -211,4 +227,72 @@ void test_env_set_expands_allocation(void) {
   TEST_ASSERT_NOT_NULL(after);
   TEST_ASSERT_EQUAL_STRING("/system/path", after);
   TEST_ASSERT_NOT_EQUAL(before, after);
+}
+
+void test_ctrl_a_moves_cursor_to_start(void) {
+  reset_capture();
+  history_reset();
+  const char sequence[] = { 'a', 'b', 0x01, 'z', '\n' };
+  feed_input(sequence, sizeof(sequence));
+  char buffer[32];
+  size_t len = read_line(MOSH_PROMPT, buffer, sizeof(buffer));
+  TEST_ASSERT_EQUAL_UINT64(3, len);
+  TEST_ASSERT_EQUAL_STRING("zab", buffer);
+}
+
+void test_ctrl_e_moves_cursor_to_end(void) {
+  reset_capture();
+  history_reset();
+  const char sequence[] = { 'a', 'b', 0x01, 0x05, 'x', '\n' };
+  feed_input(sequence, sizeof(sequence));
+  char buffer[32];
+  size_t len = read_line(MOSH_PROMPT, buffer, sizeof(buffer));
+  TEST_ASSERT_EQUAL_UINT64(3, len);
+  TEST_ASSERT_EQUAL_STRING("abx", buffer);
+}
+
+void test_ctrl_l_clears_screen(void) {
+  reset_capture();
+  history_reset();
+  const char sequence[] = { 'a', 'b', 0x0c, '\n' };
+  feed_input(sequence, sizeof(sequence));
+  char buffer[32];
+  size_t len = read_line(MOSH_PROMPT, buffer, sizeof(buffer));
+  TEST_ASSERT_EQUAL_UINT64(2, len);
+  TEST_ASSERT_EQUAL_STRING("ab", buffer);
+  TEST_ASSERT_TRUE_MESSAGE(capture_contains("\x1b[2J\x1b[H"),
+                           "Ctrl+L should emit clear-screen sequence");
+}
+
+void test_history_arrow_recalls_last_entry(void) {
+  reset_capture();
+  history_reset();
+  history_add("ls");
+  history_add("echo hi");
+  const char sequence[] = { '\x1b', '[', 'A', '\n' };
+  feed_input(sequence, sizeof(sequence));
+  char buffer[32];
+  size_t len = read_line(MOSH_PROMPT, buffer, sizeof(buffer));
+  TEST_ASSERT_EQUAL_UINT64(strlen("echo hi"), len);
+  TEST_ASSERT_EQUAL_STRING("echo hi", buffer);
+}
+
+void test_history_cursor_resets_between_reads(void) {
+  reset_capture();
+  history_reset();
+  history_add("first");
+  history_add("second");
+
+  const char seq1[] = { '\x1b', '[', 'A', '\n' };
+  feed_input(seq1, sizeof(seq1));
+  char buffer[32];
+  size_t len = read_line(MOSH_PROMPT, buffer, sizeof(buffer));
+  TEST_ASSERT_EQUAL_STRING("second", buffer);
+  TEST_ASSERT_EQUAL_UINT64(strlen("second"), len);
+
+  const char seq2[] = { '\x1b', '[', 'A', '\n' };
+  feed_input(seq2, sizeof(seq2));
+  len = read_line(MOSH_PROMPT, buffer, sizeof(buffer));
+  TEST_ASSERT_EQUAL_STRING("second", buffer);
+  TEST_ASSERT_EQUAL_UINT64(strlen("second"), len);
 }

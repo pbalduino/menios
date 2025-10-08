@@ -978,6 +978,15 @@ static void line_cursor_end(line_state_t* state) {
   line_redraw(state);
 }
 
+static void line_clear_screen(line_state_t* state) {
+  line_hide_caret(state);
+  static const char seq[] = "\x1b[2J\x1b[H";
+  write_bytes(STDOUT_FILENO, seq, sizeof(seq) - 1);
+  state->rendered_length = 0;
+  state->needs_carriage_return = false;
+  line_redraw(state);
+}
+
 static int read_stdin_char(void) {
   char ch = 0;
   long rc = read(STDIN_FILENO, &ch, 1);
@@ -990,6 +999,7 @@ static int read_stdin_char(void) {
 static char history_entries[MOSH_HISTORY_LIMIT][MOSH_MAX_LINE_LENGTH];
 static size_t history_length = 0;
 static size_t history_next = 0;
+static size_t history_cursor = 0;
 
 static void history_reset(void) {
   for(size_t i = 0; i < MOSH_HISTORY_LIMIT; i++) {
@@ -997,6 +1007,7 @@ static void history_reset(void) {
   }
   history_length = 0;
   history_next = 0;
+  history_cursor = 0;
 }
 
 static size_t history_physical_index(size_t logical_index) {
@@ -1083,7 +1094,9 @@ static size_t read_line(const char* prompt, char* buffer, size_t capacity) {
   scratch[0] = '\0';
   bool scratch_active = false;
 
-  size_t history_cursor = history_length;
+  if(prompt != NULL) {
+    history_cursor = history_length;
+  }
 
   enum escape_state esc_state = ESCAPE_NONE;
   char esc_params[8];
@@ -1123,6 +1136,7 @@ static size_t read_line(const char* prompt, char* buffer, size_t capacity) {
           if(ch == '\r') {
             swallow_lf = true;
           }
+          history_cursor = history_length;
           return state.length;
         }
         if(ch == '\b' || ch == 0x7f) {
@@ -1138,6 +1152,18 @@ static size_t read_line(const char* prompt, char* buffer, size_t capacity) {
           line_insert_char(&state, ch);
           break;
         }
+        if(ch == 0x01) {
+          line_cursor_home(&state);
+          break;
+        }
+        if(ch == 0x05) {
+          line_cursor_end(&state);
+          break;
+        }
+        if(ch == 0x0c) {
+          line_clear_screen(&state);
+          break;
+        }
         if(ch >= 0x20 && ch < 0x7f) {
           line_insert_char(&state, ch);
           break;
@@ -1145,6 +1171,7 @@ static size_t read_line(const char* prompt, char* buffer, size_t capacity) {
         if(ch == 0x04) {
           if(state.length == 0) {
             line_hide_caret(&state);
+            history_cursor = history_length;
             return 0;
           }
           beep();

@@ -588,7 +588,9 @@ ifeq ($(OS_NAME),linux)
 		-o "$$file".bin ; \
 		echo "Testing $$file" ; \
 		"$$file".bin ; \
+		rc=$$?; \
 		rm "$$file".bin ; \
+		if [ $$rc -ne 0 ]; then exit $$rc; fi; \
 	done;
 else
 	@echo "Testing inside Docker"

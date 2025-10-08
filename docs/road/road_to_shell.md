@@ -99,10 +99,10 @@ A release that meets this milestone must satisfy all of the following:
 - ✅ Working directory management (`getcwd`, `chdir` syscalls) (#147) - **NOW COMPLETE!**
 - Tab completion for files and directories (#197) - **NOW UNBLOCKED!**
 - ✅ Current directory in prompt (#222) - Dynamic prompt shows cwd in shell banner.
-- Emacs-style line editing (Ctrl+A, Ctrl+E) (#198).
+- ✅ Emacs-style line editing (Ctrl+A, Ctrl+E) (#198).
 - Reverse command search (Ctrl+R) (#199).
-- Clear screen shortcut (Ctrl+L) (#200).
-- Command history with up/down arrows (#156).
+- ✅ Clear screen shortcut (Ctrl+L) (#200).
+- ✅ Command history with up/down arrows (#156).
 
 ### System Integration
 - Login/getty integration for multiple TTYs (#175-#178).
