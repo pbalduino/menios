@@ -14,9 +14,13 @@ void setUp(void) {
   memset(&parent, 0, sizeof(parent));
   proc_signal_state_init(&proc);
   proc_signal_state_init(&parent);
+  proc.user_mode = true;
+  parent.user_mode = true;
 }
 
-void tearDown(void) {}
+void tearDown(void) {
+  current = NULL;
+}
 
 void test_signal_enqueue_and_dequeue(void) {
   TEST_ASSERT_FALSE(proc_signal_pending(&proc));
@@ -90,6 +94,53 @@ void test_signal_send_validates_signo(void) {
   TEST_ASSERT_EQUAL_INT(-EINVAL, rc);
 }
 
+void test_signal_handle_pending_invokes_handler(void) {
+  cpu_state_t frame;
+  memset(&frame, 0, sizeof(frame));
+  uint64_t stack_buf[16] = {0};
+  frame.rsp = (uint64_t)(stack_buf + 8);
+  frame.rip = 0xCAFEBABE;
+
+  proc_signal_enqueue(&proc, SIGTERM);
+  proc.signal_actions[SIGTERM].sa_handler = (sighandler_t)0xDEADBEEF;
+
+  proc_signal_delivery_t result = proc_signal_handle_pending(&proc, &frame);
+
+  TEST_ASSERT_EQUAL_INT(PROC_SIGNAL_DELIVERY_HANDLED, result);
+  TEST_ASSERT_EQUAL_UINT64((uint64_t)proc.signal_actions[SIGTERM].sa_handler, frame.rip);
+  TEST_ASSERT_EQUAL_UINT64(SIGTERM, frame.rdi);
+  TEST_ASSERT_EQUAL_UINT64(0xCAFEBABE, stack_buf[7]);
+  TEST_ASSERT_EQUAL_PTR(stack_buf + 7, (uint64_t*)frame.rsp);
+}
+
+void test_signal_handle_pending_honors_block_mask(void) {
+  cpu_state_t frame;
+  memset(&frame, 0, sizeof(frame));
+
+  proc_signal_enqueue(&proc, SIGINT);
+  proc_signal_set_blocked(&proc, sigbit(SIGINT));
+
+  proc_signal_delivery_t result = proc_signal_handle_pending(&proc, &frame);
+
+  TEST_ASSERT_EQUAL_INT(PROC_SIGNAL_DELIVERY_NONE, result);
+  TEST_ASSERT_TRUE(proc_signal_pending(&proc));
+}
+
+void test_signal_handle_pending_default_terminates(void) {
+  cpu_state_t frame;
+  memset(&frame, 0, sizeof(frame));
+  current = &proc;
+  proc.state = PROC_STATE_RUNNING;
+
+  proc_signal_enqueue(&proc, SIGTERM);
+
+  proc_signal_delivery_t result = proc_signal_handle_pending(&proc, &frame);
+
+  TEST_ASSERT_EQUAL_INT(PROC_SIGNAL_DELIVERY_TERMINATED, result);
+  TEST_ASSERT_EQUAL_INT(PROC_STATE_ZOMBIE, proc.state);
+  TEST_ASSERT_EQUAL_INT(128 + SIGTERM, proc.exit_code);
+}
+
 int main(void) {
   UNITY_BEGIN();
   RUN_TEST(test_signal_enqueue_and_dequeue);
@@ -99,5 +150,8 @@ int main(void) {
   RUN_TEST(test_signal_configure_action_rejects_sigkill_override);
   RUN_TEST(test_signal_modify_mask_blocks_and_unblocks);
   RUN_TEST(test_signal_send_validates_signo);
+  RUN_TEST(test_signal_handle_pending_invokes_handler);
+  RUN_TEST(test_signal_handle_pending_honors_block_mask);
+  RUN_TEST(test_signal_handle_pending_default_terminates);
   return UNITY_END();
 }

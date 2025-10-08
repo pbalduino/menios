@@ -304,6 +304,10 @@ void proc_switch(void* arg) {
   uint64_t diff = now - last_exec;
   last_exec = now;
 
+  if(current != NULL) {
+    proc_signal_handle_pending(current, frame);
+  }
+
   if(current && current->cpu_state) {
     memcpy(current->cpu_state, frame, sizeof(cpu_state_t));
   }
@@ -357,19 +361,44 @@ void proc_switch(void* arg) {
     }
   }
 
-  proc_info_p next = ready_queue_pop_highest();
-  if(next == NULL) {
-    next = &kernel_process_info;
-  }
-
-  current = next;
-
-  if(current->cpu_state == NULL) {
-    current->cpu_state = kmalloc(sizeof(cpu_state_t));
-    if(current->cpu_state == NULL) {
-      halt();
+  while(true) {
+    proc_info_p next = ready_queue_pop_highest();
+    if(next == NULL) {
+      next = &kernel_process_info;
     }
-    memset(current->cpu_state, 0, sizeof(cpu_state_t));
+
+    current = next;
+
+    if(current->cpu_state == NULL) {
+      current->cpu_state = kmalloc(sizeof(cpu_state_t));
+      if(current->cpu_state == NULL) {
+        halt();
+      }
+      memset(current->cpu_state, 0, sizeof(cpu_state_t));
+    }
+
+    proc_signal_delivery_t delivery =
+      proc_signal_handle_pending(current, current->cpu_state);
+
+    if(delivery == PROC_SIGNAL_DELIVERY_TERMINATED &&
+       current != &kernel_process_info) {
+      if(current->state == PROC_STATE_TERMINATED) {
+        scheduler_cleanup_process(current);
+      }
+      continue;
+    }
+
+    if(current->state == PROC_STATE_ZOMBIE ||
+       current->state == PROC_STATE_TERMINATED) {
+      if(current != &kernel_process_info) {
+        if(current->state == PROC_STATE_TERMINATED) {
+          scheduler_cleanup_process(current);
+        }
+        continue;
+      }
+    }
+
+    break;
   }
 
   current->state = PROC_STATE_RUNNING;

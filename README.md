@@ -136,8 +136,8 @@ Expect the log to show the `[user_demo]` messages on screen and in `com1.log`, c
 #### **System Features**
 - [ ] **Threading Support**: Complete pthread API and multithreading (Issues #109-#113) - Foundation complete (#108) ✅
 - [x] **IPC - Pipes & FIFOs**: ✅ **COMPLETE!** Data structure (#206) ✅, Syscall API (#207) ✅, Shell pipelines (#208) ✅, Named FIFOs (#209) ✅
-- [x] **IPC - Signals**: Bookkeeping (#210) ✅
-- [ ] **IPC - Signals**: Syscalls (#211) - ready now!, Delivery (#212), Shell Ctrl+C (#213), Advanced (#214)
+- [x] **IPC - Signals**: Bookkeeping (#210) ✅, Syscalls (#211) ✅, Delivery path (#212) ✅
+- [ ] **IPC - Signals**: Shell Ctrl+C (#213), Advanced features (#214)
 - [ ] **IPC - Shared Memory**: Manager (#215), Syscalls (#216), Cleanup (#217), Tests (#218), Docs (#219)
 - [ ] **IPC - Other**: ioctl (#220), Unix domain sockets (#105), Microkernel IPC (#106-#107)
 - [x] **Filesystem - I/O Scheduler**: Elevator I/O scheduler (#205) ✅ COMPLETE
@@ -176,7 +176,7 @@ The critical path forward is completing the **toolchain** (#194, #195, #29), whi
 
 **🎯 Recent Momentum** (19 issues closed recently!):
 - 🛠️ **Toolchain** (2/5 complete): crt0 ✅, libc ✅ → just need: ABI docs, build system, integration
-- 🔌 **IPC** (major progress!): Pipes & FIFOs ✅✅✅✅ **COMPLETE!** (#206-#209), Signals #210 ✅, #211 ready! (#211-#214), Shared Memory (#215-#219), ioctl (#220), fast syscalls (#221)
+- 🔌 **IPC** (major progress!): Pipes & FIFOs ✅✅✅✅ **COMPLETE!** (#206-#209), Signals #210-#212 ✅ (delivery path live; Ctrl+C/advanced next), Shared Memory (#215-#219), ioctl (#220), fast syscalls (#221)
 - 🐚 **Shell** (8/9 complete): Only #187 (ps/kill), #188 (env) remaining!
 - 🧵 **Threading** (1/6 complete): Kernel threading ✅, pthread API ready!
 - 🎨 **UX** (5 issues ready): Quality-of-life keyboard shortcuts

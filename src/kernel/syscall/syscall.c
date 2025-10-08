@@ -183,6 +183,19 @@ static bool listdir_iter_callback(const fs_dir_entry_t* entry, void* context) {
   return true;
 }
 
+static uint64_t syscall_finalize(syscall_frame_t* frame) {
+  if(current == NULL) {
+    return frame->rax;
+  }
+
+  proc_signal_delivery_t delivery =
+    proc_signal_handle_pending(current, (cpu_state_t*)frame);
+  if(delivery == PROC_SIGNAL_DELIVERY_TERMINATED) {
+    proc_switch((void*)frame);
+  }
+  return frame->rax;
+}
+
 static bool clone_user_vector(const char* const* user_vec,
                               size_t max_entries,
                               char*** out_vec,
@@ -323,12 +336,12 @@ uint64_t syscall_dispatch(syscall_frame_t* frame) {
     if(handler) {
       uint64_t result = handler(frame);
       frame->rax = result;
-      return result;
+      return syscall_finalize(frame);
     }
   }
 
   frame->rax = (uint64_t)(-ENOSYS);
-  return frame->rax;
+  return syscall_finalize(frame);
 }
 
 static uint64_t syscall_stub_unimplemented(syscall_frame_t* frame) {

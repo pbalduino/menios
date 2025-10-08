@@ -300,7 +300,10 @@ int proc_waitpid(proc_info_p parent, int pid, int* status_out) {
 }
 
 void proc_exit(int status) {
-  (void)status;
+  if(current != NULL) {
+    current->exit_code = status;
+    current->state = PROC_STATE_ZOMBIE;
+  }
 }
 
 bool proc_user_buffer_accessible(proc_info_p proc, const void* ptr, size_t length) {

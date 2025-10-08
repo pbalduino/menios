@@ -92,7 +92,7 @@ A release that meets this milestone must satisfy all of the following:
 
 ### IPC and Process Control
 - Expand pipelines to support advanced syntax (append, stderr redirection) once IPC primitives land (#165, #209). Kernel pipe infrastructure (#206), the `pipe()` syscall/user wrapper (#207), and shell integration (#208) are already in place.
-- Signal delivery/handling for user processes (delivery path + shell integration pending) (#212-#214).
+- Signal delivery/handling for user processes (shell Ctrl+C and advanced policies pending) (#213-#214).
 - Job control (background tasks, `wait` builtin) (#158).
 - Process management utilities (`ps`, richer `kill` semantics) (#187, depends on #213).
 

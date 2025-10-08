@@ -70,12 +70,12 @@ Inter-process communication for complex applications:
   4. ✅ **#209** - Named FIFOs (mkfifo) (CLOSED)
 - **Impact**: Shell operations, process communication, command pipelines, named FIFOs - **ALL IMPLEMENTED!** 🎉
 
-#### **UNIX Signals** (Issues #210-#214, broken down from #103) (2/5 Complete!)
-- ✅ **Status**: Bookkeeping + syscall surface in place (#210, #211 ✅); delivery path next.
+#### **UNIX Signals** (Issues #210-#214, broken down from #103) (3/5 Complete!)
+- ✅ **Status**: Bookkeeping, syscall surface, and baseline delivery path now implemented (#210-#212 ✅); shell integration next.
 - **Implementation Path**:
   1. ✅ **#210** - Signal bookkeeping scaffold (CLOSED)
   2. ✅ **#211** - Signal syscalls (`kill`, `sigaction`, `sigprocmask`) + libc wrappers and regression tests (CLOSED)
-  3. **#212** - Basic signal delivery path (2-3 weeks)
+  3. ✅ **#212** - Basic signal delivery path with user handlers (CLOSED)
   4. **#213** - Shell Ctrl+C integration (1-2 weeks)
   5. **#214** - Advanced signal features (SIGCHLD, SA_RESTART) - optional (3-4 weeks)
 - **Impact**: Process control, Ctrl+C handling, error handling, graceful shutdown

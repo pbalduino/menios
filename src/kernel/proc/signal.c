@@ -2,6 +2,7 @@
 #include <kernel/proc.h>
 
 #include <errno.h>
+#include <stdint.h>
 #include <string.h>
 
 #define SIGNAL_ALLOWED_MASK ((SIG_MAX >= 32) ? 0x7FFFFFFFu : ((1u << (SIG_MAX - 1)) - 1u))
@@ -152,4 +153,58 @@ int proc_signal_send(proc_info_p proc, int signo) {
 
   proc_signal_enqueue(proc, signo);
   return 0;
+}
+
+proc_signal_delivery_t proc_signal_handle_pending(proc_info_p proc,
+                                                  struct cpu_state_t* frame) {
+  if(proc == NULL || frame == NULL) {
+    return PROC_SIGNAL_DELIVERY_NONE;
+  }
+
+  if(!proc->user_mode || proc == &kernel_process_info) {
+    return PROC_SIGNAL_DELIVERY_NONE;
+  }
+
+  if(!proc_signal_pending(proc)) {
+    return PROC_SIGNAL_DELIVERY_NONE;
+  }
+
+  while(true) {
+    int signo = proc_signal_dequeue(proc);
+    if(signo <= 0) {
+      return PROC_SIGNAL_DELIVERY_NONE;
+    }
+
+    struct sigaction action = proc->signal_actions[signo];
+    if(action.sa_handler == SIG_IGN) {
+      continue;
+    }
+
+    if(action.sa_handler == SIG_DFL || action.sa_handler == SIG_ERR) {
+      proc_exit(128 + signo);
+      return PROC_SIGNAL_DELIVERY_TERMINATED;
+    }
+
+    uint64_t handler = (uint64_t)action.sa_handler;
+    uint64_t new_rsp = frame->rsp - sizeof(uint64_t);
+
+    if(!proc_user_buffer_accessible(proc, (void*)new_rsp, sizeof(uint64_t))) {
+      proc_exit(128 + signo);
+      return PROC_SIGNAL_DELIVERY_TERMINATED;
+    }
+
+    *((uint64_t*)new_rsp) = frame->rip;
+
+    frame->rsp = new_rsp;
+    frame->rip = handler;
+    frame->rdi = (uint64_t)signo;
+    frame->rax = 0;
+    frame->rsi = 0;
+    frame->rdx = 0;
+    frame->rcx = 0;
+    frame->r8 = 0;
+    frame->r9 = 0;
+
+    return PROC_SIGNAL_DELIVERY_HANDLED;
+  }
 }

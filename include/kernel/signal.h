@@ -10,6 +10,8 @@ extern "C" {
 #include <stdint.h>
 
 struct proc_info_t;
+struct cpu_state_t;
+
 typedef struct proc_info_t* proc_info_p;
 
 #define SIG_MAX 32
@@ -27,6 +29,14 @@ void proc_signal_set_blocked(proc_info_p proc, uint32_t mask);
 void proc_signal_enqueue(proc_info_p proc, int signo);
 bool proc_signal_pending(proc_info_p proc);
 int  proc_signal_dequeue(proc_info_p proc);
+typedef enum {
+  PROC_SIGNAL_DELIVERY_NONE = 0,
+  PROC_SIGNAL_DELIVERY_HANDLED,
+  PROC_SIGNAL_DELIVERY_TERMINATED
+} proc_signal_delivery_t;
+
+proc_signal_delivery_t proc_signal_handle_pending(proc_info_p proc,
+                                                  struct cpu_state_t* frame);
 int  proc_signal_configure_action(proc_info_p proc,
                                   int signo,
                                   const struct sigaction* new_action,
