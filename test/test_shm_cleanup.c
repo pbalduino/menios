@@ -122,9 +122,46 @@ void test_proc_shm_inherit_and_cleanup(void) {
   destroy_region(shmid);
 }
 
+void test_proc_shm_detach_all_releases_all_attachments(void) {
+  shm_region_t* region = shm_region_create(IPC_PRIVATE, PAGE_SIZE, 0600, NULL, NULL);
+  TEST_ASSERT_NOT_NULL(region);
+  int shmid = shm_region_id(region);
+
+  virt_addr_t base1 = reserve_base(&parent_proc, PAGE_SIZE);
+  virt_addr_t base2 = reserve_base(&parent_proc, PAGE_SIZE);
+
+  TEST_ASSERT_TRUE(vm_map_shared(&parent_proc,
+                                 region,
+                                 base1,
+                                 VM_REGION_FLAG_USER | VM_REGION_FLAG_READ | VM_REGION_FLAG_WRITE,
+                                 true));
+  TEST_ASSERT_TRUE(proc_shm_track_attachment(&parent_proc, region, base1, PAGE_SIZE, shmid, 0));
+
+  TEST_ASSERT_TRUE(vm_map_shared(&parent_proc,
+                                 region,
+                                 base2,
+                                 VM_REGION_FLAG_USER | VM_REGION_FLAG_READ | VM_REGION_FLAG_WRITE,
+                                 true));
+  TEST_ASSERT_TRUE(proc_shm_track_attachment(&parent_proc, region, base2, PAGE_SIZE, shmid, 0));
+
+  TEST_ASSERT_EQUAL_size_t(2, parent_proc.shm_attachment_count);
+  shm_region_t* lookup = shm_region_get_by_id(shmid);
+  TEST_ASSERT_NOT_NULL(lookup);
+  TEST_ASSERT_EQUAL_size_t(2, shm_region_attachment_count(lookup));
+  shm_region_unref(lookup);
+
+  shm_region_set_marked_for_removal(region, true);
+  proc_shm_detach_all(&parent_proc);
+  TEST_ASSERT_EQUAL_size_t(0, parent_proc.shm_attachment_count);
+
+  lookup = shm_region_get_by_id(shmid);
+  TEST_ASSERT_NULL(lookup);
+}
+
 int main(void) {
   UNITY_BEGIN();
   RUN_TEST(test_ipc_rmid_releases_region_after_detach);
   RUN_TEST(test_proc_shm_inherit_and_cleanup);
+  RUN_TEST(test_proc_shm_detach_all_releases_all_attachments);
   return UNITY_END();
 }

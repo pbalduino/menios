@@ -56,7 +56,7 @@ This document tracks the three major milestones for meniOS development.
 **Goal**: Run Doom (1993) in userland on meniOS
 **GitHub Milestone**: [Doom](https://github.com/pbalduino/menios/milestone/3)
 
-**Status**: 9/20 complete (45%)
+**Status**: 10/20 complete (50%)
 
 **Assigned Issues**:
 
@@ -82,11 +82,11 @@ This document tracks the three major milestones for meniOS development.
 - [ ] #213 - Shell Ctrl+C integration (ready now!)
 - [ ] #214 - Advanced signal features
 
-#### IPC - Shared Memory (5 issues)
+#### IPC - Shared Memory (5 issues) ✅ COMPLETE!
 - [x] #215 - Shared memory manager ✅
 - [x] #216 - Shared memory syscalls ✅
 - [x] #217 - Reference counting and cleanup ✅
-- [ ] #218 - Comprehensive test suite (ready now!)
+- [x] #218 - Comprehensive test suite ✅
 - [x] #219 - Documentation and examples ✅
 
 #### Other IPC
@@ -99,10 +99,6 @@ This document tracks the three major milestones for meniOS development.
 - #212 requires #211
 - #213 requires #212
 - #214 requires #213, #109
-- #216 requires #215
-- #217 requires #216
-- #218 requires #217
-- #219 requires #218
 
 ---
 
@@ -136,9 +132,9 @@ This document tracks the three major milestones for meniOS development.
 ## 📈 Overall Progress
 
 - **Total Issues Across Milestones**: 36 issues
-- **Completed**: 10 issues (27.8%)
-- **In Progress**: 26 issues
-- **Ready to Start**: 8 issues (no dependencies)
+- **Completed**: 11 issues (30.6%)
+- **In Progress**: 25 issues
+- **Ready to Start**: 7 issues (no dependencies)
 
 ## 🚀 Immediate Next Steps
 
@@ -150,7 +146,6 @@ This document tracks the three major milestones for meniOS development.
 2. **Doom Milestone**:
    - #109 - pthread API
    - #213 - Shell Ctrl+C integration
-   - #218 - Comprehensive test suite
    - #221 - Fast syscall instruction
 
 3. **Mosh Milestone**:

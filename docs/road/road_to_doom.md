@@ -80,14 +80,14 @@ Inter-process communication for complex applications:
   5. **#214** - Advanced signal features (SIGCHLD, SA_RESTART) - optional (3-4 weeks)
 - **Impact**: Process control, Ctrl+C handling, error handling, graceful shutdown
 
-#### **Shared Memory** (Issues #215-#219, broken down from #104)
-- ✅ **Status**: Ready to implement (VM manager complete)
+#### **Shared Memory** (Issues #215-#219, broken down from #104) ✅ **COMPLETE!**
+- ✅ **Status**: All shared memory infrastructure implemented and tested!
 - **Implementation Path**:
-  1. **#215** - Kernel shared memory region manager (2-3 weeks)
-  2. **#216** - Shared memory syscalls (shmget/shmat/shmdt) (1-2 weeks)
-  3. **#217** - Reference counting and cleanup (1-2 weeks)
-  4. **#218** - Comprehensive test suite (1-2 weeks)
-  5. **#219** - Documentation and examples (1 week)
+  1. ✅ **#215** - Kernel shared memory region manager (CLOSED)
+  2. ✅ **#216** - Shared memory syscalls (shmget/shmat/shmdt) (CLOSED)
+  3. ✅ **#217** - Reference counting and cleanup (CLOSED)
+  4. ✅ **#218** - Comprehensive test suite (CLOSED)
+  5. ✅ **#219** - Documentation and examples (CLOSED)
 - **Impact**: Fast inter-process data sharing, audio/video buffers
 
 #### **Device Control** (Issue #220)
@@ -213,7 +213,7 @@ Basic command-line tools for shell interaction:
 
 ### **Short Term (3-6 months)**
 - Land pthread API and libc hardening (#109-#111, #110).
-- Add core IPC plumbing: pipes, signals, shared memory (#102-#104).
+- ✅ Add core IPC plumbing: pipes ✅ (#102), signals (#103 - 3/5 done), shared memory ✅ (#104).
 - Keep roadmap docs in sync with kernel progress.
 
 ### **Medium Term (6-12 months)**

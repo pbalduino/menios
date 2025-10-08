@@ -138,8 +138,7 @@ Expect the log to show the `[user_demo]` messages on screen and in `com1.log`, c
 - [x] **IPC - Pipes & FIFOs**: ✅ **COMPLETE!** Data structure (#206) ✅, Syscall API (#207) ✅, Shell pipelines (#208) ✅, Named FIFOs (#209) ✅
 - [x] **IPC - Signals**: Bookkeeping (#210) ✅, Syscalls (#211) ✅, Delivery path (#212) ✅
 - [ ] **IPC - Signals**: Shell Ctrl+C (#213), Advanced features (#214)
-- [ ] **IPC - Shared Memory**: Tests (#218) - 4/5 complete!
-- [x] **IPC - Shared Memory - Complete**: Manager (#215) ✅, Syscalls (#216) ✅, Cleanup (#217) ✅, Documentation (#219) ✅ *(see docs/design/shared_memory.md)*
+- [x] **IPC - Shared Memory**: ✅ **COMPLETE!** Manager (#215) ✅, Syscalls (#216) ✅, Cleanup (#217) ✅, Tests (#218) ✅, Documentation (#219) ✅ *(see docs/design/shared_memory.md)*
 - [x] **IPC - Device Control**: ioctl (#220) ✅ **COMPLETE**
 - [ ] **IPC - Other**: Unix domain sockets (#105), Microkernel IPC (#106-#107), Fast syscalls (#221)
 - [x] **Filesystem - I/O Scheduler**: Elevator I/O scheduler (#205) ✅ COMPLETE
@@ -165,20 +164,21 @@ Remaining major components for Doom:
 
 See [`road_to_doom.md`](docs/road/road_to_doom.md) for the complete roadmap and [`tasks.json`](tasks.json) for detailed task tracking.
 
-**📊 Progress Assessment**: With **33 major foundation issues completed** 🎉🎉 and ~80 open issues, meniOS is making phenomenal progress! Major recent completions include:
+**📊 Progress Assessment**: With **34 major foundation issues completed** 🎉🎉 and ~79 open issues, meniOS is making phenomenal progress! Major recent completions include:
 - ✅ **Toolchain**: crt0 (#192), libc (#193) - 2/5 complete, almost there!
 - ✅ **Synchronization**: All primitives complete! (#36, #37, #39, #40) - 4/4 done!
 - ✅ **Shell Milestone**: 8/9 complete (#148, #180-#186) - nearly complete!
 - ✅ **Threading Foundation**: Kernel threading (#108) - ready for pthread!
 - ✅ **IPC - Pipes & FIFOs**: **COMPLETE!** All 4 issues done (#206-#209) - 4/4! 🎉
 - ✅ **IPC - Signals**: Delivery path working! (#210-#212) - 3/5 complete! 🎉
+- ✅ **IPC - Shared Memory**: **COMPLETE!** All 5 issues done (#215-#219) - 5/5! 🎉🎉🎉
 - ✅ **Performance**: I/O scheduler (#205)
 
 The critical path forward is completing the **toolchain** (#194, #195, #29), which is just 3 issues away from enabling standard C development for all userland applications!
 
-**🎯 Recent Momentum** (26 issues closed recently!):
+**🎯 Recent Momentum** (27 issues closed recently!):
 - 🛠️ **Toolchain** (2/5 complete): crt0 ✅, libc ✅ → just need: ABI docs, build system, integration
-- 🔌 **IPC** (major progress!): Pipes & FIFOs ✅✅✅✅ **COMPLETE!** (#206-#209), Signals #210-#212 ✅ (delivery path live; Ctrl+C/advanced next), Shared Memory #215-#217+#219 ✅ (4/5 almost done, just tests!), ioctl #220 ✅ **COMPLETE**, fast syscalls (#221)
+- 🔌 **IPC** (major progress!): Pipes & FIFOs ✅✅✅✅ **COMPLETE!** (#206-#209), Signals #210-#212 ✅ (delivery path live; Ctrl+C/advanced next), Shared Memory ✅✅✅✅✅ **COMPLETE!** (#215-#219), ioctl #220 ✅ **COMPLETE**, fast syscalls (#221)
 - 🐚 **Shell** (8/9 complete): Only #187 (ps/kill), #188 (env) remaining!
 - 🧵 **Threading** (1/6 complete): Kernel threading ✅, pthread API ready!
 - 🎨 **UX** (5 issues ready): Quality-of-life keyboard shortcuts

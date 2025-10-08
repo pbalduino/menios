@@ -1312,14 +1312,15 @@
     "github_issue": {
       "number": 104,
       "url": "https://github.com/pbalduino/menios/issues/104",
-      "state": "OPEN"
+      "state": "CLOSED"
     },
     "labels": [
       "enhancement"
     ],
     "assignees": [
       "pbalduino"
-    ]
+    ],
+    "notes": "Shared memory syscalls (215-219) implemented with host regression coverage"
   },
   {
     "title": "Implement UNIX signals for process control and communication",
