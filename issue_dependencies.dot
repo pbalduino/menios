@@ -118,8 +118,8 @@ digraph IssueDependencies {
 
         // Signals (broken down)
         issue210 [label="#210: Signal\nbookkeeping", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED
-        issue211 [label="#211: Signal\nsyscalls", fillcolor="#E6E6FA"];
-        issue212 [label="#212: Signal\ndelivery", fillcolor="#E6E6FA"];
+        issue211 [label="#211: Signal\nsyscalls", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED
+        issue212 [label="#212: Signal\ndelivery", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED
         issue213 [label="#213: Shell\nCtrl+C", fillcolor="#E6E6FA"];
         issue214 [label="#214: Advanced\nsignals", fillcolor="#DDA0DD"];
 
@@ -229,8 +229,8 @@ digraph IssueDependencies {
     issue93 -> issue210 [label="#93: fork/exec", style=dashed, color=gray];
     issue34 -> issue210 [label="#34: scheduler", style=dashed, color=gray];
     issue210 -> issue211 [color=purple, penwidth=2, style=dashed];
-    issue211 -> issue212 [color=purple, penwidth=2];
-    issue212 -> issue213 [color=purple, penwidth=2];
+    issue211 -> issue212 [color=purple, penwidth=2, style=dashed];
+    issue212 -> issue213 [color=purple, penwidth=2, style=dashed];
     issue213 -> issue214 [color=purple];
     issue109 -> issue214 [label="#109: pthread"];
 

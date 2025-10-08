@@ -60,8 +60,7 @@ A release that meets this milestone must satisfy all of the following:
 - [x] Basic pipelines and `<`/`>` redirection supported for foreground commands (#186).
 - [x] `Ctrl+C` aborts foreground commands and pipelines via `SYS_PROC_KILL`.
 - [x] `PATH` search order configurable once environment support lands (#185).
-- [ ] Tests ensure waitpid returns correct PID and shell stays in supervision loop (#182).
-- [ ] Tests ensure waitpid returns correct PID and shell stays in supervision loop (#182).
+- [x] Tests ensure waitpid returns correct PID and shell stays in supervision loop (#182).
 
 ## Blocking TODOs
 
@@ -74,7 +73,7 @@ A release that meets this milestone must satisfy all of the following:
 3. **Waitpid Regression Test** (#182)
    - ✅ Host-side coverage (`test/test_init_supervision.c`) exercises the kernel waitpid handler for both blocking and `WNOHANG` paths, verifying PID 1 remains in the waiting state until the child exits.
 4. **Line Editor Coverage** (#184)
-   - Extend `test_mosh_line` to cover delete, history navigation, and newline flows.
+   - ✅ Extended `test_mosh_line` to cover delete, history navigation, and newline flows.
 
 ## Verification Matrix
 

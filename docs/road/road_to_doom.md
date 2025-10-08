@@ -248,9 +248,9 @@ Basic command-line tools for shell interaction:
 
 **IPC - Signals** (sequential):
 14. ✅ **#210** – Signal bookkeeping scaffold ✅ *Completed*
-15. **#211** – Signal syscalls (kill, sigaction, sigprocmask, sigsuspend) (ready now!)
-16. **#212** – Basic signal delivery path with user handlers
-17. **#213** – Shell Ctrl+C integration
+15. ✅ **#211** – Signal syscalls (kill, sigaction, sigprocmask, sigsuspend) ✅ *Completed*
+16. ✅ **#212** – Basic signal delivery path with user handlers ✅ *Completed*
+17. **#213** – Shell Ctrl+C integration (ready now!)
 18. **#214** – Advanced signal features (optional)
 
 **IPC - Shared Memory** (sequential):

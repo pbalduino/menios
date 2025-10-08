@@ -54,7 +54,7 @@ This document tracks the three major milestones for meniOS development.
 **Goal**: Run Doom (1993) in userland on meniOS
 **GitHub Milestone**: [Doom](https://github.com/pbalduino/menios/milestone/3)
 
-**Status**: 2/20 complete (10%)
+**Status**: 4/20 complete (20%)
 
 **Assigned Issues**:
 
@@ -75,9 +75,9 @@ This document tracks the three major milestones for meniOS development.
 
 #### IPC - Signals (4 issues)
 - [x] #210 - Signal bookkeeping scaffold ✅
-- [ ] #211 - Signal syscalls (ready now!)
-- [ ] #212 - Signal delivery path
-- [ ] #213 - Shell Ctrl+C integration
+- [x] #211 - Signal syscalls ✅
+- [x] #212 - Signal delivery path ✅
+- [ ] #213 - Shell Ctrl+C integration (ready now!)
 - [ ] #214 - Advanced signal features
 
 #### IPC - Shared Memory (5 issues)
@@ -134,8 +134,8 @@ This document tracks the three major milestones for meniOS development.
 ## 📈 Overall Progress
 
 - **Total Issues Across Milestones**: 35 issues
-- **Completed**: 3 issues (8.6%)
-- **In Progress**: 32 issues
+- **Completed**: 5 issues (14.3%)
+- **In Progress**: 30 issues
 - **Ready to Start**: 9 issues (no dependencies)
 
 ## 🚀 Immediate Next Steps
@@ -147,7 +147,7 @@ This document tracks the three major milestones for meniOS development.
 
 2. **Doom Milestone**:
    - #109 - pthread API
-   - #211 - Signal syscalls
+   - #213 - Shell Ctrl+C integration
    - #215 - Shared memory manager
    - #220 - ioctl syscall
    - #221 - Fast syscall instruction
