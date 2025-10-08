@@ -97,7 +97,7 @@ A release that meets this milestone must satisfy all of the following:
 
 ### Shell Usability Features
 - ✅ Working directory management (`getcwd`, `chdir` syscalls) (#147) - **NOW COMPLETE!**
-- Tab completion for files and directories (#197) - **NOW UNBLOCKED!**
+- ✅ Tab completion for files and directories (#197).
 - ✅ Current directory in prompt (#222) - Dynamic prompt shows cwd in shell banner.
 - ✅ Emacs-style line editing (Ctrl+A, Ctrl+E) (#198).
 - Reverse command search (Ctrl+R) (#199).

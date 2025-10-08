@@ -24,7 +24,10 @@
 #define MOSH_MAX_ARGS        16
 #define MOSH_MAX_TOKENS      128
 #define MOSH_MAX_SEQUENCES   8
+#define MOSH_MAX_COMPLETIONS 64
 #define MOSH_MAX_ENV_VARS    64
+
+typedef struct line_state_t line_state_t;
 
 static char** process_envp = NULL;
 static char fallback_path[] = "PATH=/bin";
@@ -64,6 +67,7 @@ static int  launch_pipeline(char* line);
 static int  launch_command(char* line);
 static size_t split_sequence(char* line, char* parts[], size_t max_parts);
 static char* str_find_substring(char* haystack, const char* needle);
+static bool  line_replace_range(line_state_t* state, size_t start, size_t end, const char* replacement);
 
 #ifdef MOSH_TEST
 long mosh_test_syscall0(long number);
@@ -889,6 +893,34 @@ static void line_redraw(line_state_t* state) {
   line_render_caret(state);
 }
 
+static bool line_replace_range(line_state_t* state, size_t start, size_t end, const char* replacement) {
+  if(state == NULL || start > end || end > state->length) {
+    return false;
+  }
+
+  size_t replacement_len = replacement ? str_len(replacement) : 0;
+  size_t tail_len = state->length - end;
+  size_t new_len = start + replacement_len + tail_len;
+  if(new_len > state->content_capacity) {
+    beep();
+    return false;
+  }
+
+  memmove(&state->buffer[start + replacement_len],
+          &state->buffer[end],
+          tail_len + 1);
+
+  if(replacement_len > 0) {
+    memcpy(&state->buffer[start], replacement, replacement_len);
+  }
+
+  state->length = new_len;
+  state->buffer[new_len] = '\0';
+  state->cursor = start + replacement_len;
+  line_redraw(state);
+  return true;
+}
+
 static void line_insert_char(line_state_t* state, char ch) {
   if(state->length >= state->content_capacity) {
     beep();
@@ -985,6 +1017,153 @@ static void line_clear_screen(line_state_t* state) {
   state->rendered_length = 0;
   state->needs_carriage_return = false;
   line_redraw(state);
+}
+
+static bool is_completion_separator(char ch) {
+  return ch == ' ' || ch == '\t' || ch == '|' || ch == '>' || ch == '<' || ch == '&' || ch == ';';
+}
+
+static bool line_attempt_completion(line_state_t* state) {
+  if(state == NULL || state->cursor > state->length) {
+    return false;
+  }
+
+  size_t token_start = state->cursor;
+  while(token_start > 0 && !is_completion_separator(state->buffer[token_start - 1])) {
+    token_start--;
+  }
+
+  size_t token_len = state->cursor - token_start;
+  if(token_len >= MOSH_MAX_PATH) {
+    return false;
+  }
+
+  char token[MOSH_MAX_PATH];
+  for(size_t i = 0; i < token_len; i++) {
+    token[i] = state->buffer[token_start + i];
+  }
+  token[token_len] = '\0';
+
+  size_t last_slash = 0;
+  bool has_slash = false;
+  for(size_t i = 0; i < token_len; i++) {
+    if(token[i] == '/') {
+      has_slash = true;
+      last_slash = i;
+    }
+  }
+
+  char dir_fragment[MOSH_MAX_PATH];
+  if(has_slash) {
+    size_t dir_len = last_slash + 1;
+    if(dir_len >= sizeof(dir_fragment)) {
+      return false;
+    }
+    for(size_t i = 0; i < dir_len; i++) {
+      dir_fragment[i] = token[i];
+    }
+    dir_fragment[dir_len] = '\0';
+  } else {
+    dir_fragment[0] = '\0';
+  }
+
+  const char* prefix = has_slash ? token + last_slash + 1 : token;
+  size_t prefix_len = str_len(prefix);
+
+  char search_dir[MOSH_MAX_PATH];
+  if(dir_fragment[0] != '\0') {
+    const char* base = (dir_fragment[0] == '/') ? "/" : current_directory;
+    if(!normalize_path(base, dir_fragment, search_dir, sizeof(search_dir))) {
+      return false;
+    }
+  } else {
+    str_copy(search_dir, sizeof(search_dir), current_directory);
+  }
+
+  char listing[4096];
+  long rc = syscall3(SYS_LISTDIR, (long)search_dir, (long)listing, (long)(sizeof(listing) - 1));
+  if(rc < 0) {
+    return false;
+  }
+
+  size_t list_len = (size_t)rc;
+  if(list_len >= sizeof(listing)) {
+    list_len = sizeof(listing) - 1;
+  }
+  listing[list_len] = '\0';
+
+  const char* matches[MOSH_MAX_COMPLETIONS];
+  bool match_is_dir[MOSH_MAX_COMPLETIONS];
+  size_t match_count = 0;
+
+  size_t pos = 0;
+  while(pos < list_len) {
+    char* entry = &listing[pos];
+    size_t len = 0;
+    while((pos + len) < list_len && listing[pos + len] != '\n') {
+      len++;
+    }
+    listing[pos + len] = '\0';
+    pos += len + 1;
+
+    if(len == 0) {
+      continue;
+    }
+    if(prefix_len > len) {
+      continue;
+    }
+    if(str_ncmp(entry, prefix, prefix_len) != 0) {
+      continue;
+    }
+    if(match_count < MOSH_MAX_COMPLETIONS) {
+      matches[match_count] = entry;
+      match_is_dir[match_count] = (len > 0 && entry[len - 1] == '/');
+      match_count++;
+    }
+  }
+
+  if(match_count == 0) {
+    return false;
+  }
+
+  char new_token[MOSH_MAX_PATH];
+  if(match_count == 1) {
+    const char* match = matches[0];
+    str_copy(new_token, sizeof(new_token), dir_fragment);
+    if(str_len(new_token) + str_len(match) >= sizeof(new_token)) {
+      return false;
+    }
+    strcat(new_token, match);
+    if(!line_replace_range(state, token_start, state->cursor, new_token)) {
+      return false;
+    }
+    if(!match_is_dir[0] && state->cursor == state->length) {
+      line_insert_char(state, ' ');
+    }
+    return true;
+  }
+
+  char lcp[MOSH_MAX_PATH];
+  str_copy(lcp, sizeof(lcp), matches[0]);
+  for(size_t i = 1; i < match_count && lcp[0] != '\0'; i++) {
+    size_t j = 0;
+    while(lcp[j] != '\0' && matches[i][j] != '\0' && lcp[j] == matches[i][j]) {
+      j++;
+    }
+    lcp[j] = '\0';
+  }
+
+  size_t lcp_len = str_len(lcp);
+  if(lcp_len <= prefix_len) {
+    return false;
+  }
+
+  str_copy(new_token, sizeof(new_token), dir_fragment);
+  if(str_len(new_token) + lcp_len >= sizeof(new_token)) {
+    return false;
+  }
+  strcat(new_token, lcp);
+  return line_replace_range(state, token_start, state->cursor, new_token);
 }
 
 static int read_stdin_char(void) {
@@ -1149,7 +1328,9 @@ static size_t read_line(const char* prompt, char* buffer, size_t capacity) {
           break;
         }
         if(ch == '\t') {
-          line_insert_char(&state, ch);
+          if(!line_attempt_completion(&state)) {
+            beep();
+          }
           break;
         }
         if(ch == 0x01) {

@@ -100,9 +100,9 @@ These issues form the backbone of the system and should be prioritized:
 ### 🎨 Shell UX Features (Issues #197-#201, #222)
 ```
 #148 (env vars) ──┐
-                  ├──→ #197 (tab completion)
+                  ├──→ #197 (tab completion) ✅
 #147 (getcwd) ────┼──→ #222 (current dir in prompt) ✅
-                  └──→ #197 (tab completion)
+                  └──→ #197 (tab completion) ✅
 
 #156 (history) ✅ ───→ #199 (Ctrl+R search)
 
@@ -299,7 +299,7 @@ These issues form the backbone of the system and should be prioritized:
 **Device Control**:
 - ✅ **#220**: ioctl syscall - COMPLETE
 
-**Shell UX**: #197-#200 (tab completion, Ctrl shortcuts) — #198 ✅, #200 ✅, #222 (cwd prompt) ✅
+**Shell UX**: #197-#200 (tab completion, Ctrl shortcuts) — #197 ✅, #198 ✅, #200 ✅, #222 (cwd prompt) ✅
 
 **Timeline**: 3-5 months (tracks can run in parallel)
 
@@ -321,7 +321,7 @@ These issues form the backbone of the system and should be prioritized:
 
 ### ⏳ Blocked, Waiting On:
 - **#29 (toolchain)** blocks on: #194, #195
-- **#197 (tab completion)** blocks on: #147 (getcwd/chdir)
+- **#197 (tab completion)** ✅ (dependency #147 satisfied)
 - **#199 (Ctrl+R)** blocks on: #156 (history ✅)
 - **#201 (mouse selection)** blocks on: #143 or #144 (mouse drivers)
 - **#187 (ps/kill)** blocks on: #213 (signals)
@@ -360,7 +360,7 @@ These issues form the backbone of the system and should be prioritized:
 ### 📅 **Next 3-6 Months**
 1. **Threading**: #108 → #109 → #113 → #110 → #111
 2. **IPC**: #102 → #103 → #104
-3. **Shell UX**: #197 → #199 → #201
+3. **Shell UX**: #199 → #201 (tab completion ✅)
 4. **Native compilation**: Begin #190, #191
 
 ## 📈 Progress Assessment
@@ -370,7 +370,7 @@ These issues form the backbone of the system and should be prioritized:
 - Organized into categories with clear dependencies
 - **Major completions**: #192 (crt0), #193 (libc), #148 (env vars), #180-#186 (shell milestone), #222 (cwd prompt), #37, #39 (sync primitives), #205 (I/O scheduler)
 
-### ✅ **Completed Overall** (41 foundation issues! 🚀):
+### ✅ **Completed Overall** (42 foundation issues! 🚀):
 - **Foundation memory management**: #35, #57, #89
 - **Core scheduling**: #34
 - **Synchronization (COMPLETE!)**: #36 (mutex), #37 (semaphore), #39 (rwlock), #40 (condvar)
@@ -388,11 +388,11 @@ These issues form the backbone of the system and should be prioritized:
 - **#194** - Syscall ABI docs (critical path)
 - **#195** - Userland build system (dependencies met: #192✅, #193✅)
 - **#188** - env utility ✅ (built-in /bin/env ships with default env dump)
-- **#197** - Tab completion (dependency met: #147✅) ✨ NOW UNBLOCKED!
+- ✅ **#197** - Tab completion delivered using filesystem scanning
 - **#213** - Shell Ctrl+C (dependencies met: #210✅, #211✅, #212✅)
 - **#221** - Fast syscall instruction
 
-### 📋 **Total Open Issues**: ~70 issues (estimated)
+### 📋 **Total Open Issues**: ~69 issues (estimated)
 - **IPC**: 5 remaining (#105-#107, #213-#214, #221)
   - Pipes: ✅ COMPLETE! (#102 + #206-#209 = 5/5) 🎉
   - Signals: 2 remaining (#213-#214) - 4/6 complete! (#103, #210-#212) ✅✅✅✅
@@ -403,12 +403,12 @@ These issues form the backbone of the system and should be prioritized:
   - ioctl: ✅ COMPLETE! (1/1) 🎉
   - Fast syscalls: 1 (#221)
 - **Shell & utilities**: 1 remaining (#187) - now part of 30-issue Mosh milestone
-- **Shell UX**: 2 (#197, #199, #201) - history (#156) ✅, Ctrl+A/E (#198) ✅, Ctrl+L (#200) ✅, pwd prompt (#222) ✅
+- **Shell UX**: 2 (#199, #201) - history (#156) ✅, Ctrl+A/E (#198) ✅, Ctrl+L (#200) ✅, pwd prompt (#222) ✅, tab completion (#197) ✅
 - **Toolchain**: 4 remaining (#29, #194-#196) - 2/8 complete! ✅✅ (GCC milestone)
 - **Threading**: 5 remaining (#109-#113) - 1/6 complete! ✅
 - **Memory**: 1 (#95 userspace malloc)
 - **Bug fixes**: 1 (#202)
-- **Completed recently**: 36 issues (#192, #193, #148, #180-#188, #37, #39, #205, #108, #206-#212, #215-#220, #147, #102, #103, #165, #198, #200, #203, #222, #156)
+- **Completed recently**: 37 issues (#192, #193, #148, #180-#188, #37, #39, #205, #108, #206-#212, #215-#220, #147, #102, #103, #165, #198, #200, #203, #222, #156, #197)
 - **Closed duplicates**: #157, #165
 - **Previous existing**: ~64 issues
 
@@ -513,7 +513,7 @@ For contributors, issues are organized by difficulty:
 - [ ] Full pthread API (#109-#113)
 - [ ] Complete IPC (#102-#104)
 - [ ] Native compilation (TCC) (#190)
-- [ ] Advanced shell UX (#197-#201)
+- [ ] Advanced shell UX (#199-#201) — tab completion (#197) complete
 - [ ] Running Doom!
 
 ---

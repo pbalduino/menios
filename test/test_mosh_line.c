@@ -15,10 +15,25 @@ void mosh_test_set_env(char** envp);
 
 static char   g_capture[MOSH_CAPTURE_CAPACITY];
 static size_t g_capture_length;
+static const char* g_listdir_response;
+static size_t g_listdir_response_len;
+static long g_listdir_error;
 
 static void reset_capture(void) {
   g_capture_length = 0;
   memset(g_capture, 0, sizeof(g_capture));
+}
+
+static void set_listdir_response(const char* data) {
+  g_listdir_response = data;
+  g_listdir_response_len = data ? strlen(data) : 0;
+  g_listdir_error = 0;
+}
+
+static void set_listdir_error(long err) {
+  g_listdir_response = NULL;
+  g_listdir_response_len = 0;
+  g_listdir_error = err;
 }
 
 void mosh_test_write_bytes(int fd, const char* data, size_t length) {
@@ -63,7 +78,20 @@ long mosh_test_syscall2(long number, long arg1, long arg2) {
 }
 
 long mosh_test_syscall3(long number, long arg1, long arg2, long arg3) {
-  (void)number;
+  if(number == SYS_LISTDIR) {
+    if(g_listdir_error != 0) {
+      return g_listdir_error;
+    }
+    if(g_listdir_response && arg2 != 0 && arg3 > 0) {
+      size_t copy_len = g_listdir_response_len;
+      if(copy_len > (size_t)arg3) {
+        copy_len = (size_t)arg3;
+      }
+      memcpy((void*)arg2, g_listdir_response, copy_len);
+    }
+    return (long)g_listdir_response_len;
+  }
+
   (void)arg1;
   (void)arg2;
   (void)arg3;
@@ -86,6 +114,8 @@ static int capture_contains(const char* text) {
 void setUp(void) {
   reset_capture();
   mosh_test_set_env(NULL);
+  set_listdir_response(NULL);
+  str_copy(current_directory, sizeof(current_directory), "/");
 }
 
 void tearDown(void) {}
@@ -99,6 +129,10 @@ void test_ctrl_e_moves_cursor_to_end(void);
 void test_ctrl_l_clears_screen(void);
 void test_history_arrow_recalls_last_entry(void);
 void test_history_cursor_resets_between_reads(void);
+void test_tab_completion_single_match(void);
+void test_tab_completion_directory_appends_slash(void);
+void test_tab_completion_partial_extension(void);
+void test_tab_completion_no_match_beeps(void);
 
 void test_backspace_redraws_with_carriage_return(void) {
   line_state_t state;
@@ -191,6 +225,10 @@ int main(void) {
   RUN_TEST(test_ctrl_l_clears_screen);
   RUN_TEST(test_history_arrow_recalls_last_entry);
   RUN_TEST(test_history_cursor_resets_between_reads);
+  RUN_TEST(test_tab_completion_single_match);
+  RUN_TEST(test_tab_completion_directory_appends_slash);
+  RUN_TEST(test_tab_completion_partial_extension);
+  RUN_TEST(test_tab_completion_no_match_beeps);
 
   return UNITY_END();
 }
@@ -295,4 +333,54 @@ void test_history_cursor_resets_between_reads(void) {
   len = read_line(MOSH_PROMPT, buffer, sizeof(buffer));
   TEST_ASSERT_EQUAL_STRING("second", buffer);
   TEST_ASSERT_EQUAL_UINT64(strlen("second"), len);
+}
+
+void test_tab_completion_single_match(void) {
+  reset_capture();
+  history_reset();
+  set_listdir_response("foo\nbar\n");
+  const char sequence[] = { 'f', '\t', '\n' };
+  feed_input(sequence, sizeof(sequence));
+  char buffer[32];
+  size_t len = read_line(MOSH_PROMPT, buffer, sizeof(buffer));
+  TEST_ASSERT_EQUAL_STRING("foo ", buffer);
+  TEST_ASSERT_EQUAL_UINT64(strlen("foo "), len);
+}
+
+void test_tab_completion_directory_appends_slash(void) {
+  reset_capture();
+  history_reset();
+  set_listdir_response("kernel/\n");
+  const char sequence[] = { 's', 'r', 'c', '/', '\t', '\n' };
+  feed_input(sequence, sizeof(sequence));
+  char buffer[64];
+  size_t len = read_line(MOSH_PROMPT, buffer, sizeof(buffer));
+  TEST_ASSERT_EQUAL_STRING("src/kernel/", buffer);
+  TEST_ASSERT_EQUAL_UINT64(strlen("src/kernel/"), len);
+}
+
+void test_tab_completion_partial_extension(void) {
+  reset_capture();
+  history_reset();
+  set_listdir_response("foo\nfoobar\n");
+  const char sequence[] = { 'f', 'o', '\t', '\n' };
+  feed_input(sequence, sizeof(sequence));
+  char buffer[32];
+  size_t len = read_line(MOSH_PROMPT, buffer, sizeof(buffer));
+  TEST_ASSERT_EQUAL_STRING("foo", buffer);
+  TEST_ASSERT_EQUAL_UINT64(strlen("foo"), len);
+}
+
+void test_tab_completion_no_match_beeps(void) {
+  reset_capture();
+  history_reset();
+  set_listdir_response("bar\nbaz\n");
+  const char sequence[] = { 'x', '\t', '\n' };
+  feed_input(sequence, sizeof(sequence));
+  char buffer[32];
+  size_t len = read_line(MOSH_PROMPT, buffer, sizeof(buffer));
+  TEST_ASSERT_EQUAL_STRING("x", buffer);
+  TEST_ASSERT_EQUAL_UINT64(strlen("x"), len);
+  TEST_ASSERT_TRUE_MESSAGE(capture_contains("\a"),
+                           "No completion should emit a bell");
 }

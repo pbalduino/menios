@@ -272,7 +272,7 @@
     "github_issue": {
       "number": 197,
       "url": "https://github.com/pbalduino/menios/issues/197",
-      "state": "OPEN"
+      "state": "CLOSED"
     },
     "labels": [
       "enhancement",
@@ -280,7 +280,8 @@
     ],
     "assignees": [
       "pbalduino"
-    ]
+    ],
+    "notes": "Tab completes filesystem entries via SYS_LISTDIR with longest-common-prefix fallback"
   },
   {
     "title": "Research: Port Fish shell to meniOS",

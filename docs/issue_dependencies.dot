@@ -71,7 +71,7 @@ digraph IssueDependencies {
         style=filled;
         fillcolor="#F0FFFF";
 
-        issue197 [label="#197: Tab\ncompletion", fillcolor="#E0FFFF"];
+        issue197 [label="#197: Tab\ncompletion", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED
         issue198 [label="#198: Ctrl+A/E\nline nav", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED
         issue199 [label="#199: Ctrl+R\nreverse search", fillcolor="#E0FFFF"];
         issue200 [label="#200: Ctrl+L\nclear screen", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED
