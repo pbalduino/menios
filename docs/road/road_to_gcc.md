@@ -34,10 +34,11 @@ Services needed for any compiler to function properly.
 
 | Component | Issue | Status | Notes |
 | --- | --- | --- | --- |
-| **Pipes** (broken down) | #206-#209 | ✅ DONE (3/4) | GCC uses pipes between stages |
+| **Pipes & FIFOs** (broken down) | #206-#209 | ✅ COMPLETE | GCC uses pipes between stages |
 | • Pipe data structure | #206 | ✅ DONE | Kernel control path |
 | • Pipe syscall API | #207 | ✅ DONE | pipe() syscall |
 | • Shell pipelines | #208 | ✅ DONE | Shell integration |
+| • Named FIFOs | #209 | ✅ DONE | mkfifo support |
 | **Signals** (broken down) | #210-#214 | ⛳ TODO | For interrupt handling |
 | • Signal bookkeeping | #210 | ⛳ TODO | Kernel infrastructure |
 | • Signal syscalls | #211 | ⛳ TODO | kill(), sigaction() |
@@ -78,7 +79,7 @@ Running compilers natively on meniOS.
 **Dependencies for TCC (#190):**
 - #29 (cross-compiler complete)
 - ✅ #193 (libc) - COMPLETE
-- ✅ #208 (pipes - shell pipelines) - COMPLETE! (#206 ✅, #207 ✅, #208 ✅)
+- ✅ Pipes & FIFOs - **FULLY COMPLETE!** (#206 ✅, #207 ✅, #208 ✅, #209 ✅)
 - #189 (file writes)
 - ✅ #205 (I/O scheduler) - COMPLETE - Performance boost available!
 

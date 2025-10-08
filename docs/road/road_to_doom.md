@@ -61,14 +61,14 @@ Complete multithreading infrastructure for modern applications:
 ### **Phase 3: Advanced IPC** (READY TO IMPLEMENT!)
 Inter-process communication for complex applications:
 
-#### **Pipes and FIFOs** (Issues #206-#209, broken down from #102) (3/4 Complete!)
-- ✅ **Status**: Core features COMPLETE! #206 ✅ #207 ✅ #208 ✅
+#### **Pipes and FIFOs** (Issues #206-#209, broken down from #102) ✅ **COMPLETE!**
+- ✅ **Status**: **FULLY COMPLETE!** #206 ✅ #207 ✅ #208 ✅ #209 ✅
 - **Implementation Path**:
   1. ✅ **#206** - Pipe data structure and kernel control path (CLOSED)
   2. ✅ **#207** - Pipe syscall and userspace API (CLOSED)
   3. ✅ **#208** - Shell pipeline integration (CLOSED)
-  4. **#209** - Named FIFOs (mkfifo) - optional enhancement (2 weeks)
-- **Impact**: Shell operations, process communication, command pipelines - **ALL WORKING!**
+  4. ✅ **#209** - Named FIFOs (mkfifo) (CLOSED)
+- **Impact**: Shell operations, process communication, command pipelines, named FIFOs - **ALL IMPLEMENTED!** 🎉
 
 #### **UNIX Signals** (Issues #210-#214, broken down from #103)
 - ✅ **Status**: In progress — bookkeeping scaffold is in place, ready for syscall layer
@@ -240,11 +240,11 @@ Basic command-line tools for shell interaction:
 8. **#110** – Make libc thread-safe once pthread primitives exist
 9. **#111** – Land advanced pthread synchronization (barriers, robust locks)
 
-**IPC - Pipes** (sequential):
+**IPC - Pipes** (sequential): ✅ **COMPLETE!**
 10. ✅ **#206** – Pipe data structure and kernel control path ✅ *Completed*
 11. ✅ **#207** – Pipe syscall and userspace API ✅ *Completed*
 12. ✅ **#208** – Shell pipeline integration ✅ *Completed*
-13. **#209** – Named FIFOs (optional enhancement)
+13. ✅ **#209** – Named FIFOs (mkfifo) ✅ *Completed*
 
 **IPC - Signals** (sequential):
 14. **#210** – Signal bookkeeping scaffold

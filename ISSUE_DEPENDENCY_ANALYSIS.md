@@ -127,7 +127,7 @@ These issues form the backbone of the system and should be prioritized:
 - #189: ⛳ TODO - High priority (needed for save files, native compilation output)
 - #205: ✅ COMPLETE - Elevator I/O scheduler now improves disk performance!
 
-### 🔌 IPC: Pipes & FIFOs (Issues #206-#209, from #102) (3/4 Complete!)
+### 🔌 IPC: Pipes & FIFOs (Issues #206-#209, from #102) ✅ **COMPLETE!**
 ```
 #96 (fd mgmt) ─────┐
                    ├──→ ✅ #206 (Pipe data structure) - COMPLETE
@@ -139,12 +139,12 @@ These issues form the backbone of the system and should be prioritized:
                     ✅ #208 (Shell pipelines) - COMPLETE ──→ #203 (bug fix)
                            │
                            ↓
-#65 (VFS) ────────→ #209 (Named FIFOs - optional)
+#65 (VFS) ────────→ ✅ #209 (Named FIFOs) - COMPLETE
 ```
 
-**Sequential implementation**: ✅ #206 → ✅ #207 → ✅ #208 → #209
+**Sequential implementation**: ✅ #206 → ✅ #207 → ✅ #208 → ✅ #209
 
-**Priority**: High - Critical for shell and IPC (core features complete!)
+**Priority**: ✅ **COMPLETE** - All pipe and FIFO functionality implemented!
 
 ### 🚦 IPC: Signals (Issues #210-#214, from #103)
 ```
@@ -312,7 +312,6 @@ These issues form the backbone of the system and should be prioritized:
 - **#194 (ABI docs)** - Start immediately! (Critical path)
 - **#198 (Ctrl+A/E)** - Start immediately!
 - **#200 (Ctrl+L)** - Start immediately!
-- **#209 (Named FIFOs)** - Start immediately! (Pipes #206 ✅, #207 ✅, #208 ✅ complete! - optional)
 - **#210 (Signal bookkeeping)** - Start immediately! (IPC foundation)
 - **#215 (Shared mem manager)** - Start immediately! (IPC foundation)
 - **#220 (ioctl syscall)** - Start immediately!
@@ -370,7 +369,7 @@ These issues form the backbone of the system and should be prioritized:
 - Organized into categories with clear dependencies
 - **Major completions**: #192 (crt0), #193 (libc), #148 (env vars), #180-#186 (shell milestone), #37, #39 (sync primitives), #205 (I/O scheduler)
 
-### ✅ **Completed Overall** (24 foundation issues! 🚀):
+### ✅ **Completed Overall** (25 foundation issues! 🚀):
 - **Foundation memory management**: #35, #57, #89
 - **Core scheduling**: #34
 - **Synchronization (COMPLETE!)**: #36 (mutex), #37 (semaphore), #39 (rwlock), #40 (condvar)
@@ -378,24 +377,23 @@ These issues form the backbone of the system and should be prioritized:
 - **Toolchain**: #192 (crt0), #193 (libc)
 - **Shell milestone (8/9!)**: #148 (env vars), #180 (env seeding), #181 (tmpfs validation), #182 (waitpid tests), #183 (/bin utilities), #184 (line editor tests), #185 (PATH search), #186 (pipeline placeholders)
 - **Threading foundation**: #108 (kernel threading)
-- **IPC - Pipes (3/4!)**: #206 (pipe data structure), #207 (pipe syscall API), #208 (shell pipelines)
+- **IPC - Pipes (COMPLETE!)**: #206 (pipe data structure), #207 (pipe syscall API), #208 (shell pipelines), #209 (named FIFOs)
 - **Performance**: #205 (I/O scheduler)
 
-### 🔥 **Ready to Implement** (9 issues - no dependencies!):
+### 🔥 **Ready to Implement** (8 issues - no dependencies!):
 - **#194** - Syscall ABI docs (critical path)
 - **#195** - Userland build system (dependencies met: #192✅, #193✅)
 - **#188** - env utility (dependency met: #148✅)
 - **#198** - Ctrl+A/E shortcuts
 - **#200** - Ctrl+L clear screen
-- **#209** - Named FIFOs (dependencies met: #206✅, #207✅, #208✅ - optional enhancement)
 - **#210** - Signal bookkeeping (IPC foundation)
 - **#215** - Shared mem manager (IPC foundation)
 - **#220** - ioctl syscall
 - **#221** - Fast syscall instruction
 
-### 📋 **Total Open Issues**: ~89 issues (estimated)
-- **IPC**: 13 issues (#209-#221)
-  - Pipes: 1 remaining (#209 - optional) - 3/4 complete! ✅✅✅
+### 📋 **Total Open Issues**: ~88 issues (estimated)
+- **IPC**: 12 issues (#210-#221)
+  - Pipes: ✅ COMPLETE! (4/4) 🎉
   - Signals: 5 (#210-#214)
   - Shared Memory: 5 (#215-#219)
   - ioctl: 1 (#220)
@@ -405,7 +403,7 @@ These issues form the backbone of the system and should be prioritized:
 - **Toolchain**: 3 remaining (#29, #194-#196) - 2/5 complete! ✅
 - **Threading**: 5 remaining (#109-#113) - 1/6 complete! ✅
 - **Bug fixes**: 2 (#202-#203)
-- **Completed recently**: 17 issues (#192, #193, #148, #180-#186, #37, #39, #205, #108, #206, #207, #208)
+- **Completed recently**: 18 issues (#192, #193, #148, #180-#186, #37, #39, #205, #108, #206-#209)
 - **Previous existing**: ~64 issues
 
 ### 🎯 **New Issues by Category**:
