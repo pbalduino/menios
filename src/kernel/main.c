@@ -50,6 +50,7 @@
 #include <kernel/rtc.h>
 #include <kernel/serial.h>
 #include <kernel/services.h>
+#include <kernel/shm.h>
 #include <kernel/thread.h>
 #include <kernel/timer.h>
 #include <kernel/tsc.h>
@@ -147,6 +148,8 @@ void _start() {
   serial_init();
 
   mem_init();
+
+  shm_manager_init();
 
   file_system_init();
 

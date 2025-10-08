@@ -577,6 +577,7 @@ ifeq ($(OS_NAME),linux)
 			src/kernel/proc/kcondvar.c \
 			src/kernel/proc/kmutex.c \
 			src/kernel/proc/signal.c \
+			src/kernel/ipc/shm.c \
 			src/kernel/timer/tsc.c \
 			src/libc/itoa.c \
 			src/libc/string.c \

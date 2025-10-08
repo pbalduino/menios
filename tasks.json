@@ -113,7 +113,7 @@
     "github_issue": {
       "number": 215,
       "url": "https://github.com/pbalduino/menios/issues/215",
-      "state": "OPEN"
+      "state": "CLOSED"
     },
     "labels": [
       "enhancement",
@@ -121,7 +121,8 @@
     ],
     "assignees": [
       "pbalduino"
-    ]
+    ],
+    "notes": "Kernel shared memory manager implemented (see include/kernel/shm.h)"
   },
   {
     "title": "Implement advanced signal features (SIGCHLD, SA_RESTART, vDSO, RT signals)",
