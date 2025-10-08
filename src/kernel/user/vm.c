@@ -3,6 +3,7 @@
 #include <kernel/pmm.h>
 #include <kernel/proc.h>
 #include <kernel/serial.h>
+#include <kernel/shm.h>
 #include <string.h>
 
 static size_t page_align_up(size_t length) {
@@ -43,6 +44,23 @@ static bool map_pages(proc_info_p proc,
   }
 
   return true;
+}
+
+bool vm_range_overlaps(proc_info_p proc, virt_addr_t base, size_t length) {
+  if(proc == NULL || length == 0) {
+    return false;
+  }
+
+  virt_addr_t end = base + length;
+  for(size_t i = 0; i < proc->vm_region_count; i++) {
+    vm_region_t* region = &proc->vm_regions[i];
+    virt_addr_t region_base = region->base;
+    virt_addr_t region_end = region->base + region->length;
+    if(!(end <= region_base || base >= region_end)) {
+      return true;
+    }
+  }
+  return false;
 }
 
 bool vm_map(proc_info_p proc, const vm_map_params_t* params) {
@@ -130,9 +148,79 @@ bool vm_unmap(proc_info_p proc, virt_addr_t base, size_t length) {
   return true;
 }
 
+bool vm_map_shared(proc_info_p proc,
+                   shm_region_t* region,
+                   virt_addr_t base,
+                   uint32_t flags,
+                   bool writable) {
+  if(proc == NULL || region == NULL) {
+    return false;
+  }
+
+  size_t page_count = shm_region_page_count(region);
+  if(page_count == 0) {
+    return false;
+  }
+
+  size_t length = page_count * PAGE_SIZE;
+  if(vm_range_overlaps(proc, base, length)) {
+    return false;
+  }
+
+  if(!vm_region_add(proc, base, length, VM_REGION_SHARED, flags)) {
+    return false;
+  }
+
+  vm_region_t* vm_reg = vm_region_find(proc, base);
+  if(vm_reg == NULL) {
+    if(proc->vm_region_count > 0) {
+      proc->vm_region_count--;
+    }
+    return false;
+  }
+
+  bool user = (flags & VM_REGION_FLAG_USER) != 0;
+
+  size_t mapped = 0;
+  for(; mapped < page_count; ++mapped) {
+    virt_addr_t vaddr = base + (mapped * PAGE_SIZE);
+    phys_addr_t phys = shm_region_page(region, mapped);
+    if(phys == 0 ||
+       !pmm_map_page_in_root(proc->address_space_root, vaddr, phys, writable, user)) {
+      break;
+    }
+    vm_region_note_mapping(vm_reg, vaddr, PAGE_SIZE);
+  }
+
+  if(mapped != page_count) {
+    for(size_t i = 0; i < mapped; ++i) {
+      virt_addr_t vaddr = base + (i * PAGE_SIZE);
+      pmm_unmap_page_in_root(proc->address_space_root, vaddr);
+    }
+    for(size_t idx = 0; idx < proc->vm_region_count; ++idx) {
+      if(&proc->vm_regions[idx] == vm_reg) {
+        for(size_t j = idx + 1; j < proc->vm_region_count; ++j) {
+          proc->vm_regions[j - 1] = proc->vm_regions[j];
+        }
+        proc->vm_region_count--;
+        break;
+      }
+    }
+    return false;
+  }
+
+  vm_reg->committed_base = base;
+  vm_reg->committed_top = base + length;
+  return true;
+}
+
 static bool clone_region(proc_info_p dst,
                          proc_info_p src,
                          vm_region_t* region) {
+  if(region->type == VM_REGION_SHARED) {
+    return true;
+  }
+
   if(!vm_region_add(dst, region->base, region->length, region->type, region->flags)) {
     return false;
   }

@@ -12,7 +12,8 @@ typedef enum vm_region_type_t {
     VM_REGION_DATA,
     VM_REGION_HEAP,
     VM_REGION_STACK,
-    VM_REGION_MMAP
+    VM_REGION_MMAP,
+    VM_REGION_SHARED
 } vm_region_type_t;
 
 #define VM_REGION_FLAG_READ       (1u << 0)

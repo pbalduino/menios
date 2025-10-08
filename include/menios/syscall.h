@@ -31,6 +31,10 @@ extern "C" {
 #define SYS_SIGPROCMASK 68
 #define SYS_FCNTL      72
 #define SYS_IOCTL      73
+#define SYS_SHMGET     74
+#define SYS_SHMAT      75
+#define SYS_SHMDT      76
+#define SYS_SHMCTL     77
 
 #ifdef __cplusplus
 }

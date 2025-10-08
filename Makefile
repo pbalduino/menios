@@ -83,6 +83,7 @@ USERLIBC_SOURCES = \
 	src/libc/fcntl.c \
 	src/libc/itoa.c \
 	src/libc/mman.c \
+	src/libc/sysv_ipc.c \
 	src/libc/string.c \
 	src/libc/signal.c \
 	src/libc/unistd.c
@@ -576,12 +577,13 @@ ifeq ($(OS_NAME),linux)
 			src/kernel/console/ansi.c \
 			src/kernel/proc/kcondvar.c \
 			src/kernel/proc/kmutex.c \
-			src/kernel/proc/signal.c \
-			src/kernel/ipc/shm.c \
-			src/kernel/timer/tsc.c \
-			src/libc/itoa.c \
-			src/libc/string.c \
-			-o "$$file".bin ; \
+		src/kernel/proc/signal.c \
+		src/kernel/ipc/shm.c \
+		src/kernel/user/vm_region.c \
+		src/kernel/timer/tsc.c \
+		src/libc/itoa.c \
+		src/libc/string.c \
+		-o "$$file".bin ; \
 		echo "Testing $$file" ; \
 		"$$file".bin ; \
 		rm "$$file".bin ; \

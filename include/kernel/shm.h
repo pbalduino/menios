@@ -19,6 +19,38 @@ typedef enum {
   SHM_REGION_CREATE_NO_MEMORY = -2
 } shm_region_create_status_t;
 
+#define SHMLBA 4096
+
+#ifndef IPC_CREAT
+#define IPC_CREAT  01000
+#endif
+#ifndef IPC_EXCL
+#define IPC_EXCL   02000
+#endif
+#ifndef IPC_PRIVATE
+#define IPC_PRIVATE ((shm_key_t)0)
+#endif
+
+#ifndef SHM_RDONLY
+#define SHM_RDONLY 010000
+#endif
+#ifndef SHM_RND
+#define SHM_RND    020000
+#endif
+#ifndef SHM_REMAP
+#define SHM_REMAP  040000
+#endif
+
+#ifndef IPC_RMID
+#define IPC_RMID   0
+#endif
+#ifndef IPC_SET
+#define IPC_SET    1
+#endif
+#ifndef IPC_STAT
+#define IPC_STAT   2
+#endif
+
 typedef phys_addr_t (*shm_page_alloc_fn)(size_t page_count);
 typedef void (*shm_page_free_fn)(phys_addr_t base, size_t page_count);
 

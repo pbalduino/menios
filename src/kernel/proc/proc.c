@@ -8,6 +8,7 @@
 #include <kernel/thread.h>
 #include <kernel/tsc.h>
 #include <kernel/timer.h>
+#include <kernel/shm.h>
 #include <kernel/user/elf_loader.h>
 #include <kernel/syscall.h>
 #include <kernel/vm.h>
@@ -127,6 +128,7 @@ static void proc_free_resources(proc_info_p proc) {
     return;
   }
 
+  proc_shm_detach_all(proc);
   proc_release_user_memory(proc);
   proc_file_table_cleanup(proc);
 
@@ -256,6 +258,7 @@ static void scheduler_cleanup_process(proc_info_p proc) {
     return;
   }
 
+  proc_shm_detach_all(proc);
   if(proc->stack_pointer) {
     kfree(proc->stack_pointer);
     proc->stack_pointer = NULL;
@@ -476,6 +479,7 @@ void proc_create(proc_info_p proc, const char* name, void (*entrypoint)(void *),
   proc->cpu_state->ss = KERNEL_DATA_SEGMENT;
   proc->address_space_root = pmm_get_kernel_cr3();
   proc->user_segment_count = 0;
+  proc->shm_attachment_count = 0;
   proc_set_priority(proc, PROC_PRIO_NORMAL);
   proc->time_slice_remaining_us = proc->quantum_us;
 }
@@ -534,6 +538,155 @@ void proc_unregister_user_segment(proc_info_p proc, phys_addr_t phys, size_t pag
       break;
     }
   }
+}
+
+bool proc_shm_track_attachment(proc_info_p proc,
+                               shm_region_t* region,
+                               virt_addr_t base,
+                               size_t length,
+                               int shmid,
+                               int flags) {
+  if(proc == NULL || region == NULL || length == 0) {
+    return false;
+  }
+
+  if(proc->shm_attachment_count >= PROC_MAX_SHM_ATTACHMENTS) {
+    return false;
+  }
+
+  proc_shm_attachment_t* slot = &proc->shm_attachments[proc->shm_attachment_count++];
+  slot->region = region;
+  slot->base = base;
+  slot->length = length;
+  slot->shmid = shmid;
+  slot->flags = flags;
+  shm_region_increment_attachments(region);
+  return true;
+}
+
+bool proc_shm_detach(proc_info_p proc, virt_addr_t base) {
+  if(proc == NULL) {
+    return false;
+  }
+
+  size_t index = 0;
+  bool found = false;
+  proc_shm_attachment_t attachment;
+
+  for(; index < proc->shm_attachment_count; ++index) {
+    if(proc->shm_attachments[index].base == base) {
+      attachment = proc->shm_attachments[index];
+      found = true;
+      break;
+    }
+  }
+
+  if(!found) {
+    return false;
+  }
+
+  if(!vm_unmap(proc, attachment.base, attachment.length)) {
+    return false;
+  }
+
+  for(size_t j = index + 1; j < proc->shm_attachment_count; ++j) {
+    proc->shm_attachments[j - 1] = proc->shm_attachments[j];
+  }
+  proc->shm_attachment_count--;
+
+  shm_region_decrement_attachments(attachment.region);
+  shm_region_unref(attachment.region);
+  return true;
+}
+
+bool proc_shm_remove_attachment(proc_info_p proc,
+                                virt_addr_t base,
+                                proc_shm_attachment_t* out) {
+  if(proc == NULL) {
+    return false;
+  }
+
+  for(size_t i = 0; i < proc->shm_attachment_count; ++i) {
+    if(proc->shm_attachments[i].base == base) {
+      if(out) {
+        *out = proc->shm_attachments[i];
+      }
+      for(size_t j = i + 1; j < proc->shm_attachment_count; ++j) {
+        proc->shm_attachments[j - 1] = proc->shm_attachments[j];
+      }
+      proc->shm_attachment_count--;
+      return true;
+    }
+  }
+  return false;
+}
+
+void proc_shm_detach_all(proc_info_p proc) {
+  if(proc == NULL) {
+    return;
+  }
+
+  while(proc->shm_attachment_count > 0) {
+    proc_shm_attachment_t attachment =
+      proc->shm_attachments[proc->shm_attachment_count - 1];
+    if(!proc_shm_detach(proc, attachment.base)) {
+      break;
+    }
+  }
+}
+
+bool proc_shm_inherit(proc_info_p child, proc_info_p parent) {
+  if(child == NULL || parent == NULL) {
+    return false;
+  }
+
+  size_t original_count = child->shm_attachment_count;
+
+  for(size_t i = 0; i < parent->shm_attachment_count; ++i) {
+    proc_shm_attachment_t* attachment = &parent->shm_attachments[i];
+    uint32_t flags = VM_REGION_FLAG_USER | VM_REGION_FLAG_READ;
+    bool writable = (attachment->flags & SHM_RDONLY) == 0;
+    if(writable) {
+      flags |= VM_REGION_FLAG_WRITE;
+    }
+
+    shm_region_t* region = attachment->region;
+    shm_region_ref(region);
+
+    if(!vm_map_shared(child, region, attachment->base, flags, writable)) {
+      shm_region_unref(region);
+      goto inherit_fail;
+    }
+
+    if(!proc_shm_track_attachment(child,
+                                  region,
+                                  attachment->base,
+                                  attachment->length,
+                                  attachment->shmid,
+                                  attachment->flags)) {
+      vm_unmap(child, attachment->base, attachment->length);
+      shm_region_unref(region);
+      goto inherit_fail;
+    }
+
+    virt_addr_t end = attachment->base + attachment->length;
+    virt_addr_t next = (end + PAGE_SIZE - 1) & ~((virt_addr_t)PAGE_SIZE - 1);
+    if(next > child->mmap_next) {
+      child->mmap_next = next;
+    }
+  }
+
+  return true;
+
+inherit_fail:
+  while(child->shm_attachment_count > original_count) {
+    proc_shm_attachment_t rollback = child->shm_attachments[child->shm_attachment_count - 1];
+    vm_unmap(child, rollback.base, rollback.length);
+    child->shm_attachment_count--;
+    shm_region_decrement_attachments(rollback.region);
+    shm_region_unref(rollback.region);
+  }
+  return false;
 }
 
 void scheduler_set_quantum(uint8_t priority, uint64_t quantum_us) {
@@ -696,6 +849,7 @@ proc_info_p proc_fork(proc_info_p parent, const syscall_frame_t* frame, int* err
   serial_printf("proc_fork: new address space=%lx\n", (unsigned long)new_root);
 
   child->user_segment_count = 0;
+  child->shm_attachment_count = 0;
   child->vm_region_count = 0;
 
   if(!vm_clone(child, parent)) {
@@ -704,6 +858,12 @@ proc_info_p proc_fork(proc_info_p parent, const syscall_frame_t* frame, int* err
     return NULL;
   }
   serial_printf("proc_fork: vm_clone complete\n");
+
+  if(!proc_shm_inherit(child, parent)) {
+    serial_printf("proc_fork: shared memory inheritance failed\n");
+    proc_free_resources(child);
+    return NULL;
+  }
 
   memcpy(child->cpu_state, frame, sizeof(syscall_frame_t));
   child->cpu_state->rax = 0;
@@ -831,6 +991,7 @@ int proc_exec_image(proc_info_p proc,
   proc->heap = 0;
 
   phys_addr_t old_root = proc->address_space_root;
+  proc_shm_detach_all(proc);
   proc_release_user_memory(proc);
 
   if(old_root != 0 && old_root != new_root && old_root != pmm_get_kernel_cr3()) {
@@ -848,6 +1009,7 @@ int proc_exec_image(proc_info_p proc,
   memcpy(proc->vm_regions,
          staging.vm_regions,
          staging.vm_region_count * sizeof(vm_region_t));
+  proc->shm_attachment_count = 0;
   proc->user_mode = true;
   proc->mmap_base = user_mmap_base(proc->pid);
   proc->mmap_next = proc->mmap_base;

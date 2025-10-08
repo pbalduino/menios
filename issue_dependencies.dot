@@ -125,8 +125,8 @@ digraph IssueDependencies {
         issue214 [label="#214: Advanced\nsignals", fillcolor="#DDA0DD"];
 
         // Shared Memory (broken down)
-        issue215 [label="#215: Shared mem\nmanager", fillcolor="#E6E6FA"];
-        issue216 [label="#216: Shared mem\nsyscalls", fillcolor="#E6E6FA"];
+        issue215 [label="#215: Shared mem\nmanager", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED
+        issue216 [label="#216: Shared mem\nsyscalls", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED
         issue217 [label="#217: Shared mem\ncleanup", fillcolor="#E6E6FA"];
         issue218 [label="#218: Shared mem\ntests", fillcolor="#E6E6FA"];
         issue219 [label="#219: Shared mem\ndocs", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED

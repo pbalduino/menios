@@ -98,7 +98,7 @@
     "github_issue": {
       "number": 216,
       "url": "https://github.com/pbalduino/menios/issues/216",
-      "state": "OPEN"
+      "state": "CLOSED"
     },
     "labels": [
       "enhancement",
@@ -106,7 +106,8 @@
     ],
     "assignees": [
       "pbalduino"
-    ]
+    ],
+    "notes": "SysV shared memory syscalls, libc wrappers, and regression coverage in test/test_syscall_shm.c"
   },
   {
     "title": "Implement kernel shared memory region manager",

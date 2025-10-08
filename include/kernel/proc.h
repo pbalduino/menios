@@ -62,6 +62,19 @@ typedef struct proc_user_segment_t {
   size_t      pages;
 } proc_user_segment_t;
 
+struct shm_region;
+typedef struct shm_region shm_region_t;
+
+typedef struct proc_shm_attachment_t {
+  shm_region_t* region;
+  virt_addr_t   base;
+  size_t        length;
+  int           shmid;
+  int           flags;
+} proc_shm_attachment_t;
+
+#define PROC_MAX_SHM_ATTACHMENTS 32
+
 typedef struct cpu_state_t {
   uint64_t r15;
   uint64_t r14;
@@ -126,6 +139,8 @@ typedef struct proc_info_t {
   phys_addr_t  address_space_root;
   proc_user_segment_t user_segments[PROC_MAX_USER_SEGMENTS];
   size_t       user_segment_count;
+  proc_shm_attachment_t shm_attachments[PROC_MAX_SHM_ATTACHMENTS];
+  size_t       shm_attachment_count;
   vm_region_t  vm_regions[PROC_MAX_VM_REGIONS];
   size_t       vm_region_count;
   void(*entrypoint)(void*);
@@ -173,6 +188,18 @@ int proc_exec_image(proc_info_p proc,
                     const proc_exec_args_t* args);
 int proc_kill_pid(uint32_t pid, int code);
 bool proc_user_buffer_accessible(proc_info_p proc, const void* ptr, size_t length);
+bool proc_shm_track_attachment(proc_info_p proc,
+                               shm_region_t* region,
+                               virt_addr_t base,
+                               size_t length,
+                               int shmid,
+                               int flags);
+bool proc_shm_remove_attachment(proc_info_p proc,
+                                virt_addr_t base,
+                                proc_shm_attachment_t* out);
+void proc_shm_detach_all(proc_info_p proc);
+bool proc_shm_inherit(proc_info_p child, proc_info_p parent);
+bool proc_shm_detach(proc_info_p proc, virt_addr_t base);
 
 #ifdef __cplusplus
 }

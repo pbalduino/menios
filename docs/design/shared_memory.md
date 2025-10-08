@@ -183,7 +183,7 @@ int main(void) {
 | Layer      | Tests                                                                 |
 |------------|-----------------------------------------------------------------------|
 | Kernel     | Unit tests for `shm_region` lifecycle; integration tests via host VM. |
-| Userland   | Unity suites linking against libc wrappers.                           |
+| Userland   | Unity suites linking against libc wrappers (see `test/test_syscall_shm.c`). |
 | QEMU       | Smoke tests run from CI to ensure segments survive `fork/exec`.       |
 
 ## Documentation Rollout
@@ -193,4 +193,3 @@ int main(void) {
   above once they compile against the real API.
 - Advertise shared memory in the README roadmap under the IPC milestones when
   all subtasks close.
-

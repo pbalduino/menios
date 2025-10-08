@@ -4,11 +4,15 @@
 #include <kernel/heap.h>
 #include <kernel/mman.h>
 #include <kernel/proc.h>
+#include <kernel/pmm.h>
 #include <kernel/serial.h>
+#include <kernel/shm.h>
 #include <kernel/signal.h>
 #include <kernel/syscall.h>
 #include <kernel/vfs.h>
+#include <kernel/vm.h>
 #include <sys/fcntl.h>
+#include <sys/shm.h>
 #include <string.h>
 #include <stdlib.h>
 
@@ -40,6 +44,10 @@ static uint64_t syscall_sigaction_handler(syscall_frame_t* frame);
 static uint64_t syscall_sigprocmask_handler(syscall_frame_t* frame);
 static uint64_t syscall_proc_list_handler(syscall_frame_t* frame);
 static uint64_t syscall_ioctl_handler(syscall_frame_t* frame);
+static uint64_t syscall_shmget_handler(syscall_frame_t* frame);
+static uint64_t syscall_shmat_handler(syscall_frame_t* frame);
+static uint64_t syscall_shmdt_handler(syscall_frame_t* frame);
+static uint64_t syscall_shmctl_handler(syscall_frame_t* frame);
 
 static syscall_handler_t syscall_table[SYSCALL_MAX];
 
@@ -82,6 +90,82 @@ static void free_string_vector(char** vector, size_t count) {
     }
   }
   kfree(vector);
+}
+
+static size_t shm_region_length_bytes(const shm_region_t* region) {
+  size_t pages = shm_region_page_count(region);
+  return pages * PAGE_SIZE;
+}
+
+static virt_addr_t shm_align_down_hint(virt_addr_t addr, int flags) {
+  if(flags & SHM_RND) {
+    return addr & ~((virt_addr_t)SHMLBA - 1);
+  }
+  return addr & ~((virt_addr_t)PAGE_SIZE - 1);
+}
+
+static virt_addr_t shm_align_up_page(virt_addr_t addr) {
+  if((addr & (PAGE_SIZE - 1)) == 0) {
+    return addr;
+  }
+  return (addr + PAGE_SIZE) & ~((virt_addr_t)PAGE_SIZE - 1);
+}
+
+static bool shm_range_within_bounds(proc_info_p proc, virt_addr_t base, size_t length) {
+  if(proc == NULL) {
+    return false;
+  }
+  virt_addr_t end;
+  if(__builtin_add_overflow(base, length, &end)) {
+    return false;
+  }
+  if(base < proc->mmap_base || end > proc->mmap_limit || base >= end) {
+    return false;
+  }
+  return true;
+}
+
+static int shm_select_address(proc_info_p proc,
+                              size_t length,
+                              void* addr_hint,
+                              int flags,
+                              virt_addr_t* base_out) {
+  if(proc == NULL || length == 0 || base_out == NULL) {
+    return EINVAL;
+  }
+
+  bool hint = (addr_hint != NULL);
+  virt_addr_t base;
+
+  if(hint) {
+    base = shm_align_down_hint((virt_addr_t)addr_hint, flags);
+    if(!shm_range_within_bounds(proc, base, length)) {
+      return EINVAL;
+    }
+    if(vm_range_overlaps(proc, base, length)) {
+      return EINVAL;
+    }
+    *base_out = base;
+    return 0;
+  }
+
+  base = proc->mmap_next ? proc->mmap_next : proc->mmap_base;
+  base = shm_align_up_page(base);
+
+  while(true) {
+    virt_addr_t end;
+    if(__builtin_add_overflow(base, length, &end)) {
+      return ENOMEM;
+    }
+    if(end > proc->mmap_limit || base < proc->mmap_base || base >= end) {
+      return ENOMEM;
+    }
+    if(!vm_range_overlaps(proc, base, length)) {
+      *base_out = base;
+      return 0;
+    }
+    base = shm_align_up_page(end);
+  }
 }
 
 static char* duplicate_user_string(const char* user_ptr) {
@@ -326,6 +410,10 @@ void syscall_init(void) {
   syscall_register(SYS_EXIT, syscall_exit_handler);
   syscall_register(SYS_FCNTL, syscall_fcntl_handler);
   syscall_register(SYS_IOCTL, syscall_ioctl_handler);
+  syscall_register(SYS_SHMGET, syscall_shmget_handler);
+  syscall_register(SYS_SHMAT, syscall_shmat_handler);
+  syscall_register(SYS_SHMDT, syscall_shmdt_handler);
+  syscall_register(SYS_SHMCTL, syscall_shmctl_handler);
 
   serial_printf("syscall_init: initialized dispatcher (INT 0x80)\n");
 }
@@ -765,15 +853,15 @@ static uint64_t syscall_waitpid_handler(syscall_frame_t* frame) {
       return frame->rax;
     }
 
+    caller->waitpid_waiting = true;
+    caller->waitpid_target = (pid <= 0) ? -1 : pid;
+
     if(nonblock) {
-      caller->waitpid_waiting = false;
-      caller->waitpid_target = -1;
+      caller->state = PROC_STATE_WAITING;
       frame->rax = 0;
       return frame->rax;
     }
 
-    caller->waitpid_waiting = true;
-    caller->waitpid_target = (pid <= 0) ? -1 : pid;
     caller->state = PROC_STATE_WAITING;
     proc_request_sleep(0);
     proc_switch((void*)frame);
@@ -1157,5 +1245,204 @@ static uint64_t syscall_ioctl_handler(syscall_frame_t* frame) {
   file_unref(file);
 
   frame->rax = (uint64_t)rc;
+  return frame->rax;
+}
+
+static uint64_t syscall_shmget_handler(syscall_frame_t* frame) {
+  shm_key_t key = (shm_key_t)frame->rdi;
+  size_t size = (size_t)frame->rsi;
+  int shmflg = (int)frame->rdx;
+
+  if(size == 0 && key == IPC_PRIVATE) {
+    frame->rax = (uint64_t)(-EINVAL);
+    return frame->rax;
+  }
+
+  if(size == 0) {
+    size = 1;
+  }
+
+  uint16_t mode = (uint16_t)(shmflg & 0x1FF);
+  bool create = (shmflg & IPC_CREAT) != 0;
+  bool exclusive = create && ((shmflg & IPC_EXCL) != 0);
+
+  if(key != IPC_PRIVATE) {
+    shm_region_t* existing = shm_region_get_by_key(key);
+    if(existing != NULL) {
+      if(exclusive) {
+        shm_region_unref(existing);
+        frame->rax = (uint64_t)(-EEXIST);
+        return frame->rax;
+      }
+      if(create && size > shm_region_size(existing)) {
+        shm_region_unref(existing);
+        frame->rax = (uint64_t)(-EINVAL);
+        return frame->rax;
+      }
+      int id = shm_region_id(existing);
+      shm_region_unref(existing);
+      frame->rax = (uint64_t)id;
+      return frame->rax;
+    }
+
+    if(!create) {
+      frame->rax = (uint64_t)(-ENOENT);
+      return frame->rax;
+    }
+  }
+
+  size_t aligned = (size + PAGE_SIZE - 1) & ~((size_t)PAGE_SIZE - 1);
+  if(aligned == 0) {
+    frame->rax = (uint64_t)(-EINVAL);
+    return frame->rax;
+  }
+
+  shm_region_create_status_t status;
+  shm_region_t* region = shm_region_create(key, aligned, mode, NULL, &status);
+  if(region == NULL) {
+    int err = (status == SHM_REGION_CREATE_INVALID_ARGUMENT) ? EINVAL : ENOMEM;
+    frame->rax = (uint64_t)(-err);
+    return frame->rax;
+  }
+
+  frame->rax = (uint64_t)shm_region_id(region);
+  return frame->rax;
+}
+
+static uint64_t syscall_shmat_handler(syscall_frame_t* frame) {
+  if(current == NULL || !current->user_mode) {
+    frame->rax = (uint64_t)(-ENOSYS);
+    return frame->rax;
+  }
+
+  int shmid = (int)frame->rdi;
+  void* shmaddr = (void*)frame->rsi;
+  int shmflg = (int)frame->rdx;
+
+  if(shmflg & SHM_REMAP) {
+    frame->rax = (uint64_t)(-ENOSYS);
+    return frame->rax;
+  }
+
+  shm_region_t* region = shm_region_get_by_id(shmid);
+  if(region == NULL) {
+    frame->rax = (uint64_t)(-EINVAL);
+    return frame->rax;
+  }
+
+  if(shm_region_marked_for_removal(region)) {
+    shm_region_unref(region);
+    frame->rax = (uint64_t)(-EIDRM);
+    return frame->rax;
+  }
+
+  size_t length = shm_region_length_bytes(region);
+  if(length == 0) {
+    shm_region_unref(region);
+    frame->rax = (uint64_t)(-EINVAL);
+    return frame->rax;
+  }
+
+  bool writable = (shmflg & SHM_RDONLY) == 0;
+  uint32_t flags = VM_REGION_FLAG_USER | VM_REGION_FLAG_READ;
+  if(writable) {
+    flags |= VM_REGION_FLAG_WRITE;
+  }
+
+  virt_addr_t base;
+  int sel_rc = shm_select_address(current, length, shmaddr, shmflg, &base);
+  if(sel_rc != 0) {
+    shm_region_unref(region);
+    frame->rax = (uint64_t)(-sel_rc);
+    return frame->rax;
+  }
+
+  if(!vm_map_shared(current, region, base, flags, writable)) {
+    shm_region_unref(region);
+    frame->rax = (uint64_t)(-ENOMEM);
+    return frame->rax;
+  }
+
+  if(!proc_shm_track_attachment(current, region, base, length, shmid, shmflg)) {
+    vm_unmap(current, base, length);
+    shm_region_unref(region);
+    frame->rax = (uint64_t)(-ENOSPC);
+    return frame->rax;
+  }
+
+  virt_addr_t end = base + length;
+  virt_addr_t next = shm_align_up_page(end);
+  if(next > current->mmap_next) {
+    current->mmap_next = next;
+  }
+
+  frame->rax = (uint64_t)base;
+  return frame->rax;
+}
+
+static uint64_t syscall_shmdt_handler(syscall_frame_t* frame) {
+  if(current == NULL || !current->user_mode) {
+    frame->rax = (uint64_t)(-ENOSYS);
+    return frame->rax;
+  }
+
+  void* addr = (void*)frame->rdi;
+  if(addr == NULL) {
+    frame->rax = (uint64_t)(-EINVAL);
+    return frame->rax;
+  }
+
+  virt_addr_t base = (virt_addr_t)addr;
+  base = shm_align_down_hint(base, 0);
+
+  if(!proc_shm_detach(current, base)) {
+    frame->rax = (uint64_t)(-EINVAL);
+    return frame->rax;
+  }
+
+  frame->rax = 0;
+  return frame->rax;
+}
+
+static uint64_t syscall_shmctl_handler(syscall_frame_t* frame) {
+  int shmid = (int)frame->rdi;
+  int cmd = (int)frame->rsi;
+  struct shmid_ds* user_buf = (struct shmid_ds*)frame->rdx;
+
+  shm_region_t* region = shm_region_get_by_id(shmid);
+  if(region == NULL) {
+    frame->rax = (uint64_t)(-EINVAL);
+    return frame->rax;
+  }
+
+  uint64_t result = 0;
+
+  switch(cmd) {
+    case IPC_RMID:
+      shm_region_set_marked_for_removal(region, true);
+      break;
+    case IPC_STAT: {
+      if(user_buf == NULL ||
+         !proc_user_buffer_accessible(current, user_buf, sizeof(struct shmid_ds))) {
+        result = (uint64_t)(-EFAULT);
+        break;
+      }
+
+      struct shmid_ds info;
+      memset(&info, 0, sizeof(info));
+      info.shm_perm.key = shm_region_key(region);
+      info.shm_perm.mode = shm_region_mode(region);
+      info.shm_segsz = shm_region_size(region);
+      info.shm_nattch = (unsigned short)shm_region_attachment_count(region);
+      memcpy(user_buf, &info, sizeof(info));
+      break;
+    }
+    default:
+      result = (uint64_t)(-ENOSYS);
+      break;
+  }
+
+  shm_region_unref(region);
+  frame->rax = result;
   return frame->rax;
 }

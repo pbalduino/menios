@@ -332,9 +332,16 @@ void shm_region_set_marked_for_removal(shm_region_t* region, bool value) {
   if(region == NULL) {
     return;
   }
+  bool release = false;
   kmutex_lock(&region->lock);
   region->marked_for_removal = value;
+  if(value && region->attachment_count == 0) {
+    release = true;
+  }
   kmutex_unlock(&region->lock);
+  if(release) {
+    shm_region_unref(region);
+  }
 }
 
 bool shm_region_marked_for_removal(shm_region_t* region) {
@@ -361,11 +368,18 @@ void shm_region_decrement_attachments(shm_region_t* region) {
   if(region == NULL) {
     return;
   }
+  bool release = false;
   kmutex_lock(&region->lock);
   if(region->attachment_count > 0) {
     region->attachment_count--;
   }
+  if(region->attachment_count == 0 && region->marked_for_removal) {
+    release = true;
+  }
   kmutex_unlock(&region->lock);
+  if(release) {
+    shm_region_unref(region);
+  }
 }
 
 size_t shm_region_attachment_count(shm_region_t* region) {

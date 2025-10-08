@@ -116,6 +116,11 @@ static int64_t pipe_write_impl(file_t* file, const void* buffer, size_t length) 
 
   kmutex_lock(&shared->lock);
   while(total < length) {
+    if(shared->readers == 0) {
+      kmutex_unlock(&shared->lock);
+      return (total > 0) ? (int64_t)total : -EPIPE;
+    }
+
     while(shared->count == PIPE_BUFFER_SIZE) {
       if(shared->readers == 0) {
         kmutex_unlock(&shared->lock);

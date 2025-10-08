@@ -57,24 +57,6 @@ static uint32_t prot_to_region_flags(int prot) {
   return flags;
 }
 
-static bool ranges_overlap(virt_addr_t a_base, virt_addr_t a_end,
-                           virt_addr_t b_base, virt_addr_t b_end) {
-  return !(a_end <= b_base || a_base >= b_end);
-}
-
-static bool proc_region_overlaps(proc_info_p proc, virt_addr_t base, size_t length) {
-  virt_addr_t end = base + length;
-  for(size_t i = 0; i < proc->vm_region_count; i++) {
-    vm_region_t* region = &proc->vm_regions[i];
-    virt_addr_t region_base = region->base;
-    virt_addr_t region_end = region->base + region->length;
-    if(ranges_overlap(base, end, region_base, region_end)) {
-      return true;
-    }
-  }
-  return false;
-}
-
 static bool check_overflow(virt_addr_t base, size_t length) {
   return length > (size_t)(UINT64_MAX - base);
 }
@@ -119,7 +101,7 @@ void* kmmap(void *addr, size_t length, int prot, int flags, int fd, off_t offset
   }
 
   if(!hint) {
-    while(end <= current->mmap_limit && proc_region_overlaps(current, base, aligned_len)) {
+    while(end <= current->mmap_limit && vm_range_overlaps(current, base, aligned_len)) {
       base = page_align_up_addr(end);
       if(check_overflow(base, aligned_len)) {
         current->errno = ENOMEM;
@@ -132,7 +114,7 @@ void* kmmap(void *addr, size_t length, int prot, int flags, int fd, off_t offset
       current->errno = ENOMEM;
       return MAP_FAILED;
     }
-  } else if(proc_region_overlaps(current, base, aligned_len)) {
+  } else if(vm_range_overlaps(current, base, aligned_len)) {
     current->errno = EINVAL;
     return MAP_FAILED;
   }
