@@ -36,6 +36,16 @@ proc_info_p procs[PROC_MAX] = {
 
 proc_info_p current = &kernel_process_info;
 
+proc_info_p proc_find_by_pid(uint32_t pid) {
+  for(size_t i = 0; i < PROC_MAX; i++) {
+    proc_info_p proc = procs[i];
+    if(proc != NULL && proc->pid == pid) {
+      return proc;
+    }
+  }
+  return NULL;
+}
+
 typedef struct scheduler_queue_t {
   proc_info_p head;
   proc_info_p tail;
@@ -1240,15 +1250,7 @@ void proc_exit(int code) {
 }
 
 int proc_kill_pid(uint32_t pid, int code) {
-  proc_info_p target = NULL;
-  for(size_t i = 0; i < PROC_MAX; i++) {
-    proc_info_p proc = procs[i];
-    if(proc != NULL && proc->pid == pid) {
-      target = proc;
-      break;
-    }
-  }
-
+  proc_info_p target = proc_find_by_pid(pid);
   if(target == NULL || target == &kernel_process_info) {
     return -ESRCH;
   }

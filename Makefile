@@ -84,6 +84,7 @@ USERLIBC_SOURCES = \
 	src/libc/itoa.c \
 	src/libc/mman.c \
 	src/libc/string.c \
+	src/libc/signal.c \
 	src/libc/unistd.c
 
 CRT_SOURCES = user/crt/crt0.S

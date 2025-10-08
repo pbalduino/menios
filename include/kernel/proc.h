@@ -133,7 +133,7 @@ typedef struct proc_info_t {
   file_descriptor_entry_t files[PROC_MAX_FILES];
   uint32_t     signal_pending;
   uint32_t     signal_blocked;
-  sighandler_t signal_handlers[SIG_MAX];
+  struct sigaction signal_actions[SIG_MAX];
 } proc_info_t;
 
 typedef proc_info_t* proc_info_p;
@@ -158,6 +158,7 @@ void proc_request_sleep(uint64_t duration_us);
 void proc_mark_ready(proc_info_p proc);
 proc_info_p proc_fork(proc_info_p parent, const struct syscall_frame_t* frame, int* err_out);
 int proc_waitpid(proc_info_p parent, int pid, int* status_out);
+proc_info_p proc_find_by_pid(uint32_t pid);
 typedef struct proc_exec_args_t {
   size_t argc;
   char** argv;

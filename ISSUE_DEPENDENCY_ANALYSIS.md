@@ -146,10 +146,10 @@ These issues form the backbone of the system and should be prioritized:
 
 **Priority**: ✅ **COMPLETE** - All pipe and FIFO functionality implemented!
 
-### 🚦 IPC: Signals (Issues #210-#214, from #103)
+### 🚦 IPC: Signals (Issues #210-#214, from #103) (1/5 Complete!)
 ```
 #93 (fork/exec) ───┐
-                   ├──→ #210 (Signal bookkeeping)
+                   ├──→ ✅ #210 (Signal bookkeeping) - COMPLETE
 #34 (scheduler) ───┘       │
                            ↓
                     #211 (Signal syscalls)
@@ -164,9 +164,9 @@ These issues form the backbone of the system and should be prioritized:
 #109 (pthread) ────→ #214 (Advanced signals - optional)
 ```
 
-**Sequential implementation**: #210 → #211 → #212 → #213 → #214
+**Sequential implementation**: ✅ #210 → #211 → #212 → #213 → #214
 
-**Priority**: High - Essential for process control
+**Priority**: High - Essential for process control (foundation complete!)
 
 ### 🧠 IPC: Shared Memory (Issues #215-#219, from #104)
 ```
@@ -312,7 +312,7 @@ These issues form the backbone of the system and should be prioritized:
 - **#194 (ABI docs)** - Start immediately! (Critical path)
 - **#198 (Ctrl+A/E)** - Start immediately!
 - **#200 (Ctrl+L)** - Start immediately!
-- **#210 (Signal bookkeeping)** - Start immediately! (IPC foundation)
+- **#211 (Signal syscalls)** - Start immediately! (#210 ✅ complete!)
 - **#215 (Shared mem manager)** - Start immediately! (IPC foundation)
 - **#220 (ioctl syscall)** - Start immediately!
 
@@ -369,7 +369,7 @@ These issues form the backbone of the system and should be prioritized:
 - Organized into categories with clear dependencies
 - **Major completions**: #192 (crt0), #193 (libc), #148 (env vars), #180-#186 (shell milestone), #37, #39 (sync primitives), #205 (I/O scheduler)
 
-### ✅ **Completed Overall** (25 foundation issues! 🚀):
+### ✅ **Completed Overall** (26 foundation issues! 🚀):
 - **Foundation memory management**: #35, #57, #89
 - **Core scheduling**: #34
 - **Synchronization (COMPLETE!)**: #36 (mutex), #37 (semaphore), #39 (rwlock), #40 (condvar)
@@ -378,6 +378,7 @@ These issues form the backbone of the system and should be prioritized:
 - **Shell milestone (8/9!)**: #148 (env vars), #180 (env seeding), #181 (tmpfs validation), #182 (waitpid tests), #183 (/bin utilities), #184 (line editor tests), #185 (PATH search), #186 (pipeline placeholders)
 - **Threading foundation**: #108 (kernel threading)
 - **IPC - Pipes (COMPLETE!)**: #206 (pipe data structure), #207 (pipe syscall API), #208 (shell pipelines), #209 (named FIFOs)
+- **IPC - Signals (1/5!)**: #210 (signal bookkeeping)
 - **Performance**: #205 (I/O scheduler)
 
 ### 🔥 **Ready to Implement** (8 issues - no dependencies!):
@@ -386,15 +387,15 @@ These issues form the backbone of the system and should be prioritized:
 - **#188** - env utility (dependency met: #148✅)
 - **#198** - Ctrl+A/E shortcuts
 - **#200** - Ctrl+L clear screen
-- **#210** - Signal bookkeeping (IPC foundation)
+- **#211** - Signal syscalls (dependency met: #210✅)
 - **#215** - Shared mem manager (IPC foundation)
 - **#220** - ioctl syscall
 - **#221** - Fast syscall instruction
 
-### 📋 **Total Open Issues**: ~88 issues (estimated)
-- **IPC**: 12 issues (#210-#221)
+### 📋 **Total Open Issues**: ~87 issues (estimated)
+- **IPC**: 11 issues (#211-#221)
   - Pipes: ✅ COMPLETE! (4/4) 🎉
-  - Signals: 5 (#210-#214)
+  - Signals: 4 remaining (#211-#214) - 1/5 complete! ✅
   - Shared Memory: 5 (#215-#219)
   - ioctl: 1 (#220)
   - Fast syscalls: 1 (#221)
@@ -403,7 +404,7 @@ These issues form the backbone of the system and should be prioritized:
 - **Toolchain**: 3 remaining (#29, #194-#196) - 2/5 complete! ✅
 - **Threading**: 5 remaining (#109-#113) - 1/6 complete! ✅
 - **Bug fixes**: 2 (#202-#203)
-- **Completed recently**: 18 issues (#192, #193, #148, #180-#186, #37, #39, #205, #108, #206-#209)
+- **Completed recently**: 19 issues (#192, #193, #148, #180-#186, #37, #39, #205, #108, #206-#210)
 - **Previous existing**: ~64 issues
 
 ### 🎯 **New Issues by Category**:

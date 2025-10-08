@@ -26,6 +26,9 @@ extern "C" {
 #define SYS_STDIN_POLL 63
 #define SYS_PROC_KILL  64
 #define SYS_PROC_LIST  65
+#define SYS_KILL       66
+#define SYS_SIGACTION  67
+#define SYS_SIGPROCMASK 68
 #define SYS_FCNTL      72
 
 #ifdef __cplusplus

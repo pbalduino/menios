@@ -39,9 +39,9 @@ Services needed for any compiler to function properly.
 | • Pipe syscall API | #207 | ✅ DONE | pipe() syscall |
 | • Shell pipelines | #208 | ✅ DONE | Shell integration |
 | • Named FIFOs | #209 | ✅ DONE | mkfifo support |
-| **Signals** (broken down) | #210-#214 | ⛳ TODO | For interrupt handling |
-| • Signal bookkeeping | #210 | ⛳ TODO | Kernel infrastructure |
-| • Signal syscalls | #211 | ⛳ TODO | kill(), sigaction() |
+| **Signals** (broken down) | #210-#214 | 🔄 In progress | For interrupt handling |
+| • Signal bookkeeping | #210 | ✅ DONE | Kernel infrastructure |
+| • Signal syscalls | #211 | ⛳ TODO | kill(), sigaction() (ready now!) |
 | • Signal delivery | #212 | ⛳ TODO | User handlers |
 | • Shell Ctrl+C | #213 | ⛳ TODO | Process control |
 | File Write Support | #189 | ⛳ TODO | Compiler output requires writes |

@@ -5,21 +5,14 @@
 extern "C" {
 #endif
 
+#include <signal.h>
 #include <stdbool.h>
 #include <stdint.h>
 
 struct proc_info_t;
 typedef struct proc_info_t* proc_info_p;
 
-#define SIG_MAX   32
-#define SIGINT     2
-#define SIGTERM   15
-#define SIGKILL    9
-
-typedef void (*sighandler_t)(int);
-
-#define SIG_DFL ((sighandler_t)0)
-#define SIG_IGN ((sighandler_t)1)
+#define SIG_MAX 32
 
 static inline uint32_t sigbit(int signo) {
   if(signo <= 0 || signo >= SIG_MAX) {
@@ -34,6 +27,15 @@ void proc_signal_set_blocked(proc_info_p proc, uint32_t mask);
 void proc_signal_enqueue(proc_info_p proc, int signo);
 bool proc_signal_pending(proc_info_p proc);
 int  proc_signal_dequeue(proc_info_p proc);
+int  proc_signal_configure_action(proc_info_p proc,
+                                  int signo,
+                                  const struct sigaction* new_action,
+                                  struct sigaction* old_action);
+int  proc_signal_modify_mask(proc_info_p proc,
+                             int how,
+                             uint32_t mask,
+                             uint32_t* old_mask);
+int  proc_signal_send(proc_info_p proc, int signo);
 
 #ifdef __cplusplus
 }

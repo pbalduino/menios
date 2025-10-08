@@ -315,3 +315,13 @@ int proc_kill_pid(uint32_t pid, int code) {
   (void)code;
   return -ENOSYS;
 }
+
+proc_info_p proc_find_by_pid(uint32_t pid) {
+  for(size_t index = 0; index < PROC_MAX; index++) {
+    proc_info_p proc = procs[index];
+    if(proc != NULL && proc->pid == pid) {
+      return proc;
+    }
+  }
+  return NULL;
+}
