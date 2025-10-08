@@ -12,7 +12,7 @@ typedef struct driver_t {
   void (*shutdown)(void);
   uint8_t (*read)(void);
   void (*write)(void);
-  void (*ioctl)(void);
+  int (*ioctl)(void* device, unsigned long request, void* argp);
   const char name[32];
   const char hid[12];
   void* device;

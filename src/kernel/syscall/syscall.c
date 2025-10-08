@@ -39,6 +39,7 @@ static uint64_t syscall_kill_handler(syscall_frame_t* frame);
 static uint64_t syscall_sigaction_handler(syscall_frame_t* frame);
 static uint64_t syscall_sigprocmask_handler(syscall_frame_t* frame);
 static uint64_t syscall_proc_list_handler(syscall_frame_t* frame);
+static uint64_t syscall_ioctl_handler(syscall_frame_t* frame);
 
 static syscall_handler_t syscall_table[SYSCALL_MAX];
 
@@ -324,6 +325,7 @@ void syscall_init(void) {
   syscall_register(SYS_SLEEP, syscall_sleep_handler);
   syscall_register(SYS_EXIT, syscall_exit_handler);
   syscall_register(SYS_FCNTL, syscall_fcntl_handler);
+  syscall_register(SYS_IOCTL, syscall_ioctl_handler);
 
   serial_printf("syscall_init: initialized dispatcher (INT 0x80)\n");
 }
@@ -1132,4 +1134,28 @@ static uint64_t syscall_fcntl_handler(syscall_frame_t* frame) {
       frame->rax = (uint64_t)(-ENOSYS);
       return frame->rax;
   }
+}
+
+static uint64_t syscall_ioctl_handler(syscall_frame_t* frame) {
+  if(current == NULL) {
+    frame->rax = (uint64_t)(-EINVAL);
+    return frame->rax;
+  }
+
+  int fd = (int)frame->rdi;
+  unsigned long request = (unsigned long)frame->rsi;
+  void* argp = (void*)frame->rdx;
+
+  file_t* file = proc_file_get(current, fd, NULL);
+  if(file == NULL) {
+    int err = current->errno ? current->errno : EBADF;
+    frame->rax = (uint64_t)(-err);
+    return frame->rax;
+  }
+
+  int rc = file_ioctl(file, request, argp);
+  file_unref(file);
+
+  frame->rax = (uint64_t)rc;
+  return frame->rax;
 }

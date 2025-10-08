@@ -16,6 +16,7 @@ typedef struct file_ops_t {
   int64_t (*write)(file_t* file, const void* buffer, size_t length);
   int (*close)(file_t* file);
   int64_t (*seek)(file_t* file, int64_t offset, int whence);
+  int (*ioctl)(file_t* file, unsigned long request, void* argp);
 } file_ops_t;
 
 struct file {
@@ -44,6 +45,7 @@ void file_unref(file_t* file);
 int64_t file_read(file_t* file, void* buffer, size_t length);
 int64_t file_write(file_t* file, const void* buffer, size_t length);
 int64_t file_seek(file_t* file, int64_t offset, int whence);
+int file_ioctl(file_t* file, unsigned long request, void* argp);
 
 void proc_file_table_init(struct proc_info_t* proc);
 void proc_file_table_clone(struct proc_info_t* child, struct proc_info_t* parent);

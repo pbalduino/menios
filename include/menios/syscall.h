@@ -30,6 +30,7 @@ extern "C" {
 #define SYS_SIGACTION  67
 #define SYS_SIGPROCMASK 68
 #define SYS_FCNTL      72
+#define SYS_IOCTL      73
 
 #ifdef __cplusplus
 }

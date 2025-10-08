@@ -8,7 +8,7 @@ This document tracks the three major milestones for meniOS development.
 **Goal**: Complete interactive shell with full user experience
 **GitHub Milestone**: [Mosh](https://github.com/pbalduino/menios/milestone/1)
 
-**Status**: 1/9 complete (11%)
+**Status**: 1/10 complete (10%)
 
 **Assigned Issues**:
 - [x] #185 - PATH search configuration ✅
@@ -20,10 +20,12 @@ This document tracks the three major milestones for meniOS development.
 - [ ] #199 - Ctrl+R reverse search
 - [ ] #200 - Ctrl+L clear screen
 - [ ] #201 - Mouse selection/copy/paste
+- [ ] #222 - Current directory in prompt
 
 **Dependencies**:
 - #187 depends on #213 (signal support for kill)
 - #197 depends on #147 (getcwd/chdir)
+- #222 depends on #147 (getcwd/chdir)
 
 ---
 
@@ -133,10 +135,10 @@ This document tracks the three major milestones for meniOS development.
 
 ## 📈 Overall Progress
 
-- **Total Issues Across Milestones**: 35 issues
-- **Completed**: 5 issues (14.3%)
-- **In Progress**: 30 issues
-- **Ready to Start**: 9 issues (no dependencies)
+- **Total Issues Across Milestones**: 36 issues
+- **Completed**: 5 issues (13.9%)
+- **In Progress**: 31 issues
+- **Ready to Start**: 10 issues (no dependencies)
 
 ## 🚀 Immediate Next Steps
 

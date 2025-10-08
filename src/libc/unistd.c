@@ -1,10 +1,12 @@
 #ifndef MENIOS_KERNEL
 #include <menios/syscall.h>
 #include <menios/syscall_user.h>
+#include <stdarg.h>
 #include <stddef.h>
 #include <stdint.h>
 #include <sys/errno.h>
 #include <sys/fcntl.h>
+#include <sys/ioctl.h>
 #include <unistd.h>
 
 ssize_t read(int fd, void* buffer, size_t length) {
@@ -138,6 +140,31 @@ off_t lseek(int fd, off_t offset, int whence) {
 
   errno = 0;
   return (off_t)rax;
+}
+
+int ioctl(int fd, unsigned long request, ...) {
+  va_list ap;
+  va_start(ap, request);
+  void* argp = va_arg(ap, void*);
+  va_end(ap);
+
+  register uint64_t rax asm("rax") = SYS_IOCTL;
+  register uint64_t rdi asm("rdi") = (uint64_t)fd;
+  register unsigned long rsi asm("rsi") = request;
+  register uint64_t rdx asm("rdx") = (uint64_t)argp;
+
+  asm volatile("int $0x80"
+               : "+a"(rax)
+               : "D"(rdi), "S"(rsi), "d"(rdx)
+               : "rcx", "r11", "memory");
+
+  if((int64_t)rax < 0) {
+    errno = (int)(-((int64_t)rax));
+    return -1;
+  }
+
+  errno = 0;
+  return (int)rax;
 }
 
 pid_t fork(void) {

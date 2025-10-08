@@ -1,5 +1,37 @@
 [
   {
+    "title": "Mosh: show the current directory in the prompt",
+    "github_issue": {
+      "number": 222,
+      "url": "https://github.com/pbalduino/menios/issues/222",
+      "state": "OPEN"
+    },
+    "labels": [
+      "enhancement",
+      "mosh",
+      "blocked"
+    ],
+    "assignees": [
+      "pbalduino"
+    ]
+  },
+  {
+    "title": "Migrate from int 0x80 to syscall instruction for fast system calls",
+    "github_issue": {
+      "number": 221,
+      "url": "https://github.com/pbalduino/menios/issues/221",
+      "state": "OPEN"
+    },
+    "labels": [
+      "enhancement",
+      "performance",
+      "kernel"
+    ],
+    "assignees": [
+      "pbalduino"
+    ]
+  },
+  {
     "title": "Implement ioctl syscall for device-specific operations",
     "github_issue": {
       "number": 220,
@@ -115,112 +147,6 @@
     "labels": [
       "enhancement",
       "mosh"
-    ],
-    "assignees": [
-      "pbalduino"
-    ]
-  },
-  {
-    "title": "Implement basic signal delivery path with user handlers",
-    "github_issue": {
-      "number": 212,
-      "url": "https://github.com/pbalduino/menios/issues/212",
-      "state": "CLOSED"
-    },
-    "labels": [
-      "enhancement",
-      "kernel"
-    ],
-    "assignees": [
-      "pbalduino"
-    ]
-  },
-  {
-    "title": "Expose signal syscalls and userspace API",
-    "github_issue": {
-      "number": 211,
-      "url": "https://github.com/pbalduino/menios/issues/211",
-      "state": "CLOSED"
-    },
-    "labels": [
-      "enhancement",
-      "kernel"
-    ],
-    "assignees": [
-      "pbalduino"
-    ]
-  },
-  {
-    "title": "Implement signal bookkeeping scaffold in kernel",
-    "github_issue": {
-      "number": 210,
-      "url": "https://github.com/pbalduino/menios/issues/210",
-      "state": "CLOSED"
-    },
-    "labels": [
-      "enhancement",
-      "kernel"
-    ],
-    "assignees": [
-      "pbalduino"
-    ]
-  },
-  {
-    "title": "Implement named FIFOs (mkfifo) with VFS integration",
-    "github_issue": {
-      "number": 209,
-      "url": "https://github.com/pbalduino/menios/issues/209",
-      "state": "CLOSED"
-    },
-    "labels": [
-      "enhancement",
-      "nice to have",
-      "kernel"
-    ],
-    "assignees": [
-      "pbalduino"
-    ]
-  },
-  {
-    "title": "Integrate pipes into mosh shell for command pipelines",
-    "github_issue": {
-      "number": 208,
-      "url": "https://github.com/pbalduino/menios/issues/208",
-      "state": "CLOSED"
-    },
-    "labels": [
-      "enhancement",
-      "mosh"
-    ],
-    "assignees": [
-      "pbalduino"
-    ]
-  },
-  {
-    "title": "Expose pipe syscall and userspace API",
-    "github_issue": {
-      "number": 207,
-      "url": "https://github.com/pbalduino/menios/issues/207",
-      "state": "CLOSED"
-    },
-    "labels": [
-      "enhancement",
-      "kernel"
-    ],
-    "assignees": [
-      "pbalduino"
-    ]
-  },
-  {
-    "title": "Implement pipe data structure and kernel control path",
-    "github_issue": {
-      "number": 206,
-      "url": "https://github.com/pbalduino/menios/issues/206",
-      "state": "CLOSED"
-    },
-    "labels": [
-      "enhancement",
-      "kernel"
     ],
     "assignees": [
       "pbalduino"
@@ -386,20 +312,6 @@
     },
     "labels": [
       "documentation",
-      "enhancement"
-    ],
-    "assignees": [
-      "pbalduino"
-    ]
-  },
-  {
-    "title": "Implement crt0 runtime startup code for userland",
-    "github_issue": {
-      "number": 192,
-      "url": "https://github.com/pbalduino/menios/issues/192",
-      "state": "CLOSED"
-    },
-    "labels": [
       "enhancement"
     ],
     "assignees": [
@@ -700,20 +612,6 @@
     ]
   },
   {
-    "title": "Add line editing keys to mosh shell (Ctrl+L/K/U/A/E/R/etc)",
-    "github_issue": {
-      "number": 160,
-      "url": "https://github.com/pbalduino/menios/issues/160",
-      "state": "OPEN"
-    },
-    "labels": [
-      "enhancement"
-    ],
-    "assignees": [
-      "pbalduino"
-    ]
-  },
-  {
     "title": "Add advanced redirection to mosh shell (2>&1, here-docs, etc)",
     "github_issue": {
       "number": 159,
@@ -845,21 +743,6 @@
     ]
   },
   {
-    "title": "Integrate init into boot sequence and update user_demo_launch",
-    "github_issue": {
-      "number": 150,
-      "url": "https://github.com/pbalduino/menios/issues/150",
-      "state": "OPEN"
-    },
-    "labels": [
-      "enhancement",
-      "init"
-    ],
-    "assignees": [
-      "pbalduino"
-    ]
-  },
-  {
     "title": "Implement barebone init program (PID 1) for process supervision",
     "github_issue": {
       "number": 149,
@@ -868,22 +751,6 @@
     },
     "labels": [
       "enhancement",
-      "init"
-    ],
-    "assignees": [
-      "pbalduino"
-    ]
-  },
-  {
-    "title": "Implement environment variables support (getenv/setenv/environ)",
-    "github_issue": {
-      "number": 148,
-      "url": "https://github.com/pbalduino/menios/issues/148",
-      "state": "CLOSED"
-    },
-    "labels": [
-      "enhancement",
-      "good first issue",
       "init"
     ],
     "assignees": [
@@ -1464,20 +1331,6 @@
     ]
   },
   {
-    "title": "Implement pipes (pipe/mkfifo) for inter-process communication",
-    "github_issue": {
-      "number": 102,
-      "url": "https://github.com/pbalduino/menios/issues/102",
-      "state": "CLOSED"
-    },
-    "labels": [
-      "enhancement"
-    ],
-    "assignees": [
-      "pbalduino"
-    ]
-  },
-  {
     "title": "Add LAPIC/HPET fallback for TSC calibration and timer interrupt integration",
     "github_issue": {
       "number": 101,
@@ -1585,7 +1438,8 @@
       "state": "OPEN"
     },
     "labels": [
-      "enhancement"
+      "enhancement",
+      "nice to have"
     ],
     "assignees": [
       "pbalduino"
@@ -1599,7 +1453,8 @@
       "state": "OPEN"
     },
     "labels": [
-      "enhancement"
+      "enhancement",
+      "nice to have"
     ],
     "assignees": [
       "pbalduino"
@@ -1613,7 +1468,8 @@
       "state": "OPEN"
     },
     "labels": [
-      "enhancement"
+      "enhancement",
+      "nice to have"
     ],
     "assignees": [
       "pbalduino"
@@ -1627,7 +1483,8 @@
       "state": "OPEN"
     },
     "labels": [
-      "enhancement"
+      "enhancement",
+      "nice to have"
     ],
     "assignees": [
       "pbalduino"
@@ -1641,7 +1498,8 @@
       "state": "OPEN"
     },
     "labels": [
-      "enhancement"
+      "enhancement",
+      "nice to have"
     ],
     "assignees": [
       "pbalduino"
@@ -1946,20 +1804,6 @@
     "github_issue": {
       "number": 55,
       "url": "https://github.com/pbalduino/menios/issues/55",
-      "state": "OPEN"
-    },
-    "labels": [
-      "enhancement"
-    ],
-    "assignees": [
-      "pbalduino"
-    ]
-  },
-  {
-    "title": "Evolve mosh shell to be the default userland shell for meniOS",
-    "github_issue": {
-      "number": 54,
-      "url": "https://github.com/pbalduino/menios/issues/54",
       "state": "OPEN"
     },
     "labels": [

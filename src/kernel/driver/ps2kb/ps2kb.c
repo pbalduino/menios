@@ -1,3 +1,4 @@
+#include <errno.h>
 #include <kernel/console.h>
 #include <kernel/driver.h>
 #include <kernel/driver/ps2kb.h>
@@ -350,7 +351,11 @@ static uint8_t ps2kb_read(void) {
 void ps2kb_write(void) {
 }
 
-void ps2kb_ioctl(void) {
+int ps2kb_ioctl(void* device, unsigned long request, void* argp) {
+  (void)device;
+  (void)request;
+  (void)argp;
+  return -ENOTTY;
 }
 
 static struct driver_t ps2kb_driver = {

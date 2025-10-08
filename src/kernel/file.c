@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/fcntl.h>
+#include <sys/ioctl.h>
 
 #include <kernel/condvar.h>
 #include <kernel/file.h>
@@ -253,6 +254,25 @@ int64_t file_seek(file_t* file, int64_t offset, int whence) {
   return result;
 }
 
+int file_ioctl(file_t* file, unsigned long request, void* argp) {
+  if(file == NULL) {
+    set_errno(EINVAL);
+    return -EINVAL;
+  }
+  if(file->ops == NULL || file->ops->ioctl == NULL) {
+    set_errno(ENOTTY);
+    return -ENOTTY;
+  }
+
+  int rc = file->ops->ioctl(file, request, argp);
+  if(rc < 0) {
+    set_errno(-rc);
+  } else if(current) {
+    current->errno = 0;
+  }
+  return rc;
+}
+
 void proc_file_table_init(struct proc_info_t* proc) {
   if(proc == NULL) {
     return;
@@ -492,6 +512,7 @@ static const file_ops_t serial_file_ops = {
   .write = serial_write_impl,
   .close = serial_close_noop,
   .seek = NULL,
+  .ioctl = NULL,
 };
 
 static const file_ops_t framebuffer_file_ops = {
@@ -499,6 +520,7 @@ static const file_ops_t framebuffer_file_ops = {
   .write = framebuffer_write_impl,
   .close = serial_close_noop,
   .seek = NULL,
+  .ioctl = NULL,
 };
 
 static const file_ops_t stdin_file_ops = {
@@ -506,6 +528,7 @@ static const file_ops_t stdin_file_ops = {
   .write = NULL,
   .close = serial_close_noop,
   .seek = NULL,
+  .ioctl = NULL,
 };
 
 static int64_t tty_write_impl(file_t* file, const void* buffer, size_t length) {
@@ -518,11 +541,36 @@ static int64_t tty_write_impl(file_t* file, const void* buffer, size_t length) {
   return (int64_t)length;
 }
 
+static int tty_ioctl_impl(file_t* file, unsigned long request, void* argp) {
+  (void)file;
+  switch(request) {
+    case TIOCGWINSZ: {
+      if(argp == NULL) {
+        return -EINVAL;
+      }
+      if(current != NULL && !proc_user_buffer_accessible(current, argp, sizeof(struct winsize))) {
+        return -EFAULT;
+      }
+      struct winsize ws = {
+        .ws_row = 25,
+        .ws_col = 80,
+        .ws_xpixel = 0,
+        .ws_ypixel = 0,
+      };
+      memcpy(argp, &ws, sizeof(ws));
+      return 0;
+    }
+    default:
+      return -ENOTTY;
+  }
+}
+
 static const file_ops_t tty_console_file_ops = {
   .read = stdin_read_impl,
   .write = tty_write_impl,
   .close = serial_close_noop,
   .seek = NULL,
+  .ioctl = tty_ioctl_impl,
 };
 
 #ifdef MENIOS_KERNEL

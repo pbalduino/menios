@@ -96,11 +96,12 @@ These issues form the backbone of the system and should be prioritized:
 
 **Status**: Most shell features already implemented! These are polish and testing.
 
-### 🎨 Shell UX Features (Issues #197-#201)
+### 🎨 Shell UX Features (Issues #197-#201, #222)
 ```
 #148 (env vars) ──┐
                   ├──→ #197 (tab completion)
-#147 (getcwd) ────┘
+#147 (getcwd) ────┼──→ #222 (current dir in prompt)
+                  └──→ #197 (tab completion)
 
 #156 (history) ────→ #199 (Ctrl+R search)
 
@@ -319,6 +320,7 @@ These issues form the backbone of the system and should be prioritized:
 ### ⏳ Blocked, Waiting On:
 - **#29 (toolchain)** blocks on: #194, #195
 - **#197 (tab completion)** blocks on: #147 (getcwd/chdir)
+- **#222 (current dir in prompt)** blocks on: #147 (getcwd/chdir)
 - **#199 (Ctrl+R)** blocks on: #156 (history)
 - **#201 (mouse selection)** blocks on: #143 or #144 (mouse drivers)
 - **#187 (ps/kill)** blocks on: #213 (signals)
@@ -400,7 +402,7 @@ These issues form the backbone of the system and should be prioritized:
   - ioctl: 1 (#220)
   - Fast syscalls: 1 (#221)
 - **Shell & utilities**: 2 remaining (#187, #188) - 8/9 complete! ✅✅✅
-- **Shell UX**: 5 (#197-#201)
+- **Shell UX**: 6 (#197-#201, #222)
 - **Toolchain**: 3 remaining (#29, #194-#196) - 2/5 complete! ✅
 - **Threading**: 5 remaining (#109-#113) - 1/6 complete! ✅
 - **Bug fixes**: 2 (#202-#203)

@@ -1,3 +1,4 @@
+#include <errno.h>
 #include <kernel/ahci.h>
 #include <kernel/console.h>
 #include <kernel/driver.h>
@@ -36,7 +37,11 @@ uint8_t pciroot_read(void) {
 void pciroot_write(void) {
 }
 
-void pciroot_ioctl(void) {
+int pciroot_ioctl(void* device, unsigned long request, void* argp) {
+  (void)device;
+  (void)request;
+  (void)argp;
+  return -ENOTTY;
 }
 
 void pciroot_shutdown(void) {

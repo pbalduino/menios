@@ -403,6 +403,7 @@ static const file_ops_t vfs_file_ops = {
   .write = NULL,
   .close = vfs_file_close_impl,
   .seek = vfs_file_seek_impl,
+  .ioctl = NULL,
 };
 
 static int vfs_open_buffered(const char* path, file_t** out_file) {

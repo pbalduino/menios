@@ -76,6 +76,7 @@ digraph IssueDependencies {
         issue199 [label="#199: Ctrl+R\nreverse search", fillcolor="#E0FFFF"];
         issue200 [label="#200: Ctrl+L\nclear screen", fillcolor="#E0FFFF"];
         issue201 [label="#201: Mouse\nselection", fillcolor="#E0FFFF"];
+        issue222 [label="#222: Current dir\nin prompt", fillcolor="#E0FFFF"];
     }
 
     subgraph cluster_toolchain {
@@ -194,6 +195,7 @@ digraph IssueDependencies {
     // Shell UX dependencies (some complete)
     issue148 -> issue197 [color=cyan, style=dashed];
     issue147 -> issue197 [color=cyan];
+    issue147 -> issue222 [color=cyan];
     issue156 -> issue199 [label="#156: history", color=cyan];
     issue143 -> issue201 [label="#143: PS/2 mouse", color=cyan];
     issue144 -> issue201 [label="#144: USB mouse", color=cyan];
