@@ -90,10 +90,10 @@ A release that meets this milestone must satisfy all of the following:
 ## Future Enhancements (Post-Minimal Shell)
 
 ### IPC and Process Control
-- Expand pipelines to support advanced syntax (append, stderr redirection) once IPC primitives land (#165, #102).
-- Signal delivery/handling for user processes (beyond current CTRL+C kill helper) (#103).
+- Expand pipelines to support advanced syntax (append, stderr redirection) once IPC primitives land (#165, #206-#209).
+- Signal delivery/handling for user processes (beyond current CTRL+C kill helper) (#210-#214).
 - Job control (background tasks, `wait` builtin) (#158).
-- Process management utilities (`ps`, richer `kill` semantics) (#187).
+- Process management utilities (`ps`, richer `kill` semantics) (#187, depends on #213).
 
 ### Shell Usability Features
 - Tab completion for files and directories (#197).

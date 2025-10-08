@@ -3,7 +3,12 @@
 This document provides a comprehensive analysis of dependencies between open issues in the meniOS project, helping prioritize development efforts.
 
 **Last Updated**: 2025-10-07
-**Total Issues Created Today**: 25 new issues (#180-#204, #205)
+**Total Issues**: 44 new issues created recently
+- First batch: #180-#204 (25 issues)
+- I/O scheduler: #205 (1 issue)
+- IPC breakdown: #206-#219 (14 issues from breaking #102, #103, #104)
+- ioctl: #220 (1 issue)
+- Additional utility issues: #204 (3 issues total in recent work)
 
 ## 🎯 Critical Path Issues
 
@@ -17,22 +22,22 @@ These issues form the backbone of the system and should be prioritized:
 5. ✅ **#60** - Filesystem syscalls (CLOSED)
 6. ✅ **#65** - VFS layer (CLOSED)
 
-### Tier 2: Toolchain (CRITICAL PATH!)
-7. **#192** - crt0 runtime startup code
-8. **#193** - Minimal userland libc
+### Tier 2: Toolchain (CRITICAL PATH - Major Progress!)
+7. ✅ **#192** - crt0 runtime startup code (CLOSED)
+8. ✅ **#193** - Minimal userland libc (CLOSED)
 9. **#194** - Syscall ABI documentation
 10. **#195** - Userland build system
 11. **#29** - Cross-compiler toolchain integration
 
-### Tier 3: Shell Milestone
-12. **#148** - Environment variables support
-13. **#180** - Environment seeding in init
-14. **#181** - tmpfs validation
-15. **#182** - waitpid regression test
-16. **#183** - /bin utilities (echo, cat, env, true, false)
-17. **#184** - Line editor coverage
+### Tier 3: Shell Milestone (7/9 Complete! Nearly done! 🎉)
+12. ✅ **#148** - Environment variables support (CLOSED)
+13. ✅ **#180** - Environment seeding in init (CLOSED)
+14. ✅ **#181** - tmpfs validation (CLOSED)
+15. ✅ **#182** - waitpid regression test (CLOSED)
+16. ✅ **#183** - /bin utilities (echo, cat, env, true, false) (CLOSED)
+17. ✅ **#184** - Line editor coverage (CLOSED)
 18. **#185** - PATH search configuration
-19. **#186** - Pipeline placeholders
+19. ✅ **#186** - Pipeline placeholders (CLOSED)
 
 ### Tier 4: Threading Support
 20. **#108** - Kernel threading infrastructure
@@ -114,22 +119,93 @@ These issues form the backbone of the system and should be prioritized:
 #60 (file I/O) ────→ #189 (FAT32 write support)
 
 #114 (block device) ──┐
-#62 (AHCI driver)  ───┼──→ #205 (Elevator I/O scheduler) ──┬──→ #189
-#63 (block cache)  ───┘                                     ├──→ #190 (TCC)
-                                                            └──→ #191 (binutils)
+#62 (AHCI driver)  ───┼──→ #205 (Elevator I/O scheduler) ✅ COMPLETE
+#63 (block cache)  ───┘
 ```
 
-**Priority**:
-- #189: High - Needed for save files, native compilation output
-- #205: Medium - Performance optimization for concurrent disk I/O
+**Status**:
+- #189: ⛳ TODO - High priority (needed for save files, native compilation output)
+- #205: ✅ COMPLETE - Elevator I/O scheduler now improves disk performance!
+
+### 🔌 IPC: Pipes & FIFOs (Issues #206-#209, from #102)
+```
+#96 (fd mgmt) ─────┐
+                   ├──→ #206 (Pipe data structure)
+#40 (condvar) ─────┘       │
+                           ↓
+                    #207 (Pipe syscall API)
+                           │
+                           ↓
+                    #208 (Shell pipelines) ──→ #203 (bug fix)
+                           │
+                           ↓
+#65 (VFS) ────────→ #209 (Named FIFOs - optional)
+```
+
+**Sequential implementation**: #206 → #207 → #208 → #209
+
+**Priority**: High - Critical for shell and IPC
+
+### 🚦 IPC: Signals (Issues #210-#214, from #103)
+```
+#93 (fork/exec) ───┐
+                   ├──→ #210 (Signal bookkeeping)
+#34 (scheduler) ───┘       │
+                           ↓
+                    #211 (Signal syscalls)
+                           │
+                           ↓
+                    #212 (Signal delivery)
+                           │
+                           ↓
+                    #213 (Shell Ctrl+C) ──→ #187 (ps/kill)
+                           │
+                           ↓
+#109 (pthread) ────→ #214 (Advanced signals - optional)
+```
+
+**Sequential implementation**: #210 → #211 → #212 → #213 → #214
+
+**Priority**: High - Essential for process control
+
+### 🧠 IPC: Shared Memory (Issues #215-#219, from #104)
+```
+#57 (VM mgr) ──────┐
+                   ├──→ #215 (Shared mem manager)
+#89 (mmap) ────────┘       │
+                           ↓
+                    #216 (Shared mem syscalls)
+                           │
+                           ↓
+                    #217 (Reference counting)
+                           │
+                           ↓
+                    #218 (Test suite)
+                           │
+                           ↓
+                    #219 (Documentation)
+```
+
+**Sequential implementation**: #215 → #216 → #217 → #218 → #219
+
+**Priority**: Medium - Useful for high-performance IPC
+
+### 🎛️ Device Control (Issue #220)
+```
+#96 (fd mgmt) ─────┐
+                   ├──→ #220 (ioctl syscall)
+#60 (file syscalls) ──┘
+```
+
+**Priority**: Medium - Useful for terminal and device control
 
 ### 🐛 Bug Fixes (Issues #202-#203)
 ```
 #137 (/dev/zero) ──→ #202 (EOF bug)
 
-#102 (pipes) ──────┐
-                   ├──→ #203 (pipeline hang bug)
-#165 (pipeline) ───┘
+#208 (shell pipelines) ──┐
+                         ├──→ #203 (pipeline hang bug)
+#165 (pipeline) ─────────┘
 ```
 
 **Priority**: Low - Not blockers, but should be fixed
@@ -187,16 +263,39 @@ These issues form the backbone of the system and should be prioritized:
 **Timeline**: 3-4 months
 **Why Important**: Enables modern multithreaded applications
 
-### Phase 5: Advanced Features
-**Goal**: Enhanced functionality
-- **#189**: FAT32 write support
-- **#205**: Elevator I/O scheduler (performance)
-- **#102**: Pipes
-- **#103**: UNIX signals
-- **#104**: Shared memory
-- **Shell UX**: #197-#200 (tab completion, Ctrl shortcuts)
+### Phase 5: IPC & Advanced Features
+**Goal**: Inter-process communication and enhanced functionality
 
-**Timeline**: 2-3 months
+**IPC Track A - Pipes** (High Priority):
+- **#206**: Pipe data structure (1-2 weeks)
+- **#207**: Pipe syscall API (1 week)
+- **#208**: Shell pipelines (1-2 weeks)
+- **#209**: Named FIFOs - optional (2 weeks)
+
+**IPC Track B - Signals** (High Priority):
+- **#210**: Signal bookkeeping (1-2 weeks)
+- **#211**: Signal syscalls (1-2 weeks)
+- **#212**: Signal delivery (2-3 weeks)
+- **#213**: Shell Ctrl+C (1-2 weeks)
+- **#214**: Advanced signals - optional (3-4 weeks)
+
+**IPC Track C - Shared Memory** (Medium Priority):
+- **#215**: Shared mem manager (2-3 weeks)
+- **#216**: Shared mem syscalls (1-2 weeks)
+- **#217**: Reference counting (1-2 weeks)
+- **#218**: Test suite (1-2 weeks)
+- **#219**: Documentation (1 week)
+
+**File System & Performance**:
+- **#189**: FAT32 write support
+- **#205**: Elevator I/O scheduler ✅ COMPLETE
+
+**Device Control**:
+- **#220**: ioctl syscall
+
+**Shell UX**: #197-#200 (tab completion, Ctrl shortcuts)
+
+**Timeline**: 3-5 months (tracks can run in parallel)
 
 ### Phase 6: Native Compilation (Long Term)
 **Goal**: Compile on meniOS itself
@@ -210,24 +309,24 @@ These issues form the backbone of the system and should be prioritized:
 ## 🔴 Current Blocking Relationships
 
 ### ✅ Ready to Start NOW (No Dependencies):
-- **#192 (crt0)** - Start immediately!
-- **#194 (ABI docs)** - Start immediately!
+- **#192 (crt0)** - Start immediately! (Critical path)
+- **#194 (ABI docs)** - Start immediately! (Critical path)
 - **#183 (/bin utilities)** - Start immediately!
 - **#184 (line editor tests)** - Start immediately!
 - **#186 (pipeline placeholders)** - Start immediately!
 - **#198 (Ctrl+A/E)** - Start immediately!
 - **#200 (Ctrl+L)** - Start immediately!
+- **#206 (Pipe data structure)** - Start immediately! (IPC foundation)
+- **#210 (Signal bookkeeping)** - Start immediately! (IPC foundation)
+- **#215 (Shared mem manager)** - Start immediately! (IPC foundation)
+- **#220 (ioctl syscall)** - Start immediately!
 
 ### ⏳ Blocked, Waiting On:
-- **#195 (build)** blocks on: #192 *(#193 complete)*
-- **#29 (toolchain)** blocks on: #192-#195
-- **#180 (env seed)** blocks on: #148
-- **#185 (PATH)** blocks on: #148
-- **#188 (env utility)** blocks on: #148
-- **#197 (tab completion)** blocks on: #148, #147
-- **#199 (Ctrl+R)** blocks on: #156
-- **#201 (mouse selection)** blocks on: #143 or #144
-- **#187 (ps/kill)** blocks on: #103
+- **#29 (toolchain)** blocks on: #194, #195
+- **#197 (tab completion)** blocks on: #147 (getcwd/chdir)
+- **#199 (Ctrl+R)** blocks on: #156 (history)
+- **#201 (mouse selection)** blocks on: #143 or #144 (mouse drivers)
+- **#187 (ps/kill)** blocks on: #213 (signals)
 
 ### 🔗 Parallel Development Opportunities:
 1. **Toolchain** (#192-#195) - Critical path
@@ -270,28 +369,46 @@ These issues form the backbone of the system and should be prioritized:
 
 ## 📈 Progress Assessment
 
-### ✅ **Completed Today**:
-- Created 24 new issues (#180-#203)
-- Organized into 6 categories
-- Identified dependencies
-- Updated all documentation
+### ✅ **Completed Recently**:
+- Created 46 new issues and broke down complex IPC tasks
+- Organized into categories with clear dependencies
+- **Major completions**: #192 (crt0), #193 (libc), #148 (env vars), #180-#186 (shell milestone), #37, #39 (sync primitives), #205 (I/O scheduler)
 
-### ✅ **Completed Overall** (8 foundation issues):
-- Foundation memory management (#35, #57, #89)
-- Core scheduling (#34)
-- Basic synchronization (#36, #40)
-- File I/O (#96, #60, #65)
+### ✅ **Completed Overall** (19 foundation issues! 🚀):
+- **Foundation memory management**: #35, #57, #89
+- **Core scheduling**: #34
+- **Synchronization (COMPLETE!)**: #36 (mutex), #37 (semaphore), #39 (rwlock), #40 (condvar)
+- **File I/O**: #96, #60, #65
+- **Toolchain**: #192 (crt0), #193 (libc)
+- **Shell milestone**: #148 (env vars), #180 (env seeding), #181 (tmpfs validation), #182 (waitpid tests), #183 (/bin utilities), #184 (line editor tests), #186 (pipeline placeholders)
+- **Performance**: #205 (I/O scheduler)
 
-### 🔥 **Ready to Implement** (7 issues):
-- #192, #194, #183, #184, #186, #198, #200
+### 🔥 **Ready to Implement** (9 issues - no dependencies!):
+- **#194** - Syscall ABI docs (critical path)
+- **#195** - Userland build system (dependencies met: #192✅, #193✅)
+- **#185** - PATH search (dependency met: #148✅)
+- **#188** - env utility (dependency met: #148✅)
+- **#198** - Ctrl+A/E shortcuts
+- **#200** - Ctrl+L clear screen
+- **#206** - Pipe data structure (IPC foundation)
+- **#210** - Signal bookkeeping (IPC foundation)
+- **#215** - Shared mem manager (IPC foundation)
+- **#220** - ioctl syscall
+- **#221** - Fast syscall instruction
 
-### 📋 **Total Open Issues**: ~88 issues
-- Shell & utilities: 9 (#180-#188)
-- Shell UX: 5 (#197-#201)
-- Toolchain: 7 (#29, #192-#196)
-- Bug fixes: 2 (#202-#203)
-- I/O Performance: 1 (#205)
-- Previous: ~64 issues
+### 📋 **Total Open Issues**: ~94 issues (estimated)
+- **IPC**: 16 issues (#206-#221)
+  - Pipes: 4 (#206-#209)
+  - Signals: 5 (#210-#214)
+  - Shared Memory: 5 (#215-#219)
+  - ioctl: 1 (#220)
+  - Fast syscalls: 1 (#221)
+- **Shell & utilities**: 3 remaining (#185, #187, #188) - 6/9 complete! ✅✅
+- **Shell UX**: 5 (#197-#201)
+- **Toolchain**: 3 remaining (#29, #194-#196) - 2/5 complete! ✅
+- **Bug fixes**: 2 (#202-#203)
+- **Completed recently**: 12 issues (#192, #193, #148, #180-#186, #37, #39, #205)
+- **Previous existing**: ~64 issues
 
 ### 🎯 **New Issues by Category**:
 - **Toolchain**: 7 issues (highest priority)

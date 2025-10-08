@@ -1,14 +1,225 @@
 [
   {
-    "title": "Implement Elevator-Based Block I/O Scheduler",
+    "title": "Implement ioctl syscall for device-specific operations",
     "github_issue": {
-      "number": 205,
-      "url": "https://github.com/pbalduino/menios/issues/205",
+      "number": 220,
+      "url": "https://github.com/pbalduino/menios/issues/220",
       "state": "OPEN"
     },
     "labels": [
       "enhancement",
-      "performance",
+      "kernel"
+    ],
+    "assignees": [
+      "pbalduino"
+    ]
+  },
+  {
+    "title": "Document shared memory and provide example programs",
+    "github_issue": {
+      "number": 219,
+      "url": "https://github.com/pbalduino/menios/issues/219",
+      "state": "OPEN"
+    },
+    "labels": [
+      "documentation",
+      "enhancement"
+    ],
+    "assignees": [
+      "pbalduino"
+    ]
+  },
+  {
+    "title": "Create comprehensive shared memory test suite",
+    "github_issue": {
+      "number": 218,
+      "url": "https://github.com/pbalduino/menios/issues/218",
+      "state": "OPEN"
+    },
+    "labels": [
+      "enhancement",
+      "testing"
+    ],
+    "assignees": [
+      "pbalduino"
+    ]
+  },
+  {
+    "title": "Implement shared memory reference counting and cleanup",
+    "github_issue": {
+      "number": 217,
+      "url": "https://github.com/pbalduino/menios/issues/217",
+      "state": "OPEN"
+    },
+    "labels": [
+      "enhancement",
+      "kernel"
+    ],
+    "assignees": [
+      "pbalduino"
+    ]
+  },
+  {
+    "title": "Expose shared memory syscalls and userspace API",
+    "github_issue": {
+      "number": 216,
+      "url": "https://github.com/pbalduino/menios/issues/216",
+      "state": "OPEN"
+    },
+    "labels": [
+      "enhancement",
+      "kernel"
+    ],
+    "assignees": [
+      "pbalduino"
+    ]
+  },
+  {
+    "title": "Implement kernel shared memory region manager",
+    "github_issue": {
+      "number": 215,
+      "url": "https://github.com/pbalduino/menios/issues/215",
+      "state": "OPEN"
+    },
+    "labels": [
+      "enhancement",
+      "kernel"
+    ],
+    "assignees": [
+      "pbalduino"
+    ]
+  },
+  {
+    "title": "Implement advanced signal features (SIGCHLD, SA_RESTART, vDSO, RT signals)",
+    "github_issue": {
+      "number": 214,
+      "url": "https://github.com/pbalduino/menios/issues/214",
+      "state": "OPEN"
+    },
+    "labels": [
+      "enhancement",
+      "nice to have",
+      "kernel"
+    ],
+    "assignees": [
+      "pbalduino"
+    ]
+  },
+  {
+    "title": "Integrate signals into mosh shell for Ctrl+C and process control",
+    "github_issue": {
+      "number": 213,
+      "url": "https://github.com/pbalduino/menios/issues/213",
+      "state": "OPEN"
+    },
+    "labels": [
+      "enhancement",
+      "mosh"
+    ],
+    "assignees": [
+      "pbalduino"
+    ]
+  },
+  {
+    "title": "Implement basic signal delivery path with user handlers",
+    "github_issue": {
+      "number": 212,
+      "url": "https://github.com/pbalduino/menios/issues/212",
+      "state": "OPEN"
+    },
+    "labels": [
+      "enhancement",
+      "kernel"
+    ],
+    "assignees": [
+      "pbalduino"
+    ]
+  },
+  {
+    "title": "Expose signal syscalls and userspace API",
+    "github_issue": {
+      "number": 211,
+      "url": "https://github.com/pbalduino/menios/issues/211",
+      "state": "OPEN"
+    },
+    "labels": [
+      "enhancement",
+      "kernel"
+    ],
+    "assignees": [
+      "pbalduino"
+    ]
+  },
+  {
+    "title": "Implement signal bookkeeping scaffold in kernel",
+    "github_issue": {
+      "number": 210,
+      "url": "https://github.com/pbalduino/menios/issues/210",
+      "state": "OPEN"
+    },
+    "labels": [
+      "enhancement",
+      "kernel"
+    ],
+    "assignees": [
+      "pbalduino"
+    ]
+  },
+  {
+    "title": "Implement named FIFOs (mkfifo) with VFS integration",
+    "github_issue": {
+      "number": 209,
+      "url": "https://github.com/pbalduino/menios/issues/209",
+      "state": "OPEN"
+    },
+    "labels": [
+      "enhancement",
+      "nice to have",
+      "kernel"
+    ],
+    "assignees": [
+      "pbalduino"
+    ]
+  },
+  {
+    "title": "Integrate pipes into mosh shell for command pipelines",
+    "github_issue": {
+      "number": 208,
+      "url": "https://github.com/pbalduino/menios/issues/208",
+      "state": "OPEN"
+    },
+    "labels": [
+      "enhancement",
+      "mosh"
+    ],
+    "assignees": [
+      "pbalduino"
+    ]
+  },
+  {
+    "title": "Expose pipe syscall and userspace API",
+    "github_issue": {
+      "number": 207,
+      "url": "https://github.com/pbalduino/menios/issues/207",
+      "state": "OPEN"
+    },
+    "labels": [
+      "enhancement",
+      "kernel"
+    ],
+    "assignees": [
+      "pbalduino"
+    ]
+  },
+  {
+    "title": "Implement pipe data structure and kernel control path",
+    "github_issue": {
+      "number": 206,
+      "url": "https://github.com/pbalduino/menios/issues/206",
+      "state": "OPEN"
+    },
+    "labels": [
+      "enhancement",
       "kernel"
     ],
     "assignees": [
@@ -186,7 +397,7 @@
     "github_issue": {
       "number": 192,
       "url": "https://github.com/pbalduino/menios/issues/192",
-      "state": "OPEN"
+      "state": "CLOSED"
     },
     "labels": [
       "enhancement"
@@ -668,7 +879,7 @@
     "github_issue": {
       "number": 148,
       "url": "https://github.com/pbalduino/menios/issues/148",
-      "state": "OPEN"
+      "state": "CLOSED"
     },
     "labels": [
       "enhancement",

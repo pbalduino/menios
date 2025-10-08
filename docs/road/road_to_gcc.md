@@ -33,11 +33,19 @@ Services needed for any compiler to function properly.
 
 | Component | Issue | Status | Notes |
 | --- | --- | --- | --- |
-| Pipes/FIFOs | #102 | ⛳ TODO | GCC uses pipes between stages |
-| UNIX Signals | #103 | ⛳ TODO | For interrupt handling |
+| **Pipes** (broken down) | #206-#209 | ⛳ TODO | GCC uses pipes between stages |
+| • Pipe data structure | #206 | ⛳ TODO | Kernel control path |
+| • Pipe syscall API | #207 | ⛳ TODO | pipe() syscall |
+| • Shell pipelines | #208 | ⛳ TODO | Shell integration |
+| **Signals** (broken down) | #210-#214 | ⛳ TODO | For interrupt handling |
+| • Signal bookkeeping | #210 | ⛳ TODO | Kernel infrastructure |
+| • Signal syscalls | #211 | ⛳ TODO | kill(), sigaction() |
+| • Signal delivery | #212 | ⛳ TODO | User handlers |
+| • Shell Ctrl+C | #213 | ⛳ TODO | Process control |
 | File Write Support | #189 | ⛳ TODO | Compiler output requires writes |
-| I/O Scheduler | #205 | ⛳ TODO | Better performance for concurrent disk I/O |
+| I/O Scheduler | #205 | ✅ DONE | Better performance for concurrent disk I/O |
 | Threading | #109-111 | ⛳ TODO | GCC uses threads for optimization |
+| Fast Syscalls | #221 | ⛳ TODO | 3-5x faster syscall performance |
 
 **Timeline Estimate:** 3-4 months
 
@@ -65,16 +73,16 @@ Running compilers natively on meniOS.
 
 **Dependencies for TCC (#190):**
 - #29 (cross-compiler complete)
-- #193 (libc)
-- #102 (pipes)
+- #193 (libc) ✅ *Complete*
+- #206-#208 (pipes - at least through shell pipelines)
 - #189 (file writes)
-- #205 (I/O scheduler - optional but beneficial)
+- #205 (I/O scheduler) ✅ *Complete* - Performance boost available!
 
 **Dependencies for binutils (#191):**
 - #29 (cross-compiler complete)
-- #193 (libc)
+- #193 (libc) ✅ *Complete*
 - #189 (file writes)
-- #205 (I/O scheduler - optional but beneficial)
+- #205 (I/O scheduler) ✅ *Complete* - Performance boost available!
 
 **Timeline Estimate:** 6-12 months
 

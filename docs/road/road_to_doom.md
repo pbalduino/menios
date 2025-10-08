@@ -61,20 +61,38 @@ Complete multithreading infrastructure for modern applications:
 ### **Phase 3: Advanced IPC** (READY TO IMPLEMENT!)
 Inter-process communication for complex applications:
 
-#### **Pipes and FIFOs** (Issue #102)
+#### **Pipes and FIFOs** (Issues #206-#209, broken down from #102)
 - ✅ **Status**: Ready to implement (file descriptors complete, condition variables complete)
-- **Scope**: pipe(), mkfifo(), bidirectional communication
-- **Impact**: Shell operations, process communication
+- **Implementation Path**:
+  1. **#206** - Pipe data structure and kernel control path (1-2 weeks)
+  2. **#207** - Pipe syscall and userspace API (1 week)
+  3. **#208** - Shell pipeline integration (1-2 weeks)
+  4. **#209** - Named FIFOs (mkfifo) - optional (2 weeks)
+- **Impact**: Shell operations, process communication, command pipelines
 
-#### **UNIX Signals** (Issue #103)
-- ✅ **Status**: Ready to implement (fork/exec complete, waiting on Issue #101 timers)
-- **Scope**: Signal delivery, handlers, masks, default actions
-- **Impact**: Process control, error handling, graceful shutdown
+#### **UNIX Signals** (Issues #210-#214, broken down from #103)
+- ✅ **Status**: Ready to implement (fork/exec complete)
+- **Implementation Path**:
+  1. **#210** - Signal bookkeeping scaffold (1-2 weeks)
+  2. **#211** - Signal syscalls (kill, sigaction, etc.) (1-2 weeks)
+  3. **#212** - Basic signal delivery path (2-3 weeks)
+  4. **#213** - Shell Ctrl+C integration (1-2 weeks)
+  5. **#214** - Advanced signal features (SIGCHLD, SA_RESTART) - optional (3-4 weeks)
+- **Impact**: Process control, Ctrl+C handling, error handling, graceful shutdown
 
-#### **Shared Memory** (Issue #104)
+#### **Shared Memory** (Issues #215-#219, broken down from #104)
 - ✅ **Status**: Ready to implement (VM manager complete)
-- **Scope**: shmget/shmat/shmdt for high-performance IPC
-- **Impact**: Fast inter-process data sharing
+- **Implementation Path**:
+  1. **#215** - Kernel shared memory region manager (2-3 weeks)
+  2. **#216** - Shared memory syscalls (shmget/shmat/shmdt) (1-2 weeks)
+  3. **#217** - Reference counting and cleanup (1-2 weeks)
+  4. **#218** - Comprehensive test suite (1-2 weeks)
+  5. **#219** - Documentation and examples (1 week)
+- **Impact**: Fast inter-process data sharing, audio/video buffers
+
+#### **Device Control** (Issue #220)
+- **#220** - ioctl syscall for device-specific operations
+- **Impact**: Terminal control, framebuffer config, device management
 
 ### **Phase 4: File System & Storage** ✅ **MOSTLY COMPLETE**
 We can mount and read from disk images today; write support is still limited.
@@ -104,10 +122,10 @@ We can mount and read from disk images today; write support is still limited.
 - **Scope**: FAT32 write support for file creation, modification, deletion
 - **Impact**: Save games, configuration files, native compilation output
 
-#### **I/O Scheduler** (Issue #205) 🚧 **Pending**
-- **Scope**: Elevator-based block I/O scheduler for improved disk performance
-- **Dependencies**: Issues #114, #62, #63 (all complete)
+#### **I/O Scheduler** (Issue #205) ✅ **COMPLETE**
+- ✅ **Status**: Elevator-based block I/O scheduler is now implemented!
 - **Impact**: Reduced seek latency for concurrent disk operations (shell + Doom asset streaming)
+- **Benefits**: Better performance when multiple processes access disk simultaneously
 
 ### **Phase 5: Graphics & Input**
 Visual output and user interaction:
@@ -220,20 +238,41 @@ Basic command-line tools for shell interaction:
 6. **#109** – Implement the pthread API so user programs can spin up threads
 7. **#110** – Make libc thread-safe once pthread primitives exist
 8. **#111** – Land advanced pthread synchronization (barriers, robust locks)
-9. **#102** – Add pipes/FIFOs for shell pipelines and IPC
-10. **#103** – Deliver UNIX signals so processes can be controlled from the shell
-11. **#104** – Wire shared memory to back high-performance IPC (and future audio)
+
+**IPC - Pipes** (sequential):
+9. **#206** – Pipe data structure and kernel control path
+10. **#207** – Pipe syscall and userspace API
+11. **#208** – Shell pipeline integration
+12. **#209** – Named FIFOs (optional)
+
+**IPC - Signals** (sequential):
+13. **#210** – Signal bookkeeping scaffold
+14. **#211** – Signal syscalls (kill, sigaction, sigprocmask, sigsuspend)
+15. **#212** – Basic signal delivery path with user handlers
+16. **#213** – Shell Ctrl+C integration
+17. **#214** – Advanced signal features (optional)
+
+**IPC - Shared Memory** (sequential):
+18. **#215** – Kernel shared memory region manager
+19. **#216** – Shared memory syscalls (shmget, shmat, shmdt, shmctl)
+20. **#217** – Reference counting and cleanup
+21. **#218** – Comprehensive test suite
+22. **#219** – Documentation and examples
+
+**IPC - Other**:
+23. **#220** – ioctl syscall for device-specific operations
 
 ### System Services
-12. **#33** – Bring up the audio subsystem for Doom's sound effects/music
-13. **#189** – Add FAT32 write support for save games and config files
-14. **#205** – Implement elevator I/O scheduler for better disk performance
-15. **#183** – Provide basic `/bin` utilities (echo, cat, env, true, false)
-16. **#187** – Add process management tools (ps, kill)
+24. **#33** – Bring up the audio subsystem for Doom's sound effects/music
+25. **#189** – Add FAT32 write support for save games and config files
+26. ✅ **#205** – Elevator I/O scheduler (COMPLETE!)
+27. **#183** – Provide basic `/bin` utilities (echo, cat, env, true, false)
+28. **#187** – Add process management tools (ps, kill)
+29. **#221** – Migrate to fast syscall instruction for 3-5x performance boost
 
 ### Future: Native Compilation
-17. **#190** – Port TCC (Tiny C Compiler) to meniOS
-18. **#191** – Port binutils (as, ld) for native development
+30. **#190** – Port TCC (Tiny C Compiler) to meniOS
+31. **#191** – Port binutils (as, ld) for native development
 
 These items unlock the bulk of the remaining roadmap phases (threaded libc, IPC,
 networking) and pave the way for shipping a Doom-capable user environment.

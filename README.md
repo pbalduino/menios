@@ -18,7 +18,7 @@ MeniOS has made significant progress with core kernel functionality now solidly 
 ### ✅ **Completed Core Infrastructure**
 - **✅ Memory Management**: Physical memory mapping, virtual memory allocation, and kernel heap management (Issues #35, #57)
 - **✅ Process Scheduling**: Preemptive userland scheduler with kernel threads and time slicing (Issue #34)
-- **✅ Synchronization**: Blocking mutexes, condition variables, semaphores, and read-write locks with scheduler integration (Issues #36, #37, #39, #40)
+- **✅ Synchronization**: COMPLETE! Blocking mutexes, condition variables, semaphores, and read-write locks with scheduler integration (Issues #36, #37, #39, #40) 🎉
 - **Console System**: ANSI escape sequence support with scrolling and color output
 - **Input/Output**: PS/2 keyboard driver with buffered input
 - **Debugging**: Page fault and GPF handlers for system diagnostics
@@ -114,18 +114,20 @@ Expect the log to show the `[user_demo]` messages on screen and in `com1.log`, c
 
 ### 🚧 **In Progress & Planned**
 
-#### **Critical Path: Toolchain (Issues #29, #192-#195)**
-- [ ] **#192**: crt0 runtime startup code (ready to start!)
-- [x] **#193**: Minimal userland libc (syscalls, strings, memory, stdio)
+#### **Critical Path: Toolchain (Issues #29, #192-#195)** 🚀 Major Progress!
+- [x] **#192**: crt0 runtime startup code ✅ COMPLETE!
+- [x] **#193**: Minimal userland libc (syscalls, strings, memory, stdio) ✅ COMPLETE!
 - [ ] **#194**: Syscall ABI documentation (ready to start!)
-- [ ] **#195**: Userland build system
-- [ ] **#29**: Cross-compiler toolchain integration
+- [ ] **#195**: Userland build system (ready to start - dependencies met!)
+- [ ] **#29**: Cross-compiler toolchain integration (blocked on #194, #195)
 
-#### **Shell Milestone (Issues #180-#188)**
-- [ ] **Environment & Utilities**: Environment variables (#148), seeding (#180), PATH search (#185)
-- [ ] **Testing & Validation**: tmpfs (#181), waitpid tests (#182), line editor coverage (#184)
-- [ ] **Utilities**: /bin tools (#183), ps/kill (#187), env (#188)
-- [ ] **Pipeline Support**: Pipeline placeholders (#186)
+#### **Shell Milestone (Issues #180-#188)** 🎯 7/9 Complete!
+- [x] **Environment**: Environment variables (#148) ✅, seeding (#180) ✅
+- [ ] **Environment**: PATH search (#185) - ready now!, env utility (#188) - ready now!
+- [x] **Testing & Validation**: tmpfs (#181) ✅, waitpid tests (#182) ✅, line editor coverage (#184) ✅
+- [x] **Utilities**: /bin tools (#183) ✅
+- [ ] **Utilities**: ps/kill (#187) - blocked on signals (#213)
+- [x] **Pipeline Support**: Pipeline placeholders (#186) ✅
 
 #### **Shell UX Features (Issues #197-#201)**
 - [ ] **Keyboard Shortcuts**: Tab completion (#197), Ctrl+A/E (#198), Ctrl+R (#199), Ctrl+L (#200)
@@ -133,8 +135,12 @@ Expect the log to show the `[user_demo]` messages on screen and in `com1.log`, c
 
 #### **System Features**
 - [ ] **Threading Support**: Complete pthread API and multithreading (Issues #108-#113)
-- [ ] **Advanced IPC**: Signals, shared memory, microkernel IPC (Issues #102-#107)
-- [ ] **Filesystem**: FAT32 write support (#189), Elevator I/O scheduler (#205)
+- [ ] **IPC - Pipes**: Data structure (#206), Syscall API (#207), Shell pipelines (#208), Named FIFOs (#209)
+- [ ] **IPC - Signals**: Bookkeeping (#210), Syscalls (#211), Delivery (#212), Shell Ctrl+C (#213), Advanced (#214)
+- [ ] **IPC - Shared Memory**: Manager (#215), Syscalls (#216), Cleanup (#217), Tests (#218), Docs (#219)
+- [ ] **IPC - Other**: ioctl (#220), Unix domain sockets (#105), Microkernel IPC (#106-#107)
+- [x] **Filesystem - I/O Scheduler**: Elevator I/O scheduler (#205) ✅ COMPLETE
+- [ ] **Filesystem - Write Support**: FAT32 write support (#189)
 - [ ] **Networking**: Complete TCP/IP stack (Issues #67-#73)
 - [ ] **Graphics**: Framebuffer interface and input subsystem (Issues #31-#33)
 
@@ -156,14 +162,20 @@ Remaining major components for Doom:
 
 See [`road_to_doom.md`](docs/road/road_to_doom.md) for the complete roadmap and [`tasks.json`](tasks.json) for detailed task tracking.
 
-**📊 Progress Assessment**: With 8 major foundation issues completed and 88 open issues (25 created recently!), meniOS is now positioned for rapid feature development. The critical path forward is the **toolchain** (#192-#195, #29), which will enable standard C development for all userland applications.
+**📊 Progress Assessment**: With **19 major foundation issues completed** 🎉🎉 and ~94 open issues, meniOS is making phenomenal progress! Major recent completions include:
+- ✅ **Toolchain**: crt0 (#192), libc (#193) - 2/5 complete, almost there!
+- ✅ **Synchronization**: All primitives complete! (#36, #37, #39, #40) - 4/4 done!
+- ✅ **Shell Milestone**: 7/9 complete (#148, #180-#184, #186) - nearly complete!
+- ✅ **Performance**: I/O scheduler (#205)
 
-**🎯 Recent Focus**: Created comprehensive issue tracking for:
-- 🛠️ **Toolchain** (7 issues): Enable standard C development
-- 🐚 **Shell** (9 issues): Polish and complete the shell milestone
-- 🎨 **UX** (5 issues): Quality-of-life keyboard shortcuts and mouse support
+The critical path forward is completing the **toolchain** (#194, #195, #29), which is just 3 issues away from enabling standard C development for all userland applications!
+
+**🎯 Recent Momentum** (12 issues closed recently!):
+- 🛠️ **Toolchain** (2/5 complete): crt0 ✅, libc ✅ → just need: ABI docs, build system, integration
+- 🔌 **IPC** (16 issues created, ready to start): Pipes (#206-#209), Signals (#210-#214), Shared Memory (#215-#219), ioctl (#220), fast syscalls (#221)
+- 🐚 **Shell** (7/9 complete): Only #185 (PATH), #187 (ps/kill), #188 (env) remaining!
+- 🎨 **UX** (5 issues ready): Quality-of-life keyboard shortcuts
 - 🐛 **Bugs** (2 issues): Pipeline and /dev/zero fixes
-- 💾 **File System** (2 issues): FAT32 write support (#189), I/O scheduler (#205)
 
 ## Architecture Overview
 
@@ -248,7 +260,11 @@ We welcome contributions from developers of all skill levels! 🚀
 
 - **New Contributors**: Start with our [Contributing Guide](CONTRIBUTING.md) for a complete development workflow
 - **Find Tasks**: Check [GitHub Issues](https://github.com/pbalduino/menios/issues) or browse [`tasks.json`](tasks.json) for detailed task tracking
-- **High Priority**: Issues #192, #194, #183, #184, #186, #198, #200, #205 are ready to implement with no blocking dependencies
+- **High Priority - Ready Now** (11 issues ready to start!):
+  - **Toolchain** (critical): #194 (ABI docs), #195 (build system - deps met!)
+  - **IPC foundations**: #206 (pipes), #210 (signals), #215 (shared mem), #220 (ioctl)
+  - **Shell polish**: #185 (PATH - deps met!), #188 (env - deps met!), #198 (Ctrl+A/E), #200 (Ctrl+L)
+  - **Performance**: #221 (fast syscalls - 3-5x speedup!)
 - **Critical Path**: Toolchain issues (#192→#193→#195→#29) are the most important for enabling all future development
 - **Report Issues**: Use our issue templates to report bugs or request features
 - **Security Issues**: Please review our [Security Policy](SECURITY.md) for responsible disclosure
