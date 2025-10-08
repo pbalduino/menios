@@ -5,6 +5,7 @@
 extern "C" {
 #endif
 
+#include <stddef.h>
 #include <sys/types.h>
 
 #ifndef IPC_CREAT

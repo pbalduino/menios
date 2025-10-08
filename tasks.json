@@ -4,16 +4,16 @@
     "github_issue": {
       "number": 222,
       "url": "https://github.com/pbalduino/menios/issues/222",
-      "state": "OPEN"
+      "state": "CLOSED"
     },
     "labels": [
       "enhancement",
-      "mosh",
-      "blocked"
+      "mosh"
     ],
     "assignees": [
       "pbalduino"
-    ]
+    ],
+    "notes": "Prompt now derived from cwd via getcwd support"
   },
   {
     "title": "Migrate from int 0x80 to syscall instruction for fast system calls",
@@ -372,7 +372,7 @@
     "github_issue": {
       "number": 188,
       "url": "https://github.com/pbalduino/menios/issues/188",
-      "state": "OPEN"
+      "state": "CLOSED"
     },
     "labels": [
       "enhancement",
@@ -380,7 +380,8 @@
     ],
     "assignees": [
       "pbalduino"
-    ]
+    ],
+    "notes": "Utility prints inherited environment; shipped at app/env/env.c"
   },
   {
     "title": "Implement /bin/ps and /bin/kill utilities",

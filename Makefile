@@ -455,7 +455,7 @@ ifeq ($(OS_NAME),linux)
 	$(call assert_tools,$(BUILD_REQUIRED_TOOLS))
 
 	mkdir -p $(OUTPUT_DIR) $(KERNEL_OBJ) $(OBJDIR)/usermode
-	rm -rf $(KERNEL_OBJ)/*
+	find $(KERNEL_OBJ) -type f -delete
 
 	$(NASM) -f elf64 ./src/kernel/lgdt.s
 	$(NASM) -f elf64 ./src/kernel/pit.s
@@ -467,7 +467,11 @@ ifeq ($(OS_NAME),linux)
 	cp ./src/kernel/lidt.o $(KERNEL_OBJ)
 	# cp ./src/kernel/driver/ps2kb/ps2kb_handler.o  $(KERNEL_OBJ)
 
-	cp $(OBJS) $(KERNEL_OBJ)
+	@for obj in $(OBJS); do \
+		dest_dir="$(KERNEL_OBJ)/$$(dirname "$$obj")"; \
+		mkdir -p "$$dest_dir"; \
+		cp -f "$$obj" "$$dest_dir/"; \
+	done
 	@mkdir -p $(OUTPUT_DIR)/bin
 	cp build/obj/usermode/user_demo.elf $(OUTPUT_DIR)/bin/user_demo
 	cp $(MOSH_ELF) $(OUTPUT_DIR)/bin/mosh

@@ -101,7 +101,7 @@ These issues form the backbone of the system and should be prioritized:
 ```
 #148 (env vars) ──┐
                   ├──→ #197 (tab completion)
-#147 (getcwd) ────┼──→ #222 (current dir in prompt)
+#147 (getcwd) ────┼──→ #222 (current dir in prompt) ✅
                   └──→ #197 (tab completion)
 
 #156 (history) ────→ #199 (Ctrl+R search)
@@ -114,7 +114,7 @@ These issues form the backbone of the system and should be prioritized:
 #144 (USB mouse) ───┘
 ```
 
-**Priority**: Medium - Quality of life improvements
+**Priority**: Medium - Quality of life improvements (env utility complete ✅)
 
 ### 💾 File System & I/O (Issues #189, #205)
 ```
@@ -250,7 +250,7 @@ These issues form the backbone of the system and should be prioritized:
 - **#185**: PATH search
 - **#186**: Pipeline placeholders
 - **#187**: ps/kill utilities
-- **#188**: env utility
+- **#188**: env utility ✅
 
 **Timeline**: 1-2 months (many already done!)
 **Status**: Most features implemented, needs polish
@@ -297,7 +297,7 @@ These issues form the backbone of the system and should be prioritized:
 **Device Control**:
 - ✅ **#220**: ioctl syscall - COMPLETE
 
-**Shell UX**: #197-#200, #222 (tab completion, Ctrl shortcuts, prompt)
+**Shell UX**: #197-#200 (tab completion, Ctrl shortcuts) — #222 (cwd prompt) ✅
 
 **Timeline**: 3-5 months (tracks can run in parallel)
 
@@ -322,7 +322,6 @@ These issues form the backbone of the system and should be prioritized:
 ### ⏳ Blocked, Waiting On:
 - **#29 (toolchain)** blocks on: #194, #195
 - **#197 (tab completion)** blocks on: #147 (getcwd/chdir)
-- **#222 (current dir in prompt)** blocks on: #147 (getcwd/chdir)
 - **#199 (Ctrl+R)** blocks on: #156 (history)
 - **#201 (mouse selection)** blocks on: #143 or #144 (mouse drivers)
 - **#187 (ps/kill)** blocks on: #213 (signals)
@@ -357,7 +356,7 @@ These issues form the backbone of the system and should be prioritized:
 ### 📅 **Next 1-2 Months**
 1. **#195** - Userland build system (after #192, #193)
 2. **#29** - Complete toolchain integration
-3. **#180, #185, #188** - Environment-dependent shell features
+3. **#180, #185** - Environment-dependent shell features (✅ #188 complete)
 4. **#181, #182** - Testing and validation
 
 ### 📅 **Next 3-6 Months**
@@ -371,7 +370,7 @@ These issues form the backbone of the system and should be prioritized:
 ### ✅ **Completed Recently**:
 - Created 46 new issues and broke down complex IPC tasks
 - Organized into categories with clear dependencies
-- **Major completions**: #192 (crt0), #193 (libc), #148 (env vars), #180-#186 (shell milestone), #37, #39 (sync primitives), #205 (I/O scheduler)
+- **Major completions**: #192 (crt0), #193 (libc), #148 (env vars), #180-#186 (shell milestone), #222 (cwd prompt), #37, #39 (sync primitives), #205 (I/O scheduler)
 
 ### ✅ **Completed Overall** (35 foundation issues! 🚀):
 - **Foundation memory management**: #35, #57, #89
@@ -390,13 +389,12 @@ These issues form the backbone of the system and should be prioritized:
 ### 🔥 **Ready to Implement** (9 issues - no dependencies!):
 - **#194** - Syscall ABI docs (critical path)
 - **#195** - Userland build system (dependencies met: #192✅, #193✅)
-- **#188** - env utility (dependency met: #148✅)
+- **#188** - env utility ✅ (built-in /bin/env ships with default env dump)
 - **#197** - Tab completion (dependency met: #147✅) ✨ NOW UNBLOCKED!
 - **#198** - Ctrl+A/E shortcuts
 - **#200** - Ctrl+L clear screen
 - **#213** - Shell Ctrl+C (dependencies met: #210✅, #211✅, #212✅)
 - **#221** - Fast syscall instruction
-- **#222** - Current directory in prompt (dependency met: #147✅) ✨ NOW UNBLOCKED!
 
 ### 📋 **Total Open Issues**: ~76 issues (estimated)
 - **IPC**: 5 remaining (#105-#107, #213-#214, #221)
@@ -408,8 +406,8 @@ These issues form the backbone of the system and should be prioritized:
   - Capability security: 1 (#107)
   - ioctl: ✅ COMPLETE! (1/1) 🎉
   - Fast syscalls: 1 (#221)
-- **Shell & utilities**: 2 remaining (#187, #188) - now part of 30-issue Mosh milestone
-- **Shell UX**: 6 (#156, #197-#201, #222) - #197 and #222 now unblocked!
+- **Shell & utilities**: 1 remaining (#187) - now part of 30-issue Mosh milestone
+- **Shell UX**: 5 (#156, #197-#201) - #197 now unblocked; #222 completed ✅
 - **Toolchain**: 4 remaining (#29, #194-#196) - 2/8 complete! ✅✅ (GCC milestone)
 - **Threading**: 5 remaining (#109-#113) - 1/6 complete! ✅
 - **Memory**: 1 (#95 userspace malloc)
@@ -450,7 +448,7 @@ Week 13+:     Applications can be developed!
 ```
 #183, #184, #186, #198, #200 (now)
 ↓
-#148 → #180, #185, #188 (after env vars)
+#148 → #180, #185, #188 (after env vars) ✅
 ```
 **Duration**: 1-2 months
 **Priority**: Medium
@@ -510,7 +508,7 @@ For contributors, issues are organized by difficulty:
 - [ ] /bin utilities working
 
 ### Medium Term (3-6 months):
-- [ ] Environment variables (#148, #180, #185, #188)
+- [ ] Environment variables (#148, #180, #185) *(#188 complete)*
 - [ ] Shell milestone complete
 - [ ] FAT32 write support (#189)
 - [ ] Threading foundation (#108, #109)

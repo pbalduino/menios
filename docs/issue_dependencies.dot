@@ -63,7 +63,7 @@ digraph IssueDependencies {
         issue185 [label="#185: PATH\nsearch", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED
         issue186 [label="#186: Pipeline\nplaceholders", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED
         issue187 [label="#187: ps/kill\nutilities", fillcolor="#FFE4B5"];
-        issue188 [label="#188: env\nutility", fillcolor="#FFE4B5"];
+        issue188 [label="#188: env\nutility", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED
     }
 
     subgraph cluster_shell_ux {
@@ -76,7 +76,7 @@ digraph IssueDependencies {
         issue199 [label="#199: Ctrl+R\nreverse search", fillcolor="#E0FFFF"];
         issue200 [label="#200: Ctrl+L\nclear screen", fillcolor="#E0FFFF"];
         issue201 [label="#201: Mouse\nselection", fillcolor="#E0FFFF"];
-        issue222 [label="#222: Current dir\nin prompt", fillcolor="#E0FFFF"];
+        issue222 [label="#222: Current dir\nin prompt", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED
     }
 
     subgraph cluster_toolchain {

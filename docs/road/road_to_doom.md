@@ -271,7 +271,7 @@ Basic command-line tools for shell interaction:
 28. ✅ **#183** – Provide basic `/bin` utilities (echo, cat, env, true, false) (COMPLETE!)
 29. ✅ **#185** – PATH search configuration (COMPLETE!)
 30. **#187** – Add process management tools (ps, kill)
-31. **#188** – env utility (ready now!)
+31. **#188** – env utility ✅
 32. **#221** – Migrate to fast syscall instruction for 3-5x performance boost
 
 ### Future: Native Compilation

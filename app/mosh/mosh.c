@@ -18,8 +18,8 @@
 #define MOSH_MAX_LINE_LENGTH 256
 #define MOSH_MAX_PATH        256
 #define MOSH_HISTORY_LIMIT   16
-#define MOSH_PROMPT          "mosh:/>"
-
+#define MOSH_PROMPT_DEFAULT  "mosh:/>"
+#define MOSH_PROMPT          MOSH_PROMPT_DEFAULT
 #define MOSH_MAX_SEGMENTS    8
 #define MOSH_MAX_ARGS        16
 #define MOSH_MAX_TOKENS      128
@@ -53,6 +53,7 @@ static void write_str(int fd, const char* text);
 static void exec_command(char** argv, size_t argc);
 static long  mosh_fork(void);
 static long  mosh_execve(const char* path, char* const argv[], char* const envp[]);
+static const char* shell_prompt(void);
 
 static bool parse_command_segments(char* buffer, command_segment_t* segments, size_t* segment_count);
 static int  execute_pipeline(command_segment_t* segments, size_t segment_count);
@@ -1524,13 +1525,50 @@ static int launch_command(char* line) {
   return last_status;
 }
 
+static const char* shell_prompt(void) {
+  static char prompt[MOSH_MAX_PATH + 16];
+  const char prefix[] = "mosh:";
+  const char suffix[] = "> ";
+  const char* dir = current_directory;
+
+  if(dir == NULL || dir[0] == '\0') {
+    dir = "/";
+  }
+
+  size_t offset = 0;
+  for(size_t i = 0; i < sizeof(prefix) - 1 && offset < sizeof(prompt) - 1; i++) {
+    prompt[offset++] = prefix[i];
+  }
+
+  size_t dir_len = str_len(dir);
+  size_t max_dir_len = 0;
+  if(offset < sizeof(prompt)) {
+    max_dir_len = sizeof(prompt) - offset - (sizeof(suffix) - 1) - 1;
+  }
+  if(dir_len > max_dir_len) {
+    dir_len = max_dir_len;
+  }
+
+  for(size_t i = 0; i < dir_len && offset < sizeof(prompt) - 1; i++) {
+    prompt[offset++] = dir[i];
+  }
+
+  for(size_t i = 0; i < sizeof(suffix) - 1 && offset < sizeof(prompt) - 1; i++) {
+    prompt[offset++] = suffix[i];
+  }
+
+  prompt[offset] = '\0';
+  return prompt;
+}
+
 static void shell_loop(void) {
   static char line_buffer[MOSH_MAX_LINE_LENGTH];
 
   write_str(STDOUT_FILENO, "This is mosh, the meniOS shell\nType 'help' for instructions.\n\n");
 
   while(true) {
-    size_t length = read_line(MOSH_PROMPT, line_buffer, sizeof(line_buffer));
+    const char* prompt = shell_prompt();
+    size_t length = read_line(prompt, line_buffer, sizeof(line_buffer));
 
     if(line_buffer[0] == '\0') {
       continue;

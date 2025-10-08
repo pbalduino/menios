@@ -1,6 +1,7 @@
 #ifndef MENIOS_KERNEL
 #include <menios/syscall.h>
 #include <menios/syscall_user.h>
+#include <stddef.h>
 #include <sys/errno.h>
 #include <sys/shm.h>
 

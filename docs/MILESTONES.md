@@ -8,7 +8,7 @@ This document tracks the three major milestones for meniOS development.
 **Goal**: Complete interactive shell with full user experience
 **GitHub Milestone**: [Mosh](https://github.com/pbalduino/menios/milestone/1)
 
-**Status**: 13/30 complete (43.3%)
+**Status**: 15/30 complete (50.0%)
 
 **Assigned Issues**:
 
@@ -20,7 +20,7 @@ This document tracks the three major milestones for meniOS development.
 - [x] #148 - Environment variables support ✅
 - [x] #180 - Environment seeding in init ✅
 - [x] #185 - PATH search configuration ✅
-- [ ] #188 - /bin/env utility
+- [x] #188 - /bin/env utility ✅
 
 #### I/O & Pipelines (4 issues)
 - [x] #186 - Pipeline placeholder recognition ✅
@@ -43,7 +43,7 @@ This document tracks the three major milestones for meniOS development.
 - [ ] #199 - Ctrl+R reverse search
 - [ ] #200 - Ctrl+L clear screen
 - [x] #147 - getcwd/chdir syscalls ✅
-- [ ] #222 - Current directory in prompt
+- [x] #222 - Current directory in prompt ✅
 - [ ] #201 - Mouse selection/copy/paste
 
 #### Advanced Features (3 issues)
@@ -224,11 +224,9 @@ This document tracks the three major milestones for meniOS development.
    - #221 - Fast syscall instruction
 
 3. **Mosh Milestone**:
-   - #188 - /bin/env utility
    - #198 - Ctrl+A/E shortcuts
    - #200 - Ctrl+L clear screen
    - #197 - Tab completion (dependency #147 now complete!)
-   - #222 - Current directory in prompt (dependency #147 now complete!)
 
 ## 📝 Notes
 
@@ -237,7 +235,7 @@ Many issues can be worked on in parallel:
 - **GCC**: #194 and #195 can be done simultaneously
 - **Doom Threading**: #109, #112, #113 are independent
 - **Doom IPC**: Different IPC mechanisms can progress in parallel
-- **Mosh UX**: #198, #199, #200, #197, #222 are independent features
+- **Mosh UX**: #198, #199, #200, #197 are independent features
 
 ### Critical Dependencies
 - **GCC milestone** is required before meniOS can compile Doom natively
@@ -254,7 +252,9 @@ Recommended completion order for maximum impact:
 - **2025-10-08**: Expanded Mosh milestone from 10 to 30 issues to better track all shell work
 - **2025-10-08**: Added #192, #193 to GCC milestone (already complete)
 - **2025-10-08**: Added #95, #103, #105-#107 to Doom milestone for comprehensive IPC tracking
-- **2025-10-08**: Closed #147 (getcwd/chdir) - unblocks #197 and #222!
+- **2025-10-08**: Closed #147 (getcwd/chdir) - unblocked #197 and #222
+- **2025-10-11**: Closed #222 (current directory in prompt)
+- **2025-10-11**: Closed #188 (/bin/env utility)
 - **2025-10-08**: Closed #157 as duplicate of #197, #165 as completed by #208
 
 ---
