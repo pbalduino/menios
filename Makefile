@@ -54,6 +54,14 @@ LS_ELF = $(OBJDIR)/usermode/ls.elf
 KILL_ELF = $(OBJDIR)/usermode/kill.elf
 PS_ELF = $(OBJDIR)/usermode/ps.elf
 
+
+ARCH_FLAGS := -march=x86-64
+
+CC_VERSION := $(shell $(GCC_DIR)/gcc --version 2>/dev/null | head -1)
+ifneq ($(findstring clang,$(CC_VERSION)),)
+ARCH_FLAGS := -target x86_64-unknown-elf
+endif
+
 USER_CCFLAGS = \
 	-nostdlib \
 	-nostartfiles \
@@ -66,7 +74,8 @@ USER_CCFLAGS = \
 	-mno-mmx \
 	-mno-red-zone \
 	-mno-sse \
-	-mno-sse2
+	-mno-sse2 \
+	$(ARCH_FLAGS)
 
 SDK_DIR        = $(BUILD_DIR)/sdk
 SDK_INCLUDE_DIR = $(SDK_DIR)/include
@@ -116,7 +125,6 @@ override CFLAGS += \
     -fno-stack-check \
     -fno-stack-protector \
     -m64 \
-    -march=x86-64 \
     -mno-80387 \
     -mno-mmx \
     -mno-red-zone \
@@ -126,6 +134,7 @@ override CFLAGS += \
 		-DACPI_DEBUG_OUTPUT \
 		-DUACPI_KERNEL_INITIALIZATION
 override CFLAGS += $(EXTRA_CFLAGS)
+override CFLAGS += $(ARCH_FLAGS)
 
 override CPPFLAGS := \
     $(CINCLUDE) \

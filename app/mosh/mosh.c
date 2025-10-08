@@ -52,6 +52,27 @@ typedef struct {
   char*  redirect_out;
 } command_segment_t;
 
+typedef struct {
+  bool   active;
+  size_t token_start;
+  size_t inserted_length;
+  size_t match_count;
+  size_t current_index;
+  char   dir_prefix[MOSH_MAX_PATH];
+  char   matches[MOSH_MAX_COMPLETIONS][MOSH_MAX_PATH];
+  bool   match_is_dir[MOSH_MAX_COMPLETIONS];
+} completion_context_t;
+
+static completion_context_t completion_ctx;
+
+static void completion_reset(void) {
+  completion_ctx.active = false;
+  completion_ctx.match_count = 0;
+  completion_ctx.current_index = 0;
+  completion_ctx.inserted_length = 0;
+  completion_ctx.dir_prefix[0] = '\0';
+}
+
 static void write_bytes(int fd, const char* data, size_t length);
 static void write_char_stdout(char ch);
 static void write_str(int fd, const char* text);
@@ -860,6 +881,7 @@ static void line_state_init(line_state_t* state, const char* prompt, char* buffe
     write_bytes(STDOUT_FILENO, state->prompt, state->prompt_len);
   }
   line_render_caret(state);
+  completion_reset();
 }
 
 static void line_redraw(line_state_t* state) {
@@ -926,6 +948,7 @@ static void line_insert_char(line_state_t* state, char ch) {
     beep();
     return;
   }
+  completion_reset();
 
   size_t insert_at = state->cursor;
   bool appending = (insert_at == state->length);
@@ -952,6 +975,7 @@ static void line_backspace(line_state_t* state) {
     beep();
     return;
   }
+  completion_reset();
 
   size_t remove_at = state->cursor - 1;
   for(size_t idx = remove_at; idx < state->length; idx++) {
@@ -968,6 +992,7 @@ static void line_delete_at_cursor(line_state_t* state) {
     beep();
     return;
   }
+  completion_reset();
   for(size_t idx = state->cursor; idx < state->length; idx++) {
     state->buffer[idx] = state->buffer[idx + 1];
   }
@@ -981,6 +1006,7 @@ static void line_cursor_left(line_state_t* state) {
     beep();
     return;
   }
+  completion_reset();
   state->cursor--;
   line_redraw(state);
 }
@@ -990,6 +1016,7 @@ static void line_cursor_right(line_state_t* state) {
     beep();
     return;
   }
+  completion_reset();
   state->cursor++;
   line_redraw(state);
 }
@@ -998,6 +1025,7 @@ static void line_cursor_home(line_state_t* state) {
   if(state->cursor == 0) {
     return;
   }
+  completion_reset();
   state->cursor = 0;
   line_redraw(state);
 }
@@ -1006,6 +1034,7 @@ static void line_cursor_end(line_state_t* state) {
   if(state->cursor == state->length) {
     return;
   }
+  completion_reset();
   state->cursor = state->length;
   line_redraw(state);
 }
@@ -1016,11 +1045,49 @@ static void line_clear_screen(line_state_t* state) {
   write_bytes(STDOUT_FILENO, seq, sizeof(seq) - 1);
   state->rendered_length = 0;
   state->needs_carriage_return = false;
+  completion_reset();
   line_redraw(state);
 }
 
 static bool is_completion_separator(char ch) {
   return ch == ' ' || ch == '\t' || ch == '|' || ch == '>' || ch == '<' || ch == '&' || ch == ';';
+}
+
+static bool completion_requires_directory(const line_state_t* state, size_t token_start) {
+  if(state == NULL || token_start > state->length) {
+    return false;
+  }
+
+  size_t start = token_start;
+  while(start > 0 && state->buffer[start - 1] == ' ') {
+    start--;
+  }
+
+  size_t scan = start;
+  while(scan > 0) {
+    char prev = state->buffer[scan - 1];
+    if(prev == '|' || prev == '&' || prev == ';') {
+      break;
+    }
+    scan--;
+  }
+
+  size_t cmd_pos = scan;
+  while(cmd_pos < state->length && state->buffer[cmd_pos] == ' ') {
+    cmd_pos++;
+  }
+  size_t cmd_end = cmd_pos;
+  while(cmd_end < state->length && !is_completion_separator(state->buffer[cmd_end])) {
+    cmd_end++;
+  }
+  size_t cmd_len = cmd_end - cmd_pos;
+  if(cmd_len != 2) {
+    return false;
+  }
+  if(str_ncmp(&state->buffer[cmd_pos], "cd", cmd_len) != 0) {
+    return false;
+  }
+  return token_start >= cmd_end;
 }
 
 static bool line_attempt_completion(line_state_t* state) {
@@ -1038,6 +1105,33 @@ static bool line_attempt_completion(line_state_t* state) {
     return false;
   }
 
+  size_t replace_end = state->cursor;
+
+  if(completion_ctx.active && completion_ctx.match_count > 0 && token_start == completion_ctx.token_start) {
+    size_t next_index = (completion_ctx.current_index + 1) % completion_ctx.match_count;
+
+    char new_token[MOSH_MAX_PATH];
+    str_copy(new_token, sizeof(new_token), completion_ctx.dir_prefix);
+    if(str_len(new_token) + str_len(completion_ctx.matches[next_index]) >= sizeof(new_token)) {
+      return false;
+    }
+    strcat(new_token, completion_ctx.matches[next_index]);
+
+    if(!line_replace_range(state,
+                           completion_ctx.token_start,
+                           completion_ctx.token_start + completion_ctx.inserted_length,
+                           new_token)) {
+      return false;
+    }
+
+    completion_ctx.inserted_length = str_len(new_token);
+    completion_ctx.current_index = next_index;
+    line_redraw(state);
+    return true;
+  }
+
+  completion_reset();
+
   char token[MOSH_MAX_PATH];
   for(size_t i = 0; i < token_len; i++) {
     token[i] = state->buffer[token_start + i];
@@ -1053,27 +1147,24 @@ static bool line_attempt_completion(line_state_t* state) {
     }
   }
 
-  char dir_fragment[MOSH_MAX_PATH];
+  char dir_prefix[MOSH_MAX_PATH];
   if(has_slash) {
-    size_t dir_len = last_slash + 1;
-    if(dir_len >= sizeof(dir_fragment)) {
+    size_t prefix_len = last_slash + 1;
+    if(prefix_len >= sizeof(dir_prefix)) {
       return false;
     }
-    for(size_t i = 0; i < dir_len; i++) {
-      dir_fragment[i] = token[i];
-    }
-    dir_fragment[dir_len] = '\0';
+    memcpy(dir_prefix, &state->buffer[token_start], prefix_len);
+    dir_prefix[prefix_len] = '\0';
   } else {
-    dir_fragment[0] = '\0';
+    dir_prefix[0] = '\0';
   }
 
   const char* prefix = has_slash ? token + last_slash + 1 : token;
   size_t prefix_len = str_len(prefix);
 
   char search_dir[MOSH_MAX_PATH];
-  if(dir_fragment[0] != '\0') {
-    const char* base = (dir_fragment[0] == '/') ? "/" : current_directory;
-    if(!normalize_path(base, dir_fragment, search_dir, sizeof(search_dir))) {
+  if(has_slash) {
+    if(!normalize_path(current_directory, dir_prefix, search_dir, sizeof(search_dir))) {
       return false;
     }
   } else {
@@ -1092,9 +1183,10 @@ static bool line_attempt_completion(line_state_t* state) {
   }
   listing[list_len] = '\0';
 
-  const char* matches[MOSH_MAX_COMPLETIONS];
-  bool match_is_dir[MOSH_MAX_COMPLETIONS];
+  char (*matches)[MOSH_MAX_PATH] = completion_ctx.matches;
+  bool* match_is_dir = completion_ctx.match_is_dir;
   size_t match_count = 0;
+  bool require_directory = completion_requires_directory(state, token_start);
 
   size_t pos = 0;
   while(pos < list_len) {
@@ -1106,18 +1198,26 @@ static bool line_attempt_completion(line_state_t* state) {
     listing[pos + len] = '\0';
     pos += len + 1;
 
-    if(len == 0) {
-      continue;
-    }
-    if(prefix_len > len) {
+    if(len == 0 || prefix_len > len) {
       continue;
     }
     if(str_ncmp(entry, prefix, prefix_len) != 0) {
       continue;
     }
     if(match_count < MOSH_MAX_COMPLETIONS) {
-      matches[match_count] = entry;
-      match_is_dir[match_count] = (len > 0 && entry[len - 1] == '/');
+      bool is_dir = (len > 0 && entry[len - 1] == '/');
+      if(require_directory && !is_dir) {
+        continue;
+      }
+      if(is_dir) {
+        len--;
+      }
+      if(len >= sizeof(matches[match_count])) {
+        len = sizeof(matches[match_count]) - 1;
+      }
+      memcpy(matches[match_count], entry, len);
+      matches[match_count][len] = '\0';
+      match_is_dir[match_count] = is_dir;
       match_count++;
     }
   }
@@ -1126,20 +1226,49 @@ static bool line_attempt_completion(line_state_t* state) {
     return false;
   }
 
+  for(size_t i = 0; i < match_count; i++) {
+    for(size_t j = i + 1; j < match_count; j++) {
+      if(strcmp(matches[i], matches[j]) > 0) {
+        char tmp[MOSH_MAX_PATH];
+        str_copy(tmp, sizeof(tmp), matches[i]);
+        str_copy(matches[i], sizeof(matches[i]), matches[j]);
+        str_copy(matches[j], sizeof(matches[j]), tmp);
+        bool dir_tmp = match_is_dir[i];
+        match_is_dir[i] = match_is_dir[j];
+        match_is_dir[j] = dir_tmp;
+      }
+    }
+  }
+
+  char effective_prefix[MOSH_MAX_PATH];
+  if(dir_prefix[0] != '\0') {
+    str_copy(effective_prefix, sizeof(effective_prefix), dir_prefix);
+  } else if(search_dir[0] == '/' && search_dir[1] == '\0') {
+    str_copy(effective_prefix, sizeof(effective_prefix), "/");
+  } else {
+    effective_prefix[0] = '\0';
+  }
+
+  completion_ctx.token_start = token_start;
+  completion_ctx.match_count = match_count;
+  completion_ctx.current_index = match_count; // ensures next cycle starts at first entry
+  str_copy(completion_ctx.dir_prefix, sizeof(completion_ctx.dir_prefix), effective_prefix);
+
   char new_token[MOSH_MAX_PATH];
+
   if(match_count == 1) {
-    const char* match = matches[0];
-    str_copy(new_token, sizeof(new_token), dir_fragment);
-    if(str_len(new_token) + str_len(match) >= sizeof(new_token)) {
+    str_copy(new_token, sizeof(new_token), effective_prefix);
+    if(str_len(new_token) + str_len(matches[0]) >= sizeof(new_token)) {
       return false;
     }
-    strcat(new_token, match);
-    if(!line_replace_range(state, token_start, state->cursor, new_token)) {
+    strcat(new_token, matches[0]);
+    if(!line_replace_range(state, token_start, replace_end, new_token)) {
       return false;
     }
-    if(!match_is_dir[0] && state->cursor == state->length) {
-      line_insert_char(state, ' ');
-    }
+    completion_ctx.inserted_length = str_len(new_token);
+    completion_ctx.current_index = 0;
+    completion_ctx.active = false;
+    line_redraw(state);
     return true;
   }
 
@@ -1154,16 +1283,36 @@ static bool line_attempt_completion(line_state_t* state) {
   }
 
   size_t lcp_len = str_len(lcp);
-  if(lcp_len <= prefix_len) {
-    return false;
+  str_copy(new_token, sizeof(new_token), effective_prefix);
+
+  if(lcp_len > prefix_len) {
+    if(str_len(new_token) + lcp_len >= sizeof(new_token)) {
+      return false;
+    }
+    strcat(new_token, lcp);
+    if(!line_replace_range(state, token_start, replace_end, new_token)) {
+      return false;
+    }
+    completion_ctx.inserted_length = str_len(new_token);
+    completion_ctx.active = true;
+    completion_ctx.current_index = match_count; // next tab starts at first entry
+    line_redraw(state);
+    return true;
   }
 
-  str_copy(new_token, sizeof(new_token), dir_fragment);
-  if(str_len(new_token) + lcp_len >= sizeof(new_token)) {
+  str_copy(new_token, sizeof(new_token), effective_prefix);
+  if(str_len(new_token) + str_len(matches[0]) >= sizeof(new_token)) {
     return false;
   }
-  strcat(new_token, lcp);
-  return line_replace_range(state, token_start, state->cursor, new_token);
+  strcat(new_token, matches[0]);
+  if(!line_replace_range(state, token_start, replace_end, new_token)) {
+    return false;
+  }
+  completion_ctx.inserted_length = str_len(new_token);
+  completion_ctx.current_index = 0;
+  completion_ctx.active = true;
+  line_redraw(state);
+  return true;
 }
 
 static int read_stdin_char(void) {
@@ -1187,6 +1336,7 @@ static void history_reset(void) {
   history_length = 0;
   history_next = 0;
   history_cursor = 0;
+  completion_reset();
 }
 
 static size_t history_physical_index(size_t logical_index) {
@@ -1254,6 +1404,7 @@ static void history_load_into(line_state_t* state, size_t logical_index) {
     state->buffer[state->length] = '\0';
   }
   state->cursor = state->length;
+  completion_reset();
   line_redraw(state);
 }
 

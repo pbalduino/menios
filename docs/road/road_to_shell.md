@@ -52,7 +52,7 @@ A release that meets this milestone must satisfy all of the following:
 - [x] Caret overlay follows cursor; hide/show around redraws.
 - [x] History navigation (↑/↓) restores previous commands; scratch buffer preserved.
 - [x] Left/right cursor movement, home/end, backspace/delete editing.
-- [x] Tab inserts literal `\t` (no completion yet).
+- [x] Tab completion cycles filesystem entries; `cd` filters to directories only.
 - [x] `help` prints quick usage; `exit` terminates shell.
 - [x] External commands auto-prefix with `/bin/` when no slash present.
 - [x] Forked child inherits stdio, reports failure via stderr.

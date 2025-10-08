@@ -18,6 +18,10 @@ static size_t g_capture_length;
 static const char* g_listdir_response;
 static size_t g_listdir_response_len;
 static long g_listdir_error;
+static const char* g_listdir_sequence[8];
+static size_t g_listdir_sequence_lengths[8];
+static size_t g_listdir_sequence_count;
+static size_t g_listdir_sequence_index;
 
 static void reset_capture(void) {
   g_capture_length = 0;
@@ -28,12 +32,36 @@ static void set_listdir_response(const char* data) {
   g_listdir_response = data;
   g_listdir_response_len = data ? strlen(data) : 0;
   g_listdir_error = 0;
+  g_listdir_sequence_count = 0;
+  g_listdir_sequence_index = 0;
+}
+
+static void set_listdir_sequence(const char* const* entries, size_t count) {
+  if(count > (sizeof(g_listdir_sequence) / sizeof(g_listdir_sequence[0]))) {
+    count = sizeof(g_listdir_sequence) / sizeof(g_listdir_sequence[0]);
+  }
+  for(size_t i = 0; i < count; i++) {
+    g_listdir_sequence[i] = entries[i];
+    g_listdir_sequence_lengths[i] = entries[i] ? strlen(entries[i]) : 0;
+  }
+  g_listdir_sequence_count = count;
+  g_listdir_sequence_index = 0;
+  if(count > 0) {
+    g_listdir_response = g_listdir_sequence[0];
+    g_listdir_response_len = g_listdir_sequence_lengths[0];
+  } else {
+    g_listdir_response = NULL;
+    g_listdir_response_len = 0;
+  }
+  g_listdir_error = 0;
 }
 
 static void set_listdir_error(long err) {
   g_listdir_response = NULL;
   g_listdir_response_len = 0;
   g_listdir_error = err;
+  g_listdir_sequence_count = 0;
+  g_listdir_sequence_index = 0;
 }
 
 void mosh_test_write_bytes(int fd, const char* data, size_t length) {
@@ -82,14 +110,27 @@ long mosh_test_syscall3(long number, long arg1, long arg2, long arg3) {
     if(g_listdir_error != 0) {
       return g_listdir_error;
     }
-    if(g_listdir_response && arg2 != 0 && arg3 > 0) {
-      size_t copy_len = g_listdir_response_len;
+    const char* response = g_listdir_response;
+    size_t response_len = g_listdir_response_len;
+    if(g_listdir_sequence_count > 0) {
+      size_t idx = g_listdir_sequence_index;
+      if(idx >= g_listdir_sequence_count) {
+        idx = g_listdir_sequence_count - 1;
+      }
+      response = g_listdir_sequence[idx];
+      response_len = g_listdir_sequence_lengths[idx];
+      if(g_listdir_sequence_index + 1 < g_listdir_sequence_count) {
+        g_listdir_sequence_index++;
+      }
+    }
+    if(response && arg2 != 0 && arg3 > 0) {
+      size_t copy_len = response_len;
       if(copy_len > (size_t)arg3) {
         copy_len = (size_t)arg3;
       }
-      memcpy((void*)arg2, g_listdir_response, copy_len);
+      memcpy((void*)arg2, response, copy_len);
     }
-    return (long)g_listdir_response_len;
+    return (long)response_len;
   }
 
   (void)arg1;
@@ -133,6 +174,12 @@ void test_tab_completion_single_match(void);
 void test_tab_completion_directory_appends_slash(void);
 void test_tab_completion_partial_extension(void);
 void test_tab_completion_no_match_beeps(void);
+void test_tab_completion_cycles_directories(void);
+void test_tab_completion_resets_after_edit(void);
+void test_tab_completion_handles_no_match_after_edit(void);
+void test_tab_completion_cd_ignores_files(void);
+void test_tab_completion_cd_cycling_skips_files(void);
+void test_tab_completion_non_cd_includes_files(void);
 
 void test_backspace_redraws_with_carriage_return(void) {
   line_state_t state;
@@ -229,6 +276,12 @@ int main(void) {
   RUN_TEST(test_tab_completion_directory_appends_slash);
   RUN_TEST(test_tab_completion_partial_extension);
   RUN_TEST(test_tab_completion_no_match_beeps);
+  RUN_TEST(test_tab_completion_cycles_directories);
+  RUN_TEST(test_tab_completion_resets_after_edit);
+  RUN_TEST(test_tab_completion_handles_no_match_after_edit);
+  RUN_TEST(test_tab_completion_cd_ignores_files);
+  RUN_TEST(test_tab_completion_cd_cycling_skips_files);
+  RUN_TEST(test_tab_completion_non_cd_includes_files);
 
   return UNITY_END();
 }
@@ -343,8 +396,8 @@ void test_tab_completion_single_match(void) {
   feed_input(sequence, sizeof(sequence));
   char buffer[32];
   size_t len = read_line(MOSH_PROMPT, buffer, sizeof(buffer));
-  TEST_ASSERT_EQUAL_STRING("foo ", buffer);
-  TEST_ASSERT_EQUAL_UINT64(strlen("foo "), len);
+  TEST_ASSERT_EQUAL_STRING("/foo", buffer);
+  TEST_ASSERT_EQUAL_UINT64(strlen("/foo"), len);
 }
 
 void test_tab_completion_directory_appends_slash(void) {
@@ -355,8 +408,8 @@ void test_tab_completion_directory_appends_slash(void) {
   feed_input(sequence, sizeof(sequence));
   char buffer[64];
   size_t len = read_line(MOSH_PROMPT, buffer, sizeof(buffer));
-  TEST_ASSERT_EQUAL_STRING("src/kernel/", buffer);
-  TEST_ASSERT_EQUAL_UINT64(strlen("src/kernel/"), len);
+  TEST_ASSERT_EQUAL_STRING("src/kernel", buffer);
+  TEST_ASSERT_EQUAL_UINT64(strlen("src/kernel"), len);
 }
 
 void test_tab_completion_partial_extension(void) {
@@ -367,8 +420,8 @@ void test_tab_completion_partial_extension(void) {
   feed_input(sequence, sizeof(sequence));
   char buffer[32];
   size_t len = read_line(MOSH_PROMPT, buffer, sizeof(buffer));
-  TEST_ASSERT_EQUAL_STRING("foo", buffer);
-  TEST_ASSERT_EQUAL_UINT64(strlen("foo"), len);
+  TEST_ASSERT_EQUAL_STRING("/foo", buffer);
+  TEST_ASSERT_EQUAL_UINT64(strlen("/foo"), len);
 }
 
 void test_tab_completion_no_match_beeps(void) {
@@ -383,4 +436,84 @@ void test_tab_completion_no_match_beeps(void) {
   TEST_ASSERT_EQUAL_UINT64(strlen("x"), len);
   TEST_ASSERT_TRUE_MESSAGE(capture_contains("\a"),
                            "No completion should emit a bell");
+}
+
+void test_tab_completion_cycles_directories(void) {
+  reset_capture();
+  history_reset();
+  str_copy(current_directory, sizeof(current_directory), "/");
+  set_listdir_response("bin/\ntmp/\n");
+  const char sequence[] = { 'c', 'd', ' ', '\t', '\t', '\t', '\n' };
+  feed_input(sequence, sizeof(sequence));
+  char buffer[32];
+  size_t len = read_line(MOSH_PROMPT, buffer, sizeof(buffer));
+  TEST_ASSERT_EQUAL_STRING("cd /bin", buffer);
+  TEST_ASSERT_EQUAL_UINT64(strlen("cd /bin"), len);
+}
+
+void test_tab_completion_resets_after_edit(void) {
+  reset_capture();
+  history_reset();
+  str_copy(current_directory, sizeof(current_directory), "/");
+  const char* responses[] = { "bin/\ntmp/\n", "alpha/\nbeta/\n" };
+  set_listdir_sequence(responses, 2);
+  const char sequence[] = { 'c', 'd', ' ', '\t', '\t', '/', '\t', '\n' };
+  feed_input(sequence, sizeof(sequence));
+  char buffer[64];
+  size_t len = read_line(MOSH_PROMPT, buffer, sizeof(buffer));
+  TEST_ASSERT_EQUAL_STRING("cd /tmp/alpha", buffer);
+  TEST_ASSERT_EQUAL_UINT64(strlen("cd /tmp/alpha"), len);
+}
+
+void test_tab_completion_handles_no_match_after_edit(void) {
+  reset_capture();
+  history_reset();
+  str_copy(current_directory, sizeof(current_directory), "/");
+  const char* responses[] = { "bin/\ntmp/\n", "" };
+  set_listdir_sequence(responses, 2);
+  const char sequence[] = { 'c', 'd', ' ', '\t', '\t', 'z', '\t', '\n' };
+  feed_input(sequence, sizeof(sequence));
+  char buffer[64];
+  size_t len = read_line(MOSH_PROMPT, buffer, sizeof(buffer));
+  TEST_ASSERT_EQUAL_STRING("cd /tmpz", buffer);
+  TEST_ASSERT_EQUAL_UINT64(strlen("cd /tmpz"), len);
+}
+
+void test_tab_completion_cd_ignores_files(void) {
+  reset_capture();
+  history_reset();
+  str_copy(current_directory, sizeof(current_directory), "/");
+  set_listdir_response("bin/\nREADME\n");
+  const char sequence[] = { 'c', 'd', ' ', '\t', '\n' };
+  feed_input(sequence, sizeof(sequence));
+  char buffer[32];
+  size_t len = read_line(MOSH_PROMPT, buffer, sizeof(buffer));
+  TEST_ASSERT_EQUAL_STRING("cd /bin", buffer);
+  TEST_ASSERT_EQUAL_UINT64(strlen("cd /bin"), len);
+}
+
+void test_tab_completion_cd_cycling_skips_files(void) {
+  reset_capture();
+  history_reset();
+  str_copy(current_directory, sizeof(current_directory), "/");
+  set_listdir_response("bin/\nmotd\ntmp/\n");
+  const char sequence[] = { 'c', 'd', ' ', '\t', '\t', '\n' };
+  feed_input(sequence, sizeof(sequence));
+  char buffer[32];
+  size_t len = read_line(MOSH_PROMPT, buffer, sizeof(buffer));
+  TEST_ASSERT_EQUAL_STRING("cd /tmp", buffer);
+  TEST_ASSERT_EQUAL_UINT64(strlen("cd /tmp"), len);
+}
+
+void test_tab_completion_non_cd_includes_files(void) {
+  reset_capture();
+  history_reset();
+  str_copy(current_directory, sizeof(current_directory), "/");
+  set_listdir_response("bin/\nmotd\n");
+  const char sequence[] = { 'c', 'a', 't', ' ', 'm', '\t', '\n' };
+  feed_input(sequence, sizeof(sequence));
+  char buffer[32];
+  size_t len = read_line(MOSH_PROMPT, buffer, sizeof(buffer));
+  TEST_ASSERT_EQUAL_STRING("cat /motd", buffer);
+  TEST_ASSERT_EQUAL_UINT64(strlen("cat /motd"), len);
 }
