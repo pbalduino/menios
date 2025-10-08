@@ -258,8 +258,9 @@ The critical path forward is completing the **toolchain** (#194, #195, #29), whi
 - **`docs/`** - Architecture documentation and design decisions
 - **`tasks.json`** - Detailed task tracking with GitHub issue integration
 - **`docs/road/road_to_doom.md`** - Comprehensive roadmap for userland Doom support
-- **`issue_dependencies.dot/.png`** - Visual dependency chart of all issues
-- **`ISSUE_DEPENDENCY_ANALYSIS.md`** - Detailed dependency analysis and implementation strategy
+- **`docs/issue_dependencies.dot/.png`** - Visual dependency chart of all issues
+- **`docs/ISSUE_DEPENDENCY_ANALYSIS.md`** - Detailed dependency analysis and implementation strategy
+- **`docs/MILESTONES.md`** - Milestone tracking (Mosh, GCC, Doom)
 
 ## Contributing
 
