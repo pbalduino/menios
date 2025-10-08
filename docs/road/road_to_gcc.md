@@ -12,18 +12,19 @@ The foundation for all userland development. Without this, we can't build proper
 
 | Component | Issue | Status | Priority |
 | --- | --- | --- | --- |
-| crt0 Runtime | #192 | ⛳ TODO | Critical |
+| crt0 Runtime | #192 | ✅ DONE | Critical |
 | Minimal libc | #193 | ✅ DONE | Critical |
 | Syscall ABI Docs | #194 | ⛳ TODO | High |
 | Userland Build System | #195 | ⛳ TODO | Critical |
 
 Minimal libc now provides shared memory/string primitives, a simple `mmap`-backed heap (`malloc`/`free`/`aligned_alloc`), and base stdio (`printf`/`fprintf`/`sprintf`, `puts`, `perror`).
+crt0 runtime provides assembly startup stub that sets up argc/argv/envp and calls main().
 
 **Dependencies:**
-- #192 (crt0) - No dependencies, can start now
-- #193 (libc) - Depends on #148 (environment variables), #192 (crt0)
-- #194 (docs) - Can start now
-- #195 (build) - Depends on #192, #193
+- ✅ #192 (crt0) - COMPLETE
+- ✅ #193 (libc) - COMPLETE
+- #194 (docs) - Can start now (no dependencies)
+- #195 (build) - Can start now (dependencies met: #192✅, #193✅)
 
 **Timeline Estimate:** 2-3 months
 
@@ -33,10 +34,10 @@ Services needed for any compiler to function properly.
 
 | Component | Issue | Status | Notes |
 | --- | --- | --- | --- |
-| **Pipes** (broken down) | #206-#209 | ⛳ TODO | GCC uses pipes between stages |
-| • Pipe data structure | #206 | ⛳ TODO | Kernel control path |
-| • Pipe syscall API | #207 | ⛳ TODO | pipe() syscall |
-| • Shell pipelines | #208 | ⛳ TODO | Shell integration |
+| **Pipes** (broken down) | #206-#209 | ✅ DONE (3/4) | GCC uses pipes between stages |
+| • Pipe data structure | #206 | ✅ DONE | Kernel control path |
+| • Pipe syscall API | #207 | ✅ DONE | pipe() syscall |
+| • Shell pipelines | #208 | ✅ DONE | Shell integration |
 | **Signals** (broken down) | #210-#214 | ⛳ TODO | For interrupt handling |
 | • Signal bookkeeping | #210 | ⛳ TODO | Kernel infrastructure |
 | • Signal syscalls | #211 | ⛳ TODO | kill(), sigaction() |
@@ -44,7 +45,9 @@ Services needed for any compiler to function properly.
 | • Shell Ctrl+C | #213 | ⛳ TODO | Process control |
 | File Write Support | #189 | ⛳ TODO | Compiler output requires writes |
 | I/O Scheduler | #205 | ✅ DONE | Better performance for concurrent disk I/O |
-| Threading | #109-111 | ⛳ TODO | GCC uses threads for optimization |
+| **Threading Foundation** | #108 | ✅ DONE | Kernel threading infrastructure |
+| pthread API | #109 | ⛳ TODO | GCC uses threads (ready now!) |
+| Thread-safe libc | #110-111 | ⛳ TODO | For multithreaded compilation |
 | Fast Syscalls | #221 | ⛳ TODO | 3-5x faster syscall performance |
 
 **Timeline Estimate:** 3-4 months
@@ -55,9 +58,10 @@ Basic tools for testing the toolchain.
 
 | Component | Issue | Status | Purpose |
 | --- | --- | --- | --- |
-| /bin utilities | #183 | ⛳ TODO | echo, cat, env, true, false |
+| /bin utilities | #183 | ✅ DONE | echo, cat, env, true, false |
+| PATH search | #185 | ✅ DONE | Command resolution |
 | Process tools | #187 | ⛳ TODO | ps, kill |
-| env utility | #188 | ⛳ TODO | Environment debugging |
+| env utility | #188 | ⛳ TODO | Environment debugging (ready now!) |
 
 **Timeline Estimate:** 1-2 months
 
@@ -73,16 +77,16 @@ Running compilers natively on meniOS.
 
 **Dependencies for TCC (#190):**
 - #29 (cross-compiler complete)
-- #193 (libc) ✅ *Complete*
-- #206-#208 (pipes - at least through shell pipelines)
+- ✅ #193 (libc) - COMPLETE
+- ✅ #208 (pipes - shell pipelines) - COMPLETE! (#206 ✅, #207 ✅, #208 ✅)
 - #189 (file writes)
-- #205 (I/O scheduler) ✅ *Complete* - Performance boost available!
+- ✅ #205 (I/O scheduler) - COMPLETE - Performance boost available!
 
 **Dependencies for binutils (#191):**
 - #29 (cross-compiler complete)
-- #193 (libc) ✅ *Complete*
+- ✅ #193 (libc) - COMPLETE
 - #189 (file writes)
-- #205 (I/O scheduler) ✅ *Complete* - Performance boost available!
+- ✅ #205 (I/O scheduler) - COMPLETE - Performance boost available!
 
 **Timeline Estimate:** 6-12 months
 
@@ -90,38 +94,39 @@ Running compilers natively on meniOS.
 
 The **shortest path** to compiling C programs for meniOS:
 
-1. **#192** - Implement crt0 (1 week)
-   - Assembly stub that calls main()
+1. ✅ **#192** - Implement crt0 (1 week) - COMPLETE
+   - Assembly stub that calls main() and handles argc/argv/envp
    - No dependencies
 
-2. **#194** - Document syscall ABI (1 week, parallel with #192)
+2. **#194** - Document syscall ABI (1 week, can start now)
    - Reference documentation
    - No dependencies
 
-3. **#193** - Build libc (3-4 weeks) ✅ *Completed*
-  - Syscall wrappers, string/memory primitives, and basic stdio now ship with `libmeniosc`.
+3. ✅ **#193** - Build libc (3-4 weeks) - COMPLETE
+   - Syscall wrappers, string/memory primitives, and basic stdio now ship with `libmeniosc`.
 
-4. **#195** - Setup build system (1 week)
-   - Requires #192, #193
+4. **#195** - Setup build system (1 week, can start now!)
+   - Dependencies met: #192✅, #193✅
    - Integrate into Makefile
 
 5. **#29** - Integration testing (1-2 weeks)
+   - Requires: #194, #195
    - Compile test programs
    - Fix issues
 
-**Total Estimated Time:** 2-3 months for cross-compiler
+**Total Estimated Time:** ~2 weeks remaining for cross-compiler (just #194, #195, #29!)
 
 ## 🎯 **Critical Path to Native Compilation**
 
 Much longer path, requires most of the OS to work:
 
 ```
-Cross-Compiler (#29)
+Cross-Compiler (#29) — Just #194 + #195 away!
     ↓
-Environment Variables (#148)
+✅ Environment Variables (#148) - COMPLETE
     ↓
-Pipes (#102) + Signals (#103) + Threading (#109-111)
-    ↓
+Pipes (#207-#208) + Signals (#210-#214) + pthread (#109)
+    ↓ (Note: #206 ✅ complete, #108 ✅ complete)
 File Write Support (#189)
     ↓
 Comprehensive libc with thread safety (#110)
@@ -139,25 +144,26 @@ Test native compilation workflow
 
 ## 📋 **Immediate Action Items**
 
-### Week 1-2: Foundation
-- [ ] **#192** - Write crt0.S assembly
-- [ ] **#194** - Document all syscalls and ABI
+### ✅ Week 1-2: Foundation - COMPLETE!
+- [x] **#192** - Write crt0.S assembly ✅
+- [ ] **#194** - Document all syscalls and ABI (ready now!)
 
-### Week 3-6: Core Library
-- [x] **#193** - Implement syscall wrappers
-- [x] **#193** - Implement string functions
-- [x] **#193** - Implement malloc/free
-- [x] **#193** - Implement printf family
+### ✅ Week 3-6: Core Library - COMPLETE!
+- [x] **#193** - Implement syscall wrappers ✅
+- [x] **#193** - Implement string functions ✅
+- [x] **#193** - Implement malloc/free ✅
+- [x] **#193** - Implement printf family ✅
 
-### Week 7-8: Integration
-- [ ] **#195** - Create userland Makefile
+### Week 7-8: Integration (READY NOW!)
+- [ ] **#195** - Create userland Makefile (deps met!)
 - [ ] **#195** - Setup proper CFLAGS
 - [ ] **#29** - Test with simple programs
 
 ### Week 9-10: Validation
-- [ ] **#183** - Rewrite /bin utilities using new libc
+- [x] **#183** - Rewrite /bin utilities using new libc ✅
+- [x] **#185** - PATH search configuration ✅
 - [ ] **#187** - Implement ps/kill with new libc
-- [ ] **#188** - Implement env with new libc
+- [ ] **#188** - Implement env with new libc (ready now!)
 
 ## 🎓 **Why This Matters**
 
@@ -213,9 +219,10 @@ Test native compilation workflow
 
 Start with the most critical issues:
 
-1. **crt0 (#192)** - Good first issue, pure assembly
-2. **Syscall docs (#194)** - Documentation task
-3. **libc (#193)** - Large task, can be split up
+1. ✅ **crt0 (#192)** - COMPLETE
+2. **Syscall docs (#194)** - Ready now! Documentation task
+3. ✅ **libc (#193)** - COMPLETE
+4. **Build system (#195)** - Ready now! (deps met)
 
 Each component can be developed somewhat independently, then integrated together.
 

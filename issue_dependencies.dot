@@ -42,7 +42,7 @@ digraph IssueDependencies {
         style=filled;
         fillcolor="#E6F7FF";
 
-        issue108 [label="#108: kernel threading\ninfrastructure", fillcolor="#B3E5FC"];
+        issue108 [label="#108: kernel threading\ninfrastructure", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED
         issue109 [label="#109: pthread API\nand POSIX threading", fillcolor="#B3E5FC"];
         issue110 [label="#110: thread-safe\nC library (libc)", fillcolor="#B3E5FC"];
         issue111 [label="#111: advanced pthread\nsynchronization", fillcolor="#B3E5FC"];
@@ -60,7 +60,7 @@ digraph IssueDependencies {
         issue182 [label="#182: waitpid\nregression test", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED
         issue183 [label="#183: /bin\nutilities", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED
         issue184 [label="#184: Line editor\ncoverage", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED
-        issue185 [label="#185: PATH\nsearch", fillcolor="#FFE4B5"];
+        issue185 [label="#185: PATH\nsearch", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED
         issue186 [label="#186: Pipeline\nplaceholders", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED
         issue187 [label="#187: ps/kill\nutilities", fillcolor="#FFE4B5"];
         issue188 [label="#188: env\nutility", fillcolor="#FFE4B5"];
@@ -111,10 +111,10 @@ digraph IssueDependencies {
         fillcolor="#F5F0FF";
 
         // Pipes (broken down)
-        issue206 [label="#206: Pipe data\nstructure", fillcolor="#E6E6FA"];
-        issue207 [label="#207: Pipe\nsyscall API", fillcolor="#E6E6FA"];
-        issue208 [label="#208: Shell\npipelines", fillcolor="#E6E6FA"];
-        issue209 [label="#209: Named\nFIFOs", fillcolor="#DDA0DD"];
+        issue206 [label="#206: Pipe data\nstructure", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED
+        issue207 [label="#207: Pipe\nsyscall API", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED
+        issue208 [label="#208: Shell\npipelines", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED
+        issue209 [label="#209: Named\nFIFOs", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED
 
         // Signals (broken down)
         issue210 [label="#210: Signal\nbookkeeping", fillcolor="#E6E6FA"];
@@ -156,10 +156,10 @@ digraph IssueDependencies {
     issue34 -> issue108 [color=blue, penwidth=2, style=dashed];
     issue36 -> issue108 [color=blue, penwidth=2, style=dashed];
     issue57 -> issue108 [color=blue, penwidth=2, style=dashed];
-    issue108 -> issue109 [color=blue, penwidth=2];
+    issue108 -> issue109 [color=blue, penwidth=2, style=dashed];
     issue109 -> issue110 [color=blue, penwidth=2];
     issue109 -> issue111 [color=blue, penwidth=2];
-    issue108 -> issue113 [color=blue, penwidth=2];
+    issue108 -> issue113 [color=blue, penwidth=2, style=dashed];
 
     // Shell milestone dependencies (some complete)
     issue148 -> issue180 [color=green, penwidth=2, style=dashed];
@@ -220,9 +220,9 @@ digraph IssueDependencies {
     // Pipes dependencies (sequential)
     issue96 -> issue206 [label="#96: fd mgmt", style=dashed, color=gray];
     issue40 -> issue206 [label="#40: condvar", style=dashed, color=gray];
-    issue206 -> issue207 [color=purple, penwidth=2];
-    issue207 -> issue208 [color=purple, penwidth=2];
-    issue208 -> issue209 [color=purple];
+    issue206 -> issue207 [color=purple, penwidth=2, style=dashed];
+    issue207 -> issue208 [color=purple, penwidth=2, style=dashed];
+    issue208 -> issue209 [color=purple, style=dashed];
     issue65 -> issue209 [label="#65: VFS", style=dashed, color=gray];
 
     // Signals dependencies (sequential)

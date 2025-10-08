@@ -40,11 +40,11 @@ Core process and memory plumbing is in tree, and the minimal shell milestone bui
 Complete multithreading infrastructure for modern applications:
 
 #### **Kernel Threading Infrastructure** (Issue #108) ✅ **COMPLETE**
-- ✅ **Status**: COMPLETED - Thread Control Blocks, thread scheduling, stack management
+- ✅ **Status**: CLOSED - Thread Control Blocks, thread scheduling, stack management
 - **Impact**: Multithreaded applications foundation - ENABLED
 
 #### **pthread API Implementation** (Issue #109)
-- ✅ **Status**: Ready to implement (kernel threading complete)
+- ✅ **Status**: Ready to implement NOW (kernel threading complete #108 ✅)
 - **Scope**: Full POSIX threading API (create/join/exit, attributes, TSD)
 - **Impact**: Standard threading interface for applications
 
@@ -61,19 +61,19 @@ Complete multithreading infrastructure for modern applications:
 ### **Phase 3: Advanced IPC** (READY TO IMPLEMENT!)
 Inter-process communication for complex applications:
 
-#### **Pipes and FIFOs** (Issues #206-#209, broken down from #102)
-- ✅ **Status**: Ready to implement (file descriptors complete, condition variables complete)
+#### **Pipes and FIFOs** (Issues #206-#209, broken down from #102) (3/4 Complete!)
+- ✅ **Status**: Core features COMPLETE! #206 ✅ #207 ✅ #208 ✅
 - **Implementation Path**:
-  1. **#206** - Pipe data structure and kernel control path (1-2 weeks)
-  2. **#207** - Pipe syscall and userspace API (1 week)
-  3. **#208** - Shell pipeline integration (1-2 weeks)
-  4. **#209** - Named FIFOs (mkfifo) - optional (2 weeks)
-- **Impact**: Shell operations, process communication, command pipelines
+  1. ✅ **#206** - Pipe data structure and kernel control path (CLOSED)
+  2. ✅ **#207** - Pipe syscall and userspace API (CLOSED)
+  3. ✅ **#208** - Shell pipeline integration (CLOSED)
+  4. **#209** - Named FIFOs (mkfifo) - optional enhancement (2 weeks)
+- **Impact**: Shell operations, process communication, command pipelines - **ALL WORKING!**
 
 #### **UNIX Signals** (Issues #210-#214, broken down from #103)
-- ✅ **Status**: Ready to implement (fork/exec complete)
+- ✅ **Status**: In progress — bookkeeping scaffold is in place, ready for syscall layer
 - **Implementation Path**:
-  1. **#210** - Signal bookkeeping scaffold (1-2 weeks)
+  1. ✅ **#210** - Signal bookkeeping scaffold (CLOSED)
   2. **#211** - Signal syscalls (kill, sigaction, etc.) (1-2 weeks)
   3. **#212** - Basic signal delivery path (2-3 weeks)
   4. **#213** - Shell Ctrl+C integration (1-2 weeks)
@@ -228,51 +228,54 @@ Basic command-line tools for shell interaction:
 **High-impact kernel work still outstanding:**
 
 ### Toolchain (Critical Path)
-1. **#192** – Implement crt0 runtime startup code
+1. **#192** – Implement crt0 runtime startup code ✅ *Completed*
 2. **#193** – Build minimal userland libc (syscalls, strings, memory, stdio) ✅ *Completed*
 3. **#194** – Document syscall ABI specification
 4. **#195** – Separate userland build system from kernel
 5. **#29** – Complete cross-compiler toolchain integration
 
 ### Threading & IPC
-6. **#109** – Implement the pthread API so user programs can spin up threads
-7. **#110** – Make libc thread-safe once pthread primitives exist
-8. **#111** – Land advanced pthread synchronization (barriers, robust locks)
+6. ✅ **#108** – Kernel threading infrastructure ✅ *Completed*
+7. **#109** – Implement the pthread API so user programs can spin up threads (ready now!)
+8. **#110** – Make libc thread-safe once pthread primitives exist
+9. **#111** – Land advanced pthread synchronization (barriers, robust locks)
 
 **IPC - Pipes** (sequential):
-9. **#206** – Pipe data structure and kernel control path
-10. **#207** – Pipe syscall and userspace API
-11. **#208** – Shell pipeline integration
-12. **#209** – Named FIFOs (optional)
+10. ✅ **#206** – Pipe data structure and kernel control path ✅ *Completed*
+11. ✅ **#207** – Pipe syscall and userspace API ✅ *Completed*
+12. ✅ **#208** – Shell pipeline integration ✅ *Completed*
+13. **#209** – Named FIFOs (optional enhancement)
 
 **IPC - Signals** (sequential):
-13. **#210** – Signal bookkeeping scaffold
-14. **#211** – Signal syscalls (kill, sigaction, sigprocmask, sigsuspend)
-15. **#212** – Basic signal delivery path with user handlers
-16. **#213** – Shell Ctrl+C integration
-17. **#214** – Advanced signal features (optional)
+14. **#210** – Signal bookkeeping scaffold
+15. **#211** – Signal syscalls (kill, sigaction, sigprocmask, sigsuspend)
+16. **#212** – Basic signal delivery path with user handlers
+17. **#213** – Shell Ctrl+C integration
+18. **#214** – Advanced signal features (optional)
 
 **IPC - Shared Memory** (sequential):
-18. **#215** – Kernel shared memory region manager
-19. **#216** – Shared memory syscalls (shmget, shmat, shmdt, shmctl)
-20. **#217** – Reference counting and cleanup
-21. **#218** – Comprehensive test suite
-22. **#219** – Documentation and examples
+19. **#215** – Kernel shared memory region manager
+20. **#216** – Shared memory syscalls (shmget, shmat, shmdt, shmctl)
+21. **#217** – Reference counting and cleanup
+22. **#218** – Comprehensive test suite
+23. **#219** – Documentation and examples
 
 **IPC - Other**:
-23. **#220** – ioctl syscall for device-specific operations
+24. **#220** – ioctl syscall for device-specific operations
 
 ### System Services
-24. **#33** – Bring up the audio subsystem for Doom's sound effects/music
-25. **#189** – Add FAT32 write support for save games and config files
-26. ✅ **#205** – Elevator I/O scheduler (COMPLETE!)
-27. **#183** – Provide basic `/bin` utilities (echo, cat, env, true, false)
-28. **#187** – Add process management tools (ps, kill)
-29. **#221** – Migrate to fast syscall instruction for 3-5x performance boost
+25. **#33** – Bring up the audio subsystem for Doom's sound effects/music
+26. **#189** – Add FAT32 write support for save games and config files
+27. ✅ **#205** – Elevator I/O scheduler (COMPLETE!)
+28. ✅ **#183** – Provide basic `/bin` utilities (echo, cat, env, true, false) (COMPLETE!)
+29. ✅ **#185** – PATH search configuration (COMPLETE!)
+30. **#187** – Add process management tools (ps, kill)
+31. **#188** – env utility (ready now!)
+32. **#221** – Migrate to fast syscall instruction for 3-5x performance boost
 
 ### Future: Native Compilation
-30. **#190** – Port TCC (Tiny C Compiler) to meniOS
-31. **#191** – Port binutils (as, ld) for native development
+33. **#190** – Port TCC (Tiny C Compiler) to meniOS
+34. **#191** – Port binutils (as, ld) for native development
 
 These items unlock the bulk of the remaining roadmap phases (threaded libc, IPC,
 networking) and pave the way for shipping a Doom-capable user environment.

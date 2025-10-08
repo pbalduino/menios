@@ -567,6 +567,7 @@ ifeq ($(OS_NAME),linux)
 			test/stubs.c \
 			src/kernel/file.c \
 			src/kernel/fs/vfs.c \
+			src/kernel/fs/pipe.c \
 			src/kernel/fs/tmpfs.c \
 			src/kernel/syscall/syscall.c \
 			src/kernel/mem/pmm.c \
@@ -574,6 +575,7 @@ ifeq ($(OS_NAME),linux)
 			src/kernel/console/ansi.c \
 			src/kernel/proc/kcondvar.c \
 			src/kernel/proc/kmutex.c \
+			src/kernel/proc/signal.c \
 			src/kernel/timer/tsc.c \
 			src/libc/itoa.c \
 			src/libc/string.c \

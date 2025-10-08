@@ -392,6 +392,7 @@ void proc_create(proc_info_p proc, const char* name, void (*entrypoint)(void *),
   if(current != NULL) {
     proc_file_table_clone(proc, current);
   }
+  proc_signal_state_init(proc);
 
   serial_printf("proc_create: Creating process %s - %s with arg %lx\n", name, proc->name, arg);
 
@@ -602,6 +603,7 @@ proc_info_p proc_fork(proc_info_p parent, const syscall_frame_t* frame, int* err
   memset(child, 0, sizeof(proc_info_t));
   proc_file_table_init(child);
   proc_file_table_clone(child, parent);
+  proc_signal_state_copy(child, parent);
   serial_printf("proc_fork: proc_info allocated\n");
 
   child->parent = parent;
@@ -1186,6 +1188,7 @@ void proc_execute(proc_info_p proc) {
 void scheduler_init() {
   logk("Initing scheduler");
   current = &kernel_process_info;
+  proc_signal_state_init(current);
   memset(ready_queues, 0, sizeof(ready_queues));
   sleep_queue_head = NULL;
   scheduler_actions = 0;

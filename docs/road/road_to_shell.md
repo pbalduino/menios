@@ -23,7 +23,7 @@ A release that meets this milestone must satisfy all of the following:
 | Temporary FS | ✅ Done | tmpfs mounted at `/tmp` with read/write support validated via shell redirection |
 | Fork/Exec Runtime | ✅ Done | `fork`, `execve`, `waitpid`, descriptor cloning working |
 | Shell Prompt UX | ✅ Done | Inline caret, history navigation, prompt redraw regression tests |
-| Default Environment | ⛳ TODO | Seed `PATH`, `HOME`, `PWD`; chdir to `/` before launching shell (#180) |
+| Default Environment | ✅ Done | Seed `PATH`, `HOME`, `PWD`; chdir to `/` before launching shell (#180, #185) |
 | Launchable Utilities | ✅ Done | Added `/bin/echo`, `/bin/cat`, `/bin/env`, `/bin/true`, `/bin/false`, `/bin/ls`, `/bin/kill`, `/bin/ps` (#183/#187) |
 | Regression Coverage | 🔄 In progress | `test_mosh_line` + `test_mosh_exec` cover caret redraw and waitpid status |
 
@@ -59,15 +59,16 @@ A release that meets this milestone must satisfy all of the following:
 - [x] Shell waits for child completion and reports non-zero exit status.
 - [x] Basic pipelines and `<`/`>` redirection supported for foreground commands (#186).
 - [x] `Ctrl+C` aborts foreground commands and pipelines via `SYS_PROC_KILL`.
-- [ ] `PATH` search order configurable once environment support lands (#185).
+- [x] `PATH` search order configurable once environment support lands (#185).
 - [ ] Tests ensure waitpid returns correct PID and shell stays in supervision loop (#182).
 - [ ] Tests ensure waitpid returns correct PID and shell stays in supervision loop (#182).
 
 ## Blocking TODOs
 
-1. **Environment Seeding** (#180)
+1. **Environment Seeding** (#180, #185)
    - ✅ `src/usermode/init.c` seeds `PATH=/bin`, `HOME=/`, `PWD=/` before launching mosh; fallback env in mosh mirrors the same defaults.
    - ✅ `test/test_mosh_line.c` asserts the default environment is visible to the shell.
+   - ✅ PATH search order configuration implemented (#185).
 2. **tmpfs Validation** (#181)
    - ✅ Host-side regression (`test/test_tmpfs.c`) mounts tmpfs and verifies create/read/write through the VFS layer.
 3. **Waitpid Regression Test** (#182)
@@ -90,7 +91,7 @@ A release that meets this milestone must satisfy all of the following:
 ## Future Enhancements (Post-Minimal Shell)
 
 ### IPC and Process Control
-- Expand pipelines to support advanced syntax (append, stderr redirection) once IPC primitives land (#165, #206-#209).
+- Expand pipelines to support advanced syntax (append, stderr redirection) once IPC primitives land (#165, #209). Kernel pipe infrastructure (#206), the `pipe()` syscall/user wrapper (#207), and shell integration (#208) are already in place.
 - Signal delivery/handling for user processes (beyond current CTRL+C kill helper) (#210-#214).
 - Job control (background tasks, `wait` builtin) (#158).
 - Process management utilities (`ps`, richer `kill` semantics) (#187, depends on #213).

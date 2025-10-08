@@ -182,16 +182,6 @@ bool fs_file_read_all(const fs_mount_t* mount,
   return false;
 }
 
-int pipe_create(file_t** read_end, file_t** write_end) {
-  if(read_end) {
-    *read_end = NULL;
-  }
-  if(write_end) {
-    *write_end = NULL;
-  }
-  return -ENOSYS;
-}
-
 void* kmalloc(size_t size) {
   return malloc(size);
 }

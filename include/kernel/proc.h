@@ -8,6 +8,7 @@ extern "C" {
 #include <types.h>
 #include <kernel/file.h>
 #include <kernel/vm_region.h>
+#include <kernel/signal.h>
 
 struct syscall_frame_t;
 
@@ -130,6 +131,9 @@ typedef struct proc_info_t {
   void(*entrypoint)(void*);
   void*        arguments;
   file_descriptor_entry_t files[PROC_MAX_FILES];
+  uint32_t     signal_pending;
+  uint32_t     signal_blocked;
+  sighandler_t signal_handlers[SIG_MAX];
 } proc_info_t;
 
 typedef proc_info_t* proc_info_p;

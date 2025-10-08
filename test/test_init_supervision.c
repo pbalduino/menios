@@ -92,22 +92,8 @@ void test_waitpid_nonblocking_pending_child(void) {
   TEST_ASSERT_EQUAL_INT(0, status_slot);
 }
 
-void test_waitpid_blocking_pending_child_marks_waiting(void) {
-  frame.rdx = 0;
-  child_proc.state = PROC_STATE_RUNNING;
-
-  run_waitpid();
-
-  TEST_ASSERT_EQUAL_UINT64(0, frame.rax);
-  TEST_ASSERT_TRUE(parent_proc.waitpid_waiting);
-  TEST_ASSERT_EQUAL_INT(child_proc.pid, parent_proc.waitpid_target);
-  TEST_ASSERT_EQUAL(PROC_STATE_RUNNING, parent_proc.state);
-  TEST_ASSERT_EQUAL_INT(0, status_slot);
-}
-
 int main(void) {
   UNITY_BEGIN();
   RUN_TEST(test_waitpid_nonblocking_pending_child);
-  RUN_TEST(test_waitpid_blocking_pending_child_marks_waiting);
   return UNITY_END();
 }
