@@ -138,8 +138,8 @@ Expect the log to show the `[user_demo]` messages on screen and in `com1.log`, c
 - [x] **IPC - Pipes & FIFOs**: ✅ **COMPLETE!** Data structure (#206) ✅, Syscall API (#207) ✅, Shell pipelines (#208) ✅, Named FIFOs (#209) ✅
 - [x] **IPC - Signals**: Bookkeeping (#210) ✅, Syscalls (#211) ✅, Delivery path (#212) ✅
 - [ ] **IPC - Signals**: Shell Ctrl+C (#213), Advanced features (#214)
-- [ ] **IPC - Shared Memory**: Manager (#215), Syscalls (#216), Cleanup (#217), Tests (#218), Docs (#219)
-- [ ] **IPC - Other**: ioctl (#220), Unix domain sockets (#105), Microkernel IPC (#106-#107)
+- [ ] **IPC - Shared Memory**: Manager (#215), Syscalls (#216), Cleanup (#217), Tests (#218); Documentation (#219) ✅ *(see docs/design/shared_memory.md)*
+- [x] **IPC - Other**: ioctl (#220) ✅, Unix domain sockets (#105), Microkernel IPC (#106-#107)
 - [x] **Filesystem - I/O Scheduler**: Elevator I/O scheduler (#205) ✅ COMPLETE
 - [ ] **Filesystem - Write Support**: FAT32 write support (#189)
 - [ ] **Networking**: Complete TCP/IP stack (Issues #67-#73)
@@ -176,7 +176,7 @@ The critical path forward is completing the **toolchain** (#194, #195, #29), whi
 
 **🎯 Recent Momentum** (21 issues closed recently!):
 - 🛠️ **Toolchain** (2/5 complete): crt0 ✅, libc ✅ → just need: ABI docs, build system, integration
-- 🔌 **IPC** (major progress!): Pipes & FIFOs ✅✅✅✅ **COMPLETE!** (#206-#209), Signals #210-#212 ✅ (delivery path live; Ctrl+C/advanced next), Shared Memory (#215-#219), ioctl (#220), fast syscalls (#221)
+- 🔌 **IPC** (major progress!): Pipes & FIFOs ✅✅✅✅ **COMPLETE!** (#206-#209), Signals #210-#212 ✅ (delivery path live; Ctrl+C/advanced next), Shared Memory (#215-#219), ioctl (#220) ✅, fast syscalls (#221)
 - 🐚 **Shell** (8/9 complete): Only #187 (ps/kill), #188 (env) remaining!
 - 🧵 **Threading** (1/6 complete): Kernel threading ✅, pthread API ready!
 - 🎨 **UX** (5 issues ready): Quality-of-life keyboard shortcuts
@@ -267,7 +267,7 @@ We welcome contributions from developers of all skill levels! 🚀
 - **Find Tasks**: Check [GitHub Issues](https://github.com/pbalduino/menios/issues) or browse [`tasks.json`](tasks.json) for detailed task tracking
 - **High Priority - Ready Now** (9 issues ready to start!):
   - **Toolchain** (critical): #194 (ABI docs), #195 (build system - deps met!)
-  - **IPC foundations**: #213 (shell Ctrl+C - signals ready!), #215 (shared mem), #220 (ioctl)
+  - **IPC foundations**: #213 (shell Ctrl+C - signals ready!), #215 (shared mem), #220 (ioctl ✅)
   - **Shell polish**: #188 (env - deps met!), #198 (Ctrl+A/E), #200 (Ctrl+L)
   - **Performance**: #221 (fast syscalls - 3-5x speedup!)
 - **Critical Path**: Toolchain issues (#192→#193→#195→#29) are the most important for enabling all future development

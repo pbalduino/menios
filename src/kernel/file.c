@@ -620,19 +620,6 @@ int dup2(int oldfd, int newfd) {
   return proc_file_dup(stream_owner(), oldfd, newfd, false);
 }
 
-file_t* file_create_serial_console_file(void) {
-  return file_create(&serial_file_ops, NULL, FILE_MODE_WRITE);
-}
-
-file_t* file_create_framebuffer_console_file(void) {
-  return file_create(&framebuffer_file_ops, NULL, FILE_MODE_WRITE);
-}
-
-file_t* file_create_tty_console_file(void) {
-  stdin_buffer_init();
-  return file_create(&tty_console_file_ops, NULL, FILE_MODE_READ | FILE_MODE_WRITE);
-}
-
 FILE* fopen(const char* filename, const char* mode) {
   if(filename == NULL || mode == NULL) {
     set_errno(EINVAL);
@@ -736,3 +723,16 @@ fclose(new_stream);
   return stream;
 }
 #endif
+
+file_t* file_create_serial_console_file(void) {
+  return file_create(&serial_file_ops, NULL, FILE_MODE_WRITE);
+}
+
+file_t* file_create_framebuffer_console_file(void) {
+  return file_create(&framebuffer_file_ops, NULL, FILE_MODE_WRITE);
+}
+
+file_t* file_create_tty_console_file(void) {
+  stdin_buffer_init();
+  return file_create(&tty_console_file_ops, NULL, FILE_MODE_READ | FILE_MODE_WRITE);
+}

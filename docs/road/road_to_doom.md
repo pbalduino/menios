@@ -91,6 +91,7 @@ Inter-process communication for complex applications:
 - **Impact**: Fast inter-process data sharing, audio/video buffers
 
 #### **Device Control** (Issue #220)
+- ✅ **Status**: ioctl dispatcher live; `/dev/tty0` now answers `TIOCGWINSZ`
 - **#220** - ioctl syscall for device-specific operations
 - **Impact**: Terminal control, framebuffer config, device management
 
@@ -258,10 +259,10 @@ Basic command-line tools for shell interaction:
 20. **#216** – Shared memory syscalls (shmget, shmat, shmdt, shmctl)
 21. **#217** – Reference counting and cleanup
 22. **#218** – Comprehensive test suite
-23. **#219** – Documentation and examples
+23. ✅ **#219** – Documentation and examples *(docs/design/shared_memory.md)*
 
 **IPC - Other**:
-24. **#220** – ioctl syscall for device-specific operations
+24. ✅ **#220** – ioctl syscall for device-specific operations ✅ *Completed*
 
 ### System Services
 25. **#33** – Bring up the audio subsystem for Doom's sound effects/music

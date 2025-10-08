@@ -36,7 +36,7 @@
     "github_issue": {
       "number": 220,
       "url": "https://github.com/pbalduino/menios/issues/220",
-      "state": "OPEN"
+      "state": "CLOSED"
     },
     "labels": [
       "enhancement",
@@ -44,14 +44,15 @@
     ],
     "assignees": [
       "pbalduino"
-    ]
+    ],
+    "notes": "ioctl syscall implemented; tty winsize supported"
   },
   {
     "title": "Document shared memory and provide example programs",
     "github_issue": {
       "number": 219,
       "url": "https://github.com/pbalduino/menios/issues/219",
-      "state": "OPEN"
+      "state": "CLOSED"
     },
     "labels": [
       "documentation",
@@ -59,7 +60,8 @@
     ],
     "assignees": [
       "pbalduino"
-    ]
+    ],
+    "notes": "Shared memory design doc at docs/design/shared_memory.md"
   },
   {
     "title": "Create comprehensive shared memory test suite",
