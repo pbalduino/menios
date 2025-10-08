@@ -177,7 +177,7 @@
     "github_issue": {
       "number": 203,
       "url": "https://github.com/pbalduino/menios/issues/203",
-      "state": "OPEN"
+      "state": "CLOSED"
     },
     "labels": [
       "bug",
@@ -186,7 +186,8 @@
     ],
     "assignees": [
       "pbalduino"
-    ]
+    ],
+    "notes": "Pipeline no longer hangs; tested via echo hi | cat after env handling fix"
   },
   {
     "title": "Bug: cat /dev/zero finishes instantly instead of running continuously",

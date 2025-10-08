@@ -191,6 +191,26 @@ char*	strcpy(char *dst, const char *src) {
   return original;
 }
 
+char* strchr(const char* s, int c) {
+  if(s == NULL) {
+    return NULL;
+  }
+
+  unsigned char target = (unsigned char)c;
+  while(*s != '\0') {
+    if((unsigned char)*s == target) {
+      return (char*)s;
+    }
+    s++;
+  }
+
+  if(target == '\0') {
+    return (char*)s;
+  }
+
+  return NULL;
+}
+
 /**
  * Copies up to size characters from source string to destination buffer
  * @param dst Pointer to the destination buffer

@@ -24,6 +24,7 @@
 #define MOSH_MAX_ARGS        16
 #define MOSH_MAX_TOKENS      128
 #define MOSH_MAX_SEQUENCES   8
+#define MOSH_MAX_ENV_VARS    64
 
 static char** process_envp = NULL;
 static char fallback_path[] = "PATH=/bin";
@@ -35,6 +36,7 @@ static char     current_directory[MOSH_MAX_PATH];
 static char     pending_input[128];
 static size_t   pending_length = 0;
 static size_t   pending_offset = 0;
+static bool     env_heap_flags[MOSH_MAX_ENV_VARS];
 
 static size_t str_len(const char* s);
 static bool   str_eq(const char* a, const char* b);
@@ -102,7 +104,26 @@ static inline long syscall3(long number, long arg1, long arg2, long arg3) {
 }
 #endif
 
-static const char* env_get(const char* key) {
+static void env_release_heap_entries(void) {
+  if(process_envp == NULL) {
+    memset(env_heap_flags, 0, sizeof(env_heap_flags));
+    return;
+  }
+
+  for(size_t idx = 0; idx < MOSH_MAX_ENV_VARS; idx++) {
+    if(process_envp[idx] == NULL) {
+      break;
+    }
+    if(env_heap_flags[idx]) {
+      free(process_envp[idx]);
+      env_heap_flags[idx] = false;
+    }
+  }
+
+  memset(env_heap_flags, 0, sizeof(env_heap_flags));
+}
+
+static char** env_find_entry_slot(const char* key, size_t* index_out) {
   if(process_envp == NULL || key == NULL) {
     return NULL;
   }
@@ -113,78 +134,88 @@ static const char* env_get(const char* key) {
   }
 
   for(size_t idx = 0; process_envp[idx] != NULL; idx++) {
-    const char* entry = process_envp[idx];
-    size_t pos = 0;
-    while(entry[pos] != '\0' && entry[pos] != '=') {
-      pos++;
-    }
-    if(entry[pos] != '=' || pos != key_len) {
-      continue;
-    }
-
-    bool match = true;
-    for(size_t i = 0; i < key_len; i++) {
-      if(entry[i] != key[i]) {
-        match = false;
-        break;
-      }
-    }
-    if(match) {
-      return entry + key_len + 1;
-    }
-  }
-
-  return NULL;
-}
-
-#ifdef MOSH_TEST
-void mosh_test_set_env(char** envp) {
-  process_envp = (envp != NULL) ? envp : fallback_envp;
-}
-#endif
-
-static char* env_find_entry(const char* key) {
-  if(process_envp == NULL || key == NULL) {
-    return NULL;
-  }
-  size_t key_len = str_len(key);
-  for(size_t idx = 0; process_envp[idx] != NULL; idx++) {
     char* entry = process_envp[idx];
     size_t pos = 0;
     while(entry[pos] != '\0' && entry[pos] != '=') {
       pos++;
     }
-    if(entry[pos] == '=' && pos == key_len) {
-      bool match = true;
-      for(size_t i = 0; i < key_len; i++) {
-        if(entry[i] != key[i]) {
-          match = false;
-          break;
-        }
+    if(entry[pos] == '=' && pos == key_len && strncmp(entry, key, key_len) == 0) {
+      if(index_out) {
+        *index_out = idx;
       }
-      if(match) {
-        return entry;
-      }
+      return &process_envp[idx];
     }
   }
+
   return NULL;
 }
 
-static void env_set(const char* key, const char* value) {
-  char* entry = env_find_entry(key);
-  if(entry == NULL || value == NULL) {
-    return;
+static const char* env_get(const char* key) {
+  char** slot = env_find_entry_slot(key, NULL);
+  if(slot == NULL) {
+    return NULL;
   }
+
+  const char* entry = *slot;
   size_t key_len = str_len(key);
   if(entry[key_len] != '=') {
+    return NULL;
+  }
+  return entry + key_len + 1;
+}
+
+#ifdef MOSH_TEST
+void mosh_test_set_env(char** envp) {
+  env_release_heap_entries();
+  process_envp = (envp != NULL) ? envp : fallback_envp;
+}
+#endif
+
+static void env_set(const char* key, const char* value) {
+  if(value == NULL) {
     return;
   }
-  size_t value_len = str_len(value);
-  size_t idx = key_len + 1;
-  for(size_t i = 0; i < value_len; i++) {
-    entry[idx + i] = value[i];
+
+  size_t index = 0;
+  char** slot = env_find_entry_slot(key, &index);
+  if(slot == NULL) {
+    return;
   }
-  entry[idx + value_len] = '\0';
+
+  char* entry = *slot;
+  char* equals = strchr(entry, '=');
+  if(equals == NULL) {
+    return;
+  }
+
+  size_t key_len = (size_t)(equals - entry);
+  size_t old_value_len = str_len(equals + 1);
+  size_t new_value_len = str_len(value);
+
+  if(new_value_len <= old_value_len) {
+    memcpy(equals + 1, value, new_value_len);
+    equals[1 + new_value_len] = '\0';
+    return;
+  }
+
+  size_t new_entry_len = key_len + 1 + new_value_len + 1;
+  char* replacement = malloc(new_entry_len);
+  if(replacement == NULL) {
+    return;
+  }
+
+  memcpy(replacement, entry, key_len + 1);
+  memcpy(replacement + key_len + 1, value, new_value_len);
+  replacement[new_entry_len - 1] = '\0';
+
+  if(index < MOSH_MAX_ENV_VARS && env_heap_flags[index]) {
+    free(entry);
+  }
+
+  *slot = replacement;
+  if(index < MOSH_MAX_ENV_VARS) {
+    env_heap_flags[index] = true;
+  }
 }
 
 static size_t str_len(const char* s) {
@@ -1590,10 +1621,8 @@ static void shell_loop(void) {
 int main(int argc, char** argv, char** envp) {
   (void)argc;
   (void)argv;
-  process_envp = envp;
-  if(process_envp == NULL) {
-    process_envp = fallback_envp;
-  }
+  env_release_heap_entries();
+  process_envp = (envp != NULL) ? envp : fallback_envp;
   str_copy(current_directory, sizeof(current_directory), "/");
   const char* initial_pwd = env_get("PWD");
   if(initial_pwd != NULL && initial_pwd[0] != '\0') {

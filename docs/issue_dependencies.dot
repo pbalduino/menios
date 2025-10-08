@@ -144,7 +144,7 @@ digraph IssueDependencies {
         fillcolor="#FFE4E4";
 
         issue202 [label="#202: /dev/zero\nEOF bug", fillcolor="#FFB6C1"];
-        issue203 [label="#203: Pipeline\nhang bug", fillcolor="#FFB6C1"];
+        issue203 [label="#203: Pipeline\nhang bug", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED
     }
 
     // Foundation dependencies

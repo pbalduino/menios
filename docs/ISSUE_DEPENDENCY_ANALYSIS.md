@@ -208,11 +208,13 @@ These issues form the backbone of the system and should be prioritized:
 #137 (/dev/zero) ──→ #202 (EOF bug)
 
 #208 (shell pipelines) ──┐
-                         ├──→ #203 (pipeline hang bug)
+                         ├──→ ✅ #203 (pipeline hang bug)
 #165 (pipeline) ─────────┘
 ```
 
-**Priority**: Low - Not blockers, but should be fixed
+✅ #203 closed after fixing mosh's environment updates (pipelines like `echo hi | cat` now succeed).
+
+**Priority**: Low - One remaining bug (#202)
 
 ## 🏗️ Updated Implementation Phases
 
@@ -331,7 +333,7 @@ These issues form the backbone of the system and should be prioritized:
 2. **Shell polish** (#183, #184, #186, #198, #200) - Parallel
 3. **Threading** (#108-#113) - Parallel after foundation
 4. **File system** (#189) - Parallel
-5. **Bug fixes** (#202-#203) - Parallel
+5. **Bug fixes** (#202) - Parallel
 
 ## 🎯 Recommended Focus Areas
 
@@ -372,7 +374,7 @@ These issues form the backbone of the system and should be prioritized:
 - Organized into categories with clear dependencies
 - **Major completions**: #192 (crt0), #193 (libc), #148 (env vars), #180-#186 (shell milestone), #222 (cwd prompt), #37, #39 (sync primitives), #205 (I/O scheduler)
 
-### ✅ **Completed Overall** (35 foundation issues! 🚀):
+### ✅ **Completed Overall** (38 foundation issues! 🚀):
 - **Foundation memory management**: #35, #57, #89
 - **Core scheduling**: #34
 - **Synchronization (COMPLETE!)**: #36 (mutex), #37 (semaphore), #39 (rwlock), #40 (condvar)
@@ -396,7 +398,7 @@ These issues form the backbone of the system and should be prioritized:
 - **#213** - Shell Ctrl+C (dependencies met: #210✅, #211✅, #212✅)
 - **#221** - Fast syscall instruction
 
-### 📋 **Total Open Issues**: ~76 issues (estimated)
+### 📋 **Total Open Issues**: ~73 issues (estimated)
 - **IPC**: 5 remaining (#105-#107, #213-#214, #221)
   - Pipes: ✅ COMPLETE! (#102 + #206-#209 = 5/5) 🎉
   - Signals: 2 remaining (#213-#214) - 4/6 complete! (#103, #210-#212) ✅✅✅✅
@@ -407,12 +409,12 @@ These issues form the backbone of the system and should be prioritized:
   - ioctl: ✅ COMPLETE! (1/1) 🎉
   - Fast syscalls: 1 (#221)
 - **Shell & utilities**: 1 remaining (#187) - now part of 30-issue Mosh milestone
-- **Shell UX**: 5 (#156, #197-#201) - #197 now unblocked; #222 completed ✅
+- **Shell UX**: 4 (#156, #197-#200) - #197 now unblocked; #222 ✅ completed!
 - **Toolchain**: 4 remaining (#29, #194-#196) - 2/8 complete! ✅✅ (GCC milestone)
 - **Threading**: 5 remaining (#109-#113) - 1/6 complete! ✅
 - **Memory**: 1 (#95 userspace malloc)
-- **Bug fixes**: 2 (#202-#203)
-- **Completed recently**: 30 issues (#192, #193, #148, #180-#186, #37, #39, #205, #108, #206-#212, #215-#220, #147, #102, #103, #165)
+- **Bug fixes**: 1 (#202)
+- **Completed recently**: 33 issues (#192, #193, #148, #180-#188, #37, #39, #205, #108, #206-#212, #215-#220, #147, #102, #103, #165, #203, #222)
 - **Closed duplicates**: #157, #165
 - **Previous existing**: ~64 issues
 

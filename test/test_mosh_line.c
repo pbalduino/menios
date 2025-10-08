@@ -87,6 +87,7 @@ void tearDown(void) {}
 void test_default_environment_provides_path(void);
 void test_pwd_builtin_prints_path(void);
 void test_echo_builtin_emits_arguments(void);
+void test_env_set_expands_allocation(void);
 
 void test_backspace_redraws_with_carriage_return(void) {
   line_state_t state;
@@ -173,6 +174,7 @@ int main(void) {
   RUN_TEST(test_default_environment_provides_path);
   RUN_TEST(test_pwd_builtin_prints_path);
   RUN_TEST(test_echo_builtin_emits_arguments);
+  RUN_TEST(test_env_set_expands_allocation);
 
   return UNITY_END();
 }
@@ -193,4 +195,20 @@ void test_echo_builtin_emits_arguments(void) {
   TEST_ASSERT_TRUE(handle_builtin("echo hello world"));
   TEST_ASSERT_TRUE_MESSAGE(capture_contains("hello world\n"),
                            "echo builtin should print arguments");
+}
+
+void test_env_set_expands_allocation(void) {
+  static char pwd_entry[] = "PWD=/";
+  static char* envp[] = { pwd_entry, NULL };
+  mosh_test_set_env(envp);
+
+  const char* before = env_get("PWD");
+  TEST_ASSERT_NOT_NULL(before);
+
+  TEST_ASSERT_TRUE(handle_builtin("cd /system/path"));
+
+  const char* after = env_get("PWD");
+  TEST_ASSERT_NOT_NULL(after);
+  TEST_ASSERT_EQUAL_STRING("/system/path", after);
+  TEST_ASSERT_NOT_EQUAL(before, after);
 }

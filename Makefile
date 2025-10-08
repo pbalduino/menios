@@ -460,12 +460,10 @@ ifeq ($(OS_NAME),linux)
 	$(NASM) -f elf64 ./src/kernel/lgdt.s
 	$(NASM) -f elf64 ./src/kernel/pit.s
 	$(NASM) -f elf64 ./src/kernel/lidt.s
-	# $(NASM) -f elf64 ./src/kernel/driver/ps2kb/ps2kb_handler.s
 
 	cp ./src/kernel/lgdt.o $(KERNEL_OBJ)
 	cp ./src/kernel/pit.o $(KERNEL_OBJ)
 	cp ./src/kernel/lidt.o $(KERNEL_OBJ)
-	# cp ./src/kernel/driver/ps2kb/ps2kb_handler.o  $(KERNEL_OBJ)
 
 	@for obj in $(OBJS); do \
 		dest_dir="$(KERNEL_OBJ)/$$(dirname "$$obj")"; \
