@@ -189,6 +189,28 @@ int execve(const char* path, char* const argv[], char* const envp[]) {
   return (int)rc;
 }
 
+int chdir(const char* path) {
+  long rc = __menios_syscall1(SYS_CHDIR, (long)path);
+  if(rc < 0) {
+    errno = (int)(-rc);
+    return -1;
+  }
+
+  errno = 0;
+  return 0;
+}
+
+char* getcwd(char* buffer, size_t size) {
+  long rc = __menios_syscall2(SYS_GETCWD, (long)buffer, (long)size);
+  if(rc < 0) {
+    errno = (int)(-rc);
+    return NULL;
+  }
+
+  errno = 0;
+  return (char*)rc;
+}
+
 int brk(void* addr) {
   (void)addr;
   errno = ENOSYS;

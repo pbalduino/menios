@@ -35,12 +35,12 @@ static vfs_mount_entry_t* vfs_mounts = NULL;
 static kmutex_t           vfs_lock;
 static bool               vfs_initialized = false;
 
-static bool vfs_normalize_path(const char* path, char* out, size_t out_size, size_t* out_len) {
-  if(path == NULL || out == NULL || out_size == 0) {
+static bool vfs_canonicalize(const char* input, char* out, size_t out_size, size_t* out_len) {
+  if(input == NULL || out == NULL || out_size == 0) {
     return false;
   }
 
-  size_t len = strlen(path);
+  size_t len = strlen(input);
   if(len == 0) {
     if(out_size < 2) {
       return false;
@@ -53,40 +53,126 @@ static bool vfs_normalize_path(const char* path, char* out, size_t out_size, siz
     return true;
   }
 
-  size_t pos = 0;
-  if(path[0] != '/') {
-    if(out_size < len + 2) {
-      return false;
+  const size_t max_segments = 64;
+  size_t stack[max_segments];
+  size_t depth = 0;
+  size_t out_pos = 0;
+
+  out[out_pos++] = '/';
+  out[out_pos] = '\0';
+
+  size_t i = 0;
+  if(input[0] == '/') {
+    i = 1;
+    while(i < len && input[i] == '/') {
+      i++;
     }
-    out[pos++] = '/';
   }
 
-  for(size_t i = 0; i < len && pos + 1 < out_size; i++) {
-    char ch = path[i];
-    if(ch == '\\') {
-      ch = '/';
+  while(i < len) {
+    size_t start = i;
+    while(i < len && input[i] != '/') {
+      i++;
     }
-    if(pos > 0 && out[pos - 1] == '/' && ch == '/') {
+    size_t seg_len = i - start;
+    while(i < len && input[i] == '/') {
+      i++;
+    }
+
+    if(seg_len == 0) {
       continue;
     }
-    out[pos++] = ch;
+
+    if(seg_len == 1 && input[start] == '.') {
+      continue;
+    }
+
+    if(seg_len == 2 && input[start] == '.' && input[start + 1] == '.') {
+      if(depth > 0) {
+        out_pos = stack[--depth];
+        out[out_pos] = '\0';
+      }
+      continue;
+    }
+
+    if(depth >= max_segments) {
+      return false;
+    }
+
+    if(out_pos > 1) {
+      if(out_pos + 1 >= out_size) {
+        return false;
+      }
+      out[out_pos++] = '/';
+    }
+
+    stack[depth++] = out_pos;
+    if(out_pos + seg_len >= out_size) {
+      return false;
+    }
+    memcpy(out + out_pos, input + start, seg_len);
+    out_pos += seg_len;
+    out[out_pos] = '\0';
   }
 
-  if(pos == 0) {
-    out[pos++] = '/';
+  if(out_pos > 1 && out[out_pos - 1] == '/') {
+    out[--out_pos] = '\0';
   }
 
-  if(pos > 1 && out[pos - 1] == '/') {
-    pos--;
+  if(out_len) {
+    *out_len = out_pos;
   }
+  return true;
+}
 
-  if(pos >= out_size) {
+bool vfs_build_absolute_path(const char* base, const char* path, char* out, size_t out_size) {
+  if(path == NULL || out == NULL || out_size == 0) {
     return false;
   }
 
-  out[pos] = '\0';
+  char combined[VFS_PATH_MAX * 2];
+  const char* effective_base = (base != NULL && base[0] != '\0') ? base : "/";
+
+  if(path[0] == '/') {
+    if(strlen(path) + 1 > sizeof(combined)) {
+      return false;
+    }
+    for(size_t i = 0; path[i] != '\0'; ++i) {
+      combined[i] = (path[i] == '\\') ? '/' : path[i];
+      combined[i + 1] = '\0';
+    }
+  } else {
+    size_t base_len = strlen(effective_base);
+    size_t path_len = strlen(path);
+    bool base_is_root = (base_len == 1 && effective_base[0] == '/');
+    size_t needed = base_len + (base_is_root ? 0 : 1) + path_len + 1;
+    if(needed > sizeof(combined)) {
+      return false;
+    }
+
+    size_t pos = 0;
+    for(size_t i = 0; i < base_len; ++i) {
+      combined[pos++] = (effective_base[i] == '\\') ? '/' : effective_base[i];
+    }
+    if(!base_is_root && combined[pos - 1] != '/') {
+      combined[pos++] = '/';
+    }
+    for(size_t i = 0; i < path_len; ++i) {
+      char ch = path[i] == '\\' ? '/' : path[i];
+      combined[pos++] = ch;
+    }
+    combined[pos] = '\0';
+  }
+
+  return vfs_canonicalize(combined, out, out_size, NULL);
+}
+
+static bool vfs_normalize_path(const char* path, char* out, size_t out_size, size_t* out_len) {
+  if(!vfs_build_absolute_path("/", path, out, out_size)) {
+    return false;
+  }
   if(out_len) {
-    *out_len = pos;
+    *out_len = strlen(out);
   }
   return true;
 }
@@ -476,6 +562,19 @@ int vfs_open(const char* path, int flags, file_t** out_file) {
   }
 
   return vfs_open_buffered(path, out_file);
+}
+
+static bool vfs_directory_probe_iter(const fs_dir_entry_t* entry, void* context) {
+  (void)entry;
+  (void)context;
+  return true;
+}
+
+bool vfs_path_is_directory(const char* path) {
+  if(path == NULL) {
+    return false;
+  }
+  return vfs_list(path, vfs_directory_probe_iter, NULL);
 }
 
 static bool fat32_list_adapter(void* fs_ctx, const char* path, vfs_dir_iter_t iter, void* context) {

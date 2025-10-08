@@ -24,6 +24,8 @@ off_t lseek(int fd, off_t offset, int whence);
 pid_t fork(void);
 int execve(const char* path, char* const argv[], char* const envp[]);
 void _exit(int status) __attribute__((noreturn));
+int chdir(const char* path);
+char* getcwd(char* buffer, size_t size);
 
 int brk(void *addr);
 

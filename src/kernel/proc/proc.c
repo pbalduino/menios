@@ -28,7 +28,9 @@ proc_info_t kernel_process_info = {
   .parent = NULL,
   .priority = PROC_PRIO_IDLE,
   .stack_base = NULL,
-  .state = PROC_STATE_READY
+  .state = PROC_STATE_READY,
+  .cwd = "/",
+  .cwd_len = 1
 };
 
 proc_info_p procs[PROC_MAX] = {
@@ -457,6 +459,16 @@ void proc_create(proc_info_p proc, const char* name, void (*entrypoint)(void *),
   proc->mmap_base = 0;
   proc->mmap_next = 0;
   proc->mmap_limit = 0;
+  if(current != NULL && current->cwd_len > 0) {
+    size_t copy_len = current->cwd_len < PROC_CWD_MAX - 1 ? current->cwd_len : PROC_CWD_MAX - 1;
+    memcpy(proc->cwd, current->cwd, copy_len);
+    proc->cwd[copy_len] = '\0';
+    proc->cwd_len = copy_len;
+  } else {
+    proc->cwd[0] = '/';
+    proc->cwd[1] = '\0';
+    proc->cwd_len = 1;
+  }
   proc->dispatch_count = 0;
   proc->exec_time = 0;
   proc->last_dispatch_us = 0;

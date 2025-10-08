@@ -35,6 +35,20 @@ proc_info_p current;
 proc_info_t kernel_process_info;
 proc_info_p procs[PROC_MAX] = { &kernel_process_info };
 
+static void stub_init_proc(proc_info_p proc) {
+  if(proc == NULL) {
+    return;
+  }
+  proc->cwd[0] = '/';
+  proc->cwd[1] = '\0';
+  proc->cwd_len = 1;
+}
+
+static void __attribute__((constructor)) stub_kernel_proc_init(void) {
+  stub_init_proc(&kernel_process_info);
+  current = &kernel_process_info;
+}
+
 void disable_interrupts() {}
 
 void enable_interrupts() {}

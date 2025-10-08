@@ -767,7 +767,7 @@
     "github_issue": {
       "number": 147,
       "url": "https://github.com/pbalduino/menios/issues/147",
-      "state": "OPEN"
+      "state": "CLOSED"
     },
     "labels": [
       "enhancement",
@@ -776,7 +776,8 @@
     ],
     "assignees": [
       "pbalduino"
-    ]
+    ],
+    "notes": "Resolved with new chdir/getcwd syscalls, libc wrappers, and cwd-aware VFS"
   },
   {
     "title": "Implement zombie process state and orphan reparenting to init",

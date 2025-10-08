@@ -164,24 +164,25 @@ Remaining major components for Doom:
 
 See [`road_to_doom.md`](docs/road/road_to_doom.md) for the complete roadmap and [`tasks.json`](tasks.json) for detailed task tracking.
 
-**📊 Progress Assessment**: With **34 major foundation issues completed** 🎉🎉 and ~79 open issues, meniOS is making phenomenal progress! Major recent completions include:
-- ✅ **Toolchain**: crt0 (#192), libc (#193) - 2/5 complete, almost there!
+**📊 Progress Assessment**: With **35 major foundation issues completed** 🎉🎉 and ~76 open issues, meniOS is making phenomenal progress! Major recent completions include:
+- ✅ **Toolchain**: crt0 (#192), libc (#193) - 2/8 complete in GCC milestone!
 - ✅ **Synchronization**: All primitives complete! (#36, #37, #39, #40) - 4/4 done!
-- ✅ **Shell Milestone**: 8/9 complete (#148, #180-#186) - nearly complete!
+- ✅ **Shell Milestone**: Now tracking 30 issues comprehensively - 13/30 complete (43%)!
+- ✅ **Shell Core**: getcwd/chdir (#147) ✅ - unlocks tab completion and pwd prompt!
 - ✅ **Threading Foundation**: Kernel threading (#108) - ready for pthread!
-- ✅ **IPC - Pipes & FIFOs**: **COMPLETE!** All 4 issues done (#206-#209) - 4/4! 🎉
-- ✅ **IPC - Signals**: Delivery path working! (#210-#212) - 3/5 complete! 🎉
+- ✅ **IPC - Pipes & FIFOs**: **COMPLETE!** All 5 issues done (#102, #206-#209) - 5/5! 🎉
+- ✅ **IPC - Signals**: Delivery path working! (#103, #210-#212) - 4/6 complete! 🎉
 - ✅ **IPC - Shared Memory**: **COMPLETE!** All 5 issues done (#215-#219) - 5/5! 🎉🎉🎉
 - ✅ **Performance**: I/O scheduler (#205)
 
 The critical path forward is completing the **toolchain** (#194, #195, #29), which is just 3 issues away from enabling standard C development for all userland applications!
 
-**🎯 Recent Momentum** (27 issues closed recently!):
-- 🛠️ **Toolchain** (2/5 complete): crt0 ✅, libc ✅ → just need: ABI docs, build system, integration
-- 🔌 **IPC** (major progress!): Pipes & FIFOs ✅✅✅✅ **COMPLETE!** (#206-#209), Signals #210-#212 ✅ (delivery path live; Ctrl+C/advanced next), Shared Memory ✅✅✅✅✅ **COMPLETE!** (#215-#219), ioctl #220 ✅ **COMPLETE**, fast syscalls (#221)
-- 🐚 **Shell** (8/9 complete): Only #187 (ps/kill), #188 (env) remaining!
+**🎯 Recent Momentum** (30 issues closed recently!):
+- 🛠️ **Toolchain** (2/8 in GCC milestone): crt0 ✅, libc ✅ → just need: ABI docs, build system, integration
+- 🔌 **IPC** (major progress!): Pipes & FIFOs ✅✅✅✅✅ **COMPLETE!** (#102, #206-#209), Signals #103, #210-#212 ✅ (delivery path live; Ctrl+C/advanced next), Shared Memory ✅✅✅✅✅ **COMPLETE!** (#215-#219), ioctl #220 ✅ **COMPLETE**, fast syscalls (#221)
+- 🐚 **Shell** (13/30 in Mosh milestone): getcwd/chdir ✅, core features solid, UX polish ongoing!
 - 🧵 **Threading** (1/6 complete): Kernel threading ✅, pthread API ready!
-- 🎨 **UX** (5 issues ready): Quality-of-life keyboard shortcuts
+- 🎨 **UX** (7 issues now unblocked): Tab completion (#197) ✅ UNBLOCKED, pwd in prompt (#222) ✅ UNBLOCKED!
 - 🐛 **Bugs** (2 issues): Pipeline and /dev/zero fixes
 
 ## Architecture Overview

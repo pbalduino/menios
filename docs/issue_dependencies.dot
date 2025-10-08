@@ -23,7 +23,7 @@ digraph IssueDependencies {
         issue93 [label="#93: fork/exec\nprocess creation", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED
         issue34 [label="#34: Preemptive\nscheduler", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED
         issue148 [label="#148: Environment\nvariables support", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED
-        issue147 [label="#147: getcwd/chdir\nsyscalls", fillcolor="#FFE4B5"];
+        issue147 [label="#147: getcwd/chdir\nsyscalls", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED
     }
 
     subgraph cluster_sync {

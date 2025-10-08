@@ -56,6 +56,7 @@ struct syscall_frame_t;
 #define PROC_USER_STACK_SIZE (16 * 1024)
 #define PROC_MAX_USER_SEGMENTS 256
 #define PROC_MAX_VM_REGIONS 32
+#define PROC_CWD_MAX 256
 
 typedef struct proc_user_segment_t {
   phys_addr_t phys;
@@ -114,6 +115,8 @@ typedef struct proc_info_t {
   virt_addr_t  mmap_base;
   virt_addr_t  mmap_next;
   virt_addr_t  mmap_limit;
+  char         cwd[PROC_CWD_MAX];
+  size_t       cwd_len;
   proc_state_t state;
   uint8_t      priority;
   uint64_t     sleep_until;

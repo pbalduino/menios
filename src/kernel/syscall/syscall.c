@@ -38,6 +38,8 @@ static uint64_t syscall_fcntl_handler(syscall_frame_t* frame);
 static uint64_t syscall_waitpid_handler(syscall_frame_t* frame);
 static uint64_t syscall_listdir_handler(syscall_frame_t* frame);
 static uint64_t syscall_stdin_poll_handler(syscall_frame_t* frame);
+static uint64_t syscall_chdir_handler(syscall_frame_t* frame);
+static uint64_t syscall_getcwd_handler(syscall_frame_t* frame);
 static uint64_t syscall_proc_kill_handler(syscall_frame_t* frame);
 static uint64_t syscall_kill_handler(syscall_frame_t* frame);
 static uint64_t syscall_sigaction_handler(syscall_frame_t* frame);
@@ -414,6 +416,8 @@ void syscall_init(void) {
   syscall_register(SYS_SHMAT, syscall_shmat_handler);
   syscall_register(SYS_SHMDT, syscall_shmdt_handler);
   syscall_register(SYS_SHMCTL, syscall_shmctl_handler);
+  syscall_register(SYS_CHDIR, syscall_chdir_handler);
+  syscall_register(SYS_GETCWD, syscall_getcwd_handler);
 
   serial_printf("syscall_init: initialized dispatcher (INT 0x80)\n");
 }
@@ -536,17 +540,23 @@ static uint64_t syscall_open_handler(syscall_frame_t* frame) {
     return frame->rax;
   }
 
+  char absolute[VFS_PATH_MAX];
+  if(!vfs_build_absolute_path(current->cwd, path, absolute, sizeof(absolute))) {
+    frame->rax = (uint64_t)(-ENAMETOOLONG);
+    return frame->rax;
+  }
+
   uint32_t install_flags = 0;
   if(flags & O_CLOEXEC) {
     install_flags |= FD_FLAG_CLOEXEC;
   }
 
   file_t* file = NULL;
-  int rc = vfs_open(path, flags, &file);
+  int rc = vfs_open(absolute, flags, &file);
   if(rc < 0) {
     serial_printf("syscall_open: pid=%u path=%s flags=0x%x rc=%d\n",
                   current->pid,
-                  path,
+                  absolute,
                   flags,
                   rc);
     frame->rax = (uint64_t)rc;
@@ -729,7 +739,16 @@ static uint64_t syscall_execve_handler(syscall_frame_t* frame) {
     return frame->rax;
   }
 
-  serial_printf("execve: pid=%u path=%s\n", current ? current->pid : 0, path);
+  char absolute[VFS_PATH_MAX];
+  if(!vfs_build_absolute_path(current->cwd, path, absolute, sizeof(absolute))) {
+    if(current) {
+      current->errno = ENAMETOOLONG;
+    }
+    frame->rax = (uint64_t)(-ENAMETOOLONG);
+    return frame->rax;
+  }
+
+  serial_printf("execve: pid=%u path=%s\n", current ? current->pid : 0, absolute);
   serial_printf("execve: frame->rsi=%p frame->rdx=%p\n", (void*)frame->rsi, (void*)frame->rdx);
 
   char** argv = NULL;
@@ -770,7 +789,7 @@ static uint64_t syscall_execve_handler(syscall_frame_t* frame) {
 
   void* image = NULL;
   size_t size = 0;
-  if(!vfs_read_all(path, &image, &size) || image == NULL || size == 0) {
+  if(!vfs_read_all(absolute, &image, &size) || image == NULL || size == 0) {
     serial_printf("execve: vfs_read_all failed size=%lu\n", (unsigned long)size);
     if(image != NULL) {
       kfree(image);
@@ -893,6 +912,12 @@ static uint64_t syscall_listdir_handler(syscall_frame_t* frame) {
     return frame->rax;
   }
 
+  char absolute[VFS_PATH_MAX];
+  if(!vfs_build_absolute_path(current->cwd, path, absolute, sizeof(absolute))) {
+    frame->rax = (uint64_t)(-ENAMETOOLONG);
+    return frame->rax;
+  }
+
   bool list_only = (user_buffer == NULL || buffer_size == 0);
   listdir_context_t ctx = {
     .user_buffer = list_only ? NULL : user_buffer,
@@ -901,7 +926,7 @@ static uint64_t syscall_listdir_handler(syscall_frame_t* frame) {
     .error = 0,
   };
 
-  bool ok = vfs_list(path, listdir_iter_callback, &ctx);
+  bool ok = vfs_list(absolute, listdir_iter_callback, &ctx);
   if(!ok && ctx.error == 0) {
     ctx.error = -ENOENT;
   }
@@ -916,6 +941,90 @@ static uint64_t syscall_listdir_handler(syscall_frame_t* frame) {
   }
 
   frame->rax = ctx.length;
+  return frame->rax;
+}
+
+static uint64_t syscall_chdir_handler(syscall_frame_t* frame) {
+  if(current == NULL) {
+    frame->rax = (uint64_t)(-EINVAL);
+    return frame->rax;
+  }
+
+  const char* user_path = (const char*)frame->rdi;
+  if(user_path == NULL) {
+    frame->rax = (uint64_t)(-EFAULT);
+    return frame->rax;
+  }
+
+  char path[SYSCALL_PATH_MAX];
+  if(!copy_user_string(user_path, path, sizeof(path))) {
+    frame->rax = (uint64_t)(-EFAULT);
+    return frame->rax;
+  }
+
+  char absolute[VFS_PATH_MAX];
+  if(!vfs_build_absolute_path(current->cwd, path, absolute, sizeof(absolute))) {
+    frame->rax = (uint64_t)(-ENAMETOOLONG);
+    return frame->rax;
+  }
+
+  if(!vfs_path_is_directory(absolute)) {
+    file_t* probe = NULL;
+    int rc = vfs_open(absolute, O_RDONLY, &probe);
+    if(probe != NULL) {
+      file_unref(probe);
+    }
+    if(rc == 0) {
+      frame->rax = (uint64_t)(-ENOTDIR);
+      return frame->rax;
+    }
+    if(rc == -ENOSYS) {
+      frame->rax = (uint64_t)(-ENOTDIR);
+      return frame->rax;
+    }
+    frame->rax = (uint64_t)(rc != 0 ? rc : -ENOENT);
+    return frame->rax;
+  }
+
+  size_t len = strlen(absolute);
+  if(len >= PROC_CWD_MAX) {
+    frame->rax = (uint64_t)(-ENAMETOOLONG);
+    return frame->rax;
+  }
+
+  memcpy(current->cwd, absolute, len + 1);
+  current->cwd_len = len;
+  frame->rax = 0;
+  return frame->rax;
+}
+
+static uint64_t syscall_getcwd_handler(syscall_frame_t* frame) {
+  if(current == NULL) {
+    frame->rax = (uint64_t)(-EINVAL);
+    return frame->rax;
+  }
+
+  char* user_buffer = (char*)frame->rdi;
+  size_t size = (size_t)frame->rsi;
+  if(user_buffer == NULL || size == 0) {
+    frame->rax = (uint64_t)(-EINVAL);
+    return frame->rax;
+  }
+
+  size_t length = current->cwd_len ? current->cwd_len : 1;
+  size_t needed = length + 1;
+  if(needed > size) {
+    frame->rax = (uint64_t)(-ERANGE);
+    return frame->rax;
+  }
+
+  if(!proc_user_buffer_accessible(current, user_buffer, needed)) {
+    frame->rax = (uint64_t)(-EFAULT);
+    return frame->rax;
+  }
+
+  memcpy(user_buffer, current->cwd, needed);
+  frame->rax = (uint64_t)user_buffer;
   return frame->rax;
 }
 

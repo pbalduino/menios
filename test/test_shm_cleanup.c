@@ -49,6 +49,9 @@ static void init_proc(proc_info_p proc) {
   proc->mmap_base = 0x100000000ULL;
   proc->mmap_limit = proc->mmap_base + 0x010000000ULL;
   proc->mmap_next = proc->mmap_base;
+  proc->cwd[0] = '/';
+  proc->cwd[1] = '\0';
+  proc->cwd_len = 1;
 }
 
 void setUp(void) {

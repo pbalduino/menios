@@ -2,12 +2,13 @@
 
 This document provides a comprehensive analysis of dependencies between open issues in the meniOS project, helping prioritize development efforts.
 
-**Last Updated**: 2025-10-07
+**Last Updated**: 2025-10-08
 **Total Issues**: 44 new issues created recently
 - First batch: #180-#204 (25 issues)
 - I/O scheduler: #205 (1 issue)
 - IPC breakdown: #206-#219 (14 issues from breaking #102, #103, #104)
 - ioctl: #220 (1 issue)
+- Userland driver research: #223 (1 issue)
 - Additional utility issues: #204 (3 issues total in recent work)
 
 ## 🎯 Critical Path Issues
@@ -372,42 +373,49 @@ These issues form the backbone of the system and should be prioritized:
 - Organized into categories with clear dependencies
 - **Major completions**: #192 (crt0), #193 (libc), #148 (env vars), #180-#186 (shell milestone), #37, #39 (sync primitives), #205 (I/O scheduler)
 
-### ✅ **Completed Overall** (34 foundation issues! 🚀):
+### ✅ **Completed Overall** (35 foundation issues! 🚀):
 - **Foundation memory management**: #35, #57, #89
 - **Core scheduling**: #34
 - **Synchronization (COMPLETE!)**: #36 (mutex), #37 (semaphore), #39 (rwlock), #40 (condvar)
 - **File I/O**: #96, #60, #65
 - **Toolchain**: #192 (crt0), #193 (libc)
-- **Shell milestone (8/9!)**: #148 (env vars), #180 (env seeding), #181 (tmpfs validation), #182 (waitpid tests), #183 (/bin utilities), #184 (line editor tests), #185 (PATH search), #186 (pipeline placeholders)
+- **Shell milestone (9/9 core!)**: #148 (env vars), #180 (env seeding), #181 (tmpfs validation), #182 (waitpid tests), #183 (/bin utilities), #184 (line editor tests), #185 (PATH search), #186 (pipeline placeholders), #147 (getcwd/chdir) ✅
 - **Threading foundation**: #108 (kernel threading)
-- **IPC - Pipes (COMPLETE!)**: #206 (pipe data structure), #207 (pipe syscall API), #208 (shell pipelines), #209 (named FIFOs)
-- **IPC - Signals (3/5!)**: #210 (signal bookkeeping), #211 (signal syscalls), #212 (signal delivery)
+- **IPC - Pipes (COMPLETE!)**: #102 (parent), #206 (pipe data structure), #207 (pipe syscall API), #208 (shell pipelines), #209 (named FIFOs)
+- **IPC - Signals (4/6!)**: #103 (parent) ✅, #210 (signal bookkeeping), #211 (signal syscalls), #212 (signal delivery)
 - **IPC - Shared Memory (COMPLETE!)**: #215 (shared mem manager), #216 (shared mem syscalls), #217 (reference counting), #218 (test suite), #219 (documentation)
 - **Device Control (COMPLETE!)**: #220 (ioctl syscall)
 - **Performance**: #205 (I/O scheduler)
 
-### 🔥 **Ready to Implement** (7 issues - no dependencies!):
+### 🔥 **Ready to Implement** (9 issues - no dependencies!):
 - **#194** - Syscall ABI docs (critical path)
 - **#195** - Userland build system (dependencies met: #192✅, #193✅)
 - **#188** - env utility (dependency met: #148✅)
+- **#197** - Tab completion (dependency met: #147✅) ✨ NOW UNBLOCKED!
 - **#198** - Ctrl+A/E shortcuts
 - **#200** - Ctrl+L clear screen
 - **#213** - Shell Ctrl+C (dependencies met: #210✅, #211✅, #212✅)
 - **#221** - Fast syscall instruction
+- **#222** - Current directory in prompt (dependency met: #147✅) ✨ NOW UNBLOCKED!
 
-### 📋 **Total Open Issues**: ~79 issues (estimated)
-- **IPC**: 3 remaining (#213-#214, #221)
-  - Pipes: ✅ COMPLETE! (4/4) 🎉
-  - Signals: 2 remaining (#213-#214) - 3/5 complete! ✅✅✅
+### 📋 **Total Open Issues**: ~76 issues (estimated)
+- **IPC**: 5 remaining (#105-#107, #213-#214, #221)
+  - Pipes: ✅ COMPLETE! (#102 + #206-#209 = 5/5) 🎉
+  - Signals: 2 remaining (#213-#214) - 4/6 complete! (#103, #210-#212) ✅✅✅✅
   - Shared Memory: ✅ COMPLETE! (5/5) 🎉🎉🎉
+  - Unix sockets: 1 (#105)
+  - Microkernel IPC: 1 (#106)
+  - Capability security: 1 (#107)
   - ioctl: ✅ COMPLETE! (1/1) 🎉
   - Fast syscalls: 1 (#221)
-- **Shell & utilities**: 2 remaining (#187, #188) - 8/9 complete! ✅✅✅
-- **Shell UX**: 6 (#197-#201, #222)
-- **Toolchain**: 3 remaining (#29, #194-#196) - 2/5 complete! ✅
+- **Shell & utilities**: 2 remaining (#187, #188) - now part of 30-issue Mosh milestone
+- **Shell UX**: 6 (#156, #197-#201, #222) - #197 and #222 now unblocked!
+- **Toolchain**: 4 remaining (#29, #194-#196) - 2/8 complete! ✅✅ (GCC milestone)
 - **Threading**: 5 remaining (#109-#113) - 1/6 complete! ✅
+- **Memory**: 1 (#95 userspace malloc)
 - **Bug fixes**: 2 (#202-#203)
-- **Completed recently**: 27 issues (#192, #193, #148, #180-#186, #37, #39, #205, #108, #206-#212, #215-#220)
+- **Completed recently**: 30 issues (#192, #193, #148, #180-#186, #37, #39, #205, #108, #206-#212, #215-#220, #147, #102, #103, #165)
+- **Closed duplicates**: #157, #165
 - **Previous existing**: ~64 issues
 
 ### 🎯 **New Issues by Category**:

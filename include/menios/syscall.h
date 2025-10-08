@@ -35,6 +35,8 @@ extern "C" {
 #define SYS_SHMAT      75
 #define SYS_SHMDT      76
 #define SYS_SHMCTL     77
+#define SYS_CHDIR      78
+#define SYS_GETCWD     79
 
 #ifdef __cplusplus
 }

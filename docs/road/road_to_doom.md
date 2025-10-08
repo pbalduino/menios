@@ -254,12 +254,12 @@ Basic command-line tools for shell interaction:
 17. **#213** – Shell Ctrl+C integration (ready now!)
 18. **#214** – Advanced signal features (optional)
 
-**IPC - Shared Memory** (sequential):
-19. **#215** – Kernel shared memory region manager
-20. **#216** – Shared memory syscalls (shmget, shmat, shmdt, shmctl)
-21. **#217** – Reference counting and cleanup
-22. **#218** – Comprehensive test suite
-23. ✅ **#219** – Documentation and examples *(docs/design/shared_memory.md)*
+**IPC - Shared Memory** (sequential): ✅ **COMPLETE!**
+19. ✅ **#215** – Kernel shared memory region manager ✅ *Completed*
+20. ✅ **#216** – Shared memory syscalls (shmget, shmat, shmdt, shmctl) ✅ *Completed*
+21. ✅ **#217** – Reference counting and cleanup ✅ *Completed*
+22. ✅ **#218** – Comprehensive test suite ✅ *Completed*
+23. ✅ **#219** – Documentation and examples ✅ *Completed* *(docs/design/shared_memory.md)*
 
 **IPC - Other**:
 24. ✅ **#220** – ioctl syscall for device-specific operations ✅ *Completed*
@@ -310,3 +310,23 @@ When complete, users will be able to:
 **Current Status**: 🟢 **Foundation Complete** - Ready for rapid feature development!
 
 The solid foundation work (memory management, scheduling, synchronization) now enables parallel development across multiple tracks, significantly accelerating the path to running Doom in userland.
+
+---
+
+## 🎯 **GitHub Milestone Tracking**
+
+The Doom milestone on GitHub now tracks 25 issues:
+- **Status**: 10/25 complete (40%)
+- **Completed**:
+  - Graphics & Input: #31 ✅, #32 ✅
+  - IPC - Pipes: #102 ✅ (parent)
+  - IPC - Signals: #103 ✅ (parent), #210 ✅, #211 ✅, #212 ✅
+  - IPC - Shared Memory: #215 ✅, #216 ✅, #217 ✅, #218 ✅, #219 ✅ (ALL COMPLETE!)
+  - IPC - Other: #220 ✅ (ioctl)
+- **In Progress**: Threading (#109-#113), Signals (#213-#214), IPC (#105-#107, #221), File System (#189), Memory (#95), Audio (#33)
+
+**Recent Major Achievement**: Shared Memory IPC is now 100% complete, bringing Doom milestone to 40%!
+
+See [MILESTONES.md](../MILESTONES.md) for detailed milestone tracking across all three major goals (Mosh, GCC, Doom).
+
+---

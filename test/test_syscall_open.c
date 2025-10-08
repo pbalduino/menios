@@ -81,10 +81,16 @@ static const vfs_fs_driver_t fake_driver = {
 };
 
 static proc_info_t proc_state;
+static cpu_state_t cpu_state;
 
 void setUp(void) {
   memset(&proc_state, 0, sizeof(proc_state));
   proc_file_table_init(&proc_state);
+  proc_state.cwd[0] = '/';
+  proc_state.cwd[1] = '\0';
+  proc_state.cwd_len = 1;
+  proc_state.user_mode = true;
+  proc_state.cpu_state = &cpu_state;
   current = &proc_state;
   vfs_shutdown();
   TEST_ASSERT_TRUE(vfs_mount_root(&fake_driver, NULL, true));

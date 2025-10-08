@@ -281,6 +281,11 @@ void proc_file_table_init(struct proc_info_t* proc) {
     proc->files[fd].file = NULL;
     proc->files[fd].flags = 0;
   }
+  if(proc->cwd_len == 0 || proc->cwd[0] == '\0') {
+    proc->cwd[0] = '/';
+    proc->cwd[1] = '\0';
+    proc->cwd_len = 1;
+  }
 }
 
 void proc_file_table_clone(struct proc_info_t* child, struct proc_info_t* parent) {

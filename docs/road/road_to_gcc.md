@@ -247,5 +247,16 @@ This transforms meniOS from a kernel project into a true operating system with a
 
 ---
 
-**Last Updated**: 2025-10-05
-**Next Review**: After #192 (crt0) completion
+## 🎯 **GitHub Milestone Tracking**
+
+The GCC milestone on GitHub now tracks 8 issues:
+- **Status**: 2/8 complete (25%)
+- **Completed**: #192 (crt0) ✅, #193 (libc) ✅
+- **In Progress**: #194 (ABI docs), #195 (build system), #29 (toolchain), #190 (TCC), #191 (binutils), #196 (Fish research)
+
+See [MILESTONES.md](../MILESTONES.md) for detailed milestone tracking across all three major goals (Mosh, GCC, Doom).
+
+---
+
+**Last Updated**: 2025-10-08
+**Next Review**: After #194 and #195 completion
