@@ -129,13 +129,13 @@ digraph IssueDependencies {
         issue216 [label="#216: Shared mem\nsyscalls", fillcolor="#E6E6FA"];
         issue217 [label="#217: Shared mem\ncleanup", fillcolor="#E6E6FA"];
         issue218 [label="#218: Shared mem\ntests", fillcolor="#E6E6FA"];
-        issue219 [label="#219: Shared mem\ndocs", fillcolor="#E6E6FA"];
+        issue219 [label="#219: Shared mem\ndocs", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED
 
         // Other IPC
         issue105 [label="#105: Unix domain\nsockets", fillcolor="#E6E6FA"];
         issue106 [label="#106: microkernel\nIPC", fillcolor="#DDA0DD"];
         issue107 [label="#107: capability-based\nsecurity", fillcolor="#DDA0DD"];
-        issue220 [label="#220: ioctl\nsyscall", fillcolor="#E6E6FA"];
+        issue220 [label="#220: ioctl\nsyscall", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED
     }
 
     subgraph cluster_bugs {

@@ -169,7 +169,7 @@ These issues form the backbone of the system and should be prioritized:
 
 **Priority**: High - Essential for process control (delivery path working!)
 
-### 🧠 IPC: Shared Memory (Issues #215-#219, from #104)
+### 🧠 IPC: Shared Memory (Issues #215-#219, from #104) (1/5 Complete!)
 ```
 #57 (VM mgr) ──────┐
                    ├──→ #215 (Shared mem manager)
@@ -184,17 +184,17 @@ These issues form the backbone of the system and should be prioritized:
                     #218 (Test suite)
                            │
                            ↓
-                    #219 (Documentation)
+                    ✅ #219 (Documentation) - COMPLETE
 ```
 
-**Sequential implementation**: #215 → #216 → #217 → #218 → #219
+**Sequential implementation**: #215 → #216 → #217 → #218 → ✅ #219
 
 **Priority**: Medium - Useful for high-performance IPC
 
-### 🎛️ Device Control (Issue #220)
+### 🎛️ Device Control (Issue #220) ✅ **COMPLETE**
 ```
 #96 (fd mgmt) ─────┐
-                   ├──→ #220 (ioctl syscall)
+                   ├──→ ✅ #220 (ioctl syscall) - COMPLETE
 #60 (file syscalls) ──┘
 ```
 
@@ -285,16 +285,16 @@ These issues form the backbone of the system and should be prioritized:
 - **#216**: Shared mem syscalls (1-2 weeks)
 - **#217**: Reference counting (1-2 weeks)
 - **#218**: Test suite (1-2 weeks)
-- **#219**: Documentation (1 week)
+- ✅ **#219**: Documentation - COMPLETE
 
 **File System & Performance**:
 - **#189**: FAT32 write support
 - **#205**: Elevator I/O scheduler ✅ COMPLETE
 
 **Device Control**:
-- **#220**: ioctl syscall
+- ✅ **#220**: ioctl syscall - COMPLETE
 
-**Shell UX**: #197-#200 (tab completion, Ctrl shortcuts)
+**Shell UX**: #197-#200, #222 (tab completion, Ctrl shortcuts, prompt)
 
 **Timeline**: 3-5 months (tracks can run in parallel)
 
@@ -315,7 +315,6 @@ These issues form the backbone of the system and should be prioritized:
 - **#200 (Ctrl+L)** - Start immediately!
 - **#213 (Shell Ctrl+C)** - Start immediately! (#210 ✅, #211 ✅, #212 ✅ complete!)
 - **#215 (Shared mem manager)** - Start immediately! (IPC foundation)
-- **#220 (ioctl syscall)** - Start immediately!
 
 ### ⏳ Blocked, Waiting On:
 - **#29 (toolchain)** blocks on: #194, #195
@@ -371,7 +370,7 @@ These issues form the backbone of the system and should be prioritized:
 - Organized into categories with clear dependencies
 - **Major completions**: #192 (crt0), #193 (libc), #148 (env vars), #180-#186 (shell milestone), #37, #39 (sync primitives), #205 (I/O scheduler)
 
-### ✅ **Completed Overall** (28 foundation issues! 🚀):
+### ✅ **Completed Overall** (30 foundation issues! 🚀):
 - **Foundation memory management**: #35, #57, #89
 - **Core scheduling**: #34
 - **Synchronization (COMPLETE!)**: #36 (mutex), #37 (semaphore), #39 (rwlock), #40 (condvar)
@@ -381,9 +380,11 @@ These issues form the backbone of the system and should be prioritized:
 - **Threading foundation**: #108 (kernel threading)
 - **IPC - Pipes (COMPLETE!)**: #206 (pipe data structure), #207 (pipe syscall API), #208 (shell pipelines), #209 (named FIFOs)
 - **IPC - Signals (3/5!)**: #210 (signal bookkeeping), #211 (signal syscalls), #212 (signal delivery)
+- **IPC - Shared Memory (1/5!)**: #219 (documentation)
+- **Device Control (COMPLETE!)**: #220 (ioctl syscall)
 - **Performance**: #205 (I/O scheduler)
 
-### 🔥 **Ready to Implement** (8 issues - no dependencies!):
+### 🔥 **Ready to Implement** (7 issues - no dependencies!):
 - **#194** - Syscall ABI docs (critical path)
 - **#195** - Userland build system (dependencies met: #192✅, #193✅)
 - **#188** - env utility (dependency met: #148✅)
@@ -391,22 +392,21 @@ These issues form the backbone of the system and should be prioritized:
 - **#200** - Ctrl+L clear screen
 - **#213** - Shell Ctrl+C (dependencies met: #210✅, #211✅, #212✅)
 - **#215** - Shared mem manager (IPC foundation)
-- **#220** - ioctl syscall
 - **#221** - Fast syscall instruction
 
-### 📋 **Total Open Issues**: ~85 issues (estimated)
-- **IPC**: 9 issues (#213-#221)
+### 📋 **Total Open Issues**: ~83 issues (estimated)
+- **IPC**: 7 remaining (#213-#218, #221)
   - Pipes: ✅ COMPLETE! (4/4) 🎉
   - Signals: 2 remaining (#213-#214) - 3/5 complete! ✅✅✅
-  - Shared Memory: 5 (#215-#219)
-  - ioctl: 1 (#220)
+  - Shared Memory: 4 remaining (#215-#218) - 1/5 complete! ✅
+  - ioctl: ✅ COMPLETE! (1/1) 🎉
   - Fast syscalls: 1 (#221)
 - **Shell & utilities**: 2 remaining (#187, #188) - 8/9 complete! ✅✅✅
 - **Shell UX**: 6 (#197-#201, #222)
 - **Toolchain**: 3 remaining (#29, #194-#196) - 2/5 complete! ✅
 - **Threading**: 5 remaining (#109-#113) - 1/6 complete! ✅
 - **Bug fixes**: 2 (#202-#203)
-- **Completed recently**: 21 issues (#192, #193, #148, #180-#186, #37, #39, #205, #108, #206-#212)
+- **Completed recently**: 23 issues (#192, #193, #148, #180-#186, #37, #39, #205, #108, #206-#212, #219, #220)
 - **Previous existing**: ~64 issues
 
 ### 🎯 **New Issues by Category**:
