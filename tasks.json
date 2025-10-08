@@ -83,7 +83,7 @@
     "github_issue": {
       "number": 217,
       "url": "https://github.com/pbalduino/menios/issues/217",
-      "state": "OPEN"
+      "state": "CLOSED"
     },
     "labels": [
       "enhancement",
@@ -91,7 +91,8 @@
     ],
     "assignees": [
       "pbalduino"
-    ]
+    ],
+    "notes": "Region refcount + IPC_RMID cleanup verified by proc-level shared memory tests"
   },
   {
     "title": "Expose shared memory syscalls and userspace API",
