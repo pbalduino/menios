@@ -104,6 +104,11 @@ We can mount and read from disk images today; write support is still limited.
 - **Scope**: FAT32 write support for file creation, modification, deletion
 - **Impact**: Save games, configuration files, native compilation output
 
+#### **I/O Scheduler** (Issue #205) 🚧 **Pending**
+- **Scope**: Elevator-based block I/O scheduler for improved disk performance
+- **Dependencies**: Issues #114, #62, #63 (all complete)
+- **Impact**: Reduced seek latency for concurrent disk operations (shell + Doom asset streaming)
+
 ### **Phase 5: Graphics & Input**
 Visual output and user interaction:
 
@@ -222,12 +227,13 @@ Basic command-line tools for shell interaction:
 ### System Services
 12. **#33** – Bring up the audio subsystem for Doom's sound effects/music
 13. **#189** – Add FAT32 write support for save games and config files
-14. **#183** – Provide basic `/bin` utilities (echo, cat, env, true, false)
-15. **#187** – Add process management tools (ps, kill)
+14. **#205** – Implement elevator I/O scheduler for better disk performance
+15. **#183** – Provide basic `/bin` utilities (echo, cat, env, true, false)
+16. **#187** – Add process management tools (ps, kill)
 
 ### Future: Native Compilation
-16. **#190** – Port TCC (Tiny C Compiler) to meniOS
-17. **#191** – Port binutils (as, ld) for native development
+17. **#190** – Port TCC (Tiny C Compiler) to meniOS
+18. **#191** – Port binutils (as, ld) for native development
 
 These items unlock the bulk of the remaining roadmap phases (threaded libc, IPC,
 networking) and pave the way for shipping a Doom-capable user environment.

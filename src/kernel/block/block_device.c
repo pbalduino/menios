@@ -10,6 +10,28 @@ static kmutex_t block_device_lock;
 static block_device_t* block_device_head = NULL;
 static bool block_device_initialized = false;
 
+typedef struct block_io_request_t {
+  uint64_t lba;
+  size_t block_count;
+  void* buffer;
+  bool write;
+  bool processed;
+  bool success;
+  struct block_io_request_t* next;
+} block_io_request_t;
+
+static void block_queue_insert(block_device_t* device, block_io_request_t* request);
+static block_io_request_t* block_queue_peek_next(block_device_t* device);
+static block_io_request_t* block_queue_pop_next(block_device_t* device);
+static void block_queue_insert_sorted(block_io_request_t** head,
+                                      block_io_request_t* request,
+                                      bool ascending);
+static bool block_device_submit(block_device_t* device,
+                                uint64_t lba,
+                                void* buffer,
+                                size_t block_count,
+                                bool write);
+
 void block_device_system_init(void) {
   kmutex_init(&block_device_lock);
   block_cache_init();
@@ -41,6 +63,14 @@ bool block_device_register(block_device_t* device) {
     serial_printf("block_device_register: device '%s' already registered\n", device->name);
     return false;
   }
+
+  kmutex_init(&device->queue_lock);
+  kcondvar_init(&device->queue_cv);
+  device->queue_up = NULL;
+  device->queue_down = NULL;
+  device->queue_direction_up = true;
+  device->queue_busy = false;
+  device->queue_last_lba = 0;
 
   device->next = block_device_head;
   block_device_head = device;
@@ -105,8 +135,161 @@ block_device_t* block_device_next(block_device_t* current) {
   return current->next;
 }
 
+static void block_queue_insert_sorted(block_io_request_t** head,
+                                      block_io_request_t* request,
+                                      bool ascending) {
+  if(*head == NULL ||
+     (ascending ? (request->lba < (*head)->lba) : (request->lba > (*head)->lba))) {
+    request->next = *head;
+    *head = request;
+    return;
+  }
+
+  block_io_request_t* node = *head;
+  while(node->next &&
+        (ascending ? (node->next->lba <= request->lba) : (node->next->lba >= request->lba))) {
+    node = node->next;
+  }
+  request->next = node->next;
+  node->next = request;
+}
+
+static void block_queue_insert(block_device_t* device, block_io_request_t* request) {
+  request->next = NULL;
+
+  if(device->queue_up == NULL && device->queue_down == NULL) {
+    block_queue_insert_sorted(&device->queue_up, request, true);
+    return;
+  }
+
+  if(request->lba >= device->queue_last_lba) {
+    block_queue_insert_sorted(&device->queue_up, request, true);
+  } else {
+    block_queue_insert_sorted(&device->queue_down, request, false);
+  }
+}
+
+static block_io_request_t* block_queue_peek_next(block_device_t* device) {
+  if(device->queue_direction_up) {
+    if(device->queue_up) {
+      return device->queue_up;
+    }
+    if(device->queue_down) {
+      return device->queue_down;
+    }
+  } else {
+    if(device->queue_down) {
+      return device->queue_down;
+    }
+    if(device->queue_up) {
+      return device->queue_up;
+    }
+  }
+  return NULL;
+}
+
+static block_io_request_t* block_queue_pop_next(block_device_t* device) {
+  block_io_request_t* request = NULL;
+
+  if(device->queue_direction_up) {
+    if(device->queue_up) {
+      request = device->queue_up;
+      device->queue_up = request->next;
+    } else if(device->queue_down) {
+      device->queue_direction_up = false;
+      request = device->queue_down;
+      device->queue_down = request->next;
+    }
+  } else {
+    if(device->queue_down) {
+      request = device->queue_down;
+      device->queue_down = request->next;
+    } else if(device->queue_up) {
+      device->queue_direction_up = true;
+      request = device->queue_up;
+      device->queue_up = request->next;
+    }
+  }
+
+  if(request) {
+    request->next = NULL;
+  }
+  return request;
+}
+
 static bool block_device_validate(block_device_t* device) {
   return device && device->ops && device->ops->read_blocks && device->block_size != 0;
+}
+
+static bool block_device_submit(block_device_t* device,
+                                uint64_t lba,
+                                void* buffer,
+                                size_t block_count,
+                                bool write) {
+  block_io_request_t* request = kmalloc(sizeof(block_io_request_t));
+  if(request == NULL) {
+    return false;
+  }
+
+  request->lba = lba;
+  request->block_count = block_count;
+  request->buffer = buffer;
+  request->write = write;
+  request->processed = false;
+  request->success = false;
+  request->next = NULL;
+
+  kmutex_lock(&device->queue_lock);
+  block_queue_insert(device, request);
+
+  bool executor = false;
+
+  while(!request->processed) {
+    if(!executor && !device->queue_busy) {
+      block_io_request_t* next = block_queue_peek_next(device);
+      if(next == request) {
+        block_io_request_t* popped = block_queue_pop_next(device);
+        (void)popped; /* popped must equal request */
+        device->queue_busy = true;
+        executor = true;
+        break;
+      }
+    }
+    kcondvar_wait(&device->queue_cv, &device->queue_lock);
+  }
+
+  kmutex_unlock(&device->queue_lock);
+
+  bool success = false;
+
+  if(executor) {
+    if(write) {
+      success = device->ops->write_blocks(device, lba, request->buffer, block_count);
+    } else {
+      success = device->ops->read_blocks(device, lba, request->buffer, block_count);
+    }
+
+    kmutex_lock(&device->queue_lock);
+    device->queue_busy = false;
+    device->queue_last_lba = lba;
+    request->success = success;
+    request->processed = true;
+    if(device->queue_up == NULL && device->queue_down == NULL) {
+      device->queue_direction_up = true;
+    }
+    kcondvar_broadcast(&device->queue_cv);
+    kmutex_unlock(&device->queue_lock);
+  } else {
+    kmutex_lock(&device->queue_lock);
+    while(!request->processed) {
+      kcondvar_wait(&device->queue_cv, &device->queue_lock);
+    }
+    success = request->success;
+    kmutex_unlock(&device->queue_lock);
+  }
+
+  kfree(request);
+  return success;
 }
 
 bool block_device_read(block_device_t* device, uint64_t lba, void* buffer, size_t block_count) {
@@ -119,7 +302,7 @@ bool block_device_read(block_device_t* device, uint64_t lba, void* buffer, size_
   if(block_cache_try_read(device, lba, buffer, block_count)) {
     return true;
   }
-  bool ok = device->ops->read_blocks(device, lba, buffer, block_count);
+  bool ok = block_device_submit(device, lba, buffer, block_count, false);
   if(ok) {
     block_cache_store(device, lba, buffer, block_count);
   }
@@ -136,10 +319,7 @@ bool block_device_write(block_device_t* device, uint64_t lba, const void* buffer
   if(lba + block_count > device->block_count) {
     return false;
   }
-  if(!device->ops->write_blocks) {
-    return false;
-  }
-  bool ok = device->ops->write_blocks(device, lba, buffer, block_count);
+  bool ok = block_device_submit(device, lba, (void*)buffer, block_count, true);
   if(ok) {
     block_cache_update(device, lba, buffer, block_count);
   }

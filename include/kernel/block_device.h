@@ -9,7 +9,11 @@ extern "C" {
 #include <stddef.h>
 #include <stdint.h>
 
+#include <kernel/condvar.h>
+#include <kernel/mutex.h>
+
 struct block_device_t;
+struct block_io_request_t;
 typedef struct block_device_t block_device_t;
 
 typedef struct block_device_ops_t {
@@ -25,6 +29,13 @@ struct block_device_t {
   const block_device_ops_t* ops;
   void*                driver_ctx;
   block_device_t*      next;
+  kmutex_t             queue_lock;
+  kcondvar_t           queue_cv;
+  struct block_io_request_t* queue_up;
+  struct block_io_request_t* queue_down;
+  bool                 queue_direction_up;
+  bool                 queue_busy;
+  uint64_t             queue_last_lba;
 };
 
 typedef bool (*block_device_iter_t)(block_device_t* device, void* context);

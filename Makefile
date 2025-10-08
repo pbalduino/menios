@@ -567,6 +567,7 @@ ifeq ($(OS_NAME),linux)
 			test/stubs.c \
 			src/kernel/file.c \
 			src/kernel/fs/vfs.c \
+			src/kernel/fs/tmpfs.c \
 			src/kernel/syscall/syscall.c \
 			src/kernel/mem/pmm.c \
 			src/kernel/console/vprintk.c \

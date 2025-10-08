@@ -36,6 +36,7 @@ Services needed for any compiler to function properly.
 | Pipes/FIFOs | #102 | ⛳ TODO | GCC uses pipes between stages |
 | UNIX Signals | #103 | ⛳ TODO | For interrupt handling |
 | File Write Support | #189 | ⛳ TODO | Compiler output requires writes |
+| I/O Scheduler | #205 | ⛳ TODO | Better performance for concurrent disk I/O |
 | Threading | #109-111 | ⛳ TODO | GCC uses threads for optimization |
 
 **Timeline Estimate:** 3-4 months
@@ -67,11 +68,13 @@ Running compilers natively on meniOS.
 - #193 (libc)
 - #102 (pipes)
 - #189 (file writes)
+- #205 (I/O scheduler - optional but beneficial)
 
 **Dependencies for binutils (#191):**
 - #29 (cross-compiler complete)
 - #193 (libc)
 - #189 (file writes)
+- #205 (I/O scheduler - optional but beneficial)
 
 **Timeline Estimate:** 6-12 months
 

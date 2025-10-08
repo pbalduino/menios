@@ -71,7 +71,7 @@ A release that meets this milestone must satisfy all of the following:
 2. **tmpfs Validation** (#181)
    - ✅ Host-side regression (`test/test_tmpfs.c`) mounts tmpfs and verifies create/read/write through the VFS layer.
 3. **Waitpid Regression Test** (#182)
-   - Extend coverage beyond unit stubs to integration tests that fork/exec a dummy program and confirm init supervision stays asleep until completion.
+   - ✅ Host-side coverage (`test/test_init_supervision.c`) exercises the kernel waitpid handler for both blocking and `WNOHANG` paths, verifying PID 1 remains in the waiting state until the child exits.
 4. **Line Editor Coverage** (#184)
    - Extend `test_mosh_line` to cover delete, history navigation, and newline flows.
 

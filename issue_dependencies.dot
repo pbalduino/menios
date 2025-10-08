@@ -102,6 +102,7 @@ digraph IssueDependencies {
         issue60 [label="#60: Filesystem\nsyscalls", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED
         issue65 [label="#65: VFS layer", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED
         issue189 [label="#189: FAT32\nwrite support", fillcolor="#FFE4B5"];
+        issue205 [label="#205: Elevator\nI/O scheduler", fillcolor="#FFE4B5"];
     }
 
     subgraph cluster_ipc {
@@ -186,6 +187,14 @@ digraph IssueDependencies {
 
     // File system write support
     issue60 -> issue189 [style=dashed, color=gray];
+
+    // I/O scheduler dependencies
+    issue114 -> issue205 [label="#114: block device", style=dashed, color=gray];
+    issue62 -> issue205 [label="#62: AHCI", style=dashed, color=gray];
+    issue63 -> issue205 [label="#63: cache", style=dashed, color=gray];
+    issue205 -> issue189 [color=teal];
+    issue205 -> issue190 [color=teal];
+    issue205 -> issue191 [color=teal];
 
     // IPC dependencies
     issue96 -> issue102 [style=dashed, color=gray];

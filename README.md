@@ -134,7 +134,7 @@ Expect the log to show the `[user_demo]` messages on screen and in `com1.log`, c
 #### **System Features**
 - [ ] **Threading Support**: Complete pthread API and multithreading (Issues #108-#113)
 - [ ] **Advanced IPC**: Signals, shared memory, microkernel IPC (Issues #102-#107)
-- [ ] **Filesystem**: FAT32 write support (#189)
+- [ ] **Filesystem**: FAT32 write support (#189), Elevator I/O scheduler (#205)
 - [ ] **Networking**: Complete TCP/IP stack (Issues #67-#73)
 - [ ] **Graphics**: Framebuffer interface and input subsystem (Issues #31-#33)
 
@@ -156,14 +156,14 @@ Remaining major components for Doom:
 
 See [`road_to_doom.md`](docs/road/road_to_doom.md) for the complete roadmap and [`tasks.json`](tasks.json) for detailed task tracking.
 
-**📊 Progress Assessment**: With 8 major foundation issues completed and 87 open issues (24 created today!), meniOS is now positioned for rapid feature development. The critical path forward is the **toolchain** (#192-#195, #29), which will enable standard C development for all userland applications.
+**📊 Progress Assessment**: With 8 major foundation issues completed and 88 open issues (25 created recently!), meniOS is now positioned for rapid feature development. The critical path forward is the **toolchain** (#192-#195, #29), which will enable standard C development for all userland applications.
 
-**🎯 Today's Focus**: Created comprehensive issue tracking for:
+**🎯 Recent Focus**: Created comprehensive issue tracking for:
 - 🛠️ **Toolchain** (7 issues): Enable standard C development
 - 🐚 **Shell** (9 issues): Polish and complete the shell milestone
 - 🎨 **UX** (5 issues): Quality-of-life keyboard shortcuts and mouse support
 - 🐛 **Bugs** (2 issues): Pipeline and /dev/zero fixes
-- 💾 **File System** (1 issue): FAT32 write support
+- 💾 **File System** (2 issues): FAT32 write support (#189), I/O scheduler (#205)
 
 ## Architecture Overview
 
@@ -248,7 +248,7 @@ We welcome contributions from developers of all skill levels! 🚀
 
 - **New Contributors**: Start with our [Contributing Guide](CONTRIBUTING.md) for a complete development workflow
 - **Find Tasks**: Check [GitHub Issues](https://github.com/pbalduino/menios/issues) or browse [`tasks.json`](tasks.json) for detailed task tracking
-- **High Priority**: Issues #192, #194, #183, #184, #186, #198, #200 are ready to implement with no blocking dependencies
+- **High Priority**: Issues #192, #194, #183, #184, #186, #198, #200, #205 are ready to implement with no blocking dependencies
 - **Critical Path**: Toolchain issues (#192→#193→#195→#29) are the most important for enabling all future development
 - **Report Issues**: Use our issue templates to report bugs or request features
 - **Security Issues**: Please review our [Security Policy](SECURITY.md) for responsible disclosure

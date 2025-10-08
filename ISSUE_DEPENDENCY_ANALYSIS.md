@@ -2,8 +2,8 @@
 
 This document provides a comprehensive analysis of dependencies between open issues in the meniOS project, helping prioritize development efforts.
 
-**Last Updated**: 2025-10-06
-**Total Issues Created Today**: 24 new issues (#180-#203)
+**Last Updated**: 2025-10-07
+**Total Issues Created Today**: 25 new issues (#180-#204, #205)
 
 ## 🎯 Critical Path Issues
 
@@ -109,12 +109,19 @@ These issues form the backbone of the system and should be prioritized:
 
 **Priority**: Medium - Quality of life improvements
 
-### 💾 File System (Issue #189)
+### 💾 File System & I/O (Issues #189, #205)
 ```
 #60 (file I/O) ────→ #189 (FAT32 write support)
+
+#114 (block device) ──┐
+#62 (AHCI driver)  ───┼──→ #205 (Elevator I/O scheduler) ──┬──→ #189
+#63 (block cache)  ───┘                                     ├──→ #190 (TCC)
+                                                            └──→ #191 (binutils)
 ```
 
-**Priority**: High - Needed for save files, native compilation output
+**Priority**:
+- #189: High - Needed for save files, native compilation output
+- #205: Medium - Performance optimization for concurrent disk I/O
 
 ### 🐛 Bug Fixes (Issues #202-#203)
 ```
@@ -183,6 +190,7 @@ These issues form the backbone of the system and should be prioritized:
 ### Phase 5: Advanced Features
 **Goal**: Enhanced functionality
 - **#189**: FAT32 write support
+- **#205**: Elevator I/O scheduler (performance)
 - **#102**: Pipes
 - **#103**: UNIX signals
 - **#104**: Shared memory
@@ -277,11 +285,12 @@ These issues form the backbone of the system and should be prioritized:
 ### 🔥 **Ready to Implement** (7 issues):
 - #192, #194, #183, #184, #186, #198, #200
 
-### 📋 **Total Open Issues**: ~87 issues
+### 📋 **Total Open Issues**: ~88 issues
 - Shell & utilities: 9 (#180-#188)
 - Shell UX: 5 (#197-#201)
 - Toolchain: 7 (#29, #192-#196)
 - Bug fixes: 2 (#202-#203)
+- I/O Performance: 1 (#205)
 - Previous: ~64 issues
 
 ### 🎯 **New Issues by Category**:
