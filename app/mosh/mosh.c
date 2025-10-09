@@ -811,6 +811,37 @@ static void env_set(const char* key, const char* value) {
   }
 }
 
+static void env_unset(const char* key) {
+  if(process_envp == NULL || key == NULL || key[0] == '\0') {
+    return;
+  }
+
+  size_t index = 0;
+  char** slot = env_find_entry_slot(key, &index);
+  if(slot == NULL) {
+    return;
+  }
+
+  if(index < MOSH_MAX_ENV_VARS && env_heap_flags[index]) {
+    free(*slot);
+    env_heap_flags[index] = false;
+  }
+
+  char** envp = process_envp;
+  size_t i = index;
+  while(envp[i] != NULL) {
+    envp[i] = envp[i + 1];
+    if(i < MOSH_MAX_ENV_VARS) {
+      env_heap_flags[i] = (i + 1 < MOSH_MAX_ENV_VARS) ? env_heap_flags[i + 1] : false;
+    }
+    i++;
+  }
+
+  if(i < MOSH_MAX_ENV_VARS) {
+    env_heap_flags[i] = false;
+  }
+}
+
 static bool shell_is_digit(char ch) {
   return ch >= '0' && ch <= '9';
 }
@@ -1661,12 +1692,17 @@ static bool builtin_unset_variable(char* line, int* out_status) {
     shell_finish_builtin_code(1, out_status);
     return true;
   }
-  if(!shell_is_valid_var_name(tokens[0]) && !shell_is_numeric_name(tokens[0])) {
+  const char* name = tokens[0];
+  bool numeric = shell_is_numeric_name(name);
+  if(!numeric && !shell_is_valid_var_name(name)) {
     write_str(STDOUT_FILENO, "mosh: unset: invalid name\n");
     shell_finish_builtin_code(1, out_status);
     return true;
   }
-  shell_var_unset(tokens[0]);
+  if(!numeric) {
+    env_unset(name);
+  }
+  shell_var_unset(name);
   shell_finish_builtin_code(0, out_status);
   return true;
 }

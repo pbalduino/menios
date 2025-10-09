@@ -60,7 +60,7 @@ digraph IssueDependencies {
         issue161 [label="#161: Basic REPL\nand parsing", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED
         issue162 [label="#162: Command\nexecution", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED
         issue163 [label="#163: Built-in\ncommands", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED
-        issue224 [label="#224: unset\nbuilt-in", fillcolor="#FFF5EE"];
+        issue224 [label="#224: unset\nbuilt-in", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED
 
         // I/O and pipelines
         issue164 [label="#164: Basic I/O\nredirection", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED

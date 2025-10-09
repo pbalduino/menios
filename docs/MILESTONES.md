@@ -22,7 +22,7 @@ This document tracks the three major milestones for meniOS development.
 - [x] #185 - PATH search configuration ✅
 - [x] #188 - /bin/env utility ✅
 - [x] #204 - Logical operators (&&/||) ✅
-- [ ] #224 - unset built-in command
+- [x] #224 - unset built-in command ✅
 
 #### I/O & Pipelines (4 issues)
 - [x] #186 - Pipeline placeholder recognition ✅
@@ -263,11 +263,12 @@ Recommended completion order for maximum impact:
 - **2025-10-11**: Closed #204 (Logical operators &&/||) ✅
 - **2025-10-11**: Created #224 (unset built-in command)
 - **2025-10-11**: Closed #158 (Job control bg/fg/Ctrl-Z) ✅
+- **2025-10-11**: Closed #224 (unset built-in command) ✅
 - **2025-10-08**: Closed #157 as duplicate of #197, #165 as completed by #208
 
 ---
 
-**Last Updated**: 2025-10-11
+**Last Updated**: 2025-10-09
 **See Also**:
 - [Road to Shell](road/road_to_shell.md)
 - [Road to GCC](road/road_to_gcc.md)

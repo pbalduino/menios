@@ -123,13 +123,14 @@
     "github_issue": {
       "number": 224,
       "url": "https://github.com/pbalduino/menios/issues/224",
-      "state": "OPEN"
+      "state": "CLOSED"
     },
     "labels": [
       "enhancement",
       "mosh"
     ],
-    "assignees": []
+    "assignees": [],
+    "notes": "unset removes shell variables and PATH entries; regression coverage in test/test_mosh_exec.c"
   },
   {
     "title": "Research: Userland driver infrastructure and migration path",

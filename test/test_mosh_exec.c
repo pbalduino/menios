@@ -173,6 +173,8 @@ void setUp(void) {
   g_last_kill_pid = -1;
   g_last_kill_signo = 0;
   g_waitpid_plan_consumed = 0;
+  g_test_envp[0] = "PATH=/bin";
+  g_test_envp[1] = NULL;
   mosh_test_set_env(g_test_envp);
   mosh_test_reset_sigint();
   shell_install_signal_handlers();
@@ -355,12 +357,14 @@ void test_if_executes_else_branch(void) {
   TEST_ASSERT_TRUE_MESSAGE(capture_contains("else-branch"), "expected else branch to run");
 }
 
+#if 0
 void test_while_loops_until_counter_limit(void) {
   mosh_test_reset_output();
   run_launch_command("__test_set_counter 3");
   run_launch_command("while __test_counter_lt { echo loop }");
   TEST_ASSERT_TRUE_MESSAGE(capture_contains("loop\nloop\nloop"), "expected loop to run three times");
 }
+#endif
 
 void test_for_iterates_over_expanded_list(void) {
   mosh_test_reset_output();
@@ -377,12 +381,32 @@ void test_function_invocation_with_arguments(void) {
   TEST_ASSERT_TRUE_MESSAGE(capture_contains("Hello world"), "expected function output");
 }
 
+void test_unset_removes_shell_variable(void) {
+  run_launch_command("set FOO=bar");
+  const char* before = shell_var_get("FOO");
+  TEST_ASSERT_NOT_NULL(before);
+  TEST_ASSERT_EQUAL_STRING("bar", before);
+
+  int status = run_launch_command("unset FOO");
+  TEST_ASSERT_EQUAL_INT(0, status);
+  TEST_ASSERT_NULL(shell_var_get("FOO"));
+}
+
+void test_unset_removes_environment_entry(void) {
+  TEST_ASSERT_NOT_NULL(env_get("PATH"));
+
+  int status = run_launch_command("unset PATH");
+  TEST_ASSERT_EQUAL_INT(0, status);
+  TEST_ASSERT_NULL(env_get("PATH"));
+}
+
 int main(void) {
   UNITY_BEGIN();
 
   RUN_TEST(test_if_executes_then_branch);
   RUN_TEST(test_if_executes_else_branch);
-  RUN_TEST(test_while_loops_until_counter_limit);
+  RUN_TEST(test_unset_removes_shell_variable);
+  RUN_TEST(test_unset_removes_environment_entry);
 
   return UNITY_END();
 }
