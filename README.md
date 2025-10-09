@@ -62,6 +62,7 @@ A complete threading roadmap has been designed with 6 new issues:
 
 **Linux:**
 - gcc
+- x86_64-elf binutils/GCC toolchain (optional but recommended)
 - ld
 - make
 - qemu
@@ -70,6 +71,7 @@ A complete threading roadmap has been designed with 6 new issues:
 - Docker
 - make
 - qemu
+- x86_64-elf binutils/GCC toolchain (installable via homebrew tap such as `nativeos/i386-elf-toolchain`) if you plan to build userland natively
 
 ### Building and Running
 
@@ -80,6 +82,17 @@ make run             # launch the image in QEMU
 ```
 
 The separated `userland` target allows you to iterate on libc or `/bin` utilities without recompiling the kernel image. `make build` assembles the kernel, regenerates the Limine assets, produces `menios.hdd` and `menios.iso`, and copies the freshly built user programs into `/bin`. All generated artifacts live under `build/` (`build/bin` for boot assets, `build/obj` for intermediates). When the kernel reaches `halt()` the QEMU instance exits automatically via the debug-exit device, so `make run` returns to your shell without manual intervention. The default `QEMU_OPTS` wire an AHCI controller (`-device ahci`) with the disk attached to `ahci.0`, ensuring the kernel exercises its SATA/AHCI path during every run.
+
+#### Using a cross compiler
+
+The build scripts prefer an `x86_64-elf` cross toolchain when one is available.  Set `MENIOS_HOST_CC` (and optionally `MENIOS_CROSS_PREFIX`) if your compiler lives under a different prefix:
+
+```bash
+export MENIOS_HOST_CC=/opt/cross/bin/x86_64-elf-gcc
+export MENIOS_CROSS_PREFIX=x86_64-elf   # default
+```
+
+If the cross toolchain is not found the build falls back to the host compiler, but using the dedicated cross toolchain avoids pulling in glibc/host headers and mirrors the environment we expect for future self-hosting.
 
 ### Verify the User Demo
 

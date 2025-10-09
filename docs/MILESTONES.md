@@ -97,26 +97,25 @@ This document tracks the three major milestones for meniOS development.
 **Goal**: Enable native compilation on meniOS with GCC toolchain support
 **GitHub Milestone**: [GCC](https://github.com/pbalduino/menios/milestone/2)
 
-**Status**: 4/8 complete (50%)
+**Status**: 5/8 complete (62.5%)
 
 **Assigned Issues**:
 - [x] #192 - crt0 runtime startup code ✅
 - [x] #193 - Minimal userland libc ✅
 - [x] #194 - Syscall ABI documentation ✅
 - [x] #195 - Userland build system ✅
-- [ ] #29 - Cross-compiler toolchain integration (ready now!)
+- [x] #29 - Cross-compiler toolchain integration ✅
 - [ ] #190 - TCC (Tiny C Compiler) port
 - [ ] #191 - binutils (as, ld) port
 - [ ] #196 - Fish shell research
 
-**Critical Path**: #192 ✅ → #193 ✅ → #194 ✅ → #195 ✅ → #29 → #190/#191
+**Critical Path**: #192 ✅ → #193 ✅ → #194 ✅ → #195 ✅ → #29 ✅ → #190/#191
 
 **Dependencies**:
-- #29 requires #194 ✅, #195 ✅ (ready to start!)
-- #190 requires #29, #189 (FAT32 writes)
-- #191 requires #29, #189 (FAT32 writes)
+- #190 requires #29 ✅, #189 (FAT32 writes)
+- #191 requires #29 ✅, #189 (FAT32 writes)
 
-**Progress**: Foundation complete! crt0, libc, syscall ABI docs, and separated build system all done. Ready for cross-compiler integration (#29).
+**Progress**: Core toolchain complete! crt0, libc, syscall ABI docs, separated build system, and x86_64-elf cross-compiler integration all done. Remaining: TCC/binutils ports for native compilation and Fish shell research.
 
 ---
 
@@ -214,17 +213,14 @@ This document tracks the three major milestones for meniOS development.
 ## 📈 Overall Progress
 
 - **Total Issues Across Milestones**: 61 issues
-- **Completed**: 41 issues (67.2%)
-- **In Progress**: 20 issues
-- **Ready to Start**: 1 issue (no dependencies)
+- **Completed**: 42 issues (68.9%)
+- **In Progress**: 19 issues
+- **Ready to Start**: 2 issues (no dependencies)
 
 ## 🚀 Immediate Next Steps
 
 ### Ready to Start Now (No Dependencies):
-1. **GCC Milestone**:
-   - #29 - Cross-compiler toolchain integration (unblocked by #194 ✅, #195 ✅)
-
-2. **Doom Milestone**:
+1. **Doom Milestone**:
    - #109 - pthread API
    - #221 - Fast syscall instruction
 
@@ -245,7 +241,7 @@ Many issues can be worked on in parallel:
 ### Completion Order
 Recommended completion order for maximum impact:
 1. **Mosh** - Provides usable development environment (100% complete) 🎉
-2. **GCC** - Enables native development and compilation (50% complete) 🎯
+2. **GCC** - Enables native development and compilation (62.5% complete) 🚀
 3. **Doom** - Demonstrates full OS capabilities (38.5% complete)
 
 ### Recent Changes
@@ -281,6 +277,8 @@ Recommended completion order for maximum impact:
 - **2025-10-13**: Closed #194 (Syscall ABI documentation) ✅ - see `docs/architecture/syscall_abi.md`
 - **2025-10-13**: Closed #195 (Userland build system) ✅ - `make userland` now builds libc + /bin independently
 - **2025-10-13**: GCC milestone reaches 50% - toolchain foundation complete, ready for #29!
+- **2025-10-13**: Closed #29 (Cross-compiler toolchain integration) ✅ - x86_64-elf-gcc now preferred, fallback to host compiler
+- **2025-10-13**: GCC milestone reaches 62.5% - core toolchain complete! 🚀
 - **2025-10-12**: Shell polish – `export` persists env entries and `echo` mirrors POSIX quoting rules
 - **2025-10-08**: Closed #157 as duplicate of #197, #165 as completed by #208
 

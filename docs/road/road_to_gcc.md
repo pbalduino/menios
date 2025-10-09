@@ -4,7 +4,7 @@
 
 ## 📊 **Progress Overview**
 
-### **Phase 1: Cross-Compiler Toolchain** (Issue #29) 🚧 **IN PROGRESS**
+### **Phase 1: Cross-Compiler Toolchain** (Issue #29) ✅ **COMPLETE**
 
 The foundation for all userland development. Without this, we can't build proper C programs for meniOS.
 
@@ -15,18 +15,20 @@ The foundation for all userland development. Without this, we can't build proper
 | crt0 Runtime | #192 | ✅ DONE | Critical |
 | Minimal libc | #193 | ✅ DONE | Critical |
 | Syscall ABI Docs | #194 | ✅ DONE | High |
-| Userland Build System | #195 | ⛳ TODO | Critical |
+| Userland Build System | #195 | ✅ DONE | Critical |
+| Cross-Compiler Integration | #29 | ✅ DONE | Critical |
 
 Minimal libc now provides shared memory/string primitives, a simple `mmap`-backed heap (`malloc`/`free`/`aligned_alloc`), and base stdio (`printf`/`fprintf`/`sprintf`, `puts`, `perror`).
 crt0 runtime provides assembly startup stub that sets up argc/argv/envp and calls main().
 
-`make userland` now builds this user-space stack (libc, crt0, and `/bin` utilities) independently of the kernel image, while `make build` consumes the resulting artifacts when assembling the disk.
+`make userland` now builds this user-space stack (libc, crt0, and `/bin` utilities) independently of the kernel image, while `make build` consumes the resulting artifacts when assembling the disk.  The build prefers an `x86_64-elf` cross compiler (configurable via `MENIOS_CROSS_PREFIX` / `MENIOS_HOST_CC`) and gracefully falls back to the host compiler when the cross toolchain is unavailable.
 
 **Dependencies:**
 - ✅ #192 (crt0) - COMPLETE
 - ✅ #193 (libc) - COMPLETE
 - ✅ #194 (docs) - COMPLETE
-- #195 (build) - Can start now (dependencies met: #192✅, #193✅)
+- ✅ #195 (build) - COMPLETE
+- ✅ #29 (toolchain integration) - COMPLETE
 
 **Timeline Estimate:** 2-3 months
 
@@ -108,23 +110,21 @@ The **shortest path** to compiling C programs for meniOS:
 3. ✅ **#193** - Build libc (3-4 weeks) - COMPLETE
    - Syscall wrappers, string/memory primitives, and basic stdio now ship with `libmeniosc`.
 
-4. **#195** - Setup build system (1 week, can start now!)
-   - Dependencies met: #192✅, #193✅
-   - Integrate into Makefile
+4. ✅ **#195** - Setup build system (1 week)
+   - Dedicated `make userland` target and SDK integration
 
-5. **#29** - Integration testing (1-2 weeks)
-   - Requires: #194, #195
-   - Compile test programs
-   - Fix issues
+5. ✅ **#29** - Integration testing (1-2 weeks)
+   - Cross toolchain builds `/bin` programs via `make userland`
+   - Tested through the existing `/bin` suite and disk image build
 
-**Total Estimated Time:** ~2 weeks remaining for cross-compiler (just #194, #195, #29!)
+**Total Estimated Time:** Complete — cross-compiler flow is live via `make userland` and `menios-gcc`.
 
 ## 🎯 **Critical Path to Native Compilation**
 
 Much longer path, requires most of the OS to work:
 
 ```
-Cross-Compiler (#29) — Just #194 + #195 away!
+Cross-Compiler (#29) — ✅ complete
     ↓
 ✅ Environment Variables (#148) - COMPLETE
     ↓
@@ -157,10 +157,10 @@ Test native compilation workflow
 - [x] **#193** - Implement malloc/free ✅
 - [x] **#193** - Implement printf family ✅
 
-### Week 7-8: Integration (READY NOW!)
-- [ ] **#195** - Create userland Makefile (deps met!)
-- [ ] **#195** - Setup proper CFLAGS
-- [ ] **#29** - Test with simple programs
+### ✅ Week 7-8: Integration
+- [x] **#195** - Create userland Makefile / targets
+- [x] **#195** - Setup proper CFLAGS
+- [x] **#29** - Test with simple programs
 
 ### Week 9-10: Validation
 - [x] **#183** - Rewrite /bin utilities using new libc ✅
@@ -254,7 +254,7 @@ This transforms meniOS from a kernel project into a true operating system with a
 The GCC milestone on GitHub now tracks 8 issues:
 - **Status**: 2/8 complete (25%)
 - **Completed**: #192 (crt0) ✅, #193 (libc) ✅
-- **In Progress**: #194 (ABI docs), #195 (build system), #29 (toolchain), #190 (TCC), #191 (binutils), #196 (Fish research)
+- **In Progress**: #190 (TCC), #191 (binutils), #196 (Fish research)
 
 See [MILESTONES.md](../MILESTONES.md) for detailed milestone tracking across all three major goals (Mosh, GCC, Doom).
 

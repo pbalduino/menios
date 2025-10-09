@@ -10,6 +10,35 @@ EXTRA_CFLAGS ?=
 ARCH ?= x86-64
 GCC_DIR = /usr/bin
 LIB_DIR = src/libc
+
+DEFAULT_CROSS_PREFIX ?= x86_64-elf
+CROSS_PREFIX ?= $(DEFAULT_CROSS_PREFIX)
+
+ifneq ($(MENIOS_HOST_CC),)
+USER_CC := $(MENIOS_HOST_CC)
+else ifneq ($(shell command -v $(CROSS_PREFIX)-gcc 2>/dev/null),)
+USER_CC := $(CROSS_PREFIX)-gcc
+else
+USER_CC := gcc
+endif
+
+ifneq ($(MENIOS_HOST_AR),)
+USER_AR := $(MENIOS_HOST_AR)
+else ifneq ($(shell command -v $(CROSS_PREFIX)-ar 2>/dev/null),)
+USER_AR := $(CROSS_PREFIX)-ar
+else
+USER_AR := ar
+endif
+
+ifneq ($(MENIOS_HOST_OBJCOPY),)
+USER_OBJCOPY := $(MENIOS_HOST_OBJCOPY)
+else ifneq ($(shell command -v $(CROSS_PREFIX)-objcopy 2>/dev/null),)
+USER_OBJCOPY := $(CROSS_PREFIX)-objcopy
+else
+USER_OBJCOPY := objcopy
+endif
+
+export MENIOS_HOST_CC := $(USER_CC)
 CINCLUDE = \
 	-I./include
 
@@ -270,7 +299,7 @@ endif
 $(SDK_OBJ_DIR)/%.o: %.c
 ifeq ($(OS_NAME),linux)
 	@mkdir -p $(dir $@)
-	$(GCC) $(USERLIBC_CFLAGS) $(EXTRA_CFLAGS) -c $< -o $@
+	$(USER_CC) $(USERLIBC_CFLAGS) $(EXTRA_CFLAGS) -c $< -o $@
 else
 	$(DOCKER) run --rm $(DOCKER_RUN_FLAGS) $(DOCKER_ENV) --mount type=bind,source=$$(pwd),target=/mnt $(DOCKER_IMAGE) /bin/sh -c "cd /mnt && make EXTRA_CFLAGS='$(EXTRA_CFLAGS)' $@"
 endif
@@ -278,7 +307,7 @@ endif
 $(SDK_OBJ_DIR)/%.o: %.S
 ifeq ($(OS_NAME),linux)
 	@mkdir -p $(dir $@)
-	$(GCC) $(USERLIBC_CFLAGS) $(EXTRA_CFLAGS) -c $< -o $@
+	$(USER_CC) $(USERLIBC_CFLAGS) $(EXTRA_CFLAGS) -c $< -o $@
 else
 	$(DOCKER) run --rm $(DOCKER_RUN_FLAGS) $(DOCKER_ENV) --mount type=bind,source=$$(pwd),target=/mnt $(DOCKER_IMAGE) /bin/sh -c "cd /mnt && make EXTRA_CFLAGS='$(EXTRA_CFLAGS)' $@"
 endif
@@ -286,7 +315,7 @@ endif
 $(SDK_LIB): $(USERLIBC_OBJS)
 ifeq ($(OS_NAME),linux)
 	@mkdir -p $(SDK_LIB_DIR)
-	$(AR) rcs $@ $^
+	$(USER_AR) rcs $@ $^
 else
 	$(DOCKER) run --rm $(DOCKER_RUN_FLAGS) $(DOCKER_ENV) --mount type=bind,source=$$(pwd),target=/mnt $(DOCKER_IMAGE) /bin/sh -c "cd /mnt && make EXTRA_CFLAGS='$(EXTRA_CFLAGS)' $@"
 endif
@@ -356,7 +385,7 @@ endif
 $(USER_ELF_OBJ): $(USER_ELF)
 ifeq ($(OS_NAME),linux)
 	@mkdir -p $(OBJDIR)/usermode
-	$(OBJCOPY) --input binary --output elf64-x86-64 --binary-architecture i386:x86-64 \
+	$(USER_OBJCOPY) --input binary --output elf64-x86-64 --binary-architecture i386:x86-64 \
 		--redefine-sym _binary_$(USER_ELF_SYMBOL)_start=user_demo_elf_start \
 		--redefine-sym _binary_$(USER_ELF_SYMBOL)_end=user_demo_elf_end \
 		--redefine-sym _binary_$(USER_ELF_SYMBOL)_size=user_demo_elf_size \
@@ -377,7 +406,7 @@ endif
 $(INIT_ELF_OBJ): $(INIT_ELF)
 ifeq ($(OS_NAME),linux)
 	@mkdir -p $(OBJDIR)/usermode
-	$(OBJCOPY) --input binary --output elf64-x86-64 --binary-architecture i386:x86-64 \
+	$(USER_OBJCOPY) --input binary --output elf64-x86-64 --binary-architecture i386:x86-64 \
 		--redefine-sym _binary_$(INIT_ELF_SYMBOL)_start=init_elf_start \
 		--redefine-sym _binary_$(INIT_ELF_SYMBOL)_end=init_elf_end \
 		--redefine-sym _binary_$(INIT_ELF_SYMBOL)_size=init_elf_size \
@@ -468,6 +497,7 @@ $(OBJDIR)/kernel:
 .PHONY: userland
 userland: $(USERLAND_DEPS)
 ifeq ($(OS_NAME),linux)
+	@$(MAKE) sdk $(USER_ELF) $(USER_PROGRAM_ELFS)
 	@rm -rf $(OUTPUT_DIR)/bin
 	@mkdir -p $(OUTPUT_DIR)/bin
 	cp $(USER_ELF) $(OUTPUT_DIR)/bin/user_demo
