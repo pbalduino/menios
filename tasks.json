@@ -1,5 +1,42 @@
 [
   {
+    "title": "bug: Delete key not working in mosh shell",
+    "github_issue": {
+      "number": 236,
+      "url": "https://github.com/pbalduino/menios/issues/236",
+      "state": "OPEN"
+    },
+    "labels": [
+      "bug",
+      "mosh"
+    ],
+    "assignees": []
+  },
+  {
+    "title": "Port xargs utility to meniOS",
+    "github_issue": {
+      "number": 235,
+      "url": "https://github.com/pbalduino/menios/issues/235",
+      "state": "OPEN"
+    },
+    "labels": [
+      "enhancement"
+    ],
+    "assignees": []
+  },
+  {
+    "title": "Port grep utility to meniOS",
+    "github_issue": {
+      "number": 234,
+      "url": "https://github.com/pbalduino/menios/issues/234",
+      "state": "OPEN"
+    },
+    "labels": [
+      "enhancement"
+    ],
+    "assignees": []
+  },
+  {
     "title": "bug: test_while_loops_until_counter_limit causes infinite loop",
     "github_issue": {
       "number": 233,
@@ -190,8 +227,7 @@
     },
     "labels": [
       "bug",
-      "enhancement",
-      "mosh"
+      "enhancement"
     ],
     "assignees": [
       "pbalduino"
@@ -206,7 +242,8 @@
     },
     "labels": [
       "enhancement",
-      "nice to have"
+      "nice to have",
+      "mosh"
     ],
     "assignees": [
       "pbalduino"
@@ -338,7 +375,8 @@
     },
     "labels": [
       "enhancement",
-      "init"
+      "init",
+      "mosh"
     ],
     "assignees": [
       "pbalduino"
@@ -382,7 +420,8 @@
       "state": "OPEN"
     },
     "labels": [
-      "init"
+      "init",
+      "mosh"
     ],
     "assignees": [
       "pbalduino"
@@ -466,28 +505,11 @@
       "state": "OPEN"
     },
     "labels": [
-      "enhancement"
-    ],
-    "assignees": [
-      "pbalduino"
-    ]
-  },
-  {
-    "title": "Add advanced redirection to mosh shell (2>&1, here-docs, etc)",
-    "github_issue": {
-      "number": 159,
-      "url": "https://github.com/pbalduino/menios/issues/159",
-      "state": "CLOSED"
-    },
-    "labels": [
-      "enhancement",
-      "nice to have",
       "mosh"
     ],
     "assignees": [
       "pbalduino"
-    ],
-    "notes": "Shell now supports fd-qualified redirects (2>, 2>>), stream duplication (2>&1, 1>&2) and append operators with coverage in test/test_mosh_exec.c"
+    ]
   },
   {
     "title": "Add scripting support to mosh shell (if/while/for/functions)",
@@ -1207,22 +1229,6 @@
     ]
   },
   {
-    "title": "Implement signal handling and delivery system",
-    "github_issue": {
-      "number": 94,
-      "url": "https://github.com/pbalduino/menios/issues/94",
-      "state": "CLOSED"
-    },
-    "labels": [
-      "enhancement",
-      "mosh"
-    ],
-    "assignees": [
-      "pbalduino"
-    ],
-    "notes": "Signal delivery implemented in src/kernel/proc/signal.c with syscall wiring in src/kernel/syscall/syscall.c and coverage via test/test_signal.c and test/test_signal_syscalls.c"
-  },
-  {
     "title": "Create jemalloc integration benchmarking and validation suite",
     "github_issue": {
       "number": 92,
@@ -1672,21 +1678,6 @@
     "labels": [
       "enhancement",
       "nice to have"
-    ],
-    "assignees": [
-      "pbalduino"
-    ]
-  },
-  {
-    "title": "Shell: Delete key support",
-    "github_issue": {
-      "number": 236,
-      "url": "https://github.com/pbalduino/menios/issues/236",
-      "state": "OPEN"
-    },
-    "labels": [
-      "enhancement",
-      "mosh"
     ],
     "assignees": [
       "pbalduino"

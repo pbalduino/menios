@@ -2,6 +2,8 @@
 
 This roadmap captures every dependency for shipping a **minimally functional interactive shell** on meniOS.  The goal is for users to boot the OS, reach a prompt, type commands, execute programs, and see their output without relying on developer shortcuts.
 
+> **Milestone Update (v0.1.0, 2025-10-13):** All criteria below are now met and ship in the meniOS v0.1.0 release—the first build where users can spend meaningful time inside the mosh shell.
+
 ## Definition of "Minimal Shell"
 
 A release that meets this milestone must satisfy all of the following:
@@ -25,7 +27,7 @@ A release that meets this milestone must satisfy all of the following:
 | Shell Prompt UX | ✅ Done | Inline caret, history navigation, prompt redraw regression tests |
 | Default Environment | ✅ Done | Seed `PATH`, `HOME`, `PWD`; chdir to `/` before launching shell (#180, #185) |
 | Launchable Utilities | ✅ Done | Added `/bin/echo`, `/bin/cat`, `/bin/env`, `/bin/true`, `/bin/false`, `/bin/ls`, `/bin/kill`, `/bin/ps` (#183/#187) |
-| Regression Coverage | 🔄 In progress | `test_mosh_line` + `test_mosh_exec` cover caret redraw and waitpid status |
+| Regression Coverage | ✅ Done | `test_mosh_line` + `test_mosh_exec` cover caret redraw, waitpid status, and execution semantics |
 
 ## Kernel Foundations
 
@@ -110,4 +112,4 @@ A release that meets this milestone must satisfy all of the following:
 ### System Integration
 - Login/getty integration for multiple TTYs (#175-#178).
 
-Keep this document updated whenever shell-related PRs merge or new blockers appear.  Treat the milestone as complete only when every "TODO" above is resolved and automated coverage eliminates the regressions that inspired this roadmap.
+Keep this document updated whenever shell-related PRs merge or new blockers appear.  With v0.1.0 the milestone is complete; future updates should capture enhancements that extend the shell beyond the minimal target.

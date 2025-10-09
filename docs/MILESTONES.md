@@ -2,6 +2,8 @@
 
 This document tracks the three major milestones for meniOS development.
 
+> **Release v0.1.0 (2025-10-13):** celebrates the completion of the Mosh shell milestone and is the first meniOS build to ship a polished interactive shell to users.
+
 ## 📊 Milestone Overview
 
 ### 1. **Mosh** (Shell Milestone)
@@ -211,10 +213,10 @@ This document tracks the three major milestones for meniOS development.
 
 ## 📈 Overall Progress
 
-- **Total Issues Across Milestones**: 62 issues
-- **Completed**: 39 issues (62.9%)
-- **In Progress**: 23 issues
-- **Ready to Start**: 2 issues (no dependencies)
+- **Total Issues Across Milestones**: 61 issues
+- **Completed**: 39 issues (63.9%)
+- **In Progress**: 22 issues
+- **Ready to Start**: 4 issues (no dependencies)
 
 ## 🚀 Immediate Next Steps
 
@@ -273,6 +275,10 @@ Recommended completion order for maximum impact:
 - **2025-10-12**: Closed #94 (signal handling); Mosh milestone now tracks #159 and #202
 - **2025-10-12**: Closed #159 after landing stderr redirection and fd duplication support
 - **2025-10-13**: Deferred #202 (/dev/zero EOF bug) out of the Mosh milestone; milestone now sits at 27 completed issues
+- **2025-10-13**: Released v0.1.0 - Mosh milestone complete! 🎉
+- **2025-10-13**: Created #234 (Port grep utility)
+- **2025-10-13**: Created #235 (Port xargs utility)
+- **2025-10-13**: Created #236 (Delete key not working bug)
 - **2025-10-12**: Shell polish – `export` persists env entries and `echo` mirrors POSIX quoting rules
 - **2025-10-08**: Closed #157 as duplicate of #197, #165 as completed by #208
 

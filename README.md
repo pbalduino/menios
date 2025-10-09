@@ -1,12 +1,24 @@
 # MeniOS
 
-> Current release: **0.0.4**
+> Current release: **0.1.0**
 
 <img alt="image" src="https://github.com/user-attachments/assets/90634816-da18-4e3c-8132-bba2ea291940">
 
 <a rel="me" href="https://bolha.us/@p_balduino">Mastodon</a>
 
 A hobby operating system kernel written in C and Assembly, targeting x86-64 architecture. The ultimate goal is to run Doom in userland! 🎯
+
+## 🎉 Release v0.1.0
+
+Version 0.1.0 is the first public milestone where meniOS boots straight into a fully interactive shell experience. Highlights of this release:
+
+- **Mosh shell milestone complete**: init now supervises `/bin/mosh`, which delivers a polished prompt, command history, tab completion, reverse search, Ctrl shortcuts, and directory-aware `cd` UX.
+- **Robust command execution pipeline**: fork/exec/wait, pipes, redirection (stdin/stdout/stderr, append, fd duplication), logical operators, and background job control (`jobs`, `bg`, `fg`, Ctrl+Z) all work end-to-end.
+- **Utility toolbox**: core `/bin` programs (`echo`, `cat`, `env`, `true`, `false`, `ls`, `kill`, `ps`) ship in-tree, along with tmpfs write support and environment persistence (`export`, `unset`).
+- **Signal integration**: Ctrl+C cleanly terminates foreground jobs while preserving the supervising init loop.
+- **Regression coverage**: expanded Unity test suites exercise the line editor, waitpid edge cases, and shell execution paths to protect the milestone.
+
+This release marks meniOS’s transition from kernel experiments to an OS you can boot, explore, and script.
 
 If you are tracking the steps toward a usable shell, see
 [Road to Shell Readiness](docs/road/road_to_shell.md) for the current checklist.
@@ -29,13 +41,11 @@ MeniOS has made significant progress with core kernel functionality now solidly 
 - **Memory Protection**: Kernel/user separation with per-process page tables
 
 ### 🚧 **Next Major Milestones**
-With the strong foundation now in place, the next high-priority developments are:
+With the shell shipped, attention turns to the toolchain and developer workflows:
 
-1. **File Descriptor Management** (Issue #96) - Foundation for all I/O operations
-2. **Memory Mapping Syscalls** (Issue #89) - mmap/munmap for userspace allocators
-3. **Fork/Exec Process Creation** (Issue #93) - Full process lifecycle management
-4. **Threading Support** (Issues #108-#113) - Complete multithreading infrastructure
-5. **Advanced IPC** (Issues #102-#107) - Pipes, signals, shared memory, and microkernel IPC
+1. **GCC Toolchain Milestone** – Publish syscall ABI docs (#194), land the userland build system (#195), and integrate a cross-compiler toolchain (#29) so meniOS can build its own apps.
+2. **Writable Storage** – Implement FAT32 write support (#189) to persist user data and compiler outputs directly on meniOS disks.
+3. **POSIX Threading Stack** – Deliver the pthread API and supporting kernel features (#109-#113) to unlock multithreaded workloads and future ports like Doom.
 
 ### 🆕 **Threading Support Added**
 A complete threading roadmap has been designed with 6 new issues:
@@ -121,9 +131,9 @@ Expect the log to show the `[user_demo]` messages on screen and in `com1.log`, c
 - [ ] **#195**: Userland build system (ready to start - dependencies met!)
 - [ ] **#29**: Cross-compiler toolchain integration (blocked on #194, #195)
 
-#### **Shell Milestone (Issues #180-#188)** 🎯 8/9 Complete!
+#### **Shell Milestone (Issues #180-#188)** 🎯 9/9 Complete!
 - [x] **Environment**: Environment variables (#148) ✅, seeding (#180) ✅, PATH search (#185) ✅
-- [ ] **Environment**: env utility (#188) - ready now!
+- [x] **Environment**: env utility (#188) ✅
 - [x] **Testing & Validation**: tmpfs (#181) ✅, waitpid tests (#182) ✅, line editor coverage (#184) ✅
 - [x] **Utilities**: /bin tools (#183) ✅
 - [x] **Utilities**: ps/kill (#187) ✅
@@ -167,7 +177,7 @@ See [`road_to_doom.md`](docs/road/road_to_doom.md) for the complete roadmap and 
 **📊 Progress Assessment**: With **47 major foundation issues completed** 🎉🎉 and ~65 open issues, meniOS is making phenomenal progress! Major recent completions include:
 - ✅ **Toolchain**: crt0 (#192), libc (#193) - 2/8 complete in GCC milestone!
 - ✅ **Synchronization**: All primitives complete! (#36, #37, #39, #40) - 4/4 done!
-- ✅ **Shell Milestone**: Now tracking 31 issues comprehensively - 25/31 complete (80.6%)! 🎉
+- ✅ **Shell Milestone**: 27/27 issues complete—v0.1.0 ships the full interactive shell experience. 🎉
 - ✅ **Shell UX**: Tab completion (#197) ✅, History (#156) ✅, Ctrl+A/E (#198) ✅, Ctrl+L (#200) ✅, Ctrl+R (#199) ✅, Job control (#158) ✅, pwd prompt (#222) ✅!
 - ✅ **Threading Foundation**: Kernel threading (#108) - ready for pthread!
 - ✅ **IPC - Pipes & FIFOs**: **COMPLETE!** All 5 issues done (#102, #206-#209) - 5/5! 🎉
@@ -181,7 +191,7 @@ The critical path forward is completing the **toolchain** (#194, #195, #29), whi
 **🎯 Recent Momentum** (43 issues closed recently!):
 - 🛠️ **Toolchain** (2/8 in GCC milestone): crt0 ✅, libc ✅ → just need: ABI docs, build system, integration
 - 🔌 **IPC** (major progress!): Pipes & FIFOs ✅✅✅✅✅ **COMPLETE!** (#102, #206-#209), Signals #103, #210-#213 ✅ (Ctrl+C working; advanced next), Shared Memory ✅✅✅✅✅ **COMPLETE!** (#215-#219), ioctl #220 ✅ **COMPLETE**, fast syscalls (#221)
-- 🐚 **Shell** (25/31 in Mosh milestone - 80.6%!): Tab completion ✅, History ✅, Ctrl+A/E ✅, Ctrl+L ✅, Ctrl+R ✅, Ctrl+C ✅, Job control (bg/fg/Ctrl-Z) ✅, I/O redirection ✅, pipelines ✅, &&/|| operators ✅, ps/kill ✅, getcwd/chdir ✅, /bin/env ✅, pwd prompt ✅!
+- 🐚 **Shell**: Mosh milestone complete—tab completion, history, Ctrl shortcuts, job control, pipelines, logical operators, ps/kill, env tooling, and prompt polish all ship in v0.1.0.
 - 🧵 **Threading** (1/6 complete): Kernel threading ✅, pthread API ready!
 - 🎨 **UX** (Almost done!): Only mouse (#201) left!
 - 🐛 **Bugs** (1 remaining): Just /dev/zero EOF bug (#202)
