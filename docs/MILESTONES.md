@@ -97,26 +97,26 @@ This document tracks the three major milestones for meniOS development.
 **Goal**: Enable native compilation on meniOS with GCC toolchain support
 **GitHub Milestone**: [GCC](https://github.com/pbalduino/menios/milestone/2)
 
-**Status**: 3/8 complete (37.5%)
+**Status**: 4/8 complete (50%)
 
 **Assigned Issues**:
 - [x] #192 - crt0 runtime startup code ✅
 - [x] #193 - Minimal userland libc ✅
 - [x] #194 - Syscall ABI documentation ✅
-- [ ] #195 - Userland build system (ready now!)
-- [ ] #29 - Cross-compiler toolchain integration
+- [x] #195 - Userland build system ✅
+- [ ] #29 - Cross-compiler toolchain integration (ready now!)
 - [ ] #190 - TCC (Tiny C Compiler) port
 - [ ] #191 - binutils (as, ld) port
 - [ ] #196 - Fish shell research
 
-**Critical Path**: #192 ✅ → #193 ✅ → #194 ✅ → #195 → #29 → #190/#191
+**Critical Path**: #192 ✅ → #193 ✅ → #194 ✅ → #195 ✅ → #29 → #190/#191
 
 **Dependencies**:
-- #29 requires #194, #195
+- #29 requires #194 ✅, #195 ✅ (ready to start!)
 - #190 requires #29, #189 (FAT32 writes)
 - #191 requires #29, #189 (FAT32 writes)
 
-**Progress**: Foundation complete! crt0, libc, and syscall ABI docs are done. Ready for build system (#195).
+**Progress**: Foundation complete! crt0, libc, syscall ABI docs, and separated build system all done. Ready for cross-compiler integration (#29).
 
 ---
 
@@ -214,15 +214,15 @@ This document tracks the three major milestones for meniOS development.
 ## 📈 Overall Progress
 
 - **Total Issues Across Milestones**: 61 issues
-- **Completed**: 40 issues (65.6%)
-- **In Progress**: 21 issues
+- **Completed**: 41 issues (67.2%)
+- **In Progress**: 20 issues
 - **Ready to Start**: 1 issue (no dependencies)
 
 ## 🚀 Immediate Next Steps
 
 ### Ready to Start Now (No Dependencies):
 1. **GCC Milestone**:
-   - #195 - Userland build system (unblocked by #194 ✅)
+   - #29 - Cross-compiler toolchain integration (unblocked by #194 ✅, #195 ✅)
 
 2. **Doom Milestone**:
    - #109 - pthread API
@@ -232,10 +232,10 @@ This document tracks the three major milestones for meniOS development.
 
 ### Parallel Development
 Many issues can be worked on in parallel:
-- **GCC**: #194 and #195 can be done simultaneously
+- **GCC**: Foundation complete (#192-#195 all done ✅)
 - **Doom Threading**: #109, #112, #113 are independent
 - **Doom IPC**: Different IPC mechanisms can progress in parallel
-- **Mosh UX**: #198 ✅, #199 ✅, #200 ✅, #197 ✅ are independent features (all complete!)
+- **Mosh UX**: All features complete! ✅
 
 ### Critical Dependencies
 - **GCC milestone** is required before meniOS can compile Doom natively
@@ -245,7 +245,7 @@ Many issues can be worked on in parallel:
 ### Completion Order
 Recommended completion order for maximum impact:
 1. **Mosh** - Provides usable development environment (100% complete) 🎉
-2. **GCC** - Enables native development and compilation (37.5% complete)
+2. **GCC** - Enables native development and compilation (50% complete) 🎯
 3. **Doom** - Demonstrates full OS capabilities (38.5% complete)
 
 ### Recent Changes
@@ -279,6 +279,8 @@ Recommended completion order for maximum impact:
 - **2025-10-13**: Created #235 (Port xargs utility)
 - **2025-10-13**: Created #236 (Delete key not working bug)
 - **2025-10-13**: Closed #194 (Syscall ABI documentation) ✅ - see `docs/architecture/syscall_abi.md`
+- **2025-10-13**: Closed #195 (Userland build system) ✅ - `make userland` now builds libc + /bin independently
+- **2025-10-13**: GCC milestone reaches 50% - toolchain foundation complete, ready for #29!
 - **2025-10-12**: Shell polish – `export` persists env entries and `echo` mirrors POSIX quoting rules
 - **2025-10-08**: Closed #157 as duplicate of #197, #165 as completed by #208
 

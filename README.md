@@ -74,11 +74,12 @@ A complete threading roadmap has been designed with 6 new issues:
 ### Building and Running
 
 ```bash
-make build run
+make userland        # build libc + /bin utilities (no kernel)
+make build           # build kernel + disk image (runs userland on Linux)
+make run             # launch the image in QEMU
 ```
 
-This will build the kernel, create a bootable image, and launch it in QEMU.
-All generated artifacts now live under `build/` (`build/bin` for boot assets, `build/obj` for intermediates), keeping the repository tree clean. When the kernel reaches `halt()` the QEMU instance exits automatically via the debug-exit device, so `make run` returns to your shell without manual intervention. The default `QEMU_OPTS` wire an AHCI controller (`-device ahci`) with the disk attached to `ahci.0`, ensuring the kernel exercises its SATA/AHCI path during every run.
+The separated `userland` target allows you to iterate on libc or `/bin` utilities without recompiling the kernel image. `make build` assembles the kernel, regenerates the Limine assets, produces `menios.hdd` and `menios.iso`, and copies the freshly built user programs into `/bin`. All generated artifacts live under `build/` (`build/bin` for boot assets, `build/obj` for intermediates). When the kernel reaches `halt()` the QEMU instance exits automatically via the debug-exit device, so `make run` returns to your shell without manual intervention. The default `QEMU_OPTS` wire an AHCI controller (`-device ahci`) with the disk attached to `ahci.0`, ensuring the kernel exercises its SATA/AHCI path during every run.
 
 ### Verify the User Demo
 

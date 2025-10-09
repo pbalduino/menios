@@ -54,6 +54,9 @@ LS_ELF = $(OBJDIR)/usermode/ls.elf
 KILL_ELF = $(OBJDIR)/usermode/kill.elf
 PS_ELF = $(OBJDIR)/usermode/ps.elf
 
+USER_PROGRAM_ELFS = $(MOSH_ELF) $(ECHO_ELF) $(CAT_ELF) $(ENV_ELF) $(TRUE_ELF) $(FALSE_ELF) $(LS_ELF) $(KILL_ELF) $(PS_ELF)
+USERLAND_BINS = mosh echo cat env true false ls kill ps
+
 
 ARCH_FLAGS := -march=x86-64
 
@@ -107,6 +110,14 @@ CRT_OBJS = $(patsubst %.S,$(SDK_OBJ_DIR)/%.o,$(CRT_SOURCES))
 SDK_LIB = $(SDK_LIB_DIR)/libmeniosc.a
 SDK_STARTUP = $(SDK_LIB_DIR)/crt0.o
 SDK_LINKER_SCRIPT = $(SDK_LIB_DIR)/user_elf.ld
+
+ifeq ($(OS_NAME),linux)
+USERLAND_DEPS := sdk $(USER_ELF) $(USER_PROGRAM_ELFS)
+BUILD_DEPS := userland $(OBJS)
+else
+USERLAND_DEPS :=
+BUILD_DEPS :=
+endif
 
 -include $(OBJS:.o=.d)
 
@@ -454,8 +465,21 @@ $(OBJDIR)/kernel:
 	@mkdir -p $@
 
 
+.PHONY: userland
+userland: $(USERLAND_DEPS)
+ifeq ($(OS_NAME),linux)
+	@rm -rf $(OUTPUT_DIR)/bin
+	@mkdir -p $(OUTPUT_DIR)/bin
+	cp $(USER_ELF) $(OUTPUT_DIR)/bin/user_demo
+	@for prog in $(USERLAND_BINS); do \
+		cp $(OBJDIR)/usermode/$$prog.elf $(OUTPUT_DIR)/bin/$$prog; \
+	done
+else
+	$(DOCKER) run --rm $(DOCKER_RUN_FLAGS) $(DOCKER_ENV) --mount type=bind,source=$$(pwd),target=/mnt $(DOCKER_IMAGE) /bin/sh -c "cd /mnt && make EXTRA_CFLAGS='$(EXTRA_CFLAGS)' userland"
+endif
+
 .PHONY: build
-build: sdk $(OBJS) $(MOSH_ELF) $(ECHO_ELF) $(CAT_ELF) $(ENV_ELF) $(TRUE_ELF) $(FALSE_ELF) $(LS_ELF) $(KILL_ELF) $(PS_ELF)
+build: $(BUILD_DEPS)
 ifeq ($(OS_NAME),linux)
 	@set -eux
 
@@ -479,18 +503,6 @@ ifeq ($(OS_NAME),linux)
 		mkdir -p "$$dest_dir"; \
 		cp -f "$$obj" "$$dest_dir/"; \
 	done
-	@mkdir -p $(OUTPUT_DIR)/bin
-	cp build/obj/usermode/user_demo.elf $(OUTPUT_DIR)/bin/user_demo
-	cp $(MOSH_ELF) $(OUTPUT_DIR)/bin/mosh
-	cp $(ECHO_ELF) $(OUTPUT_DIR)/bin/echo
-	cp $(CAT_ELF) $(OUTPUT_DIR)/bin/cat
-	cp $(ENV_ELF) $(OUTPUT_DIR)/bin/env
-	cp $(TRUE_ELF) $(OUTPUT_DIR)/bin/true
-	cp $(FALSE_ELF) $(OUTPUT_DIR)/bin/false
-	cp $(LS_ELF) $(OUTPUT_DIR)/bin/ls
-	cp $(KILL_ELF) $(OUTPUT_DIR)/bin/kill
-	cp $(PS_ELF) $(OUTPUT_DIR)/bin/ps
-
 	$(LD) $(LDFLAGS) -o $(KERNEL) $$(find -L $(KERNEL_OBJ) -type f -name '*.o')
 
 	@echo Syncing Limine assets
@@ -557,7 +569,7 @@ ifeq ($(OS_NAME),linux)
         $(OUTPUT_DIR) -o $(IMAGE_NAME).iso
 	$(OUTPUT_DIR)/limine bios-install $(IMAGE_NAME).iso
 else
-	$(DOCKER) run --rm $(DOCKER_RUN_FLAGS) $(DOCKER_ENV) --mount type=bind,source=$$(pwd),target=/mnt $(DOCKER_IMAGE) /bin/sh -c "cd /mnt && make build"
+	$(DOCKER) run --rm $(DOCKER_RUN_FLAGS) $(DOCKER_ENV) --mount type=bind,source=$$(pwd),target=/mnt $(DOCKER_IMAGE) /bin/sh -c "cd /mnt && make EXTRA_CFLAGS='$(EXTRA_CFLAGS)' build"
 endif
 
 .PHONY: run

@@ -20,6 +20,8 @@ The foundation for all userland development. Without this, we can't build proper
 Minimal libc now provides shared memory/string primitives, a simple `mmap`-backed heap (`malloc`/`free`/`aligned_alloc`), and base stdio (`printf`/`fprintf`/`sprintf`, `puts`, `perror`).
 crt0 runtime provides assembly startup stub that sets up argc/argv/envp and calls main().
 
+`make userland` now builds this user-space stack (libc, crt0, and `/bin` utilities) independently of the kernel image, while `make build` consumes the resulting artifacts when assembling the disk.
+
 **Dependencies:**
 - ✅ #192 (crt0) - COMPLETE
 - ✅ #193 (libc) - COMPLETE
