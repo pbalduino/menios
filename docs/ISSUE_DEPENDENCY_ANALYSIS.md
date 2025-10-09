@@ -160,7 +160,7 @@ These issues form the backbone of the system and should be prioritized:
                     ✅ #212 (Signal delivery) - COMPLETE
                            │
                            ↓
-                    #213 (Shell Ctrl+C) ──→ #187 (ps/kill)
+                    #213 (Shell Ctrl+C) ──→ #187 (ps/kill) ✅
                            │
                            ↓
 #109 (pthread) ────→ #214 (Advanced signals - optional)
@@ -251,7 +251,7 @@ These issues form the backbone of the system and should be prioritized:
 - **#184**: Line editor tests
 - **#185**: PATH search
 - **#186**: Pipeline placeholders
-- **#187**: ps/kill utilities
+- **#187**: ps/kill utilities ✅
 - **#188**: env utility ✅
 
 **Timeline**: 1-2 months (many already done!)
@@ -324,7 +324,7 @@ These issues form the backbone of the system and should be prioritized:
 - **#197 (tab completion)** ✅ (dependency #147 satisfied)
 - **#199 (Ctrl+R)** ✅ (dependency #156 satisfied)
 - **#201 (mouse selection)** blocks on: #143 or #144 (mouse drivers)
-- **#187 (ps/kill)** ready now! (#213 complete)
+- **#187 (ps/kill)** ✅ completed (#213 complete)
 
 ### 🔗 Parallel Development Opportunities:
 1. **Toolchain** (#192-#195) - Critical path
@@ -402,13 +402,13 @@ These issues form the backbone of the system and should be prioritized:
   - Capability security: 1 (#107)
   - ioctl: ✅ COMPLETE! (1/1) 🎉
   - Fast syscalls: 1 (#221)
-- **Shell & utilities**: 1 remaining (#187) - now part of 30-issue Mosh milestone
+- **Shell & utilities**: 0 remaining in this bucket (ps/kill complete)
 - **Shell UX**: 1 (#201) - history (#156) ✅, Ctrl+A/E (#198) ✅, Ctrl+L (#200) ✅, Ctrl+R (#199) ✅, pwd prompt (#222) ✅, tab completion (#197) ✅
 - **Toolchain**: 4 remaining (#29, #194-#196) - 2/8 complete! ✅✅ (GCC milestone)
 - **Threading**: 5 remaining (#109-#113) - 1/6 complete! ✅
 - **Memory**: 1 (#95 userspace malloc)
 - **Bug fixes**: 1 (#202)
-- **Completed recently**: 41 issues (#192, #193, #148, #180-#188, #37, #39, #205, #108, #206-#213, #215-#220, #147, #102, #103, #161, #164, #165, #198, #199, #200, #203, #222, #156, #197)
+- **Completed recently**: 42 issues (#192, #193, #148, #180-#188, #37, #39, #205, #108, #206-#213, #215-#220, #147, #102, #103, #161, #164, #165, #187, #198, #199, #200, #203, #222, #156, #197)
 - **Closed duplicates**: #157, #165
 - **Previous existing**: ~64 issues
 

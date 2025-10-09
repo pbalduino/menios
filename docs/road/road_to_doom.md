@@ -177,7 +177,7 @@ Basic command-line tools for shell interaction:
 - **Scope**: echo, cat, env, true, false
 - **Impact**: Basic shell operations and testing
 
-#### **Process Management Tools** (Issue #187)
+#### **Process Management Tools** (Issue #187) ✅
 - **Scope**: ps (list processes), kill (send signals)
 - **Dependencies**: Issue #103 (signals), Issue #153 (procfs helpful but not required)
 - **Impact**: Process monitoring and control from shell
@@ -270,7 +270,7 @@ Basic command-line tools for shell interaction:
 27. ✅ **#205** – Elevator I/O scheduler (COMPLETE!)
 28. ✅ **#183** – Provide basic `/bin` utilities (echo, cat, env, true, false) (COMPLETE!)
 29. ✅ **#185** – PATH search configuration (COMPLETE!)
-30. **#187** – Add process management tools (ps, kill)
+30. ~~**#187** – Add process management tools (ps, kill)~~ ✅
 31. **#188** – env utility ✅
 32. **#221** – Migrate to fast syscall instruction for 3-5x performance boost
 

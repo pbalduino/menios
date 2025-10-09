@@ -61,7 +61,7 @@ Basic tools for testing the toolchain.
 | --- | --- | --- | --- |
 | /bin utilities | #183 | ✅ DONE | echo, cat, env, true, false |
 | PATH search | #185 | ✅ DONE | Command resolution |
-| Process tools | #187 | ⛳ TODO | ps, kill |
+| Process tools | #187 | ✅ Done | ps, kill |
 | env utility | #188 | ✅ Done | Environment debugging (prints inherited variables) |
 
 **Timeline Estimate:** 1-2 months
@@ -163,7 +163,7 @@ Test native compilation workflow
 ### Week 9-10: Validation
 - [x] **#183** - Rewrite /bin utilities using new libc ✅
 - [x] **#185** - PATH search configuration ✅
-- [ ] **#187** - Implement ps/kill with new libc
+- [x] **#187** - Implement ps/kill with new libc ✅
 - [x] **#188** - Implement env with new libc (prints inherited environment)
 
 ## 🎓 **Why This Matters**

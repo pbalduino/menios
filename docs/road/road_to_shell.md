@@ -93,7 +93,7 @@ A release that meets this milestone must satisfy all of the following:
 - Expand pipelines to support advanced syntax (append, stderr redirection) once IPC primitives land (#209). Kernel pipe infrastructure (#206), the `pipe()` syscall/user wrapper (#207), shell integration (#208), and basic `|`, `<`, `>` handling (#165/#164) are already in place.
 - Signal delivery/handling for user processes (Ctrl+C integrated, advanced policies pending) (#213 done, #214 todo).
 - Job control (background tasks, `wait` builtin) (#158).
-- Process management utilities (`ps`, richer `kill` semantics) (#187, depends on #213).
+- Process management utilities (`ps`, basic `kill` implemented; richer semantics future) (#187 ✅).
 
 ### Shell Usability Features
 - ✅ Working directory management (`getcwd`, `chdir` syscalls) (#147) - **NOW COMPLETE!**

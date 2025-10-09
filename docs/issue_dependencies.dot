@@ -62,7 +62,7 @@ digraph IssueDependencies {
         issue184 [label="#184: Line editor\ncoverage", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED
         issue185 [label="#185: PATH\nsearch", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED
         issue186 [label="#186: Pipeline\nplaceholders", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED
-        issue187 [label="#187: ps/kill\nutilities", fillcolor="#FFE4B5"];
+        issue187 [label="#187: ps/kill\nutilities", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED
         issue188 [label="#188: env\nutility", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED
     }
 

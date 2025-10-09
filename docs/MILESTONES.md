@@ -8,7 +8,7 @@ This document tracks the three major milestones for meniOS development.
 **Goal**: Complete interactive shell with full user experience
 **GitHub Milestone**: [Mosh](https://github.com/pbalduino/menios/milestone/1)
 
-**Status**: 22/30 complete (73.3%)
+**Status**: 23/30 complete (76.7%)
 
 **Assigned Issues**:
 
@@ -30,7 +30,7 @@ This document tracks the three major milestones for meniOS development.
 
 #### Utilities (4 issues)
 - [x] #183 - /bin utility set (echo, cat, env, true, false) ✅
-- [ ] #187 - /bin/ps and /bin/kill utilities
+- [x] #187 - /bin/ps and /bin/kill utilities ✅
 - [x] #181 - tmpfs validation ✅
 - [x] #182 - waitpid regression test ✅
 
@@ -207,8 +207,8 @@ This document tracks the three major milestones for meniOS development.
 ## 📈 Overall Progress
 
 - **Total Issues Across Milestones**: 63 issues
-- **Completed**: 34 issues (54.0%)
-- **In Progress**: 29 issues
+- **Completed**: 35 issues (55.6%)
+- **In Progress**: 28 issues
 - **Ready to Start**: 2 issues (no dependencies)
 
 ## 🚀 Immediate Next Steps
@@ -238,7 +238,7 @@ Many issues can be worked on in parallel:
 
 ### Completion Order
 Recommended completion order for maximum impact:
-1. **Mosh** - Provides usable development environment (73.3% complete)
+1. **Mosh** - Provides usable development environment (76.7% complete)
 2. **GCC** - Enables native development and compilation (25% complete)
 3. **Doom** - Demonstrates full OS capabilities (40% complete)
 
@@ -257,6 +257,7 @@ Recommended completion order for maximum impact:
 - **2025-10-11**: Closed #213 (Shell Ctrl+C integration) ✅
 - **2025-10-11**: Closed #161 (Basic REPL and command parsing) ✅
 - **2025-10-11**: Closed #164 (Basic I/O redirection) ✅
+- **2025-10-11**: Closed #187 (/bin/ps and /bin/kill utilities) ✅
 - **2025-10-08**: Closed #157 as duplicate of #197, #165 as completed by #208
 
 ---
