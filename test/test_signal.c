@@ -156,7 +156,7 @@ void test_signal_handle_pending_default_terminates(void) {
 
   TEST_ASSERT_EQUAL_INT(PROC_SIGNAL_DELIVERY_TERMINATED, result);
   TEST_ASSERT_EQUAL_INT(PROC_STATE_ZOMBIE, proc.state);
-  TEST_ASSERT_EQUAL_INT(128 + SIGTERM, proc.exit_code);
+  TEST_ASSERT_EQUAL_INT(SIGTERM & 0x7f, proc.exit_code);
 }
 
 void test_signal_handle_pending_default_stops_process(void) {

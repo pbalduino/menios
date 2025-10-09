@@ -2,7 +2,7 @@
 
 This document provides a comprehensive analysis of dependencies between open issues in the meniOS project, helping prioritize development efforts.
 
-**Last Updated**: 2025-10-08
+**Last Updated**: 2025-10-13
 **Total Issues**: 44 new issues created recently
 - First batch: #180-#204 (25 issues)
 - I/O scheduler: #205 (1 issue)
@@ -30,7 +30,7 @@ These issues form the backbone of the system and should be prioritized:
 10. **#195** - Userland build system
 11. **#29** - Cross-compiler toolchain integration
 
-### Tier 3: Shell Milestone (8/9 Complete! Nearly done! 🎉)
+### Tier 3: Shell Milestone (Complete! 🎉)
 12. ✅ **#148** - Environment variables support (CLOSED)
 13. ✅ **#180** - Environment seeding in init (CLOSED)
 14. ✅ **#181** - tmpfs validation (CLOSED)
@@ -203,7 +203,7 @@ These issues form the backbone of the system and should be prioritized:
 
 **Priority**: Medium - Useful for terminal and device control
 
-### 🐛 Bug Fixes (Issues #202-#203)
+### 🐛 Bug Fixes (Backlog: #202)
 ```
 #137 (/dev/zero) ──→ #202 (EOF bug)
 
@@ -214,7 +214,7 @@ These issues form the backbone of the system and should be prioritized:
 
 ✅ #203 closed after fixing mosh's environment updates (pipelines like `echo hi | cat` now succeed).
 
-**Priority**: Low - One remaining bug (#202)
+**Priority**: Deferred - Track #202 once higher-priority work lands
 
 ## 🏗️ Updated Implementation Phases
 
@@ -243,19 +243,19 @@ These issues form the backbone of the system and should be prioritized:
 
 ### Phase 3: Shell Milestone
 **Goal**: Complete interactive shell
-- **#148**: Environment variables
-- **#180**: Environment seeding
-- **#181**: tmpfs validation
-- **#182**: waitpid tests
-- **#183**: /bin utilities
-- **#184**: Line editor tests
-- **#185**: PATH search
-- **#186**: Pipeline placeholders
-- **#187**: ps/kill utilities ✅
-- **#188**: env utility ✅
+- ✅ #148: Environment variables
+- ✅ #180: Environment seeding
+- ✅ #181: tmpfs validation
+- ✅ #182: waitpid tests
+- ✅ #183: /bin utilities
+- ✅ #184: Line editor tests
+- ✅ #185: PATH search
+- ✅ #186: Pipeline placeholders
+- ✅ #187: ps/kill utilities
+- ✅ #188: env utility
 
 **Timeline**: 1-2 months (many already done!)
-**Status**: Most features implemented, needs polish
+**Status**: Complete! Remaining backlog bug #202 sits outside the milestone
 
 ### Phase 4: Threading Support
 **Goal**: Full multithreading capability
@@ -331,7 +331,7 @@ These issues form the backbone of the system and should be prioritized:
 2. **Shell polish** (#183, #184, #186) - Parallel (Ctrl+A/E, Ctrl+L, history ✅)
 3. **Threading** (#108-#113) - Parallel after foundation
 4. **File system** (#189) - Parallel
-5. **Bug fixes** (#202) - Parallel
+5. **Bug fixes** (#202 backlog) - Track separately
 
 ## 🎯 Recommended Focus Areas
 
@@ -407,7 +407,7 @@ These issues form the backbone of the system and should be prioritized:
 - **Toolchain**: 4 remaining (#29, #194-#196) - 2/8 complete! ✅✅ (GCC milestone)
 - **Threading**: 5 remaining (#109-#113) - 1/6 complete! ✅
 - **Memory**: 1 (#95 userspace malloc)
-- **Bug fixes**: 1 (#202)
+- **Bug fixes**: 1 (#202 backlog)
 - **Completed recently**: 43 issues (#192, #193, #148, #180-#188, #37, #39, #204, #205, #108, #206-#213, #215-#220, #147, #102, #103, #161, #164, #165, #187, #198, #199, #200, #203, #222, #156, #197)
 - **Closed duplicates**: #157, #165
 - **Previous existing**: ~64 issues

@@ -211,7 +211,7 @@ proc_signal_delivery_t proc_signal_handle_pending(proc_info_p proc,
         return PROC_SIGNAL_DELIVERY_HANDLED;
       }
 
-      proc_exit(128 + signo);
+      proc_exit_signal(signo);
       return PROC_SIGNAL_DELIVERY_TERMINATED;
     }
 
@@ -219,7 +219,7 @@ proc_signal_delivery_t proc_signal_handle_pending(proc_info_p proc,
     uint64_t new_rsp = frame->rsp - sizeof(uint64_t);
 
     if(!proc_user_buffer_accessible(proc, (void*)new_rsp, sizeof(uint64_t))) {
-      proc_exit(128 + signo);
+      proc_exit_signal(signo);
       return PROC_SIGNAL_DELIVERY_TERMINATED;
     }
 

@@ -8,7 +8,7 @@ This document tracks the three major milestones for meniOS development.
 **Goal**: Complete interactive shell with full user experience
 **GitHub Milestone**: [Mosh](https://github.com/pbalduino/menios/milestone/1)
 
-**Status**: 27/28 complete (96.4%)
+**Status**: 27/27 complete (100%)
 
 **Assigned Issues**:
 
@@ -73,9 +73,8 @@ This document tracks the three major milestones for meniOS development.
 - [x] #96 - File descriptor management ✅
 - [x] #102 - Pipes implementation ✅
 
-#### Bug Fixes (2 issues)
+#### Bug Fixes (completed)
 - [x] #94 - Implement signal handling and delivery system ✅
-- [ ] #202 - /dev/zero EOF bug
 
 **Dependencies**:
 - #187 depends on #213 (signal support for kill) ✅ COMPLETE
@@ -88,6 +87,7 @@ This document tracks the three major milestones for meniOS development.
 - Closed #165 as completed by #208 (pipe support)
 - Moved #143 to Doom milestone (mouse driver)
 - Removed #201 (mouse selection - depends on #143), #177, #172, #166, #155 from Mosh milestone
+- Deferred #202 (/dev/zero EOF bug) out of the Mosh milestone backlog
 
 ---
 
@@ -243,7 +243,7 @@ Many issues can be worked on in parallel:
 
 ### Completion Order
 Recommended completion order for maximum impact:
-1. **Mosh** - Provides usable development environment (96.4% complete) 🎉
+1. **Mosh** - Provides usable development environment (100% complete) 🎉
 2. **GCC** - Enables native development and compilation (25% complete)
 3. **Doom** - Demonstrates full OS capabilities (38.5% complete)
 
@@ -271,13 +271,14 @@ Recommended completion order for maximum impact:
 - **2025-10-09**: Removed #201, #177, #172, #166, #155 from Mosh milestone
 - **2025-10-09**: Mosh milestone now focuses on core shell functionality: #94, #159, #202
 - **2025-10-12**: Closed #94 (signal handling); Mosh milestone now tracks #159 and #202
-- **2025-10-12**: Closed #159 after landing stderr redirection and fd duplication support; remaining open item is #202
+- **2025-10-12**: Closed #159 after landing stderr redirection and fd duplication support
+- **2025-10-13**: Deferred #202 (/dev/zero EOF bug) out of the Mosh milestone; milestone now sits at 27 completed issues
 - **2025-10-12**: Shell polish – `export` persists env entries and `echo` mirrors POSIX quoting rules
 - **2025-10-08**: Closed #157 as duplicate of #197, #165 as completed by #208
 
 ---
 
-**Last Updated**: 2025-10-12
+**Last Updated**: 2025-10-13
 **See Also**:
 - [Road to Shell](road/road_to_shell.md)
 - [Road to GCC](road/road_to_gcc.md)

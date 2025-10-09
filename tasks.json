@@ -1676,5 +1676,20 @@
     "assignees": [
       "pbalduino"
     ]
+  },
+  {
+    "title": "Shell: Delete key support",
+    "github_issue": {
+      "number": 236,
+      "url": "https://github.com/pbalduino/menios/issues/236",
+      "state": "OPEN"
+    },
+    "labels": [
+      "enhancement",
+      "mosh"
+    ],
+    "assignees": [
+      "pbalduino"
+    ]
   }
 ]

@@ -1592,13 +1592,21 @@ void scheduler_init() {
   printf(".OK\n");
 }
 
-void proc_exit(int code) {
+static inline int encode_exit_status(int code) {
+  return (code & 0xff) << 8;
+}
+
+static inline int encode_signal_status(int signo) {
+  return signo & 0x7f;
+}
+
+static void proc_exit_with_status(int status) {
   current->state = PROC_STATE_ZOMBIE;
-  current->exit_code = code;
+  current->exit_code = status;
   current->stopped = false;
   current->stop_status_pending = false;
   current->continued_pending = false;
-  serial_printf("proc_exit: Process %s exited with code %d\n", current->name, code);
+  serial_printf("proc_exit: Process %s exited with status %d\n", current->name, status);
 
   proc_info_p parent = current->parent;
   if(parent != NULL && parent->waitpid_waiting) {
@@ -1610,6 +1618,14 @@ void proc_exit(int code) {
   }
 
   scheduler_actions |= SCHED_ACTION_FORCE;
+}
+
+void proc_exit(int code) {
+  proc_exit_with_status(encode_exit_status(code));
+}
+
+void proc_exit_signal(int signo) {
+  proc_exit_with_status(encode_signal_status(signo));
 }
 
 int proc_kill_pid(uint32_t pid, int code) {

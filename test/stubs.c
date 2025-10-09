@@ -646,6 +646,10 @@ void proc_exit(int status) {
   }
 }
 
+void proc_exit_signal(int signo) {
+  proc_exit(signo & 0x7f);
+}
+
 bool proc_user_buffer_accessible(proc_info_p proc, const void* ptr, size_t length) {
   (void)proc;
   (void)ptr;

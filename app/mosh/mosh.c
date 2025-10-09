@@ -401,10 +401,10 @@ static int job_wait_temporary(const char* command,
 
   while(true) {
     job_event_t event = job_poll_status(&temp, true);
-    if(event == JOB_EVENT_CONTINUED) {
+    if(event == JOB_EVENT_CONTINUED || event == JOB_EVENT_NONE) {
       continue;
     }
-    if(event == JOB_EVENT_STOPPED || event == JOB_EVENT_EXITED || event == JOB_EVENT_NONE) {
+    if(event == JOB_EVENT_STOPPED || event == JOB_EVENT_EXITED) {
       break;
     }
   }
@@ -423,14 +423,14 @@ static int job_wait_foreground(job_t* job) {
 
   while(true) {
     job_event_t event = job_poll_status(job, true);
-    if(event == JOB_EVENT_CONTINUED) {
+    if(event == JOB_EVENT_CONTINUED || event == JOB_EVENT_NONE) {
       continue;
     }
     if(event == JOB_EVENT_STOPPED) {
       job_print_notification(job, "Stopped");
       break;
     }
-    if(event == JOB_EVENT_EXITED || event == JOB_EVENT_NONE) {
+    if(event == JOB_EVENT_EXITED) {
       break;
     }
   }
