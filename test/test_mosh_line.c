@@ -1,6 +1,7 @@
 #include <stddef.h>
 #include <stdint.h>
 #include <string.h>
+#include <signal.h>
 
 #include <unity.h>
 
@@ -157,6 +158,8 @@ void setUp(void) {
   mosh_test_set_env(NULL);
   set_listdir_response(NULL);
   str_copy(current_directory, sizeof(current_directory), "/");
+  mosh_test_reset_sigint();
+  shell_install_signal_handlers();
 }
 
 void tearDown(void) {}

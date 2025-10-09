@@ -126,7 +126,7 @@ Expect the log to show the `[user_demo]` messages on screen and in `com1.log`, c
 - [ ] **Environment**: env utility (#188) - ready now!
 - [x] **Testing & Validation**: tmpfs (#181) ✅, waitpid tests (#182) ✅, line editor coverage (#184) ✅
 - [x] **Utilities**: /bin tools (#183) ✅
-- [ ] **Utilities**: ps/kill (#187) - blocked on signals (#213)
+- [ ] **Utilities**: ps/kill (#187) - ready now! (signals #213 complete)
 - [x] **Pipeline Support**: Pipeline placeholders (#186) ✅
 
 #### **Shell UX Features (Issues #197-#201)**
@@ -136,8 +136,8 @@ Expect the log to show the `[user_demo]` messages on screen and in `com1.log`, c
 #### **System Features**
 - [ ] **Threading Support**: Complete pthread API and multithreading (Issues #109-#113) - Foundation complete (#108) ✅
 - [x] **IPC - Pipes & FIFOs**: ✅ **COMPLETE!** Data structure (#206) ✅, Syscall API (#207) ✅, Shell pipelines (#208) ✅, Named FIFOs (#209) ✅
-- [x] **IPC - Signals**: Bookkeeping (#210) ✅, Syscalls (#211) ✅, Delivery path (#212) ✅
-- [ ] **IPC - Signals**: Shell Ctrl+C (#213), Advanced features (#214)
+- [x] **IPC - Signals**: Bookkeeping (#210) ✅, Syscalls (#211) ✅, Delivery path (#212) ✅, Shell Ctrl+C (#213) ✅
+- [ ] **IPC - Signals**: Advanced features (#214)
 - [x] **IPC - Shared Memory**: ✅ **COMPLETE!** Manager (#215) ✅, Syscalls (#216) ✅, Cleanup (#217) ✅, Tests (#218) ✅, Documentation (#219) ✅ *(see docs/design/shared_memory.md)*
 - [x] **IPC - Device Control**: ioctl (#220) ✅ **COMPLETE**
 - [ ] **IPC - Other**: Unix domain sockets (#105), Microkernel IPC (#106-#107), Fast syscalls (#221)
@@ -164,24 +164,24 @@ Remaining major components for Doom:
 
 See [`road_to_doom.md`](docs/road/road_to_doom.md) for the complete roadmap and [`tasks.json`](tasks.json) for detailed task tracking.
 
-**📊 Progress Assessment**: With **43 major foundation issues completed** 🎉🎉 and ~68 open issues, meniOS is making phenomenal progress! Major recent completions include:
+**📊 Progress Assessment**: With **45 major foundation issues completed** 🎉🎉 and ~66 open issues, meniOS is making phenomenal progress! Major recent completions include:
 - ✅ **Toolchain**: crt0 (#192), libc (#193) - 2/8 complete in GCC milestone!
 - ✅ **Synchronization**: All primitives complete! (#36, #37, #39, #40) - 4/4 done!
-- ✅ **Shell Milestone**: Now tracking 30 issues comprehensively - 20/30 complete (66.7%)! 🎉
+- ✅ **Shell Milestone**: Now tracking 30 issues comprehensively - 22/30 complete (73.3%)! 🎉
 - ✅ **Shell UX**: Tab completion (#197) ✅, History (#156) ✅, Ctrl+A/E (#198) ✅, Ctrl+L (#200) ✅, Ctrl+R (#199) ✅, pwd prompt (#222) ✅!
 - ✅ **Threading Foundation**: Kernel threading (#108) - ready for pthread!
 - ✅ **IPC - Pipes & FIFOs**: **COMPLETE!** All 5 issues done (#102, #206-#209) - 5/5! 🎉
-- ✅ **IPC - Signals**: Delivery path working! (#103, #210-#212) - 4/6 complete! 🎉
+- ✅ **IPC - Signals**: Delivery path working! (#103, #210-#213) - 5/6 complete! 🎉
 - ✅ **IPC - Shared Memory**: **COMPLETE!** All 5 issues done (#215-#219) - 5/5! 🎉🎉🎉
 - ✅ **Performance**: I/O scheduler (#205)
 - ✅ **Bug Fixes**: Pipeline hang bug (#203) ✅ fixed!
 
 The critical path forward is completing the **toolchain** (#194, #195, #29), which is just 3 issues away from enabling standard C development for all userland applications!
 
-**🎯 Recent Momentum** (38 issues closed recently!):
+**🎯 Recent Momentum** (41 issues closed recently!):
 - 🛠️ **Toolchain** (2/8 in GCC milestone): crt0 ✅, libc ✅ → just need: ABI docs, build system, integration
-- 🔌 **IPC** (major progress!): Pipes & FIFOs ✅✅✅✅✅ **COMPLETE!** (#102, #206-#209), Signals #103, #210-#212 ✅ (delivery path live; Ctrl+C/advanced next), Shared Memory ✅✅✅✅✅ **COMPLETE!** (#215-#219), ioctl #220 ✅ **COMPLETE**, fast syscalls (#221)
-- 🐚 **Shell** (20/30 in Mosh milestone - 66.7%!): Tab completion ✅, History ✅, Ctrl+A/E ✅, Ctrl+L ✅, Ctrl+R ✅, getcwd/chdir ✅, /bin/env ✅, pwd prompt ✅!
+- 🔌 **IPC** (major progress!): Pipes & FIFOs ✅✅✅✅✅ **COMPLETE!** (#102, #206-#209), Signals #103, #210-#213 ✅ (Ctrl+C working; advanced next), Shared Memory ✅✅✅✅✅ **COMPLETE!** (#215-#219), ioctl #220 ✅ **COMPLETE**, fast syscalls (#221)
+- 🐚 **Shell** (22/30 in Mosh milestone - 73.3%!): Tab completion ✅, History ✅, Ctrl+A/E ✅, Ctrl+L ✅, Ctrl+R ✅, Ctrl+C ✅, I/O redirection ✅, pipelines ✅, getcwd/chdir ✅, /bin/env ✅, pwd prompt ✅!
 - 🧵 **Threading** (1/6 complete): Kernel threading ✅, pthread API ready!
 - 🎨 **UX** (Almost done!): Only mouse (#201) left!
 - 🐛 **Bugs** (1 remaining): Just /dev/zero EOF bug (#202)
@@ -272,7 +272,7 @@ We welcome contributions from developers of all skill levels! 🚀
 - **Find Tasks**: Check [GitHub Issues](https://github.com/pbalduino/menios/issues) or browse [`tasks.json`](tasks.json) for detailed task tracking
 - **High Priority - Ready Now** (7 issues ready to start!):
   - **Toolchain** (critical): #194 (ABI docs), #195 (build system - deps met!)
-  - **IPC foundations**: #213 (shell Ctrl+C - signals ready!), #218 (shared mem tests - cleanup done!)
+  - **IPC foundations**: #213 (shell Ctrl+C) ✅, #218 (shared mem tests - cleanup done!)
   - **Shell polish**: #188 (env - deps met!), #198 (Ctrl+A/E), #200 (Ctrl+L)
   - **Performance**: #221 (fast syscalls - 3-5x speedup!)
 - **Critical Path**: Toolchain issues (#192→#193→#195→#29) are the most important for enabling all future development

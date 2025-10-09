@@ -5,6 +5,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <signal.h>
 #include <sys/fcntl.h>
 #include <sys/types.h>
 #include <unistd.h>
@@ -65,6 +66,18 @@ typedef struct {
 
 static completion_context_t completion_ctx;
 
+static volatile int sigint_requested = 0;
+static volatile int sigint_print_pending = 0;
+
+static void write_bytes(int fd, const char* data, size_t length);
+static void write_char_stdout(char ch);
+static void write_str(int fd, const char* text);
+static void exec_command(char** argv, size_t argc);
+static long  mosh_fork(void);
+static long  mosh_execve(const char* path, char* const argv[], char* const envp[]);
+static const char* shell_prompt(void);
+static void send_signal_to_children(long* pids, size_t segment_count, int signo);
+
 typedef struct {
   bool   active;
   bool   have_match;
@@ -102,13 +115,48 @@ static size_t str_append(char* dest, size_t capacity, size_t offset, const char*
   return offset;
 }
 
-static void write_bytes(int fd, const char* data, size_t length);
-static void write_char_stdout(char ch);
-static void write_str(int fd, const char* text);
-static void exec_command(char** argv, size_t argc);
-static long  mosh_fork(void);
-static long  mosh_execve(const char* path, char* const argv[], char* const envp[]);
-static const char* shell_prompt(void);
+static void sigint_handler(int signo) {
+  (void)signo;
+  sigint_requested = 1;
+  sigint_print_pending = 1;
+}
+
+static bool shell_take_sigint(void) {
+  if(sigint_requested) {
+    sigint_requested = 0;
+    return true;
+  }
+  return false;
+}
+
+static void shell_maybe_print_sigint(void) {
+  if(sigint_print_pending) {
+    sigint_print_pending = 0;
+    write_str(STDOUT_FILENO, "^C\n");
+  }
+}
+
+static void shell_trigger_sigint(void) {
+  sigint_handler(SIGINT);
+}
+
+static void shell_install_signal_handlers(void) {
+  struct sigaction sa;
+  memset(&sa, 0, sizeof(sa));
+  sa.sa_handler = sigint_handler;
+  sigaction(SIGINT, &sa, NULL);
+}
+
+#ifdef MOSH_TEST
+void mosh_test_trigger_sigint(void) {
+  shell_trigger_sigint();
+}
+
+void mosh_test_reset_sigint(void) {
+  sigint_requested = 0;
+  sigint_print_pending = 0;
+}
+#endif
 
 static bool parse_command_segments(char* buffer, command_segment_t* segments, size_t* segment_count);
 static int  execute_pipeline(command_segment_t* segments, size_t segment_count);
@@ -555,6 +603,13 @@ static int wait_for_children(command_segment_t* segments,
   while(remaining > 0) {
     bool progress = false;
 
+    if(sigint_requested && shell_take_sigint()) {
+      shell_maybe_print_sigint();
+      pending_length = 0;
+      pending_offset = 0;
+      send_signal_to_children(pids, segment_count, SIGINT);
+    }
+
     for(size_t i = 0; i < segment_count; i++) {
       long pid = pids[i];
       if(pid <= 0) {
@@ -594,14 +649,8 @@ static int wait_for_children(command_segment_t* segments,
     if(polled >= 0) {
       char ch = (char)polled;
       if(ch == 3) {
-        pending_length = 0;
-        pending_offset = 0;
-        write_str(STDOUT_FILENO, "^C\n");
-        for(size_t i = 0; i < segment_count; i++) {
-          if(pids[i] > 0) {
-            syscall2(SYS_PROC_KILL, pids[i], 130);
-          }
-        }
+        shell_trigger_sigint();
+        continue;
       } else {
         if(pending_length + 1 < sizeof(pending_input)) {
           pending_input[pending_length++] = ch;
@@ -1672,6 +1721,14 @@ static bool reverse_search_handle_char(line_state_t* state, char ch) {
   return false;
 }
 
+static void send_signal_to_children(long* pids, size_t segment_count, int signo) {
+  for(size_t i = 0; i < segment_count; i++) {
+    if(pids[i] > 0) {
+      syscall2(SYS_KILL, pids[i], signo);
+    }
+  }
+}
+
 static size_t read_line(const char* prompt, char* buffer, size_t capacity) {
   if(buffer == NULL || capacity == 0) {
     return 0;
@@ -1698,6 +1755,22 @@ static size_t read_line(const char* prompt, char* buffer, size_t capacity) {
   bool swallow_lf = false;
 
   while(true) {
+    if(sigint_requested && shell_take_sigint()) {
+      line_hide_caret(&state);
+      shell_maybe_print_sigint();
+      state.length = 0;
+      state.cursor = 0;
+      state.buffer[0] = '\0';
+      state.rendered_length = 0;
+      state.needs_carriage_return = false;
+      scratch_active = false;
+      reverse_search_reset();
+      pending_length = 0;
+      pending_offset = 0;
+      history_cursor = history_length;
+      return 0;
+    }
+
     int input = -1;
     if(pending_offset < pending_length) {
       input = (unsigned char)pending_input[pending_offset++];
@@ -1724,20 +1797,8 @@ static size_t read_line(const char* prompt, char* buffer, size_t capacity) {
     switch(esc_state) {
       case ESCAPE_NONE:
         if(ch == 0x03) {
-          if(reverse_search.active) {
-            reverse_search_clear_display(&state);
-            reverse_search_reset();
-            line_redraw(&state);
-          }
-          line_hide_caret(&state);
-          write_str(STDOUT_FILENO, "^C\n");
-          state.length = 0;
-          state.cursor = 0;
-          state.buffer[0] = '\0';
-          state.rendered_length = 0;
-          scratch_active = false;
-          history_cursor = history_length;
-          return 0;
+          shell_trigger_sigint();
+          continue;
         }
         if(reverse_search.active) {
           if(reverse_search_handle_char(&state, ch)) {
@@ -2283,6 +2344,7 @@ int main(int argc, char** argv, char** envp) {
     }
   }
   env_set("PWD", current_directory);
+  shell_install_signal_handlers();
   history_reset();
   shell_loop();
   return 0;

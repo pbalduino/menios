@@ -76,7 +76,7 @@ Inter-process communication for complex applications:
   1. ✅ **#210** - Signal bookkeeping scaffold (CLOSED)
   2. ✅ **#211** - Signal syscalls (`kill`, `sigaction`, `sigprocmask`) + libc wrappers and regression tests (CLOSED)
   3. ✅ **#212** - Basic signal delivery path with user handlers (CLOSED)
-  4. **#213** - Shell Ctrl+C integration (1-2 weeks)
+  4. ~~**#213** - Shell Ctrl+C integration~~ ✅
   5. **#214** - Advanced signal features (SIGCHLD, SA_RESTART) - optional (3-4 weeks)
 - **Impact**: Process control, Ctrl+C handling, error handling, graceful shutdown
 
@@ -251,7 +251,7 @@ Basic command-line tools for shell interaction:
 14. ✅ **#210** – Signal bookkeeping scaffold ✅ *Completed*
 15. ✅ **#211** – Signal syscalls (kill, sigaction, sigprocmask, sigsuspend) ✅ *Completed*
 16. ✅ **#212** – Basic signal delivery path with user handlers ✅ *Completed*
-17. **#213** – Shell Ctrl+C integration (ready now!)
+17. **#213** – Shell Ctrl+C integration ✅
 18. **#214** – Advanced signal features (optional)
 
 **IPC - Shared Memory** (sequential): ✅ **COMPLETE!**

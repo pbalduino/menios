@@ -43,7 +43,7 @@ Services needed for any compiler to function properly.
 | • Signal bookkeeping | #210 | ✅ DONE | Kernel infrastructure |
 | • Signal syscalls | #211 | ✅ DONE | kill(), sigaction() |
 | • Signal delivery | #212 | ✅ DONE | User handlers |
-| • Shell Ctrl+C | #213 | ⛳ TODO | Process control (ready now!) |
+| • Shell Ctrl+C | #213 | ✅ Done | Process control |
 | File Write Support | #189 | ⛳ TODO | Compiler output requires writes |
 | I/O Scheduler | #205 | ✅ DONE | Better performance for concurrent disk I/O |
 | **Threading Foundation** | #108 | ✅ DONE | Kernel threading infrastructure |

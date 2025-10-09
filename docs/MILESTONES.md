@@ -8,7 +8,7 @@ This document tracks the three major milestones for meniOS development.
 **Goal**: Complete interactive shell with full user experience
 **GitHub Milestone**: [Mosh](https://github.com/pbalduino/menios/milestone/1)
 
-**Status**: 20/30 complete (66.7%)
+**Status**: 22/30 complete (73.3%)
 
 **Assigned Issues**:
 
@@ -16,7 +16,7 @@ This document tracks the three major milestones for meniOS development.
 - [x] #54 - Evolve mosh shell to be default userland shell ✅
 - [x] #162 - Command execution (fork/exec/wait) ✅
 - [x] #163 - Built-in commands (cd/pwd/exit/export) ✅
-- [ ] #161 - Basic REPL and command parsing
+- [x] #161 - Basic REPL and command parsing ✅
 - [x] #148 - Environment variables support ✅
 - [x] #180 - Environment seeding in init ✅
 - [x] #185 - PATH search configuration ✅
@@ -25,7 +25,7 @@ This document tracks the three major milestones for meniOS development.
 #### I/O & Pipelines (4 issues)
 - [x] #186 - Pipeline placeholder recognition ✅
 - [x] #208 - Shell pipelines integration ✅
-- [ ] #164 - Basic I/O redirection (>, <)
+- [x] #164 - Basic I/O redirection (>, <) ✅
 - [ ] #159 - Advanced redirection (2>&1, here-docs)
 
 #### Utilities (4 issues)
@@ -75,7 +75,7 @@ This document tracks the three major milestones for meniOS development.
 - [x] #102 - Pipes implementation ✅
 
 **Dependencies**:
-- #187 depends on #213 (signal support for kill)
+- #187 depends on #213 (signal support for kill) ✅ COMPLETE
 - #197 depends on #147 (getcwd/chdir) ✅ COMPLETE
 - #222 depends on #147 (getcwd/chdir) ✅ COMPLETE
 - #199 depends on #156 (history) ✅ COMPLETE
@@ -148,7 +148,7 @@ This document tracks the three major milestones for meniOS development.
 - [x] #210 - Signal bookkeeping scaffold ✅
 - [x] #211 - Signal syscalls ✅
 - [x] #212 - Signal delivery path ✅
-- [ ] #213 - Shell Ctrl+C integration (ready now!)
+- [x] #213 - Shell Ctrl+C integration ✅
 - [ ] #214 - Advanced signal features
 
 #### IPC - Shared Memory (5 issues) ✅ COMPLETE!
@@ -168,12 +168,12 @@ This document tracks the three major milestones for meniOS development.
 **Dependencies**:
 - #110 requires #109
 - #111 requires #109
-- #213 requires #212 ✅
+- #213 requires #212 ✅ COMPLETE
 - #214 requires #213, #109
 - #106 requires #102 ✅, #103 ✅ (pipes & signals)
 - #107 requires #106
 
-**Progress**: IPC infrastructure well underway - Pipes ✅, Signals (4/6), Shared Memory ✅ all complete!
+**Progress**: IPC infrastructure well underway - Pipes ✅, Signals (5/6), Shared Memory ✅ all complete!
 
 ---
 
@@ -207,9 +207,9 @@ This document tracks the three major milestones for meniOS development.
 ## 📈 Overall Progress
 
 - **Total Issues Across Milestones**: 63 issues
-- **Completed**: 32 issues (50.8%)
-- **In Progress**: 31 issues
-- **Ready to Start**: 3 issues (no dependencies)
+- **Completed**: 34 issues (54.0%)
+- **In Progress**: 29 issues
+- **Ready to Start**: 2 issues (no dependencies)
 
 ## 🚀 Immediate Next Steps
 
@@ -220,7 +220,6 @@ This document tracks the three major milestones for meniOS development.
 
 2. **Doom Milestone**:
    - #109 - pthread API
-   - #213 - Shell Ctrl+C integration
    - #221 - Fast syscall instruction
 
 ## 📝 Notes
@@ -239,7 +238,7 @@ Many issues can be worked on in parallel:
 
 ### Completion Order
 Recommended completion order for maximum impact:
-1. **Mosh** - Provides usable development environment (66.7% complete)
+1. **Mosh** - Provides usable development environment (73.3% complete)
 2. **GCC** - Enables native development and compilation (25% complete)
 3. **Doom** - Demonstrates full OS capabilities (40% complete)
 
@@ -255,6 +254,9 @@ Recommended completion order for maximum impact:
 - **2025-10-11**: Closed #156 (command history) - unblocks #199!
 - **2025-10-11**: Closed #197 (tab completion) ✅
 - **2025-10-11**: Closed #199 (Ctrl+R reverse search) ✅
+- **2025-10-11**: Closed #213 (Shell Ctrl+C integration) ✅
+- **2025-10-11**: Closed #161 (Basic REPL and command parsing) ✅
+- **2025-10-11**: Closed #164 (Basic I/O redirection) ✅
 - **2025-10-08**: Closed #157 as duplicate of #197, #165 as completed by #208
 
 ---

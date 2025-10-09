@@ -166,7 +166,7 @@ These issues form the backbone of the system and should be prioritized:
 #109 (pthread) ────→ #214 (Advanced signals - optional)
 ```
 
-**Sequential implementation**: ✅ #210 → ✅ #211 → ✅ #212 → #213 → #214
+**Sequential implementation**: ✅ #210 → ✅ #211 → ✅ #212 → ✅ #213 → #214
 
 **Priority**: High - Essential for process control (delivery path working!)
 
@@ -282,7 +282,7 @@ These issues form the backbone of the system and should be prioritized:
 - **#210**: Signal bookkeeping (1-2 weeks)
 - **#211**: Signal syscalls (1-2 weeks)
 - **#212**: Signal delivery (2-3 weeks)
-- **#213**: Shell Ctrl+C (1-2 weeks)
+- **#213**: Shell Ctrl+C ✅
 - **#214**: Advanced signals - optional (3-4 weeks)
 
 **IPC Track C - Shared Memory** (✅ COMPLETE!):
@@ -316,7 +316,7 @@ These issues form the backbone of the system and should be prioritized:
 
 ### ✅ Ready to Start NOW (No Dependencies):
 - **#194 (ABI docs)** - Start immediately! (Critical path)
-- **#213 (Shell Ctrl+C)** - Start immediately! (#210 ✅, #211 ✅, #212 ✅ complete!)
+- **#213 (Shell Ctrl+C)** - Completed (#210 ✅, #211 ✅, #212 ✅)
 - **#218 (Shared mem tests)** - Start immediately! (#217 ✅ complete!)
 
 ### ⏳ Blocked, Waiting On:
@@ -324,7 +324,7 @@ These issues form the backbone of the system and should be prioritized:
 - **#197 (tab completion)** ✅ (dependency #147 satisfied)
 - **#199 (Ctrl+R)** ✅ (dependency #156 satisfied)
 - **#201 (mouse selection)** blocks on: #143 or #144 (mouse drivers)
-- **#187 (ps/kill)** blocks on: #213 (signals)
+- **#187 (ps/kill)** ready now! (#213 complete)
 
 ### 🔗 Parallel Development Opportunities:
 1. **Toolchain** (#192-#195) - Critical path
@@ -379,7 +379,7 @@ These issues form the backbone of the system and should be prioritized:
 - **Shell milestone (9/9 core!)**: #148 (env vars), #180 (env seeding), #181 (tmpfs validation), #182 (waitpid tests), #183 (/bin utilities), #184 (line editor tests), #185 (PATH search), #186 (pipeline placeholders), #147 (getcwd/chdir) ✅
 - **Threading foundation**: #108 (kernel threading)
 - **IPC - Pipes (COMPLETE!)**: #102 (parent), #206 (pipe data structure), #207 (pipe syscall API), #208 (shell pipelines), #209 (named FIFOs)
-- **IPC - Signals (4/6!)**: #103 (parent) ✅, #210 (signal bookkeeping), #211 (signal syscalls), #212 (signal delivery)
+- **IPC - Signals (5/6!)**: #103 (parent) ✅, #210 (signal bookkeeping), #211 (signal syscalls), #212 (signal delivery), #213 (shell Ctrl+C)
 - **IPC - Shared Memory (COMPLETE!)**: #215 (shared mem manager), #216 (shared mem syscalls), #217 (reference counting), #218 (test suite), #219 (documentation)
 - **Device Control (COMPLETE!)**: #220 (ioctl syscall)
 - **Performance**: #205 (I/O scheduler)
@@ -389,13 +389,13 @@ These issues form the backbone of the system and should be prioritized:
 - **#195** - Userland build system (dependencies met: #192✅, #193✅)
 - **#188** - env utility ✅ (built-in /bin/env ships with default env dump)
 - ✅ **#197** - Tab completion delivered using filesystem scanning
-- **#213** - Shell Ctrl+C (dependencies met: #210✅, #211✅, #212✅)
+- **#213** - Shell Ctrl+C ✅ (dependencies met: #210✅, #211✅, #212✅)
 - **#221** - Fast syscall instruction
 
 ### 📋 **Total Open Issues**: ~69 issues (estimated)
-- **IPC**: 5 remaining (#105-#107, #213-#214, #221)
+- **IPC**: 3 remaining (#105-#107, #214, #221)
   - Pipes: ✅ COMPLETE! (#102 + #206-#209 = 5/5) 🎉
-  - Signals: 2 remaining (#213-#214) - 4/6 complete! (#103, #210-#212) ✅✅✅✅
+  - Signals: 1 remaining (#214) - 5/6 complete! (#103, #210-#213) ✅✅✅✅✅ - Ctrl+C working!
   - Shared Memory: ✅ COMPLETE! (5/5) 🎉🎉🎉
   - Unix sockets: 1 (#105)
   - Microkernel IPC: 1 (#106)
@@ -408,7 +408,7 @@ These issues form the backbone of the system and should be prioritized:
 - **Threading**: 5 remaining (#109-#113) - 1/6 complete! ✅
 - **Memory**: 1 (#95 userspace malloc)
 - **Bug fixes**: 1 (#202)
-- **Completed recently**: 38 issues (#192, #193, #148, #180-#188, #37, #39, #205, #108, #206-#212, #215-#220, #147, #102, #103, #165, #198, #199, #200, #203, #222, #156, #197)
+- **Completed recently**: 41 issues (#192, #193, #148, #180-#188, #37, #39, #205, #108, #206-#213, #215-#220, #147, #102, #103, #161, #164, #165, #198, #199, #200, #203, #222, #156, #197)
 - **Closed duplicates**: #157, #165
 - **Previous existing**: ~64 issues
 
