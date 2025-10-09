@@ -73,7 +73,7 @@ digraph IssueDependencies {
 
         issue197 [label="#197: Tab\ncompletion", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED
         issue198 [label="#198: Ctrl+A/E\nline nav", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED
-        issue199 [label="#199: Ctrl+R\nreverse search", fillcolor="#E0FFFF"];
+        issue199 [label="#199: Ctrl+R\nreverse search", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED
         issue200 [label="#200: Ctrl+L\nclear screen", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED
         issue201 [label="#201: Mouse\nselection", fillcolor="#E0FFFF"];
         issue222 [label="#222: Current dir\nin prompt", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED
@@ -196,7 +196,7 @@ digraph IssueDependencies {
     issue148 -> issue197 [color=cyan, style=dashed];
     issue147 -> issue197 [color=cyan];
     issue147 -> issue222 [color=cyan];
-    issue156 -> issue199 [label="#156: history", color=cyan];
+    issue156 -> issue199 [label="#156: history", color=cyan, style=dashed];
     issue143 -> issue201 [label="#143: PS/2 mouse", color=cyan];
     issue144 -> issue201 [label="#144: USB mouse", color=cyan];
 

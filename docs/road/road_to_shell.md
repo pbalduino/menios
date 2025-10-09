@@ -100,7 +100,7 @@ A release that meets this milestone must satisfy all of the following:
 - ✅ Tab completion for files and directories (#197).
 - ✅ Current directory in prompt (#222) - Dynamic prompt shows cwd in shell banner.
 - ✅ Emacs-style line editing (Ctrl+A, Ctrl+E) (#198).
-- Reverse command search (Ctrl+R) (#199).
+- ✅ Reverse command search (Ctrl+R) (#199).
 - ✅ Clear screen shortcut (Ctrl+L) (#200).
 - ✅ Command history with up/down arrows (#156).
 

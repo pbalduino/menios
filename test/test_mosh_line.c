@@ -180,6 +180,11 @@ void test_tab_completion_handles_no_match_after_edit(void);
 void test_tab_completion_cd_ignores_files(void);
 void test_tab_completion_cd_cycling_skips_files(void);
 void test_tab_completion_non_cd_includes_files(void);
+void test_reverse_search_returns_latest_match(void);
+void test_reverse_search_repeat_advances(void);
+void test_reverse_search_no_match_beeps(void);
+void test_reverse_search_cancel_restores_line(void);
+void test_ctrl_c_clears_line(void);
 
 void test_backspace_redraws_with_carriage_return(void) {
   line_state_t state;
@@ -282,6 +287,11 @@ int main(void) {
   RUN_TEST(test_tab_completion_cd_ignores_files);
   RUN_TEST(test_tab_completion_cd_cycling_skips_files);
   RUN_TEST(test_tab_completion_non_cd_includes_files);
+  RUN_TEST(test_reverse_search_returns_latest_match);
+  RUN_TEST(test_reverse_search_repeat_advances);
+  RUN_TEST(test_reverse_search_no_match_beeps);
+  RUN_TEST(test_reverse_search_cancel_restores_line);
+  RUN_TEST(test_ctrl_c_clears_line);
 
   return UNITY_END();
 }
@@ -516,4 +526,78 @@ void test_tab_completion_non_cd_includes_files(void) {
   size_t len = read_line(MOSH_PROMPT, buffer, sizeof(buffer));
   TEST_ASSERT_EQUAL_STRING("cat /motd", buffer);
   TEST_ASSERT_EQUAL_UINT64(strlen("cat /motd"), len);
+}
+
+void test_reverse_search_returns_latest_match(void) {
+  reset_capture();
+  history_reset();
+  history_add("ls /bin");
+  history_add("echo hi");
+  history_add("ls /tmp");
+
+  const char sequence[] = { 0x12, 'l', 's', '\n' };
+  feed_input(sequence, sizeof(sequence));
+  char buffer[64];
+  size_t len = read_line(MOSH_PROMPT, buffer, sizeof(buffer));
+  TEST_ASSERT_EQUAL_STRING("ls /tmp", buffer);
+  TEST_ASSERT_EQUAL_UINT64(strlen("ls /tmp"), len);
+}
+
+void test_reverse_search_repeat_advances(void) {
+  reset_capture();
+  history_reset();
+  history_add("ls /bin");
+  history_add("echo hi");
+  history_add("ls /tmp");
+
+  const char sequence[] = { 0x12, 'l', 's', 0x12, '\n' };
+  feed_input(sequence, sizeof(sequence));
+  char buffer[64];
+  size_t len = read_line(MOSH_PROMPT, buffer, sizeof(buffer));
+  TEST_ASSERT_EQUAL_STRING("ls /bin", buffer);
+  TEST_ASSERT_EQUAL_UINT64(strlen("ls /bin"), len);
+}
+
+void test_reverse_search_no_match_beeps(void) {
+  reset_capture();
+  history_reset();
+  history_add("echo hi");
+  history_add("ls /tmp");
+
+  const char sequence[] = { 0x12, 'z', '\n' };
+  feed_input(sequence, sizeof(sequence));
+  char buffer[64];
+  size_t len = read_line(MOSH_PROMPT, buffer, sizeof(buffer));
+  TEST_ASSERT_EQUAL_UINT64(0, len);
+  TEST_ASSERT_TRUE_MESSAGE(capture_contains("\a"),
+                           "Failed reverse search should beep");
+}
+
+void test_reverse_search_cancel_restores_line(void) {
+  reset_capture();
+  history_reset();
+  history_add("ls /bin");
+  history_add("ls /tmp");
+
+  const char sequence[] = { 'e', 'c', 'h', 'o', ' ', 'h', 'i', 0x12, 'l', 0x07, '\n' };
+  feed_input(sequence, sizeof(sequence));
+  char buffer[64];
+  size_t len = read_line(MOSH_PROMPT, buffer, sizeof(buffer));
+  TEST_ASSERT_EQUAL_STRING("echo hi", buffer);
+  TEST_ASSERT_EQUAL_UINT64(strlen("echo hi"), len);
+  TEST_ASSERT_TRUE_MESSAGE(capture_contains("\a"),
+                           "Cancel should emit a bell");
+}
+
+void test_ctrl_c_clears_line(void) {
+  reset_capture();
+  history_reset();
+  const char sequence[] = { 'l', 's', 0x03 };
+  feed_input(sequence, sizeof(sequence));
+  char buffer[32];
+  size_t len = read_line(MOSH_PROMPT, buffer, sizeof(buffer));
+  TEST_ASSERT_EQUAL_UINT64(0, len);
+  TEST_ASSERT_EQUAL_CHAR('\0', buffer[0]);
+  TEST_ASSERT_TRUE_MESSAGE(capture_contains("^C\n"),
+                           "Ctrl+C should print caret notation");
 }

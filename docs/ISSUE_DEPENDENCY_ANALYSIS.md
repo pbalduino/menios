@@ -104,7 +104,7 @@ These issues form the backbone of the system and should be prioritized:
 #147 (getcwd) ────┼──→ #222 (current dir in prompt) ✅
                   └──→ #197 (tab completion) ✅
 
-#156 (history) ✅ ───→ #199 (Ctrl+R search)
+#156 (history) ✅ ───→ #199 (Ctrl+R search) ✅
 
 #198 (Ctrl+A/E) ✅
 #200 (Ctrl+L) ✅
@@ -299,7 +299,7 @@ These issues form the backbone of the system and should be prioritized:
 **Device Control**:
 - ✅ **#220**: ioctl syscall - COMPLETE
 
-**Shell UX**: #197-#200 (tab completion, Ctrl shortcuts) — #197 ✅, #198 ✅, #200 ✅, #222 (cwd prompt) ✅
+**Shell UX**: #197-#200 (tab completion, Ctrl shortcuts) — #197 ✅, #198 ✅, #199 ✅, #200 ✅, #222 (cwd prompt) ✅
 
 **Timeline**: 3-5 months (tracks can run in parallel)
 
@@ -322,7 +322,7 @@ These issues form the backbone of the system and should be prioritized:
 ### ⏳ Blocked, Waiting On:
 - **#29 (toolchain)** blocks on: #194, #195
 - **#197 (tab completion)** ✅ (dependency #147 satisfied)
-- **#199 (Ctrl+R)** blocks on: #156 (history ✅)
+- **#199 (Ctrl+R)** ✅ (dependency #156 satisfied)
 - **#201 (mouse selection)** blocks on: #143 or #144 (mouse drivers)
 - **#187 (ps/kill)** blocks on: #213 (signals)
 
@@ -360,7 +360,7 @@ These issues form the backbone of the system and should be prioritized:
 ### 📅 **Next 3-6 Months**
 1. **Threading**: #108 → #109 → #113 → #110 → #111
 2. **IPC**: #102 → #103 → #104
-3. **Shell UX**: #199 → #201 (tab completion ✅)
+3. **Shell UX**: #201 (mouse) - most UX features complete (tab completion ✅, Ctrl+R ✅)
 4. **Native compilation**: Begin #190, #191
 
 ## 📈 Progress Assessment
@@ -403,12 +403,12 @@ These issues form the backbone of the system and should be prioritized:
   - ioctl: ✅ COMPLETE! (1/1) 🎉
   - Fast syscalls: 1 (#221)
 - **Shell & utilities**: 1 remaining (#187) - now part of 30-issue Mosh milestone
-- **Shell UX**: 2 (#199, #201) - history (#156) ✅, Ctrl+A/E (#198) ✅, Ctrl+L (#200) ✅, pwd prompt (#222) ✅, tab completion (#197) ✅
+- **Shell UX**: 1 (#201) - history (#156) ✅, Ctrl+A/E (#198) ✅, Ctrl+L (#200) ✅, Ctrl+R (#199) ✅, pwd prompt (#222) ✅, tab completion (#197) ✅
 - **Toolchain**: 4 remaining (#29, #194-#196) - 2/8 complete! ✅✅ (GCC milestone)
 - **Threading**: 5 remaining (#109-#113) - 1/6 complete! ✅
 - **Memory**: 1 (#95 userspace malloc)
 - **Bug fixes**: 1 (#202)
-- **Completed recently**: 37 issues (#192, #193, #148, #180-#188, #37, #39, #205, #108, #206-#212, #215-#220, #147, #102, #103, #165, #198, #200, #203, #222, #156, #197)
+- **Completed recently**: 38 issues (#192, #193, #148, #180-#188, #37, #39, #205, #108, #206-#212, #215-#220, #147, #102, #103, #165, #198, #199, #200, #203, #222, #156, #197)
 - **Closed duplicates**: #157, #165
 - **Previous existing**: ~64 issues
 
@@ -513,7 +513,7 @@ For contributors, issues are organized by difficulty:
 - [ ] Full pthread API (#109-#113)
 - [ ] Complete IPC (#102-#104)
 - [ ] Native compilation (TCC) (#190)
-- [ ] Advanced shell UX (#199-#201) — tab completion (#197) complete
+- [ ] Advanced shell UX (#201) — tab completion (#197) ✅, Ctrl+R (#199) ✅ complete
 - [ ] Running Doom!
 
 ---

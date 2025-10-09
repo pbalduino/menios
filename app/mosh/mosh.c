@@ -65,12 +65,41 @@ typedef struct {
 
 static completion_context_t completion_ctx;
 
+typedef struct {
+  bool   active;
+  bool   have_match;
+  bool   saved_valid;
+  char   query[MOSH_MAX_LINE_LENGTH];
+  size_t query_len;
+  size_t search_index;
+  size_t match_index;
+  char   saved_buffer[MOSH_MAX_LINE_LENGTH];
+  size_t saved_length;
+  size_t saved_cursor;
+} reverse_search_state_t;
+
+static reverse_search_state_t reverse_search;
+
 static void completion_reset(void) {
   completion_ctx.active = false;
   completion_ctx.match_count = 0;
   completion_ctx.current_index = 0;
   completion_ctx.inserted_length = 0;
   completion_ctx.dir_prefix[0] = '\0';
+}
+
+static size_t str_append(char* dest, size_t capacity, size_t offset, const char* src) {
+  if(dest == NULL || capacity == 0 || offset >= capacity) {
+    return offset;
+  }
+  if(src == NULL) {
+    src = "";
+  }
+  while(*src != '\0' && offset + 1 < capacity) {
+    dest[offset++] = *src++;
+  }
+  dest[offset] = '\0';
+  return offset;
 }
 
 static void write_bytes(int fd, const char* data, size_t length);
@@ -89,6 +118,10 @@ static int  launch_command(char* line);
 static size_t split_sequence(char* line, char* parts[], size_t max_parts);
 static char* str_find_substring(char* haystack, const char* needle);
 static bool  line_replace_range(line_state_t* state, size_t start, size_t end, const char* replacement);
+static void  reverse_search_reset(void);
+static void  reverse_search_start(line_state_t* state);
+static void  reverse_search_next(line_state_t* state);
+static bool  reverse_search_handle_char(line_state_t* state, char ch);
 
 #ifdef MOSH_TEST
 long mosh_test_syscall0(long number);
@@ -882,6 +915,7 @@ static void line_state_init(line_state_t* state, const char* prompt, char* buffe
   }
   line_render_caret(state);
   completion_reset();
+  reverse_search_reset();
 }
 
 static void line_redraw(line_state_t* state) {
@@ -1337,6 +1371,7 @@ static void history_reset(void) {
   history_next = 0;
   history_cursor = 0;
   completion_reset();
+  reverse_search_reset();
 }
 
 static size_t history_physical_index(size_t logical_index) {
@@ -1408,6 +1443,235 @@ static void history_load_into(line_state_t* state, size_t logical_index) {
   line_redraw(state);
 }
 
+static void reverse_search_clear_display(line_state_t* state) {
+  line_hide_caret(state);
+  write_char_stdout('\r');
+  static const char clear_seq[] = "\x1b[K";
+  write_bytes(STDOUT_FILENO, clear_seq, sizeof(clear_seq) - 1);
+  state->caret_visible = false;
+  state->needs_carriage_return = true;
+}
+
+static void reverse_search_reset(void) {
+  reverse_search.active = false;
+  reverse_search.have_match = false;
+  reverse_search.saved_valid = false;
+  reverse_search.query_len = 0;
+  reverse_search.query[0] = '\0';
+  reverse_search.search_index = history_length;
+  reverse_search.match_index = history_length;
+}
+
+static bool reverse_search_scan(size_t start, const char** out_entry, size_t* out_index) {
+  size_t idx = start;
+  while(idx > 0) {
+    idx--;
+    const char* entry = history_get(idx);
+    if(reverse_search.query_len == 0 || str_find_substring((char*)entry, reverse_search.query) != NULL) {
+      if(out_index != NULL) {
+        *out_index = idx;
+      }
+      if(out_entry != NULL) {
+        *out_entry = entry;
+      }
+      return true;
+    }
+  }
+  return false;
+}
+
+static void reverse_search_render(line_state_t* state) {
+  reverse_search_clear_display(state);
+
+  char message[MOSH_MAX_LINE_LENGTH * 2];
+  size_t offset = 0;
+  offset = str_append(message, sizeof(message), offset, "(reverse-search: '");
+  offset = str_append(message, sizeof(message), offset, reverse_search.query);
+  offset = str_append(message, sizeof(message), offset, "') ");
+  if(reverse_search.have_match) {
+    offset = str_append(message, sizeof(message), offset, state->buffer);
+  } else {
+    offset = str_append(message, sizeof(message), offset, "- no match");
+  }
+  write_bytes(STDOUT_FILENO, message, offset);
+}
+
+static void reverse_search_copy_to_state(line_state_t* state, const char* entry) {
+  str_copy(state->buffer, state->total_capacity, entry);
+  state->length = str_len(state->buffer);
+  if(state->length > state->content_capacity) {
+    state->length = state->content_capacity;
+    state->buffer[state->length] = '\0';
+  }
+  state->cursor = state->length;
+  state->rendered_length = state->length;
+  state->needs_carriage_return = true;
+  completion_reset();
+}
+
+static void reverse_search_apply(line_state_t* state, bool advance_from_current) {
+  size_t start = reverse_search.search_index;
+  if(advance_from_current && reverse_search.have_match) {
+    start = reverse_search.match_index;
+  }
+
+  size_t match_idx = 0;
+  const char* match_entry = NULL;
+  bool found = reverse_search_scan(start, &match_entry, &match_idx);
+  if(!found && reverse_search.have_match) {
+    found = reverse_search_scan(history_length, &match_entry, &match_idx);
+  } else if(!found && reverse_search.query_len == 0) {
+    found = reverse_search_scan(history_length, &match_entry, &match_idx);
+  }
+
+  if(found) {
+    reverse_search.have_match = true;
+    reverse_search.match_index = match_idx;
+    reverse_search.search_index = match_idx;
+    reverse_search_copy_to_state(state, match_entry);
+    reverse_search_render(state);
+    return;
+  }
+
+  reverse_search.have_match = false;
+  reverse_search.search_index = history_length;
+  reverse_search_render(state);
+  beep();
+}
+
+static void reverse_search_start(line_state_t* state) {
+  if(reverse_search.active) {
+    reverse_search_apply(state, true);
+    return;
+  }
+
+  reverse_search.active = true;
+  reverse_search.have_match = false;
+  reverse_search.query_len = 0;
+  reverse_search.query[0] = '\0';
+  reverse_search.search_index = history_length;
+  reverse_search.match_index = history_length;
+  str_copy(reverse_search.saved_buffer, sizeof(reverse_search.saved_buffer), state->buffer);
+  reverse_search.saved_length = str_len(reverse_search.saved_buffer);
+  reverse_search.saved_cursor = state->cursor;
+  reverse_search.saved_valid = true;
+  history_cursor = history_length;
+
+  reverse_search_apply(state, false);
+}
+
+static void reverse_search_next(line_state_t* state) {
+  if(!reverse_search.active) {
+    reverse_search_start(state);
+    return;
+  }
+  if(reverse_search.have_match && reverse_search.match_index > 0) {
+    reverse_search.search_index = reverse_search.match_index;
+  }
+  reverse_search_apply(state, true);
+}
+
+static void reverse_search_append_char(line_state_t* state, char ch) {
+  if(reverse_search.query_len + 1 >= sizeof(reverse_search.query)) {
+    beep();
+    return;
+  }
+  reverse_search.query[reverse_search.query_len++] = ch;
+  reverse_search.query[reverse_search.query_len] = '\0';
+  reverse_search.have_match = false;
+  reverse_search.search_index = history_length;
+  reverse_search_apply(state, false);
+}
+
+static void reverse_search_backspace(line_state_t* state) {
+  if(reverse_search.query_len == 0) {
+    beep();
+    return;
+  }
+  reverse_search.query_len--;
+  reverse_search.query[reverse_search.query_len] = '\0';
+  reverse_search.have_match = false;
+  reverse_search.search_index = history_length;
+  reverse_search_apply(state, false);
+}
+
+static void reverse_search_accept(line_state_t* state) {
+  if(!reverse_search.have_match && reverse_search.saved_valid) {
+    str_copy(state->buffer, state->total_capacity, reverse_search.saved_buffer);
+    state->length = str_len(state->buffer);
+    if(state->length > state->content_capacity) {
+      state->length = state->content_capacity;
+      state->buffer[state->length] = '\0';
+    }
+    state->cursor = (reverse_search.saved_cursor <= state->length) ? reverse_search.saved_cursor : state->length;
+    state->rendered_length = state->length;
+    state->needs_carriage_return = true;
+    completion_reset();
+  }
+  reverse_search_clear_display(state);
+  reverse_search_reset();
+  line_redraw(state);
+}
+
+static void reverse_search_restore_saved(line_state_t* state) {
+  if(!reverse_search.saved_valid) {
+    state->length = 0;
+    state->buffer[0] = '\0';
+    state->cursor = 0;
+    state->rendered_length = 0;
+    return;
+  }
+
+  str_copy(state->buffer, state->total_capacity, reverse_search.saved_buffer);
+  state->length = str_len(state->buffer);
+  if(state->length > state->content_capacity) {
+    state->length = state->content_capacity;
+    state->buffer[state->length] = '\0';
+  }
+  state->cursor = (reverse_search.saved_cursor <= state->length) ? reverse_search.saved_cursor : state->length;
+  state->rendered_length = state->length;
+  state->needs_carriage_return = true;
+  completion_reset();
+}
+
+static void reverse_search_cancel(line_state_t* state) {
+  reverse_search_restore_saved(state);
+  reverse_search_clear_display(state);
+  reverse_search_reset();
+  line_redraw(state);
+  beep();
+}
+
+static bool reverse_search_handle_char(line_state_t* state, char ch) {
+  if(ch == 0x12) {
+    reverse_search_next(state);
+    return true;
+  }
+  if(ch == '\b' || ch == 0x7f) {
+    reverse_search_backspace(state);
+    return true;
+  }
+  if(ch == 0x07) {
+    reverse_search_cancel(state);
+    return true;
+  }
+  if(ch == '\n' || ch == '\r') {
+    reverse_search_accept(state);
+    return false;
+  }
+  if(ch == 0x1b) {
+    reverse_search_accept(state);
+    return false;
+  }
+  if(ch >= 0x20 && ch < 0x7f) {
+    reverse_search_append_char(state, ch);
+    return true;
+  }
+
+  reverse_search_accept(state);
+  return false;
+}
+
 static size_t read_line(const char* prompt, char* buffer, size_t capacity) {
   if(buffer == NULL || capacity == 0) {
     return 0;
@@ -1459,6 +1723,27 @@ static size_t read_line(const char* prompt, char* buffer, size_t capacity) {
 
     switch(esc_state) {
       case ESCAPE_NONE:
+        if(ch == 0x03) {
+          if(reverse_search.active) {
+            reverse_search_clear_display(&state);
+            reverse_search_reset();
+            line_redraw(&state);
+          }
+          line_hide_caret(&state);
+          write_str(STDOUT_FILENO, "^C\n");
+          state.length = 0;
+          state.cursor = 0;
+          state.buffer[0] = '\0';
+          state.rendered_length = 0;
+          scratch_active = false;
+          history_cursor = history_length;
+          return 0;
+        }
+        if(reverse_search.active) {
+          if(reverse_search_handle_char(&state, ch)) {
+            break;
+          }
+        }
         if(ch == '\n' || ch == '\r') {
           state.buffer[state.length] = '\0';
           line_hide_caret(&state);
@@ -1468,6 +1753,14 @@ static size_t read_line(const char* prompt, char* buffer, size_t capacity) {
           }
           history_cursor = history_length;
           return state.length;
+        }
+        if(ch == 0x12) {
+          if(history_length == 0) {
+            beep();
+          } else {
+            reverse_search_start(&state);
+          }
+          break;
         }
         if(ch == '\b' || ch == 0x7f) {
           line_backspace(&state);

@@ -8,7 +8,7 @@ This document tracks the three major milestones for meniOS development.
 **Goal**: Complete interactive shell with full user experience
 **GitHub Milestone**: [Mosh](https://github.com/pbalduino/menios/milestone/1)
 
-**Status**: 19/30 complete (63.3%)
+**Status**: 20/30 complete (66.7%)
 
 **Assigned Issues**:
 
@@ -40,7 +40,7 @@ This document tracks the three major milestones for meniOS development.
 - [x] #156 - Command history (up/down arrows) ✅
 - [x] #197 - Tab completion for files/directories ✅
 - [x] #198 - Ctrl+A/E line editing shortcuts ✅
-- [ ] #199 - Ctrl+R reverse search
+- [x] #199 - Ctrl+R reverse search ✅
 - [x] #200 - Ctrl+L clear screen ✅
 - [x] #147 - getcwd/chdir syscalls ✅
 - [x] #222 - Current directory in prompt ✅
@@ -78,7 +78,7 @@ This document tracks the three major milestones for meniOS development.
 - #187 depends on #213 (signal support for kill)
 - #197 depends on #147 (getcwd/chdir) ✅ COMPLETE
 - #222 depends on #147 (getcwd/chdir) ✅ COMPLETE
-- #199 depends on #156 (history)
+- #199 depends on #156 (history) ✅ COMPLETE
 - #201 depends on #143 or #144 (mouse drivers)
 
 **Notes**:
@@ -207,9 +207,9 @@ This document tracks the three major milestones for meniOS development.
 ## 📈 Overall Progress
 
 - **Total Issues Across Milestones**: 63 issues
-- **Completed**: 31 issues (49.2%)
-- **In Progress**: 32 issues
-- **Ready to Start**: 4 issues (no dependencies)
+- **Completed**: 32 issues (50.8%)
+- **In Progress**: 31 issues
+- **Ready to Start**: 3 issues (no dependencies)
 
 ## 🚀 Immediate Next Steps
 
@@ -223,9 +223,6 @@ This document tracks the three major milestones for meniOS development.
    - #213 - Shell Ctrl+C integration
    - #221 - Fast syscall instruction
 
-3. **Mosh Milestone**:
-   - #199 - Ctrl+R reverse search (dependency #156 now complete!)
-
 ## 📝 Notes
 
 ### Parallel Development
@@ -233,7 +230,7 @@ Many issues can be worked on in parallel:
 - **GCC**: #194 and #195 can be done simultaneously
 - **Doom Threading**: #109, #112, #113 are independent
 - **Doom IPC**: Different IPC mechanisms can progress in parallel
-- **Mosh UX**: #198, #199, #200, #197 are independent features
+- **Mosh UX**: #198 ✅, #199 ✅, #200 ✅, #197 ✅ are independent features (all complete!)
 
 ### Critical Dependencies
 - **GCC milestone** is required before meniOS can compile Doom natively
@@ -242,7 +239,7 @@ Many issues can be worked on in parallel:
 
 ### Completion Order
 Recommended completion order for maximum impact:
-1. **Mosh** - Provides usable development environment (63.3% complete)
+1. **Mosh** - Provides usable development environment (66.7% complete)
 2. **GCC** - Enables native development and compilation (25% complete)
 3. **Doom** - Demonstrates full OS capabilities (40% complete)
 
@@ -257,6 +254,7 @@ Recommended completion order for maximum impact:
 - **2025-10-11**: Closed #198 (Ctrl+A/E shortcuts), #200 (Ctrl+L clear screen)
 - **2025-10-11**: Closed #156 (command history) - unblocks #199!
 - **2025-10-11**: Closed #197 (tab completion) ✅
+- **2025-10-11**: Closed #199 (Ctrl+R reverse search) ✅
 - **2025-10-08**: Closed #157 as duplicate of #197, #165 as completed by #208
 
 ---

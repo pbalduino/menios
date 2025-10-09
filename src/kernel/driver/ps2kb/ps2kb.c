@@ -32,6 +32,8 @@ static volatile uint8_t buffer_tail;
 
 static bool left_shift;
 static bool right_shift;
+static bool left_ctrl;
+static bool right_ctrl;
 static bool caps_lock;
 static bool extended_code;
 static bool pic_remapped;
@@ -122,6 +124,32 @@ static char translate_scancode(uint8_t code) {
   }
 
   bool shift = left_shift || right_shift;
+  bool ctrl = left_ctrl || right_ctrl;
+
+  if(ctrl) {
+    char temp = base;
+    if(temp >= 'A' && temp <= 'Z') {
+      temp = (char)(temp - 'A' + 'a');
+    }
+    if(temp >= 'a' && temp <= 'z') {
+      return (char)((temp - 'a') + 1);
+    }
+    if(base == '[') {
+      return 0x1b;
+    }
+    if(base == '\\') {
+      return 0x1c;
+    }
+    if(base == ']') {
+      return 0x1d;
+    }
+    if(base == '^') {
+      return 0x1e;
+    }
+    if(base == '_') {
+      return 0x1f;
+    }
+  }
 
   if(is_alpha(base)) {
     bool upper = shift ^ caps_lock;
@@ -218,6 +246,11 @@ void ps2kb_handler() {
 
   if(extended_code) {
     extended_code = false;
+    if(code == 0x1D) { // Right Control
+      right_ctrl = !release;
+      irq_eoi();
+      return;
+    }
     if(!release) {
       switch(code) {
         case 0x48: // Up
@@ -243,6 +276,10 @@ void ps2kb_handler() {
       return;
     case 0x36: // Right Shift
       right_shift = !release;
+      irq_eoi();
+      return;
+    case 0x1D: // Left Control
+      left_ctrl = !release;
       irq_eoi();
       return;
     case 0x3A: // Caps Lock
@@ -277,7 +314,7 @@ static bool ps2_read_byte(uint8_t *out) {
 
 void ps2kb_start(void) {
   buffer_head = buffer_tail = 0;
-  left_shift = right_shift = caps_lock = false;
+  left_shift = right_shift = left_ctrl = right_ctrl = caps_lock = false;
   extended_code = false;
 
   pic_remap();
