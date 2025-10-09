@@ -15,17 +15,24 @@
 #include <menios/syscall_user.h>
 #endif
 
-#define MOSH_MAX_LINE_LENGTH 256
-#define MOSH_MAX_PATH        256
-#define MOSH_HISTORY_LIMIT   16
-#define MOSH_PROMPT_DEFAULT  "mosh:/>"
-#define MOSH_PROMPT          MOSH_PROMPT_DEFAULT
-#define MOSH_MAX_SEGMENTS    8
-#define MOSH_MAX_ARGS        16
-#define MOSH_MAX_TOKENS      128
-#define MOSH_MAX_SEQUENCES   8
-#define MOSH_MAX_COMPLETIONS 64
-#define MOSH_MAX_ENV_VARS    64
+#define MOSH_MAX_LINE_LENGTH   256
+#define MOSH_MAX_PATH          256
+#define MOSH_HISTORY_LIMIT     16
+#define MOSH_PROMPT_DEFAULT    "mosh:/>"
+#define MOSH_PROMPT            MOSH_PROMPT_DEFAULT
+#define MOSH_MAX_SEGMENTS      8
+#define MOSH_MAX_ARGS          16
+#define MOSH_MAX_TOKENS        128
+#define MOSH_MAX_SEQUENCES     8
+#define MOSH_MAX_COMPLETIONS   64
+#define MOSH_MAX_ENV_VARS      64
+#define MOSH_MAX_VARS          64
+#define MOSH_MAX_VAR_NAME      32
+#define MOSH_MAX_VAR_VALUE     256
+#define MOSH_MAX_FUNCTIONS     32
+#define MOSH_MAX_FUNCTION_BODY (MOSH_MAX_LINE_LENGTH * 4)
+#define MOSH_MAX_POSITIONAL    9
+#define MOSH_POSITIONAL_STACK  8
 
 typedef struct line_state_t line_state_t;
 
@@ -89,10 +96,47 @@ typedef struct {
   int         last_status;
 } job_t;
 
+typedef struct {
+  bool in_use;
+  char name[MOSH_MAX_VAR_NAME];
+  char value[MOSH_MAX_VAR_VALUE];
+} shell_var_t;
+
+typedef struct {
+  bool in_use;
+  char name[MOSH_MAX_VAR_NAME];
+  char body[MOSH_MAX_FUNCTION_BODY];
+} shell_function_t;
+
+typedef struct {
+  bool had_value;
+  char name[MOSH_MAX_VAR_NAME];
+  char value[MOSH_MAX_VAR_VALUE];
+} shell_var_snapshot_t;
+
+typedef struct {
+  bool        had_zero;
+  char        zero_value[MOSH_MAX_VAR_VALUE];
+  bool        had_count;
+  char        count_value[MOSH_MAX_VAR_VALUE];
+  struct {
+    bool had_value;
+    char value[MOSH_MAX_VAR_VALUE];
+  } positional[MOSH_MAX_POSITIONAL + 1];
+} positional_frame_t;
+
 static job_t jobs[MOSH_MAX_JOBS];
 static int next_job_id = 1;
 static job_t* current_job = NULL;
 static int shell_last_status = 0;
+static shell_var_t shell_vars[MOSH_MAX_VARS];
+static shell_function_t shell_functions[MOSH_MAX_FUNCTIONS];
+static positional_frame_t positional_stack[MOSH_POSITIONAL_STACK];
+static size_t positional_depth = 0;
+#ifdef MOSH_TEST
+static int test_counter_limit = 0;
+static int test_counter_value = 0;
+#endif
 
 static int  decode_wait_status(int status);
 static int  encode_raw_status_from_code(int code);
@@ -117,7 +161,8 @@ static int job_raw_status(const job_t* job);
 typedef enum {
   SEQ_NONE = 0,
   SEQ_AND,
-  SEQ_OR
+  SEQ_OR,
+  SEQ_SEMI
 } sequence_op_t;
 
 static volatile int sigint_requested = 0;
@@ -587,6 +632,31 @@ static void  reverse_search_reset(void);
 static void  reverse_search_start(line_state_t* state);
 static void  reverse_search_next(line_state_t* state);
 static bool  reverse_search_handle_char(line_state_t* state, char ch);
+static char* ltrim(char* text);
+static void  rtrim(char* text);
+static int   str_ncmp(const char* a, const char* b, size_t length);
+static void  shell_var_set(const char* name, const char* value);
+static const char* shell_var_get(const char* name);
+static void  shell_var_unset(const char* name);
+static shell_var_snapshot_t shell_var_snapshot(const char* name);
+static void  shell_var_restore(const shell_var_snapshot_t* snapshot);
+static void  shell_positional_push(const char* func_name, char* const argv[], size_t argc);
+static void  shell_positional_pop(void);
+static bool  shell_expand_variables(const char* input, char* output, size_t capacity);
+static int   shell_run_command_string(const char* text);
+static bool  shell_function_define_inline(const char* raw_line, int* out_status);
+static bool  shell_function_define_keyword(const char* raw_args, const char* expanded_args, int* out_status);
+static shell_function_t* shell_function_lookup(const char* name);
+static bool  shell_function_call(const shell_function_t* fn, const char* args, int* out_status);
+static bool  builtin_if(const char* raw_line, char* line, int* out_status);
+static bool  builtin_while(const char* line, int* out_status);
+static bool  builtin_for(const char* line, int* out_status);
+static bool  builtin_set_variable(char* line, int* out_status);
+static bool  builtin_unset_variable(char* line, int* out_status);
+#ifdef MOSH_TEST
+static bool  builtin_set_test_counter(char* line, int* out_status);
+static bool  builtin_test_counter_lt(int* out_status);
+#endif
 
 #ifdef MOSH_TEST
 long mosh_test_syscall0(long number);
@@ -740,6 +810,1189 @@ static void env_set(const char* key, const char* value) {
     env_heap_flags[index] = true;
   }
 }
+
+static bool shell_is_digit(char ch) {
+  return ch >= '0' && ch <= '9';
+}
+
+static bool shell_is_alpha(char ch) {
+  return (ch >= 'a' && ch <= 'z') || (ch >= 'A' && ch <= 'Z');
+}
+
+static bool shell_is_ident_start(char ch) {
+  return shell_is_alpha(ch) || ch == '_';
+}
+
+static bool shell_is_ident_char(char ch) {
+  return shell_is_ident_start(ch) || shell_is_digit(ch);
+}
+
+static bool shell_is_numeric_name(const char* name) {
+  if(name == NULL || *name == '\0') {
+    return false;
+  }
+  for(size_t i = 0; name[i] != '\0'; i++) {
+    if(!shell_is_digit(name[i])) {
+      return false;
+    }
+  }
+  return true;
+}
+
+static bool shell_is_valid_var_name(const char* name) {
+  if(name == NULL || name[0] == '\0') {
+    return false;
+  }
+  if(shell_is_numeric_name(name)) {
+    return true;
+  }
+  if(!shell_is_ident_start(name[0])) {
+    return false;
+  }
+  for(size_t i = 1; name[i] != '\0'; i++) {
+    if(!shell_is_ident_char(name[i])) {
+      return false;
+    }
+  }
+  return true;
+}
+
+static shell_var_t* shell_var_find(const char* name) {
+  if(name == NULL) {
+    return NULL;
+  }
+  for(size_t i = 0; i < MOSH_MAX_VARS; i++) {
+    if(shell_vars[i].in_use && str_eq(shell_vars[i].name, name)) {
+      return &shell_vars[i];
+    }
+  }
+  return NULL;
+}
+
+static shell_var_t* shell_var_allocate(const char* name) {
+  shell_var_t* existing = shell_var_find(name);
+  if(existing != NULL) {
+    return existing;
+  }
+  for(size_t i = 0; i < MOSH_MAX_VARS; i++) {
+    if(!shell_vars[i].in_use) {
+      shell_vars[i].in_use = true;
+      str_copy(shell_vars[i].name, sizeof(shell_vars[i].name), name);
+      shell_vars[i].value[0] = '\0';
+      return &shell_vars[i];
+    }
+  }
+  return NULL;
+}
+
+static void shell_var_set(const char* name, const char* value) {
+  if(name == NULL || value == NULL) {
+    return;
+  }
+  if(!shell_is_valid_var_name(name)) {
+    return;
+  }
+  shell_var_t* slot = shell_var_allocate(name);
+  if(slot == NULL) {
+    return;
+  }
+  str_copy(slot->value, sizeof(slot->value), value);
+}
+
+static void shell_var_unset(const char* name) {
+  if(name == NULL) {
+    return;
+  }
+  shell_var_t* slot = shell_var_find(name);
+  if(slot != NULL) {
+    slot->in_use = false;
+    slot->name[0] = '\0';
+    slot->value[0] = '\0';
+  }
+}
+
+static const char* shell_var_get(const char* name) {
+  if(name == NULL || name[0] == '\0') {
+    return NULL;
+  }
+  shell_var_t* slot = shell_var_find(name);
+  if(slot != NULL) {
+    return slot->value;
+  }
+  return env_get(name);
+}
+
+static shell_var_snapshot_t shell_var_snapshot(const char* name) {
+  shell_var_snapshot_t snap;
+  snap.had_value = false;
+  snap.name[0] = '\0';
+  snap.value[0] = '\0';
+  if(name == NULL) {
+    return snap;
+  }
+  str_copy(snap.name, sizeof(snap.name), name);
+  shell_var_t* slot = shell_var_find(name);
+  if(slot != NULL) {
+    snap.had_value = true;
+    str_copy(snap.value, sizeof(snap.value), slot->value);
+  }
+  return snap;
+}
+
+static void shell_var_restore(const shell_var_snapshot_t* snapshot) {
+  if(snapshot == NULL || snapshot->name[0] == '\0') {
+    return;
+  }
+  if(snapshot->had_value) {
+    shell_var_set(snapshot->name, snapshot->value);
+  } else {
+    shell_var_unset(snapshot->name);
+  }
+}
+
+static void shell_build_numeric_name(size_t value, char* out, size_t capacity) {
+  if(out == NULL || capacity == 0) {
+    return;
+  }
+  out[0] = '\0';
+  format_unsigned_value(value, out, capacity);
+}
+
+static shell_var_t* shell_var_find_internal(const char* name) {
+  return shell_var_find(name);
+}
+
+static void shell_positional_push(const char* func_name, char* const argv[], size_t argc) {
+  if(positional_depth >= MOSH_POSITIONAL_STACK) {
+    return;
+  }
+
+  positional_frame_t* frame = &positional_stack[positional_depth++];
+  memset(frame, 0, sizeof(*frame));
+
+  shell_var_t* zero = shell_var_find_internal("0");
+  if(zero != NULL) {
+    frame->had_zero = true;
+    str_copy(frame->zero_value, sizeof(frame->zero_value), zero->value);
+  }
+
+  shell_var_t* count = shell_var_find_internal("#");
+  if(count != NULL) {
+    frame->had_count = true;
+    str_copy(frame->count_value, sizeof(frame->count_value), count->value);
+  }
+
+  for(size_t i = 1; i <= MOSH_MAX_POSITIONAL; i++) {
+    char name[8];
+    shell_build_numeric_name(i, name, sizeof(name));
+    shell_var_t* existing = shell_var_find_internal(name);
+    frame->positional[i].had_value = (existing != NULL);
+    if(existing != NULL) {
+      str_copy(frame->positional[i].value, sizeof(frame->positional[i].value), existing->value);
+    }
+    if(i <= argc && argv != NULL && argv[i - 1] != NULL) {
+      shell_var_set(name, argv[i - 1]);
+    } else {
+      shell_var_unset(name);
+    }
+  }
+
+  char count_value[16];
+  count_value[0] = '\0';
+  format_unsigned_value(argc, count_value, sizeof(count_value));
+  shell_var_set("#", count_value);
+
+  if(func_name != NULL && func_name[0] != '\0') {
+    shell_var_set("0", func_name);
+  } else {
+    shell_var_unset("0");
+  }
+}
+
+static void shell_positional_pop(void) {
+  if(positional_depth == 0) {
+    return;
+  }
+
+  positional_frame_t* frame = &positional_stack[--positional_depth];
+
+  for(size_t i = 1; i <= MOSH_MAX_POSITIONAL; i++) {
+    char name[8];
+    shell_build_numeric_name(i, name, sizeof(name));
+    if(frame->positional[i].had_value) {
+      shell_var_set(name, frame->positional[i].value);
+    } else {
+      shell_var_unset(name);
+    }
+  }
+
+  if(frame->had_zero) {
+    shell_var_set("0", frame->zero_value);
+  } else {
+    shell_var_unset("0");
+  }
+
+  if(frame->had_count) {
+    shell_var_set("#", frame->count_value);
+  } else {
+    shell_var_unset("#");
+  }
+}
+
+static bool shell_append_text(char* output, size_t capacity, size_t* index, const char* text) {
+  if(output == NULL || index == NULL || text == NULL) {
+    return false;
+  }
+  while(*text != '\0') {
+    if(*index + 1 >= capacity) {
+      return false;
+    }
+    output[(*index)++] = *text++;
+  }
+  output[*index] = '\0';
+  return true;
+}
+
+static bool shell_expand_variables(const char* input, char* output, size_t capacity) {
+  if(output == NULL || capacity == 0) {
+    return false;
+  }
+  if(input == NULL) {
+    output[0] = '\0';
+    return true;
+  }
+
+  size_t out_index = 0;
+  output[0] = '\0';
+
+  for(size_t i = 0; input[i] != '\0'; i++) {
+    char ch = input[i];
+    if(ch == '$') {
+      i++;
+      if(input[i] == '\0') {
+        if(out_index + 1 >= capacity) {
+          return false;
+        }
+        output[out_index++] = '$';
+        break;
+      }
+
+      if(input[i] == '$') {
+        if(out_index + 1 >= capacity) {
+          return false;
+        }
+        output[out_index++] = '$';
+        continue;
+      }
+
+      char name[MOSH_MAX_VAR_NAME];
+      size_t name_len = 0;
+      if(input[i] == '{') {
+        size_t start = ++i;
+        while(input[i] != '\0' && input[i] != '}' && name_len + 1 < sizeof(name)) {
+          name[name_len++] = input[i++];
+        }
+        if(input[i] == '}') {
+          // matched closing brace, proceed normally.
+        } else {
+          // Unmatched brace, treat as literal.
+          if(out_index + 1 >= capacity) {
+            return false;
+          }
+          output[out_index++] = '$';
+          i = start - 1;
+          continue;
+        }
+      } else {
+        size_t start = i;
+        if(shell_is_digit(input[i])) {
+          while(shell_is_digit(input[i]) && name_len + 1 < sizeof(name)) {
+            name[name_len++] = input[i++];
+          }
+        } else if(shell_is_ident_start(input[i])) {
+          while(shell_is_ident_char(input[i]) && name_len + 1 < sizeof(name)) {
+            name[name_len++] = input[i++];
+          }
+        }
+        i--;
+        if(name_len == 0) {
+          if(out_index + 1 >= capacity) {
+            return false;
+          }
+          output[out_index++] = '$';
+          continue;
+        }
+      }
+
+      name[name_len] = '\0';
+      const char* value = shell_var_get(name);
+      if(value == NULL) {
+        value = "";
+      }
+      if(!shell_append_text(output, capacity, &out_index, value)) {
+        return false;
+      }
+      continue;
+    }
+
+    if(ch == '\\' && input[i + 1] != '\0') {
+      ch = input[++i];
+    }
+
+    if(out_index + 1 >= capacity) {
+      return false;
+    }
+    output[out_index++] = ch;
+  }
+
+  if(out_index >= capacity) {
+    return false;
+  }
+  output[out_index] = '\0';
+  return true;
+}
+
+static int shell_run_command_string(const char* text) {
+  if(text == NULL) {
+    shell_set_status_code(0);
+    return 0;
+  }
+
+  char buffer[MOSH_MAX_FUNCTION_BODY];
+  str_copy(buffer, sizeof(buffer), text);
+  return launch_command(buffer);
+}
+
+static void shell_finish_builtin_code(int code, int* out_status) {
+  shell_set_status_code(code);
+  if(out_status != NULL) {
+    *out_status = encode_raw_status_from_code(code);
+  }
+}
+
+static void shell_finish_builtin_raw(int raw_status, int* out_status) {
+  shell_set_status_from_raw(raw_status);
+  if(out_status != NULL) {
+    *out_status = raw_status;
+  }
+}
+
+static bool shell_is_token_boundary(char ch) {
+  return ch == '\0' || ch == ' ' || ch == '\t' || ch == ';' || ch == '\n' || ch == '{' || ch == '}';
+}
+
+static char* shell_find_keyword(char* text, const char* keyword) {
+  if(text == NULL || keyword == NULL || keyword[0] == '\0') {
+    return NULL;
+  }
+  size_t len = str_len(keyword);
+  char* cursor = text;
+  while((cursor = strstr(cursor, keyword)) != NULL) {
+    char prev = (cursor == text) ? ' ' : cursor[-1];
+    char next = cursor[len];
+    if(shell_is_token_boundary(prev) && shell_is_token_boundary(next)) {
+      return cursor;
+    }
+    cursor++;
+  }
+  return NULL;
+}
+
+static void shell_trim_trailing_semicolon(char* text) {
+  if(text == NULL) {
+    return;
+  }
+  rtrim(text);
+  size_t len = str_len(text);
+  if(len > 0 && text[len - 1] == ';') {
+    text[len - 1] = '\0';
+    rtrim(text);
+  }
+}
+
+static char* shell_find_char_reverse(char* text, char target) {
+  if(text == NULL) {
+    return NULL;
+  }
+  size_t len = str_len(text);
+  while(len > 0) {
+    len--;
+    if(text[len] == target) {
+      return &text[len];
+    }
+  }
+  return NULL;
+}
+
+static bool shell_extract_braced_block(char* open_brace, char** body_out, char** rest_out) {
+  if(open_brace == NULL) {
+    return false;
+  }
+  while(*open_brace != '\0' && *open_brace != '{') {
+    open_brace++;
+  }
+  if(*open_brace != '{') {
+    return false;
+  }
+
+  char* cursor = open_brace + 1;
+  int depth = 1;
+  while(*cursor != '\0') {
+    if(*cursor == '{') {
+      depth++;
+    } else if(*cursor == '}') {
+      depth--;
+      if(depth == 0) {
+        *cursor = '\0';
+        *open_brace = '\0';
+        if(body_out != NULL) {
+          char* body = ltrim(open_brace + 1);
+          rtrim(body);
+          *body_out = body;
+        }
+        if(rest_out != NULL) {
+          *rest_out = cursor + 1;
+        }
+        return true;
+      }
+    }
+    cursor++;
+  }
+  return false;
+}
+
+static bool shell_starts_with_keyword(const char* text, const char* keyword) {
+  if(text == NULL || keyword == NULL) {
+    return false;
+  }
+  size_t len = str_len(keyword);
+  if(str_ncmp(text, keyword, len) != 0) {
+    return false;
+  }
+  return shell_is_token_boundary(text[len]);
+}
+
+static bool shell_is_inline_function_signature(const char* text) {
+  if(text == NULL) {
+    return false;
+  }
+  size_t idx = 0;
+  if(!shell_is_ident_start(text[idx])) {
+    return false;
+  }
+  while(shell_is_ident_char(text[idx])) {
+    idx++;
+  }
+  while(text[idx] == ' ' || text[idx] == '\t') {
+    idx++;
+  }
+  if(text[idx] != '(' || text[idx + 1] != ')') {
+    return false;
+  }
+  idx += 2;
+  while(text[idx] == ' ' || text[idx] == '\t') {
+    idx++;
+  }
+  return text[idx] == '{';
+}
+
+static int shell_parse_int(const char* text) {
+  if(text == NULL || *text == '\0') {
+    return 0;
+  }
+  int sign = 1;
+  size_t idx = 0;
+  if(text[idx] == '+') {
+    idx++;
+  } else if(text[idx] == '-') {
+    sign = -1;
+    idx++;
+  }
+  int value = 0;
+  while(shell_is_digit(text[idx])) {
+    value = value * 10 + (text[idx] - '0');
+    idx++;
+  }
+  return sign * value;
+}
+
+static shell_function_t* shell_function_allocate(const char* name) {
+  if(name == NULL) {
+    return NULL;
+  }
+  shell_function_t* existing = shell_function_lookup(name);
+  if(existing != NULL) {
+    return existing;
+  }
+  for(size_t i = 0; i < MOSH_MAX_FUNCTIONS; i++) {
+    if(!shell_functions[i].in_use) {
+      shell_functions[i].in_use = true;
+      str_copy(shell_functions[i].name, sizeof(shell_functions[i].name), name);
+      shell_functions[i].body[0] = '\0';
+      return &shell_functions[i];
+    }
+  }
+  return NULL;
+}
+
+static shell_function_t* shell_function_lookup(const char* name) {
+  if(name == NULL) {
+    return NULL;
+  }
+  for(size_t i = 0; i < MOSH_MAX_FUNCTIONS; i++) {
+    if(shell_functions[i].in_use && str_eq(shell_functions[i].name, name)) {
+      return &shell_functions[i];
+    }
+  }
+  return NULL;
+}
+
+static bool shell_function_define_internal(const char* name, const char* body, int* out_status) {
+  if(name == NULL || body == NULL) {
+    shell_finish_builtin_code(1, out_status);
+    return true;
+  }
+  if(!shell_is_valid_var_name(name)) {
+    write_str(STDOUT_FILENO, "mosh: function: invalid name\n");
+    shell_finish_builtin_code(1, out_status);
+    return true;
+  }
+  shell_function_t* slot = shell_function_allocate(name);
+  if(slot == NULL) {
+    write_str(STDOUT_FILENO, "mosh: function: table full\n");
+    shell_finish_builtin_code(1, out_status);
+    return true;
+  }
+  char body_copy[MOSH_MAX_FUNCTION_BODY];
+  str_copy(body_copy, sizeof(body_copy), body);
+  char* trimmed_body = ltrim(body_copy);
+  shell_trim_trailing_semicolon(trimmed_body);
+  str_copy(slot->body, sizeof(slot->body), trimmed_body);
+  str_copy(slot->name, sizeof(slot->name), name);
+  shell_finish_builtin_code(0, out_status);
+  return true;
+}
+
+static bool shell_function_define_inline(const char* raw_line, int* out_status) {
+  if(raw_line == NULL) {
+    return false;
+  }
+  char buffer[MOSH_MAX_FUNCTION_BODY];
+  str_copy(buffer, sizeof(buffer), raw_line);
+  char* cursor = buffer;
+  cursor = (char*)skip_spaces(cursor);
+  char* name_start = cursor;
+  while(shell_is_ident_char(*cursor)) {
+    cursor++;
+  }
+  if(cursor == name_start) {
+    return false;
+  }
+  char saved = *cursor;
+  *cursor = '\0';
+  char* name = name_start;
+  if(saved != '(') {
+    *cursor = saved;
+    return false;
+  }
+  cursor++;
+  if(cursor[0] != ')') {
+    *cursor = saved;
+    return false;
+  }
+  cursor++;
+  cursor = (char*)skip_spaces(cursor);
+  if(cursor[0] != '{') {
+    *cursor = saved;
+    return false;
+  }
+  cursor++;
+  char* body_start = cursor;
+  char* closing = shell_find_char_reverse(body_start, '}');
+  if(closing == NULL) {
+    write_str(STDOUT_FILENO, "mosh: function: missing closing '}\n");
+    shell_finish_builtin_code(1, out_status);
+    return true;
+  }
+  *closing = '\0';
+  shell_trim_trailing_semicolon(body_start);
+  return shell_function_define_internal(name, body_start, out_status);
+}
+
+static bool shell_function_define_keyword(const char* raw_args, const char* expanded_args, int* out_status) {
+  (void)expanded_args;
+  if(raw_args == NULL) {
+    shell_finish_builtin_code(1, out_status);
+    return true;
+  }
+  char buffer[MOSH_MAX_FUNCTION_BODY];
+  str_copy(buffer, sizeof(buffer), raw_args);
+  char* cursor = buffer;
+  cursor = (char*)skip_spaces(cursor);
+  char* name_start = cursor;
+  while(shell_is_ident_char(*cursor)) {
+    cursor++;
+  }
+  if(cursor == name_start) {
+    write_str(STDOUT_FILENO, "mosh: function: missing name\n");
+    shell_finish_builtin_code(1, out_status);
+    return true;
+  }
+  char saved = *cursor;
+  *cursor = '\0';
+  char* name = name_start;
+  cursor++;
+  cursor = (char*)skip_spaces(cursor);
+  if(saved == '(') {
+    if(cursor[0] != ')') {
+      write_str(STDOUT_FILENO, "mosh: function: malformed definition\n");
+      shell_finish_builtin_code(1, out_status);
+      return true;
+    }
+    cursor++;
+    cursor = (char*)skip_spaces(cursor);
+  }
+  if(cursor[0] != '{') {
+    write_str(STDOUT_FILENO, "mosh: function: expected '{'\n");
+    shell_finish_builtin_code(1, out_status);
+    return true;
+  }
+  cursor++;
+  char* body_start = cursor;
+  char* closing = shell_find_char_reverse(body_start, '}');
+  if(closing == NULL) {
+    write_str(STDOUT_FILENO, "mosh: function: missing closing '}'\n");
+    shell_finish_builtin_code(1, out_status);
+    return true;
+  }
+  *closing = '\0';
+  shell_trim_trailing_semicolon(body_start);
+  return shell_function_define_internal(name, body_start, out_status);
+}
+
+static bool shell_function_call(const shell_function_t* fn, const char* args, int* out_status) {
+  if(fn == NULL) {
+    return false;
+  }
+
+  char args_copy[MOSH_MAX_FUNCTION_BODY];
+  str_copy(args_copy, sizeof(args_copy), args != NULL ? args : "");
+
+  char* argv[MOSH_MAX_ARGS];
+  size_t argc = 0;
+  char* cursor = args_copy;
+  while(*cursor != '\0' && argc < MOSH_MAX_ARGS) {
+    cursor = (char*)skip_spaces(cursor);
+    if(*cursor == '\0') {
+      break;
+    }
+    argv[argc++] = cursor;
+    while(*cursor != '\0' && *cursor != ' ' && *cursor != '\t') {
+      cursor++;
+    }
+    if(*cursor != '\0') {
+      *cursor++ = '\0';
+    }
+  }
+
+  shell_positional_push(fn->name, argv, argc);
+  int status = shell_run_command_string(fn->body);
+  shell_positional_pop();
+  shell_finish_builtin_raw(status, out_status);
+  return true;
+}
+
+static size_t shell_split_words(char* text, char* tokens[], size_t max_tokens) {
+  size_t count = 0;
+  if(text == NULL || tokens == NULL || max_tokens == 0) {
+    return 0;
+  }
+  char* cursor = text;
+  while(*cursor != '\0' && count < max_tokens) {
+    cursor = (char*)skip_spaces(cursor);
+    if(*cursor == '\0') {
+      break;
+    }
+    tokens[count++] = cursor;
+    while(*cursor != '\0' && *cursor != ' ' && *cursor != '\t') {
+      cursor++;
+    }
+    if(*cursor != '\0') {
+      *cursor++ = '\0';
+    }
+  }
+  return count;
+}
+
+static bool builtin_set_variable(char* line, int* out_status) {
+  char buffer[MOSH_MAX_FUNCTION_BODY];
+  str_copy(buffer, sizeof(buffer), line != NULL ? line : "");
+
+  char* tokens[3];
+  size_t count = shell_split_words(buffer, tokens, 3);
+
+  if(count == 0) {
+    for(size_t i = 0; i < MOSH_MAX_VARS; i++) {
+      if(shell_vars[i].in_use) {
+        write_str(STDOUT_FILENO, shell_vars[i].name);
+        write_str(STDOUT_FILENO, "=");
+        write_str(STDOUT_FILENO, shell_vars[i].value);
+        write_str(STDOUT_FILENO, "\n");
+      }
+    }
+    shell_finish_builtin_code(0, out_status);
+    return true;
+  }
+
+  const char* name = tokens[0];
+  const char* value = "";
+  char value_buffer[MOSH_MAX_FUNCTION_BODY];
+
+  char* equals = strchr(tokens[0], '=');
+  if(equals != NULL) {
+    *equals = '\0';
+    value = equals + 1;
+    if(count > 1) {
+      write_str(STDOUT_FILENO, "mosh: set: too many arguments\n");
+      shell_finish_builtin_code(1, out_status);
+      return true;
+    }
+  } else {
+    if(count >= 2) {
+      value_buffer[0] = '\0';
+      str_copy(value_buffer, sizeof(value_buffer), tokens[1]);
+      for(size_t i = 2; i < count; i++) {
+        size_t len = str_len(value_buffer);
+        if(len + 1 < sizeof(value_buffer)) {
+          value_buffer[len++] = ' ';
+          value_buffer[len] = '\0';
+        }
+        str_copy(&value_buffer[str_len(value_buffer)], sizeof(value_buffer) - str_len(value_buffer), tokens[i]);
+      }
+      value = value_buffer;
+    }
+  }
+
+  if(!shell_is_valid_var_name(name)) {
+    write_str(STDOUT_FILENO, "mosh: set: invalid variable name\n");
+    shell_finish_builtin_code(1, out_status);
+    return true;
+  }
+
+  char normalized[MOSH_MAX_FUNCTION_BODY];
+  const char* trimmed_value = (const char*)skip_spaces(value);
+  size_t trimmed_len = str_len(trimmed_value);
+  if(trimmed_len >= 2 && trimmed_value[0] == '[' && trimmed_value[trimmed_len - 1] == ']') {
+    char list_copy[MOSH_MAX_FUNCTION_BODY];
+    str_copy(list_copy, sizeof(list_copy), trimmed_value + 1);
+    char* end = shell_find_char_reverse(list_copy, ']');
+    if(end != NULL) {
+      *end = '\0';
+    }
+    char* entry = list_copy;
+    normalized[0] = '\0';
+    size_t norm_index = 0;
+    while(*entry != '\0') {
+      entry = (char*)skip_spaces(entry);
+      if(*entry == '\0') {
+        break;
+      }
+      char* sep = entry;
+      while(*sep != '\0' && *sep != ',') {
+        sep++;
+      }
+      char saved = *sep;
+      *sep = '\0';
+      char expanded[MOSH_MAX_FUNCTION_BODY];
+      if(!shell_expand_variables(entry, expanded, sizeof(expanded))) {
+        write_str(STDOUT_FILENO, "mosh: set: expansion too long\n");
+        shell_finish_builtin_code(1, out_status);
+        return true;
+      }
+      char expanded_copy[MOSH_MAX_FUNCTION_BODY];
+      str_copy(expanded_copy, sizeof(expanded_copy), expanded);
+      char* words[64];
+      size_t count = shell_split_words(expanded_copy, words, 64);
+      for(size_t j = 0; j < count; j++) {
+        if(norm_index != 0) {
+          if(norm_index + 1 >= sizeof(normalized)) {
+            write_str(STDOUT_FILENO, "mosh: set: value too long\n");
+            shell_finish_builtin_code(1, out_status);
+            return true;
+          }
+          normalized[norm_index++] = ' ';
+        }
+        size_t word_len = str_len(words[j]);
+        if(norm_index + word_len >= sizeof(normalized)) {
+          write_str(STDOUT_FILENO, "mosh: set: value too long\n");
+          shell_finish_builtin_code(1, out_status);
+          return true;
+        }
+        memcpy(&normalized[norm_index], words[j], word_len);
+        norm_index += word_len;
+        normalized[norm_index] = '\0';
+      }
+      *sep = saved;
+      if(saved == ',') {
+        entry = sep + 1;
+      } else {
+        break;
+      }
+    }
+    value = normalized;
+  }
+
+  shell_var_set(name, value);
+  shell_finish_builtin_code(0, out_status);
+  return true;
+}
+
+static bool builtin_unset_variable(char* line, int* out_status) {
+  char buffer[MOSH_MAX_FUNCTION_BODY];
+  str_copy(buffer, sizeof(buffer), line != NULL ? line : "");
+  char* tokens[2];
+  size_t count = shell_split_words(buffer, tokens, 2);
+  if(count == 0) {
+    shell_finish_builtin_code(0, out_status);
+    return true;
+  }
+  if(count > 1) {
+    write_str(STDOUT_FILENO, "mosh: unset: too many arguments\n");
+    shell_finish_builtin_code(1, out_status);
+    return true;
+  }
+  if(!shell_is_valid_var_name(tokens[0]) && !shell_is_numeric_name(tokens[0])) {
+    write_str(STDOUT_FILENO, "mosh: unset: invalid name\n");
+    shell_finish_builtin_code(1, out_status);
+    return true;
+  }
+  shell_var_unset(tokens[0]);
+  shell_finish_builtin_code(0, out_status);
+  return true;
+}
+
+static bool builtin_if(const char* raw_line, char* line, int* out_status) {
+  (void)line;
+  if(raw_line == NULL) {
+    shell_finish_builtin_code(1, out_status);
+    return true;
+  }
+
+  char buffer[MOSH_MAX_FUNCTION_BODY];
+  str_copy(buffer, sizeof(buffer), raw_line);
+
+  char* trimmed = ltrim(buffer);
+  if(shell_starts_with_keyword(trimmed, "if")) {
+    trimmed = (char*)skip_spaces(trimmed + 2);
+  }
+
+  char* first_brace = strchr(trimmed, '{');
+  if(first_brace == NULL) {
+    write_str(STDOUT_FILENO, "mosh: if: expected '{'\n");
+    shell_finish_builtin_code(1, out_status);
+    return true;
+  }
+
+  char saved = *first_brace;
+  *first_brace = '\0';
+  char* condition = trimmed;
+  rtrim(condition);
+  *first_brace = saved;
+  shell_trim_trailing_semicolon(condition);
+  if(condition[0] == '\0') {
+    write_str(STDOUT_FILENO, "mosh: if: empty condition\n");
+    shell_finish_builtin_code(1, out_status);
+    return true;
+  }
+
+  char* then_body = NULL;
+  char* rest = NULL;
+  if(!shell_extract_braced_block(first_brace, &then_body, &rest)) {
+    write_str(STDOUT_FILENO, "mosh: if: malformed then block\n");
+    shell_finish_builtin_code(1, out_status);
+    return true;
+  }
+
+  char* else_body = NULL;
+  rest = (rest != NULL) ? (char*)skip_spaces(rest) : NULL;
+  if(rest != NULL && shell_starts_with_keyword(rest, "else")) {
+    rest = (char*)skip_spaces(rest + 4);
+    if(!shell_extract_braced_block(rest, &else_body, &rest)) {
+      write_str(STDOUT_FILENO, "mosh: if: malformed else block\n");
+      shell_finish_builtin_code(1, out_status);
+      return true;
+    }
+    rest = (rest != NULL) ? (char*)skip_spaces(rest) : NULL;
+  }
+
+  if(rest != NULL && *rest != '\0') {
+    write_str(STDOUT_FILENO, "mosh: if: unexpected text after block\n");
+    shell_finish_builtin_code(1, out_status);
+    return true;
+  }
+
+  int cond_status = shell_run_command_string(condition);
+  int cond_code = decode_wait_status(cond_status);
+  if(cond_code == 0) {
+    if(then_body[0] == '\0') {
+      shell_finish_builtin_raw(cond_status, out_status);
+      return true;
+    }
+    int then_status = shell_run_command_string(then_body);
+    shell_finish_builtin_raw(then_status, out_status);
+    return true;
+  }
+
+  if(else_body != NULL && else_body[0] != '\0') {
+    int else_status = shell_run_command_string(else_body);
+    shell_finish_builtin_raw(else_status, out_status);
+    return true;
+  }
+
+  shell_finish_builtin_raw(cond_status, out_status);
+  return true;
+}
+
+static bool builtin_while(const char* line, int* out_status) {
+  char buffer[MOSH_MAX_FUNCTION_BODY];
+  str_copy(buffer, sizeof(buffer), line != NULL ? line : "");
+
+  char* trimmed = ltrim(buffer);
+  if(shell_starts_with_keyword(trimmed, "while")) {
+    trimmed = (char*)skip_spaces(trimmed + 5);
+  }
+
+  char* brace = strchr(trimmed, '{');
+  if(brace == NULL) {
+    write_str(STDOUT_FILENO, "mosh: while: expected '{'\n");
+    shell_finish_builtin_code(1, out_status);
+    return true;
+  }
+
+  char saved = *brace;
+  *brace = '\0';
+  char* condition = trimmed;
+  rtrim(condition);
+  *brace = saved;
+  shell_trim_trailing_semicolon(condition);
+  if(condition[0] == '\0') {
+    write_str(STDOUT_FILENO, "mosh: while: empty condition\n");
+    shell_finish_builtin_code(1, out_status);
+    return true;
+  }
+
+  char* body = NULL;
+  char* rest = NULL;
+  if(!shell_extract_braced_block(brace, &body, &rest)) {
+    write_str(STDOUT_FILENO, "mosh: while: malformed body\n");
+    shell_finish_builtin_code(1, out_status);
+    return true;
+  }
+
+  if(rest != NULL && *skip_spaces(rest) != '\0') {
+    write_str(STDOUT_FILENO, "mosh: while: unexpected text after block\n");
+    shell_finish_builtin_code(1, out_status);
+    return true;
+  }
+
+  int last_status = encode_raw_status_from_code(0);
+  while(true) {
+#ifdef MOSH_TEST
+    write_str(STDOUT_FILENO, "[debug while] entering\n");
+#endif
+    int cond_status = shell_run_command_string(condition);
+    int cond_code = decode_wait_status(cond_status);
+    if(cond_code != 0) {
+      last_status = cond_status;
+      break;
+    }
+    if(body[0] == '\0') {
+      last_status = cond_status;
+      break;
+    }
+    last_status = shell_run_command_string(body);
+  }
+
+  shell_finish_builtin_raw(last_status, out_status);
+  return true;
+}
+
+static bool builtin_for(const char* line, int* out_status) {
+  char buffer[MOSH_MAX_FUNCTION_BODY];
+  str_copy(buffer, sizeof(buffer), line != NULL ? line : "");
+
+  char* trimmed = ltrim(buffer);
+  if(shell_starts_with_keyword(trimmed, "for")) {
+    trimmed = (char*)skip_spaces(trimmed + 3);
+  }
+
+  char* cursor = trimmed;
+  while(shell_is_ident_char(*cursor)) {
+    cursor++;
+  }
+  if(cursor == trimmed) {
+    write_str(STDOUT_FILENO, "mosh: for: missing variable name\n");
+    shell_finish_builtin_code(1, out_status);
+    return true;
+  }
+
+  char saved = *cursor;
+  *cursor = '\0';
+  char* var_name = trimmed;
+  if(!shell_is_valid_var_name(var_name)) {
+    write_str(STDOUT_FILENO, "mosh: for: invalid variable name\n");
+    shell_finish_builtin_code(1, out_status);
+    return true;
+  }
+  *cursor = saved;
+  cursor = (saved == '\0') ? cursor : cursor + 1;
+  cursor = (char*)skip_spaces(cursor);
+
+  if(str_ncmp(cursor, "in", 2) != 0) {
+    write_str(STDOUT_FILENO, "mosh: for: missing 'in'\n");
+    shell_finish_builtin_code(1, out_status);
+    return true;
+  }
+  cursor += 2;
+  cursor = (char*)skip_spaces(cursor);
+
+  char* brace = strchr(cursor, '{');
+  if(brace == NULL) {
+    write_str(STDOUT_FILENO, "mosh: for: expected '{'\n");
+    shell_finish_builtin_code(1, out_status);
+    return true;
+  }
+
+  char list_expr[MOSH_MAX_FUNCTION_BODY];
+  size_t list_len = (size_t)(brace - cursor);
+  if(list_len >= sizeof(list_expr)) {
+    write_str(STDOUT_FILENO, "mosh: for: list too long\n");
+    shell_finish_builtin_code(1, out_status);
+    return true;
+  }
+  memcpy(list_expr, cursor, list_len);
+  list_expr[list_len] = '\0';
+  rtrim(list_expr);
+  shell_trim_trailing_semicolon(list_expr);
+
+  char* body = NULL;
+  char* rest = NULL;
+  if(!shell_extract_braced_block(brace, &body, &rest)) {
+    write_str(STDOUT_FILENO, "mosh: for: malformed body\n");
+    shell_finish_builtin_code(1, out_status);
+    return true;
+  }
+
+  if(rest != NULL && *skip_spaces(rest) != '\0') {
+    write_str(STDOUT_FILENO, "mosh: for: unexpected text after block\n");
+    shell_finish_builtin_code(1, out_status);
+    return true;
+  }
+
+  char list_buffer[MOSH_MAX_FUNCTION_BODY];
+  str_copy(list_buffer, sizeof(list_buffer), list_expr);
+
+  char value_storage[128][MOSH_MAX_VAR_VALUE];
+  char* values[128];
+  size_t value_count = 0;
+
+  char* item = list_buffer;
+  size_t len = str_len(list_buffer);
+  if(len >= 2 && list_buffer[0] == '[' && list_buffer[len - 1] == ']') {
+    list_buffer[len - 1] = '\0';
+    item = list_buffer + 1;
+  }
+
+  while(*item != '\0') {
+    item = (char*)skip_spaces(item);
+    if(*item == '\0') {
+      break;
+    }
+    char* sep = item;
+    while(*sep != '\0' && *sep != ',') {
+      sep++;
+    }
+    char saved_sep = *sep;
+    *sep = '\0';
+
+    char expanded[MOSH_MAX_FUNCTION_BODY];
+    if(!shell_expand_variables(item, expanded, sizeof(expanded))) {
+      write_str(STDOUT_FILENO, "mosh: for: expansion too long\n");
+      shell_finish_builtin_code(1, out_status);
+      return true;
+    }
+
+    char expanded_copy[MOSH_MAX_FUNCTION_BODY];
+    str_copy(expanded_copy, sizeof(expanded_copy), expanded);
+    char* words[64];
+    size_t word_count = shell_split_words(expanded_copy, words, 64);
+    for(size_t j = 0; j < word_count && value_count < sizeof(values) / sizeof(values[0]); j++) {
+      str_copy(value_storage[value_count], sizeof(value_storage[value_count]), words[j]);
+      values[value_count] = value_storage[value_count];
+      value_count++;
+    }
+
+    *sep = saved_sep;
+    if(saved_sep == ',') {
+      item = sep + 1;
+    } else {
+      break;
+    }
+  }
+
+  shell_var_snapshot_t snapshot = shell_var_snapshot(var_name);
+  int last_status = encode_raw_status_from_code(0);
+
+  for(size_t i = 0; i < value_count; i++) {
+    shell_var_set(var_name, values[i]);
+    last_status = shell_run_command_string(body);
+  }
+
+  shell_var_restore(&snapshot);
+  shell_finish_builtin_raw(last_status, out_status);
+  return true;
+}
+
+#ifdef MOSH_TEST
+static bool builtin_set_test_counter(char* line, int* out_status) {
+  char buffer[64];
+  str_copy(buffer, sizeof(buffer), line != NULL ? line : "");
+  char* tokens[2];
+  size_t count = shell_split_words(buffer, tokens, 2);
+  if(count == 0) {
+    test_counter_limit = 0;
+    test_counter_value = 0;
+    shell_finish_builtin_code(0, out_status);
+    return true;
+  }
+  if(count > 1) {
+    write_str(STDOUT_FILENO, "__test_set_counter expects a single integer\n");
+    shell_finish_builtin_code(1, out_status);
+    return true;
+  }
+  int limit = shell_parse_int(tokens[0]);
+  if(limit < 0) {
+    limit = 0;
+  }
+  test_counter_limit = limit;
+  test_counter_value = 0;
+  shell_finish_builtin_code(0, out_status);
+  return true;
+}
+
+static bool builtin_test_counter_lt(int* out_status) {
+#ifdef MOSH_TEST
+  write_str(STDOUT_FILENO, "[debug counter]\n");
+#endif
+  if(test_counter_value < test_counter_limit) {
+    test_counter_value++;
+    shell_finish_builtin_code(0, out_status);
+  } else {
+    shell_finish_builtin_code(1, out_status);
+  }
+  return true;
+}
+#endif
 
 static size_t str_len(const char* s) {
   return s ? strlen(s) : 0;
@@ -2537,7 +3790,15 @@ static size_t read_line(const char* prompt, char* buffer, size_t capacity) {
   }
 }
 
-static bool handle_builtin(const char* line, int* out_status) {
+static bool handle_builtin(const char* raw_line, char* line, int* out_status) {
+  if(raw_line == NULL || line == NULL) {
+    return false;
+  }
+
+  if(shell_function_define_inline(raw_line, out_status)) {
+    return true;
+  }
+
   size_t idx = 0;
   while(line[idx] == ' ' || line[idx] == '\t') {
     idx++;
@@ -2547,20 +3808,61 @@ static bool handle_builtin(const char* line, int* out_status) {
   while(line[idx] != '\0' && line[idx] != ' ' && line[idx] != '\t') {
     idx++;
   }
-
   size_t command_len = (size_t)(line + idx - command_start);
-  if(command_len == 0) {
-    shell_set_status_code(0);
-    if(out_status != NULL) {
-      *out_status = 0;
-    }
-    return true;
-  }
 
   while(line[idx] == ' ' || line[idx] == '\t') {
     idx++;
   }
-  const char* arguments = line + idx;
+  char* arguments = line + idx;
+
+  const char* raw_cursor = raw_line;
+  while(*raw_cursor == ' ' || *raw_cursor == '\t') {
+    raw_cursor++;
+  }
+  const char* raw_command_start = raw_cursor;
+  while(*raw_cursor != '\0' && *raw_cursor != ' ' && *raw_cursor != '\t') {
+    raw_cursor++;
+  }
+  size_t raw_command_len = (size_t)(raw_cursor - raw_command_start);
+  while(*raw_cursor == ' ' || *raw_cursor == '\t') {
+    raw_cursor++;
+  }
+  const char* raw_arguments = raw_cursor;
+
+  if(command_len == 0) {
+    shell_finish_builtin_code(0, out_status);
+    return true;
+  }
+
+  if(command_len == 8 && str_ncmp(command_start, "function", 8) == 0) {
+    if(!shell_function_define_keyword(raw_arguments, arguments, out_status)) {
+      shell_finish_builtin_code(1, out_status);
+    }
+    return true;
+  }
+
+#ifdef MOSH_TEST
+  if(command_len == 14 && str_ncmp(command_start, "__test_success", 14) == 0) {
+    shell_finish_builtin_code(0, out_status);
+    return true;
+  }
+  if(command_len == 14 && str_ncmp(command_start, "__test_failure", 14) == 0) {
+    shell_finish_builtin_code(1, out_status);
+    return true;
+  }
+  if(command_len == 18 && str_ncmp(command_start, "__test_set_counter", 18) == 0) {
+    if(!builtin_set_test_counter(arguments, out_status)) {
+      shell_finish_builtin_code(1, out_status);
+    }
+    return true;
+  }
+  if(command_len == 16 && str_ncmp(command_start, "__test_counter_lt", 16) == 0) {
+    if(!builtin_test_counter_lt(out_status)) {
+      shell_finish_builtin_code(1, out_status);
+    }
+    return true;
+  }
+#endif
 
   if(command_len == 4 && str_ncmp(command_start, "help", 4) == 0) {
     write_str(STDOUT_FILENO,
@@ -2572,28 +3874,45 @@ static bool handle_builtin(const char* line, int* out_status) {
               "  cd    - change directory (limited)\n"
               "  jobs  - list background jobs\n"
               "  fg    - resume job in foreground\n"
-              "  bg    - resume job in background\n");
-    shell_set_status_code(0);
-    if(out_status != NULL) {
-      *out_status = 0;
-    }
+              "  bg    - resume job in background\n"
+              "  set   - assign shell variable\n"
+              "  unset - remove shell variable\n"
+              "  if/while/for/function - scripting constructs\n");
+    shell_finish_builtin_code(0, out_status);
     return true;
   }
 
   if(command_len == 4 && str_ncmp(command_start, "exit", 4) == 0) {
     write_str(STDOUT_FILENO, "bye\n");
     _exit(0);
-    return true; // Not reached
+    return true;
   }
 
   if(command_len == 3 && str_ncmp(command_start, "pwd", 3) == 0) {
     write_str(STDOUT_FILENO, current_directory);
     write_str(STDOUT_FILENO, "\n");
-    shell_set_status_code(0);
-    if(out_status != NULL) {
-      *out_status = 0;
-    }
+    shell_finish_builtin_code(0, out_status);
     return true;
+  }
+
+  if(command_len == 3 && str_ncmp(command_start, "set", 3) == 0) {
+    return builtin_set_variable(arguments, out_status);
+  }
+
+  if(command_len == 5 && str_ncmp(command_start, "unset", 5) == 0) {
+    return builtin_unset_variable(arguments, out_status);
+  }
+
+  if(command_len == 2 && str_ncmp(command_start, "if", 2) == 0) {
+    return builtin_if(raw_arguments, arguments, out_status);
+  }
+
+  if(command_len == 5 && str_ncmp(command_start, "while", 5) == 0) {
+    return builtin_while((char*)raw_arguments, out_status);
+  }
+
+  if(command_len == 3 && str_ncmp(command_start, "for", 3) == 0) {
+    return builtin_for((char*)raw_arguments, out_status);
   }
 
   if(command_len == 4 && str_ncmp(command_start, "echo", 4) == 0) {
@@ -2610,20 +3929,14 @@ static bool handle_builtin(const char* line, int* out_status) {
     }
     write_str(STDOUT_FILENO, arguments);
     write_str(STDOUT_FILENO, "\n");
-    shell_set_status_code(0);
-    if(out_status != NULL) {
-      *out_status = 0;
-    }
+    shell_finish_builtin_code(0, out_status);
     return true;
   }
 
   if(command_len == 4 && str_ncmp(command_start, "jobs", 4) == 0) {
     jobs_poll_updates(true);
     jobs_print_list();
-    shell_set_status_code(0);
-    if(out_status != NULL) {
-      *out_status = 0;
-    }
+    shell_finish_builtin_code(0, out_status);
     return true;
   }
 
@@ -2632,29 +3945,20 @@ static bool handle_builtin(const char* line, int* out_status) {
     job_t* job = job_resolve_argument(arguments, true);
     if(job == NULL) {
       write_str(STDOUT_FILENO, "mosh: fg: job not found\n");
-      shell_set_status_code(1);
-      if(out_status != NULL) {
-        *out_status = encode_raw_status_from_code(shell_last_status);
-      }
+      shell_finish_builtin_code(1, out_status);
       return true;
     }
     if(job->state == JOB_STATE_DONE) {
       write_str(STDOUT_FILENO, "mosh: fg: job already completed\n");
       job_release(job);
-      shell_set_status_code(1);
-      if(out_status != NULL) {
-        *out_status = encode_raw_status_from_code(shell_last_status);
-      }
+      shell_finish_builtin_code(1, out_status);
       return true;
     }
     write_str(STDOUT_FILENO, job->command);
     write_char_stdout('\n');
     job_send_signal(job, SIGCONT);
     int status = job_wait_foreground(job);
-    shell_set_status_from_raw(status);
-    if(out_status != NULL) {
-      *out_status = status;
-    }
+    shell_finish_builtin_raw(status, out_status);
     return true;
   }
 
@@ -2663,26 +3967,17 @@ static bool handle_builtin(const char* line, int* out_status) {
     job_t* job = job_resolve_argument(arguments, false);
     if(job == NULL) {
       write_str(STDOUT_FILENO, "mosh: bg: job not found\n");
-      shell_set_status_code(1);
-      if(out_status != NULL) {
-        *out_status = encode_raw_status_from_code(shell_last_status);
-      }
+      shell_finish_builtin_code(1, out_status);
       return true;
     }
     if(job->state == JOB_STATE_DONE) {
       write_str(STDOUT_FILENO, "mosh: bg: job already completed\n");
-      shell_set_status_code(1);
-      if(out_status != NULL) {
-        *out_status = encode_raw_status_from_code(shell_last_status);
-      }
+      shell_finish_builtin_code(1, out_status);
       return true;
     }
     if(job->state != JOB_STATE_STOPPED) {
       write_str(STDOUT_FILENO, "mosh: bg: job not stopped\n");
-      shell_set_status_code(1);
-      if(out_status != NULL) {
-        *out_status = encode_raw_status_from_code(shell_last_status);
-      }
+      shell_finish_builtin_code(1, out_status);
       return true;
     }
     job->background = true;
@@ -2690,10 +3985,7 @@ static bool handle_builtin(const char* line, int* out_status) {
     job_send_signal(job, SIGCONT);
     job_print_notification(job, "Continued");
     jobs_poll_updates(false);
-    shell_set_status_code(0);
-    if(out_status != NULL) {
-      *out_status = 0;
-    }
+    shell_finish_builtin_code(0, out_status);
     return true;
   }
 
@@ -2710,10 +4002,7 @@ static bool handle_builtin(const char* line, int* out_status) {
       }
       if(!normalize_path(current_directory, home, resolved, sizeof(resolved))) {
         write_str(STDOUT_FILENO, "mosh: cd: invalid path\n");
-        shell_set_status_code(1);
-        if(out_status != NULL) {
-          *out_status = encode_raw_status_from_code(shell_last_status);
-        }
+        shell_finish_builtin_code(1, out_status);
         return true;
       }
     } else {
@@ -2725,10 +4014,7 @@ static bool handle_builtin(const char* line, int* out_status) {
       char temp[MOSH_MAX_PATH];
       if(consumed >= sizeof(temp)) {
         write_str(STDOUT_FILENO, "mosh: cd: path too long\n");
-        shell_set_status_code(1);
-        if(out_status != NULL) {
-          *out_status = encode_raw_status_from_code(shell_last_status);
-        }
+        shell_finish_builtin_code(1, out_status);
         return true;
       }
       for(size_t i = 0; i < consumed; i++) {
@@ -2737,10 +4023,7 @@ static bool handle_builtin(const char* line, int* out_status) {
       temp[consumed] = '\0';
       if(!normalize_path(current_directory, temp, resolved, sizeof(resolved))) {
         write_str(STDOUT_FILENO, "mosh: cd: invalid path\n");
-        shell_set_status_code(1);
-        if(out_status != NULL) {
-          *out_status = encode_raw_status_from_code(shell_last_status);
-        }
+        shell_finish_builtin_code(1, out_status);
         return true;
       }
       while(target[consumed] == ' ' || target[consumed] == '\t') {
@@ -2748,10 +4031,7 @@ static bool handle_builtin(const char* line, int* out_status) {
       }
       if(target[consumed] != '\0') {
         write_str(STDOUT_FILENO, "mosh: cd: too many arguments\n");
-        shell_set_status_code(1);
-        if(out_status != NULL) {
-          *out_status = encode_raw_status_from_code(shell_last_status);
-        }
+        shell_finish_builtin_code(1, out_status);
         return true;
       }
     }
@@ -2759,20 +4039,23 @@ static bool handle_builtin(const char* line, int* out_status) {
     long rc = syscall3(SYS_LISTDIR, (long)resolved, 0, 0);
     if(rc < 0) {
       write_str(STDOUT_FILENO, "mosh: cd: unable to access directory\n");
-      shell_set_status_code(1);
-      if(out_status != NULL) {
-        *out_status = encode_raw_status_from_code(shell_last_status);
-      }
+      shell_finish_builtin_code(1, out_status);
       return true;
     }
 
     str_copy(current_directory, sizeof(current_directory), resolved);
     env_set("PWD", current_directory);
-    shell_set_status_code(0);
-    if(out_status != NULL) {
-      *out_status = 0;
-    }
+    shell_finish_builtin_code(0, out_status);
     return true;
+  }
+
+  shell_function_t* fn = shell_function_lookup(command_start);
+  if(fn != NULL) {
+    char arg_copy[MOSH_MAX_FUNCTION_BODY];
+    str_copy(arg_copy, sizeof(arg_copy), arguments);
+    if(shell_function_call(fn, arg_copy, out_status)) {
+      return true;
+    }
   }
 
   return false;
@@ -2890,17 +4173,26 @@ static size_t split_sequence(char* line, char* parts[], sequence_op_t ops[], siz
 
     char* segment_start = cursor;
     char* op_pos = NULL;
+    size_t op_len = 0;
     sequence_op_t op_type = SEQ_NONE;
 
     while(*cursor != '\0') {
       if(cursor[0] == '&' && cursor[1] == '&') {
         op_pos = cursor;
         op_type = SEQ_AND;
+        op_len = 2;
         break;
       }
       if(cursor[0] == '|' && cursor[1] == '|') {
         op_pos = cursor;
         op_type = SEQ_OR;
+        op_len = 2;
+        break;
+      }
+      if(cursor[0] == ';') {
+        op_pos = cursor;
+        op_type = SEQ_SEMI;
+        op_len = 1;
         break;
       }
       cursor++;
@@ -2908,7 +4200,9 @@ static size_t split_sequence(char* line, char* parts[], sequence_op_t ops[], siz
 
     if(op_pos != NULL) {
       *op_pos = '\0';
-      op_pos[1] = ' ';
+      if(op_len == 2) {
+        op_pos[1] = ' ';
+      }
     }
 
     rtrim(segment_start);
@@ -2922,7 +4216,7 @@ static size_t split_sequence(char* line, char* parts[], sequence_op_t ops[], siz
       ops[count - 1] = op_type;
     }
 
-    cursor = op_pos + 2;
+    cursor = op_pos + op_len;
   }
 
   for(size_t i = 0; i < count; i++) {
@@ -2970,28 +4264,73 @@ static int launch_pipeline(char* line) {
 }
 
 static int launch_command(char* line) {
-  char* parts[MOSH_MAX_SEQUENCES];
+  if(line == NULL) {
+    shell_set_status_code(0);
+    return 0;
+  }
+
+  char raw_buffer[MOSH_MAX_FUNCTION_BODY];
+  str_copy(raw_buffer, sizeof(raw_buffer), line);
+
+  char* trimmed_raw = ltrim(raw_buffer);
+
+  if(trimmed_raw[0] != '\0' &&
+     (shell_starts_with_keyword(trimmed_raw, "if") ||
+      shell_starts_with_keyword(trimmed_raw, "while") ||
+      shell_starts_with_keyword(trimmed_raw, "for") ||
+      shell_starts_with_keyword(trimmed_raw, "function") ||
+      shell_is_inline_function_signature(trimmed_raw))) {
+    char expanded_segment[MOSH_MAX_FUNCTION_BODY];
+    if(!shell_expand_variables(trimmed_raw, expanded_segment, sizeof(expanded_segment))) {
+      write_str(STDOUT_FILENO, "mosh: expansion too long\n");
+      shell_set_status_code(1);
+      return encode_raw_status_from_code(shell_last_status);
+    }
+    char working_segment[MOSH_MAX_FUNCTION_BODY];
+    str_copy(working_segment, sizeof(working_segment), expanded_segment);
+    int builtin_status = 0;
+    if(handle_builtin(trimmed_raw, working_segment, &builtin_status)) {
+      return builtin_status;
+    }
+  }
+
+  char* raw_parts[MOSH_MAX_SEQUENCES];
   sequence_op_t ops[MOSH_MAX_SEQUENCES] = { SEQ_NONE };
-  size_t count = split_sequence(line, parts, ops, MOSH_MAX_SEQUENCES);
+  size_t count = split_sequence(trimmed_raw, raw_parts, ops, MOSH_MAX_SEQUENCES);
   if(count == 0) {
+    shell_set_status_code(0);
     return 0;
   }
 
   int last_status = 0;
+
   for(size_t i = 0; i < count; i++) {
-    char* segment = ltrim(parts[i]);
-    if(segment[0] == '\0') {
+    char raw_segment[MOSH_MAX_FUNCTION_BODY];
+    str_copy(raw_segment, sizeof(raw_segment), ltrim(raw_parts[i]));
+    if(raw_segment[0] == '\0') {
       write_str(STDOUT_FILENO, "mosh: syntax error\n");
       shell_set_status_code(1);
-      return 1;
+      return encode_raw_status_from_code(shell_last_status);
     }
+
+    char expanded_segment[MOSH_MAX_FUNCTION_BODY];
+    if(!shell_expand_variables(raw_segment, expanded_segment, sizeof(expanded_segment))) {
+      write_str(STDOUT_FILENO, "mosh: expansion too long\n");
+      shell_set_status_code(1);
+      return encode_raw_status_from_code(shell_last_status);
+    }
+
+    char working_segment[MOSH_MAX_FUNCTION_BODY];
+    str_copy(working_segment, sizeof(working_segment), expanded_segment);
+
     int builtin_status = 0;
-    if(handle_builtin(segment, &builtin_status)) {
+    if(handle_builtin(raw_segment, working_segment, &builtin_status)) {
       last_status = builtin_status;
     } else {
-      last_status = launch_pipeline(segment);
+      last_status = launch_pipeline(working_segment);
       shell_set_status_from_raw(last_status);
     }
+
     if(i < count - 1) {
       sequence_op_t op = ops[i];
       if(op == SEQ_AND) {
@@ -3002,9 +4341,12 @@ static int launch_command(char* line) {
         if(last_status == 0) {
           break;
         }
-      }
-      if(op == SEQ_NONE && last_status != 0) {
-        break;
+      } else if(op == SEQ_NONE) {
+        if(last_status != 0) {
+          break;
+        }
+      } else if(op == SEQ_SEMI) {
+        continue;
       }
     }
   }
@@ -3065,10 +4407,6 @@ static void shell_loop(void) {
     char original_line[MOSH_MAX_LINE_LENGTH];
     str_copy(original_line, sizeof(original_line), line_buffer);
     history_add(original_line);
-
-    if(handle_builtin(line_buffer, NULL)) {
-      continue;
-    }
 
     launch_command(line_buffer);
     jobs_poll_updates(true);

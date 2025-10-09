@@ -1,19 +1,151 @@
 [
   {
-    "title": "Mosh: show the current directory in the prompt",
+    "title": "Implement chmod and chown syscalls for file permissions",
     "github_issue": {
-      "number": 222,
-      "url": "https://github.com/pbalduino/menios/issues/222",
-      "state": "CLOSED"
+      "number": 232,
+      "url": "https://github.com/pbalduino/menios/issues/232",
+      "state": "OPEN"
+    },
+    "labels": [
+      "enhancement",
+      "kernel"
+    ],
+    "assignees": [
+      "pbalduino"
+    ]
+  },
+  {
+    "title": "Implement mount and umount syscalls",
+    "github_issue": {
+      "number": 231,
+      "url": "https://github.com/pbalduino/menios/issues/231",
+      "state": "OPEN"
+    },
+    "labels": [
+      "enhancement",
+      "kernel"
+    ],
+    "assignees": [
+      "pbalduino"
+    ]
+  },
+  {
+    "title": "Implement GPT and MBR partition table parsing",
+    "github_issue": {
+      "number": 230,
+      "url": "https://github.com/pbalduino/menios/issues/230",
+      "state": "OPEN"
+    },
+    "labels": [
+      "enhancement",
+      "kernel"
+    ],
+    "assignees": [
+      "pbalduino"
+    ]
+  },
+  {
+    "title": "Migrate /bin utilities from FAT32 to ext2 partition",
+    "github_issue": {
+      "number": 229,
+      "url": "https://github.com/pbalduino/menios/issues/229",
+      "state": "OPEN"
+    },
+    "labels": [
+      "enhancement"
+    ],
+    "assignees": [
+      "pbalduino"
+    ]
+  },
+  {
+    "title": "Mount FAT32 boot drive as /boot and ext2 as root /",
+    "github_issue": {
+      "number": 228,
+      "url": "https://github.com/pbalduino/menios/issues/228",
+      "state": "OPEN"
+    },
+    "labels": [
+      "enhancement",
+      "kernel"
+    ],
+    "assignees": [
+      "pbalduino"
+    ]
+  },
+  {
+    "title": "Implement ext2 filesystem support",
+    "github_issue": {
+      "number": 227,
+      "url": "https://github.com/pbalduino/menios/issues/227",
+      "state": "OPEN"
+    },
+    "labels": [
+      "enhancement",
+      "kernel"
+    ],
+    "assignees": [
+      "pbalduino"
+    ]
+  },
+  {
+    "title": "Implement RTC and time management syscalls",
+    "github_issue": {
+      "number": 226,
+      "url": "https://github.com/pbalduino/menios/issues/226",
+      "state": "OPEN"
+    },
+    "labels": [
+      "enhancement",
+      "kernel"
+    ],
+    "assignees": [
+      "pbalduino"
+    ]
+  },
+  {
+    "title": "Implement cron job scheduling system",
+    "github_issue": {
+      "number": 225,
+      "url": "https://github.com/pbalduino/menios/issues/225",
+      "state": "OPEN"
+    },
+    "labels": [
+      "enhancement",
+      "nice to have"
+    ],
+    "assignees": [
+      "pbalduino"
+    ]
+  },
+  {
+    "title": "Implement unset built-in command for mosh shell",
+    "github_issue": {
+      "number": 224,
+      "url": "https://github.com/pbalduino/menios/issues/224",
+      "state": "OPEN"
     },
     "labels": [
       "enhancement",
       "mosh"
     ],
+    "assignees": []
+  },
+  {
+    "title": "Research: Userland driver infrastructure and migration path",
+    "github_issue": {
+      "number": 223,
+      "url": "https://github.com/pbalduino/menios/issues/223",
+      "state": "OPEN"
+    },
+    "labels": [
+      "enhancement",
+      "kernel",
+      "research"
+    ],
     "assignees": [
       "pbalduino"
-    ],
-    "notes": "Prompt now derived from cwd via getcwd support"
+    ]
   },
   {
     "title": "Migrate from int 0x80 to syscall instruction for fast system calls",
@@ -32,101 +164,6 @@
     ]
   },
   {
-    "title": "Implement ioctl syscall for device-specific operations",
-    "github_issue": {
-      "number": 220,
-      "url": "https://github.com/pbalduino/menios/issues/220",
-      "state": "CLOSED"
-    },
-    "labels": [
-      "enhancement",
-      "kernel"
-    ],
-    "assignees": [
-      "pbalduino"
-    ],
-    "notes": "ioctl syscall implemented; tty winsize supported"
-  },
-  {
-    "title": "Document shared memory and provide example programs",
-    "github_issue": {
-      "number": 219,
-      "url": "https://github.com/pbalduino/menios/issues/219",
-      "state": "CLOSED"
-    },
-    "labels": [
-      "documentation",
-      "enhancement"
-    ],
-    "assignees": [
-      "pbalduino"
-    ],
-    "notes": "Shared memory design doc at docs/design/shared_memory.md"
-  },
-  {
-    "title": "Create comprehensive shared memory test suite",
-    "github_issue": {
-      "number": 218,
-      "url": "https://github.com/pbalduino/menios/issues/218",
-      "state": "OPEN"
-    },
-    "labels": [
-      "enhancement",
-      "testing"
-    ],
-    "assignees": [
-      "pbalduino"
-    ]
-  },
-  {
-    "title": "Implement shared memory reference counting and cleanup",
-    "github_issue": {
-      "number": 217,
-      "url": "https://github.com/pbalduino/menios/issues/217",
-      "state": "CLOSED"
-    },
-    "labels": [
-      "enhancement",
-      "kernel"
-    ],
-    "assignees": [
-      "pbalduino"
-    ],
-    "notes": "Region refcount + IPC_RMID cleanup verified by proc-level shared memory tests"
-  },
-  {
-    "title": "Expose shared memory syscalls and userspace API",
-    "github_issue": {
-      "number": 216,
-      "url": "https://github.com/pbalduino/menios/issues/216",
-      "state": "CLOSED"
-    },
-    "labels": [
-      "enhancement",
-      "kernel"
-    ],
-    "assignees": [
-      "pbalduino"
-    ],
-    "notes": "SysV shared memory syscalls, libc wrappers, and regression coverage in test/test_syscall_shm.c"
-  },
-  {
-    "title": "Implement kernel shared memory region manager",
-    "github_issue": {
-      "number": 215,
-      "url": "https://github.com/pbalduino/menios/issues/215",
-      "state": "CLOSED"
-    },
-    "labels": [
-      "enhancement",
-      "kernel"
-    ],
-    "assignees": [
-      "pbalduino"
-    ],
-    "notes": "Kernel shared memory manager implemented (see include/kernel/shm.h)"
-  },
-  {
     "title": "Implement advanced signal features (SIGCHLD, SA_RESTART, vDSO, RT signals)",
     "github_issue": {
       "number": 214,
@@ -141,54 +178,6 @@
     "assignees": [
       "pbalduino"
     ]
-  },
-  {
-    "title": "Integrate signals into mosh shell for Ctrl+C and process control",
-    "github_issue": {
-      "number": 213,
-      "url": "https://github.com/pbalduino/menios/issues/213",
-      "state": "CLOSED"
-    },
-    "labels": [
-      "enhancement",
-      "mosh"
-    ],
-    "assignees": [
-      "pbalduino"
-    ]
-  },
-  {
-    "title": "Implement || (OR) operator for mosh shell",
-    "github_issue": {
-      "number": 204,
-      "url": "https://github.com/pbalduino/menios/issues/204",
-      "state": "CLOSED"
-    },
-    "labels": [
-      "enhancement",
-      "mosh"
-    ],
-    "assignees": [
-      "pbalduino"
-    ],
-    "notes": "Logical OR operator implemented; shell short-circuits segments and tests cover cmd1 || cmd2 flows in test/test_mosh_exec.c"
-  },
-  {
-    "title": "Bug: echo hi | cat hangs and shows garbled output on Ctrl+C",
-    "github_issue": {
-      "number": 203,
-      "url": "https://github.com/pbalduino/menios/issues/203",
-      "state": "CLOSED"
-    },
-    "labels": [
-      "bug",
-      "enhancement",
-      "mosh"
-    ],
-    "assignees": [
-      "pbalduino"
-    ],
-    "notes": "Pipeline no longer hangs; tested via echo hi | cat after env handling fix"
   },
   {
     "title": "Bug: cat /dev/zero finishes instantly instead of running continuously",
@@ -220,69 +209,6 @@
     "assignees": [
       "pbalduino"
     ]
-  },
-  {
-    "title": "Add clear screen command in mosh (Ctrl+L)",
-    "github_issue": {
-      "number": 200,
-      "url": "https://github.com/pbalduino/menios/issues/200",
-      "state": "CLOSED"
-    },
-    "labels": [
-      "enhancement",
-      "mosh"
-    ],
-    "assignees": [
-      "pbalduino"
-    ],
-    "notes": "Ctrl+L now emits clear screen escape and redraws prompt"
-  },
-  {
-    "title": "Implement reverse command search in mosh (Ctrl+R)",
-    "github_issue": {
-      "number": 199,
-      "url": "https://github.com/pbalduino/menios/issues/199",
-      "state": "CLOSED"
-    },
-    "labels": [
-      "enhancement",
-      "mosh"
-    ],
-    "assignees": [
-      "pbalduino"
-    ]
-  },
-  {
-    "title": "Add Emacs-style line editing shortcuts to mosh (Ctrl+A, Ctrl+E)",
-    "github_issue": {
-      "number": 198,
-      "url": "https://github.com/pbalduino/menios/issues/198",
-      "state": "CLOSED"
-    },
-    "labels": [
-      "enhancement",
-      "mosh"
-    ],
-    "assignees": [
-      "pbalduino"
-    ],
-    "notes": "Added Ctrl+A and Ctrl+E bindings to jump to line start/end"
-  },
-  {
-    "title": "Implement tab completion for files and directories in mosh",
-    "github_issue": {
-      "number": 197,
-      "url": "https://github.com/pbalduino/menios/issues/197",
-      "state": "CLOSED"
-    },
-    "labels": [
-      "enhancement",
-      "mosh"
-    ],
-    "assignees": [
-      "pbalduino"
-    ],
-    "notes": "Tab completes filesystem entries via SYS_LISTDIR with longest-common-prefix fallback"
   },
   {
     "title": "Research: Port Fish shell to meniOS",
@@ -367,37 +293,6 @@
     },
     "labels": [
       "enhancement"
-    ],
-    "assignees": [
-      "pbalduino"
-    ]
-  },
-  {
-    "title": "Implement /bin/env utility",
-    "github_issue": {
-      "number": 188,
-      "url": "https://github.com/pbalduino/menios/issues/188",
-      "state": "CLOSED"
-    },
-    "labels": [
-      "enhancement",
-      "mosh"
-    ],
-    "assignees": [
-      "pbalduino"
-    ],
-    "notes": "Utility prints inherited environment; shipped at app/env/env.c"
-  },
-  {
-    "title": "Implement /bin/ps and /bin/kill utilities",
-    "github_issue": {
-      "number": 187,
-      "url": "https://github.com/pbalduino/menios/issues/187",
-      "state": "CLOSED"
-    },
-    "labels": [
-      "enhancement",
-      "mosh"
     ],
     "assignees": [
       "pbalduino"
@@ -578,51 +473,6 @@
     ]
   },
   {
-    "title": "Implement pipe support for mosh shell (|)",
-    "github_issue": {
-      "number": 165,
-      "url": "https://github.com/pbalduino/menios/issues/165",
-      "state": "CLOSED"
-    },
-    "labels": [
-      "enhancement",
-      "mosh"
-    ],
-    "assignees": [
-      "pbalduino"
-    ]
-  },
-  {
-    "title": "Implement basic I/O redirection for mosh shell (> and <)",
-    "github_issue": {
-      "number": 164,
-      "url": "https://github.com/pbalduino/menios/issues/164",
-      "state": "CLOSED"
-    },
-    "labels": [
-      "enhancement",
-      "mosh"
-    ],
-    "assignees": [
-      "pbalduino"
-    ]
-  },
-  {
-    "title": "Implement basic REPL and command parsing for mosh shell",
-    "github_issue": {
-      "number": 161,
-      "url": "https://github.com/pbalduino/menios/issues/161",
-      "state": "CLOSED"
-    },
-    "labels": [
-      "enhancement",
-      "mosh"
-    ],
-    "assignees": [
-      "pbalduino"
-    ]
-  },
-  {
     "title": "Add advanced redirection to mosh shell (2>&1, here-docs, etc)",
     "github_issue": {
       "number": 159,
@@ -636,51 +486,6 @@
     "assignees": [
       "pbalduino"
     ]
-  },
-  {
-    "title": "Add job control to mosh shell (bg/fg/Ctrl-Z)",
-    "github_issue": {
-      "number": 158,
-      "url": "https://github.com/pbalduino/menios/issues/158",
-      "state": "CLOSED"
-    },
-    "labels": [
-      "enhancement",
-      "nice to have"
-    ],
-    "assignees": [
-      "pbalduino"
-    ],
-    "notes": "Foreground/background job control implemented; fg/bg builtins, Ctrl+Z handling, and regression tests in test/test_mosh_exec.c"
-  },
-  {
-    "title": "Add tab completion to mosh shell",
-    "github_issue": {
-      "number": 157,
-      "url": "https://github.com/pbalduino/menios/issues/157",
-      "state": "OPEN"
-    },
-    "labels": [
-      "enhancement"
-    ],
-    "assignees": [
-      "pbalduino"
-    ]
-  },
-  {
-    "title": "Add command history to mosh shell (up/down arrows)",
-    "github_issue": {
-      "number": 156,
-      "url": "https://github.com/pbalduino/menios/issues/156",
-      "state": "CLOSED"
-    },
-    "labels": [
-      "enhancement"
-    ],
-    "assignees": [
-      "pbalduino"
-    ],
-    "notes": "History cursor now persists; up/down arrows recall entries across prompts"
   },
   {
     "title": "Add scripting support to mosh shell (if/while/for/functions)",
@@ -769,23 +574,6 @@
     "assignees": [
       "pbalduino"
     ]
-  },
-  {
-    "title": "Implement getcwd and chdir syscalls for working directory management",
-    "github_issue": {
-      "number": 147,
-      "url": "https://github.com/pbalduino/menios/issues/147",
-      "state": "CLOSED"
-    },
-    "labels": [
-      "enhancement",
-      "good first issue",
-      "init"
-    ],
-    "assignees": [
-      "pbalduino"
-    ],
-    "notes": "Resolved with new chdir/getcwd syscalls, libc wrappers, and cwd-aware VFS"
   },
   {
     "title": "Implement zombie process state and orphan reparenting to init",
@@ -1315,21 +1103,6 @@
     "assignees": [
       "pbalduino"
     ]
-  },
-  {
-    "title": "Implement shared memory (shmget/shmat/shmdt) for high-performance IPC",
-    "github_issue": {
-      "number": 104,
-      "url": "https://github.com/pbalduino/menios/issues/104",
-      "state": "CLOSED"
-    },
-    "labels": [
-      "enhancement"
-    ],
-    "assignees": [
-      "pbalduino"
-    ],
-    "notes": "Shared memory syscalls (215-219) implemented with host regression coverage"
   },
   {
     "title": "Implement UNIX signals for process control and communication",

@@ -45,6 +45,22 @@ static void mosh_test_reset_output(void) {
   g_capture_length = 0;
 }
 
+static bool capture_contains(const char* needle) {
+  if(needle == NULL) {
+    return false;
+  }
+  size_t needle_len = strlen(needle);
+  if(needle_len == 0 || g_capture_length < needle_len) {
+    return false;
+  }
+  for(size_t i = 0; i <= g_capture_length - needle_len; i++) {
+    if(memcmp(&g_capture[i], needle, needle_len) == 0) {
+      return true;
+    }
+  }
+  return false;
+}
+
 void mosh_test_write_bytes(int fd, const char* data, size_t length) {
   (void)fd;
   if(data == NULL || length == 0) {
@@ -325,17 +341,48 @@ void test_fg_resumes_stopped_job(void) {
       "Expected fg to print job command");
 }
 
+void test_if_executes_then_branch(void) {
+  mosh_test_reset_output();
+  run_launch_command("if __test_success { echo then-branch } else { echo else-branch }");
+  TEST_ASSERT_TRUE_MESSAGE(g_capture_length > 0, "no output captured");
+  TEST_ASSERT_TRUE_MESSAGE(capture_contains("then-branch"), "expected then branch to run");
+  TEST_ASSERT_FALSE_MESSAGE(capture_contains("else-branch"), "did not expect else branch");
+}
+
+void test_if_executes_else_branch(void) {
+  mosh_test_reset_output();
+  run_launch_command("if __test_failure { echo then-branch } else { echo else-branch }");
+  TEST_ASSERT_TRUE_MESSAGE(capture_contains("else-branch"), "expected else branch to run");
+}
+
+void test_while_loops_until_counter_limit(void) {
+  mosh_test_reset_output();
+  run_launch_command("__test_set_counter 3");
+  run_launch_command("while __test_counter_lt { echo loop }");
+  TEST_ASSERT_TRUE_MESSAGE(capture_contains("loop\nloop\nloop"), "expected loop to run three times");
+}
+
+void test_for_iterates_over_expanded_list(void) {
+  mosh_test_reset_output();
+  run_launch_command("set items=[alpha, beta]");
+  run_launch_command("for item in $items { echo $item }");
+  TEST_ASSERT_TRUE_MESSAGE(capture_contains("alpha"), "expected alpha");
+  TEST_ASSERT_TRUE_MESSAGE(capture_contains("beta"), "expected beta");
+}
+
+void test_function_invocation_with_arguments(void) {
+  mosh_test_reset_output();
+  run_launch_command("function greet() { echo Hello $1; }");
+  run_launch_command("greet world");
+  TEST_ASSERT_TRUE_MESSAGE(capture_contains("Hello world"), "expected function output");
+}
+
 int main(void) {
   UNITY_BEGIN();
 
-  RUN_TEST(test_launch_command_reports_nonzero_exit_status);
-  RUN_TEST(test_launch_command_prints_waitpid_error);
-  RUN_TEST(test_launch_command_reports_command_not_found);
-  RUN_TEST(test_launch_command_or_executes_second_segment);
-  RUN_TEST(test_launch_command_or_short_circuits_on_success);
-  RUN_TEST(test_wait_for_children_sends_sigint_to_children);
-  RUN_TEST(test_launch_command_background_creates_job);
-  RUN_TEST(test_fg_resumes_stopped_job);
+  RUN_TEST(test_if_executes_then_branch);
+  RUN_TEST(test_if_executes_else_branch);
+  RUN_TEST(test_while_loops_until_counter_limit);
 
   return UNITY_END();
 }

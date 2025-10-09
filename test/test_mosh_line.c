@@ -88,6 +88,15 @@ static void feed_input(const char* data, size_t length) {
   pending_offset = 0;
 }
 
+#define RUN_CMD_BUFFER 512
+
+static int run_shell_command(const char* line) {
+  char buffer[RUN_CMD_BUFFER];
+  memset(buffer, 0, sizeof(buffer));
+  strncpy(buffer, line, sizeof(buffer) - 1);
+  return launch_command(buffer);
+}
+
 long mosh_test_syscall0(long number) {
   (void)number;
   return 0;
@@ -303,16 +312,16 @@ void test_pwd_builtin_prints_path(void) {
   static char pwd_entry[64] = "PWD=/";
   static char* envp[] = { pwd_entry, NULL };
   mosh_test_set_env(envp);
-  TEST_ASSERT_TRUE(handle_builtin("cd /system", NULL));
+  TEST_ASSERT_EQUAL_INT(0, run_shell_command("cd /system"));
   reset_capture();
-  TEST_ASSERT_TRUE(handle_builtin("pwd", NULL));
+  TEST_ASSERT_EQUAL_INT(0, run_shell_command("pwd"));
   TEST_ASSERT_TRUE_MESSAGE(capture_contains("/system\n"),
                            "pwd builtin should print PWD env value");
 }
 
 void test_echo_builtin_emits_arguments(void) {
   reset_capture();
-  TEST_ASSERT_TRUE(handle_builtin("echo hello world", NULL));
+  TEST_ASSERT_EQUAL_INT(0, run_shell_command("echo hello world"));
   TEST_ASSERT_TRUE_MESSAGE(capture_contains("hello world\n"),
                            "echo builtin should print arguments");
 }
@@ -325,7 +334,7 @@ void test_env_set_expands_allocation(void) {
   const char* before = env_get("PWD");
   TEST_ASSERT_NOT_NULL(before);
 
-  TEST_ASSERT_TRUE(handle_builtin("cd /system/path", NULL));
+  TEST_ASSERT_EQUAL_INT(0, run_shell_command("cd /system/path"));
 
   const char* after = env_get("PWD");
   TEST_ASSERT_NOT_NULL(after);
