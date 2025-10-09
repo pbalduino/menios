@@ -97,26 +97,26 @@ This document tracks the three major milestones for meniOS development.
 **Goal**: Enable native compilation on meniOS with GCC toolchain support
 **GitHub Milestone**: [GCC](https://github.com/pbalduino/menios/milestone/2)
 
-**Status**: 2/8 complete (25%)
+**Status**: 3/8 complete (37.5%)
 
 **Assigned Issues**:
 - [x] #192 - crt0 runtime startup code ✅
 - [x] #193 - Minimal userland libc ✅
-- [ ] #194 - Syscall ABI documentation (ready now!)
+- [x] #194 - Syscall ABI documentation ✅
 - [ ] #195 - Userland build system (ready now!)
 - [ ] #29 - Cross-compiler toolchain integration
 - [ ] #190 - TCC (Tiny C Compiler) port
 - [ ] #191 - binutils (as, ld) port
 - [ ] #196 - Fish shell research
 
-**Critical Path**: #192 ✅ → #193 ✅ → #194 → #195 → #29 → #190/#191
+**Critical Path**: #192 ✅ → #193 ✅ → #194 ✅ → #195 → #29 → #190/#191
 
 **Dependencies**:
 - #29 requires #194, #195
 - #190 requires #29, #189 (FAT32 writes)
 - #191 requires #29, #189 (FAT32 writes)
 
-**Progress**: Foundation complete! crt0 and libc are done, ready for ABI docs and build system.
+**Progress**: Foundation complete! crt0, libc, and syscall ABI docs are done. Ready for build system (#195).
 
 ---
 
@@ -214,16 +214,15 @@ This document tracks the three major milestones for meniOS development.
 ## 📈 Overall Progress
 
 - **Total Issues Across Milestones**: 61 issues
-- **Completed**: 39 issues (63.9%)
-- **In Progress**: 22 issues
-- **Ready to Start**: 4 issues (no dependencies)
+- **Completed**: 40 issues (65.6%)
+- **In Progress**: 21 issues
+- **Ready to Start**: 1 issue (no dependencies)
 
 ## 🚀 Immediate Next Steps
 
 ### Ready to Start Now (No Dependencies):
 1. **GCC Milestone**:
-   - #194 - Syscall ABI docs
-   - #195 - Userland build system
+   - #195 - Userland build system (unblocked by #194 ✅)
 
 2. **Doom Milestone**:
    - #109 - pthread API
@@ -246,7 +245,7 @@ Many issues can be worked on in parallel:
 ### Completion Order
 Recommended completion order for maximum impact:
 1. **Mosh** - Provides usable development environment (100% complete) 🎉
-2. **GCC** - Enables native development and compilation (25% complete)
+2. **GCC** - Enables native development and compilation (37.5% complete)
 3. **Doom** - Demonstrates full OS capabilities (38.5% complete)
 
 ### Recent Changes
@@ -279,6 +278,7 @@ Recommended completion order for maximum impact:
 - **2025-10-13**: Created #234 (Port grep utility)
 - **2025-10-13**: Created #235 (Port xargs utility)
 - **2025-10-13**: Created #236 (Delete key not working bug)
+- **2025-10-13**: Closed #194 (Syscall ABI documentation) ✅ - see `docs/architecture/syscall_abi.md`
 - **2025-10-12**: Shell polish – `export` persists env entries and `echo` mirrors POSIX quoting rules
 - **2025-10-08**: Closed #157 as duplicate of #197, #165 as completed by #208
 

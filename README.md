@@ -127,7 +127,7 @@ Expect the log to show the `[user_demo]` messages on screen and in `com1.log`, c
 #### **Critical Path: Toolchain (Issues #29, #192-#195)** 🚀 Major Progress!
 - [x] **#192**: crt0 runtime startup code ✅ COMPLETE!
 - [x] **#193**: Minimal userland libc (syscalls, strings, memory, stdio) ✅ COMPLETE!
-- [ ] **#194**: Syscall ABI documentation (ready to start!)
+- [x] **#194**: Syscall ABI documentation (see `docs/architecture/syscall_abi.md`)
 - [ ] **#195**: Userland build system (ready to start - dependencies met!)
 - [ ] **#29**: Cross-compiler toolchain integration (blocked on #194, #195)
 

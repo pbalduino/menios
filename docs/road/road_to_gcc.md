@@ -14,7 +14,7 @@ The foundation for all userland development. Without this, we can't build proper
 | --- | --- | --- | --- |
 | crt0 Runtime | #192 | ✅ DONE | Critical |
 | Minimal libc | #193 | ✅ DONE | Critical |
-| Syscall ABI Docs | #194 | ⛳ TODO | High |
+| Syscall ABI Docs | #194 | ✅ DONE | High |
 | Userland Build System | #195 | ⛳ TODO | Critical |
 
 Minimal libc now provides shared memory/string primitives, a simple `mmap`-backed heap (`malloc`/`free`/`aligned_alloc`), and base stdio (`printf`/`fprintf`/`sprintf`, `puts`, `perror`).
@@ -23,7 +23,7 @@ crt0 runtime provides assembly startup stub that sets up argc/argv/envp and call
 **Dependencies:**
 - ✅ #192 (crt0) - COMPLETE
 - ✅ #193 (libc) - COMPLETE
-- #194 (docs) - Can start now (no dependencies)
+- ✅ #194 (docs) - COMPLETE
 - #195 (build) - Can start now (dependencies met: #192✅, #193✅)
 
 **Timeline Estimate:** 2-3 months
@@ -99,9 +99,9 @@ The **shortest path** to compiling C programs for meniOS:
    - Assembly stub that calls main() and handles argc/argv/envp
    - No dependencies
 
-2. **#194** - Document syscall ABI (1 week, can start now)
-   - Reference documentation
-   - No dependencies
+2. ✅ **#194** - Document syscall ABI (published in `docs/architecture/syscall_abi.md`)
+   - Reference documentation is now available for toolchain work
+   - No remaining dependencies
 
 3. ✅ **#193** - Build libc (3-4 weeks) - COMPLETE
    - Syscall wrappers, string/memory primitives, and basic stdio now ship with `libmeniosc`.
@@ -147,7 +147,7 @@ Test native compilation workflow
 
 ### ✅ Week 1-2: Foundation - COMPLETE!
 - [x] **#192** - Write crt0.S assembly ✅
-- [ ] **#194** - Document all syscalls and ABI (ready now!)
+- [x] **#194** - Document all syscalls and ABI ✅
 
 ### ✅ Week 3-6: Core Library - COMPLETE!
 - [x] **#193** - Implement syscall wrappers ✅
