@@ -477,7 +477,7 @@
     "github_issue": {
       "number": 159,
       "url": "https://github.com/pbalduino/menios/issues/159",
-      "state": "OPEN"
+      "state": "CLOSED"
     },
     "labels": [
       "enhancement",
@@ -486,7 +486,8 @@
     ],
     "assignees": [
       "pbalduino"
-    ]
+    ],
+    "notes": "Shell now supports fd-qualified redirects (2>, 2>>), stream duplication (2>&1, 1>&2) and append operators with coverage in test/test_mosh_exec.c"
   },
   {
     "title": "Add scripting support to mosh shell (if/while/for/functions)",

@@ -381,6 +381,72 @@ void test_function_invocation_with_arguments(void) {
   TEST_ASSERT_TRUE_MESSAGE(capture_contains("Hello world"), "expected function output");
 }
 
+static command_segment_t* allocate_segments(size_t* count_out) {
+  static command_segment_t segments[MOSH_MAX_SEGMENTS];
+  if(count_out != NULL) {
+    *count_out = 0;
+  }
+  return segments;
+}
+
+void test_parse_redirects_stderr_to_file(void) {
+  size_t count = 0;
+  command_segment_t* segments = allocate_segments(&count);
+  TEST_ASSERT_TRUE(mosh_test_parse_pipeline("cmd 2> err.txt", segments, &count));
+  TEST_ASSERT_EQUAL_UINT32(1, count);
+  TEST_ASSERT_EQUAL_UINT32(1, segments[0].argc);
+  TEST_ASSERT_NOT_NULL(segments[0].redirect_err);
+  TEST_ASSERT_EQUAL_STRING("err.txt", segments[0].redirect_err);
+  TEST_ASSERT_FALSE(segments[0].redirect_err_append);
+  TEST_ASSERT_FALSE(segments[0].redirect_err_to_stdout);
+}
+
+void test_parse_redirects_stdout_append(void) {
+  size_t count = 0;
+  command_segment_t* segments = allocate_segments(&count);
+  TEST_ASSERT_TRUE(mosh_test_parse_pipeline("cmd >> out.log", segments, &count));
+  TEST_ASSERT_EQUAL_UINT32(1, count);
+  TEST_ASSERT_NOT_NULL(segments[0].redirect_out);
+  TEST_ASSERT_TRUE(segments[0].redirect_out_append);
+  TEST_ASSERT_EQUAL_STRING("out.log", segments[0].redirect_out);
+}
+
+void test_parse_redirects_stderr_append(void) {
+  size_t count = 0;
+  command_segment_t* segments = allocate_segments(&count);
+  TEST_ASSERT_TRUE(mosh_test_parse_pipeline("cmd 2>> err.log", segments, &count));
+  TEST_ASSERT_EQUAL_UINT32(1, count);
+  TEST_ASSERT_NOT_NULL(segments[0].redirect_err);
+  TEST_ASSERT_TRUE(segments[0].redirect_err_append);
+  TEST_ASSERT_EQUAL_STRING("err.log", segments[0].redirect_err);
+}
+
+void test_parse_redirects_stderr_to_stdout(void) {
+  size_t count = 0;
+  command_segment_t* segments = allocate_segments(&count);
+  TEST_ASSERT_TRUE(mosh_test_parse_pipeline("cmd 2>&1", segments, &count));
+  TEST_ASSERT_TRUE(segments[0].redirect_err_to_stdout);
+  TEST_ASSERT_NULL(segments[0].redirect_err);
+  TEST_ASSERT_EQUAL_UINT32(1, segments[0].argc);
+}
+
+void test_parse_redirects_stdout_to_stderr(void) {
+  size_t count = 0;
+  command_segment_t* segments = allocate_segments(&count);
+  TEST_ASSERT_TRUE(mosh_test_parse_pipeline("cmd 1>&2", segments, &count));
+  TEST_ASSERT_TRUE(segments[0].redirect_out_to_stderr);
+  TEST_ASSERT_NULL(segments[0].redirect_out);
+}
+
+void test_parse_redirects_both_to_file(void) {
+  size_t count = 0;
+  command_segment_t* segments = allocate_segments(&count);
+  TEST_ASSERT_TRUE(mosh_test_parse_pipeline("cmd &> both.log", segments, &count));
+  TEST_ASSERT_NOT_NULL(segments[0].redirect_out);
+  TEST_ASSERT_NOT_NULL(segments[0].redirect_err);
+  TEST_ASSERT_EQUAL_STRING(segments[0].redirect_out, segments[0].redirect_err);
+}
+
 void test_unset_removes_shell_variable(void) {
   run_launch_command("set FOO=bar");
   const char* before = shell_var_get("FOO");
@@ -405,6 +471,12 @@ int main(void) {
 
   RUN_TEST(test_if_executes_then_branch);
   RUN_TEST(test_if_executes_else_branch);
+  RUN_TEST(test_parse_redirects_stderr_to_file);
+  RUN_TEST(test_parse_redirects_stdout_append);
+  RUN_TEST(test_parse_redirects_stderr_append);
+  RUN_TEST(test_parse_redirects_stderr_to_stdout);
+  RUN_TEST(test_parse_redirects_stdout_to_stderr);
+  RUN_TEST(test_parse_redirects_both_to_file);
   RUN_TEST(test_unset_removes_shell_variable);
   RUN_TEST(test_unset_removes_environment_entry);
 

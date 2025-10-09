@@ -64,7 +64,7 @@ digraph IssueDependencies {
 
         // I/O and pipelines
         issue164 [label="#164: Basic I/O\nredirection", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED
-        issue159 [label="#159: Advanced\nredirection", fillcolor="#FFF5EE"];
+        issue159 [label="#159: Advanced\nredirection", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED
         issue204 [label="#204: Logical\noperators", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED
 
         // Environment and utilities

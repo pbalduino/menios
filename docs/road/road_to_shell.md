@@ -93,7 +93,7 @@ A release that meets this milestone must satisfy all of the following:
 ## Future Enhancements (Post-Minimal Shell)
 
 ### IPC and Process Control
-- Expand pipelines to support advanced syntax (append, stderr redirection) once IPC primitives land (#209). Kernel pipe infrastructure (#206), the `pipe()` syscall/user wrapper (#207), shell integration (#208), and basic `|`, `<`, `>` handling (#165/#164) are already in place.
+- Advanced redirection (append, stderr duplication) now live via #159; remaining TODO is richer pipeline wiring once IPC primitives (#209) arrive. Kernel pipe infrastructure (#206), the `pipe()` syscall/user wrapper (#207), shell integration (#208), and basic `|`, `<`, `>` handling (#165/#164) are already in place.
 - Signal delivery/handling for user processes (Ctrl+C integrated, advanced policies pending) (#213 done, #214 todo).
 - Background process management now includes job control (`jobs`, `fg`, `bg`, Ctrl+Z); future work covers richer `wait` semantics.
 - Process management utilities (`ps`, basic `kill` implemented; richer semantics future) (#187 ✅).

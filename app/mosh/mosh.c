@@ -58,6 +58,11 @@ typedef struct {
   size_t argc;
   char*  redirect_in;
   char*  redirect_out;
+  char*  redirect_err;
+  bool   redirect_out_append;
+  bool   redirect_err_append;
+  bool   redirect_err_to_stdout;
+  bool   redirect_out_to_stderr;
 } command_segment_t;
 
 typedef struct {
@@ -2216,6 +2221,11 @@ static void init_segment(command_segment_t* segment) {
   segment->argc = 0;
   segment->redirect_in = NULL;
   segment->redirect_out = NULL;
+  segment->redirect_err = NULL;
+  segment->redirect_out_append = false;
+  segment->redirect_err_append = false;
+  segment->redirect_err_to_stdout = false;
+  segment->redirect_out_to_stderr = false;
   for(size_t i = 0; i < MOSH_MAX_ARGS; i++) {
     segment->argv[i] = NULL;
   }
@@ -2276,6 +2286,9 @@ static bool parse_command_segments(char* buffer, command_segment_t* segments, si
     }
 
     if(tok[0] == '<' && tok[1] == '\0') {
+      if(i + 1 < token_count && tokens[i + 1][0] == '<' && tokens[i + 1][1] == '\0') {
+        return false;
+      }
       if(i + 1 >= token_count) {
         return false;
       }
@@ -2287,14 +2300,118 @@ static bool parse_command_segments(char* buffer, command_segment_t* segments, si
     }
 
     if(tok[0] == '>' && tok[1] == '\0') {
+      int target_fd = 1;
+      bool append = false;
+      bool both_streams = false;
+
+      if(i > 0) {
+        char* prev = tokens[i - 1];
+        if(prev != NULL && prev[0] != '\0') {
+          if(prev[0] >= '0' && prev[0] <= '9' && prev[1] == '\0') {
+            target_fd = prev[0] - '0';
+            if(current->argc > 0 && current->argv[current->argc - 1] == prev) {
+              current->argc--;
+              current->argv[current->argc] = NULL;
+            }
+          } else if(prev[0] == '&' && prev[1] == '\0') {
+            both_streams = true;
+            if(current->argc > 0 && current->argv[current->argc - 1] == prev) {
+              current->argc--;
+              current->argv[current->argc] = NULL;
+            }
+          }
+        }
+      }
+
+      if(i + 1 < token_count && tokens[i + 1][0] == '>' && tokens[i + 1][1] == '\0') {
+        append = true;
+        i++;
+      }
+
       if(i + 1 >= token_count) {
         return false;
       }
-      if(current->redirect_out != NULL) {
+
+      char* destination = tokens[++i];
+
+      if(destination[0] == '&') {
+        const char* fd_spec = destination + 1;
+        if(fd_spec[0] == '\0') {
+          if(i + 1 >= token_count) {
+            return false;
+          }
+          destination = tokens[++i];
+          fd_spec = destination;
+        }
+
+        if(fd_spec[0] == '-' && fd_spec[1] == '\0') {
+          return false;
+        }
+
+        if(fd_spec[0] < '0' || fd_spec[0] > '9' || fd_spec[1] != '\0') {
+          return false;
+        }
+
+        int dup_target = fd_spec[0] - '0';
+
+        if(both_streams) {
+          return false;
+        }
+
+        if(target_fd == 1) {
+          if(dup_target == 2) {
+            current->redirect_out_to_stderr = true;
+            continue;
+          }
+          if(dup_target == 1) {
+            continue;
+          }
+        } else if(target_fd == 2) {
+          if(dup_target == 1) {
+            if(current->redirect_err != NULL || current->redirect_err_to_stdout) {
+              return false;
+            }
+            current->redirect_err_to_stdout = true;
+            continue;
+          }
+          if(dup_target == 2) {
+            continue;
+          }
+        }
+
         return false;
       }
-      current->redirect_out = tokens[++i];
-      continue;
+
+      if(both_streams) {
+        if(current->redirect_out != NULL || current->redirect_err != NULL) {
+          return false;
+        }
+        current->redirect_out = destination;
+        current->redirect_err = destination;
+        current->redirect_out_append = append;
+        current->redirect_err_append = append;
+        continue;
+      }
+
+      if(target_fd == 1) {
+        if(current->redirect_out != NULL) {
+          return false;
+        }
+        current->redirect_out = destination;
+        current->redirect_out_append = append;
+        continue;
+      }
+
+      if(target_fd == 2) {
+        if(current->redirect_err != NULL) {
+          return false;
+        }
+        current->redirect_err = destination;
+        current->redirect_err_append = append;
+        continue;
+      }
+
+      return false;
     }
 
     if(current->argc >= MOSH_MAX_ARGS - 1) {
@@ -2311,6 +2428,41 @@ static bool parse_command_segments(char* buffer, command_segment_t* segments, si
   *segment_count = seg_idx + 1;
   return true;
 }
+
+#ifdef MOSH_TEST
+bool mosh_test_parse_pipeline(const char* line,
+                              command_segment_t* segments,
+                              size_t* segment_count) {
+  if(line == NULL || segments == NULL || segment_count == NULL) {
+    return false;
+  }
+
+  char working[MOSH_MAX_LINE_LENGTH];
+  str_copy(working, sizeof(working), line);
+
+  strip_background_marker(working);
+
+  char expanded[MOSH_MAX_LINE_LENGTH * 3];
+  size_t idx = 0;
+  for(size_t i = 0; working[i] != '\0' && idx + 3 < sizeof(expanded); i++) {
+    char ch = working[i];
+    if(ch == '|' || ch == '<' || ch == '>') {
+      expanded[idx++] = ' ';
+      expanded[idx++] = ch;
+      expanded[idx++] = ' ';
+    } else {
+      expanded[idx++] = ch;
+    }
+  }
+  expanded[idx] = '\0';
+
+  for(size_t i = 0; i < MOSH_MAX_SEGMENTS; i++) {
+    init_segment(&segments[i]);
+  }
+
+  return parse_command_segments(expanded, segments, segment_count);
+}
+#endif
 
 static inline void close_fd_if_needed(int fd) {
   if(fd >= 0) {
@@ -2576,7 +2728,13 @@ static int execute_pipeline(const char* command,
           write_str(STDOUT_FILENO, "mosh: invalid redirection path\n");
           _exit(1);
         }
-        int fd = open(absolute, O_WRONLY | O_CREAT | O_TRUNC, 0644);
+        int flags = O_WRONLY | O_CREAT;
+        if(segments[i].redirect_out_append) {
+          flags |= O_APPEND;
+        } else {
+          flags |= O_TRUNC;
+        }
+        int fd = open(absolute, flags, 0644);
         if(fd < 0) {
           write_str(STDOUT_FILENO, "mosh: failed to open redirection target\n");
           _exit(1);
@@ -2587,6 +2745,37 @@ static int execute_pipeline(const char* command,
         }
       } else if(pipe_fds[1] >= 0) {
         dup2(pipe_fds[1], STDOUT_FILENO);
+      }
+
+      if(segments[i].redirect_err != NULL) {
+        char absolute[MOSH_MAX_PATH];
+        if(!normalize_path(current_directory, segments[i].redirect_err, absolute, sizeof(absolute))) {
+          write_str(STDOUT_FILENO, "mosh: invalid redirection path\n");
+          _exit(1);
+        }
+        int flags = O_WRONLY | O_CREAT;
+        if(segments[i].redirect_err_append) {
+          flags |= O_APPEND;
+        } else {
+          flags |= O_TRUNC;
+        }
+        int fd = open(absolute, flags, 0644);
+        if(fd < 0) {
+          write_str(STDOUT_FILENO, "mosh: failed to open redirection target\n");
+          _exit(1);
+        }
+        dup2(fd, STDERR_FILENO);
+        if(fd != STDERR_FILENO) {
+          close(fd);
+        }
+      }
+
+      if(segments[i].redirect_err_to_stdout) {
+        dup2(STDOUT_FILENO, STDERR_FILENO);
+      }
+
+      if(segments[i].redirect_out_to_stderr) {
+        dup2(STDERR_FILENO, STDOUT_FILENO);
       }
 
       close_fd_if_needed(prev_read);

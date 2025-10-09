@@ -8,7 +8,7 @@ This document tracks the three major milestones for meniOS development.
 **Goal**: Complete interactive shell with full user experience
 **GitHub Milestone**: [Mosh](https://github.com/pbalduino/menios/milestone/1)
 
-**Status**: 25/28 complete (89.3%)
+**Status**: 27/28 complete (96.4%)
 
 **Assigned Issues**:
 
@@ -28,7 +28,7 @@ This document tracks the three major milestones for meniOS development.
 - [x] #186 - Pipeline placeholder recognition ✅
 - [x] #208 - Shell pipelines integration ✅
 - [x] #164 - Basic I/O redirection (>, <) ✅
-- [ ] #159 - Advanced redirection (2>&1, here-docs)
+ - [x] #159 - Advanced redirection (2>&1, append, fd duplication) ✅
 
 #### Utilities (4 issues)
 - [x] #183 - /bin utility set (echo, cat, env, true, false) ✅
@@ -212,8 +212,8 @@ This document tracks the three major milestones for meniOS development.
 ## 📈 Overall Progress
 
 - **Total Issues Across Milestones**: 62 issues
-- **Completed**: 37 issues (59.7%)
-- **In Progress**: 25 issues
+- **Completed**: 39 issues (62.9%)
+- **In Progress**: 23 issues
 - **Ready to Start**: 2 issues (no dependencies)
 
 ## 🚀 Immediate Next Steps
@@ -243,7 +243,7 @@ Many issues can be worked on in parallel:
 
 ### Completion Order
 Recommended completion order for maximum impact:
-1. **Mosh** - Provides usable development environment (89.3% complete)
+1. **Mosh** - Provides usable development environment (96.4% complete) 🎉
 2. **GCC** - Enables native development and compilation (25% complete)
 3. **Doom** - Demonstrates full OS capabilities (38.5% complete)
 
@@ -271,11 +271,12 @@ Recommended completion order for maximum impact:
 - **2025-10-09**: Removed #201, #177, #172, #166, #155 from Mosh milestone
 - **2025-10-09**: Mosh milestone now focuses on core shell functionality: #94, #159, #202
 - **2025-10-12**: Closed #94 (signal handling); Mosh milestone now tracks #159 and #202
+- **2025-10-12**: Closed #159 after landing stderr redirection and fd duplication support; remaining open item is #202
 - **2025-10-08**: Closed #157 as duplicate of #197, #165 as completed by #208
 
 ---
 
-**Last Updated**: 2025-10-09
+**Last Updated**: 2025-10-12
 **See Also**:
 - [Road to Shell](road/road_to_shell.md)
 - [Road to GCC](road/road_to_gcc.md)
