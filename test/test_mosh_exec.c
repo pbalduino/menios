@@ -23,6 +23,7 @@ long mosh_test_syscall1(long number, long arg1);
 long mosh_test_syscall2(long number, long arg1, long arg2);
 long mosh_test_syscall3(long number, long arg1, long arg2, long arg3);
 void mosh_test_set_env(char** envp);
+const char* mosh_test_env_get(const char* key);
 static char* g_test_envp[] = { "PATH=/bin", NULL };
 
 static long g_mock_fork_result;
@@ -447,6 +448,15 @@ void test_parse_redirects_both_to_file(void) {
   TEST_ASSERT_EQUAL_STRING(segments[0].redirect_out, segments[0].redirect_err);
 }
 
+void test_export_assigns_environment(void) {
+  static char* local_env[] = { "PATH=/bin", NULL };
+  mosh_test_set_env(local_env);
+  run_launch_command("export OS=menios");
+  const char* value = mosh_test_env_get("OS");
+  TEST_ASSERT_NOT_NULL(value);
+  TEST_ASSERT_EQUAL_STRING("menios", value);
+}
+
 void test_unset_removes_shell_variable(void) {
   run_launch_command("set FOO=bar");
   const char* before = shell_var_get("FOO");
@@ -477,6 +487,7 @@ int main(void) {
   RUN_TEST(test_parse_redirects_stderr_to_stdout);
   RUN_TEST(test_parse_redirects_stdout_to_stderr);
   RUN_TEST(test_parse_redirects_both_to_file);
+  RUN_TEST(test_export_assigns_environment);
   RUN_TEST(test_unset_removes_shell_variable);
   RUN_TEST(test_unset_removes_environment_entry);
 

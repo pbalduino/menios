@@ -272,6 +272,7 @@ Recommended completion order for maximum impact:
 - **2025-10-09**: Mosh milestone now focuses on core shell functionality: #94, #159, #202
 - **2025-10-12**: Closed #94 (signal handling); Mosh milestone now tracks #159 and #202
 - **2025-10-12**: Closed #159 after landing stderr redirection and fd duplication support; remaining open item is #202
+- **2025-10-12**: Shell polish – `export` persists env entries and `echo` mirrors POSIX quoting rules
 - **2025-10-08**: Closed #157 as duplicate of #197, #165 as completed by #208
 
 ---

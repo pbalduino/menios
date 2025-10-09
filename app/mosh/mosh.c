@@ -47,6 +47,8 @@ static char     pending_input[128];
 static size_t   pending_length = 0;
 static size_t   pending_offset = 0;
 static bool     env_heap_flags[MOSH_MAX_ENV_VARS];
+static char*    env_storage[MOSH_MAX_ENV_VARS + 1];
+static bool     env_storage_active = false;
 
 static size_t str_len(const char* s);
 static bool   str_eq(const char* a, const char* b);
@@ -657,6 +659,7 @@ static bool  builtin_if(const char* raw_line, char* line, int* out_status);
 static bool  builtin_while(const char* line, int* out_status);
 static bool  builtin_for(const char* line, int* out_status);
 static bool  builtin_set_variable(char* line, int* out_status);
+static bool  builtin_export_variable(char* line, int* out_status);
 static bool  builtin_unset_variable(char* line, int* out_status);
 #ifdef MOSH_TEST
 static bool  builtin_set_test_counter(char* line, int* out_status);
@@ -721,6 +724,31 @@ static void env_release_heap_entries(void) {
   memset(env_heap_flags, 0, sizeof(env_heap_flags));
 }
 
+static void env_activate_storage(void) {
+  if(env_storage_active) {
+    return;
+  }
+
+  size_t idx = 0;
+  if(process_envp != NULL) {
+    for(; idx < MOSH_MAX_ENV_VARS && process_envp[idx] != NULL; idx++) {
+      env_storage[idx] = process_envp[idx];
+    }
+  }
+
+  if(idx >= MOSH_MAX_ENV_VARS) {
+    idx = MOSH_MAX_ENV_VARS - 1;
+  }
+
+  env_storage[idx] = NULL;
+  for(size_t i = idx; i < MOSH_MAX_ENV_VARS; i++) {
+    env_heap_flags[i] = false;
+  }
+
+  process_envp = env_storage;
+  env_storage_active = true;
+}
+
 static char** env_find_entry_slot(const char* key, size_t* index_out) {
   if(process_envp == NULL || key == NULL) {
     return NULL;
@@ -766,6 +794,7 @@ static const char* env_get(const char* key) {
 void mosh_test_set_env(char** envp) {
   env_release_heap_entries();
   process_envp = (envp != NULL) ? envp : fallback_envp;
+  env_storage_active = false;
 }
 #endif
 
@@ -777,6 +806,36 @@ static void env_set(const char* key, const char* value) {
   size_t index = 0;
   char** slot = env_find_entry_slot(key, &index);
   if(slot == NULL) {
+    env_activate_storage();
+    slot = env_find_entry_slot(key, &index);
+  }
+  if(slot == NULL) {
+    size_t count = 0;
+    while(count < MOSH_MAX_ENV_VARS && process_envp[count] != NULL) {
+      count++;
+    }
+    if(count >= MOSH_MAX_ENV_VARS - 1) {
+      write_str(STDOUT_FILENO, "mosh: export: environment full\n");
+      return;
+    }
+
+    size_t key_len = str_len(key);
+    size_t value_len = str_len(value);
+    size_t entry_len = key_len + 1 + value_len + 1;
+    char* entry = malloc(entry_len);
+    if(entry == NULL) {
+      return;
+    }
+    memcpy(entry, key, key_len);
+    entry[key_len] = '=';
+    memcpy(entry + key_len + 1, value, value_len);
+    entry[entry_len - 1] = '\0';
+
+    process_envp[count] = entry;
+    process_envp[count + 1] = NULL;
+    if(count < MOSH_MAX_ENV_VARS) {
+      env_heap_flags[count] = true;
+    }
     return;
   }
 
@@ -820,6 +879,8 @@ static void env_unset(const char* key) {
   if(process_envp == NULL || key == NULL || key[0] == '\0') {
     return;
   }
+
+  env_activate_storage();
 
   size_t index = 0;
   char** slot = env_find_entry_slot(key, &index);
@@ -1222,14 +1283,15 @@ static char* shell_find_keyword(char* text, const char* keyword) {
     return NULL;
   }
   size_t len = str_len(keyword);
-  char* cursor = text;
-  while((cursor = strstr(cursor, keyword)) != NULL) {
+  for(char* cursor = text; *cursor != '\0'; cursor++) {
+    if(str_ncmp(cursor, keyword, len) != 0) {
+      continue;
+    }
     char prev = (cursor == text) ? ' ' : cursor[-1];
     char next = cursor[len];
     if(shell_is_token_boundary(prev) && shell_is_token_boundary(next)) {
       return cursor;
     }
-    cursor++;
   }
   return NULL;
 }
@@ -1679,6 +1741,60 @@ static bool builtin_set_variable(char* line, int* out_status) {
   }
 
   shell_var_set(name, value);
+  shell_finish_builtin_code(0, out_status);
+  return true;
+}
+
+static bool builtin_export_variable(char* line, int* out_status) {
+  char buffer[MOSH_MAX_FUNCTION_BODY];
+  str_copy(buffer, sizeof(buffer), line != NULL ? line : "");
+
+  char* tokens[32];
+  size_t count = shell_split_words(buffer, tokens, 32);
+
+  if(count == 0) {
+    char** envp = (process_envp != NULL) ? process_envp : fallback_envp;
+    for(size_t i = 0; envp != NULL && envp[i] != NULL; i++) {
+      write_str(STDOUT_FILENO, envp[i]);
+      write_char_stdout('\n');
+    }
+    shell_finish_builtin_code(0, out_status);
+    return true;
+  }
+
+  for(size_t i = 0; i < count; i++) {
+    char* entry = tokens[i];
+    if(entry == NULL || entry[0] == '\0') {
+      continue;
+    }
+
+    char* equals = strchr(entry, '=');
+    char* name = entry;
+    const char* value = NULL;
+
+    if(equals != NULL) {
+      *equals = '\0';
+      value = equals + 1;
+    } else {
+      value = shell_var_get(name);
+      if(value == NULL) {
+        value = env_get(name);
+      }
+      if(value == NULL) {
+        value = "";
+      }
+    }
+
+    if(!shell_is_valid_var_name(name) || shell_is_numeric_name(name)) {
+      write_str(STDOUT_FILENO, "mosh: export: invalid name\n");
+      shell_finish_builtin_code(1, out_status);
+      return true;
+    }
+
+    shell_var_set(name, value);
+    env_set(name, value);
+  }
+
   shell_finish_builtin_code(0, out_status);
   return true;
 }
@@ -2461,6 +2577,10 @@ bool mosh_test_parse_pipeline(const char* line,
   }
 
   return parse_command_segments(expanded, segments, segment_count);
+}
+
+const char* mosh_test_env_get(const char* key) {
+  return env_get(key);
 }
 #endif
 
@@ -4124,6 +4244,10 @@ static bool handle_builtin(const char* raw_line, char* line, int* out_status) {
     return builtin_set_variable(arguments, out_status);
   }
 
+  if(command_len == 6 && str_ncmp(command_start, "export", 6) == 0) {
+    return builtin_export_variable(arguments, out_status);
+  }
+
   if(command_len == 5 && str_ncmp(command_start, "unset", 5) == 0) {
     return builtin_unset_variable(arguments, out_status);
   }
@@ -4152,7 +4276,13 @@ static bool handle_builtin(const char* raw_line, char* line, int* out_status) {
     if(has_redirection) {
       return false;
     }
-    write_str(STDOUT_FILENO, arguments);
+    size_t arg_len = str_len(arguments);
+    bool quoted = (arg_len >= 2 && arguments[0] == '"' && arguments[arg_len - 1] == '"');
+    if(quoted) {
+      write_bytes(STDOUT_FILENO, arguments + 1, arg_len - 2);
+    } else {
+      write_str(STDOUT_FILENO, arguments);
+    }
     write_str(STDOUT_FILENO, "\n");
     shell_finish_builtin_code(0, out_status);
     return true;
