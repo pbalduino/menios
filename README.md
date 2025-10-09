@@ -259,6 +259,7 @@ The critical path forward is completing the **toolchain** (#194, #195, #29), whi
 
 ### Current Limitations
 - **Filesystem**: Read-only FAT32 and tmpfs support exist; write support and broader FS coverage are still TODO (Issues #60, #62-#65).
+- **FAT32 writes**: Existing files can now be overwritten and new short-name files created in `/bin`; long filenames and directory creation remain TODO (#189).
 - **Limited hardware support**: Only basic PS/2 keyboard, VGA framebuffer
 - **No network stack**: No networking capabilities (Issues #67-#73)
 - **Graphics**: Basic framebuffer, no hardware acceleration

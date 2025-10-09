@@ -35,6 +35,11 @@ fs_type_t fs_mount_type(const fs_mount_t* mount);
 bool fs_list_directory(const fs_mount_t* mount, const char* path, fs_dir_iter_t iter, void* context);
 bool fs_file_read(const fs_mount_t* mount, const char* path, size_t offset, void* buffer, size_t length, size_t* bytes_read);
 bool fs_file_read_all(const fs_mount_t* mount, const char* path, void** out_buffer, size_t* out_size);
+bool fs_file_write(const fs_mount_t* mount, const char* path, size_t offset, const void* buffer, size_t length, size_t* bytes_written);
+bool fs_file_write_all(const fs_mount_t* mount, const char* path, const void* buffer, size_t size);
+bool fs_directory_create(const fs_mount_t* mount, const char* path, bool exclusive);
+bool fs_path_unlink(const fs_mount_t* mount, const char* path);
+bool fs_directory_remove(const fs_mount_t* mount, const char* path);
 
 #ifdef __cplusplus
 }

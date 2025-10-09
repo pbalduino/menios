@@ -55,6 +55,8 @@ Services needed for any compiler to function properly.
 | Thread-safe libc | #110-111 | ⛳ TODO | For multithreaded compilation |
 | Fast Syscalls | #221 | ⛳ TODO | 3-5x faster syscall performance |
 
+> **Update (v0.1.x)**: FAT32 now supports overwriting and creating short-name files (used for `/bin` updates). Long filenames, directory creation, and more advanced cluster management remain on the backlog (#189).
+
 **Timeline Estimate:** 3-4 months
 
 ### **Phase 3: Userland Utilities** 🚧 **IN PROGRESS**

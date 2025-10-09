@@ -38,6 +38,8 @@ typedef struct tmpfs_file_state_t {
   int           flags;
 } tmpfs_file_state_t;
 
+static bool tmpfs_reserve(tmpfs_node_t* node, size_t new_capacity);
+
 static tmpfs_node_t* tmpfs_find_node(tmpfs_ctx_t* ctx, const char* name) {
   tmpfs_node_t* node = ctx->head;
   while(node != NULL) {
@@ -179,6 +181,82 @@ static bool tmpfs_read_all(void* fs_ctx, const char* path, void** out_buffer, si
   memcpy(copy, node->data, node->size);
   *out_buffer = copy;
   *out_size = node->size;
+  kmutex_unlock(&ctx->lock);
+  return true;
+}
+
+static bool tmpfs_driver_write(void* fs_ctx,
+                                const char* path,
+                                size_t offset,
+                                const void* buffer,
+                                size_t length,
+                                size_t* bytes_written) {
+  tmpfs_ctx_t* ctx = (tmpfs_ctx_t*)fs_ctx;
+  if(buffer == NULL) {
+    return false;
+  }
+
+  const char* name = path;
+  while(*name == '/') {
+    name++;
+  }
+
+  kmutex_lock(&ctx->lock);
+  tmpfs_node_t* node = tmpfs_find_node(ctx, name);
+  if(node == NULL || node->deleted) {
+    kmutex_unlock(&ctx->lock);
+    return false;
+  }
+
+  if(offset > node->size) {
+    kmutex_unlock(&ctx->lock);
+    return false;
+  }
+
+  size_t end = offset + length;
+  if(!tmpfs_reserve(node, end)) {
+    kmutex_unlock(&ctx->lock);
+    return false;
+  }
+
+  memcpy(node->data + offset, buffer, length);
+  if(end > node->size) {
+    node->size = end;
+  }
+
+  if(bytes_written) {
+    *bytes_written = length;
+  }
+
+  kmutex_unlock(&ctx->lock);
+  return true;
+}
+
+static bool tmpfs_driver_write_all(void* fs_ctx, const char* path, const void* buffer, size_t size) {
+  tmpfs_ctx_t* ctx = (tmpfs_ctx_t*)fs_ctx;
+  if(buffer == NULL) {
+    return false;
+  }
+
+  const char* name = path;
+  while(*name == '/') {
+    name++;
+  }
+
+  kmutex_lock(&ctx->lock);
+  tmpfs_node_t* node = tmpfs_find_node(ctx, name);
+  if(node == NULL || node->deleted) {
+    kmutex_unlock(&ctx->lock);
+    return false;
+  }
+
+  if(!tmpfs_reserve(node, size)) {
+    kmutex_unlock(&ctx->lock);
+    return false;
+  }
+
+  memcpy(node->data, buffer, size);
+  node->size = size;
   kmutex_unlock(&ctx->lock);
   return true;
 }
@@ -490,6 +568,8 @@ static const vfs_fs_driver_t tmpfs_driver = {
   .list = tmpfs_list,
   .read = tmpfs_read,
   .read_all = tmpfs_read_all,
+  .write = tmpfs_driver_write,
+  .write_all = tmpfs_driver_write_all,
   .open = tmpfs_open,
   .unlink = tmpfs_unlink,
   .destroy = tmpfs_destroy,

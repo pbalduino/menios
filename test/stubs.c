@@ -449,24 +449,59 @@ void proc_unregister_user_segment(proc_info_p proc, phys_addr_t phys, size_t pag
   }
 }
 
-bool fs_mount_fat32_first(block_device_t* device, fs_mount_t** out_mount) {
+bool block_device_read(block_device_t* device, uint64_t lba, void* buffer, size_t block_count) {
+  if(device == NULL || buffer == NULL || block_count == 0) {
+    return false;
+  }
+  if(device->ops == NULL || device->ops->read_blocks == NULL) {
+    return false;
+  }
+  return device->ops->read_blocks(device, lba, buffer, block_count);
+}
+
+bool block_device_write(block_device_t* device, uint64_t lba, const void* buffer, size_t block_count) {
+  if(device == NULL || buffer == NULL || block_count == 0) {
+    return false;
+  }
+  if(device->ops == NULL || device->ops->write_blocks == NULL) {
+    return false;
+  }
+  return device->ops->write_blocks(device, lba, buffer, block_count);
+}
+
+bool block_device_flush(block_device_t* device) {
+  if(device == NULL) {
+    return false;
+  }
+  if(device->ops == NULL || device->ops->flush == NULL) {
+    return true;
+  }
+  return device->ops->flush(device);
+}
+
+bool __attribute__((weak)) fs_mount_fat32_first(block_device_t* device, fs_mount_t** out_mount) {
   (void)device;
   (void)out_mount;
   return false;
 }
 
-bool fs_mount_fat32_partition(block_device_t* device, uint32_t partition_index, fs_mount_t** out_mount) {
+bool __attribute__((weak)) fs_mount_fat32_partition(block_device_t* device,
+                                                    uint32_t partition_index,
+                                                    fs_mount_t** out_mount) {
   (void)device;
   (void)partition_index;
   (void)out_mount;
   return false;
 }
 
-void fs_unmount(fs_mount_t* mount) {
+void __attribute__((weak)) fs_unmount(fs_mount_t* mount) {
   (void)mount;
 }
 
-bool fs_list_directory(const fs_mount_t* mount, const char* path, fs_dir_iter_t iter, void* context) {
+bool __attribute__((weak)) fs_list_directory(const fs_mount_t* mount,
+                                            const char* path,
+                                            fs_dir_iter_t iter,
+                                            void* context) {
   (void)mount;
   (void)path;
   (void)iter;
@@ -474,12 +509,12 @@ bool fs_list_directory(const fs_mount_t* mount, const char* path, fs_dir_iter_t 
   return false;
 }
 
-bool fs_file_read(const fs_mount_t* mount,
-                  const char* path,
-                  size_t offset,
-                  void* buffer,
-                  size_t length,
-                  size_t* bytes_read) {
+bool __attribute__((weak)) fs_file_read(const fs_mount_t* mount,
+                                        const char* path,
+                                        size_t offset,
+                                        void* buffer,
+                                        size_t length,
+                                        size_t* bytes_read) {
   (void)mount;
   (void)path;
   (void)offset;
@@ -489,15 +524,76 @@ bool fs_file_read(const fs_mount_t* mount,
   return false;
 }
 
-bool fs_file_read_all(const fs_mount_t* mount,
-                      const char* path,
-                      void** out_buffer,
-                      size_t* out_size) {
+bool __attribute__((weak)) fs_file_read_all(const fs_mount_t* mount,
+                                            const char* path,
+                                            void** out_buffer,
+                                            size_t* out_size) {
   (void)mount;
   (void)path;
   (void)out_buffer;
   (void)out_size;
   return false;
+}
+
+bool __attribute__((weak)) fs_directory_create(const fs_mount_t* mount,
+                                               const char* path,
+                                               bool exclusive) {
+  (void)mount;
+  (void)path;
+  (void)exclusive;
+  return false;
+}
+
+bool __attribute__((weak)) fs_path_unlink(const fs_mount_t* mount, const char* path) {
+  (void)mount;
+  (void)path;
+  return false;
+}
+
+bool __attribute__((weak)) fs_directory_remove(const fs_mount_t* mount, const char* path) {
+  (void)mount;
+  (void)path;
+  return false;
+}
+
+bool __attribute__((weak)) fs_file_write(const fs_mount_t* mount,
+                                         const char* path,
+                                         size_t offset,
+                                         const void* buffer,
+                                         size_t length,
+                                         size_t* bytes_written) {
+  (void)mount;
+  (void)path;
+  (void)offset;
+  (void)buffer;
+  (void)length;
+  (void)bytes_written;
+  return false;
+}
+
+bool __attribute__((weak)) fs_file_write_all(const fs_mount_t* mount,
+                                            const char* path,
+                                            const void* buffer,
+                                            size_t size) {
+  (void)mount;
+  (void)path;
+  (void)buffer;
+  (void)size;
+  return false;
+}
+
+int __attribute__((weak)) fat32_open_adapter(void* fs_ctx, const char* path, int flags, file_t** out_file) {
+  (void)fs_ctx;
+  (void)path;
+  (void)flags;
+  (void)out_file;
+  return -ENOSYS;
+}
+
+int __attribute__((weak)) fat32_unlink_adapter(void* fs_ctx, const char* path) {
+  (void)fs_ctx;
+  (void)path;
+  return -ENOSYS;
 }
 
 void* kmalloc(size_t size) {

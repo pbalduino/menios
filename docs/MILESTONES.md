@@ -279,12 +279,18 @@ Recommended completion order for maximum impact:
 - **2025-10-13**: GCC milestone reaches 50% - toolchain foundation complete, ready for #29!
 - **2025-10-13**: Closed #29 (Cross-compiler toolchain integration) ✅ - x86_64-elf-gcc now preferred, fallback to host compiler
 - **2025-10-13**: GCC milestone reaches 62.5% - core toolchain complete! 🚀
+- **2025-10-14**: Created #237 (End-to-end shell validation script)
+- **2025-10-14**: Created #238 (Add rand() and time() support) - broken into #239, #240, #241
+- **2025-10-14**: Created #239 (Kernel time syscalls - SYS_TIME, SYS_GETTIMEOFDAY)
+- **2025-10-14**: Created #240 (Implement time() and gettimeofday() in libc)
+- **2025-10-14**: Created #241 (Implement rand() and srand() in libc)
+- **2025-10-14**: Issue #202 remains open for further investigation
 - **2025-10-12**: Shell polish – `export` persists env entries and `echo` mirrors POSIX quoting rules
 - **2025-10-08**: Closed #157 as duplicate of #197, #165 as completed by #208
 
 ---
 
-**Last Updated**: 2025-10-13
+**Last Updated**: 2025-10-14
 **See Also**:
 - [Road to Shell](road/road_to_shell.md)
 - [Road to GCC](road/road_to_gcc.md)

@@ -19,11 +19,16 @@ configuration files and, eventually, user binaries from persistent storage.
   mount. The table provides fast cluster-chain traversal for file and directory
   operations while keeping the code simple. The current disk image requires only
   a few hundred KiB for the FAT copy.
-- **Read-only operations** – The API focuses on safe read access:
+- **Read operations** – The API focuses on safe read access:
   - `fs_list_directory()` iterates a directory tree using a callback.
   - `fs_file_read()` streams a portion of a file into a caller-provided buffer.
   - `fs_file_read_all()` returns a kernel-allocated buffer containing the full
     contents of a file. The buffer is NUL-terminated to simplify text handling.
+- **Write support (incremental)** – Buffered writes now cover truncation and
+  overwriting existing files, as well as creating new directory entries for
+  both files and subdirectories. The writer emits the full Long File Name (LFN)
+  sequence alongside a unique 8.3 short-name alias so long filenames survive
+  round-trips through legacy FAT tooling.
 - **LFN support** – Long File Name entries are reconstructed so callers can use
   the human-readable names present on the EFI system partition (e.g.,
   `limine.conf`, `EFI/BOOT/BOOTX64.EFI`). The driver falls back to short 8.3
@@ -57,8 +62,9 @@ configuration files and, eventually, user binaries from persistent storage.
 
 ## Limitations and Follow-up Work
 
-- Mounting is read-only; write support, cache coherency, and FAT updates are
-  out of scope for now.
+- Write support remains limited to buffered, single-writer use cases; unlinking
+  currently handles regular files and empty directories, but recursive pruning
+  or concurrent writers still need design work.
 - Only the primary GPT is consulted. Mirroring, MBR fallbacks, and partition
   attributes are not validated yet.
 - The global block cache (Issue #63) keeps frequently accessed sectors resident,

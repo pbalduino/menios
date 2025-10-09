@@ -1066,7 +1066,7 @@ static uint64_t syscall_proc_list_handler(syscall_frame_t* frame) {
   char output[(PROC_MAX * 64) + 32];
   size_t out_len = 0;
 
-  const char header[] = "PID STATE NAME\n";
+  const char header[] = "PID   STATE     NAME\n";
   size_t header_len = strlen(header);
   if(header_len >= sizeof(output)) {
     frame->rax = (uint64_t)(-ENOSPC);

@@ -213,8 +213,9 @@ These issues form the backbone of the system and should be prioritized:
 ```
 
 ✅ #203 closed after fixing mosh's environment updates (pipelines like `echo hi | cat` now succeed).
+⚠️ #202 remains open while we investigate `/dev/zero` behaviour under FAT32.
 
-**Priority**: Deferred - Track #202 once higher-priority work lands
+**Priority**: Deferred - track #202 once higher-priority work lands
 
 ## 🏗️ Updated Implementation Phases
 

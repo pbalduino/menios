@@ -528,6 +528,8 @@ ifeq ($(OS_NAME),linux)
 	cp ./src/kernel/pit.o $(KERNEL_OBJ)
 	cp ./src/kernel/lidt.o $(KERNEL_OBJ)
 
+	$(MAKE) $(OBJS)
+
 	@for obj in $(OBJS); do \
 		dest_dir="$(KERNEL_OBJ)/$$(dirname "$$obj")"; \
 		mkdir -p "$$dest_dir"; \
