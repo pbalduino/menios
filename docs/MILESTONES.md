@@ -8,11 +8,11 @@ This document tracks the three major milestones for meniOS development.
 **Goal**: Complete interactive shell with full user experience
 **GitHub Milestone**: [Mosh](https://github.com/pbalduino/menios/milestone/1)
 
-**Status**: 25/31 complete (80.6%)
+**Status**: 25/28 complete (89.3%)
 
 **Assigned Issues**:
 
-#### Core Shell Features (13 issues)
+#### Core Shell Features (10 issues)
 - [x] #54 - Evolve mosh shell to be default userland shell ✅
 - [x] #162 - Command execution (fork/exec/wait) ✅
 - [x] #163 - Built-in commands (cd/pwd/exit/export) ✅
@@ -36,7 +36,7 @@ This document tracks the three major milestones for meniOS development.
 - [x] #181 - tmpfs validation ✅
 - [x] #182 - waitpid regression test ✅
 
-#### UX Features (10 issues)
+#### UX Features (9 issues)
 - [x] #160 - Line editing keys (Ctrl+L/K/U/A/E/R) ✅
 - [x] #184 - Line editor coverage ✅
 - [x] #156 - Command history (up/down arrows) ✅
@@ -46,12 +46,9 @@ This document tracks the three major milestones for meniOS development.
 - [x] #200 - Ctrl+L clear screen ✅
 - [x] #147 - getcwd/chdir syscalls ✅
 - [x] #222 - Current directory in prompt ✅
-- [ ] #201 - Mouse selection/copy/paste
 
-#### Advanced Features (3 issues)
-- [ ] #155 - Scripting support (if/while/for/functions)
+#### Advanced Features (1 issue)
 - [x] #158 - Job control (bg/fg/Ctrl-Z) ✅
-- [ ] #166 - Hook shell I/O to virtual terminals/VGA
 
 #### Core Infrastructure (22 completed dependencies)
 - [x] #8 - ANSI and scrolling console ✅
@@ -76,16 +73,21 @@ This document tracks the three major milestones for meniOS development.
 - [x] #96 - File descriptor management ✅
 - [x] #102 - Pipes implementation ✅
 
+#### Bug Fixes (2 issues)
+- [x] #94 - Implement signal handling and delivery system ✅
+- [ ] #202 - /dev/zero EOF bug
+
 **Dependencies**:
 - #187 depends on #213 (signal support for kill) ✅ COMPLETE
 - #197 depends on #147 (getcwd/chdir) ✅ COMPLETE
 - #222 depends on #147 (getcwd/chdir) ✅ COMPLETE
 - #199 depends on #156 (history) ✅ COMPLETE
-- #201 depends on #143 or #144 (mouse drivers)
 
 **Notes**:
 - Closed #157 as duplicate of #197 (tab completion)
 - Closed #165 as completed by #208 (pipe support)
+- Moved #143 to Doom milestone (mouse driver)
+- Removed #201 (mouse selection - depends on #143), #177, #172, #166, #155 from Mosh milestone
 
 ---
 
@@ -120,14 +122,15 @@ This document tracks the three major milestones for meniOS development.
 **Goal**: Run Doom (1993) in userland on meniOS
 **GitHub Milestone**: [Doom](https://github.com/pbalduino/menios/milestone/3)
 
-**Status**: 10/25 complete (40%)
+**Status**: 10/26 complete (38.5%)
 
 **Assigned Issues**:
 
-#### Graphics & Audio (3 issues)
+#### Graphics & Audio (4 issues)
 - [x] #31 - Userspace graphics interface ✅
 - [x] #32 - Input subsystem ✅
 - [ ] #33 - Audio subsystem
+- [ ] #143 - Mouse driver
 
 #### Threading Support (5 issues)
 - [ ] #109 - pthread API implementation (ready now!)
@@ -208,9 +211,9 @@ This document tracks the three major milestones for meniOS development.
 
 ## 📈 Overall Progress
 
-- **Total Issues Across Milestones**: 64 issues
-- **Completed**: 37 issues (57.8%)
-- **In Progress**: 27 issues
+- **Total Issues Across Milestones**: 62 issues
+- **Completed**: 37 issues (59.7%)
+- **In Progress**: 25 issues
 - **Ready to Start**: 2 issues (no dependencies)
 
 ## 🚀 Immediate Next Steps
@@ -240,9 +243,9 @@ Many issues can be worked on in parallel:
 
 ### Completion Order
 Recommended completion order for maximum impact:
-1. **Mosh** - Provides usable development environment (80.6% complete)
+1. **Mosh** - Provides usable development environment (89.3% complete)
 2. **GCC** - Enables native development and compilation (25% complete)
-3. **Doom** - Demonstrates full OS capabilities (40% complete)
+3. **Doom** - Demonstrates full OS capabilities (38.5% complete)
 
 ### Recent Changes
 - **2025-10-08**: Expanded Mosh milestone from 10 to 30 issues to better track all shell work
@@ -264,6 +267,10 @@ Recommended completion order for maximum impact:
 - **2025-10-11**: Created #224 (unset built-in command)
 - **2025-10-11**: Closed #158 (Job control bg/fg/Ctrl-Z) ✅
 - **2025-10-11**: Closed #224 (unset built-in command) ✅
+- **2025-10-09**: Moved #143 (mouse driver) to Doom milestone
+- **2025-10-09**: Removed #201, #177, #172, #166, #155 from Mosh milestone
+- **2025-10-09**: Mosh milestone now focuses on core shell functionality: #94, #159, #202
+- **2025-10-12**: Closed #94 (signal handling); Mosh milestone now tracks #159 and #202
 - **2025-10-08**: Closed #157 as duplicate of #197, #165 as completed by #208
 
 ---

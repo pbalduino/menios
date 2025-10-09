@@ -1,5 +1,20 @@
 [
   {
+    "title": "bug: test_while_loops_until_counter_limit causes infinite loop",
+    "github_issue": {
+      "number": 233,
+      "url": "https://github.com/pbalduino/menios/issues/233",
+      "state": "OPEN"
+    },
+    "labels": [
+      "bug",
+      "testing"
+    ],
+    "assignees": [
+      "pbalduino"
+    ]
+  },
+  {
     "title": "Implement chmod and chown syscalls for file permissions",
     "github_issue": {
       "number": 232,
@@ -119,20 +134,6 @@
     ]
   },
   {
-    "title": "Implement unset built-in command for mosh shell",
-    "github_issue": {
-      "number": 224,
-      "url": "https://github.com/pbalduino/menios/issues/224",
-      "state": "CLOSED"
-    },
-    "labels": [
-      "enhancement",
-      "mosh"
-    ],
-    "assignees": [],
-    "notes": "unset removes shell variables and PATH entries; regression coverage in test/test_mosh_exec.c"
-  },
-  {
     "title": "Research: Userland driver infrastructure and migration path",
     "github_issue": {
       "number": 223,
@@ -189,7 +190,8 @@
     },
     "labels": [
       "bug",
-      "enhancement"
+      "enhancement",
+      "mosh"
     ],
     "assignees": [
       "pbalduino"
@@ -204,8 +206,7 @@
     },
     "labels": [
       "enhancement",
-      "nice to have",
-      "mosh"
+      "nice to have"
     ],
     "assignees": [
       "pbalduino"
@@ -337,8 +338,7 @@
     },
     "labels": [
       "enhancement",
-      "init",
-      "mosh"
+      "init"
     ],
     "assignees": [
       "pbalduino"
@@ -382,8 +382,7 @@
       "state": "OPEN"
     },
     "labels": [
-      "init",
-      "mosh"
+      "init"
     ],
     "assignees": [
       "pbalduino"
@@ -467,7 +466,7 @@
       "state": "OPEN"
     },
     "labels": [
-      "mosh"
+      "enhancement"
     ],
     "assignees": [
       "pbalduino"
@@ -482,7 +481,8 @@
     },
     "labels": [
       "enhancement",
-      "nice to have"
+      "nice to have",
+      "mosh"
     ],
     "assignees": [
       "pbalduino"
@@ -1210,14 +1210,16 @@
     "github_issue": {
       "number": 94,
       "url": "https://github.com/pbalduino/menios/issues/94",
-      "state": "OPEN"
+      "state": "CLOSED"
     },
     "labels": [
-      "enhancement"
+      "enhancement",
+      "mosh"
     ],
     "assignees": [
       "pbalduino"
-    ]
+    ],
+    "notes": "Signal delivery implemented in src/kernel/proc/signal.c with syscall wiring in src/kernel/syscall/syscall.c and coverage via test/test_signal.c and test/test_signal_syscalls.c"
   },
   {
     "title": "Create jemalloc integration benchmarking and validation suite",
