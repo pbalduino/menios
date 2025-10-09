@@ -32,6 +32,7 @@ int  proc_signal_dequeue(proc_info_p proc);
 typedef enum {
   PROC_SIGNAL_DELIVERY_NONE = 0,
   PROC_SIGNAL_DELIVERY_HANDLED,
+  PROC_SIGNAL_DELIVERY_STOPPED,
   PROC_SIGNAL_DELIVERY_TERMINATED
 } proc_signal_delivery_t;
 

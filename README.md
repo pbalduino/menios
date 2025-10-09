@@ -167,8 +167,8 @@ See [`road_to_doom.md`](docs/road/road_to_doom.md) for the complete roadmap and 
 **📊 Progress Assessment**: With **47 major foundation issues completed** 🎉🎉 and ~65 open issues, meniOS is making phenomenal progress! Major recent completions include:
 - ✅ **Toolchain**: crt0 (#192), libc (#193) - 2/8 complete in GCC milestone!
 - ✅ **Synchronization**: All primitives complete! (#36, #37, #39, #40) - 4/4 done!
-- ✅ **Shell Milestone**: Now tracking 31 issues comprehensively - 24/31 complete (77.4%)! 🎉
-- ✅ **Shell UX**: Tab completion (#197) ✅, History (#156) ✅, Ctrl+A/E (#198) ✅, Ctrl+L (#200) ✅, Ctrl+R (#199) ✅, pwd prompt (#222) ✅!
+- ✅ **Shell Milestone**: Now tracking 31 issues comprehensively - 25/31 complete (80.6%)! 🎉
+- ✅ **Shell UX**: Tab completion (#197) ✅, History (#156) ✅, Ctrl+A/E (#198) ✅, Ctrl+L (#200) ✅, Ctrl+R (#199) ✅, Job control (#158) ✅, pwd prompt (#222) ✅!
 - ✅ **Threading Foundation**: Kernel threading (#108) - ready for pthread!
 - ✅ **IPC - Pipes & FIFOs**: **COMPLETE!** All 5 issues done (#102, #206-#209) - 5/5! 🎉
 - ✅ **IPC - Signals**: Delivery path working! (#103, #210-#213) - 5/6 complete! 🎉
@@ -181,7 +181,7 @@ The critical path forward is completing the **toolchain** (#194, #195, #29), whi
 **🎯 Recent Momentum** (43 issues closed recently!):
 - 🛠️ **Toolchain** (2/8 in GCC milestone): crt0 ✅, libc ✅ → just need: ABI docs, build system, integration
 - 🔌 **IPC** (major progress!): Pipes & FIFOs ✅✅✅✅✅ **COMPLETE!** (#102, #206-#209), Signals #103, #210-#213 ✅ (Ctrl+C working; advanced next), Shared Memory ✅✅✅✅✅ **COMPLETE!** (#215-#219), ioctl #220 ✅ **COMPLETE**, fast syscalls (#221)
-- 🐚 **Shell** (24/31 in Mosh milestone - 77.4%!): Tab completion ✅, History ✅, Ctrl+A/E ✅, Ctrl+L ✅, Ctrl+R ✅, Ctrl+C ✅, I/O redirection ✅, pipelines ✅, &&/|| operators ✅, ps/kill ✅, getcwd/chdir ✅, /bin/env ✅, pwd prompt ✅!
+- 🐚 **Shell** (25/31 in Mosh milestone - 80.6%!): Tab completion ✅, History ✅, Ctrl+A/E ✅, Ctrl+L ✅, Ctrl+R ✅, Ctrl+C ✅, Job control (bg/fg/Ctrl-Z) ✅, I/O redirection ✅, pipelines ✅, &&/|| operators ✅, ps/kill ✅, getcwd/chdir ✅, /bin/env ✅, pwd prompt ✅!
 - 🧵 **Threading** (1/6 complete): Kernel threading ✅, pthread API ready!
 - 🎨 **UX** (Almost done!): Only mouse (#201) left!
 - 🐛 **Bugs** (1 remaining): Just /dev/zero EOF bug (#202)

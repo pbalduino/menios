@@ -2,10 +2,7 @@
 
 #include <kernel/proc.h>
 #include <kernel/syscall.h>
-
-#ifndef WNOHANG
-#define WNOHANG 1
-#endif
+#include <sys/wait.h>
 
 static cpu_state_t parent_frame;
 static cpu_state_t child_frame;

@@ -13,6 +13,7 @@
 #include <kernel/vm.h>
 #include <sys/fcntl.h>
 #include <sys/shm.h>
+#include <sys/wait.h>
 #include <string.h>
 #include <stdlib.h>
 
@@ -57,8 +58,6 @@ static syscall_handler_t syscall_table[SYSCALL_MAX];
 #define EXECVE_MAX_ARGS   64
 #define EXECVE_MAX_ENVP   64
 #define EXECVE_MAX_STRING 4096
-
-#define WNOHANG 1
 
 static bool copy_user_string(const char* user_ptr, char* dest, size_t capacity) {
   if(current == NULL || user_ptr == NULL || dest == NULL || capacity == 0) {
@@ -276,8 +275,9 @@ static uint64_t syscall_finalize(syscall_frame_t* frame) {
   }
 
   proc_signal_delivery_t delivery =
-    proc_signal_handle_pending(current, (cpu_state_t*)frame);
-  if(delivery == PROC_SIGNAL_DELIVERY_TERMINATED) {
+      proc_signal_handle_pending(current, (cpu_state_t*)frame);
+  if(delivery == PROC_SIGNAL_DELIVERY_TERMINATED ||
+     delivery == PROC_SIGNAL_DELIVERY_STOPPED) {
     proc_switch((void*)frame);
   }
   return frame->rax;
@@ -846,7 +846,7 @@ static uint64_t syscall_waitpid_handler(syscall_frame_t* frame) {
 
   for(;;) {
     int status = 0;
-    int result = proc_waitpid(caller, pid, &status);
+    int result = proc_waitpid(caller, pid, options, &status);
     serial_printf("waitpid: loop result=%d status=%d\n", result, status);
 
     if(result > 0) {

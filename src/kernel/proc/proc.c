@@ -12,6 +12,7 @@
 #include <kernel/user/elf_loader.h>
 #include <kernel/syscall.h>
 #include <kernel/vm.h>
+#include <sys/wait.h>
 #include <errno.h>
 #include <stdio.h>
 #include <string.h>
@@ -30,7 +31,12 @@ proc_info_t kernel_process_info = {
   .stack_base = NULL,
   .state = PROC_STATE_READY,
   .cwd = "/",
-  .cwd_len = 1
+  .cwd_len = 1,
+  .stop_status = 0,
+  .continue_status = 0,
+  .stopped = false,
+  .stop_status_pending = false,
+  .continued_pending = false
 };
 
 proc_info_p procs[PROC_MAX] = {
@@ -57,6 +63,60 @@ typedef struct scheduler_queue_t {
 static scheduler_queue_t ready_queues[PROC_PRIORITY_COUNT];
 static proc_info_p sleep_queue_head = NULL;
 static uint32_t scheduler_actions = 0;
+
+static inline int encode_stopped_status(int signo) {
+  return ((signo & 0x7f) << 8) | 0x7f;
+}
+
+static void ready_queue_remove(proc_info_p proc) {
+  if(proc == NULL) {
+    return;
+  }
+
+  for(int pr = PROC_PRIO_IDLE; pr <= PROC_PRIORITY_MAX; ++pr) {
+    scheduler_queue_t* queue = &ready_queues[pr];
+    proc_info_p prev = NULL;
+    proc_info_p node = queue->head;
+    while(node) {
+      if(node == proc) {
+        if(prev) {
+          prev->next = node->next;
+        } else {
+          queue->head = node->next;
+        }
+        if(queue->tail == node) {
+          queue->tail = prev;
+        }
+        node->next = NULL;
+        return;
+      }
+      prev = node;
+      node = node->next;
+    }
+  }
+}
+
+static void sleep_queue_remove(proc_info_p proc) {
+  if(proc == NULL) {
+    return;
+  }
+
+  proc_info_p prev = NULL;
+  proc_info_p node = sleep_queue_head;
+  while(node) {
+    if(node == proc) {
+      if(prev) {
+        prev->next = node->next;
+      } else {
+        sleep_queue_head = node->next;
+      }
+      node->next = NULL;
+      return;
+    }
+    prev = node;
+    node = node->next;
+  }
+}
 
 static void proc_link_child(proc_info_p parent, proc_info_p child) {
   if(parent == NULL || child == NULL) {
@@ -197,6 +257,10 @@ static proc_info_p ready_queue_pop_at_priority(uint8_t priority) {
 
     if(proc->state == PROC_STATE_SLEEPING) {
       scheduler_sleep_enqueue(proc);
+      continue;
+    }
+
+    if(proc->state == PROC_STATE_STOPPED) {
       continue;
     }
 
@@ -385,6 +449,11 @@ void proc_switch(void* arg) {
     proc_signal_delivery_t delivery =
       proc_signal_handle_pending(current, current->cpu_state);
 
+    if(delivery == PROC_SIGNAL_DELIVERY_STOPPED &&
+       current != &kernel_process_info) {
+      continue;
+    }
+
     if(delivery == PROC_SIGNAL_DELIVERY_TERMINATED &&
        current != &kernel_process_info) {
       if(current->state == PROC_STATE_TERMINATED) {
@@ -437,6 +506,9 @@ void proc_create(proc_info_p proc, const char* name, void (*entrypoint)(void *),
     proc_file_table_clone(proc, current);
   }
   proc_signal_state_init(proc);
+  proc->stopped = false;
+  proc->stop_status_pending = false;
+  proc->stop_status = 0;
 
   serial_printf("proc_create: Creating process %s - %s with arg %lx\n", name, proc->name, arg);
 
@@ -786,6 +858,62 @@ void proc_mark_ready(proc_info_p proc) {
 
   if(flags & (1ull << 9)) {
     enable_interrupts();
+  }
+}
+
+void proc_mark_stopped(proc_info_p proc, int signo) {
+  if(proc == NULL || proc == &kernel_process_info) {
+    return;
+  }
+
+  proc->stop_status = encode_stopped_status(signo);
+  proc->stop_status_pending = true;
+  proc->stopped = true;
+  proc->continue_status = 0;
+  proc->continued_pending = false;
+
+  if(proc->state == PROC_STATE_SLEEPING) {
+    sleep_queue_remove(proc);
+  } else if(proc->state == PROC_STATE_READY) {
+    ready_queue_remove(proc);
+  }
+
+  proc->state = PROC_STATE_STOPPED;
+  proc->time_slice_remaining_us = 0;
+
+  proc_info_p parent = proc->parent;
+  if(parent != NULL && parent->waitpid_waiting) {
+    if(parent->waitpid_target == -1 || parent->waitpid_target == (int)proc->pid) {
+      parent->waitpid_waiting = false;
+      parent->waitpid_target = -1;
+      proc_mark_ready(parent);
+    }
+  }
+
+  scheduler_actions |= SCHED_ACTION_FORCE;
+}
+
+void proc_mark_continued(proc_info_p proc) {
+  if(proc == NULL || proc == &kernel_process_info) {
+    return;
+  }
+
+  proc->stopped = false;
+  proc->stop_status_pending = false;
+  proc->continue_status = 0xffff;
+  proc->continued_pending = true;
+
+  if(proc->state == PROC_STATE_STOPPED) {
+    proc_mark_ready(proc);
+  }
+
+  proc_info_p parent = proc->parent;
+  if(parent != NULL && parent->waitpid_waiting) {
+    if(parent->waitpid_target == -1 || parent->waitpid_target == (int)proc->pid) {
+      parent->waitpid_waiting = false;
+      parent->waitpid_target = -1;
+      proc_mark_ready(parent);
+    }
   }
 }
 
@@ -1213,7 +1341,7 @@ static bool proc_setup_exec_stack(proc_info_p proc,
   return true;
 }
 
-int proc_waitpid(proc_info_p parent, int pid, int* status_out) {
+int proc_waitpid(proc_info_p parent, int pid, int options, int* status_out) {
   if(parent == NULL) {
     return -EINVAL;
   }
@@ -1221,15 +1349,44 @@ int proc_waitpid(proc_info_p parent, int pid, int* status_out) {
   proc_info_p prev = NULL;
   proc_info_p child = parent->first_child;
   bool match_found = false;
+  bool report_stopped = (options & WUNTRACED) != 0;
+  bool report_continued = (options & WCONTINUED) != 0;
 
   if(child == NULL) {
     return -ECHILD;
   }
 
   while(child != NULL) {
+    proc_info_p next = child->sibling_next;
     bool matches = (pid == -1) || (child->pid == (uint32_t)pid);
     if(matches) {
       match_found = true;
+
+      if(child->stop_status_pending) {
+        if(report_stopped) {
+          if(status_out) {
+            *status_out = child->stop_status;
+          }
+          child->stop_status_pending = false;
+          parent->waitpid_waiting = false;
+          parent->waitpid_target = -1;
+          return (int)child->pid;
+        }
+      }
+
+      if(child->continued_pending) {
+        if(report_continued) {
+          if(status_out) {
+            *status_out = child->continue_status;
+          }
+          child->continued_pending = false;
+          child->continue_status = 0;
+          parent->waitpid_waiting = false;
+          parent->waitpid_target = -1;
+          return (int)child->pid;
+        }
+      }
+
       if(child->state == PROC_STATE_ZOMBIE) {
         int exit_code = child->exit_code;
         if(status_out) {
@@ -1261,7 +1418,7 @@ int proc_waitpid(proc_info_p parent, int pid, int* status_out) {
     }
 
     prev = child;
-    child = child->sibling_next;
+    child = next;
   }
 
   if(pid > 0 && !match_found) {
@@ -1438,6 +1595,9 @@ void scheduler_init() {
 void proc_exit(int code) {
   current->state = PROC_STATE_ZOMBIE;
   current->exit_code = code;
+  current->stopped = false;
+  current->stop_status_pending = false;
+  current->continued_pending = false;
   serial_printf("proc_exit: Process %s exited with code %d\n", current->name, code);
 
   proc_info_p parent = current->parent;
@@ -1464,6 +1624,9 @@ int proc_kill_pid(uint32_t pid, int code) {
 
   target->exit_code = code;
   target->state = PROC_STATE_ZOMBIE;
+  target->stopped = false;
+  target->stop_status_pending = false;
+  target->continued_pending = false;
   proc_info_p parent = target->parent;
   if(parent != NULL && parent->waitpid_waiting) {
     if(parent->waitpid_target == -1 || parent->waitpid_target == (int)target->pid) {

@@ -55,6 +55,19 @@ digraph IssueDependencies {
         style=filled;
         fillcolor="#FFF5EE";
 
+        // Core shell functionality
+        issue54 [label="#54: mosh as\ndefault shell", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED
+        issue161 [label="#161: Basic REPL\nand parsing", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED
+        issue162 [label="#162: Command\nexecution", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED
+        issue163 [label="#163: Built-in\ncommands", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED
+        issue224 [label="#224: unset\nbuilt-in", fillcolor="#FFF5EE"];
+
+        // I/O and pipelines
+        issue164 [label="#164: Basic I/O\nredirection", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED
+        issue159 [label="#159: Advanced\nredirection", fillcolor="#FFF5EE"];
+        issue204 [label="#204: Logical\noperators", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED
+
+        // Environment and utilities
         issue180 [label="#180: Environment\nseeding in init", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED
         issue181 [label="#181: tmpfs\nvalidation", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED
         issue182 [label="#182: waitpid\nregression test", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED
@@ -64,6 +77,11 @@ digraph IssueDependencies {
         issue186 [label="#186: Pipeline\nplaceholders", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED
         issue187 [label="#187: ps/kill\nutilities", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED
         issue188 [label="#188: env\nutility", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED
+
+        // Advanced features
+        issue155 [label="#155: Scripting\nsupport", fillcolor="#DDA0DD"];
+        issue158 [label="#158: Job control\nbg/fg/Ctrl-Z", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED
+        issue166 [label="#166: Virtual\nterminal I/O", fillcolor="#DDA0DD"];
     }
 
     subgraph cluster_shell_ux {
@@ -71,6 +89,7 @@ digraph IssueDependencies {
         style=filled;
         fillcolor="#F0FFFF";
 
+        issue160 [label="#160: Line editing\nkeys", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED
         issue197 [label="#197: Tab\ncompletion", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED
         issue198 [label="#198: Ctrl+A/E\nline nav", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED
         issue199 [label="#199: Ctrl+R\nreverse search", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED
@@ -111,13 +130,15 @@ digraph IssueDependencies {
         style=filled;
         fillcolor="#F5F0FF";
 
-        // Pipes (broken down)
+        // Pipes (parent and breakdown)
+        issue102 [label="#102: Pipes/FIFOs\n(parent)", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED
         issue206 [label="#206: Pipe data\nstructure", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED
         issue207 [label="#207: Pipe\nsyscall API", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED
         issue208 [label="#208: Shell\npipelines", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED
         issue209 [label="#209: Named\nFIFOs", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED
 
-        // Signals (broken down)
+        // Signals (parent and breakdown)
+        issue103 [label="#103: UNIX signals\n(parent)", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED
         issue210 [label="#210: Signal\nbookkeeping", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED
         issue211 [label="#211: Signal\nsyscalls", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED
         issue212 [label="#212: Signal\ndelivery", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED
@@ -136,6 +157,26 @@ digraph IssueDependencies {
         issue106 [label="#106: microkernel\nIPC", fillcolor="#DDA0DD"];
         issue107 [label="#107: capability-based\nsecurity", fillcolor="#DDA0DD"];
         issue220 [label="#220: ioctl\nsyscall", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED
+        issue221 [label="#221: Fast syscall\ninstruction", fillcolor="#E6E6FA"];
+    }
+
+    subgraph cluster_graphics {
+        label="Graphics & Audio (Doom)";
+        style=filled;
+        fillcolor="#FFE4F0";
+
+        issue31 [label="#31: Userspace\ngraphics interface", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED
+        issue32 [label="#32: Input\nsubsystem", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED
+        issue33 [label="#33: Audio\nsubsystem", fillcolor="#FFB6E8"];
+    }
+
+    subgraph cluster_system_services {
+        label="System Services";
+        style=filled;
+        fillcolor="#FFF9E6";
+
+        issue225 [label="#225: Cron job\nscheduling", fillcolor="#FFE4B5"];
+        issue226 [label="#226: RTC and time\nmanagement", fillcolor="#FFE4B5"];
     }
 
     subgraph cluster_bugs {
@@ -253,6 +294,33 @@ digraph IssueDependencies {
     // ioctl dependencies
     issue96 -> issue220 [label="#96: fd mgmt", style=dashed, color=gray];
     issue60 -> issue220 [label="#60: file syscalls", style=dashed, color=gray];
+
+    // Parent issue relationships (pipes and signals)
+    issue102 -> issue206 [color=purple, style=dashed, label="breakdown"];
+    issue103 -> issue210 [color=purple, style=dashed, label="breakdown"];
+
+    // Shell core dependencies
+    issue148 -> issue163 [color=green, style=dashed];  // env vars -> built-ins
+    issue148 -> issue224 [color=green];  // env vars -> unset
+    issue163 -> issue224 [color=green];  // built-ins -> unset
+    issue162 -> issue54 [color=green, style=dashed];  // command exec -> mosh default
+    issue161 -> issue162 [color=green, style=dashed];  // REPL -> command exec
+    issue164 -> issue159 [color=green];  // basic I/O -> advanced I/O
+    issue208 -> issue204 [color=green, style=dashed];  // pipelines -> logical operators
+    issue158 -> issue187 [color=green, style=dashed];  // job control -> ps/kill
+
+    // Shell UX line editing progression
+    issue160 -> issue198 [color=cyan, style=dashed];  // line editing keys -> Ctrl+A/E
+
+    // Cron dependencies
+    issue226 -> issue225 [color=brown, penwidth=2, label="time syscalls"];  // RTC/time -> cron
+    issue213 -> issue225 [color=brown, label="signals"];  // Ctrl+C signals -> cron
+    issue96 -> issue225 [color=brown, label="file I/O"];  // fd mgmt -> cron
+    issue148 -> issue225 [color=brown, label="env vars"];  // env -> cron
+
+    // Graphics/Audio dependencies (for Doom)
+    issue96 -> issue31 [color=purple, style=dashed];  // fd mgmt -> graphics
+    issue32 -> issue31 [color=purple];  // input -> graphics
 
     // Critical path highlighting
     edge [color=red, penwidth=3];

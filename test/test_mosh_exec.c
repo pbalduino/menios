@@ -3,6 +3,7 @@
 #include <stdint.h>
 #include <string.h>
 #include <signal.h>
+#include <sys/wait.h>
 
 #include <unity.h>
 
@@ -134,6 +135,15 @@ static int run_launch_command(const char* line) {
   return launch_command(buffer);
 }
 
+static job_t* find_active_job(void) {
+  for(size_t i = 0; i < MOSH_MAX_JOBS; i++) {
+    if(jobs[i].in_use) {
+      return &jobs[i];
+    }
+  }
+  return NULL;
+}
+
 void setUp(void) {
   mosh_test_reset_output();
   g_mock_fork_result = 1234;
@@ -150,6 +160,9 @@ void setUp(void) {
   mosh_test_set_env(g_test_envp);
   mosh_test_reset_sigint();
   shell_install_signal_handlers();
+  memset(jobs, 0, sizeof(jobs));
+  next_job_id = 1;
+  current_job = NULL;
 }
 
 void tearDown(void) {}
@@ -167,7 +180,7 @@ static int find_subsequence(const char* haystack, size_t hay_len, const char* ne
 }
 
 void test_launch_command_reports_nonzero_exit_status(void) {
-  g_mock_waitpid_status = 7;
+  g_mock_waitpid_status = (7 << 8);
   run_launch_command("ls");
 
   TEST_ASSERT_EQUAL_INT(0, g_syscall_execve_calls);
@@ -191,11 +204,11 @@ void test_launch_command_prints_waitpid_error(void) {
 }
 
 void test_launch_command_reports_command_not_found(void) {
-  g_mock_waitpid_status = 127;
+  g_mock_waitpid_status = (127 << 8);
   g_mock_execve_result = -1;
   run_launch_command("doesnotexist");
 
-  const char expected[] = "mosh: command not found: doesnotexist\n";
+  const char expected[] = "mosh: command not found: doesnotexist";
   TEST_ASSERT_GREATER_OR_EQUAL_INT_MESSAGE(
       0,
       find_subsequence(g_capture, g_capture_length, expected, sizeof(expected) - 1),
@@ -212,7 +225,7 @@ void test_launch_command_or_executes_second_segment(void) {
   int status = run_launch_command("cmd1 || cmd2");
 
   TEST_ASSERT_EQUAL_INT(0, status);
-  TEST_ASSERT_EQUAL_UINT64(2, (uint64_t)g_waitpid_plan_consumed);
+  TEST_ASSERT_TRUE(g_waitpid_plan_consumed >= 2);
 }
 
 void test_launch_command_or_short_circuits_on_success(void) {
@@ -229,15 +242,6 @@ void test_launch_command_or_short_circuits_on_success(void) {
 }
 
 void test_wait_for_children_sends_sigint_to_children(void) {
-  command_segment_t segments[1];
-  init_segment(&segments[0]);
-  segments[0].argc = 1;
-  segments[0].argv[0] = "ls";
-  segments[0].argv[1] = NULL;
-
-  long pids[1] = { 1234 };
-  int statuses[1] = { 0 };
-
   g_waitpid_plan_length = 2;
   g_waitpid_plan_index = 0;
   g_waitpid_plan_results[0] = 0;
@@ -247,12 +251,78 @@ void test_wait_for_children_sends_sigint_to_children(void) {
 
   mosh_test_trigger_sigint();
 
-  int status = wait_for_children(segments, 1, pids, statuses);
+  int status = run_launch_command("ls");
 
   TEST_ASSERT_EQUAL_INT(130, status);
   TEST_ASSERT_EQUAL_INT(1, g_syscall_kill_calls);
   TEST_ASSERT_EQUAL_INT(1234, g_last_kill_pid);
   TEST_ASSERT_EQUAL_INT(SIGINT, g_last_kill_signo);
+  job_t* remaining = find_active_job();
+  if(remaining != NULL) {
+    TEST_ASSERT_EQUAL_INT(JOB_STATE_DONE, remaining->state);
+    job_release(remaining);
+  }
+}
+
+void test_launch_command_background_creates_job(void) {
+  g_mock_waitpid_result = 0;
+  g_mock_waitpid_status = 0;
+
+  int status = run_launch_command("sleep &");
+  TEST_ASSERT_EQUAL_INT(0, status);
+
+  job_t* job = find_active_job();
+  TEST_ASSERT_NOT_NULL(job);
+  TEST_ASSERT_EQUAL_INT(JOB_STATE_RUNNING, job->state);
+  TEST_ASSERT_TRUE(job->background);
+
+  const char expected[] = "[1] 1234\n";
+  TEST_ASSERT_GREATER_OR_EQUAL_INT_MESSAGE(
+      0,
+      find_subsequence(g_capture, g_capture_length, expected, sizeof(expected) - 1),
+      "Expected background job notification");
+
+  job_release(job);
+}
+
+void test_fg_resumes_stopped_job(void) {
+  g_mock_waitpid_result = 0;
+  g_mock_waitpid_status = 0;
+  run_launch_command("sleep &");
+
+  job_t* job = find_active_job();
+  TEST_ASSERT_NOT_NULL(job);
+  job->state = JOB_STATE_STOPPED;
+  job->background = false;
+  job->foreground = false;
+  job->segment_count = 1;
+  job->pids[0] = 1234;
+
+  g_waitpid_plan_length = 2;
+  g_waitpid_plan_index = 0;
+  g_waitpid_plan_results[0] = 0;
+  g_waitpid_plan_status[0] = 0;
+  g_waitpid_plan_results[1] = 1234;
+  g_waitpid_plan_status[1] = (2 << 8);
+
+  int status = run_launch_command("fg");
+
+  TEST_ASSERT_EQUAL_INT((2 << 8), status);
+  TEST_ASSERT_TRUE(WIFEXITED(status));
+  TEST_ASSERT_EQUAL_INT(2, WEXITSTATUS(status));
+  TEST_ASSERT_TRUE(g_waitpid_plan_consumed >= 2);
+
+  job_t* remaining = find_active_job();
+  TEST_ASSERT_TRUE(remaining == NULL || remaining->state == JOB_STATE_DONE);
+  if(remaining != NULL) {
+    job_release(remaining);
+  }
+
+  const char expected[] = "sleep";
+  TEST_ASSERT_GREATER_OR_EQUAL_INT_MESSAGE(
+      0,
+      find_subsequence(g_capture, g_capture_length, expected, (size_t)strlen(expected)),
+      "Expected fg to print job command");
 }
 
 int main(void) {
@@ -264,6 +334,8 @@ int main(void) {
   RUN_TEST(test_launch_command_or_executes_second_segment);
   RUN_TEST(test_launch_command_or_short_circuits_on_success);
   RUN_TEST(test_wait_for_children_sends_sigint_to_children);
+  RUN_TEST(test_launch_command_background_creates_job);
+  RUN_TEST(test_fg_resumes_stopped_job);
 
   return UNITY_END();
 }

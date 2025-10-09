@@ -20,8 +20,11 @@ typedef struct sigaction {
 } sigaction_t;
 
 #define SIGINT   2
-#define SIGTERM  15
+#define SIGTERM 15
 #define SIGKILL  9
+#define SIGCONT 18
+#define SIGSTOP 19
+#define SIGTSTP 20
 
 #define SIG_DFL ((sighandler_t)0)
 #define SIG_IGN ((sighandler_t)1)

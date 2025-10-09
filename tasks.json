@@ -642,7 +642,7 @@
     "github_issue": {
       "number": 158,
       "url": "https://github.com/pbalduino/menios/issues/158",
-      "state": "OPEN"
+      "state": "CLOSED"
     },
     "labels": [
       "enhancement",
@@ -650,7 +650,8 @@
     ],
     "assignees": [
       "pbalduino"
-    ]
+    ],
+    "notes": "Foreground/background job control implemented; fg/bg builtins, Ctrl+Z handling, and regression tests in test/test_mosh_exec.c"
   },
   {
     "title": "Add tab completion to mosh shell",

@@ -5,6 +5,7 @@
 
 #include <kernel/signal.h>
 #include <kernel/proc.h>
+#include <sys/wait.h>
 
 static proc_info_t proc;
 static proc_info_t parent;
@@ -16,6 +17,8 @@ void setUp(void) {
   proc_signal_state_init(&parent);
   proc.user_mode = true;
   parent.user_mode = true;
+  proc.quantum_us = 1000;
+  parent.quantum_us = 1000;
 }
 
 void tearDown(void) {
@@ -76,6 +79,17 @@ void test_signal_configure_action_rejects_sigkill_override(void) {
   TEST_ASSERT_EQUAL_INT(-EINVAL, rc);
 }
 
+void test_signal_configure_action_rejects_sigstop_override(void) {
+  struct sigaction action = {
+    .sa_handler = (sighandler_t)0x1234,
+    .sa_mask = 0,
+    .sa_flags = 0
+  };
+
+  int rc = proc_signal_configure_action(&proc, SIGSTOP, &action, NULL);
+  TEST_ASSERT_EQUAL_INT(-EINVAL, rc);
+}
+
 void test_signal_modify_mask_blocks_and_unblocks(void) {
   uint32_t previous = 0;
   int rc = proc_signal_modify_mask(&proc, SIG_BLOCK, sigbit(SIGINT), &previous);
@@ -87,6 +101,10 @@ void test_signal_modify_mask_blocks_and_unblocks(void) {
   TEST_ASSERT_EQUAL_INT(0, rc);
   TEST_ASSERT_EQUAL_UINT32(sigbit(SIGINT), previous);
   TEST_ASSERT_EQUAL_UINT32(0, proc.signal_blocked);
+
+  rc = proc_signal_modify_mask(&proc, SIG_BLOCK, sigbit(SIGSTOP), &previous);
+  TEST_ASSERT_EQUAL_INT(0, rc);
+  TEST_ASSERT_EQUAL_UINT32(0, proc.signal_blocked & sigbit(SIGSTOP));
 }
 
 void test_signal_send_validates_signo(void) {
@@ -141,6 +159,86 @@ void test_signal_handle_pending_default_terminates(void) {
   TEST_ASSERT_EQUAL_INT(128 + SIGTERM, proc.exit_code);
 }
 
+void test_signal_handle_pending_default_stops_process(void) {
+  cpu_state_t frame;
+  memset(&frame, 0, sizeof(frame));
+  current = &proc;
+  proc.state = PROC_STATE_RUNNING;
+  proc.quantum_us = 1000;
+
+  proc_signal_enqueue(&proc, SIGSTOP);
+
+  proc_signal_delivery_t result = proc_signal_handle_pending(&proc, &frame);
+
+  TEST_ASSERT_EQUAL_INT(PROC_SIGNAL_DELIVERY_STOPPED, result);
+  TEST_ASSERT_EQUAL_INT(PROC_STATE_STOPPED, proc.state);
+  TEST_ASSERT_TRUE(proc.stop_status_pending);
+  TEST_ASSERT_EQUAL_INT(((SIGSTOP & 0x7f) << 8) | 0x7f, proc.stop_status);
+}
+
+void test_signal_handle_pending_default_continues_process(void) {
+  cpu_state_t frame;
+  memset(&frame, 0, sizeof(frame));
+  current = &proc;
+  proc.state = PROC_STATE_STOPPED;
+  proc.quantum_us = 1000;
+  proc.stop_status_pending = true;
+  proc.stopped = true;
+
+  proc_signal_enqueue(&proc, SIGCONT);
+
+  proc_signal_delivery_t result = proc_signal_handle_pending(&proc, &frame);
+
+  TEST_ASSERT_EQUAL_INT(PROC_SIGNAL_DELIVERY_HANDLED, result);
+  TEST_ASSERT_FALSE(proc.stopped);
+  TEST_ASSERT_EQUAL_INT(PROC_STATE_READY, proc.state);
+  TEST_ASSERT_FALSE(proc.stop_status_pending);
+  TEST_ASSERT_TRUE(proc.continued_pending);
+  TEST_ASSERT_EQUAL_INT(0xffff, proc.continue_status);
+}
+
+void test_proc_waitpid_reports_stop_status(void) {
+  proc_info_t child;
+  memset(&child, 0, sizeof(child));
+  proc_signal_state_init(&child);
+  child.pid = 1234;
+  child.state = PROC_STATE_STOPPED;
+  child.stop_status = ((SIGTSTP & 0x7f) << 8) | 0x7f;
+  child.stop_status_pending = true;
+  child.quantum_us = 1000;
+
+  parent.first_child = &child;
+  parent.children_count = 1;
+
+  int status = 0;
+  int result = proc_waitpid(&parent, child.pid, WUNTRACED, &status);
+
+  TEST_ASSERT_EQUAL_INT(child.pid, result);
+  TEST_ASSERT_EQUAL_INT(child.stop_status, status);
+  TEST_ASSERT_FALSE(child.stop_status_pending);
+}
+
+void test_proc_waitpid_reports_continued_status(void) {
+  proc_info_t child;
+  memset(&child, 0, sizeof(child));
+  proc_signal_state_init(&child);
+  child.pid = 4321;
+  child.state = PROC_STATE_READY;
+  child.continue_status = 0xffff;
+  child.continued_pending = true;
+  child.quantum_us = 1000;
+
+  parent.first_child = &child;
+  parent.children_count = 1;
+
+  int status = 0;
+  int result = proc_waitpid(&parent, child.pid, WCONTINUED, &status);
+
+  TEST_ASSERT_EQUAL_INT(child.pid, result);
+  TEST_ASSERT_EQUAL_INT(0xffff, status);
+  TEST_ASSERT_FALSE(child.continued_pending);
+}
+
 int main(void) {
   UNITY_BEGIN();
   RUN_TEST(test_signal_enqueue_and_dequeue);
@@ -148,10 +246,15 @@ int main(void) {
   RUN_TEST(test_signal_state_copy_inherits_handlers);
   RUN_TEST(test_signal_configure_action_sets_handler);
   RUN_TEST(test_signal_configure_action_rejects_sigkill_override);
+  RUN_TEST(test_signal_configure_action_rejects_sigstop_override);
   RUN_TEST(test_signal_modify_mask_blocks_and_unblocks);
   RUN_TEST(test_signal_send_validates_signo);
   RUN_TEST(test_signal_handle_pending_invokes_handler);
   RUN_TEST(test_signal_handle_pending_honors_block_mask);
   RUN_TEST(test_signal_handle_pending_default_terminates);
+  RUN_TEST(test_signal_handle_pending_default_stops_process);
+  RUN_TEST(test_signal_handle_pending_default_continues_process);
+  RUN_TEST(test_proc_waitpid_reports_stop_status);
+  RUN_TEST(test_proc_waitpid_reports_continued_status);
   return UNITY_END();
 }

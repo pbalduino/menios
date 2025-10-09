@@ -2,6 +2,7 @@
 #include <unity.h>
 
 #include <string.h>
+#include <sys/wait.h>
 
 extern proc_info_p current;
 
@@ -30,7 +31,7 @@ void test_waitpid_returns_child_when_zombie(void) {
   child_proc.exit_code = 42;
 
   int status = 0;
-  int result = proc_waitpid(&parent_proc, child_proc.pid, &status);
+  int result = proc_waitpid(&parent_proc, child_proc.pid, 0, &status);
 
   TEST_ASSERT_EQUAL_INT(child_proc.pid, result);
   TEST_ASSERT_EQUAL_INT(42, status);
@@ -43,7 +44,7 @@ void test_waitpid_returns_zero_when_child_running(void) {
   child_proc.state = PROC_STATE_RUNNING;
   int status = -1;
 
-  int result = proc_waitpid(&parent_proc, child_proc.pid, &status);
+  int result = proc_waitpid(&parent_proc, child_proc.pid, 0, &status);
 
   TEST_ASSERT_EQUAL_INT(0, result);
   TEST_ASSERT_EQUAL_INT(-1, status);

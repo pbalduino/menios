@@ -60,6 +60,7 @@ A release that meets this milestone must satisfy all of the following:
 - [x] Basic pipelines and `<`/`>` redirection supported for foreground commands (#186).
 - [x] Logical `&&`/`||` command chaining with short-circuit semantics (#204).
 - [x] `Ctrl+C` aborts foreground commands and pipelines via `SYS_PROC_KILL`.
+- [x] Background job control: Ctrl+Z stops foreground jobs, `jobs` lists them, `bg`/`fg` resume interactively.
 - [x] `PATH` search order configurable once environment support lands (#185).
 - [x] Tests ensure waitpid returns correct PID and shell stays in supervision loop (#182).
 
@@ -84,6 +85,7 @@ A release that meets this milestone must satisfy all of the following:
 | Typing commands echoes characters | manu | ✅ Stable |
 | Backspace redraw | `test/test_mosh_line.c` | ✅ Covered |
 | History navigation | manu | 🔄 Manual only |
+| Job control (Ctrl+Z, jobs/bg/fg) | `test/test_mosh_exec.c` | ✅ Covered |
 | Launch external binary (`/bin/user_demo`) | manu | ✅ Manual |
 | Shell exit + respawn | manu | ✅ Manual |
 | tmpfs workflow (`cat > /tmp/foo`) | test/test_tmpfs.c | ✅ Covered |
@@ -93,7 +95,7 @@ A release that meets this milestone must satisfy all of the following:
 ### IPC and Process Control
 - Expand pipelines to support advanced syntax (append, stderr redirection) once IPC primitives land (#209). Kernel pipe infrastructure (#206), the `pipe()` syscall/user wrapper (#207), shell integration (#208), and basic `|`, `<`, `>` handling (#165/#164) are already in place.
 - Signal delivery/handling for user processes (Ctrl+C integrated, advanced policies pending) (#213 done, #214 todo).
-- Job control (background tasks, `wait` builtin) (#158).
+- Background process management now includes job control (`jobs`, `fg`, `bg`, Ctrl+Z); future work covers richer `wait` semantics.
 - Process management utilities (`ps`, basic `kill` implemented; richer semantics future) (#187 ✅).
 
 ### Shell Usability Features

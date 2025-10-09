@@ -8,7 +8,7 @@ This document tracks the three major milestones for meniOS development.
 **Goal**: Complete interactive shell with full user experience
 **GitHub Milestone**: [Mosh](https://github.com/pbalduino/menios/milestone/1)
 
-**Status**: 24/31 complete (77.4%)
+**Status**: 25/31 complete (80.6%)
 
 **Assigned Issues**:
 
@@ -50,7 +50,7 @@ This document tracks the three major milestones for meniOS development.
 
 #### Advanced Features (3 issues)
 - [ ] #155 - Scripting support (if/while/for/functions)
-- [ ] #158 - Job control (bg/fg/Ctrl-Z)
+- [x] #158 - Job control (bg/fg/Ctrl-Z) ✅
 - [ ] #166 - Hook shell I/O to virtual terminals/VGA
 
 #### Core Infrastructure (22 completed dependencies)
@@ -209,8 +209,8 @@ This document tracks the three major milestones for meniOS development.
 ## 📈 Overall Progress
 
 - **Total Issues Across Milestones**: 64 issues
-- **Completed**: 36 issues (56.3%)
-- **In Progress**: 28 issues
+- **Completed**: 37 issues (57.8%)
+- **In Progress**: 27 issues
 - **Ready to Start**: 2 issues (no dependencies)
 
 ## 🚀 Immediate Next Steps
@@ -240,7 +240,7 @@ Many issues can be worked on in parallel:
 
 ### Completion Order
 Recommended completion order for maximum impact:
-1. **Mosh** - Provides usable development environment (77.4% complete)
+1. **Mosh** - Provides usable development environment (80.6% complete)
 2. **GCC** - Enables native development and compilation (25% complete)
 3. **Doom** - Demonstrates full OS capabilities (40% complete)
 
@@ -262,6 +262,7 @@ Recommended completion order for maximum impact:
 - **2025-10-11**: Closed #187 (/bin/ps and /bin/kill utilities) ✅
 - **2025-10-11**: Closed #204 (Logical operators &&/||) ✅
 - **2025-10-11**: Created #224 (unset built-in command)
+- **2025-10-11**: Closed #158 (Job control bg/fg/Ctrl-Z) ✅
 - **2025-10-08**: Closed #157 as duplicate of #197, #165 as completed by #208
 
 ---

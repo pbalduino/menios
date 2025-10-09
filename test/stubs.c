@@ -9,6 +9,7 @@
 #include <kernel/syscall.h>
 #include <kernel/vm.h>
 #include <kernel/thread.h>
+#include <sys/wait.h>
 #include <errno.h>
 #include <stdarg.h>
 #include <stdint.h>
@@ -77,6 +78,34 @@ void proc_request_sleep(uint64_t duration_us) {
 
 void proc_mark_ready(proc_info_p proc) {
   if(proc) {
+    proc->state = PROC_STATE_READY;
+  }
+}
+
+void proc_mark_stopped(proc_info_p proc, int signo) {
+  if(proc == NULL) {
+    return;
+  }
+
+  proc->stop_status = ((signo & 0x7f) << 8) | 0x7f;
+  proc->stop_status_pending = true;
+  proc->stopped = true;
+  proc->state = PROC_STATE_STOPPED;
+  proc->time_slice_remaining_us = 0;
+  proc->continue_status = 0;
+  proc->continued_pending = false;
+}
+
+void proc_mark_continued(proc_info_p proc) {
+  if(proc == NULL) {
+    return;
+  }
+
+  proc->stopped = false;
+  proc->stop_status_pending = false;
+  proc->continue_status = 0xffff;
+  proc->continued_pending = true;
+  if(proc->state == PROC_STATE_STOPPED) {
     proc->state = PROC_STATE_READY;
   }
 }
@@ -544,13 +573,15 @@ int proc_exec_image(proc_info_p proc,
   return -ENOSYS;
 }
 
-int proc_waitpid(proc_info_p parent, int pid, int* status_out) {
+int proc_waitpid(proc_info_p parent, int pid, int options, int* status_out) {
   if(parent == NULL) {
     return -ECHILD;
   }
 
   proc_info_p prev = NULL;
   proc_info_p child = parent->first_child;
+  bool report_stopped = (options & WUNTRACED) != 0;
+  bool report_continued = (options & WCONTINUED) != 0;
 
   while(child != NULL) {
     proc_info_p next = child->sibling_next;
@@ -558,6 +589,26 @@ int proc_waitpid(proc_info_p parent, int pid, int* status_out) {
       prev = child;
       child = next;
       continue;
+    }
+
+    if(child->stop_status_pending && report_stopped) {
+      if(status_out != NULL) {
+        *status_out = child->stop_status;
+      }
+      child->stop_status_pending = false;
+      parent->waitpid_waiting = false;
+      parent->waitpid_target = -1;
+      return (int)child->pid;
+    }
+
+    if(child->continued_pending && report_continued) {
+      if(status_out != NULL) {
+        *status_out = child->continue_status;
+      }
+      child->continued_pending = false;
+      parent->waitpid_waiting = false;
+      parent->waitpid_target = -1;
+      return (int)child->pid;
     }
 
     if(child->state == PROC_STATE_ZOMBIE) {

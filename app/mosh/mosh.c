@@ -8,13 +8,12 @@
 #include <signal.h>
 #include <sys/fcntl.h>
 #include <sys/types.h>
+#include <sys/wait.h>
 #include <unistd.h>
 #include <menios/syscall.h>
 #ifndef MOSH_TEST
 #include <menios/syscall_user.h>
 #endif
-
-#define WNOHANG 1
 
 #define MOSH_MAX_LINE_LENGTH 256
 #define MOSH_MAX_PATH        256
@@ -45,6 +44,7 @@ static bool     env_heap_flags[MOSH_MAX_ENV_VARS];
 static size_t str_len(const char* s);
 static bool   str_eq(const char* a, const char* b);
 static void   str_copy(char* dest, size_t capacity, const char* src);
+static bool   strip_background_marker(char* text);
 
 typedef struct {
   char*  argv[MOSH_MAX_ARGS];
@@ -66,6 +66,54 @@ typedef struct {
 
 static completion_context_t completion_ctx;
 
+#define MOSH_MAX_JOBS 16
+
+typedef enum {
+  JOB_STATE_RUNNING = 0,
+  JOB_STATE_STOPPED,
+  JOB_STATE_DONE
+} job_state_t;
+
+typedef struct {
+  bool        in_use;
+  int         id;
+  job_state_t state;
+  bool        background;
+  bool        foreground;
+  bool        notified_done;
+  char        command[MOSH_MAX_LINE_LENGTH];
+  size_t      segment_count;
+  long        pids[MOSH_MAX_SEGMENTS];
+  int         statuses[MOSH_MAX_SEGMENTS];
+  char        argv0[MOSH_MAX_SEGMENTS][MOSH_MAX_PATH];
+  int         last_status;
+} job_t;
+
+static job_t jobs[MOSH_MAX_JOBS];
+static int next_job_id = 1;
+static job_t* current_job = NULL;
+static int shell_last_status = 0;
+
+static int  decode_wait_status(int status);
+static int  encode_raw_status_from_code(int code);
+static void shell_set_status_code(int code);
+static void shell_set_status_from_raw(int status);
+
+typedef enum {
+  JOB_EVENT_NONE = 0,
+  JOB_EVENT_EXITED,
+  JOB_EVENT_STOPPED,
+  JOB_EVENT_CONTINUED
+} job_event_t;
+
+static job_event_t job_poll_status(job_t* job, bool block);
+static inline long syscall2(long number, long arg1, long arg2);
+static size_t format_unsigned_value(size_t value, char* out, size_t capacity);
+static size_t format_signed_value(int value, char* out, size_t capacity);
+static void jobs_poll_updates(bool print_notifications);
+static void jobs_print_list(void);
+static int job_raw_status(const job_t* job);
+
 typedef enum {
   SEQ_NONE = 0,
   SEQ_AND,
@@ -74,6 +122,8 @@ typedef enum {
 
 static volatile int sigint_requested = 0;
 static volatile int sigint_print_pending = 0;
+static volatile int sigtstp_requested = 0;
+static volatile int sigtstp_print_pending = 0;
 
 static void write_bytes(int fd, const char* data, size_t length);
 static void write_char_stdout(char ch);
@@ -82,7 +132,6 @@ static void exec_command(char** argv, size_t argc);
 static long  mosh_fork(void);
 static long  mosh_execve(const char* path, char* const argv[], char* const envp[]);
 static const char* shell_prompt(void);
-static void send_signal_to_children(long* pids, size_t segment_count, int signo);
 
 typedef struct {
   bool   active;
@@ -105,6 +154,340 @@ static void completion_reset(void) {
   completion_ctx.current_index = 0;
   completion_ctx.inserted_length = 0;
   completion_ctx.dir_prefix[0] = '\0';
+}
+
+static job_t* job_find_by_id(int id) {
+  for(size_t i = 0; i < MOSH_MAX_JOBS; i++) {
+    if(jobs[i].in_use && jobs[i].id == id) {
+      return &jobs[i];
+    }
+  }
+  return NULL;
+}
+
+static job_t* job_find_latest(bool prefer_stopped) {
+  job_t* candidate = NULL;
+  for(size_t i = 0; i < MOSH_MAX_JOBS; i++) {
+    if(!jobs[i].in_use) {
+      continue;
+    }
+    if(prefer_stopped && jobs[i].state == JOB_STATE_STOPPED) {
+      if(candidate == NULL || jobs[i].id > candidate->id) {
+        candidate = &jobs[i];
+      }
+      continue;
+    }
+    if(!prefer_stopped) {
+      if(candidate == NULL || jobs[i].id > candidate->id) {
+        candidate = &jobs[i];
+      }
+    }
+  }
+  return candidate;
+}
+
+static job_t* job_allocate(const char* command,
+                           command_segment_t* segments,
+                           size_t segment_count,
+                           long* pids,
+                           bool background) {
+  size_t slot = MOSH_MAX_JOBS;
+  for(size_t i = 0; i < MOSH_MAX_JOBS; i++) {
+    if(!jobs[i].in_use) {
+      slot = i;
+      break;
+    }
+  }
+  if(slot == MOSH_MAX_JOBS) {
+    return NULL;
+  }
+
+  job_t* job = &jobs[slot];
+  memset(job, 0, sizeof(*job));
+  job->in_use = true;
+  job->id = next_job_id++;
+  if(next_job_id < 0) {
+    next_job_id = 1;
+  }
+  job->state = JOB_STATE_RUNNING;
+  job->background = background;
+  job->foreground = !background;
+  job->segment_count = segment_count;
+  job->last_status = 0;
+  if(command != NULL) {
+    str_copy(job->command, sizeof(job->command), command);
+  } else {
+    job->command[0] = '\0';
+  }
+  for(size_t i = 0; i < segment_count && i < MOSH_MAX_SEGMENTS; i++) {
+    job->pids[i] = pids ? pids[i] : 0;
+    job->statuses[i] = 0;
+    if(segments != NULL && segments[i].argc > 0 && segments[i].argv[0] != NULL) {
+      str_copy(job->argv0[i], sizeof(job->argv0[i]), segments[i].argv[0]);
+    } else {
+      job->argv0[i][0] = '\0';
+    }
+  }
+  for(size_t i = segment_count; i < MOSH_MAX_SEGMENTS; i++) {
+    job->pids[i] = 0;
+    job->statuses[i] = 0;
+    job->argv0[i][0] = '\0';
+  }
+  return job;
+}
+
+static void job_release(job_t* job) {
+  if(job == NULL) {
+    return;
+  }
+  memset(job, 0, sizeof(*job));
+}
+
+static const char* job_state_label(const job_t* job) {
+  switch(job->state) {
+    case JOB_STATE_RUNNING:
+      return job->background ? "Running" : "Running";
+    case JOB_STATE_STOPPED:
+      return "Stopped";
+    case JOB_STATE_DONE:
+      return "Done";
+  }
+  return "Unknown";
+}
+
+static void job_send_signal(job_t* job, int signo) {
+  if(job == NULL) {
+    return;
+  }
+  for(size_t i = 0; i < job->segment_count; i++) {
+    long pid = job->pids[i];
+    if(pid > 0) {
+      syscall2(SYS_KILL, pid, signo);
+    }
+  }
+}
+
+static void job_print_notification(job_t* job, const char* status_text) {
+  if(job == NULL || status_text == NULL) {
+    return;
+  }
+  write_char_stdout('\n');
+  char buffer[64];
+  size_t len = 0;
+  if(len + 1 < sizeof(buffer)) {
+    buffer[len++] = '[';
+  }
+  len += format_unsigned_value((size_t)job->id, &buffer[len], sizeof(buffer) - len - 1);
+  if(len + 2 < sizeof(buffer)) {
+    buffer[len++] = ']';
+    buffer[len++] = ' ';
+  }
+  const char* text = status_text;
+  while(*text != '\0' && len + 1 < sizeof(buffer)) {
+    buffer[len++] = *text++;
+  }
+  if(len + 1 < sizeof(buffer)) {
+    buffer[len++] = ' ';
+  }
+  buffer[len] = '\0';
+  write_bytes(STDOUT_FILENO, buffer, len);
+  write_str(STDOUT_FILENO, job->command);
+  write_char_stdout('\n');
+}
+
+static void jobs_print_list(void) {
+  for(size_t i = 0; i < MOSH_MAX_JOBS; i++) {
+    if(!jobs[i].in_use) {
+      continue;
+    }
+    char header[64];
+    size_t len = 0;
+    if(len + 1 < sizeof(header)) {
+      header[len++] = '[';
+    }
+    len += format_unsigned_value((size_t)jobs[i].id, &header[len], sizeof(header) - len - 1);
+    if(len + 2 < sizeof(header)) {
+      header[len++] = ']';
+      header[len++] = ' ';
+    }
+    const char* state = job_state_label(&jobs[i]);
+    while(state != NULL && *state != '\0' && len + 1 < sizeof(header)) {
+      header[len++] = *state++;
+    }
+    if(len + 1 < sizeof(header)) {
+      header[len++] = ' ';
+    }
+    header[len] = '\0';
+    write_bytes(STDOUT_FILENO, header, len);
+    write_str(STDOUT_FILENO, jobs[i].command);
+    write_char_stdout('\n');
+  }
+}
+
+static int job_wait_temporary(const char* command,
+                              command_segment_t* segments,
+                              size_t segment_count,
+                              long* pids) {
+  job_t temp;
+  memset(&temp, 0, sizeof(temp));
+  temp.in_use = false;
+  temp.id = 0;
+  temp.state = JOB_STATE_RUNNING;
+  temp.foreground = true;
+  temp.background = false;
+  temp.segment_count = segment_count;
+  if(command != NULL) {
+    str_copy(temp.command, sizeof(temp.command), command);
+  }
+  for(size_t i = 0; i < segment_count && i < MOSH_MAX_SEGMENTS; i++) {
+    temp.pids[i] = pids[i];
+    temp.statuses[i] = 0;
+    if(segments != NULL && segments[i].argc > 0 && segments[i].argv[0] != NULL) {
+      str_copy(temp.argv0[i], sizeof(temp.argv0[i]), segments[i].argv[0]);
+    }
+  }
+
+  while(true) {
+    job_event_t event = job_poll_status(&temp, true);
+    if(event == JOB_EVENT_CONTINUED) {
+      continue;
+    }
+    if(event == JOB_EVENT_STOPPED || event == JOB_EVENT_EXITED || event == JOB_EVENT_NONE) {
+      break;
+    }
+  }
+
+  return temp.last_status;
+}
+
+static int job_wait_foreground(job_t* job) {
+  if(job == NULL) {
+    return 0;
+  }
+
+  job->foreground = true;
+  job->background = false;
+  current_job = job;
+
+  while(true) {
+    job_event_t event = job_poll_status(job, true);
+    if(event == JOB_EVENT_CONTINUED) {
+      continue;
+    }
+    if(event == JOB_EVENT_STOPPED) {
+      job_print_notification(job, "Stopped");
+      break;
+    }
+    if(event == JOB_EVENT_EXITED || event == JOB_EVENT_NONE) {
+      break;
+    }
+  }
+
+  current_job = NULL;
+
+  int status = (job->state == JOB_STATE_DONE) ? job_raw_status(job) : job->last_status;
+  if(job->state == JOB_STATE_DONE) {
+    job_release(job);
+  } else {
+    job->foreground = false;
+  }
+
+  jobs_poll_updates(false);
+  return status;
+}
+
+static int decode_wait_status(int status) {
+  if(status < 0) {
+    return 1;
+  }
+  if(WIFEXITED(status)) {
+    return WEXITSTATUS(status);
+  }
+  if(WIFSIGNALED(status)) {
+    return 128 + WTERMSIG(status);
+  }
+  return status;
+}
+
+static int encode_raw_status_from_code(int code) {
+  if(code <= 0) {
+    return 0;
+  }
+  return (code & 0xff) << 8;
+}
+
+static void shell_set_status_code(int code) {
+  if(code < 0) {
+    code = 1;
+  }
+  shell_last_status = code;
+}
+
+static void shell_set_status_from_raw(int status) {
+  shell_last_status = decode_wait_status(status);
+}
+
+static const char* skip_spaces(const char* text) {
+  while(text != NULL && (*text == ' ' || *text == '\t')) {
+    text++;
+  }
+  return text;
+}
+
+static bool parse_job_identifier(const char* token, int* out_id) {
+  if(token == NULL || out_id == NULL) {
+    return false;
+  }
+
+  token = skip_spaces(token);
+  if(*token == '%') {
+    token++;
+  }
+  if(*token == '\0') {
+    return false;
+  }
+
+  int value = 0;
+  while(*token >= '0' && *token <= '9') {
+    value = value * 10 + (*token - '0');
+    token++;
+  }
+  if(*token != '\0' && *token != ' ' && *token != '\t') {
+    return false;
+  }
+  if(value <= 0) {
+    return false;
+  }
+  *out_id = value;
+  return true;
+}
+
+static job_t* job_resolve_argument(const char* arguments, bool prefer_stopped) {
+  const char* token = skip_spaces(arguments);
+  if(token == NULL || *token == '\0') {
+    job_t* job = NULL;
+    if(prefer_stopped) {
+      job = job_find_latest(true);
+    }
+    if(job == NULL) {
+      job = job_find_latest(false);
+    }
+    return job;
+  }
+
+  char buffer[16];
+  size_t len = 0;
+  while(token[len] != '\0' && token[len] != ' ' && token[len] != '\t' && len + 1 < sizeof(buffer)) {
+    buffer[len] = token[len];
+    len++;
+  }
+  buffer[len] = '\0';
+
+  int id = 0;
+  if(!parse_job_identifier(buffer, &id)) {
+    return NULL;
+  }
+  return job_find_by_id(id);
 }
 
 static size_t str_append(char* dest, size_t capacity, size_t offset, const char* src) {
@@ -146,11 +529,40 @@ static void shell_trigger_sigint(void) {
   sigint_handler(SIGINT);
 }
 
+static void sigtstp_handler(int signo) {
+  (void)signo;
+  sigtstp_requested = 1;
+  sigtstp_print_pending = 1;
+}
+
+static bool shell_take_sigtstp(void) {
+  if(sigtstp_requested) {
+    sigtstp_requested = 0;
+    return true;
+  }
+  return false;
+}
+
+static void shell_maybe_print_sigtstp(void) {
+  if(sigtstp_print_pending) {
+    sigtstp_print_pending = 0;
+    write_str(STDOUT_FILENO, "^Z\n");
+  }
+}
+
+static void shell_trigger_sigtstp(void) {
+  sigtstp_handler(SIGTSTP);
+}
+
 static void shell_install_signal_handlers(void) {
   struct sigaction sa;
   memset(&sa, 0, sizeof(sa));
   sa.sa_handler = sigint_handler;
   sigaction(SIGINT, &sa, NULL);
+
+  memset(&sa, 0, sizeof(sa));
+  sa.sa_handler = sigtstp_handler;
+  sigaction(SIGTSTP, &sa, NULL);
 }
 
 #ifdef MOSH_TEST
@@ -165,8 +577,7 @@ void mosh_test_reset_sigint(void) {
 #endif
 
 static bool parse_command_segments(char* buffer, command_segment_t* segments, size_t* segment_count);
-static int  execute_pipeline(command_segment_t* segments, size_t segment_count);
-static int  wait_for_children(command_segment_t* segments, size_t segment_count, long* pids, int* statuses);
+static int  execute_pipeline(const char* command, command_segment_t* segments, size_t segment_count, bool background);
 static int  launch_pipeline(char* line);
 static int  launch_command(char* line);
 static size_t split_sequence(char* line, char* parts[], sequence_op_t ops[], size_t max_parts);
@@ -365,6 +776,27 @@ static void str_copy(char* dest, size_t capacity, const char* src) {
     idx++;
   }
   dest[idx] = '\0';
+}
+
+static bool strip_background_marker(char* text) {
+  if(text == NULL) {
+    return false;
+  }
+
+  size_t len = str_len(text);
+  while(len > 0 && (text[len - 1] == ' ' || text[len - 1] == '\t')) {
+    text[--len] = '\0';
+  }
+
+  if(len > 0 && text[len - 1] == '&') {
+    text[--len] = '\0';
+    while(len > 0 && (text[len - 1] == ' ' || text[len - 1] == '\t')) {
+      text[--len] = '\0';
+    }
+    return true;
+  }
+
+  return false;
 }
 
 static bool build_combined_path(const char* base, const char* path, char* out, size_t capacity) {
@@ -597,86 +1029,204 @@ static inline void close_fd_if_needed(int fd) {
   }
 }
 
-static int wait_for_children(command_segment_t* segments,
-                             size_t segment_count,
-                             long* pids,
-                             int* statuses) {
-  size_t remaining = segment_count;
-  for(size_t i = 0; i < segment_count; i++) {
-    statuses[i] = 0;
+static int job_raw_status(const job_t* job) {
+  if(job == NULL || job->segment_count == 0) {
+    return 0;
+  }
+  return job->statuses[job->segment_count - 1];
+}
+
+static void job_handle_exit_messages(job_t* job) {
+  if(job == NULL || job->segment_count == 0) {
+    return;
   }
 
-  while(remaining > 0) {
-    bool progress = false;
+  int status = job_raw_status(job);
+  if(WIFEXITED(status)) {
+    int code = WEXITSTATUS(status);
+    if(code == 127) {
+      if(job->argv0[job->segment_count - 1][0] != '\0') {
+        const char prefix[] = "mosh: command not found: ";
+        write_bytes(STDOUT_FILENO, prefix, sizeof(prefix) - 1);
+        write_str(STDOUT_FILENO, job->argv0[job->segment_count - 1]);
+        write_char_stdout('\n');
+      }
+      return;
+    }
+    if(code > 0 && code != 130) {
+      static const char prefix[] = "mosh: process exited with status ";
+      char buffer[32];
+      size_t len = format_signed_value(code, buffer, sizeof(buffer));
+      write_bytes(STDERR_FILENO, prefix, sizeof(prefix) - 1);
+      if(len > 0 && len <= sizeof(buffer)) {
+        write_bytes(STDERR_FILENO, buffer, len);
+      }
+      write_char_stdout('\n');
+    }
+  } else if(WIFSIGNALED(status)) {
+    int signo = WTERMSIG(status);
+    if(signo != SIGINT) {
+      static const char prefix[] = "mosh: process terminated by signal ";
+      char buffer[32];
+      size_t len = format_signed_value(signo, buffer, sizeof(buffer));
+      write_bytes(STDERR_FILENO, prefix, sizeof(prefix) - 1);
+      if(len > 0 && len <= sizeof(buffer)) {
+        write_bytes(STDERR_FILENO, buffer, len);
+      }
+      write_char_stdout('\n');
+    }
+  }
+}
 
-    if(sigint_requested && shell_take_sigint()) {
-      shell_maybe_print_sigint();
-      pending_length = 0;
-      pending_offset = 0;
-      send_signal_to_children(pids, segment_count, SIGINT);
+static job_event_t job_poll_status(job_t* job, bool block) {
+  if(job == NULL) {
+    return JOB_EVENT_NONE;
+  }
+
+  job_event_t pending_event = JOB_EVENT_NONE;
+
+  while(true) {
+    bool progress = false;
+    size_t remaining = 0;
+    for(size_t i = 0; i < job->segment_count; i++) {
+      if(job->pids[i] > 0) {
+        remaining++;
+      }
     }
 
-    for(size_t i = 0; i < segment_count; i++) {
-      long pid = pids[i];
+    if(remaining == 0) {
+      job->state = JOB_STATE_DONE;
+      job_handle_exit_messages(job);
+      job->last_status = job_raw_status(job);
+      return JOB_EVENT_EXITED;
+    }
+
+    if(block) {
+      if(sigint_requested && shell_take_sigint()) {
+        shell_maybe_print_sigint();
+        pending_length = 0;
+        pending_offset = 0;
+        job_send_signal(job, SIGINT);
+      }
+      if(sigtstp_requested && shell_take_sigtstp()) {
+        shell_maybe_print_sigtstp();
+        pending_length = 0;
+        pending_offset = 0;
+        job_send_signal(job, SIGTSTP);
+      }
+    }
+
+    for(size_t i = 0; i < job->segment_count; i++) {
+      long pid = job->pids[i];
       if(pid <= 0) {
         continue;
       }
 
       int status = 0;
-      long waited = syscall3(SYS_WAITPID, pid, (long)&status, WNOHANG);
+      long waited = syscall3(SYS_WAITPID, pid, (long)&status, WUNTRACED | WCONTINUED | WNOHANG);
       if(waited == pid) {
-        pids[i] = -pid;
-        statuses[i] = status;
-        remaining--;
         progress = true;
-        if(status == 127 && segments[i].argc > 0) {
+
+        if(WIFSTOPPED(status)) {
+          job->statuses[i] = status;
+          job->state = JOB_STATE_STOPPED;
+          job->foreground = false;
+          job->background = false;
+          job->last_status = status;
+          return JOB_EVENT_STOPPED;
+        }
+
+        if(WIFCONTINUED(status)) {
+          job->statuses[i] = status;
+          job->state = JOB_STATE_RUNNING;
+          job->background = true;
+          pending_event = JOB_EVENT_CONTINUED;
+          continue;
+        }
+
+        job->statuses[i] = status;
+        job->pids[i] = -pid;
+        if(WIFEXITED(status) && WEXITSTATUS(status) == 127 && job->argv0[i][0] != '\0') {
           const char prefix[] = "mosh: command not found: ";
           write_bytes(STDOUT_FILENO, prefix, sizeof(prefix) - 1);
-          write_bytes(STDOUT_FILENO, segments[i].argv[0], str_len(segments[i].argv[0]));
-          write_bytes(STDOUT_FILENO, "\n", 1);
+          write_str(STDOUT_FILENO, job->argv0[i]);
+          write_char_stdout('\n');
+          job->argv0[i][0] = '\0';
         }
-        continue;
-      }
-
-      if(waited < 0 && waited != -ECHILD) {
-        write_str(STDOUT_FILENO, "mosh: waitpid failed\n");
-        pids[i] = -pid;
-        statuses[i] = (int)waited;
-        remaining--;
+      } else if(waited < 0 && waited != -ECHILD) {
+        job->pids[i] = -pid;
+        job->statuses[i] = (int)waited;
         progress = true;
+        write_str(STDOUT_FILENO, "mosh: waitpid failed\n");
       }
     }
 
-    if(remaining == 0) {
-      break;
+    if(pending_event != JOB_EVENT_NONE) {
+      job->last_status = job_raw_status(job);
+      return pending_event;
     }
 
-    long polled = syscall0(SYS_STDIN_POLL);
-    if(polled >= 0) {
-      char ch = (char)polled;
-      if(ch == 3) {
-        shell_trigger_sigint();
-        continue;
-      } else {
-        if(pending_length + 1 < sizeof(pending_input)) {
-          pending_input[pending_length++] = ch;
-          pending_input[pending_length] = '\0';
-          write_char_stdout(ch);
-        }
-      }
+    if(!block) {
+      return JOB_EVENT_NONE;
     }
 
     if(!progress) {
-      syscall2(SYS_SLEEP, 1000, 0);
+      long polled = syscall0(SYS_STDIN_POLL);
+      if(polled >= 0) {
+        char ch = (char)polled;
+        if(ch == 0x03) {
+          shell_trigger_sigint();
+        } else if(ch == 0x1a) {
+          shell_trigger_sigtstp();
+        } else {
+          if(pending_length + 1 < sizeof(pending_input)) {
+            pending_input[pending_length++] = ch;
+            pending_input[pending_length] = '\0';
+            write_char_stdout(ch);
+          }
+        }
+      } else {
+        syscall2(SYS_SLEEP, 1000, 0);
+      }
     }
   }
-
-  return statuses[segment_count - 1];
 }
 
-static int execute_pipeline(command_segment_t* segments, size_t segment_count) {
+static void jobs_poll_updates(bool print_notifications) {
+  for(size_t i = 0; i < MOSH_MAX_JOBS; i++) {
+    job_t* job = &jobs[i];
+    if(!job->in_use) {
+      continue;
+    }
+    if(job->foreground) {
+      continue;
+    }
+
+    job_event_t event = job_poll_status(job, false);
+    if(event == JOB_EVENT_NONE) {
+      continue;
+    }
+
+    if(event == JOB_EVENT_EXITED) {
+      if(print_notifications || job->background) {
+        job_print_notification(job, "Done");
+      }
+      job_release(job);
+    } else if(event == JOB_EVENT_STOPPED) {
+      job_print_notification(job, "Stopped");
+    } else if(event == JOB_EVENT_CONTINUED) {
+      if(print_notifications || job->background) {
+        job_print_notification(job, "Continued");
+      }
+    }
+  }
+}
+
+static int execute_pipeline(const char* command,
+                            command_segment_t* segments,
+                            size_t segment_count,
+                            bool background) {
   long pids[MOSH_MAX_SEGMENTS] = {0};
-  int statuses[MOSH_MAX_SEGMENTS] = {0};
   int prev_read = -1;
   size_t started = 0;
 
@@ -689,7 +1239,7 @@ static int execute_pipeline(command_segment_t* segments, size_t segment_count) {
         write_str(STDOUT_FILENO, "mosh: failed to create pipe\n");
         close_fd_if_needed(prev_read);
         if(started > 0) {
-          wait_for_children(segments, started, pids, statuses);
+          job_wait_temporary(command, segments, started, pids);
         }
         return (int)rc;
       }
@@ -704,7 +1254,7 @@ static int execute_pipeline(command_segment_t* segments, size_t segment_count) {
       close_fd_if_needed(pipe_fds[1]);
       close_fd_if_needed(prev_read);
       if(started > 0) {
-        wait_for_children(segments, started, pids, statuses);
+        job_wait_temporary(command, segments, started, pids);
       }
       return (int)fork_rc;
     }
@@ -769,8 +1319,43 @@ static int execute_pipeline(command_segment_t* segments, size_t segment_count) {
   }
 
   close_fd_if_needed(prev_read);
+  job_t* job = job_allocate(command, segments, segment_count, pids, background);
+  if(job == NULL) {
+    write_str(STDOUT_FILENO, "mosh: too many concurrent jobs\n");
+    return job_wait_temporary(command, segments, segment_count, pids);
+  }
 
-  int last_status = wait_for_children(segments, segment_count, pids, statuses);
+  if(background) {
+    job->background = true;
+    job->foreground = false;
+    char message[64];
+    long display_pid = 0;
+    if(job->segment_count > 0) {
+      display_pid = job->pids[job->segment_count - 1];
+      if(display_pid < 0) {
+        display_pid = -display_pid;
+      }
+    }
+    size_t msg_len = 0;
+    if(msg_len + 1 < sizeof(message)) {
+      message[msg_len++] = '[';
+    }
+    msg_len += format_unsigned_value((size_t)job->id, &message[msg_len], sizeof(message) - msg_len - 1);
+    if(msg_len + 2 < sizeof(message)) {
+      message[msg_len++] = ']';
+      message[msg_len++] = ' ';
+    }
+    msg_len += format_unsigned_value((size_t)display_pid, &message[msg_len], sizeof(message) - msg_len - 1);
+    if(msg_len + 1 < sizeof(message)) {
+      message[msg_len++] = '\n';
+    }
+    message[msg_len] = '\0';
+    write_bytes(STDOUT_FILENO, message, msg_len);
+    jobs_poll_updates(false);
+    return 0;
+  }
+
+  int last_status = job_wait_foreground(job);
   return last_status;
 }
 
@@ -1727,13 +2312,6 @@ static bool reverse_search_handle_char(line_state_t* state, char ch) {
   return false;
 }
 
-static void send_signal_to_children(long* pids, size_t segment_count, int signo) {
-  for(size_t i = 0; i < segment_count; i++) {
-    if(pids[i] > 0) {
-      syscall2(SYS_KILL, pids[i], signo);
-    }
-  }
-}
 
 static size_t read_line(const char* prompt, char* buffer, size_t capacity) {
   if(buffer == NULL || capacity == 0) {
@@ -1959,7 +2537,7 @@ static size_t read_line(const char* prompt, char* buffer, size_t capacity) {
   }
 }
 
-static bool handle_builtin(const char* line) {
+static bool handle_builtin(const char* line, int* out_status) {
   size_t idx = 0;
   while(line[idx] == ' ' || line[idx] == '\t') {
     idx++;
@@ -1972,6 +2550,10 @@ static bool handle_builtin(const char* line) {
 
   size_t command_len = (size_t)(line + idx - command_start);
   if(command_len == 0) {
+    shell_set_status_code(0);
+    if(out_status != NULL) {
+      *out_status = 0;
+    }
     return true;
   }
 
@@ -1987,7 +2569,14 @@ static bool handle_builtin(const char* line) {
               "  exit  - leave mosh\n"
               "  pwd   - print current directory\n"
               "  echo  - print arguments\n"
-              "  cd    - change directory (limited)\n");
+              "  cd    - change directory (limited)\n"
+              "  jobs  - list background jobs\n"
+              "  fg    - resume job in foreground\n"
+              "  bg    - resume job in background\n");
+    shell_set_status_code(0);
+    if(out_status != NULL) {
+      *out_status = 0;
+    }
     return true;
   }
 
@@ -2000,6 +2589,10 @@ static bool handle_builtin(const char* line) {
   if(command_len == 3 && str_ncmp(command_start, "pwd", 3) == 0) {
     write_str(STDOUT_FILENO, current_directory);
     write_str(STDOUT_FILENO, "\n");
+    shell_set_status_code(0);
+    if(out_status != NULL) {
+      *out_status = 0;
+    }
     return true;
   }
 
@@ -2017,6 +2610,90 @@ static bool handle_builtin(const char* line) {
     }
     write_str(STDOUT_FILENO, arguments);
     write_str(STDOUT_FILENO, "\n");
+    shell_set_status_code(0);
+    if(out_status != NULL) {
+      *out_status = 0;
+    }
+    return true;
+  }
+
+  if(command_len == 4 && str_ncmp(command_start, "jobs", 4) == 0) {
+    jobs_poll_updates(true);
+    jobs_print_list();
+    shell_set_status_code(0);
+    if(out_status != NULL) {
+      *out_status = 0;
+    }
+    return true;
+  }
+
+  if(command_len == 2 && str_ncmp(command_start, "fg", 2) == 0) {
+    jobs_poll_updates(false);
+    job_t* job = job_resolve_argument(arguments, true);
+    if(job == NULL) {
+      write_str(STDOUT_FILENO, "mosh: fg: job not found\n");
+      shell_set_status_code(1);
+      if(out_status != NULL) {
+        *out_status = encode_raw_status_from_code(shell_last_status);
+      }
+      return true;
+    }
+    if(job->state == JOB_STATE_DONE) {
+      write_str(STDOUT_FILENO, "mosh: fg: job already completed\n");
+      job_release(job);
+      shell_set_status_code(1);
+      if(out_status != NULL) {
+        *out_status = encode_raw_status_from_code(shell_last_status);
+      }
+      return true;
+    }
+    write_str(STDOUT_FILENO, job->command);
+    write_char_stdout('\n');
+    job_send_signal(job, SIGCONT);
+    int status = job_wait_foreground(job);
+    shell_set_status_from_raw(status);
+    if(out_status != NULL) {
+      *out_status = status;
+    }
+    return true;
+  }
+
+  if(command_len == 2 && str_ncmp(command_start, "bg", 2) == 0) {
+    jobs_poll_updates(false);
+    job_t* job = job_resolve_argument(arguments, false);
+    if(job == NULL) {
+      write_str(STDOUT_FILENO, "mosh: bg: job not found\n");
+      shell_set_status_code(1);
+      if(out_status != NULL) {
+        *out_status = encode_raw_status_from_code(shell_last_status);
+      }
+      return true;
+    }
+    if(job->state == JOB_STATE_DONE) {
+      write_str(STDOUT_FILENO, "mosh: bg: job already completed\n");
+      shell_set_status_code(1);
+      if(out_status != NULL) {
+        *out_status = encode_raw_status_from_code(shell_last_status);
+      }
+      return true;
+    }
+    if(job->state != JOB_STATE_STOPPED) {
+      write_str(STDOUT_FILENO, "mosh: bg: job not stopped\n");
+      shell_set_status_code(1);
+      if(out_status != NULL) {
+        *out_status = encode_raw_status_from_code(shell_last_status);
+      }
+      return true;
+    }
+    job->background = true;
+    job->foreground = false;
+    job_send_signal(job, SIGCONT);
+    job_print_notification(job, "Continued");
+    jobs_poll_updates(false);
+    shell_set_status_code(0);
+    if(out_status != NULL) {
+      *out_status = 0;
+    }
     return true;
   }
 
@@ -2033,6 +2710,10 @@ static bool handle_builtin(const char* line) {
       }
       if(!normalize_path(current_directory, home, resolved, sizeof(resolved))) {
         write_str(STDOUT_FILENO, "mosh: cd: invalid path\n");
+        shell_set_status_code(1);
+        if(out_status != NULL) {
+          *out_status = encode_raw_status_from_code(shell_last_status);
+        }
         return true;
       }
     } else {
@@ -2044,6 +2725,10 @@ static bool handle_builtin(const char* line) {
       char temp[MOSH_MAX_PATH];
       if(consumed >= sizeof(temp)) {
         write_str(STDOUT_FILENO, "mosh: cd: path too long\n");
+        shell_set_status_code(1);
+        if(out_status != NULL) {
+          *out_status = encode_raw_status_from_code(shell_last_status);
+        }
         return true;
       }
       for(size_t i = 0; i < consumed; i++) {
@@ -2052,6 +2737,10 @@ static bool handle_builtin(const char* line) {
       temp[consumed] = '\0';
       if(!normalize_path(current_directory, temp, resolved, sizeof(resolved))) {
         write_str(STDOUT_FILENO, "mosh: cd: invalid path\n");
+        shell_set_status_code(1);
+        if(out_status != NULL) {
+          *out_status = encode_raw_status_from_code(shell_last_status);
+        }
         return true;
       }
       while(target[consumed] == ' ' || target[consumed] == '\t') {
@@ -2059,6 +2748,10 @@ static bool handle_builtin(const char* line) {
       }
       if(target[consumed] != '\0') {
         write_str(STDOUT_FILENO, "mosh: cd: too many arguments\n");
+        shell_set_status_code(1);
+        if(out_status != NULL) {
+          *out_status = encode_raw_status_from_code(shell_last_status);
+        }
         return true;
       }
     }
@@ -2066,11 +2759,19 @@ static bool handle_builtin(const char* line) {
     long rc = syscall3(SYS_LISTDIR, (long)resolved, 0, 0);
     if(rc < 0) {
       write_str(STDOUT_FILENO, "mosh: cd: unable to access directory\n");
+      shell_set_status_code(1);
+      if(out_status != NULL) {
+        *out_status = encode_raw_status_from_code(shell_last_status);
+      }
       return true;
     }
 
     str_copy(current_directory, sizeof(current_directory), resolved);
     env_set("PWD", current_directory);
+    shell_set_status_code(0);
+    if(out_status != NULL) {
+      *out_status = 0;
+    }
     return true;
   }
 
@@ -2238,6 +2939,13 @@ static int launch_pipeline(char* line) {
     init_segment(&segments[i]);
   }
 
+  char command_text[MOSH_MAX_LINE_LENGTH];
+  str_copy(command_text, sizeof(command_text), line);
+  bool background = strip_background_marker(command_text);
+  if(background) {
+    strip_background_marker(line);
+  }
+
   char expanded[MOSH_MAX_LINE_LENGTH * 3];
   size_t idx = 0;
   for(size_t i = 0; line[i] != '\0' && idx + 3 < sizeof(expanded); i++) {
@@ -2258,19 +2966,7 @@ static int launch_pipeline(char* line) {
     return 1;
   }
 
-  int status = execute_pipeline(segments, segment_count);
-  if(status > 0 && status != 127 && status != 130) {
-    static const char prefix[] = "mosh: process exited with status ";
-    char buffer[32];
-    size_t len = format_signed_value(status, buffer, sizeof(buffer));
-    write_bytes(STDERR_FILENO, prefix, sizeof(prefix) - 1);
-    if(len > 0 && len <= sizeof(buffer)) {
-      write_bytes(STDERR_FILENO, buffer, len);
-    }
-    write_bytes(STDERR_FILENO, "\n", 1);
-  }
-
-  return status;
+  return execute_pipeline(command_text, segments, segment_count, background);
 }
 
 static int launch_command(char* line) {
@@ -2286,9 +2982,16 @@ static int launch_command(char* line) {
     char* segment = ltrim(parts[i]);
     if(segment[0] == '\0') {
       write_str(STDOUT_FILENO, "mosh: syntax error\n");
+      shell_set_status_code(1);
       return 1;
     }
-    last_status = launch_pipeline(segment);
+    int builtin_status = 0;
+    if(handle_builtin(segment, &builtin_status)) {
+      last_status = builtin_status;
+    } else {
+      last_status = launch_pipeline(segment);
+      shell_set_status_from_raw(last_status);
+    }
     if(i < count - 1) {
       sequence_op_t op = ops[i];
       if(op == SEQ_AND) {
@@ -2351,6 +3054,7 @@ static void shell_loop(void) {
   write_str(STDOUT_FILENO, "This is mosh, the meniOS shell\nType 'help' for instructions.\n\n");
 
   while(true) {
+    jobs_poll_updates(true);
     const char* prompt = shell_prompt();
     size_t length = read_line(prompt, line_buffer, sizeof(line_buffer));
 
@@ -2362,11 +3066,12 @@ static void shell_loop(void) {
     str_copy(original_line, sizeof(original_line), line_buffer);
     history_add(original_line);
 
-    if(handle_builtin(line_buffer)) {
+    if(handle_builtin(line_buffer, NULL)) {
       continue;
     }
 
     launch_command(line_buffer);
+    jobs_poll_updates(true);
   }
 }
 

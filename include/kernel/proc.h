@@ -5,6 +5,7 @@
 extern "C" {
 #endif
 
+#include <stdbool.h>
 #include <types.h>
 #include <kernel/file.h>
 #include <kernel/vm_region.h>
@@ -38,6 +39,7 @@ struct syscall_frame_t;
 #define PROC_STATE_WAITING    3
 #define PROC_STATE_SLEEPING   4
 #define PROC_STATE_ZOMBIE     5
+#define PROC_STATE_STOPPED    6
 #define PROC_STATE_TERMINATED 7
 
 #define PROC_PRIO_IDLE    0
@@ -128,6 +130,8 @@ typedef struct proc_info_t {
   bool         waitpid_waiting;
   proc_info_p  next;
   int          exit_code;
+  int          stop_status;
+  int          continue_status;
   int          errno;
   uint64_t     exec_time;
   char         name[32];
@@ -152,6 +156,9 @@ typedef struct proc_info_t {
   uint32_t     signal_pending;
   uint32_t     signal_blocked;
   struct sigaction signal_actions[SIG_MAX];
+  bool         stopped;
+  bool         stop_status_pending;
+  bool         continued_pending;
 } proc_info_t;
 
 typedef proc_info_t* proc_info_p;
@@ -174,8 +181,10 @@ uint64_t scheduler_get_quantum(uint8_t priority);
 void proc_request_yield(void);
 void proc_request_sleep(uint64_t duration_us);
 void proc_mark_ready(proc_info_p proc);
+void proc_mark_stopped(proc_info_p proc, int signo);
+void proc_mark_continued(proc_info_p proc);
 proc_info_p proc_fork(proc_info_p parent, const struct syscall_frame_t* frame, int* err_out);
-int proc_waitpid(proc_info_p parent, int pid, int* status_out);
+int proc_waitpid(proc_info_p parent, int pid, int options, int* status_out);
 proc_info_p proc_find_by_pid(uint32_t pid);
 typedef struct proc_exec_args_t {
   size_t argc;

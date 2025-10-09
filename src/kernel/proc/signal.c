@@ -7,6 +7,10 @@
 
 #define SIGNAL_ALLOWED_MASK ((SIG_MAX >= 32) ? 0x7FFFFFFFu : ((1u << (SIG_MAX - 1)) - 1u))
 
+static inline uint32_t unblockable_mask(void) {
+  return sigbit(SIGKILL) | sigbit(SIGSTOP);
+}
+
 void proc_signal_state_init(proc_info_p proc) {
   if(proc == NULL) {
     return;
@@ -14,6 +18,11 @@ void proc_signal_state_init(proc_info_p proc) {
 
   proc->signal_pending = 0;
   proc->signal_blocked = 0;
+  proc->stopped = false;
+  proc->stop_status_pending = false;
+  proc->stop_status = 0;
+  proc->continue_status = 0;
+  proc->continued_pending = false;
   for(int signo = 0; signo < SIG_MAX; signo++) {
     proc->signal_actions[signo].sa_handler = SIG_DFL;
     proc->signal_actions[signo].sa_mask = 0;
@@ -27,15 +36,20 @@ void proc_signal_state_copy(proc_info_p dst, proc_info_p src) {
   }
 
   dst->signal_pending = 0;
-  dst->signal_blocked = src->signal_blocked;
+  dst->signal_blocked = src->signal_blocked & ~unblockable_mask();
   memcpy(dst->signal_actions, src->signal_actions, sizeof(dst->signal_actions));
+  dst->stopped = false;
+  dst->stop_status_pending = false;
+  dst->stop_status = 0;
+  dst->continue_status = 0;
+  dst->continued_pending = false;
 }
 
 void proc_signal_set_blocked(proc_info_p proc, uint32_t mask) {
   if(proc == NULL) {
     return;
   }
-  proc->signal_blocked = mask & SIGNAL_ALLOWED_MASK;
+  proc->signal_blocked = (mask & SIGNAL_ALLOWED_MASK) & ~unblockable_mask();
 }
 
 void proc_signal_enqueue(proc_info_p proc, int signo) {
@@ -96,7 +110,7 @@ int proc_signal_configure_action(proc_info_p proc,
   }
 
   if(new_action != NULL) {
-    if(signo == SIGKILL) {
+    if(signo == SIGKILL || signo == SIGSTOP) {
       return -EINVAL;
     }
 
@@ -138,6 +152,8 @@ int proc_signal_modify_mask(proc_info_p proc,
       return -EINVAL;
   }
 
+  proc->signal_blocked &= ~unblockable_mask();
+
   return 0;
 }
 
@@ -177,10 +193,24 @@ proc_signal_delivery_t proc_signal_handle_pending(proc_info_p proc,
 
     struct sigaction action = proc->signal_actions[signo];
     if(action.sa_handler == SIG_IGN) {
+      if(signo == SIGSTOP) {
+        proc_mark_stopped(proc, signo);
+        return PROC_SIGNAL_DELIVERY_STOPPED;
+      }
       continue;
     }
 
     if(action.sa_handler == SIG_DFL || action.sa_handler == SIG_ERR) {
+      if(signo == SIGSTOP || signo == SIGTSTP) {
+        proc_mark_stopped(proc, signo);
+        return PROC_SIGNAL_DELIVERY_STOPPED;
+      }
+
+      if(signo == SIGCONT) {
+        proc_mark_continued(proc);
+        return PROC_SIGNAL_DELIVERY_HANDLED;
+      }
+
       proc_exit(128 + signo);
       return PROC_SIGNAL_DELIVERY_TERMINATED;
     }
