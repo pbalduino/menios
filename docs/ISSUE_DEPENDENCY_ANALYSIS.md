@@ -9,7 +9,7 @@ This document provides a comprehensive analysis of dependencies between open iss
 - IPC breakdown: #206-#219 (14 issues from breaking #102, #103, #104)
 - ioctl: #220 (1 issue)
 - Userland driver research: #223 (1 issue)
-- Additional utility issues: #204 (3 issues total in recent work)
+- Additional utility issues: #204 (closed; 3 issues total in recent work)
 
 ## 🎯 Critical Path Issues
 
@@ -408,7 +408,7 @@ These issues form the backbone of the system and should be prioritized:
 - **Threading**: 5 remaining (#109-#113) - 1/6 complete! ✅
 - **Memory**: 1 (#95 userspace malloc)
 - **Bug fixes**: 1 (#202)
-- **Completed recently**: 42 issues (#192, #193, #148, #180-#188, #37, #39, #205, #108, #206-#213, #215-#220, #147, #102, #103, #161, #164, #165, #187, #198, #199, #200, #203, #222, #156, #197)
+- **Completed recently**: 43 issues (#192, #193, #148, #180-#188, #37, #39, #204, #205, #108, #206-#213, #215-#220, #147, #102, #103, #161, #164, #165, #187, #198, #199, #200, #203, #222, #156, #197)
 - **Closed duplicates**: #157, #165
 - **Previous existing**: ~64 issues
 

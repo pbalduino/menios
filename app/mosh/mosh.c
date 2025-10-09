@@ -66,6 +66,12 @@ typedef struct {
 
 static completion_context_t completion_ctx;
 
+typedef enum {
+  SEQ_NONE = 0,
+  SEQ_AND,
+  SEQ_OR
+} sequence_op_t;
+
 static volatile int sigint_requested = 0;
 static volatile int sigint_print_pending = 0;
 
@@ -163,7 +169,7 @@ static int  execute_pipeline(command_segment_t* segments, size_t segment_count);
 static int  wait_for_children(command_segment_t* segments, size_t segment_count, long* pids, int* statuses);
 static int  launch_pipeline(char* line);
 static int  launch_command(char* line);
-static size_t split_sequence(char* line, char* parts[], size_t max_parts);
+static size_t split_sequence(char* line, char* parts[], sequence_op_t ops[], size_t max_parts);
 static char* str_find_substring(char* haystack, const char* needle);
 static bool  line_replace_range(line_state_t* state, size_t start, size_t end, const char* replacement);
 static void  reverse_search_reset(void);
@@ -2168,7 +2174,7 @@ static void rtrim(char* text) {
   }
 }
 
-static size_t split_sequence(char* line, char* parts[], size_t max_parts) {
+static size_t split_sequence(char* line, char* parts[], sequence_op_t ops[], size_t max_parts) {
   size_t count = 0;
   char* cursor = line;
 
@@ -2182,19 +2188,40 @@ static size_t split_sequence(char* line, char* parts[], size_t max_parts) {
     }
 
     char* segment_start = cursor;
-    char* op = str_find_substring(cursor, "&&");
-    if(op != NULL) {
-      *op = '\0';
-      op[1] = ' ';
-      rtrim(segment_start);
-      parts[count++] = segment_start;
-      cursor = op + 2;
-      continue;
+    char* op_pos = NULL;
+    sequence_op_t op_type = SEQ_NONE;
+
+    while(*cursor != '\0') {
+      if(cursor[0] == '&' && cursor[1] == '&') {
+        op_pos = cursor;
+        op_type = SEQ_AND;
+        break;
+      }
+      if(cursor[0] == '|' && cursor[1] == '|') {
+        op_pos = cursor;
+        op_type = SEQ_OR;
+        break;
+      }
+      cursor++;
+    }
+
+    if(op_pos != NULL) {
+      *op_pos = '\0';
+      op_pos[1] = ' ';
     }
 
     rtrim(segment_start);
     parts[count++] = segment_start;
-    break;
+
+    if(op_pos == NULL) {
+      break;
+    }
+
+    if(ops != NULL) {
+      ops[count - 1] = op_type;
+    }
+
+    cursor = op_pos + 2;
   }
 
   for(size_t i = 0; i < count; i++) {
@@ -2248,7 +2275,8 @@ static int launch_pipeline(char* line) {
 
 static int launch_command(char* line) {
   char* parts[MOSH_MAX_SEQUENCES];
-  size_t count = split_sequence(line, parts, MOSH_MAX_SEQUENCES);
+  sequence_op_t ops[MOSH_MAX_SEQUENCES] = { SEQ_NONE };
+  size_t count = split_sequence(line, parts, ops, MOSH_MAX_SEQUENCES);
   if(count == 0) {
     return 0;
   }
@@ -2261,8 +2289,20 @@ static int launch_command(char* line) {
       return 1;
     }
     last_status = launch_pipeline(segment);
-    if(last_status != 0) {
-      break;
+    if(i < count - 1) {
+      sequence_op_t op = ops[i];
+      if(op == SEQ_AND) {
+        if(last_status != 0) {
+          break;
+        }
+      } else if(op == SEQ_OR) {
+        if(last_status == 0) {
+          break;
+        }
+      }
+      if(op == SEQ_NONE && last_status != 0) {
+        break;
+      }
     }
   }
 

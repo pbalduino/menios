@@ -164,10 +164,10 @@ Remaining major components for Doom:
 
 See [`road_to_doom.md`](docs/road/road_to_doom.md) for the complete roadmap and [`tasks.json`](tasks.json) for detailed task tracking.
 
-**📊 Progress Assessment**: With **46 major foundation issues completed** 🎉🎉 and ~65 open issues, meniOS is making phenomenal progress! Major recent completions include:
+**📊 Progress Assessment**: With **47 major foundation issues completed** 🎉🎉 and ~65 open issues, meniOS is making phenomenal progress! Major recent completions include:
 - ✅ **Toolchain**: crt0 (#192), libc (#193) - 2/8 complete in GCC milestone!
 - ✅ **Synchronization**: All primitives complete! (#36, #37, #39, #40) - 4/4 done!
-- ✅ **Shell Milestone**: Now tracking 30 issues comprehensively - 23/30 complete (76.7%)! 🎉
+- ✅ **Shell Milestone**: Now tracking 31 issues comprehensively - 24/31 complete (77.4%)! 🎉
 - ✅ **Shell UX**: Tab completion (#197) ✅, History (#156) ✅, Ctrl+A/E (#198) ✅, Ctrl+L (#200) ✅, Ctrl+R (#199) ✅, pwd prompt (#222) ✅!
 - ✅ **Threading Foundation**: Kernel threading (#108) - ready for pthread!
 - ✅ **IPC - Pipes & FIFOs**: **COMPLETE!** All 5 issues done (#102, #206-#209) - 5/5! 🎉
@@ -178,10 +178,10 @@ See [`road_to_doom.md`](docs/road/road_to_doom.md) for the complete roadmap and 
 
 The critical path forward is completing the **toolchain** (#194, #195, #29), which is just 3 issues away from enabling standard C development for all userland applications!
 
-**🎯 Recent Momentum** (42 issues closed recently!):
+**🎯 Recent Momentum** (43 issues closed recently!):
 - 🛠️ **Toolchain** (2/8 in GCC milestone): crt0 ✅, libc ✅ → just need: ABI docs, build system, integration
 - 🔌 **IPC** (major progress!): Pipes & FIFOs ✅✅✅✅✅ **COMPLETE!** (#102, #206-#209), Signals #103, #210-#213 ✅ (Ctrl+C working; advanced next), Shared Memory ✅✅✅✅✅ **COMPLETE!** (#215-#219), ioctl #220 ✅ **COMPLETE**, fast syscalls (#221)
-- 🐚 **Shell** (23/30 in Mosh milestone - 76.7%!): Tab completion ✅, History ✅, Ctrl+A/E ✅, Ctrl+L ✅, Ctrl+R ✅, Ctrl+C ✅, I/O redirection ✅, pipelines ✅, ps/kill ✅, getcwd/chdir ✅, /bin/env ✅, pwd prompt ✅!
+- 🐚 **Shell** (24/31 in Mosh milestone - 77.4%!): Tab completion ✅, History ✅, Ctrl+A/E ✅, Ctrl+L ✅, Ctrl+R ✅, Ctrl+C ✅, I/O redirection ✅, pipelines ✅, &&/|| operators ✅, ps/kill ✅, getcwd/chdir ✅, /bin/env ✅, pwd prompt ✅!
 - 🧵 **Threading** (1/6 complete): Kernel threading ✅, pthread API ready!
 - 🎨 **UX** (Almost done!): Only mouse (#201) left!
 - 🐛 **Bugs** (1 remaining): Just /dev/zero EOF bug (#202)

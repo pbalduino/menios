@@ -58,6 +58,7 @@ A release that meets this milestone must satisfy all of the following:
 - [x] Forked child inherits stdio, reports failure via stderr.
 - [x] Shell waits for child completion and reports non-zero exit status.
 - [x] Basic pipelines and `<`/`>` redirection supported for foreground commands (#186).
+- [x] Logical `&&`/`||` command chaining with short-circuit semantics (#204).
 - [x] `Ctrl+C` aborts foreground commands and pipelines via `SYS_PROC_KILL`.
 - [x] `PATH` search order configurable once environment support lands (#185).
 - [x] Tests ensure waitpid returns correct PID and shell stays in supervision loop (#182).

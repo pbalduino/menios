@@ -36,6 +36,7 @@ static size_t g_waitpid_plan_index;
 static int  g_syscall_kill_calls;
 static pid_t g_last_kill_pid;
 static int  g_last_kill_signo;
+static size_t g_waitpid_plan_consumed;
 
 #include "../app/mosh/mosh.c"
 
@@ -114,6 +115,7 @@ long mosh_test_syscall3(long number, long arg1, long arg2, long arg3) {
       if(g_waitpid_plan_index + 1 < g_waitpid_plan_length) {
         g_waitpid_plan_index++;
       }
+      g_waitpid_plan_consumed++;
     }
     if(status_ptr != NULL) {
       *status_ptr = status;
@@ -125,11 +127,11 @@ long mosh_test_syscall3(long number, long arg1, long arg2, long arg3) {
   return -1;
 }
 
-static void run_launch_command(const char* line) {
+static int run_launch_command(const char* line) {
   char buffer[128];
   memset(buffer, 0, sizeof(buffer));
   strncpy(buffer, line, sizeof(buffer) - 1);
-  launch_command(buffer);
+  return launch_command(buffer);
 }
 
 void setUp(void) {
@@ -144,6 +146,7 @@ void setUp(void) {
   g_syscall_kill_calls = 0;
   g_last_kill_pid = -1;
   g_last_kill_signo = 0;
+  g_waitpid_plan_consumed = 0;
   mosh_test_set_env(g_test_envp);
   mosh_test_reset_sigint();
   shell_install_signal_handlers();
@@ -199,6 +202,32 @@ void test_launch_command_reports_command_not_found(void) {
       "Expected command not found message");
 }
 
+void test_launch_command_or_executes_second_segment(void) {
+  g_waitpid_plan_length = 2;
+  g_waitpid_plan_results[0] = 1234;
+  g_waitpid_plan_status[0] = 1;
+  g_waitpid_plan_results[1] = 1234;
+  g_waitpid_plan_status[1] = 0;
+
+  int status = run_launch_command("cmd1 || cmd2");
+
+  TEST_ASSERT_EQUAL_INT(0, status);
+  TEST_ASSERT_EQUAL_UINT64(2, (uint64_t)g_waitpid_plan_consumed);
+}
+
+void test_launch_command_or_short_circuits_on_success(void) {
+  g_waitpid_plan_length = 2;
+  g_waitpid_plan_results[0] = 1234;
+  g_waitpid_plan_status[0] = 0;
+  g_waitpid_plan_results[1] = 1234;
+  g_waitpid_plan_status[1] = 77;
+
+  int status = run_launch_command("cmd1 || cmd2");
+
+  TEST_ASSERT_EQUAL_INT(0, status);
+  TEST_ASSERT_EQUAL_UINT64(1, (uint64_t)g_waitpid_plan_consumed);
+}
+
 void test_wait_for_children_sends_sigint_to_children(void) {
   command_segment_t segments[1];
   init_segment(&segments[0]);
@@ -232,6 +261,8 @@ int main(void) {
   RUN_TEST(test_launch_command_reports_nonzero_exit_status);
   RUN_TEST(test_launch_command_prints_waitpid_error);
   RUN_TEST(test_launch_command_reports_command_not_found);
+  RUN_TEST(test_launch_command_or_executes_second_segment);
+  RUN_TEST(test_launch_command_or_short_circuits_on_success);
   RUN_TEST(test_wait_for_children_sends_sigint_to_children);
 
   return UNITY_END();

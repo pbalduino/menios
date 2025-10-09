@@ -8,11 +8,11 @@ This document tracks the three major milestones for meniOS development.
 **Goal**: Complete interactive shell with full user experience
 **GitHub Milestone**: [Mosh](https://github.com/pbalduino/menios/milestone/1)
 
-**Status**: 23/30 complete (76.7%)
+**Status**: 24/31 complete (77.4%)
 
 **Assigned Issues**:
 
-#### Core Shell Features (12 issues)
+#### Core Shell Features (13 issues)
 - [x] #54 - Evolve mosh shell to be default userland shell ✅
 - [x] #162 - Command execution (fork/exec/wait) ✅
 - [x] #163 - Built-in commands (cd/pwd/exit/export) ✅
@@ -21,6 +21,8 @@ This document tracks the three major milestones for meniOS development.
 - [x] #180 - Environment seeding in init ✅
 - [x] #185 - PATH search configuration ✅
 - [x] #188 - /bin/env utility ✅
+- [x] #204 - Logical operators (&&/||) ✅
+- [ ] #224 - unset built-in command
 
 #### I/O & Pipelines (4 issues)
 - [x] #186 - Pipeline placeholder recognition ✅
@@ -206,8 +208,8 @@ This document tracks the three major milestones for meniOS development.
 
 ## 📈 Overall Progress
 
-- **Total Issues Across Milestones**: 63 issues
-- **Completed**: 35 issues (55.6%)
+- **Total Issues Across Milestones**: 64 issues
+- **Completed**: 36 issues (56.3%)
 - **In Progress**: 28 issues
 - **Ready to Start**: 2 issues (no dependencies)
 
@@ -238,7 +240,7 @@ Many issues can be worked on in parallel:
 
 ### Completion Order
 Recommended completion order for maximum impact:
-1. **Mosh** - Provides usable development environment (76.7% complete)
+1. **Mosh** - Provides usable development environment (77.4% complete)
 2. **GCC** - Enables native development and compilation (25% complete)
 3. **Doom** - Demonstrates full OS capabilities (40% complete)
 
@@ -258,6 +260,8 @@ Recommended completion order for maximum impact:
 - **2025-10-11**: Closed #161 (Basic REPL and command parsing) ✅
 - **2025-10-11**: Closed #164 (Basic I/O redirection) ✅
 - **2025-10-11**: Closed #187 (/bin/ps and /bin/kill utilities) ✅
+- **2025-10-11**: Closed #204 (Logical operators &&/||) ✅
+- **2025-10-11**: Created #224 (unset built-in command)
 - **2025-10-08**: Closed #157 as duplicate of #197, #165 as completed by #208
 
 ---

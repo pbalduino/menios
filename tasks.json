@@ -162,7 +162,7 @@
     "github_issue": {
       "number": 204,
       "url": "https://github.com/pbalduino/menios/issues/204",
-      "state": "OPEN"
+      "state": "CLOSED"
     },
     "labels": [
       "enhancement",
@@ -170,7 +170,8 @@
     ],
     "assignees": [
       "pbalduino"
-    ]
+    ],
+    "notes": "Logical OR operator implemented; shell short-circuits segments and tests cover cmd1 || cmd2 flows in test/test_mosh_exec.c"
   },
   {
     "title": "Bug: echo hi | cat hangs and shows garbled output on Ctrl+C",
