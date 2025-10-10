@@ -141,7 +141,7 @@ This document tracks the three major milestones for meniOS development.
 - [ ] #113 - Thread-aware system calls
 
 #### Memory & Process (1 issue)
-- [x] #95 - Userspace memory allocator (malloc/free)
+- [x] #95 - Userspace memory allocator (malloc/free) — libc arena allocator now exposes SYS_GETPAGESIZE and ships with stress coverage
 
 #### File System (1 issue)
 - [ ] #189 - FAT32 write support

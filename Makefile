@@ -82,9 +82,10 @@ FALSE_ELF = $(OBJDIR)/usermode/false.elf
 LS_ELF = $(OBJDIR)/usermode/ls.elf
 KILL_ELF = $(OBJDIR)/usermode/kill.elf
 PS_ELF = $(OBJDIR)/usermode/ps.elf
+MALLOC_STRESS_ELF = $(OBJDIR)/usermode/malloc_stress.elf
 
-USER_PROGRAM_ELFS = $(MOSH_ELF) $(ECHO_ELF) $(CAT_ELF) $(ENV_ELF) $(TRUE_ELF) $(FALSE_ELF) $(LS_ELF) $(KILL_ELF) $(PS_ELF)
-USERLAND_BINS = mosh echo cat env true false ls kill ps
+USER_PROGRAM_ELFS = $(MOSH_ELF) $(ECHO_ELF) $(CAT_ELF) $(ENV_ELF) $(TRUE_ELF) $(FALSE_ELF) $(LS_ELF) $(KILL_ELF) $(PS_ELF) $(MALLOC_STRESS_ELF)
+USERLAND_BINS = mosh echo cat env true false ls kill ps malloc_stress
 
 
 ARCH_FLAGS := -march=x86-64
@@ -479,6 +480,14 @@ else
 	$(DOCKER) run --rm $(DOCKER_RUN_FLAGS) $(DOCKER_ENV) --mount type=bind,source=$$(pwd),target=/mnt $(DOCKER_IMAGE) /bin/sh -c "cd /mnt && make EXTRA_CFLAGS='$(EXTRA_CFLAGS)' $@"
 endif
 
+$(MALLOC_STRESS_ELF): app/malloc_stress/malloc_stress.c | sdk
+ifeq ($(OS_NAME),linux)
+	@mkdir -p $(dir $@)
+	$(SDK_BIN_DIR)/menios-gcc $(EXTRA_CFLAGS) $< -o $@
+else
+	$(DOCKER) run --rm $(DOCKER_RUN_FLAGS) $(DOCKER_ENV) --mount type=bind,source=$$(pwd),target=/mnt $(DOCKER_IMAGE) /bin/sh -c "cd /mnt && make EXTRA_CFLAGS='$(EXTRA_CFLAGS)' $@"
+endif
+
 $(KILL_ELF): app/kill/kill.c | sdk
 ifeq ($(OS_NAME),linux)
 	@mkdir -p $(dir $@)
@@ -590,6 +599,7 @@ ifeq ($(OS_NAME),linux)
 	mcopy -i $(IMAGE_NAME).hdd@@2M $(OUTPUT_DIR)/bin/ls ::/bin/ls
 	mcopy -i $(IMAGE_NAME).hdd@@2M $(OUTPUT_DIR)/bin/kill ::/bin/kill
 	mcopy -i $(IMAGE_NAME).hdd@@2M $(OUTPUT_DIR)/bin/ps ::/bin/ps
+	mcopy -i $(IMAGE_NAME).hdd@@2M $(OUTPUT_DIR)/bin/malloc_stress ::/bin/malloc_stress
 	$(OUTPUT_DIR)/limine bios-install $(IMAGE_NAME).hdd 1
 
 	@echo Building ISO
@@ -617,7 +627,7 @@ ifeq ($(OS_NAME),linux)
 	@echo "Testing inside Linux"
 
 	# Skip host-unsafe tests until proper stubs land.
-	for file in $(shell find -L test -type f -name 'test_*.c' ! -name 'test_kmalloc.c'); do \
+	for file in $(shell find -L test -type f -name 'test_*.c' ! -name 'test_kmalloc.c' ! -name 'test_malloc_stress.c'); do \
 		gcc -std=gnu11 -DMENIOS_NO_DEBUG -DUNITY_EXCLUDE_SETJMP_H -I./include \
 			$$file \
 			test/unity.c \
@@ -645,6 +655,35 @@ ifeq ($(OS_NAME),linux)
 		rm "$$file".bin ; \
 		if [ $$rc -ne 0 ]; then exit $$rc; fi; \
 	done;
+
+	# Host-stubbed allocator stress test exercises user/libc/stdlib.c explicitly.
+	gcc -std=gnu11 -DMENIOS_NO_DEBUG -DMENIOS_HOST_TEST -DUNITY_EXCLUDE_SETJMP_H -I./include \
+		test/test_malloc_stress.c \
+		test/unity.c \
+		test/stubs.c \
+		src/kernel/file.c \
+		src/kernel/fs/vfs.c \
+		src/kernel/fs/pipe.c \
+		src/kernel/fs/tmpfs.c \
+		src/kernel/syscall/syscall.c \
+		src/kernel/mem/pmm.c \
+		src/kernel/console/vprintk.c \
+		src/kernel/console/ansi.c \
+		src/kernel/proc/kcondvar.c \
+		src/kernel/proc/kmutex.c \
+		src/kernel/proc/signal.c \
+		src/kernel/ipc/shm.c \
+		src/kernel/user/vm_region.c \
+		src/kernel/timer/tsc.c \
+		src/libc/itoa.c \
+		src/libc/string.c \
+		user/libc/stdlib.c \
+	-o test/test_malloc_stress.c.bin ; \
+	echo "Testing test/test_malloc_stress.c" ; \
+	test/test_malloc_stress.c.bin ; \
+	rc=$$?; \
+	rm test/test_malloc_stress.c.bin ; \
+	if [ $$rc -ne 0 ]; then exit $$rc; fi;
 else
 	@echo "Testing inside Docker"
 	$(DOCKER) run --rm $(DOCKER_RUN_FLAGS) $(DOCKER_ENV) --mount type=bind,source=$$(pwd),target=/mnt $(DOCKER_IMAGE) /bin/sh -c "cd /mnt && make test"

@@ -581,14 +581,13 @@ static inline virt_addr_t user_stack_top(uint32_t pid) {
 }
 
 static inline virt_addr_t user_mmap_base(uint32_t pid) {
-  const virt_addr_t base = 0x0000000100000000ull;   // 4GB window per process slot
-  const virt_addr_t stride = 0x0000000010000000ull; // 256MB per process
-  return base + (stride * pid);
+  (void)pid;
+  return 0x0000000100000000ull; // 4 GiB — leaves low canonical addresses for binary/stack
 }
 
 static inline virt_addr_t user_mmap_limit(uint32_t pid) {
-  const virt_addr_t stride = 0x0000000010000000ull;
-  return user_mmap_base(pid) + stride;
+  (void)pid;
+  return 0x00007fff00000000ull; // just below canonical user ceiling (~128 TiB window)
 }
 
 static bool proc_register_user_segment_internal(proc_info_p proc, phys_addr_t phys, size_t pages) {

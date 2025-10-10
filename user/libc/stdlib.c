@@ -1,6 +1,5 @@
 #include <limits.h>
 #include <menios/syscall.h>
-#include <menios/syscall_user.h>
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
@@ -11,7 +10,47 @@
 #include <ctype.h>
 #include <string.h>
 
+#ifndef MENIOS_HOST_TEST
+#include <menios/syscall_user.h>
+#endif
+
 void __menios_fini_libc(int status);
+
+#ifdef MENIOS_HOST_TEST
+void __menios_fini_libc(int status) {
+  (void)status;
+}
+
+static inline long __menios_syscall0(long number) {
+  (void)number;
+  errno = ENOSYS;
+  return -1;
+}
+
+static inline long __menios_syscall1(long number, long arg1) {
+  (void)number;
+  (void)arg1;
+  errno = ENOSYS;
+  return -1;
+}
+
+static inline long __menios_syscall2(long number, long arg1, long arg2) {
+  (void)number;
+  (void)arg1;
+  (void)arg2;
+  errno = ENOSYS;
+  return -1;
+}
+
+static inline long __menios_syscall3(long number, long arg1, long arg2, long arg3) {
+  (void)number;
+  (void)arg1;
+  (void)arg2;
+  (void)arg3;
+  errno = ENOSYS;
+  return -1;
+}
+#endif
 
 static inline bool is_power_of_two(size_t value) {
   return value != 0 && (value & (value - 1)) == 0;
@@ -33,6 +72,10 @@ static inline size_t default_page_size(void) {
     return cached;
   }
 
+#ifdef MENIOS_HOST_TEST
+  cached = 4096u;
+  return cached;
+#else
   long result = __menios_syscall0(SYS_GETPAGESIZE);
   if(result > 0) {
     cached = (size_t)result;
@@ -40,6 +83,7 @@ static inline size_t default_page_size(void) {
     cached = 4096u;
   }
   return cached;
+#endif
 }
 
 static menios_block_header_t* map_block(size_t payload_size, size_t alignment) {
@@ -362,6 +406,7 @@ long strtol(const char* nptr, char** endptr, int base) {
   return (long)acc;
 }
 
+#ifndef MENIOS_HOST_TEST
 void _exit(int status) {
   __menios_syscall1(SYS_EXIT, (long)status);
   for(;;) {
@@ -373,3 +418,4 @@ void exit(int status) {
   __menios_fini_libc(status);
   _exit(status);
 }
+#endif
