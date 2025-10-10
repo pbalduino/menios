@@ -323,7 +323,8 @@ The Doom milestone on GitHub now tracks 25 issues:
   - IPC - Signals: #103 ✅ (parent), #210 ✅, #211 ✅, #212 ✅
   - IPC - Shared Memory: #215 ✅, #216 ✅, #217 ✅, #218 ✅, #219 ✅ (ALL COMPLETE!)
   - IPC - Other: #220 ✅ (ioctl)
-- **In Progress**: Threading (#109-#113), Signals (#213-#214), IPC (#105-#107, #221), File System (#189), Memory (#95), Audio (#33)
+- **In Progress**: Threading (#109-#113), Signals (#213-#214), IPC (#105-#107, #221), File System (#189), Audio (#33)
+- **Recently Completed**: Memory (#95) – userspace arena allocator with malloc/calloc/realloc support
 
 **Recent Major Achievement**: Shared Memory IPC is now 100% complete, bringing Doom milestone to 40%!
 

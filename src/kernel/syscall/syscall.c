@@ -51,6 +51,7 @@ static uint64_t syscall_shmget_handler(syscall_frame_t* frame);
 static uint64_t syscall_shmat_handler(syscall_frame_t* frame);
 static uint64_t syscall_shmdt_handler(syscall_frame_t* frame);
 static uint64_t syscall_shmctl_handler(syscall_frame_t* frame);
+static uint64_t syscall_getpagesize_handler(syscall_frame_t* frame);
 
 static syscall_handler_t syscall_table[SYSCALL_MAX];
 
@@ -418,6 +419,7 @@ void syscall_init(void) {
   syscall_register(SYS_SHMCTL, syscall_shmctl_handler);
   syscall_register(SYS_CHDIR, syscall_chdir_handler);
   syscall_register(SYS_GETCWD, syscall_getcwd_handler);
+  syscall_register(SYS_GETPAGESIZE, syscall_getpagesize_handler);
 
   serial_printf("syscall_init: initialized dispatcher (INT 0x80)\n");
 }
@@ -1554,4 +1556,9 @@ static uint64_t syscall_shmctl_handler(syscall_frame_t* frame) {
   shm_region_unref(region);
   frame->rax = result;
   return frame->rax;
+}
+
+static uint64_t syscall_getpagesize_handler(syscall_frame_t* frame) {
+  (void)frame;
+  return (uint64_t)PAGE_SIZE;
 }

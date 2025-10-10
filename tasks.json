@@ -1219,7 +1219,7 @@
     "github_issue": {
       "number": 95,
       "url": "https://github.com/pbalduino/menios/issues/95",
-      "state": "OPEN"
+      "state": "CLOSED"
     },
     "labels": [
       "enhancement"

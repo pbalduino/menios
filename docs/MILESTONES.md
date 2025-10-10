@@ -141,7 +141,7 @@ This document tracks the three major milestones for meniOS development.
 - [ ] #113 - Thread-aware system calls
 
 #### Memory & Process (1 issue)
-- [ ] #95 - Userspace memory allocator (malloc/free)
+- [x] #95 - Userspace memory allocator (malloc/free)
 
 #### File System (1 issue)
 - [ ] #189 - FAT32 write support
@@ -270,6 +270,7 @@ Recommended completion order for maximum impact:
 - **2025-10-12**: Closed #94 (signal handling); Mosh milestone now tracks #159 and #202
 - **2025-10-12**: Closed #159 after landing stderr redirection and fd duplication support
 - **2025-10-13**: Deferred #202 (/dev/zero EOF bug) out of the Mosh milestone; milestone now sits at 27 completed issues
+- **2025-10-14**: Closed #95 (userspace malloc/free) ✅ – libc now ships an arena allocator with regression coverage
 - **2025-10-13**: Released v0.1.0 - Mosh milestone complete! 🎉
 - **2025-10-13**: Created #234 (Port grep utility)
 - **2025-10-13**: Created #235 (Port xargs utility)

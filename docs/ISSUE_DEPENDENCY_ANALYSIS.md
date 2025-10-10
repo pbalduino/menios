@@ -407,7 +407,7 @@ These issues form the backbone of the system and should be prioritized:
 - **Shell UX**: 1 (#201) - history (#156) ✅, Ctrl+A/E (#198) ✅, Ctrl+L (#200) ✅, Ctrl+R (#199) ✅, pwd prompt (#222) ✅, tab completion (#197) ✅
 - **Toolchain**: 4 remaining (#29, #194-#196) - 2/8 complete! ✅✅ (GCC milestone)
 - **Threading**: 5 remaining (#109-#113) - 1/6 complete! ✅
-- **Memory**: 1 (#95 userspace malloc)
+- **Memory**: 0 (allocator complete)
 - **Bug fixes**: 1 (#202 backlog)
 - **Completed recently**: 43 issues (#192, #193, #148, #180-#188, #37, #39, #204, #205, #108, #206-#213, #215-#220, #147, #102, #103, #161, #164, #165, #187, #198, #199, #200, #203, #222, #156, #197)
 - **Closed duplicates**: #157, #165

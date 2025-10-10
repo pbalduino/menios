@@ -9,6 +9,7 @@
 #include <sys/mman.h>
 #include <unistd.h>
 #include <ctype.h>
+#include <string.h>
 
 void __menios_fini_libc(int status);
 
@@ -23,7 +24,23 @@ static inline size_t align_up(size_t value, size_t alignment) {
 typedef struct menios_block_header {
   void*  mapping_base;
   size_t mapping_size;
+  size_t payload_size;
 } menios_block_header_t;
+
+static inline size_t default_page_size(void) {
+  static size_t cached = 0;
+  if(cached != 0) {
+    return cached;
+  }
+
+  long result = __menios_syscall0(SYS_GETPAGESIZE);
+  if(result > 0) {
+    cached = (size_t)result;
+  } else {
+    cached = 4096u;
+  }
+  return cached;
+}
 
 static menios_block_header_t* map_block(size_t payload_size, size_t alignment) {
   if(!is_power_of_two(alignment)) {
@@ -32,6 +49,11 @@ static menios_block_header_t* map_block(size_t payload_size, size_t alignment) {
 
   if(payload_size == 0) {
     payload_size = alignment;
+  }
+
+  if(payload_size > SIZE_MAX - (alignment - 1)) {
+    errno = ENOMEM;
+    return NULL;
   }
 
   size_t padded = align_up(payload_size, alignment);
@@ -58,6 +80,7 @@ static menios_block_header_t* map_block(size_t payload_size, size_t alignment) {
   menios_block_header_t* header = (menios_block_header_t*)(aligned - sizeof(menios_block_header_t));
   header->mapping_base = mapping;
   header->mapping_size = total;
+  header->payload_size = padded;
   return header;
 }
 
@@ -97,6 +120,136 @@ void* aligned_alloc(size_t alignment, size_t size) {
   }
 
   return (void*)(header + 1);
+}
+
+int posix_memalign(void** memptr, size_t alignment, size_t size) {
+  if(memptr == NULL) {
+    return EINVAL;
+  }
+
+  if(alignment < sizeof(void*) || !is_power_of_two(alignment)) {
+    *memptr = NULL;
+    return EINVAL;
+  }
+
+  menios_block_header_t* header = map_block(size, alignment);
+  if(header == NULL) {
+    *memptr = NULL;
+    return errno != 0 ? errno : ENOMEM;
+  }
+
+  *memptr = (void*)(header + 1);
+  return 0;
+}
+
+void* memalign(size_t alignment, size_t size) {
+  if(alignment < sizeof(void*) || !is_power_of_two(alignment)) {
+    errno = EINVAL;
+    return NULL;
+  }
+
+  menios_block_header_t* header = map_block(size, alignment);
+  if(header == NULL) {
+    return NULL;
+  }
+
+  return (void*)(header + 1);
+}
+
+void* valloc(size_t size) {
+  size_t page = default_page_size();
+  menios_block_header_t* header = map_block(size == 0 ? page : size, page);
+  if(header == NULL) {
+    return NULL;
+  }
+  return (void*)(header + 1);
+}
+
+void* pvalloc(size_t size) {
+  size_t page = default_page_size();
+  if(size > SIZE_MAX - (page - 1)) {
+    errno = ENOMEM;
+    return NULL;
+  }
+
+  size_t rounded = size == 0 ? page : align_up(size, page);
+  menios_block_header_t* header = map_block(rounded, page);
+  if(header == NULL) {
+    return NULL;
+  }
+  return (void*)(header + 1);
+}
+
+void* calloc(size_t nmemb, size_t size) {
+  if(nmemb == 0 || size == 0) {
+    return malloc(0);
+  }
+
+  if(size > 0 && nmemb > SIZE_MAX / size) {
+    errno = ENOMEM;
+    return NULL;
+  }
+
+  size_t total = nmemb * size;
+  void* ptr = malloc(total);
+  if(ptr) {
+    memset(ptr, 0, total);
+  }
+  return ptr;
+}
+
+static size_t block_payload_size(const menios_block_header_t* header) {
+  return header ? header->payload_size : 0;
+}
+
+void* realloc(void* ptr, size_t size) {
+  if(ptr == NULL) {
+    return malloc(size);
+  }
+
+  if(size == 0) {
+    free(ptr);
+    return NULL;
+  }
+
+  menios_block_header_t* header = ((menios_block_header_t*)ptr) - 1;
+  size_t available = block_payload_size(header);
+  if(size <= available) {
+    return ptr;
+  }
+
+  void* replacement = malloc(size);
+  if(replacement == NULL) {
+    return NULL;
+  }
+
+  size_t copy = available < size ? available : size;
+  memcpy(replacement, ptr, copy);
+  free(ptr);
+  return replacement;
+}
+
+void* reallocarray(void* ptr, size_t nmemb, size_t size) {
+  if(nmemb == 0 || size == 0) {
+    free(ptr);
+    return NULL;
+  }
+
+  if(size > 0 && nmemb > SIZE_MAX / size) {
+    errno = ENOMEM;
+    return NULL;
+  }
+
+  return realloc(ptr, nmemb * size);
+}
+
+size_t malloc_usable_size(void* ptr) {
+  if(ptr == NULL) {
+    return 0;
+  }
+
+  menios_block_header_t* header = ((menios_block_header_t*)ptr) - 1;
+  return block_payload_size(header);
 }
 
 static int digit_from_char(char ch) {

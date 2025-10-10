@@ -37,6 +37,7 @@ extern "C" {
 #define SYS_SHMCTL     77
 #define SYS_CHDIR      78
 #define SYS_GETCWD     79
+#define SYS_GETPAGESIZE 80
 
 #ifdef __cplusplus
 }
