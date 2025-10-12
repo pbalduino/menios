@@ -43,8 +43,8 @@ The migration follows a careful sequence to minimize risk:
 | #249 | Integrate Buddy Allocator with malloc/free | ✅ Complete | Critical | 3-4 days |
 | #250 | Adapt realloc/reallocarray for Buddy Allocator | ✅ Complete | High | 2-3 days |
 | #251 | Update Direct mmap Path for Large Allocations | ✅ Complete | Medium | 2 days |
-| #252 | Add Buddy Allocator Diagnostics and Tests | 🔄 Open | High | 3-4 days |
-| #253 | Cleanup and Document Buddy Allocator Migration | 🔄 Open | Medium | 2-3 days |
+| #252 | Add Buddy Allocator Diagnostics and Tests | ✅ Complete | High | 3-4 days |
+| #253 | Cleanup and Document Buddy Allocator Migration | ✅ Complete | Medium | 2-3 days |
 
 **Total Estimated Effort:** 22-30 days
 
@@ -267,18 +267,13 @@ void free(void *ptr) {
 ### Phase 8: Cleanup (#253)
 **Goal:** Production-ready code
 
-**Tasks:**
-- Remove old first-fit code
-- Remove split_block/coalesce_with_neighbours
-- Document buddy design and rationale
-- Update architecture docs
-- Add code comments for buddy calculations
+**Status:** ✅ Completed. Legacy first-fit code paths have been removed, the buddy design is documented, and regression coverage (`test/test_buddy_allocator.c`, `test/test_malloc_direct.c`, `test/test_malloc_stats.c`) guards allocator correctness, large direct mappings, and diagnostics.
 
 ## Validation Criteria
 
 The migration is complete when:
 
-- [ ] All buddy allocator issues (#245-#253) closed
+- [x] All buddy allocator issues (#245-#253) closed
 - [ ] All existing malloc/free/realloc tests pass
 - [ ] malloc_stress runs without errors under heavy load
 - [ ] No memory leaks detected

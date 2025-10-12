@@ -61,6 +61,8 @@ Work remaining after issue #28 (also expanded in `docs/architecture/per_process_
 
 * Demand paging for large executables or memory-mapped files is not yet designed. When we add a filesystem this document should be updated to cover file-backed mappings.
 * The kernel heap still operates purely inside the HHDM; longer term we may want a VM-aware heap that can grow by mapping new virtual arenas.
+* Buddy allocator diagnostics are available via `menios_malloc_stats()` (libc) so userland tools can observe arena counts, free payload bytes, and direct-mmap usage without peeking at kernel logs.
+
 * We have not finalised the layout for kernel modules, PCI MMIO windows, or per-CPU structures. When SMP work begins, the memory map will need to document per-CPU stacks and data segments.
 
 ---

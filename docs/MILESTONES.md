@@ -107,8 +107,8 @@ This document tracks the three major milestones for meniOS development.
 - [x] #249 - Integrate Buddy Allocator with malloc/free ✅
 - [x] #250 - Adapt realloc/reallocarray for Buddy Allocator ✅
 - [x] #251 - Update Direct mmap Path for Large Allocations ✅
-- [ ] #252 - Add Buddy Allocator Diagnostics and Tests
-- [ ] #253 - Cleanup and Document Buddy Allocator Migration
+- [x] #252 - Add Buddy Allocator Diagnostics and Tests
+- [x] #253 - Cleanup and Document Buddy Allocator Migration
 
 **Critical Path**: #245 → #246 → #247 → #248 → #249 → #250/#251 → #252 → #253
 
