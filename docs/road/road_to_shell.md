@@ -26,7 +26,7 @@ A release that meets this milestone must satisfy all of the following:
 | Fork/Exec Runtime | ✅ Done | `fork`, `execve`, `waitpid`, descriptor cloning working |
 | Shell Prompt UX | ✅ Done | Inline caret, history navigation, prompt redraw regression tests |
 | Default Environment | ✅ Done | Seed `PATH`, `HOME`, `PWD`; chdir to `/` before launching shell (#180, #185) |
-| Launchable Utilities | ✅ Done | Added `/bin/echo`, `/bin/cat`, `/bin/env`, `/bin/true`, `/bin/false`, `/bin/ls`, `/bin/kill`, `/bin/ps` (#183/#187) |
+| Launchable Utilities | ✅ Done | Added `/bin/echo`, `/bin/cat`, `/bin/env`, `/bin/true`, `/bin/false`, `/bin/ls`, `/bin/kill`, `/bin/ps`, `/bin/mem` (#183/#187/#243) |
 | Regression Coverage | ✅ Done | `test_mosh_line` + `test_mosh_exec` cover caret redraw, waitpid status, and execution semantics |
 
 ## Kernel Foundations
