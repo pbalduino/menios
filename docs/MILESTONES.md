@@ -97,11 +97,11 @@ This document tracks the three major milestones for meniOS development.
 **Goal**: Migrate userland allocator from first-fit to buddy allocator system
 **GitHub Milestone**: [Buddy Allocator](https://github.com/pbalduino/menios/milestone/4)
 
-**Status**: 1/9 complete (11.1%)
+**Status**: 2/9 complete (22.2%)
 
 **Assigned Issues**:
 - [x] #245 - Survey Current Heap Implementation ✅
-- [ ] #246 - Define Buddy Allocator Orders and Configuration
+- [x] #246 - Define Buddy Allocator Orders and Configuration ✅
 - [ ] #247 - Rewrite Arena Setup for Buddy Allocator
 - [ ] #248 - Implement Buddy Split and Coalesce Operations
 - [ ] #249 - Integrate Buddy Allocator with malloc/free
@@ -122,9 +122,9 @@ This document tracks the three major milestones for meniOS development.
 - #252 depends on #248, #249 (core operations + API)
 - #253 depends on #252 (testing)
 
-**Progress**: Survey complete (#245 ✅)! Current first-fit allocator fully documented. Next: Define buddy orders and configuration (#246). Both GCC and Doom milestones depend on buddy allocator completion for efficient handling of complex allocation patterns.
+**Progress**: Heap survey (#245) and buddy configuration (#246) complete. Buddy allocator will operate over orders 7–27 (128 B–128 MiB) with 128 MiB arenas. Next actions: rewrite arena setup (#247) and implement buddy split/coalesce (#248). Both GCC and Doom milestones depend on this migration for reliable heap behaviour.
 
-**Estimated Effort**: 20-28 days remaining (2-3 days complete)
+**Estimated Effort**: 18-26 days remaining (4-6 days complete)
 
 ---
 
@@ -252,10 +252,10 @@ This document tracks the three major milestones for meniOS development.
 ## 📈 Overall Progress
 
 - **Total Issues Across Milestones**: 70 issues
-- **Completed**: 43 issues (61.4%)
-- **In Progress**: 27 issues
+- **Completed**: 44 issues (62.9%)
+- **In Progress**: 26 issues
 - **Ready to Start**: 2 issues (no dependencies: #109, #221)
-- **Next Up**: #246 (Define Buddy Orders - dependency met!)
+- **Next Up**: #247 (Rewrite Arena Setup - dependency met!)
 
 ## 🚀 Immediate Next Steps
 
@@ -266,7 +266,7 @@ This document tracks the three major milestones for meniOS development.
 
 ### Next in Critical Path (Dependencies Met):
 1. **Buddy Allocator Milestone**:
-   - #246 - Define Buddy Allocator Orders and Configuration (depends on #245 ✅)
+   - #247 - Rewrite Arena Setup for Buddy Allocator (depends on #246 ✅)
 
 ## 📝 Notes
 
@@ -287,7 +287,7 @@ Many issues can be worked on in parallel:
 ### Completion Order
 Recommended completion order for maximum impact:
 1. **Mosh** - Provides usable development environment (100% complete) 🎉
-2. **Buddy Allocator** - Foundation for complex apps (11.1% complete, in progress!) 🔨
+2. **Buddy Allocator** - Foundation for complex apps (22.2% complete, design done!) 🔨
 3. **GCC** - Enables native development and compilation (62.5% complete, blocked on Buddy) 🚀
 4. **Doom** - Demonstrates full OS capabilities (38.5% complete, some work can start now)
 
@@ -340,6 +340,8 @@ Recommended completion order for maximum impact:
 - **2025-10-14**: Created #242 (PATH-aware tab completion), #243 (/bin/mem utility), #244 (procfs)
 - **2025-10-14**: Total issues across milestones: 70 (was 61)
 - **2025-10-14**: Closed #245 (Survey Current Heap) ✅ - Buddy Allocator milestone 11.1% complete!
+- **2025-10-14**: Closed #246 (Define Buddy Orders and Configuration) ✅ - Buddy Allocator milestone 22.2% complete!
+  - Orders 7–27 (128 B–128 MiB), 128 MiB arenas, 21 freelists
 
 ---
 

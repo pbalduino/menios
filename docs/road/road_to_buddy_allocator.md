@@ -37,7 +37,7 @@ The migration follows a careful sequence to minimize risk:
 | Issue | Title | Status | Priority | Effort |
 | --- | --- | --- | --- | --- |
 | #245 | Survey Current Heap Implementation | ✅ Complete | High | 2-3 days |
-| #246 | Define Buddy Allocator Orders and Configuration | 🔄 Open | High | 1-2 days |
+| #246 | Define Buddy Allocator Orders and Configuration | ✅ Complete | High | 1-2 days |
 | #247 | Rewrite Arena Setup for Buddy Allocator | 🔄 Open | High | 3-4 days |
 | #248 | Implement Buddy Split and Coalesce Operations | 🔄 Open | Critical | 4-5 days |
 | #249 | Integrate Buddy Allocator with malloc/free | 🔄 Open | Critical | 3-4 days |
@@ -157,10 +157,39 @@ typedef struct arena {
 **Goal:** Define buddy allocator parameters
 
 **Deliverables:**
-- MIN_ORDER, MAX_ORDER, ARENA_SIZE constants
-- Block metadata structure
-- Arena structure with freelists
-- Order-to-size mapping table
+- **Order bounds.** Adopt `MIN_ORDER = 7` (128 B blocks) and `MAX_ORDER = 27` (128 MiB blocks). `MIN_ORDER` safely covers the 0x50-byte header plus 16-byte alignment; `MAX_ORDER` matches the new 128 MiB arena size. This yields 21 freelists (orders 7–27).
+- **Arena size.** Each arena will map `1u << MAX_ORDER` bytes (128 MiB), aligned to 2 MiB for paging. New arenas are seeded as a single order-27 block before splitting.
+- **Buddy metadata.**
+  ```c
+  typedef struct buddy_block {
+      uint32_t order;           // 7..27 inclusive
+      uint32_t flags;           // BUDDY_FREE, BUDDY_USED, BUDDY_DIRECT
+      struct buddy_block* next;
+      struct buddy_block* prev;
+      struct arena* arena;      // Owning arena; NULL for direct mmaps
+  } buddy_block_t;
+  ```
+  The 0x50-byte header layout stays compatible with existing alignment rules.
+- **Arena descriptor.**
+  ```c
+  typedef struct arena {
+      void* base;
+      size_t size;                        // always 128 MiB
+      struct arena* next;
+      buddy_block_t* freelists[21];       // orders 7..27
+  } arena_t;
+  ```
+- **Order/size table (excerpt).**
+  | Order | Block size |
+  |-------|-----------|
+  | 7     | 128 B     |
+  | 8     | 256 B     |
+  | 9     | 512 B     |
+  | …     | …         |
+  | 20    | 1 MiB     |
+  | 21    | 2 MiB     |
+  | 27    | 128 MiB   |
+- **Design notes.** Orders ≤ 20 (≤ 1 MiB) cover the bulk of libc allocations. Larger orders handle gcc/Doom workloads without immediately falling back to direct `mmap`. Direct mappings still handle requests exceeding order 27 or alignments beyond the buddy range.
 
 ### Phase 3: Arena Infrastructure (#247)
 **Goal:** Bootstrap buddy system
