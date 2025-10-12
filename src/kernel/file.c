@@ -10,6 +10,7 @@
 #include <kernel/condvar.h>
 #include <kernel/file.h>
 #include <kernel/devfs.h>
+#include <kernel/procfs.h>
 #include <kernel/tmpfs.h>
 #include <kernel/framebuffer.h>
 #include <kernel/heap.h>
@@ -612,6 +613,9 @@ void file_system_init(void) {
   }
   if(!tmpfs_mount()) {
     serial_printf("file_system_init: failed to mount tmpfs\n");
+  }
+  if(!procfs_mount()) {
+    serial_printf("file_system_init: failed to mount procfs\n");
   }
 #endif
 }

@@ -15,6 +15,8 @@ static uint64_t page_bitmap[PAGE_BITMAP_SIZE];
 static uintptr_t kernel_offset;
 static uintptr_t cr3_vaddr;
 static phys_addr_t kernel_cr3_phys = 0;
+static size_t pmm_total_usable_pages = 0;
+static size_t pmm_free_page_count = 0;
 
 static inline void invlpg(void* addr) {
 #ifdef __x86_64__
@@ -130,7 +132,11 @@ void set_page_free(uintptr_t physical_address) {
   size_t page_number = physical_address / PAGE_SIZE;
   size_t index = page_number / (sizeof(uint64_t) * 8);
   size_t bit_position = page_number % (sizeof(uint64_t) * 8);
-  page_bitmap[index] &= ~(1UL << bit_position);
+  uint64_t mask = (1UL << bit_position);
+  if(page_bitmap[index] & mask) {
+    page_bitmap[index] &= ~mask;
+    pmm_free_page_count++;
+  }
 }
 
 static bool mark_intermediate_user(virt_addr_t vaddr,
@@ -564,13 +570,26 @@ void set_page_used(uintptr_t physical_address) {
   size_t page_number = physical_address / PAGE_SIZE;
   size_t index = page_number / (sizeof(uint64_t) * 8);
   size_t bit_position = page_number % (sizeof(uint64_t) * 8);
-  page_bitmap[index] |= (1UL << bit_position);
+  uint64_t mask = (1UL << bit_position);
+  if((page_bitmap[index] & mask) == 0) {
+    page_bitmap[index] |= mask;
+    if(pmm_free_page_count > 0) {
+      pmm_free_page_count--;
+    }
+  }
 }
 
 void set_page_row_free(uintptr_t physical_address) {
   size_t page_number = physical_address / PAGE_SIZE;
   size_t index = page_number / (sizeof(unsigned long) * 8);
-  page_bitmap[index] = PAGE_FREE;
+  uint64_t previous = page_bitmap[index];
+  if(previous != PAGE_FREE) {
+    size_t used = (size_t)__builtin_popcountll(previous);
+    if(used < 64) {
+      pmm_free_page_count += (64 - used);
+    }
+    page_bitmap[index] = PAGE_FREE;
+  }
 }
 
 static phys_addr_t pmm_alloc_internal(size_t page_count,
@@ -683,6 +702,7 @@ void bulk_page_bitmap_as_free(uint64_t base, uint64_t size) {
   }
 
   if(base % PAGE_SIZE == 0 && size % PAGE_SIZE == 0) {
+    pmm_total_usable_pages += (size_t)(size / PAGE_SIZE);
     for(uint64_t p = base; p < base + size; p += PAGE_SIZE) {
       uint64_t b = p - base;
       uint64_t r = size - b;
@@ -700,9 +720,9 @@ void bulk_page_bitmap_as_free(uint64_t base, uint64_t size) {
 }
 
 void list_memory_areas() {
-  uint64_t mem_total;
-  uint64_t mem_available;
-  uint64_t mem_framebuffer;
+  uint64_t mem_total = 0;
+  uint64_t mem_available = 0;
+  uint64_t mem_framebuffer = 0;
 
   struct limine_memmap_response* memmap_response;
 
@@ -747,6 +767,14 @@ void list_memory_areas() {
     mem_available / (1024 * 1024), 
     mem_framebuffer / (1024 * 1024));
 
+}
+
+void pmm_get_stats(pmm_stats_t* stats) {
+  if(stats == NULL) {
+    return;
+  }
+  stats->usable_pages = pmm_total_usable_pages;
+  stats->free_pages = pmm_free_page_count;
 }
 
 void init_kernel_offset() {

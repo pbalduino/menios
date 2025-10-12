@@ -1,0 +1,280 @@
+#include <kernel/procfs.h>
+
+#include <errno.h>
+#include <stdio.h>
+#include <string.h>
+#include <sys/fcntl.h>
+
+#include <kernel/file.h>
+#include <kernel/heap.h>
+#include <kernel/pmm.h>
+#include <kernel/vfs.h>
+
+#define PROCFS_MAX_NAME 64
+
+typedef bool (*procfs_generate_fn)(char** out_buffer, size_t* out_size);
+
+typedef struct procfs_entry_t {
+  const char*        name;
+  procfs_generate_fn generate;
+} procfs_entry_t;
+
+typedef struct procfs_file_state_t {
+  char*  buffer;
+  size_t size;
+  size_t offset;
+} procfs_file_state_t;
+
+static bool procfs_generate_meminfo(char** out_buffer, size_t* out_size);
+
+static const procfs_entry_t procfs_entries[] = {
+  { "meminfo", procfs_generate_meminfo },
+};
+
+static size_t procfs_entry_count(void) {
+  return sizeof(procfs_entries) / sizeof(procfs_entries[0]);
+}
+
+static const procfs_entry_t* procfs_find_entry(const char* path) {
+  if(path == NULL) {
+    return NULL;
+  }
+  while(*path == '/') {
+    path++;
+  }
+  if(*path == '\0') {
+    return NULL;
+  }
+  for(size_t i = 0; i < procfs_entry_count(); ++i) {
+    if(strcmp(path, procfs_entries[i].name) == 0) {
+      return &procfs_entries[i];
+    }
+  }
+  return NULL;
+}
+
+static bool procfs_list(void* fs_ctx, const char* path, vfs_dir_iter_t iter, void* context) {
+  (void)fs_ctx;
+  if(path != NULL && path[0] != '\0' && strcmp(path, "/") != 0) {
+    return false;
+  }
+  for(size_t i = 0; i < procfs_entry_count(); ++i) {
+    vfs_dir_entry_t entry;
+    memset(&entry, 0, sizeof(entry));
+    strncpy(entry.name, procfs_entries[i].name, sizeof(entry.name) - 1);
+    entry.name[sizeof(entry.name) - 1] = '\0';
+    entry.is_directory = false;
+    entry.size = 0;
+    if(!iter(&entry, context)) {
+      break;
+    }
+  }
+  return true;
+}
+
+static bool procfs_generate(const char* path, char** out_buffer, size_t* out_size) {
+  const procfs_entry_t* entry = procfs_find_entry(path);
+  if(entry == NULL || entry->generate == NULL) {
+    return false;
+  }
+  return entry->generate(out_buffer, out_size);
+}
+
+static bool procfs_read(void* fs_ctx,
+                        const char* path,
+                        size_t offset,
+                        void* buffer,
+                        size_t length,
+                        size_t* bytes_read) {
+  (void)fs_ctx;
+  if(buffer == NULL || bytes_read == NULL) {
+    return false;
+  }
+  char* data = NULL;
+  size_t size = 0;
+  if(!procfs_generate(path, &data, &size)) {
+    return false;
+  }
+  if(offset >= size) {
+    *bytes_read = 0;
+    kfree(data);
+    return true;
+  }
+  size_t to_copy = length;
+  if(offset + to_copy > size) {
+    to_copy = size - offset;
+  }
+  memcpy(buffer, data + offset, to_copy);
+  *bytes_read = to_copy;
+  kfree(data);
+  return true;
+}
+
+static bool procfs_read_all(void* fs_ctx, const char* path, void** out_buffer, size_t* out_size) {
+  (void)fs_ctx;
+  if(out_buffer == NULL || out_size == NULL) {
+    return false;
+  }
+  return procfs_generate(path, (char**)out_buffer, out_size);
+}
+
+static int64_t procfs_file_read(file_t* file, void* buffer, size_t length) {
+  if(file == NULL || buffer == NULL || length == 0) {
+    return -EINVAL;
+  }
+  procfs_file_state_t* state = (procfs_file_state_t*)file->private_data;
+  if(state == NULL || state->buffer == NULL) {
+    return -EIO;
+  }
+  if(state->offset >= state->size) {
+    return 0;
+  }
+  size_t to_copy = length;
+  if(state->offset + to_copy > state->size) {
+    to_copy = state->size - state->offset;
+  }
+  memcpy(buffer, state->buffer + state->offset, to_copy);
+  state->offset += to_copy;
+  return (int64_t)to_copy;
+}
+
+static int procfs_file_close(file_t* file) {
+  if(file == NULL) {
+    return 0;
+  }
+  procfs_file_state_t* state = (procfs_file_state_t*)file->private_data;
+  if(state != NULL) {
+    if(state->buffer != NULL) {
+      kfree(state->buffer);
+    }
+    kfree(state);
+    file->private_data = NULL;
+  }
+  return 0;
+}
+
+static const file_ops_t procfs_file_ops = {
+  .read = procfs_file_read,
+  .write = NULL,
+  .close = procfs_file_close,
+  .seek = NULL,
+  .ioctl = NULL,
+};
+
+static int procfs_open(void* fs_ctx, const char* path, int flags, file_t** out_file) {
+  (void)fs_ctx;
+  if(out_file == NULL) {
+    return -EINVAL;
+  }
+  if((flags & O_ACCMODE) != O_RDONLY) {
+    return -EACCES;
+  }
+
+  char* buffer = NULL;
+  size_t size = 0;
+  if(!procfs_generate(path, &buffer, &size)) {
+    return -ENOENT;
+  }
+
+  procfs_file_state_t* state = kmalloc(sizeof(procfs_file_state_t));
+  if(state == NULL) {
+    kfree(buffer);
+    return -ENOMEM;
+  }
+  state->buffer = buffer;
+  state->size = size;
+  state->offset = 0;
+
+  file_t* handle = file_create(&procfs_file_ops, state, FILE_MODE_READ);
+  if(handle == NULL) {
+    kfree(buffer);
+    kfree(state);
+    return -ENOMEM;
+  }
+
+  *out_file = handle;
+  return 0;
+}
+
+static int procfs_unlink(void* fs_ctx, const char* path) {
+  (void)fs_ctx;
+  (void)path;
+  return -EACCES;
+}
+
+static bool procfs_write(void* fs_ctx,
+                         const char* path,
+                         size_t offset,
+                         const void* buffer,
+                         size_t length,
+                         size_t* bytes_written) {
+  (void)fs_ctx;
+  (void)path;
+  (void)offset;
+  (void)buffer;
+  (void)length;
+  (void)bytes_written;
+  return false;
+}
+
+static bool procfs_write_all(void* fs_ctx, const char* path, const void* buffer, size_t size) {
+  (void)fs_ctx;
+  (void)path;
+  (void)buffer;
+  (void)size;
+  return false;
+}
+
+static void procfs_destroy(void* fs_ctx) {
+  (void)fs_ctx;
+}
+
+static const vfs_fs_driver_t procfs_driver = {
+  .list = procfs_list,
+  .read = procfs_read,
+  .read_all = procfs_read_all,
+  .write = procfs_write,
+  .write_all = procfs_write_all,
+  .open = procfs_open,
+  .unlink = procfs_unlink,
+  .destroy = procfs_destroy,
+};
+
+static bool procfs_generate_meminfo(char** out_buffer, size_t* out_size) {
+  if(out_buffer == NULL || out_size == NULL) {
+    return false;
+  }
+
+  pmm_stats_t stats;
+  pmm_get_stats(&stats);
+
+  uint64_t usable_bytes = (uint64_t)stats.usable_pages * PAGE_SIZE;
+  uint64_t free_bytes = (uint64_t)stats.free_pages * PAGE_SIZE;
+  uint64_t used_bytes = usable_bytes - free_bytes;
+
+  char* buffer = kmalloc(256);
+  if(buffer == NULL) {
+    return false;
+  }
+
+  int written = snprintf(buffer,
+                         256,
+                         "usable_bytes: %llu\nfree_bytes: %llu\nused_bytes: %llu\nusable_pages: %zu\nfree_pages: %zu\n",
+                         (unsigned long long)usable_bytes,
+                         (unsigned long long)free_bytes,
+                         (unsigned long long)used_bytes,
+                         stats.usable_pages,
+                         stats.free_pages);
+  if(written < 0) {
+    kfree(buffer);
+    return false;
+  }
+
+  *out_buffer = buffer;
+  *out_size = (size_t)written;
+  return true;
+}
+
+bool procfs_mount(void) {
+  return vfs_mount("/proc", &procfs_driver, NULL, true);
+}

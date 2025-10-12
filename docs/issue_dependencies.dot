@@ -197,7 +197,7 @@ digraph IssueDependencies {
         issue239 [label="#239: Kernel time\nsyscalls", fillcolor="#E0FFFF"];
         issue240 [label="#240: time() in\nlibc", fillcolor="#E0FFFF"];
         issue241 [label="#241: rand() in\nlibc", fillcolor="#E0FFFF"];
-        issue244 [label="#244: /proc\nfilesystem", fillcolor="#E0FFFF"];
+        issue244 [label="#244: /proc\nfilesystem", fillcolor="#90EE90", style="filled,dashed"];
     }
 
     subgraph cluster_utilities {
