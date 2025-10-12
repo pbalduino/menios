@@ -148,13 +148,14 @@ Expect the log to show the `[user_demo]` messages on screen and in `com1.log`, c
   - New arenas seed order-27 root blocks with per-order freelists
 - [x] **#248**: Implement Buddy Split and Coalesce Operations ✅ COMPLETE!
   - Core buddy algorithms with host regression tests
-- [ ] **#249**: Integrate Buddy Allocator with malloc/free
+- [x] **#249**: Integrate Buddy Allocator with malloc/free ✅ COMPLETE!
+  - malloc() and free() now route through buddy allocator
 - [ ] **#250**: Adapt realloc/reallocarray for Buddy Allocator
 - [ ] **#251**: Update Direct mmap Path for Large Allocations
 - [ ] **#252**: Add Buddy Allocator Diagnostics and Tests
 - [ ] **#253**: Cleanup and Document Buddy Allocator Migration
 
-**Status**: 4/9 complete (44.4%) - Core algorithms done, malloc/free integration next!
+**Status**: 5/9 complete (55.6%) - malloc/free integrated, realloc/mmap paths next!
 
 #### **Toolchain (Issues #29, #192-#195)** 🚀 Core Complete, Blocked on Buddy!
 - [x] **#192**: crt0 runtime startup code ✅ COMPLETE!
@@ -208,10 +209,10 @@ Remaining major components for Doom:
 
 See [`road_to_doom.md`](docs/road/road_to_doom.md) for the complete roadmap and [`tasks.json`](tasks.json) for detailed task tracking.
 
-**📊 Progress Assessment**: With **46 issues completed across 70 total** (65.7%), meniOS is making phenomenal progress! Major recent completions include:
+**📊 Progress Assessment**: With **47 issues completed across 70 total** (67.1%), meniOS is making phenomenal progress! Major recent completions include:
 - ✅ **Shell Milestone**: 27/27 complete (100%)—v0.1.0 ships the full interactive shell experience! 🎉
 - ✅ **Toolchain Core**: 5/8 complete (62.5%)—crt0 (#192) ✅, libc (#193) ✅, ABI docs (#194) ✅, build system (#195) ✅, cross-compiler (#29) ✅
-- 🔨 **Buddy Allocator**: 4/9 complete (44.4%)—survey, design, arena setup, and core split/coalesce algorithms (#245-#248 ✅) done, critical foundation for GCC and Doom
+- 🔨 **Buddy Allocator**: 5/9 complete (55.6%)—survey, design, arena setup, core algorithms, and malloc/free integration (#245-#249 ✅) done, critical foundation for GCC and Doom
 - ✅ **Synchronization**: All primitives complete! (#36, #37, #39, #40) - 4/4 done!
 - ✅ **Shell UX**: Tab completion (#197) ✅, History (#156) ✅, Ctrl+A/E (#198) ✅, Ctrl+L (#200) ✅, Ctrl+R (#199) ✅, Job control (#158) ✅, pwd prompt (#222) ✅!
 - ✅ **Threading Foundation**: Kernel threading (#108) - ready for pthread!
@@ -225,7 +226,7 @@ See [`road_to_doom.md`](docs/road/road_to_doom.md) for the complete roadmap and 
 
 **🎯 Milestone Status**:
 - 🎉 **Mosh** (Shell): 27/27 complete (100%) - v0.1.0 shipped!
-- 🔨 **Buddy Allocator** (Memory): 4/9 complete (44.4%) - core algorithms done, malloc/free integration next (#249)!
+- 🔨 **Buddy Allocator** (Memory): 5/9 complete (55.6%) - malloc/free integrated, realloc/mmap next (#250/#251)!
 - 🚀 **GCC** (Toolchain): 5/8 complete (62.5%) - core done, native compilation blocked on Buddy
 - 🎮 **Doom** (Full OS): 10/26 complete (38.5%) - blocked on Buddy for game engine memory
 
@@ -317,10 +318,10 @@ We welcome contributions from developers of all skill levels! 🚀
 
 - **New Contributors**: Start with our [Contributing Guide](CONTRIBUTING.md) for a complete development workflow
 - **Find Tasks**: Check [GitHub Issues](https://github.com/pbalduino/menios/issues) or browse [`tasks.json`](tasks.json) for detailed task tracking
-- **High Priority - Ready Now** (3 issues ready to start!):
-  - **🔨 Buddy Allocator** (CRITICAL): #249 (Integrate malloc/free with Buddy) - connect the allocator API!
+- **High Priority - Ready Now** (4 issues ready to start!):
+  - **🔨 Buddy Allocator** (CRITICAL): #250 (realloc adaptation) and #251 (direct mmap) - can work in parallel!
   - **🧵 Threading**: #109 (pthread API), #221 (fast syscalls - 3-5x speedup!)
-- **Critical Path**: Buddy Allocator milestone (#245-#253) is 44.4% done - core algorithms complete ✅✅✅✅, now integrate with malloc/free!
+- **Critical Path**: Buddy Allocator milestone (#245-#253) is 55.6% done - malloc/free integrated ✅✅✅✅✅, realloc and mmap paths next!
 - **Report Issues**: Use our issue templates to report bugs or request features
 - **Security Issues**: Please review our [Security Policy](SECURITY.md) for responsible disclosure
 - **Code Style**: Follow the guidelines in [`CODING.md`](CODING.md)

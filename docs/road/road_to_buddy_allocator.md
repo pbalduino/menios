@@ -40,7 +40,7 @@ The migration follows a careful sequence to minimize risk:
 | #246 | Define Buddy Allocator Orders and Configuration | ✅ Complete | High | 1-2 days |
 | #247 | Rewrite Arena Setup for Buddy Allocator | ✅ Complete | High | 3-4 days |
 | #248 | Implement Buddy Split and Coalesce Operations | ✅ Complete | Critical | 4-5 days |
-| #249 | Integrate Buddy Allocator with malloc/free | 🔄 Open | Critical | 3-4 days |
+| #249 | Integrate Buddy Allocator with malloc/free | ✅ Complete | Critical | 3-4 days |
 | #250 | Adapt realloc/reallocarray for Buddy Allocator | 🔄 Open | High | 2-3 days |
 | #251 | Update Direct mmap Path for Large Allocations | 🔄 Open | Medium | 2 days |
 | #252 | Add Buddy Allocator Diagnostics and Tests | 🔄 Open | High | 3-4 days |
