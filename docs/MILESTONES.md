@@ -97,13 +97,13 @@ This document tracks the three major milestones for meniOS development.
 **Goal**: Migrate userland allocator from first-fit to buddy allocator system
 **GitHub Milestone**: [Buddy Allocator](https://github.com/pbalduino/menios/milestone/4)
 
-**Status**: 3/9 complete (33.3%)
+**Status**: 4/9 complete (44.4%)
 
 **Assigned Issues**:
 - [x] #245 - Survey Current Heap Implementation ✅
 - [x] #246 - Define Buddy Allocator Orders and Configuration ✅
 - [x] #247 - Rewrite Arena Setup for Buddy Allocator ✅
-- [ ] #248 - Implement Buddy Split and Coalesce Operations
+- [x] #248 - Implement Buddy Split and Coalesce Operations ✅
 - [ ] #249 - Integrate Buddy Allocator with malloc/free
 - [ ] #250 - Adapt realloc/reallocarray for Buddy Allocator
 - [ ] #251 - Update Direct mmap Path for Large Allocations
@@ -122,9 +122,9 @@ This document tracks the three major milestones for meniOS development.
 - #252 depends on #248, #249 (core operations + API)
 - #253 depends on #252 (testing)
 
-**Progress**: Survey (#245), configuration (#246), and buddy-aware arena setup (#247) complete. New arenas now seed order-27 root blocks with per-order freelists ready for buddy splitting. Next actions: implement buddy split/coalesce (#248) and switch malloc/free onto the new freelists (#249). Both GCC and Doom milestones depend on this migration for reliable heap behaviour.
+**Progress**: Survey (#245), configuration (#246), arena setup (#247), and buddy split/coalesce core (#248) are complete. New arenas seed order-27 root blocks, the buddy freelists can split on demand, and coalescing rebuilds higher-order blocks correctly (covered by the new host regression tests). Each arena is 128 MiB and we currently grow without a hard cap—the allocator keeps mapping arenas until kernel VM resources or physical memory run out. Next actions: route malloc/free through the buddy freelists (#249) and adapt realloc/direct-mmap paths (#250/#251). Both GCC and Doom milestones depend on this migration for reliable heap behaviour.
 
-**Estimated Effort**: 15-22 days remaining (7-10 days complete)
+**Estimated Effort**: 11-17 days remaining (11-15 days complete)
 
 ---
 
@@ -252,10 +252,10 @@ This document tracks the three major milestones for meniOS development.
 ## 📈 Overall Progress
 
 - **Total Issues Across Milestones**: 70 issues
-- **Completed**: 45 issues (64.3%)
-- **In Progress**: 25 issues
+- **Completed**: 46 issues (65.7%)
+- **In Progress**: 24 issues
 - **Ready to Start**: 2 issues (no dependencies: #109, #221)
-- **Next Up**: #248 (Buddy Split/Coalesce - dependency met!)
+- **Next Up**: #249 (Integrate malloc/free with buddy freelists)
 
 ## 🚀 Immediate Next Steps
 
@@ -266,7 +266,7 @@ This document tracks the three major milestones for meniOS development.
 
 ### Next in Critical Path (Dependencies Met):
 1. **Buddy Allocator Milestone**:
-   - #248 - Implement Buddy Split and Coalesce Operations (depends on #247 ✅)
+   - #248 - Implement Buddy Split and Coalesce Operations (depends on #247 ✅) ✅ Done
 
 ## 📝 Notes
 
@@ -287,7 +287,7 @@ Many issues can be worked on in parallel:
 ### Completion Order
 Recommended completion order for maximum impact:
 1. **Mosh** - Provides usable development environment (100% complete) 🎉
-2. **Buddy Allocator** - Foundation for complex apps (33.3% complete, arena setup done!) 🔨
+2. **Buddy Allocator** - Foundation for complex apps (44.4% complete, core algorithms done!) 🔨
 3. **GCC** - Enables native development and compilation (62.5% complete, blocked on Buddy) 🚀
 4. **Doom** - Demonstrates full OS capabilities (38.5% complete, some work can start now)
 
@@ -344,6 +344,8 @@ Recommended completion order for maximum impact:
   - Orders 7–27 (128 B–128 MiB), 128 MiB arenas, 21 freelists
 - **2025-10-14**: Closed #247 (Rewrite Arena Setup) ✅ - Buddy Allocator milestone 33.3% complete!
   - New arenas seed order-27 root blocks with per-order freelists
+- **2025-10-14**: Closed #248 (Buddy Split/Coalesce) ✅ - Buddy Allocator milestone 44.4% complete!
+  - Core buddy algorithms implemented with host regression tests
 
 ---
 

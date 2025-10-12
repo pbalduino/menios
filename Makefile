@@ -627,7 +627,7 @@ ifeq ($(OS_NAME),linux)
 	@echo "Testing inside Linux"
 
 	# Skip host-unsafe tests until proper stubs land.
-	for file in $(shell find -L test -type f -name 'test_*.c' ! -name 'test_kmalloc.c' ! -name 'test_malloc_stress.c'); do \
+	for file in $(shell find -L test -type f -name 'test_*.c' ! -name 'test_kmalloc.c' ! -name 'test_malloc_stress.c' ! -name 'test_buddy_allocator.c'); do \
 		gcc -std=gnu11 -DMENIOS_NO_DEBUG -DUNITY_EXCLUDE_SETJMP_H -I./include \
 			$$file \
 			test/unity.c \
@@ -655,6 +655,35 @@ ifeq ($(OS_NAME),linux)
 		rm "$$file".bin ; \
 		if [ $$rc -ne 0 ]; then exit $$rc; fi; \
 	done;
+
+	# Host-stubbed allocator stress test exercises user/libc/stdlib.c explicitly.
+	gcc -std=gnu11 -DMENIOS_NO_DEBUG -DMENIOS_HOST_TEST -DUNITY_EXCLUDE_SETJMP_H -I./include \
+		test/test_buddy_allocator.c \
+		test/unity.c \
+		test/stubs.c \
+		src/kernel/file.c \
+		src/kernel/fs/vfs.c \
+		src/kernel/fs/pipe.c \
+		src/kernel/fs/tmpfs.c \
+		src/kernel/syscall/syscall.c \
+		src/kernel/mem/pmm.c \
+		src/kernel/console/vprintk.c \
+		src/kernel/console/ansi.c \
+		src/kernel/proc/kcondvar.c \
+		src/kernel/proc/kmutex.c \
+		src/kernel/proc/signal.c \
+		src/kernel/ipc/shm.c \
+		src/kernel/user/vm_region.c \
+		src/kernel/timer/tsc.c \
+		src/libc/itoa.c \
+		src/libc/string.c \
+		user/libc/stdlib.c \
+	-o test/test_buddy_allocator.c.bin ; \
+	echo "Testing test/test_buddy_allocator.c" ; \
+	test/test_buddy_allocator.c.bin ; \
+	rc=$$?; \
+	rm test/test_buddy_allocator.c.bin ; \
+	if [ $$rc -ne 0 ]; then exit $$rc; fi;
 
 	# Host-stubbed allocator stress test exercises user/libc/stdlib.c explicitly.
 	gcc -std=gnu11 -DMENIOS_NO_DEBUG -DMENIOS_HOST_TEST -DUNITY_EXCLUDE_SETJMP_H -I./include \

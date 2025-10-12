@@ -106,7 +106,7 @@ digraph IssueDependencies {
         issue245 [label="#245: Survey\nCurrent Heap", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED
         issue246 [label="#246: Define Buddy\nOrders", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED
         issue247 [label="#247: Rewrite Arena\nSetup", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED
-        issue248 [label="#248: Buddy Split/\nCoalesce", fillcolor="#C8E6C9"];
+        issue248 [label="#248: Buddy Split/\nCoalesce", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED
         issue249 [label="#249: malloc/free\nIntegration", fillcolor="#C8E6C9"];
         issue250 [label="#250: realloc\nAdaptation", fillcolor="#C8E6C9"];
         issue251 [label="#251: Direct mmap\nPath", fillcolor="#C8E6C9"];
@@ -215,7 +215,7 @@ digraph IssueDependencies {
     issue245 -> issue246 [color=green, penwidth=2, label="survey→config", style=dashed];
     issue246 -> issue247 [color=green, penwidth=2, label="config→arena", style=dashed];
     issue247 -> issue248 [color=green, penwidth=2, label="arena→split/coalesce", style=dashed];
-    issue248 -> issue249 [color=green, penwidth=2, label="core→API"];
+    issue248 -> issue249 [color=green, penwidth=2, label="core→API", style=dashed];
     issue249 -> issue250 [color=green, penwidth=2, label="malloc→realloc"];
     issue249 -> issue251 [color=green, penwidth=2, label="malloc→mmap"];
     issue248 -> issue252 [color=green, label="core→tests"];

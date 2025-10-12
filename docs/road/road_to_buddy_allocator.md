@@ -39,7 +39,7 @@ The migration follows a careful sequence to minimize risk:
 | #245 | Survey Current Heap Implementation | ✅ Complete | High | 2-3 days |
 | #246 | Define Buddy Allocator Orders and Configuration | ✅ Complete | High | 1-2 days |
 | #247 | Rewrite Arena Setup for Buddy Allocator | ✅ Complete | High | 3-4 days |
-| #248 | Implement Buddy Split and Coalesce Operations | 🔄 Open | Critical | 4-5 days |
+| #248 | Implement Buddy Split and Coalesce Operations | ✅ Complete | Critical | 4-5 days |
 | #249 | Integrate Buddy Allocator with malloc/free | 🔄 Open | Critical | 3-4 days |
 | #250 | Adapt realloc/reallocarray for Buddy Allocator | 🔄 Open | High | 2-3 days |
 | #251 | Update Direct mmap Path for Large Allocations | 🔄 Open | Medium | 2 days |
@@ -123,12 +123,9 @@ When freeing block at order k:
 ### Block Metadata
 
 ```c
-typedef struct buddy_block {
-    uint32_t order;           // Block order (k for size 2^k)
-    uint32_t flags;           // FREE, USED, DIRECT_MMAP
-    struct buddy_block *next; // Freelist linkage
-    struct buddy_block *prev;
-} buddy_block_t;
+typedef struct block_header block_header_t;
+
+/* block_header_t carries both payload metadata and the buddy freelist hooks */
 ```
 
 ### Arena Structure
@@ -137,7 +134,7 @@ typedef struct buddy_block {
 typedef struct arena {
     void *base;                           // Start address
     size_t size;                          // Total arena size
-    buddy_block_t *freelists[NUM_ORDERS]; // Per-order freelists
+    block_header_t *freelists[NUM_ORDERS]; // Per-order freelists
     struct arena *next;                   // Arena chain
 } arena_t;
 ```
@@ -161,22 +158,24 @@ typedef struct arena {
 - **Arena size.** Each arena will map `1u << MAX_ORDER` bytes (128 MiB), aligned to 2 MiB for paging. New arenas are seeded as a single order-27 block before splitting.
 - **Buddy metadata.**
   ```c
-  typedef struct buddy_block {
-      uint32_t order;           // 7..27 inclusive
-      uint32_t flags;           // BUDDY_FREE, BUDDY_USED, BUDDY_DIRECT
-      struct buddy_block* next;
-      struct buddy_block* prev;
+  typedef struct block_header {
+      struct block_header* buddy_next;
+      struct block_header* buddy_prev;
       struct arena* arena;      // Owning arena; NULL for direct mmaps
-  } buddy_block_t;
+      uint32_t buddy_order;     // 7..27 inclusive
+      uint32_t buddy_flags;     // BUDDY_FREE, BUDDY_USED
+      uintptr_t buddy_offset;   // Offset from arena->buddy_base
+      /* ... existing payload fields (mapping_base, size, flags, etc.) ... */
+  } block_header_t;
   ```
-  The 0x50-byte header layout stays compatible with existing alignment rules.
+  The existing 0x50-byte header now doubles as the buddy freelist node, so allocated blocks keep their metadata for debugging while free blocks reuse the same storage for `buddy_next/prev`.
 - **Arena descriptor.**
   ```c
   typedef struct arena {
       void* base;
       size_t size;                        // always 128 MiB
       struct arena* next;
-      buddy_block_t* freelists[21];       // orders 7..27
+      block_header_t* freelists[21];      // orders 7..27
   } arena_t;
   ```
 - **Order/size table (excerpt).**
@@ -196,7 +195,7 @@ typedef struct arena {
 
 **Key Changes:**
 - Replace the single global freelist with per-order freelists stored in each arena (and optionally a global array for quick lookup). Provide helpers such as `buddy_push(order, block)` / `buddy_pop(order)` so allocation code no longer touches the legacy list.
-- When `grow_heap` mmaps a 128 MiB arena, initialise an `arena_t` structure (base, size, `freelists[21]`, link into `arena_list_head`). Seed the arena with a single order-27 `buddy_block_t` covering the entire mapping.
+- When `grow_heap` mmaps a 128 MiB arena, initialise an `arena_t` structure (base, size, `freelists[21]`, link into `arena_list_head`). Seed the arena by materialising an order-27 `block_header_t` at offset 0 inside the buddy payload region.
 - Ensure the seeded block records `order = MAX_ORDER`, `flags = BUDDY_FREE`, and `arena = current arena`. Defer splitting to the allocation path that consumes blocks from `freelists`.
 - Remove the old `free_list_head` usage in favour of order-aware insertion/removal. Existing arena metadata (base pointer, size) becomes part of the new `arena_t` so free/coalesce can locate the owning freelist quickly.
 
@@ -205,10 +204,12 @@ typedef struct arena {
 
 **Critical Functions:**
 ```c
-buddy_block_t* buddy_split(buddy_block_t *block, int target_order);
-buddy_block_t* buddy_coalesce(buddy_block_t *block);
+block_header_t* buddy_split(block_header_t *block, int target_order);
+block_header_t* buddy_coalesce(block_header_t *block);
 void* buddy_addr(void *block, int order);  // Calculate buddy address
 ```
+
+**Status:** ✅ Completed. Arenas now maintain per-order buddy freelists, `buddy_split_to_order` splits large blocks down to a requested order while seeding right-side siblings, and `buddy_coalesce_block` merges a freed block back up through the hierarchy. Host-only regression tests (`test/test_buddy_allocator.c`) exercise both operations to ensure the order bookkeeping and freelist accounting stay consistent across splits and merges. Each arena still mmaps 128 MiB, and the allocator will keep reserving additional arenas on demand—effectively unbounded until the process exhausts VM regions or the kernel runs out of physical memory.
 
 ### Phase 5: API Integration (#249)
 **Goal:** Connect to malloc/free
@@ -216,8 +217,8 @@ void* buddy_addr(void *block, int order);  // Calculate buddy address
 **Changes:**
 ```c
 void* malloc(size_t size) {
-    int order = compute_order(size + sizeof(buddy_block_t));
-    buddy_block_t *block = allocate_from_order(order);
+    int order = compute_order(size + sizeof(block_header_t));
+    block_header_t *block = allocate_from_order(order);
     if (!block && order <= MAX_ORDER) {
         block = buddy_split(higher_order_block, order);
     }
@@ -228,7 +229,7 @@ void* malloc(size_t size) {
 }
 
 void free(void *ptr) {
-    buddy_block_t *block = (buddy_block_t*)ptr - 1;
+    block_header_t *block = (block_header_t*)ptr - 1;
     if (block->flags & DIRECT_MMAP) {
         munmap(block, block->size);
     } else {

@@ -16,6 +16,8 @@
 
 #ifndef MENIOS_HOST_TEST
 #include <menios/syscall_user.h>
+#else
+#include "allocator_debug.h"
 #endif
 
 void __menios_fini_libc(int status);
@@ -57,11 +59,11 @@ static inline long __menios_syscall3(long number, long arg1, long arg2, long arg
 #endif
 
 #define DEFAULT_ALIGNMENT   16u
-#define MIN_SPLIT_SIZE      64u
-#define ARENA_INITIAL_SIZE  (1u << 20)   /* 1 MiB */
-#define ARENA_MAX_SIZE      (1u << 27)   /* 128 MiB */
+#define ARENA_INITIAL_SIZE  (1u << 27)   /* 128 MiB payload */
+#define ARENA_MAX_SIZE      (1u << 27)   /* 128 MiB payload */
 #define BLOCK_FLAG_FREE     (1u << 0)
 #define BLOCK_FLAG_DIRECT   (1u << 1)
+#define BLOCK_FLAG_BUDDY    (1u << 2)
 
 #define BUDDY_MIN_ORDER     7u           /* 128 bytes */
 #define BUDDY_MAX_ORDER     27u          /* 128 MiB */
@@ -69,14 +71,16 @@ static inline long __menios_syscall3(long number, long arg1, long arg2, long arg
 
 #define BUDDY_FLAG_FREE     (1u << 0)
 #define BUDDY_FLAG_USED     (1u << 1)
-#define BUDDY_FLAG_DIRECT   (1u << 2)
+
+struct arena_header;
 
 typedef struct block_header {
-  struct block_header* next;      /* neighbour inside arena */
-  struct block_header* prev;
-  struct block_header* free_next; /* intrusive freelist linkage */
-  struct block_header* free_prev;
+  struct block_header* buddy_next;
+  struct block_header* buddy_prev;
   struct arena_header* arena;     /* NULL for directly mapped blocks */
+  uint32_t buddy_order;           /* valid for buddy managed blocks */
+  uint32_t buddy_flags;
+  uintptr_t buddy_offset;         /* byte offset from arena->buddy_base */
   void* mapping_base;             /* only used for direct mappings */
   size_t mapping_size;            /* only used for direct mappings */
   size_t size;                    /* payload size for this block */
@@ -85,31 +89,285 @@ typedef struct block_header {
   uint64_t padding_align;         /* keep header aligned to 16 bytes */
 } block_header_t;
 
-typedef struct buddy_block {
-  struct buddy_block* next;
-  struct buddy_block* prev;
-  struct arena_header* arena;
-  uint32_t order;
-  uint32_t flags;
-  uintptr_t offset;               /* byte offset from arena base */
-} buddy_block_t;
-
 typedef struct arena_header {
   struct arena_header* next;
   struct arena_header* prev;
   void* mapping_base;             /* raw mapping returned by mmap */
-  size_t size;                    /* total bytes managed by allocator */
-  block_header_t* first_block;    /* legacy first-fit compatibility */
-  buddy_block_t* buddy_freelists[BUDDY_ORDER_COUNT];
-  buddy_block_t root_block;       /* seeded highest-order block */
+  size_t size;                    /* total bytes mapped (header + payload) */
+  uint8_t* buddy_base;            /* start of buddy-managed payload */
+  size_t buddy_size;              /* size of buddy-managed payload */
+  block_header_t* buddy_freelists[BUDDY_ORDER_COUNT];
 } arena_header_t;
 
 _Static_assert((sizeof(block_header_t) % DEFAULT_ALIGNMENT) == 0,
                "block header must stay aligned");
 
 static arena_header_t* arena_list_head = NULL;
-static block_header_t* free_list_head = NULL;
-static size_t next_arena_size = ARENA_INITIAL_SIZE;
+
+static int grow_heap(size_t size);
+
+static inline bool buddy_order_valid(uint32_t order) {
+  return order >= BUDDY_MIN_ORDER && order <= BUDDY_MAX_ORDER;
+}
+
+static inline size_t buddy_order_index(uint32_t order) {
+  return (size_t)(order - BUDDY_MIN_ORDER);
+}
+
+static inline size_t buddy_order_size(uint32_t order) {
+  return (size_t)1u << order;
+}
+
+static inline block_header_t* buddy_block_from_offset(arena_header_t* arena, uintptr_t offset) {
+  if(arena == NULL || offset >= arena->buddy_size) {
+    return NULL;
+  }
+  return (block_header_t*)(arena->buddy_base + offset);
+}
+
+static block_header_t* buddy_materialize_block(arena_header_t* arena,
+                                               uintptr_t offset,
+                                               uint32_t order) {
+  block_header_t* block = buddy_block_from_offset(arena, offset);
+  if(block == NULL) {
+    return NULL;
+  }
+  block->buddy_next = NULL;
+  block->buddy_prev = NULL;
+  block->arena = arena;
+  block->buddy_order = order;
+  block->buddy_flags = BUDDY_FLAG_FREE;
+  block->buddy_offset = offset;
+  block->mapping_base = NULL;
+  block->mapping_size = 0;
+  block->size = buddy_order_size(order) > sizeof(block_header_t)
+                  ? buddy_order_size(order) - sizeof(block_header_t)
+                  : 0u;
+  block->flags = 0u;
+  block->padding_reserved = 0u;
+  block->padding_align = 0u;
+  return block;
+}
+
+static void buddy_freelist_push(arena_header_t* arena, block_header_t* block) {
+  if(block == NULL || arena == NULL || !buddy_order_valid(block->buddy_order)) {
+    return;
+  }
+
+  size_t index = buddy_order_index(block->buddy_order);
+  block->buddy_flags &= (uint32_t)~BUDDY_FLAG_USED;
+  block->buddy_flags |= BUDDY_FLAG_FREE;
+  block->buddy_prev = NULL;
+  block->buddy_next = arena->buddy_freelists[index];
+  if(block->buddy_next != NULL) {
+    block->buddy_next->buddy_prev = block;
+  }
+  arena->buddy_freelists[index] = block;
+}
+
+static void buddy_freelist_remove(arena_header_t* arena, block_header_t* block) {
+  if(block == NULL || arena == NULL || !buddy_order_valid(block->buddy_order)) {
+    return;
+  }
+
+  if((block->buddy_flags & BUDDY_FLAG_FREE) == 0u) {
+    return;
+  }
+
+  size_t index = buddy_order_index(block->buddy_order);
+  if(block->buddy_prev != NULL) {
+    block->buddy_prev->buddy_next = block->buddy_next;
+  } else if(arena->buddy_freelists[index] == block) {
+    arena->buddy_freelists[index] = block->buddy_next;
+  }
+
+  if(block->buddy_next != NULL) {
+    block->buddy_next->buddy_prev = block->buddy_prev;
+  }
+
+  block->buddy_next = NULL;
+  block->buddy_prev = NULL;
+  block->buddy_flags &= (uint32_t)~BUDDY_FLAG_FREE;
+  block->buddy_flags |= BUDDY_FLAG_USED;
+}
+
+static block_header_t* buddy_freelist_pop(arena_header_t* arena, uint32_t order) {
+  if(arena == NULL || !buddy_order_valid(order)) {
+    return NULL;
+  }
+
+  size_t index = buddy_order_index(order);
+  block_header_t* block = arena->buddy_freelists[index];
+  if(block != NULL) {
+    buddy_freelist_remove(arena, block);
+  }
+  return block;
+}
+
+static block_header_t* buddy_freelist_find(arena_header_t* arena,
+                                           uint32_t order,
+                                           uintptr_t offset) {
+  if(arena == NULL || !buddy_order_valid(order)) {
+    return NULL;
+  }
+
+  size_t index = buddy_order_index(order);
+  for(block_header_t* node = arena->buddy_freelists[index]; node != NULL; node = node->buddy_next) {
+    if(node->buddy_offset == offset) {
+      return node;
+    }
+  }
+  return NULL;
+}
+
+static block_header_t* buddy_split_to_order(block_header_t* block, uint32_t target_order) {
+  if(block == NULL || block->arena == NULL || !buddy_order_valid(target_order)) {
+    return NULL;
+  }
+
+  if(block->buddy_order < target_order) {
+    return NULL;
+  }
+
+  arena_header_t* arena = block->arena;
+
+  while(block->buddy_order > target_order) {
+    uint32_t new_order = block->buddy_order - 1u;
+    size_t half_size = buddy_order_size(new_order);
+    uintptr_t right_offset = block->buddy_offset + half_size;
+
+    block_header_t* right = buddy_materialize_block(arena, right_offset, new_order);
+    if(right == NULL) {
+      break;
+    }
+    buddy_freelist_push(arena, right);
+
+    block->buddy_order = new_order;
+    block->size = buddy_order_size(new_order) - sizeof(block_header_t);
+  }
+
+  block->buddy_flags = BUDDY_FLAG_USED;
+  block->buddy_next = NULL;
+  block->buddy_prev = NULL;
+  return block;
+}
+
+static block_header_t* buddy_coalesce_block(block_header_t* block) {
+  if(block == NULL || block->arena == NULL) {
+    return NULL;
+  }
+
+  arena_header_t* arena = block->arena;
+  block->buddy_flags = BUDDY_FLAG_FREE;
+  block->buddy_next = NULL;
+  block->buddy_prev = NULL;
+
+  while(block->buddy_order < BUDDY_MAX_ORDER) {
+    size_t size = buddy_order_size(block->buddy_order);
+    uintptr_t buddy_offset = block->buddy_offset ^ size;
+    if(buddy_offset >= arena->buddy_size) {
+      break;
+    }
+    block_header_t* buddy = buddy_freelist_find(arena, block->buddy_order, buddy_offset);
+    if(buddy == NULL) {
+      break;
+    }
+
+    buddy_freelist_remove(arena, buddy);
+
+    if(buddy->buddy_offset < block->buddy_offset) {
+      block = buddy;
+    }
+
+    block->buddy_offset &= ~(size);
+    block->buddy_order += 1u;
+    block->size = buddy_order_size(block->buddy_order) - sizeof(block_header_t);
+    block->buddy_flags = BUDDY_FLAG_FREE;
+    block->buddy_next = NULL;
+    block->buddy_prev = NULL;
+  }
+
+  buddy_freelist_push(arena, block);
+  return block;
+}
+
+
+#ifdef MENIOS_HOST_TEST
+
+void __menios_allocator_reset(void) {
+  arena_header_t* arena = arena_list_head;
+  while(arena != NULL) {
+    arena_header_t* next = arena->next;
+    if(arena->mapping_base != NULL && arena->size != 0) {
+      munmap(arena->mapping_base, arena->size);
+    }
+    arena = next;
+  }
+
+  arena_list_head = NULL;
+}
+
+int __menios_allocator_grow_heap_for_test(size_t size) {
+  return grow_heap(size);
+}
+
+block_header_t* __menios_buddy_debug_pop(uint32_t order) {
+  if(!buddy_order_valid(order)) {
+    return NULL;
+  }
+
+  for(arena_header_t* arena = arena_list_head; arena != NULL; arena = arena->next) {
+    block_header_t* block = buddy_freelist_pop(arena, order);
+    if(block != NULL) {
+      return block;
+    }
+  }
+  return NULL;
+}
+
+void __menios_buddy_debug_push(block_header_t* block) {
+  if(block == NULL || block->arena == NULL) {
+    return;
+  }
+  buddy_freelist_push(block->arena, block);
+}
+
+block_header_t* __menios_buddy_debug_split(block_header_t* block, uint32_t target_order) {
+  return buddy_split_to_order(block, target_order);
+}
+
+block_header_t* __menios_buddy_debug_coalesce(block_header_t* block) {
+  return buddy_coalesce_block(block);
+}
+
+uint32_t __menios_buddy_debug_order(const block_header_t* block) {
+  return block != NULL ? block->buddy_order : 0u;
+}
+
+uintptr_t __menios_buddy_debug_offset(const block_header_t* block) {
+  return block != NULL ? block->buddy_offset : 0u;
+}
+
+arena_header_t* __menios_buddy_debug_arena(const block_header_t* block) {
+  return block != NULL ? block->arena : NULL;
+}
+
+size_t __menios_buddy_debug_freelist_length(uint32_t order) {
+  if(!buddy_order_valid(order)) {
+    return 0u;
+  }
+
+  size_t total = 0u;
+  size_t index = buddy_order_index(order);
+  for(arena_header_t* arena = arena_list_head; arena != NULL; arena = arena->next) {
+    for(block_header_t* node = arena->buddy_freelists[index]; node != NULL; node = node->buddy_next) {
+      ++total;
+    }
+  }
+  return total;
+}
+
+#endif /* MENIOS_HOST_TEST */
 
 static inline bool is_power_of_two(size_t value) {
   return value != 0 && (value & (value - 1)) == 0;
@@ -125,10 +383,6 @@ static inline void* block_payload(block_header_t* block) {
 
 static inline block_header_t* payload_to_block(void* ptr) {
   return ((block_header_t*)ptr) - 1;
-}
-
-static inline bool block_is_free(const block_header_t* block) {
-  return (block->flags & BLOCK_FLAG_FREE) != 0u;
 }
 
 static inline bool block_is_direct(const block_header_t* block) {
@@ -155,139 +409,113 @@ static size_t default_page_size(void) {
 #endif
 }
 
-static void free_list_remove(block_header_t* block) {
-  if(!block_is_free(block)) {
-    return;
-  }
-
-  if(block->free_prev != NULL) {
-    block->free_prev->free_next = block->free_next;
-  } else if(free_list_head == block) {
-    free_list_head = block->free_next;
-  }
-
-  if(block->free_next != NULL) {
-    block->free_next->free_prev = block->free_prev;
-  }
-
-  block->free_next = NULL;
-  block->free_prev = NULL;
-  block->flags &= (uint32_t)~BLOCK_FLAG_FREE;
+static inline size_t buddy_block_size(uint32_t order) {
+  return buddy_order_size(order);
 }
 
-static void free_list_push(block_header_t* block) {
-  block->flags |= BLOCK_FLAG_FREE;
-  block->free_prev = NULL;
-  block->free_next = free_list_head;
-  if(free_list_head != NULL) {
-    free_list_head->free_prev = block;
-  }
-  free_list_head = block;
+static inline size_t buddy_payload_capacity(uint32_t order) {
+  size_t block_bytes = buddy_block_size(order);
+  return block_bytes > sizeof(block_header_t)
+           ? block_bytes - sizeof(block_header_t)
+           : 0u;
 }
 
-static block_header_t* coalesce_with_neighbours(block_header_t* block) {
-  if(block->arena == NULL) {
-    return block;
+static uint32_t buddy_order_for_size(size_t total) {
+  uint32_t order = BUDDY_MIN_ORDER;
+  size_t block_bytes = buddy_block_size(order);
+  while(block_bytes < total && order < BUDDY_MAX_ORDER) {
+    ++order;
+    block_bytes = buddy_block_size(order);
   }
-
-  block_header_t* prev = block->prev;
-  if(prev != NULL && block_is_free(prev) && prev->arena == block->arena) {
-    free_list_remove(prev);
-    prev->flags |= BLOCK_FLAG_FREE;
-    if(block->arena->first_block == block) {
-      block->arena->first_block = prev;
-    }
-    prev->size += sizeof(block_header_t) + block->size;
-    prev->next = block->next;
-    if(block->next != NULL) {
-      block->next->prev = prev;
-    }
-    block = prev;
+  if(block_bytes < total) {
+    return (uint32_t)(BUDDY_MAX_ORDER + 1u);
   }
-
-  block_header_t* next = block->next;
-  if(next != NULL && block_is_free(next) && next->arena == block->arena) {
-    free_list_remove(next);
-    block->flags |= BLOCK_FLAG_FREE;
-    if(block->arena->first_block == next) {
-      block->arena->first_block = block;
-    }
-    block->size += sizeof(block_header_t) + next->size;
-    block->next = next->next;
-    if(next->next != NULL) {
-      next->next->prev = block;
-    }
-  }
-
-  return block;
+  return order;
 }
 
-static block_header_t* split_block(block_header_t* block, size_t size) {
-  size_t total = block->size;
-  if(total < size + sizeof(block_header_t) + MIN_SPLIT_SIZE) {
-    return block;
+static block_header_t* buddy_acquire_block(uint32_t order) {
+  if(!buddy_order_valid(order)) {
+    return NULL;
   }
 
-  uint8_t* payload = (uint8_t*)block_payload(block);
-  block_header_t* new_block = (block_header_t*)(payload + size);
+  for(int attempt = 0; attempt < 2; ++attempt) {
+    for(arena_header_t* arena = arena_list_head; arena != NULL; arena = arena->next) {
+      for(uint32_t current = order; current <= BUDDY_MAX_ORDER; ++current) {
+        block_header_t* candidate = buddy_freelist_pop(arena, current);
+        if(candidate != NULL) {
+          return buddy_split_to_order(candidate, order);
+        }
+      }
+    }
 
-  new_block->next = block->next;
-  new_block->prev = block;
-  new_block->free_next = NULL;
-  new_block->free_prev = NULL;
-  new_block->arena = block->arena;
-  new_block->mapping_base = NULL;
-  new_block->mapping_size = 0;
-  new_block->size = total - size - sizeof(block_header_t);
-  new_block->flags = BLOCK_FLAG_FREE;
-
-  if(block->next != NULL) {
-    block->next->prev = new_block;
-  }
-  block->next = new_block;
-  block->size = size;
-
-  free_list_push(new_block);
-  return block;
-}
-
-static block_header_t* find_suitable_block(size_t size) {
-  for(block_header_t* current = free_list_head; current != NULL; current = current->free_next) {
-    if(current->size >= size) {
-      return current;
+    if(grow_heap(buddy_block_size(order)) != 0) {
+      break;
     }
   }
+
   return NULL;
 }
 
-static size_t arena_overhead(void) {
-  return align_up(sizeof(arena_header_t), DEFAULT_ALIGNMENT) + sizeof(block_header_t);
+static block_header_t* buddy_allocate_block(size_t payload_size) {
+  size_t total = payload_size + sizeof(block_header_t);
+  if(total < payload_size) {
+    errno = ENOMEM;
+    return NULL;
+  }
+
+  uint32_t order = buddy_order_for_size(total);
+  if(order > BUDDY_MAX_ORDER) {
+    return NULL;
+  }
+
+  block_header_t* block = buddy_acquire_block(order);
+  if(block == NULL) {
+    errno = ENOMEM;
+    return NULL;
+  }
+
+  block->buddy_flags = BUDDY_FLAG_USED;
+  block->flags = BLOCK_FLAG_BUDDY;
+  block->mapping_base = NULL;
+  block->mapping_size = 0;
+  block->size = buddy_payload_capacity(order);
+  block->padding_reserved = 0u;
+  block->padding_align = 0u;
+  return block;
+}
+
+static void buddy_release_block(block_header_t* block) {
+  if(block == NULL || block->arena == NULL) {
+    return;
+  }
+
+  if(block->buddy_flags & BUDDY_FLAG_FREE) {
+    return;
+  }
+
+  block->flags &= (uint32_t)~BLOCK_FLAG_FREE;
+  block->buddy_flags = BUDDY_FLAG_FREE;
+  block->buddy_next = NULL;
+  block->buddy_prev = NULL;
+  block->size = buddy_payload_capacity(block->buddy_order);
+  buddy_coalesce_block(block);
 }
 
 static int grow_heap(size_t size) {
-  const size_t overhead = arena_overhead();
+  (void)size;
+
   const size_t page = default_page_size();
-  size_t total_needed = overhead + size;
+  size_t header_size = align_up(sizeof(arena_header_t), DEFAULT_ALIGNMENT);
+  size_t buddy_offset = align_up(header_size, page);
+  size_t buddy_bytes = ARENA_INITIAL_SIZE;
+  size_t mapping_size = align_up(buddy_offset + buddy_bytes, page);
 
-  if(total_needed < size || total_needed > SIZE_MAX - DEFAULT_ALIGNMENT) {
-    errno = ENOMEM;
-    return -1;
-  }
-
-  size_t arena_size = next_arena_size;
-  if(arena_size < total_needed) {
-    while(arena_size < total_needed && arena_size < ARENA_MAX_SIZE) {
-      arena_size <<= 1;
-    }
-  }
-
-  if(arena_size < total_needed) {
-    arena_size = align_up(total_needed, page);
-  }
-
-  arena_size = align_up(arena_size, page);
-
-  void* mapping = mmap(NULL, arena_size, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
+  void* mapping = mmap(NULL,
+                       mapping_size,
+                       PROT_READ | PROT_WRITE,
+                       MAP_PRIVATE | MAP_ANONYMOUS,
+                       -1,
+                       0);
   if(mapping == MAP_FAILED) {
     errno = ENOMEM;
     return -1;
@@ -295,7 +523,9 @@ static int grow_heap(size_t size) {
 
   arena_header_t* arena = (arena_header_t*)mapping;
   arena->mapping_base = mapping;
-  arena->size = arena_size;
+  arena->size = mapping_size;
+  arena->buddy_base = (uint8_t*)mapping + buddy_offset;
+  arena->buddy_size = buddy_bytes;
   arena->prev = NULL;
   arena->next = arena_list_head;
   if(arena_list_head != NULL) {
@@ -303,41 +533,18 @@ static int grow_heap(size_t size) {
   }
   arena_list_head = arena;
 
-  size_t header_size = align_up(sizeof(arena_header_t), DEFAULT_ALIGNMENT);
-  block_header_t* block = (block_header_t*)((uint8_t*)mapping + header_size);
-  block->next = NULL;
-  block->prev = NULL;
-  block->free_next = NULL;
-  block->free_prev = NULL;
-  block->arena = arena;
-  block->mapping_base = NULL;
-  block->mapping_size = 0;
-  block->size = arena_size - header_size - sizeof(block_header_t);
-  block->flags = BLOCK_FLAG_FREE;
-  arena->first_block = block;
   for(size_t i = 0; i < BUDDY_ORDER_COUNT; ++i) {
     arena->buddy_freelists[i] = NULL;
   }
-  arena->root_block.next = NULL;
-  arena->root_block.prev = NULL;
-  arena->root_block.arena = arena;
-  arena->root_block.order = BUDDY_MAX_ORDER;
-  arena->root_block.flags = BUDDY_FLAG_FREE;
-  arena->root_block.offset = (uintptr_t)((uint8_t*)(block + 1) - (uint8_t*)mapping);
-  arena->buddy_freelists[BUDDY_MAX_ORDER - BUDDY_MIN_ORDER] = &arena->root_block;
 
-  free_list_push(block);
-
-  if(arena_size < ARENA_MAX_SIZE) {
-    size_t prospective = arena_size << 1;
-    if(prospective > ARENA_MAX_SIZE) {
-      prospective = ARENA_MAX_SIZE;
-    }
-    next_arena_size = prospective;
-  } else {
-    next_arena_size = ARENA_MAX_SIZE;
+  block_header_t* root = buddy_materialize_block(arena, 0u, BUDDY_MAX_ORDER);
+  if(root == NULL) {
+    munmap(mapping, mapping_size);
+    errno = ENOMEM;
+    return -1;
   }
 
+  buddy_freelist_push(arena, root);
   return 0;
 }
 
@@ -366,40 +573,24 @@ static void* allocate_direct(size_t size, size_t alignment) {
   }
 
   uintptr_t base = (uintptr_t)mapping + sizeof(block_header_t);
-  uintptr_t aligned = align_up(base, alignment);
-  block_header_t* header = (block_header_t*)(aligned - sizeof(block_header_t));
-  header->next = NULL;
-  header->prev = NULL;
-  header->free_next = NULL;
-  header->free_prev = NULL;
+  uintptr_t aligned_addr = align_up(base, alignment);
+  block_header_t* header = (block_header_t*)(aligned_addr - sizeof(block_header_t));
+  header->buddy_next = NULL;
+  header->buddy_prev = NULL;
   header->arena = NULL;
+  header->buddy_order = 0u;
+  header->buddy_flags = 0u;
+  header->buddy_offset = 0u;
   header->mapping_base = mapping;
   header->mapping_size = total;
   header->size = padded;
   header->flags = BLOCK_FLAG_DIRECT;
-
+  header->padding_reserved = 0u;
+  header->padding_align = 0u;
   return block_payload(header);
 }
 
-static block_header_t* allocate_block(size_t size) {
-  block_header_t* block = find_suitable_block(size);
-  if(block == NULL) {
-    if(grow_heap(size) != 0) {
-      return NULL;
-    }
-    block = find_suitable_block(size);
-    if(block == NULL) {
-      return NULL;
-    }
-  }
 
-  free_list_remove(block);
-  block = split_block(block, size);
-  block->flags &= (uint32_t)~BLOCK_FLAG_FREE;
-  block->free_next = NULL;
-  block->free_prev = NULL;
-  return block;
-}
 
 void* malloc(size_t size) {
   if(size == 0) {
@@ -412,14 +603,18 @@ void* malloc(size_t size) {
     return NULL;
   }
 
-  const size_t overhead = arena_overhead();
-  if(aligned > ARENA_MAX_SIZE - overhead) {
+  size_t total = aligned + sizeof(block_header_t);
+  if(total < aligned) {
+    errno = ENOMEM;
+    return NULL;
+  }
+
+  if(total > buddy_block_size(BUDDY_MAX_ORDER)) {
     return allocate_direct(aligned, DEFAULT_ALIGNMENT);
   }
 
-  block_header_t* block = allocate_block(aligned);
+  block_header_t* block = buddy_allocate_block(aligned);
   if(block == NULL) {
-    errno = ENOMEM;
     return NULL;
   }
 
@@ -439,16 +634,7 @@ void free(void* ptr) {
     return;
   }
 
-  if(block_is_free(block)) {
-    return; /* ignore obvious double free */
-  }
-
-  block->flags |= BLOCK_FLAG_FREE;
-  block->free_next = NULL;
-  block->free_prev = NULL;
-
-  block = coalesce_with_neighbours(block);
-  free_list_push(block);
+  buddy_release_block(block);
 }
 
 void* calloc(size_t nmemb, size_t size) {
@@ -469,32 +655,6 @@ void* calloc(size_t nmemb, size_t size) {
   return ptr;
 }
 
-static void* realloc_grow_in_place(block_header_t* block, size_t size) {
-  if(block_is_direct(block)) {
-    return NULL;
-  }
-
-  block_header_t* next = block->next;
-  if(next != NULL && block_is_free(next) && next->arena == block->arena) {
-    size_t merged = block->size + sizeof(block_header_t) + next->size;
-    if(merged >= size) {
-      free_list_remove(next);
-      block->size = merged;
-      block->next = next->next;
-      if(block->next != NULL) {
-        block->next->prev = block;
-      }
-      block = split_block(block, size);
-      block->flags &= (uint32_t)~BLOCK_FLAG_FREE;
-      block->free_next = NULL;
-      block->free_prev = NULL;
-      return block_payload(block);
-    }
-  }
-
-  return NULL;
-}
-
 void* realloc(void* ptr, size_t size) {
   if(ptr == NULL) {
     return malloc(size);
@@ -512,23 +672,20 @@ void* realloc(void* ptr, size_t size) {
     return NULL;
   }
 
-  if(block->size >= aligned) {
+  if(block_is_direct(block)) {
+    if(block->size >= aligned) {
+      return ptr;
+    }
+  } else if(block->buddy_flags == BUDDY_FLAG_USED && block->size >= aligned) {
     return ptr;
   }
 
-  if(!block_is_direct(block)) {
-    void* grown = realloc_grow_in_place(block, aligned);
-    if(grown != NULL) {
-      return grown;
-    }
-  }
-
+  size_t total = aligned + sizeof(block_header_t);
   void* replacement;
-  const size_t overhead = arena_overhead();
-  if(aligned > ARENA_MAX_SIZE - overhead || block_is_direct(block)) {
+  if(total > buddy_block_size(BUDDY_MAX_ORDER) || block_is_direct(block)) {
     replacement = allocate_direct(aligned, DEFAULT_ALIGNMENT);
   } else {
-    block_header_t* new_block = allocate_block(aligned);
+    block_header_t* new_block = buddy_allocate_block(aligned);
     replacement = new_block ? block_payload(new_block) : NULL;
   }
 
@@ -556,6 +713,7 @@ void* reallocarray(void* ptr, size_t nmemb, size_t size) {
 
   return realloc(ptr, nmemb * size);
 }
+
 
 size_t malloc_usable_size(void* ptr) {
   if(ptr == NULL) {
