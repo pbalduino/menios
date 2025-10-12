@@ -98,16 +98,33 @@ digraph IssueDependencies {
         issue222 [label="#222: Current dir\nin prompt", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED
     }
 
+    subgraph cluster_memory {
+        label="Memory Management - Buddy Allocator";
+        style=filled;
+        fillcolor="#E8F5E9";
+
+        issue245 [label="#245: Survey\nCurrent Heap", fillcolor="#C8E6C9"];
+        issue246 [label="#246: Define Buddy\nOrders", fillcolor="#C8E6C9"];
+        issue247 [label="#247: Rewrite Arena\nSetup", fillcolor="#C8E6C9"];
+        issue248 [label="#248: Buddy Split/\nCoalesce", fillcolor="#C8E6C9"];
+        issue249 [label="#249: malloc/free\nIntegration", fillcolor="#C8E6C9"];
+        issue250 [label="#250: realloc\nAdaptation", fillcolor="#C8E6C9"];
+        issue251 [label="#251: Direct mmap\nPath", fillcolor="#C8E6C9"];
+        issue252 [label="#252: Diagnostics\n& Tests", fillcolor="#C8E6C9"];
+        issue253 [label="#253: Cleanup &\nDocs", fillcolor="#C8E6C9"];
+        issue95 [label="#95: userspace\nmalloc", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED
+    }
+
     subgraph cluster_toolchain {
         label="Toolchain & Compilation";
         style=filled;
         fillcolor="#FFFAEF";
 
-        issue29 [label="#29: Cross-compiler\ntoolchain", fillcolor="#FFE4B5"];
+        issue29 [label="#29: Cross-compiler\ntoolchain", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED
         issue192 [label="#192: crt0\nruntime", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED
         issue193 [label="#193: Minimal\nlibc", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED
-        issue194 [label="#194: Syscall\nABI docs", fillcolor="#FFE4B5"];
-        issue195 [label="#195: Userland\nbuild system", fillcolor="#FFE4B5"];
+        issue194 [label="#194: Syscall\nABI docs", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED
+        issue195 [label="#195: Userland\nbuild system", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED
         issue190 [label="#190: TCC\nport", fillcolor="#DDA0DD"];
         issue191 [label="#191: binutils\nport", fillcolor="#DDA0DD"];
         issue196 [label="#196: Fish shell\nresearch", fillcolor="#DDA0DD"];
@@ -192,7 +209,18 @@ digraph IssueDependencies {
     issue35 -> issue57 [style=dashed, color=gray];
     issue57 -> issue89 [style=dashed, color=gray];
     issue57 -> issue93 [style=dashed, color=gray];
-    issue89 -> issue95 [label="#95: userspace malloc", style=dashed, color=gray];
+    issue89 -> issue95 [style=dashed, color=gray];
+
+    // Buddy Allocator migration chain (green for memory management)
+    issue245 -> issue246 [color=green, penwidth=2, label="survey→config"];
+    issue246 -> issue247 [color=green, penwidth=2, label="config→arena"];
+    issue247 -> issue248 [color=green, penwidth=2, label="arena→split/coalesce"];
+    issue248 -> issue249 [color=green, penwidth=2, label="core→API"];
+    issue249 -> issue250 [color=green, penwidth=2, label="malloc→realloc"];
+    issue249 -> issue251 [color=green, penwidth=2, label="malloc→mmap"];
+    issue248 -> issue252 [color=green, label="core→tests"];
+    issue249 -> issue252 [color=green, label="API→tests"];
+    issue252 -> issue253 [color=green, penwidth=2, label="tests→cleanup"];
 
     // Threading dependencies
     issue34 -> issue108 [color=blue, penwidth=2, style=dashed];
@@ -222,16 +250,19 @@ digraph IssueDependencies {
     issue194 -> issue29 [color=orange];
     issue195 -> issue29 [color=orange, penwidth=2];
 
-    // Native compilation dependencies (some complete)
-    issue29 -> issue190 [color=purple];
+    // Native compilation dependencies - NOW DEPEND ON BUDDY ALLOCATOR
+    issue29 -> issue190 [color=purple, style=dashed];
     issue193 -> issue190 [color=purple, style=dashed];
-    issue208 -> issue190 [color=purple, label="pipes"];
+    issue208 -> issue190 [color=purple, label="pipes", style=dashed];
     issue189 -> issue190 [color=purple];
     issue205 -> issue190 [color=teal, label="I/O perf", style=dashed];
-    issue29 -> issue191 [color=purple];
+    issue253 -> issue190 [color=red, penwidth=3, label="BUDDY\nREQUIRED"];  // Buddy milestone complete
+
+    issue29 -> issue191 [color=purple, style=dashed];
     issue193 -> issue191 [color=purple, style=dashed];
     issue189 -> issue191 [color=purple];
     issue205 -> issue191 [color=teal, label="I/O perf", style=dashed];
+    issue253 -> issue191 [color=red, penwidth=3, label="BUDDY\nREQUIRED"];  // Buddy milestone complete
 
     // Shell UX dependencies (some complete)
     issue148 -> issue197 [color=cyan, style=dashed];
@@ -324,8 +355,11 @@ digraph IssueDependencies {
 
     // Critical path highlighting
     edge [color=red, penwidth=3];
-    issue192 -> issue193 [label="TOOLCHAIN\nCRITICAL"];
-    issue193 -> issue29 [label="TOOLCHAIN\nCRITICAL"];
+    issue192 -> issue193 [label="TOOLCHAIN\nCRITICAL", style=dashed];
+    issue193 -> issue29 [label="TOOLCHAIN\nCRITICAL", style=dashed];
+    issue245 -> issue246 [label="BUDDY\nCRITICAL"];
+    issue248 -> issue249 [label="BUDDY\nCRITICAL"];
+    issue252 -> issue253 [label="BUDDY\nCRITICAL"];
 
     // Legend
     subgraph cluster_legend {
@@ -335,6 +369,7 @@ digraph IssueDependencies {
 
         legend_open [label="Open Issue", fillcolor="#FFE6E6"];
         legend_closed [label="Closed Issue", fillcolor="#90EE90", style="filled,dashed"];
+        legend_buddy [label="Buddy Allocator", fillcolor="#C8E6C9"];
         legend_shell [label="Shell Milestone", fillcolor="#FFE4B5"];
         legend_toolchain [label="Toolchain", fillcolor="#FFE4B5"];
         legend_ux [label="UX Features", fillcolor="#E0FFFF"];

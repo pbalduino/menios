@@ -41,11 +41,13 @@ MeniOS has made significant progress with core kernel functionality now solidly 
 - **Memory Protection**: Kernel/user separation with per-process page tables
 
 ### 🚧 **Next Major Milestones**
-With the shell shipped, attention turns to the toolchain and developer workflows:
+With the shell shipped in v0.1.0, the focus shifts to memory management and toolchain infrastructure:
 
-1. **GCC Toolchain Milestone** – Publish syscall ABI docs (#194), land the userland build system (#195), and integrate a cross-compiler toolchain (#29) so meniOS can build its own apps.
-2. **Writable Storage** – Implement FAT32 write support (#189) to persist user data and compiler outputs directly on meniOS disks.
-3. **POSIX Threading Stack** – Deliver the pthread API and supporting kernel features (#109-#113) to unlock multithreaded workloads and future ports like Doom.
+1. **Buddy Allocator Milestone** (NEW! 🔨) – Migrate userland memory allocator from first-fit to buddy allocator system (#245-#253). This provides the robust memory management foundation required by both GCC and Doom milestones. The buddy system offers power-of-2 allocation, fast split/coalesce operations, and bounded fragmentation—critical for complex applications like compilers and game engines.
+
+2. **GCC Toolchain Milestone** – Complete the toolchain foundation with TCC port (#190) and binutils (#191). Both depend on Buddy Allocator completion for efficient memory handling during compilation and linking.
+
+3. **Doom Capabilities** – With robust memory management and threading support, unlock the final pieces needed to run Doom: audio subsystem (#33), advanced IPC (#105-#107), and FAT32 write support (#189).
 
 ### 🆕 **Threading Support Added**
 A complete threading roadmap has been designed with 6 new issues:
@@ -138,12 +140,27 @@ Expect the log to show the `[user_demo]` messages on screen and in `com1.log`, c
 
 ### 🚧 **In Progress & Planned**
 
-#### **Critical Path: Toolchain (Issues #29, #192-#195)** 🚀 Major Progress!
+#### **Critical Path: Memory Management - Buddy Allocator (Issues #245-#253)** 🔨 NEW MILESTONE!
+- [ ] **#245**: Survey Current Heap Implementation (ready to start!)
+- [ ] **#246**: Define Buddy Allocator Orders and Configuration
+- [ ] **#247**: Rewrite Arena Setup for Buddy Allocator
+- [ ] **#248**: Implement Buddy Split and Coalesce Operations
+- [ ] **#249**: Integrate Buddy Allocator with malloc/free
+- [ ] **#250**: Adapt realloc/reallocarray for Buddy Allocator
+- [ ] **#251**: Update Direct mmap Path for Large Allocations
+- [ ] **#252**: Add Buddy Allocator Diagnostics and Tests
+- [ ] **#253**: Cleanup and Document Buddy Allocator Migration
+
+**Status**: 0/9 complete - Foundation for GCC and Doom milestones!
+
+#### **Toolchain (Issues #29, #192-#195)** 🚀 Core Complete, Blocked on Buddy!
 - [x] **#192**: crt0 runtime startup code ✅ COMPLETE!
 - [x] **#193**: Minimal userland libc (syscalls, strings, memory, stdio) ✅ COMPLETE!
-- [x] **#194**: Syscall ABI documentation (see `docs/architecture/syscall_abi.md`)
-- [ ] **#195**: Userland build system (ready to start - dependencies met!)
-- [ ] **#29**: Cross-compiler toolchain integration (blocked on #194, #195)
+- [x] **#194**: Syscall ABI documentation ✅ COMPLETE!
+- [x] **#195**: Userland build system ✅ COMPLETE!
+- [x] **#29**: Cross-compiler toolchain integration ✅ COMPLETE!
+- [ ] **#190**: TCC port (blocked on Buddy Allocator completion)
+- [ ] **#191**: binutils port (blocked on Buddy Allocator completion)
 
 #### **Shell Milestone (Issues #180-#188)** 🎯 9/9 Complete!
 - [x] **Environment**: Environment variables (#148) ✅, seeding (#180) ✅, PATH search (#185) ✅
@@ -188,27 +205,26 @@ Remaining major components for Doom:
 
 See [`road_to_doom.md`](docs/road/road_to_doom.md) for the complete roadmap and [`tasks.json`](tasks.json) for detailed task tracking.
 
-**📊 Progress Assessment**: With **47 major foundation issues completed** 🎉🎉 and ~65 open issues, meniOS is making phenomenal progress! Major recent completions include:
-- ✅ **Toolchain**: crt0 (#192), libc (#193) - 2/8 complete in GCC milestone!
+**📊 Progress Assessment**: With **42 issues completed across 70 total** (60%), meniOS is making phenomenal progress! Major recent completions include:
+- ✅ **Shell Milestone**: 27/27 complete (100%)—v0.1.0 ships the full interactive shell experience! 🎉
+- ✅ **Toolchain Core**: 5/8 complete (62.5%)—crt0 (#192) ✅, libc (#193) ✅, ABI docs (#194) ✅, build system (#195) ✅, cross-compiler (#29) ✅
+- 🔨 **Buddy Allocator**: NEW milestone! 0/9 complete—critical foundation for GCC and Doom
 - ✅ **Synchronization**: All primitives complete! (#36, #37, #39, #40) - 4/4 done!
-- ✅ **Shell Milestone**: 27/27 issues complete—v0.1.0 ships the full interactive shell experience. 🎉
 - ✅ **Shell UX**: Tab completion (#197) ✅, History (#156) ✅, Ctrl+A/E (#198) ✅, Ctrl+L (#200) ✅, Ctrl+R (#199) ✅, Job control (#158) ✅, pwd prompt (#222) ✅!
 - ✅ **Threading Foundation**: Kernel threading (#108) - ready for pthread!
 - ✅ **IPC - Pipes & FIFOs**: **COMPLETE!** All 5 issues done (#102, #206-#209) - 5/5! 🎉
 - ✅ **IPC - Signals**: Delivery path working! (#103, #210-#213) - 5/6 complete! 🎉
 - ✅ **IPC - Shared Memory**: **COMPLETE!** All 5 issues done (#215-#219) - 5/5! 🎉🎉🎉
-- ✅ **Performance**: I/O scheduler (#205)
-- ✅ **Bug Fixes**: Pipeline hang bug (#203) ✅ fixed!
+- ✅ **Performance**: I/O scheduler (#205) ✅
+- ✅ **Memory**: Userspace allocator (#95) ✅
 
-The critical path forward is completing the **toolchain** (#194, #195, #29), which is just 3 issues away from enabling standard C development for all userland applications!
+**The critical path forward** is the **Buddy Allocator migration** (#245-#253), which unblocks both GCC native compilation (#190, #191) and Doom's memory-intensive workloads!
 
-**🎯 Recent Momentum** (43 issues closed recently!):
-- 🛠️ **Toolchain** (2/8 in GCC milestone): crt0 ✅, libc ✅ → just need: ABI docs, build system, integration
-- 🔌 **IPC** (major progress!): Pipes & FIFOs ✅✅✅✅✅ **COMPLETE!** (#102, #206-#209), Signals #103, #210-#213 ✅ (Ctrl+C working; advanced next), Shared Memory ✅✅✅✅✅ **COMPLETE!** (#215-#219), ioctl #220 ✅ **COMPLETE**, fast syscalls (#221)
-- 🐚 **Shell**: Mosh milestone complete—tab completion, history, Ctrl shortcuts, job control, pipelines, logical operators, ps/kill, env tooling, and prompt polish all ship in v0.1.0.
-- 🧵 **Threading** (1/6 complete): Kernel threading ✅, pthread API ready!
-- 🎨 **UX** (Almost done!): Only mouse (#201) left!
-- 🐛 **Bugs** (1 remaining): Just /dev/zero EOF bug (#202)
+**🎯 Milestone Status**:
+- 🎉 **Mosh** (Shell): 27/27 complete (100%) - v0.1.0 shipped!
+- 🔨 **Buddy Allocator** (Memory): 0/9 complete (0%) - ready to start with #245!
+- 🚀 **GCC** (Toolchain): 5/8 complete (62.5%) - core done, native compilation blocked on Buddy
+- 🎮 **Doom** (Full OS): 10/26 complete (38.5%) - blocked on Buddy for game engine memory
 
 ## Architecture Overview
 
@@ -284,10 +300,13 @@ The critical path forward is completing the **toolchain** (#194, #195, #29), whi
 - **`build/`** - Build artifacts and bootloader assets
 - **`docs/`** - Architecture documentation and design decisions
 - **`tasks.json`** - Detailed task tracking with GitHub issue integration
+- **`docs/road/road_to_shell.md`** - Shell milestone roadmap (v0.1.0 complete!)
+- **`docs/road/road_to_buddy_allocator.md`** - Buddy allocator migration roadmap (NEW!)
+- **`docs/road/road_to_gcc.md`** - Toolchain development roadmap
 - **`docs/road/road_to_doom.md`** - Comprehensive roadmap for userland Doom support
 - **`docs/issue_dependencies.dot/.png`** - Visual dependency chart of all issues
 - **`docs/ISSUE_DEPENDENCY_ANALYSIS.md`** - Detailed dependency analysis and implementation strategy
-- **`docs/MILESTONES.md`** - Milestone tracking (Mosh, GCC, Doom)
+- **`docs/MILESTONES.md`** - Milestone tracking (Mosh ✅, Buddy Allocator 🔨, GCC, Doom)
 
 ## Contributing
 
@@ -295,12 +314,10 @@ We welcome contributions from developers of all skill levels! 🚀
 
 - **New Contributors**: Start with our [Contributing Guide](CONTRIBUTING.md) for a complete development workflow
 - **Find Tasks**: Check [GitHub Issues](https://github.com/pbalduino/menios/issues) or browse [`tasks.json`](tasks.json) for detailed task tracking
-- **High Priority - Ready Now** (7 issues ready to start!):
-  - **Toolchain** (critical): #194 (ABI docs), #195 (build system - deps met!)
-  - **IPC foundations**: #213 (shell Ctrl+C) ✅, #218 (shared mem tests - cleanup done!)
-  - **Shell polish**: #188 (env - deps met!), #198 (Ctrl+A/E), #200 (Ctrl+L)
-  - **Performance**: #221 (fast syscalls - 3-5x speedup!)
-- **Critical Path**: Toolchain issues (#192→#193→#195→#29) are the most important for enabling all future development
+- **High Priority - Ready Now** (3 issues ready to start!):
+  - **🔨 Buddy Allocator** (CRITICAL): #245 (Survey Current Heap) - starts the memory migration that unblocks GCC and Doom!
+  - **🧵 Threading**: #109 (pthread API), #221 (fast syscalls - 3-5x speedup!)
+- **Critical Path**: Buddy Allocator milestone (#245-#253) is now THE most important work - it unblocks both native compilation and Doom!
 - **Report Issues**: Use our issue templates to report bugs or request features
 - **Security Issues**: Please review our [Security Policy](SECURITY.md) for responsible disclosure
 - **Code Style**: Follow the guidelines in [`CODING.md`](CODING.md)

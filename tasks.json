@@ -1,5 +1,253 @@
 [
   {
+    "title": "Cleanup and Document Buddy Allocator Migration",
+    "github_issue": {
+      "number": 253,
+      "url": "https://github.com/pbalduino/menios/issues/253",
+      "state": "OPEN"
+    },
+    "labels": [
+      "documentation",
+      "enhancement"
+    ],
+    "assignees": [
+      "pbalduino"
+    ]
+  },
+  {
+    "title": "Add Buddy Allocator Diagnostics and Tests",
+    "github_issue": {
+      "number": 252,
+      "url": "https://github.com/pbalduino/menios/issues/252",
+      "state": "OPEN"
+    },
+    "labels": [
+      "enhancement",
+      "testing"
+    ],
+    "assignees": [
+      "pbalduino"
+    ]
+  },
+  {
+    "title": "Update Direct mmap Path for Large Allocations",
+    "github_issue": {
+      "number": 251,
+      "url": "https://github.com/pbalduino/menios/issues/251",
+      "state": "OPEN"
+    },
+    "labels": [
+      "enhancement"
+    ],
+    "assignees": [
+      "pbalduino"
+    ]
+  },
+  {
+    "title": "Adapt realloc/reallocarray for Buddy Allocator",
+    "github_issue": {
+      "number": 250,
+      "url": "https://github.com/pbalduino/menios/issues/250",
+      "state": "OPEN"
+    },
+    "labels": [
+      "enhancement"
+    ],
+    "assignees": [
+      "pbalduino"
+    ]
+  },
+  {
+    "title": "Integrate Buddy Allocator with malloc/free",
+    "github_issue": {
+      "number": 249,
+      "url": "https://github.com/pbalduino/menios/issues/249",
+      "state": "OPEN"
+    },
+    "labels": [
+      "enhancement"
+    ],
+    "assignees": [
+      "pbalduino"
+    ]
+  },
+  {
+    "title": "Implement Buddy Split and Coalesce Operations",
+    "github_issue": {
+      "number": 248,
+      "url": "https://github.com/pbalduino/menios/issues/248",
+      "state": "OPEN"
+    },
+    "labels": [
+      "enhancement"
+    ],
+    "assignees": [
+      "pbalduino"
+    ]
+  },
+  {
+    "title": "Rewrite Arena Setup for Buddy Allocator",
+    "github_issue": {
+      "number": 247,
+      "url": "https://github.com/pbalduino/menios/issues/247",
+      "state": "OPEN"
+    },
+    "labels": [
+      "enhancement"
+    ],
+    "assignees": [
+      "pbalduino"
+    ]
+  },
+  {
+    "title": "Define Buddy Allocator Orders and Configuration",
+    "github_issue": {
+      "number": 246,
+      "url": "https://github.com/pbalduino/menios/issues/246",
+      "state": "OPEN"
+    },
+    "labels": [
+      "enhancement"
+    ],
+    "assignees": [
+      "pbalduino"
+    ]
+  },
+  {
+    "title": "Survey Current Heap Implementation",
+    "github_issue": {
+      "number": 245,
+      "url": "https://github.com/pbalduino/menios/issues/245",
+      "state": "OPEN"
+    },
+    "labels": [
+      "enhancement"
+    ],
+    "assignees": [
+      "pbalduino"
+    ]
+  },
+  {
+    "title": "Implement /proc filesystem (procfs)",
+    "github_issue": {
+      "number": 244,
+      "url": "https://github.com/pbalduino/menios/issues/244",
+      "state": "OPEN"
+    },
+    "labels": [
+      "enhancement",
+      "kernel"
+    ],
+    "assignees": [
+      "pbalduino"
+    ]
+  },
+  {
+    "title": "Add /bin/mem utility to inspect meniOS memory status",
+    "github_issue": {
+      "number": 243,
+      "url": "https://github.com/pbalduino/menios/issues/243",
+      "state": "OPEN"
+    },
+    "labels": [
+      "enhancement",
+      "nice to have"
+    ],
+    "assignees": [
+      "pbalduino"
+    ]
+  },
+  {
+    "title": "Tab completion should search executables in PATH, not just current directory",
+    "github_issue": {
+      "number": 242,
+      "url": "https://github.com/pbalduino/menios/issues/242",
+      "state": "OPEN"
+    },
+    "labels": [
+      "enhancement",
+      "nice to have",
+      "mosh"
+    ],
+    "assignees": [
+      "pbalduino"
+    ]
+  },
+  {
+    "title": "Implement rand() and srand() in userland libc",
+    "github_issue": {
+      "number": 241,
+      "url": "https://github.com/pbalduino/menios/issues/241",
+      "state": "OPEN"
+    },
+    "labels": [
+      "enhancement"
+    ],
+    "assignees": [
+      "pbalduino"
+    ]
+  },
+  {
+    "title": "Implement time() and gettimeofday() in userland libc",
+    "github_issue": {
+      "number": 240,
+      "url": "https://github.com/pbalduino/menios/issues/240",
+      "state": "OPEN"
+    },
+    "labels": [
+      "enhancement"
+    ],
+    "assignees": [
+      "pbalduino"
+    ]
+  },
+  {
+    "title": "Implement kernel time syscalls (SYS_TIME, SYS_GETTIMEOFDAY)",
+    "github_issue": {
+      "number": 239,
+      "url": "https://github.com/pbalduino/menios/issues/239",
+      "state": "OPEN"
+    },
+    "labels": [
+      "enhancement",
+      "kernel"
+    ],
+    "assignees": [
+      "pbalduino"
+    ]
+  },
+  {
+    "title": "Add rand() and time() support to meniOS libc",
+    "github_issue": {
+      "number": 238,
+      "url": "https://github.com/pbalduino/menios/issues/238",
+      "state": "OPEN"
+    },
+    "labels": [
+      "enhancement"
+    ],
+    "assignees": [
+      "pbalduino"
+    ]
+  },
+  {
+    "title": "Create end-to-end shell validation script for meniOS",
+    "github_issue": {
+      "number": 237,
+      "url": "https://github.com/pbalduino/menios/issues/237",
+      "state": "OPEN"
+    },
+    "labels": [
+      "enhancement",
+      "nice to have",
+      "mosh",
+      "testing"
+    ],
+    "assignees": [
+      "pbalduino"
+    ]
+  },
+  {
     "title": "bug: Delete key not working in mosh shell",
     "github_issue": {
       "number": 236,
@@ -259,35 +507,6 @@
     "labels": [
       "enhancement",
       "nice to have"
-    ],
-    "assignees": [
-      "pbalduino"
-    ]
-  },
-  {
-    "title": "Separate userland build system from kernel",
-    "github_issue": {
-      "number": 195,
-      "url": "https://github.com/pbalduino/menios/issues/195",
-      "state": "CLOSED"
-    },
-    "labels": [
-      "enhancement"
-    ],
-    "assignees": [
-      "pbalduino"
-    ]
-  },
-  {
-    "title": "Document meniOS userland syscall ABI specification",
-    "github_issue": {
-      "number": 194,
-      "url": "https://github.com/pbalduino/menios/issues/194",
-      "state": "CLOSED"
-    },
-    "labels": [
-      "documentation",
-      "enhancement"
     ],
     "assignees": [
       "pbalduino"
@@ -1215,20 +1434,6 @@
     ]
   },
   {
-    "title": "Implement userspace memory allocator (malloc/free)",
-    "github_issue": {
-      "number": 95,
-      "url": "https://github.com/pbalduino/menios/issues/95",
-      "state": "CLOSED"
-    },
-    "labels": [
-      "enhancement"
-    ],
-    "assignees": [
-      "pbalduino"
-    ]
-  },
-  {
     "title": "Create jemalloc integration benchmarking and validation suite",
     "github_issue": {
       "number": 92,
@@ -1631,20 +1836,6 @@
       "number": 33,
       "url": "https://github.com/pbalduino/menios/issues/33",
       "state": "OPEN"
-    },
-    "labels": [
-      "enhancement"
-    ],
-    "assignees": [
-      "pbalduino"
-    ]
-  },
-  {
-    "title": "Create cross-compiler toolchain for userland",
-    "github_issue": {
-      "number": 29,
-      "url": "https://github.com/pbalduino/menios/issues/29",
-      "state": "CLOSED"
     },
     "labels": [
       "enhancement"

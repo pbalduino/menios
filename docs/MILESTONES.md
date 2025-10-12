@@ -93,7 +93,42 @@ This document tracks the three major milestones for meniOS development.
 
 ---
 
-### 2. **GCC** (Toolchain Milestone)
+### 2. **Buddy Allocator** (Memory Management Milestone)
+**Goal**: Migrate userland allocator from first-fit to buddy allocator system
+**GitHub Milestone**: [Buddy Allocator](https://github.com/pbalduino/menios/milestone/4)
+
+**Status**: 0/9 complete (0%)
+
+**Assigned Issues**:
+- [ ] #245 - Survey Current Heap Implementation
+- [ ] #246 - Define Buddy Allocator Orders and Configuration
+- [ ] #247 - Rewrite Arena Setup for Buddy Allocator
+- [ ] #248 - Implement Buddy Split and Coalesce Operations
+- [ ] #249 - Integrate Buddy Allocator with malloc/free
+- [ ] #250 - Adapt realloc/reallocarray for Buddy Allocator
+- [ ] #251 - Update Direct mmap Path for Large Allocations
+- [ ] #252 - Add Buddy Allocator Diagnostics and Tests
+- [ ] #253 - Cleanup and Document Buddy Allocator Migration
+
+**Critical Path**: #245 → #246 → #247 → #248 → #249 → #250/#251 → #252 → #253
+
+**Dependencies**:
+- #246 depends on #245 (survey)
+- #247 depends on #246 (configuration)
+- #248 depends on #247 (arena setup)
+- #249 depends on #248 (split/coalesce)
+- #250 depends on #249 (malloc/free)
+- #251 depends on #249 (malloc/free)
+- #252 depends on #248, #249 (core operations + API)
+- #253 depends on #252 (testing)
+
+**Progress**: Foundational work for robust memory management. Both GCC and Doom milestones depend on buddy allocator completion for efficient handling of complex allocation patterns.
+
+**Estimated Effort**: 22-30 days total
+
+---
+
+### 3. **GCC** (Toolchain Milestone)
 **Goal**: Enable native compilation on meniOS with GCC toolchain support
 **GitHub Milestone**: [GCC](https://github.com/pbalduino/menios/milestone/2)
 
@@ -112,18 +147,20 @@ This document tracks the three major milestones for meniOS development.
 **Critical Path**: #192 ✅ → #193 ✅ → #194 ✅ → #195 ✅ → #29 ✅ → #190/#191
 
 **Dependencies**:
-- #190 requires #29 ✅, #189 (FAT32 writes)
-- #191 requires #29 ✅, #189 (FAT32 writes)
+- #190 requires #29 ✅, #189 (FAT32 writes), **Buddy Allocator milestone** (robust memory for compiler)
+- #191 requires #29 ✅, #189 (FAT32 writes), **Buddy Allocator milestone** (robust memory for linker)
 
 **Progress**: Core toolchain complete! crt0, libc, syscall ABI docs, separated build system, and x86_64-elf cross-compiler integration all done. Remaining: TCC/binutils ports for native compilation and Fish shell research.
 
 ---
 
-### 3. **Doom** (Game Porting Milestone)
+### 4. **Doom** (Game Porting Milestone)
 **Goal**: Run Doom (1993) in userland on meniOS
 **GitHub Milestone**: [Doom](https://github.com/pbalduino/menios/milestone/3)
 
 **Status**: 10/26 complete (38.5%)
+
+**Note**: Depends on **Buddy Allocator milestone** for efficient memory management under game engine load.
 
 **Assigned Issues**:
 
@@ -188,39 +225,43 @@ This document tracks the three major milestones for meniOS development.
 ```
 ┌─────────────────────────────────────────┐
 │  Mosh (Shell UX & Developer Tools)      │
-│  - Interactive shell complete            │
+│  - Interactive shell complete ✅          │
 │  - Basic utilities working               │
 │  - Development environment ready         │
 └────────────────┬────────────────────────┘
                  │
                  ↓
 ┌─────────────────────────────────────────┐
-│  GCC (Native Compilation Toolchain)      │
-│  - Cross-compiler working                │
-│  - Can compile C programs for meniOS     │
-│  - Eventually native compilation         │
-└────────────────┬────────────────────────┘
-                 │
-                 ↓
-┌─────────────────────────────────────────┐
-│  Doom (Full OS Capabilities)             │
-│  - Graphics, audio, threading            │
-│  - Complete IPC support                  │
-│  - Can run complex userland applications │
-└─────────────────────────────────────────┘
+│  Buddy Allocator (Memory Management)     │
+│  - Power-of-2 block allocation           │
+│  - Fast split/coalesce operations        │
+│  - Bounded fragmentation                 │
+│  - Foundation for complex apps           │
+└─────┬──────────────────────────┬────────┘
+      │                          │
+      ↓                          ↓
+┌─────────────────────┐   ┌──────────────────────────┐
+│  GCC (Toolchain)    │   │  Doom (Full OS Caps)     │
+│  - Native compile   │   │  - Graphics, audio       │
+│  - Complex tools    │   │  - Threading, IPC        │
+│  - Needs robust     │   │  - Game engine stress    │
+│    memory mgmt      │   │  - Needs efficient alloc │
+└─────────────────────┘   └──────────────────────────┘
 ```
 
 ## 📈 Overall Progress
 
-- **Total Issues Across Milestones**: 61 issues
-- **Completed**: 42 issues (68.9%)
-- **In Progress**: 19 issues
-- **Ready to Start**: 2 issues (no dependencies)
+- **Total Issues Across Milestones**: 70 issues
+- **Completed**: 42 issues (60%)
+- **In Progress**: 28 issues
+- **Ready to Start**: 3 issues (no dependencies: #109, #221, #245)
 
 ## 🚀 Immediate Next Steps
 
 ### Ready to Start Now (No Dependencies):
-1. **Doom Milestone**:
+1. **Buddy Allocator Milestone**:
+   - #245 - Survey Current Heap Implementation (starts the migration!)
+2. **Doom Milestone**:
    - #109 - pthread API
    - #221 - Fast syscall instruction
 
@@ -228,21 +269,24 @@ This document tracks the three major milestones for meniOS development.
 
 ### Parallel Development
 Many issues can be worked on in parallel:
-- **GCC**: Foundation complete (#192-#195 all done ✅)
-- **Doom Threading**: #109, #112, #113 are independent
+- **Buddy Allocator**: Linear dependency chain, but #250/#251 can be parallel
+- **GCC**: Blocked on Buddy Allocator completion
+- **Doom Threading**: #109, #112, #113 are independent (can start now!)
 - **Doom IPC**: Different IPC mechanisms can progress in parallel
 - **Mosh UX**: All features complete! ✅
 
 ### Critical Dependencies
-- **GCC milestone** is required before meniOS can compile Doom natively
-- **Mosh milestone** provides the development environment for debugging
-- Many **Doom** features are prerequisites for running the game
+- **Buddy Allocator milestone** is foundational - required by both GCC and Doom
+- **GCC milestone** depends on Buddy Allocator for native compilation
+- **Doom milestone** depends on Buddy Allocator for game engine memory management
+- **Mosh milestone** provides the development environment for debugging ✅
 
 ### Completion Order
 Recommended completion order for maximum impact:
 1. **Mosh** - Provides usable development environment (100% complete) 🎉
-2. **GCC** - Enables native development and compilation (62.5% complete) 🚀
-3. **Doom** - Demonstrates full OS capabilities (38.5% complete)
+2. **Buddy Allocator** - Foundation for complex apps (0% complete) 🔨
+3. **GCC** - Enables native development and compilation (62.5% complete, blocked) 🚀
+4. **Doom** - Demonstrates full OS capabilities (38.5% complete, some work can start now)
 
 ### Recent Changes
 - **2025-10-08**: Expanded Mosh milestone from 10 to 30 issues to better track all shell work
@@ -288,11 +332,16 @@ Recommended completion order for maximum impact:
 - **2025-10-14**: Issue #202 remains open for further investigation
 - **2025-10-12**: Shell polish – `export` persists env entries and `echo` mirrors POSIX quoting rules
 - **2025-10-08**: Closed #157 as duplicate of #197, #165 as completed by #208
+- **2025-10-14**: Created Buddy Allocator milestone (#245-#253) - 9 issues for first-fit → buddy migration
+- **2025-10-14**: Both GCC and Doom milestones now depend on Buddy Allocator completion
+- **2025-10-14**: Created #242 (PATH-aware tab completion), #243 (/bin/mem utility), #244 (procfs)
+- **2025-10-14**: Total issues across milestones: 70 (was 61)
 
 ---
 
 **Last Updated**: 2025-10-14
 **See Also**:
 - [Road to Shell](road/road_to_shell.md)
+- [Road to Buddy Allocator](road/road_to_buddy_allocator.md) 🆕
 - [Road to GCC](road/road_to_gcc.md)
 - [Road to Doom](road/road_to_doom.md)

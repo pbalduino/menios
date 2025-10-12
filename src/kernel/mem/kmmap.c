@@ -83,8 +83,14 @@ void* kmmap(void *addr, size_t length, int prot, int flags, int fd, off_t offset
     return MAP_FAILED;
   }
 
+  virt_addr_t base_hint = current->mmap_next ? current->mmap_next : current->mmap_base;
+  if(base_hint < current->mmap_base || base_hint >= current->mmap_limit) {
+    base_hint = current->mmap_base;
+    current->mmap_next = current->mmap_base;
+  }
+
   virt_addr_t base = addr ? page_align_down_addr((virt_addr_t)addr)
-                          : page_align_up_addr(current->mmap_next ? current->mmap_next : current->mmap_base);
+                          : page_align_up_addr(base_hint);
 
   bool hint = (addr != NULL);
 
