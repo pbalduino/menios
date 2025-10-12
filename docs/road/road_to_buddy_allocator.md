@@ -38,7 +38,7 @@ The migration follows a careful sequence to minimize risk:
 | --- | --- | --- | --- | --- |
 | #245 | Survey Current Heap Implementation | ✅ Complete | High | 2-3 days |
 | #246 | Define Buddy Allocator Orders and Configuration | ✅ Complete | High | 1-2 days |
-| #247 | Rewrite Arena Setup for Buddy Allocator | 🔄 Open | High | 3-4 days |
+| #247 | Rewrite Arena Setup for Buddy Allocator | ✅ Complete | High | 3-4 days |
 | #248 | Implement Buddy Split and Coalesce Operations | 🔄 Open | Critical | 4-5 days |
 | #249 | Integrate Buddy Allocator with malloc/free | 🔄 Open | Critical | 3-4 days |
 | #250 | Adapt realloc/reallocarray for Buddy Allocator | 🔄 Open | High | 2-3 days |
@@ -195,9 +195,10 @@ typedef struct arena {
 **Goal:** Bootstrap buddy system
 
 **Key Changes:**
-- Replace single freelist with order-segregated freelists
-- Seed initial arena as highest-order block
-- Update arena growth to maintain buddy invariants
+- Replace the single global freelist with per-order freelists stored in each arena (and optionally a global array for quick lookup). Provide helpers such as `buddy_push(order, block)` / `buddy_pop(order)` so allocation code no longer touches the legacy list.
+- When `grow_heap` mmaps a 128 MiB arena, initialise an `arena_t` structure (base, size, `freelists[21]`, link into `arena_list_head`). Seed the arena with a single order-27 `buddy_block_t` covering the entire mapping.
+- Ensure the seeded block records `order = MAX_ORDER`, `flags = BUDDY_FREE`, and `arena = current arena`. Defer splitting to the allocation path that consumes blocks from `freelists`.
+- Remove the old `free_list_head` usage in favour of order-aware insertion/removal. Existing arena metadata (base pointer, size) becomes part of the new `arena_t` so free/coalesce can locate the owning freelist quickly.
 
 ### Phase 4: Core Operations (#248)
 **Goal:** Implement split and coalesce

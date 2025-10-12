@@ -63,7 +63,14 @@ static inline long __menios_syscall3(long number, long arg1, long arg2, long arg
 #define BLOCK_FLAG_FREE     (1u << 0)
 #define BLOCK_FLAG_DIRECT   (1u << 1)
 
-struct arena_header;
+#define BUDDY_MIN_ORDER     7u           /* 128 bytes */
+#define BUDDY_MAX_ORDER     27u          /* 128 MiB */
+#define BUDDY_ORDER_COUNT   (BUDDY_MAX_ORDER - BUDDY_MIN_ORDER + 1u)
+
+#define BUDDY_FLAG_FREE     (1u << 0)
+#define BUDDY_FLAG_USED     (1u << 1)
+#define BUDDY_FLAG_DIRECT   (1u << 2)
+
 typedef struct block_header {
   struct block_header* next;      /* neighbour inside arena */
   struct block_header* prev;
@@ -78,11 +85,23 @@ typedef struct block_header {
   uint64_t padding_align;         /* keep header aligned to 16 bytes */
 } block_header_t;
 
+typedef struct buddy_block {
+  struct buddy_block* next;
+  struct buddy_block* prev;
+  struct arena_header* arena;
+  uint32_t order;
+  uint32_t flags;
+  uintptr_t offset;               /* byte offset from arena base */
+} buddy_block_t;
+
 typedef struct arena_header {
   struct arena_header* next;
   struct arena_header* prev;
-  size_t size;                    /* total bytes mapped for this arena */
-  block_header_t* first_block;
+  void* mapping_base;             /* raw mapping returned by mmap */
+  size_t size;                    /* total bytes managed by allocator */
+  block_header_t* first_block;    /* legacy first-fit compatibility */
+  buddy_block_t* buddy_freelists[BUDDY_ORDER_COUNT];
+  buddy_block_t root_block;       /* seeded highest-order block */
 } arena_header_t;
 
 _Static_assert((sizeof(block_header_t) % DEFAULT_ALIGNMENT) == 0,
@@ -275,6 +294,7 @@ static int grow_heap(size_t size) {
   }
 
   arena_header_t* arena = (arena_header_t*)mapping;
+  arena->mapping_base = mapping;
   arena->size = arena_size;
   arena->prev = NULL;
   arena->next = arena_list_head;
@@ -295,6 +315,16 @@ static int grow_heap(size_t size) {
   block->size = arena_size - header_size - sizeof(block_header_t);
   block->flags = BLOCK_FLAG_FREE;
   arena->first_block = block;
+  for(size_t i = 0; i < BUDDY_ORDER_COUNT; ++i) {
+    arena->buddy_freelists[i] = NULL;
+  }
+  arena->root_block.next = NULL;
+  arena->root_block.prev = NULL;
+  arena->root_block.arena = arena;
+  arena->root_block.order = BUDDY_MAX_ORDER;
+  arena->root_block.flags = BUDDY_FLAG_FREE;
+  arena->root_block.offset = (uintptr_t)((uint8_t*)(block + 1) - (uint8_t*)mapping);
+  arena->buddy_freelists[BUDDY_MAX_ORDER - BUDDY_MIN_ORDER] = &arena->root_block;
 
   free_list_push(block);
 
