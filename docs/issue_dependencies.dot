@@ -108,8 +108,8 @@ digraph IssueDependencies {
         issue247 [label="#247: Rewrite Arena\nSetup", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED
         issue248 [label="#248: Buddy Split/\nCoalesce", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED
         issue249 [label="#249: malloc/free\nIntegration", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED
-        issue250 [label="#250: realloc\nAdaptation", fillcolor="#C8E6C9"];
-        issue251 [label="#251: Direct mmap\nPath", fillcolor="#C8E6C9"];
+        issue250 [label="#250: realloc\nAdaptation", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED
+        issue251 [label="#251: Direct mmap\nPath", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED
         issue252 [label="#252: Diagnostics\n& Tests", fillcolor="#C8E6C9"];
         issue253 [label="#253: Cleanup &\nDocs", fillcolor="#C8E6C9"];
         issue95 [label="#95: userspace\nmalloc", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED
@@ -194,6 +194,43 @@ digraph IssueDependencies {
 
         issue225 [label="#225: Cron job\nscheduling", fillcolor="#FFE4B5"];
         issue226 [label="#226: RTC and time\nmanagement", fillcolor="#FFE4B5"];
+        issue239 [label="#239: Kernel time\nsyscalls", fillcolor="#E0FFFF"];
+        issue240 [label="#240: time() in\nlibc", fillcolor="#E0FFFF"];
+        issue241 [label="#241: rand() in\nlibc", fillcolor="#E0FFFF"];
+        issue244 [label="#244: /proc\nfilesystem", fillcolor="#E0FFFF"];
+    }
+
+    subgraph cluster_utilities {
+        label="Utilities & Tools";
+        style=filled;
+        fillcolor="#F5F5DC";
+
+        issue234 [label="#234: grep\nutility", fillcolor="#E0FFFF"];
+        issue235 [label="#235: xargs\nutility", fillcolor="#E0FFFF"];
+        issue237 [label="#237: Shell\nvalidation script", fillcolor="#E0FFFF"];
+        issue242 [label="#242: PATH tab\ncompletion", fillcolor="#E0FFFF"];
+        issue243 [label="#243: /bin/mem\nutility", fillcolor="#E0FFFF"];
+    }
+
+    subgraph cluster_hibernation {
+        label="Hibernation (Suspend-to-Disk)";
+        style=filled;
+        fillcolor="#E8E0FF";
+
+        issue254 [label="#254: Hibernation\nInfrastructure", fillcolor="#E6E6FA"];
+        issue255 [label="#255: Process State\nSerialization", fillcolor="#E6E6FA"];
+        issue256 [label="#256: Memory\nSnapshot/Restore", fillcolor="#E6E6FA"];
+        issue257 [label="#257: SQLite Hibernate\nMetadata", fillcolor="#E6E6FA"];
+        issue258 [label="#258: Resume from\nHibernation", fillcolor="#E6E6FA"];
+    }
+
+    subgraph cluster_sqlite {
+        label="SQLite Integration";
+        style=filled;
+        fillcolor="#FFF0F5";
+
+        issue259 [label="#259: Package Mgmt\nDatabase", fillcolor="#E6E6FA"];
+        issue260 [label="#260: Structured\nLogging", fillcolor="#E6E6FA"];
     }
 
     subgraph cluster_bugs {
@@ -203,6 +240,7 @@ digraph IssueDependencies {
 
         issue202 [label="#202: /dev/zero\nEOF bug", fillcolor="#FFB6C1"];
         issue203 [label="#203: Pipeline\nhang bug", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED
+        issue236 [label="#236: Delete key\nnot working", fillcolor="#FFB6C1"];
     }
 
     // Foundation dependencies
@@ -216,8 +254,8 @@ digraph IssueDependencies {
     issue246 -> issue247 [color=green, penwidth=2, label="config→arena", style=dashed];
     issue247 -> issue248 [color=green, penwidth=2, label="arena→split/coalesce", style=dashed];
     issue248 -> issue249 [color=green, penwidth=2, label="core→API", style=dashed];
-    issue249 -> issue250 [color=green, penwidth=2, label="malloc→realloc"];
-    issue249 -> issue251 [color=green, penwidth=2, label="malloc→mmap"];
+    issue249 -> issue250 [color=green, penwidth=2, label="malloc→realloc", style=dashed];
+    issue249 -> issue251 [color=green, penwidth=2, label="malloc→mmap", style=dashed];
     issue248 -> issue252 [color=green, label="core→tests"];
     issue249 -> issue252 [color=green, label="API→tests"];
     issue252 -> issue253 [color=green, penwidth=2, label="tests→cleanup"];
@@ -352,6 +390,39 @@ digraph IssueDependencies {
     // Graphics/Audio dependencies (for Doom)
     issue96 -> issue31 [color=purple, style=dashed];  // fd mgmt -> graphics
     issue32 -> issue31 [color=purple];  // input -> graphics
+
+    // Time/Random dependencies
+    issue239 -> issue240 [color=brown];  // kernel time syscalls -> libc time
+    issue239 -> issue226 [color=brown];  // kernel time syscalls -> RTC management
+    issue193 -> issue241 [label="libc", color=brown];  // libc -> rand()
+
+    // Procfs dependencies
+    issue65 -> issue244 [label="VFS", style=dashed, color=gray];  // VFS -> procfs
+    issue93 -> issue244 [label="fork/exec", style=dashed, color=gray];  // process mgmt -> procfs
+
+    // Utility dependencies
+    issue193 -> issue234 [label="libc", color=brown];  // libc -> grep
+    issue193 -> issue235 [label="libc", color=brown];  // libc -> xargs
+    issue234 -> issue235 [label="grep", color=brown];  // grep -> xargs
+    issue185 -> issue242 [label="PATH search", color=cyan];  // PATH search -> PATH tab completion
+    issue244 -> issue243 [label="procfs", color=brown];  // procfs -> /bin/mem utility
+
+    // Hibernation dependencies
+    issue93 -> issue254 [label="fork/exec"];  // process mgmt -> hibernation infra
+    issue57 -> issue254 [label="VM"];  // VM -> hibernation infra
+    issue189 -> issue254 [label="FAT32 write"];  // FAT32 write -> hibernation infra
+    issue254 -> issue255 [color=purple, penwidth=2];  // infra -> process serialization
+    issue254 -> issue256 [color=purple, penwidth=2];  // infra -> memory snapshot
+    issue254 -> issue257 [color=purple, penwidth=2];  // infra -> SQLite metadata
+    issue193 -> issue257 [label="libc"];  // libc -> SQLite
+    issue255 -> issue258 [color=purple];  // process serialization -> resume
+    issue256 -> issue258 [color=purple];  // memory snapshot -> resume
+    issue257 -> issue258 [color=purple];  // SQLite metadata -> resume
+
+    // SQLite dependencies
+    issue257 -> issue259 [color=purple, penwidth=2];  // SQLite integration -> package mgmt
+    issue189 -> issue259 [label="FAT32 write"];  // FAT32 write -> package mgmt
+    issue257 -> issue260 [color=purple, penwidth=2];  // SQLite integration -> structured logging
 
     // Critical path highlighting
     edge [color=red, penwidth=3];

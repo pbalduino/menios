@@ -97,7 +97,7 @@ This document tracks the three major milestones for meniOS development.
 **Goal**: Migrate userland allocator from first-fit to buddy allocator system
 **GitHub Milestone**: [Buddy Allocator](https://github.com/pbalduino/menios/milestone/4)
 
-**Status**: 5/9 complete (55.6%)
+**Status**: 7/9 complete (77.8%)
 
 **Assigned Issues**:
 - [x] #245 - Survey Current Heap Implementation ✅
@@ -105,8 +105,8 @@ This document tracks the three major milestones for meniOS development.
 - [x] #247 - Rewrite Arena Setup for Buddy Allocator ✅
 - [x] #248 - Implement Buddy Split and Coalesce Operations ✅
 - [x] #249 - Integrate Buddy Allocator with malloc/free ✅
-- [ ] #250 - Adapt realloc/reallocarray for Buddy Allocator
-- [ ] #251 - Update Direct mmap Path for Large Allocations
+- [x] #250 - Adapt realloc/reallocarray for Buddy Allocator ✅
+- [x] #251 - Update Direct mmap Path for Large Allocations ✅
 - [ ] #252 - Add Buddy Allocator Diagnostics and Tests
 - [ ] #253 - Cleanup and Document Buddy Allocator Migration
 
@@ -122,7 +122,7 @@ This document tracks the three major milestones for meniOS development.
 - #252 depends on #248, #249 (core operations + API)
 - #253 depends on #252 (testing)
 
-**Progress**: Survey (#245), configuration (#246), arena setup (#247), and buddy split/coalesce core (#248) are complete. New arenas seed order-27 root blocks, the buddy freelists can split on demand, and coalescing rebuilds higher-order blocks correctly (covered by the new host regression tests). Each arena is 128 MiB and we currently grow without a hard cap—the allocator keeps mapping arenas until kernel VM resources or physical memory run out. Next actions: adapt realloc/direct-mmap paths (#250/#251) and expand diagnostics/tests (#252). Both GCC and Doom milestones depend on this migration for reliable heap behaviour.
+**Progress**: Survey (#245), configuration (#246), arena setup (#247), and buddy split/coalesce core (#248) are complete. New arenas seed order-27 root blocks, the buddy freelists can split on demand, and coalescing rebuilds higher-order blocks correctly (covered by the new host regression tests). Each arena is 128 MiB and we currently grow without a hard cap—the allocator keeps mapping arenas until kernel VM resources or physical memory run out. Next actions: expand diagnostics/tests (#252) and wrap up documentation cleanup (#253). Both GCC and Doom milestones depend on this migration for reliable heap behaviour.
 
 **Estimated Effort**: 11-17 days remaining (11-15 days complete)
 
@@ -252,10 +252,10 @@ This document tracks the three major milestones for meniOS development.
 ## 📈 Overall Progress
 
 - **Total Issues Across Milestones**: 70 issues
-- **Completed**: 47 issues (67.1%)
-- **In Progress**: 23 issues
-- **Ready to Start**: 4 issues (no dependencies: #109, #221; dependencies met: #250, #251)
-- **Next Up**: #250 (Adapt realloc/reallocarray) or #251 (Direct mmap) - can work in parallel!
+- **Completed**: 49 issues (70.0%)
+- **In Progress**: 21 issues
+- **Ready to Start**: 3 issues (no dependencies: #109, #221; dependencies met: #252)
+- **Next Up**: #252 (Buddy Allocator diagnostics and tests) - ready to start!
 
 ## 🚀 Immediate Next Steps
 
@@ -266,9 +266,8 @@ This document tracks the three major milestones for meniOS development.
 
 ### Next in Critical Path (Dependencies Met):
 1. **Buddy Allocator Milestone**:
-   - #250 - Adapt realloc/reallocarray (depends on #249 ✅) - Ready!
-   - #251 - Update Direct mmap Path (depends on #249 ✅) - Ready!
-   - These can be worked on in parallel!
+   - #252 - Add Buddy Allocator Diagnostics and Tests (depends on #248, #249 ✅) - Ready!
+   - After #252, #253 (cleanup/docs) will be unblocked and milestone will be complete!
 
 ## 📝 Notes
 
@@ -289,7 +288,7 @@ Many issues can be worked on in parallel:
 ### Completion Order
 Recommended completion order for maximum impact:
 1. **Mosh** - Provides usable development environment (100% complete) 🎉
-2. **Buddy Allocator** - Foundation for complex apps (55.6% complete, malloc/free integrated!) 🔨
+2. **Buddy Allocator** - Foundation for complex apps (77.8% complete, core allocator done!) 🔨
 3. **GCC** - Enables native development and compilation (62.5% complete, blocked on Buddy) 🚀
 4. **Doom** - Demonstrates full OS capabilities (38.5% complete, some work can start now)
 
@@ -350,6 +349,10 @@ Recommended completion order for maximum impact:
   - Core buddy algorithms implemented with host regression tests
 - **2025-10-14**: Closed #249 (malloc/free Integration) ✅ - Buddy Allocator milestone 55.6% complete!
   - malloc() and free() now route through buddy allocator with order-based allocation
+- **2025-10-14**: Closed #250 (realloc Adaptation) ✅ - Buddy Allocator milestone 66.7% complete!
+  - realloc() attempts in-place expansion via buddy merging, splits on shrinking
+- **2025-10-14**: Closed #251 (Direct mmap Path) ✅ - Buddy Allocator milestone 77.8% complete!
+  - Handles large allocations and unusual alignments (posix_memalign, memalign, valloc, pvalloc)
 
 ---
 

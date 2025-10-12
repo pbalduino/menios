@@ -41,8 +41,8 @@ The migration follows a careful sequence to minimize risk:
 | #247 | Rewrite Arena Setup for Buddy Allocator | ✅ Complete | High | 3-4 days |
 | #248 | Implement Buddy Split and Coalesce Operations | ✅ Complete | Critical | 4-5 days |
 | #249 | Integrate Buddy Allocator with malloc/free | ✅ Complete | Critical | 3-4 days |
-| #250 | Adapt realloc/reallocarray for Buddy Allocator | 🔄 Open | High | 2-3 days |
-| #251 | Update Direct mmap Path for Large Allocations | 🔄 Open | Medium | 2 days |
+| #250 | Adapt realloc/reallocarray for Buddy Allocator | ✅ Complete | High | 2-3 days |
+| #251 | Update Direct mmap Path for Large Allocations | ✅ Complete | Medium | 2 days |
 | #252 | Add Buddy Allocator Diagnostics and Tests | 🔄 Open | High | 3-4 days |
 | #253 | Cleanup and Document Buddy Allocator Migration | 🔄 Open | Medium | 2-3 days |
 
@@ -242,20 +242,20 @@ void free(void *ptr) {
 ### Phase 6: Extensions (#250, #251)
 **Goal:** Complete allocator features
 
-**realloc (#250):**
-- Check if current order provides enough space
-- Check if buddy of next order is free for growth
-- Fall back to allocate + copy
+**realloc (#250):** ✅ Done
+- Buddy-managed blocks now split when shrinking and attempt in-place expansion by merging the right-hand buddy before falling back to copy+free.
+- `reallocarray` rides the same path, so overflow checks feed the buddy allocator automatically.
 
-**Direct mmap (#251):**
-- Handle allocations > MAX_ORDER
-- Handle unusual alignment via posix_memalign
-- Mark with DIRECT_MMAP flag
+**Direct mmap (#251):** ✅ Done
+- Requests larger than the buddy ceiling or requiring alignments above 16 bytes now funnel through a single helper that over-allocates, aligns, and tracks the mapping so `free` can `munmap` correctly.
+- `posix_memalign`, `memalign`, `valloc`, and `pvalloc` all ride this path, so unusual alignments no longer depend on the buddy freelists.
 
 ### Phase 7: Testing (#252)
 **Goal:** Validate correctness and performance
 
 **Test Coverage:**
+- Added host regression `test/test_malloc_direct.c` validating both oversized `malloc` and high-alignment `posix_memalign` paths to ensure the shared direct-mmap helper remains correct.
+
 - Split/coalesce unit tests
 - Alignment validation (posix_memalign)
 - Fragmentation stress tests
