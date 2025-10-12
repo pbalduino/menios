@@ -110,8 +110,8 @@ digraph IssueDependencies {
         issue249 [label="#249: malloc/free\nIntegration", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED
         issue250 [label="#250: realloc\nAdaptation", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED
         issue251 [label="#251: Direct mmap\nPath", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED
-        issue252 [label="#252: Diagnostics\n& Tests", fillcolor="#C8E6C9"];
-        issue253 [label="#253: Cleanup &\nDocs", fillcolor="#C8E6C9"];
+        issue252 [label="#252: Diagnostics\n& Tests", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED
+        issue253 [label="#253: Cleanup &\nDocs", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED
         issue95 [label="#95: userspace\nmalloc", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED
     }
 
@@ -256,9 +256,9 @@ digraph IssueDependencies {
     issue248 -> issue249 [color=green, penwidth=2, label="core→API", style=dashed];
     issue249 -> issue250 [color=green, penwidth=2, label="malloc→realloc", style=dashed];
     issue249 -> issue251 [color=green, penwidth=2, label="malloc→mmap", style=dashed];
-    issue248 -> issue252 [color=green, label="core→tests"];
-    issue249 -> issue252 [color=green, label="API→tests"];
-    issue252 -> issue253 [color=green, penwidth=2, label="tests→cleanup"];
+    issue248 -> issue252 [color=green, label="core→tests", style=dashed];
+    issue249 -> issue252 [color=green, label="API→tests", style=dashed];
+    issue252 -> issue253 [color=green, penwidth=2, label="tests→cleanup", style=dashed];
 
     // Threading dependencies
     issue34 -> issue108 [color=blue, penwidth=2, style=dashed];
@@ -288,19 +288,19 @@ digraph IssueDependencies {
     issue194 -> issue29 [color=orange];
     issue195 -> issue29 [color=orange, penwidth=2];
 
-    // Native compilation dependencies - NOW DEPEND ON BUDDY ALLOCATOR
+    // Native compilation dependencies - BUDDY ALLOCATOR COMPLETE ✅
     issue29 -> issue190 [color=purple, style=dashed];
     issue193 -> issue190 [color=purple, style=dashed];
     issue208 -> issue190 [color=purple, label="pipes", style=dashed];
     issue189 -> issue190 [color=purple];
     issue205 -> issue190 [color=teal, label="I/O perf", style=dashed];
-    issue253 -> issue190 [color=red, penwidth=3, label="BUDDY\nREQUIRED"];  // Buddy milestone complete
+    issue253 -> issue190 [color=green, penwidth=3, label="BUDDY\nCOMPLETE ✅", style=dashed];  // Buddy milestone complete!
 
     issue29 -> issue191 [color=purple, style=dashed];
     issue193 -> issue191 [color=purple, style=dashed];
     issue189 -> issue191 [color=purple];
     issue205 -> issue191 [color=teal, label="I/O perf", style=dashed];
-    issue253 -> issue191 [color=red, penwidth=3, label="BUDDY\nREQUIRED"];  // Buddy milestone complete
+    issue253 -> issue191 [color=green, penwidth=3, label="BUDDY\nCOMPLETE ✅", style=dashed];  // Buddy milestone complete!
 
     // Shell UX dependencies (some complete)
     issue148 -> issue197 [color=cyan, style=dashed];
@@ -428,9 +428,9 @@ digraph IssueDependencies {
     edge [color=red, penwidth=3];
     issue192 -> issue193 [label="TOOLCHAIN\nCRITICAL", style=dashed];
     issue193 -> issue29 [label="TOOLCHAIN\nCRITICAL", style=dashed];
-    issue245 -> issue246 [label="BUDDY\nCRITICAL"];
-    issue248 -> issue249 [label="BUDDY\nCRITICAL"];
-    issue252 -> issue253 [label="BUDDY\nCRITICAL"];
+    issue245 -> issue246 [label="BUDDY\nCOMPLETE ✅", style=dashed];
+    issue248 -> issue249 [label="BUDDY\nCOMPLETE ✅", style=dashed];
+    issue252 -> issue253 [label="BUDDY\nCOMPLETE ✅", style=dashed];
 
     // Legend
     subgraph cluster_legend {

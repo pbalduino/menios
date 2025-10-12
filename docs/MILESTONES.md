@@ -97,7 +97,7 @@ This document tracks the three major milestones for meniOS development.
 **Goal**: Migrate userland allocator from first-fit to buddy allocator system
 **GitHub Milestone**: [Buddy Allocator](https://github.com/pbalduino/menios/milestone/4)
 
-**Status**: 7/9 complete (77.8%)
+**Status**: 9/9 complete (100%) 🎉
 
 **Assigned Issues**:
 - [x] #245 - Survey Current Heap Implementation ✅
@@ -107,10 +107,10 @@ This document tracks the three major milestones for meniOS development.
 - [x] #249 - Integrate Buddy Allocator with malloc/free ✅
 - [x] #250 - Adapt realloc/reallocarray for Buddy Allocator ✅
 - [x] #251 - Update Direct mmap Path for Large Allocations ✅
-- [x] #252 - Add Buddy Allocator Diagnostics and Tests
-- [x] #253 - Cleanup and Document Buddy Allocator Migration
+- [x] #252 - Add Buddy Allocator Diagnostics and Tests ✅
+- [x] #253 - Cleanup and Document Buddy Allocator Migration ✅
 
-**Critical Path**: #245 → #246 → #247 → #248 → #249 → #250/#251 → #252 → #253
+**Critical Path**: #245 → #246 → #247 → #248 → #249 → #250/#251 → #252 → #253 ✅
 
 **Dependencies**:
 - #246 depends on #245 (survey)
@@ -122,9 +122,9 @@ This document tracks the three major milestones for meniOS development.
 - #252 depends on #248, #249 (core operations + API)
 - #253 depends on #252 (testing)
 
-**Progress**: Survey (#245), configuration (#246), arena setup (#247), and buddy split/coalesce core (#248) are complete. New arenas seed order-27 root blocks, the buddy freelists can split on demand, and coalescing rebuilds higher-order blocks correctly (covered by the new host regression tests). Each arena is 128 MiB and we currently grow without a hard cap—the allocator keeps mapping arenas until kernel VM resources or physical memory run out. Buddy diagnostics now expose `menios_malloc_stats()` so tests can assert arena/direct counters without spelunking logs. Next actions: expand diagnostics/tests (#252) and wrap up documentation cleanup (#253). Both GCC and Doom milestones depend on this migration for reliable heap behaviour.
+**Progress**: Buddy allocator migration is fully complete. Userland now allocates from 128 MiB arenas managed by per-order freelists, split/coalesce is covered by regression tests, diagnostics expose allocator health via `/proc/meminfo` and `menios_malloc_stats()`, and documentation cleanup is finished. This foundation unblocks the GCC and Doom milestones by delivering predictable heap behaviour under heavy workloads.
 
-**Estimated Effort**: 11-17 days remaining (11-15 days complete)
+**Estimated Effort**: ✅ Finished (actual delivery matched the high-end estimate)
 
 ---
 
@@ -252,45 +252,50 @@ This document tracks the three major milestones for meniOS development.
 ## 📈 Overall Progress
 
 - **Total Issues Across Milestones**: 70 issues
-- **Completed**: 49 issues (70.0%)
-- **In Progress**: 21 issues
-- **Ready to Start**: 3 issues (no dependencies: #109, #221; dependencies met: #252)
-- **Next Up**: #252 (Buddy Allocator diagnostics and tests) - ready to start!
+- **Completed**: 51 issues (72.9%)
+- **In Progress**: 19 issues
+- **Ready to Start**: 5 issues (no dependencies: #109, #221, #190, #191; unblocked by Buddy completion)
+- **Next Up**: TCC/binutils ports (#190, #191) - Buddy Allocator complete, ready for native compilation!
 
 ## 🚀 Immediate Next Steps
 
-### Ready to Start Now (No Dependencies):
-1. **Doom Milestone**:
-   - #109 - pthread API
-   - #221 - Fast syscall instruction
+### 🎉 Buddy Allocator Milestone Complete!
+The Buddy Allocator milestone is now 100% complete, unblocking both GCC and Doom milestones!
 
-### Next in Critical Path (Dependencies Met):
-1. **Buddy Allocator Milestone**:
-   - #252 - Add Buddy Allocator Diagnostics and Tests (depends on #248, #249 ✅) - Ready!
-   - After #252, #253 (cleanup/docs) will be unblocked and milestone will be complete!
+### Ready to Start Now (Dependencies Met):
+1. **GCC Milestone** (UNBLOCKED! 🚀):
+   - #190 - TCC port (Buddy Allocator ✅, needs #189 FAT32 writes)
+   - #191 - binutils port (Buddy Allocator ✅, needs #189 FAT32 writes)
+
+2. **Doom Milestone** (Partial unblock):
+   - #109 - pthread API (no dependencies)
+   - #221 - Fast syscall instruction (no dependencies)
+
+3. **Critical Blocker**:
+   - #189 - FAT32 write support (blocks #190, #191 for native compilation)
 
 ## 📝 Notes
 
 ### Parallel Development
 Many issues can be worked on in parallel:
-- **Buddy Allocator**: Linear dependency chain, but #250/#251 can be parallel
-- **GCC**: Blocked on Buddy Allocator completion
+- **Buddy Allocator**: ✅ COMPLETE! (100%)
+- **GCC**: Unblocked! #190/#191 can start now (blocked only by #189 FAT32 writes)
 - **Doom Threading**: #109, #112, #113 are independent (can start now!)
 - **Doom IPC**: Different IPC mechanisms can progress in parallel
 - **Mosh UX**: All features complete! ✅
 
 ### Critical Dependencies
-- **Buddy Allocator milestone** is foundational - required by both GCC and Doom
-- **GCC milestone** depends on Buddy Allocator for native compilation
-- **Doom milestone** depends on Buddy Allocator for game engine memory management
-- **Mosh milestone** provides the development environment for debugging ✅
+- **Buddy Allocator milestone** ✅ COMPLETE - Foundation now ready for both GCC and Doom!
+- **GCC milestone** - Buddy dependency met ✅, now blocked only by #189 (FAT32 writes)
+- **Doom milestone** - Buddy dependency met ✅, can leverage efficient heap for game engine
+- **Mosh milestone** ✅ COMPLETE - Development environment ready!
 
 ### Completion Order
 Recommended completion order for maximum impact:
-1. **Mosh** - Provides usable development environment (100% complete) 🎉
-2. **Buddy Allocator** - Foundation for complex apps (77.8% complete, core allocator done!) 🔨
-3. **GCC** - Enables native development and compilation (62.5% complete, blocked on Buddy) 🚀
-4. **Doom** - Demonstrates full OS capabilities (38.5% complete, some work can start now)
+1. **Mosh** ✅ COMPLETE (100%) - Development environment ready! 🎉
+2. **Buddy Allocator** ✅ COMPLETE (100%) - Foundation for complex apps ready! 🎉
+3. **GCC** - Enables native development (62.5% complete, unblocked! Only needs #189) 🚀
+4. **Doom** - Demonstrates full OS capabilities (38.5% complete, threading/IPC ready to start)
 
 ### Recent Changes
 - **2025-10-08**: Expanded Mosh milestone from 10 to 30 issues to better track all shell work
@@ -353,6 +358,11 @@ Recommended completion order for maximum impact:
   - realloc() attempts in-place expansion via buddy merging, splits on shrinking
 - **2025-10-14**: Closed #251 (Direct mmap Path) ✅ - Buddy Allocator milestone 77.8% complete!
   - Handles large allocations and unusual alignments (posix_memalign, memalign, valloc, pvalloc)
+- **2025-10-14**: Closed #252 (Buddy Allocator Diagnostics and Tests) ✅ - Buddy Allocator milestone 88.9% complete!
+  - Added `menios_malloc_stats()` and comprehensive regression tests
+- **2025-10-14**: Closed #253 (Cleanup and Documentation) ✅ - Buddy Allocator milestone 100% COMPLETE! 🎉
+  - Legacy first-fit code removed, buddy design fully documented
+  - **MILESTONE ACHIEVEMENT**: Buddy Allocator complete! Unblocks GCC (#190, #191) and Doom milestones!
 
 ---
 
