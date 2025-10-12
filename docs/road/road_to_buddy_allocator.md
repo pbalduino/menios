@@ -36,7 +36,7 @@ The migration follows a careful sequence to minimize risk:
 
 | Issue | Title | Status | Priority | Effort |
 | --- | --- | --- | --- | --- |
-| #245 | Survey Current Heap Implementation | 🔄 Open | High | 2-3 days |
+| #245 | Survey Current Heap Implementation | ✅ Complete | High | 2-3 days |
 | #246 | Define Buddy Allocator Orders and Configuration | 🔄 Open | High | 1-2 days |
 | #247 | Rewrite Arena Setup for Buddy Allocator | 🔄 Open | High | 3-4 days |
 | #248 | Implement Buddy Split and Coalesce Operations | 🔄 Open | Critical | 4-5 days |
@@ -148,10 +148,10 @@ typedef struct arena {
 **Goal:** Complete understanding of current allocator
 
 **Deliverables:**
-- Documentation of `grow_heap` arena creation
-- Header layout and freelist structure diagram
-- List of arbitrary-size assumptions
-- Migration risk assessment
+- `grow_heap` currently mmaps the next arena (starting at 1 MiB, doubling up to 32 MiB) and seeds a single `block_header_t` that spans the arena. The block is pushed onto the global freelist and linked into `arena_list_head`.
+- `block_header_t` is 0x50 bytes, aligned to 16, and stores neighbour pointers (`next/prev`), freelist linkage (`free_next/free_prev`), the owning arena pointer (NULL for direct `mmap`), the mmap base/size for direct mappings, payload size in bytes, and flags (`BLOCK_FLAG_FREE`, `BLOCK_FLAG_DIRECT`). Payload begins immediately after the header.
+- Allocation is pure first-fit: `find_suitable_block` linearly walks `free_list_head`, `split_block` carves the tail of oversized blocks, and `malloc` does not segregate by size. Freeing coalesces with adjacent free blocks inside the same arena and pushes the merged block back to the freelist. Requests above `ARENA_MAX_SIZE - arena_overhead` or with large alignments fall back to direct `mmap` and bypass arena bookkeeping.
+- Risk assessment: arbitrary splitting/coalescing coupled with a single freelist makes size accounting fragile (pattern mismatches observed in `/bin/malloc_stress`). Fragmentation grows quickly under heavy workloads, alignment relies on header maths, and large allocations bypass arenas entirely—motivating the switch to a deterministic buddy scheme.
 
 ### Phase 2: Design (#246)
 **Goal:** Define buddy allocator parameters

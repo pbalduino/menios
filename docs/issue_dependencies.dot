@@ -103,7 +103,7 @@ digraph IssueDependencies {
         style=filled;
         fillcolor="#E8F5E9";
 
-        issue245 [label="#245: Survey\nCurrent Heap", fillcolor="#C8E6C9"];
+        issue245 [label="#245: Survey\nCurrent Heap", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED
         issue246 [label="#246: Define Buddy\nOrders", fillcolor="#C8E6C9"];
         issue247 [label="#247: Rewrite Arena\nSetup", fillcolor="#C8E6C9"];
         issue248 [label="#248: Buddy Split/\nCoalesce", fillcolor="#C8E6C9"];
@@ -212,7 +212,7 @@ digraph IssueDependencies {
     issue89 -> issue95 [style=dashed, color=gray];
 
     // Buddy Allocator migration chain (green for memory management)
-    issue245 -> issue246 [color=green, penwidth=2, label="survey→config"];
+    issue245 -> issue246 [color=green, penwidth=2, label="survey→config", style=dashed];
     issue246 -> issue247 [color=green, penwidth=2, label="config→arena"];
     issue247 -> issue248 [color=green, penwidth=2, label="arena→split/coalesce"];
     issue248 -> issue249 [color=green, penwidth=2, label="core→API"];

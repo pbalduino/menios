@@ -97,10 +97,10 @@ This document tracks the three major milestones for meniOS development.
 **Goal**: Migrate userland allocator from first-fit to buddy allocator system
 **GitHub Milestone**: [Buddy Allocator](https://github.com/pbalduino/menios/milestone/4)
 
-**Status**: 0/9 complete (0%)
+**Status**: 1/9 complete (11.1%)
 
 **Assigned Issues**:
-- [ ] #245 - Survey Current Heap Implementation
+- [x] #245 - Survey Current Heap Implementation ✅
 - [ ] #246 - Define Buddy Allocator Orders and Configuration
 - [ ] #247 - Rewrite Arena Setup for Buddy Allocator
 - [ ] #248 - Implement Buddy Split and Coalesce Operations
@@ -122,9 +122,9 @@ This document tracks the three major milestones for meniOS development.
 - #252 depends on #248, #249 (core operations + API)
 - #253 depends on #252 (testing)
 
-**Progress**: Foundational work for robust memory management. Both GCC and Doom milestones depend on buddy allocator completion for efficient handling of complex allocation patterns.
+**Progress**: Survey complete (#245 ✅)! Current first-fit allocator fully documented. Next: Define buddy orders and configuration (#246). Both GCC and Doom milestones depend on buddy allocator completion for efficient handling of complex allocation patterns.
 
-**Estimated Effort**: 22-30 days total
+**Estimated Effort**: 20-28 days remaining (2-3 days complete)
 
 ---
 
@@ -252,18 +252,21 @@ This document tracks the three major milestones for meniOS development.
 ## 📈 Overall Progress
 
 - **Total Issues Across Milestones**: 70 issues
-- **Completed**: 42 issues (60%)
-- **In Progress**: 28 issues
-- **Ready to Start**: 3 issues (no dependencies: #109, #221, #245)
+- **Completed**: 43 issues (61.4%)
+- **In Progress**: 27 issues
+- **Ready to Start**: 2 issues (no dependencies: #109, #221)
+- **Next Up**: #246 (Define Buddy Orders - dependency met!)
 
 ## 🚀 Immediate Next Steps
 
 ### Ready to Start Now (No Dependencies):
-1. **Buddy Allocator Milestone**:
-   - #245 - Survey Current Heap Implementation (starts the migration!)
-2. **Doom Milestone**:
+1. **Doom Milestone**:
    - #109 - pthread API
    - #221 - Fast syscall instruction
+
+### Next in Critical Path (Dependencies Met):
+1. **Buddy Allocator Milestone**:
+   - #246 - Define Buddy Allocator Orders and Configuration (depends on #245 ✅)
 
 ## 📝 Notes
 
@@ -284,8 +287,8 @@ Many issues can be worked on in parallel:
 ### Completion Order
 Recommended completion order for maximum impact:
 1. **Mosh** - Provides usable development environment (100% complete) 🎉
-2. **Buddy Allocator** - Foundation for complex apps (0% complete) 🔨
-3. **GCC** - Enables native development and compilation (62.5% complete, blocked) 🚀
+2. **Buddy Allocator** - Foundation for complex apps (11.1% complete, in progress!) 🔨
+3. **GCC** - Enables native development and compilation (62.5% complete, blocked on Buddy) 🚀
 4. **Doom** - Demonstrates full OS capabilities (38.5% complete, some work can start now)
 
 ### Recent Changes
@@ -336,6 +339,7 @@ Recommended completion order for maximum impact:
 - **2025-10-14**: Both GCC and Doom milestones now depend on Buddy Allocator completion
 - **2025-10-14**: Created #242 (PATH-aware tab completion), #243 (/bin/mem utility), #244 (procfs)
 - **2025-10-14**: Total issues across milestones: 70 (was 61)
+- **2025-10-14**: Closed #245 (Survey Current Heap) ✅ - Buddy Allocator milestone 11.1% complete!
 
 ---
 

@@ -140,9 +140,9 @@ Expect the log to show the `[user_demo]` messages on screen and in `com1.log`, c
 
 ### 🚧 **In Progress & Planned**
 
-#### **Critical Path: Memory Management - Buddy Allocator (Issues #245-#253)** 🔨 NEW MILESTONE!
-- [ ] **#245**: Survey Current Heap Implementation (ready to start!)
-- [ ] **#246**: Define Buddy Allocator Orders and Configuration
+#### **Critical Path: Memory Management - Buddy Allocator (Issues #245-#253)** 🔨 IN PROGRESS!
+- [x] **#245**: Survey Current Heap Implementation ✅ COMPLETE!
+- [ ] **#246**: Define Buddy Allocator Orders and Configuration (ready to start!)
 - [ ] **#247**: Rewrite Arena Setup for Buddy Allocator
 - [ ] **#248**: Implement Buddy Split and Coalesce Operations
 - [ ] **#249**: Integrate Buddy Allocator with malloc/free
@@ -151,7 +151,7 @@ Expect the log to show the `[user_demo]` messages on screen and in `com1.log`, c
 - [ ] **#252**: Add Buddy Allocator Diagnostics and Tests
 - [ ] **#253**: Cleanup and Document Buddy Allocator Migration
 
-**Status**: 0/9 complete - Foundation for GCC and Doom milestones!
+**Status**: 1/9 complete (11.1%) - Survey done, ready for design phase!
 
 #### **Toolchain (Issues #29, #192-#195)** 🚀 Core Complete, Blocked on Buddy!
 - [x] **#192**: crt0 runtime startup code ✅ COMPLETE!
@@ -205,10 +205,10 @@ Remaining major components for Doom:
 
 See [`road_to_doom.md`](docs/road/road_to_doom.md) for the complete roadmap and [`tasks.json`](tasks.json) for detailed task tracking.
 
-**📊 Progress Assessment**: With **42 issues completed across 70 total** (60%), meniOS is making phenomenal progress! Major recent completions include:
+**📊 Progress Assessment**: With **43 issues completed across 70 total** (61.4%), meniOS is making phenomenal progress! Major recent completions include:
 - ✅ **Shell Milestone**: 27/27 complete (100%)—v0.1.0 ships the full interactive shell experience! 🎉
 - ✅ **Toolchain Core**: 5/8 complete (62.5%)—crt0 (#192) ✅, libc (#193) ✅, ABI docs (#194) ✅, build system (#195) ✅, cross-compiler (#29) ✅
-- 🔨 **Buddy Allocator**: NEW milestone! 0/9 complete—critical foundation for GCC and Doom
+- 🔨 **Buddy Allocator**: 1/9 complete (11.1%)—survey done (#245 ✅), critical foundation for GCC and Doom
 - ✅ **Synchronization**: All primitives complete! (#36, #37, #39, #40) - 4/4 done!
 - ✅ **Shell UX**: Tab completion (#197) ✅, History (#156) ✅, Ctrl+A/E (#198) ✅, Ctrl+L (#200) ✅, Ctrl+R (#199) ✅, Job control (#158) ✅, pwd prompt (#222) ✅!
 - ✅ **Threading Foundation**: Kernel threading (#108) - ready for pthread!
@@ -222,7 +222,7 @@ See [`road_to_doom.md`](docs/road/road_to_doom.md) for the complete roadmap and 
 
 **🎯 Milestone Status**:
 - 🎉 **Mosh** (Shell): 27/27 complete (100%) - v0.1.0 shipped!
-- 🔨 **Buddy Allocator** (Memory): 0/9 complete (0%) - ready to start with #245!
+- 🔨 **Buddy Allocator** (Memory): 1/9 complete (11.1%) - survey done, design phase next (#246)!
 - 🚀 **GCC** (Toolchain): 5/8 complete (62.5%) - core done, native compilation blocked on Buddy
 - 🎮 **Doom** (Full OS): 10/26 complete (38.5%) - blocked on Buddy for game engine memory
 
@@ -315,9 +315,9 @@ We welcome contributions from developers of all skill levels! 🚀
 - **New Contributors**: Start with our [Contributing Guide](CONTRIBUTING.md) for a complete development workflow
 - **Find Tasks**: Check [GitHub Issues](https://github.com/pbalduino/menios/issues) or browse [`tasks.json`](tasks.json) for detailed task tracking
 - **High Priority - Ready Now** (3 issues ready to start!):
-  - **🔨 Buddy Allocator** (CRITICAL): #245 (Survey Current Heap) - starts the memory migration that unblocks GCC and Doom!
+  - **🔨 Buddy Allocator** (CRITICAL): #246 (Define Buddy Orders) - continues the memory migration that unblocks GCC and Doom!
   - **🧵 Threading**: #109 (pthread API), #221 (fast syscalls - 3-5x speedup!)
-- **Critical Path**: Buddy Allocator milestone (#245-#253) is now THE most important work - it unblocks both native compilation and Doom!
+- **Critical Path**: Buddy Allocator milestone (#245-#253) is now THE most important work - #245 done ✅, #246 ready to start!
 - **Report Issues**: Use our issue templates to report bugs or request features
 - **Security Issues**: Please review our [Security Policy](SECURITY.md) for responsible disclosure
 - **Code Style**: Follow the guidelines in [`CODING.md`](CODING.md)
