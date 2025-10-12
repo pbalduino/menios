@@ -21,6 +21,14 @@ void  free(void* ptr);
 void* calloc(size_t nmemb, size_t size);
 void* realloc(void* ptr, size_t size);
 void* reallocarray(void* ptr, size_t nmemb, size_t size);
+typedef struct {
+  size_t arena_count;
+  size_t arena_payload_bytes;
+  size_t buddy_free_payload_bytes;
+  size_t buddy_free_blocks;
+  size_t direct_allocations;
+  size_t direct_bytes;
+} menios_malloc_stats_t;
 
 int   posix_memalign(void** memptr, size_t alignment, size_t size);
 void* aligned_alloc(size_t alignment, size_t size);
@@ -28,6 +36,7 @@ void* memalign(size_t alignment, size_t size);
 void* valloc(size_t size);
 void* pvalloc(size_t size);
 size_t malloc_usable_size(void* ptr);
+int menios_malloc_stats(menios_malloc_stats_t* stats);
 
 long strtol(const char* nptr, char** endptr, int base);
 

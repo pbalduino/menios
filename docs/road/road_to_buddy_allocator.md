@@ -255,6 +255,7 @@ void free(void *ptr) {
 
 **Test Coverage:**
 - Added host regression `test/test_malloc_direct.c` validating both oversized `malloc` and high-alignment `posix_memalign` paths to ensure the shared direct-mmap helper remains correct.
+- Introduced `menios_malloc_stats()` alongside host test `test/test_malloc_stats.c` so we can assert arena/direct counters without manual inspection.
 
 - Split/coalesce unit tests
 - Alignment validation (posix_memalign)

@@ -103,6 +103,8 @@ _Static_assert((sizeof(block_header_t) % DEFAULT_ALIGNMENT) == 0,
                "block header must stay aligned");
 
 static arena_header_t* arena_list_head = NULL;
+static size_t direct_allocation_count = 0;
+static size_t direct_total_bytes = 0;
 
 static int grow_heap(size_t size);
 
@@ -587,6 +589,8 @@ static void* allocate_direct(size_t size, size_t alignment) {
   header->flags = BLOCK_FLAG_DIRECT;
   header->padding_reserved = 0u;
   header->padding_align = 0u;
+  direct_allocation_count++;
+  direct_total_bytes += total;
   return block_payload(header);
 }
 
@@ -629,6 +633,14 @@ void free(void* ptr) {
   block_header_t* block = payload_to_block(ptr);
   if(block_is_direct(block)) {
     if(block->mapping_base != NULL && block->mapping_size != 0) {
+      if(direct_allocation_count > 0) {
+        direct_allocation_count--;
+      }
+      if(direct_total_bytes >= block->mapping_size) {
+        direct_total_bytes -= block->mapping_size;
+      } else {
+        direct_total_bytes = 0;
+      }
       (void)munmap(block->mapping_base, block->mapping_size);
     }
     return;
@@ -722,6 +734,33 @@ size_t malloc_usable_size(void* ptr) {
 
   block_header_t* block = payload_to_block(ptr);
   return block->size;
+}
+
+int menios_malloc_stats(menios_malloc_stats_t* stats) {
+  if(stats == NULL) {
+    errno = EINVAL;
+    return -1;
+  }
+
+  menios_malloc_stats_t snapshot = {0};
+
+  for(arena_header_t* arena = arena_list_head; arena != NULL; arena = arena->next) {
+    snapshot.arena_count++;
+    snapshot.arena_payload_bytes += arena->buddy_size;
+    for(uint32_t order = BUDDY_MIN_ORDER; order <= BUDDY_MAX_ORDER; ++order) {
+      size_t index = buddy_order_index(order);
+      for(block_header_t* node = arena->buddy_freelists[index]; node != NULL; node = node->buddy_next) {
+        snapshot.buddy_free_blocks++;
+        snapshot.buddy_free_payload_bytes += node->size;
+      }
+    }
+  }
+
+  snapshot.direct_allocations = direct_allocation_count;
+  snapshot.direct_bytes = direct_total_bytes;
+
+  *stats = snapshot;
+  return 0;
 }
 
 void* aligned_alloc(size_t alignment, size_t size) {

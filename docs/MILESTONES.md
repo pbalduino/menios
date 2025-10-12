@@ -122,7 +122,7 @@ This document tracks the three major milestones for meniOS development.
 - #252 depends on #248, #249 (core operations + API)
 - #253 depends on #252 (testing)
 
-**Progress**: Survey (#245), configuration (#246), arena setup (#247), and buddy split/coalesce core (#248) are complete. New arenas seed order-27 root blocks, the buddy freelists can split on demand, and coalescing rebuilds higher-order blocks correctly (covered by the new host regression tests). Each arena is 128 MiB and we currently grow without a hard cap—the allocator keeps mapping arenas until kernel VM resources or physical memory run out. Next actions: expand diagnostics/tests (#252) and wrap up documentation cleanup (#253). Both GCC and Doom milestones depend on this migration for reliable heap behaviour.
+**Progress**: Survey (#245), configuration (#246), arena setup (#247), and buddy split/coalesce core (#248) are complete. New arenas seed order-27 root blocks, the buddy freelists can split on demand, and coalescing rebuilds higher-order blocks correctly (covered by the new host regression tests). Each arena is 128 MiB and we currently grow without a hard cap—the allocator keeps mapping arenas until kernel VM resources or physical memory run out. Buddy diagnostics now expose `menios_malloc_stats()` so tests can assert arena/direct counters without spelunking logs. Next actions: expand diagnostics/tests (#252) and wrap up documentation cleanup (#253). Both GCC and Doom milestones depend on this migration for reliable heap behaviour.
 
 **Estimated Effort**: 11-17 days remaining (11-15 days complete)
 
