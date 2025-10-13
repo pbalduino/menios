@@ -6,11 +6,17 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
+#ifdef MENIOS_HOST_TEST
+typedef int wchar_t;
+#endif
 #include <stdatomic.h>
 #include <sys/errno.h>
 #include <sys/mman.h>
 #include <unistd.h>
+
+#ifndef MENIOS_HOST_TEST
 #include <stdio.h>
+#endif
 
 static atomic_flag allocator_lock = ATOMIC_FLAG_INIT;
 
@@ -48,7 +54,11 @@ static size_t debug_append_hex(char* buffer, size_t pos, size_t capacity, uint64
 
 static inline void allocator_lock_guard(void) {
   while(atomic_flag_test_and_set_explicit(&allocator_lock, memory_order_acquire)) {
+#ifndef MENIOS_HOST_TEST
     __asm__ __volatile__("pause");
+#else
+    __asm__ __volatile__("" ::: "memory");
+#endif
   }
 }
 
@@ -114,6 +124,12 @@ static inline long __menios_syscall3(long number, long arg1, long arg2, long arg
 #define BUDDY_MIN_ORDER     7u           /* 128 bytes */
 #define BUDDY_MAX_ORDER     27u          /* 128 MiB */
 #define BUDDY_ORDER_COUNT   (BUDDY_MAX_ORDER - BUDDY_MIN_ORDER + 1u)
+
+#ifdef MENIOS_HOST_TEST
+#define DIRECT_ALLOCATION_THRESHOLD_BYTES (16u * 1024u * 1024u)
+#else
+#define DIRECT_ALLOCATION_THRESHOLD_BYTES ((size_t)1u << BUDDY_MAX_ORDER)
+#endif
 
 #define BUDDY_FLAG_FREE     (1u << 0)
 #define BUDDY_FLAG_USED     (1u << 1)
@@ -405,17 +421,6 @@ void __menios_allocator_reset(void) {
 int __menios_allocator_grow_heap_for_test(size_t size) {
   allocator_lock_guard();
   int rc = grow_heap(size);
-#ifdef MENIOS_HOST_TEST
-  if(rc != 0) {
-    static const char prefix[] = "grow_heap failed errno=";
-    char number[32];
-    (void)itoa(errno, number, 10);
-    static const char suffix[] = "\n";
-    (void)write(STDERR_FILENO, prefix, sizeof(prefix) - 1u);
-    (void)write(STDERR_FILENO, number, strlen(number));
-    (void)write(STDERR_FILENO, suffix, sizeof(suffix) - 1u);
-  }
-#endif
   allocator_unlock_guard();
   return rc;
 }
@@ -661,8 +666,10 @@ static void buddy_release_block(block_header_t* block) {
   }
 
   if(block->buddy_flags & BUDDY_FLAG_FREE) {
+#ifndef MENIOS_HOST_TEST
     static const char msg[] = "buddy_release_block: double free detected\n";
     (void)write(STDERR_FILENO, msg, sizeof(msg) - 1u);
+#endif
     ++double_free_attempts;
 #ifdef MENIOS_HOST_TEST
     if(buddy_debug_abort_on_double_free) {
@@ -885,7 +892,7 @@ void* malloc(size_t size) {
     return NULL;
   }
 
-  if(total > buddy_block_size(BUDDY_MAX_ORDER)) {
+  if(total > DIRECT_ALLOCATION_THRESHOLD_BYTES) {
     return allocate_direct(aligned, DEFAULT_ALIGNMENT);
   }
 

@@ -47,7 +47,7 @@ With the shell shipped in v0.1.0 and Buddy Allocator FULLY COMPLETE (100%), the 
 
 2. **FAT32 Write Support** (CRITICAL PATH 📁) – Issue #189 is now the ONLY blocker for native compilation. Enables TCC/binutils to write compiled binaries to disk.
 
-3. **Doom Capabilities** – With robust memory management FULLY COMPLETE (Buddy Allocator 20/20 ✅) and threading support (#108 ✅), ready to unlock the final pieces: pthread API (#109), audio subsystem (#33), advanced IPC (#105-#107), and fast syscalls (#221).
+3. **Doom Capabilities** – With robust memory management FULLY COMPLETE (Buddy Allocator 20/20 ✅), fast syscall/sysret path live (#221 ✅), and threading support (#108 ✅), ready to unlock the final pieces: pthread API (#109), audio subsystem (#33), and advanced IPC (#105-#107).
 
 ### 🆕 **Threading Support Added**
 A complete threading roadmap has been designed with 6 new issues:
@@ -202,7 +202,8 @@ Expect the log to show the `[user_demo]` messages on screen and in `com1.log`, c
 - [ ] **IPC - Signals**: Advanced features (#214)
 - [x] **IPC - Shared Memory**: ✅ **COMPLETE!** Manager (#215) ✅, Syscalls (#216) ✅, Cleanup (#217) ✅, Tests (#218) ✅, Documentation (#219) ✅ *(see docs/design/shared_memory.md)*
 - [x] **IPC - Device Control**: ioctl (#220) ✅ **COMPLETE**
-- [ ] **IPC - Other**: Unix domain sockets (#105), Microkernel IPC (#106-#107), Fast syscalls (#221)
+- [x] **IPC - Other**: Fast syscalls (#221) ✅
+- [ ] **IPC - Other**: Unix domain sockets (#105), Microkernel IPC (#106-#107)
 - [x] **Filesystem - I/O Scheduler**: Elevator I/O scheduler (#205) ✅ COMPLETE
 - [ ] **Filesystem - Write Support**: FAT32 write support (#189)
 - [ ] **Networking**: Complete TCP/IP stack (Issues #67-#73)
@@ -226,7 +227,7 @@ Remaining major components for Doom:
 
 See [`road_to_doom.md`](docs/road/road_to_doom.md) for the complete roadmap and [`tasks.json`](tasks.json) for detailed task tracking.
 
-**📊 Progress Assessment**: With **57 issues completed across 81 total** (70.4%), meniOS is making phenomenal progress! Major recent completions include:
+**📊 Progress Assessment**: With **59 issues completed across 81 total** (72.8%), meniOS is making phenomenal progress! Major recent completions include:
 - ✅ **Shell Milestone**: 27/27 complete (100%)—v0.1.0 ships the full interactive shell experience! 🎉
 - ✅ **Toolchain Core**: 5/8 complete (62.5%)—crt0 (#192) ✅, libc (#193) ✅, ABI docs (#194) ✅, build system (#195) ✅, cross-compiler (#29) ✅
 - 🎉 **Buddy Allocator**: 20/20 complete (100%)—Core implementation ✅ (9/9), Critical security fixes ✅ (3/3), Reliability fixes ✅ (5/5), Performance optimizations ✅ (3/3)
@@ -236,7 +237,7 @@ See [`road_to_doom.md`](docs/road/road_to_doom.md) for the complete roadmap and 
 - ✅ **IPC - Pipes & FIFOs**: **COMPLETE!** All 5 issues done (#102, #206-#209) - 5/5! 🎉
 - ✅ **IPC - Signals**: Delivery path working! (#103, #210-#213) - 5/6 complete! 🎉
 - ✅ **IPC - Shared Memory**: **COMPLETE!** All 5 issues done (#215-#219) - 5/5! 🎉🎉🎉
-- ✅ **Performance**: I/O scheduler (#205) ✅
+- ✅ **Performance**: I/O scheduler (#205) ✅, Fast syscall/sysret (#221) ✅
 - ✅ **Memory**: Userspace allocator (#95) ✅
 
 **The critical path forward**: Buddy allocator is COMPLETE (100%)! 🎉 Focus now shifts to **FAT32 write support** (#189) to unblock GCC native compilation (#190, #191)!
@@ -245,7 +246,7 @@ See [`road_to_doom.md`](docs/road/road_to_doom.md) for the complete roadmap and 
 - 🎉 **Mosh** (Shell): 27/27 complete (100%) - v0.1.0 shipped!
 - 🎉 **Buddy Allocator** (Memory): 20/20 complete (100%) - Core ✅, Critical security ✅, Reliability ✅, Performance ✅ FULLY UNBLOCKS GCC & DOOM!
 - 🚀 **GCC** (Toolchain): 5/8 complete (62.5%) - core done, #190/#191 FULLY UNBLOCKED (only needs #189 FAT32 writes)!
-- 🎮 **Doom** (Full OS): 10/26 complete (38.5%) - Buddy allocator COMPLETE ✅, threading/IPC ready to start!
+- 🎮 **Doom** (Full OS): 11/26 complete (42.3%) - Buddy allocator COMPLETE ✅, fast syscalls ✅, threading/IPC ready to start!
 
 ## Architecture Overview
 
@@ -337,9 +338,9 @@ We welcome contributions from developers of all skill levels! 🚀
 - **Find Tasks**: Check [GitHub Issues](https://github.com/pbalduino/menios/issues) or browse [`tasks.json`](tasks.json) for detailed task tracking
 - **High Priority - In Progress** (2 issues active):
   - **📁 Critical Blocker**: #189 (FAT32 write support) - blocks native compilation!
-- **Ready to Start** (5 issues available):
+- **Ready to Start** (3 issues available):
   - **🚀 GCC Native Compilation** (FULLY UNBLOCKED): #190 (TCC port), #191 (binutils port) - Buddy allocator ✅ COMPLETE, only needs #189 FAT32 writes!
-  - **🧵 Threading**: #109 (pthread API), #221 (fast syscalls - 3-5x speedup!)
+  - **🧵 Threading**: #109 (pthread API - no dependencies!)
 - **Milestone Status**: Buddy Allocator COMPLETE (20/20) ✅ 🎉 - Core (9/9) ✅, Critical security (3/3) ✅, Reliability (5/5) ✅, Performance (3/3) ✅
 - **Report Issues**: Use our issue templates to report bugs or request features
 - **Security Issues**: Please review our [Security Policy](SECURITY.md) for responsible disclosure

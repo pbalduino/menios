@@ -177,7 +177,7 @@ This document tracks the three major milestones for meniOS development.
 **Goal**: Run Doom (1993) in userland on meniOS
 **GitHub Milestone**: [Doom](https://github.com/pbalduino/menios/milestone/3)
 
-**Status**: 10/26 complete (38.5%)
+**Status**: 11/26 complete (42.3%)
 
 **Note**: Depends on **Buddy Allocator milestone** for efficient memory management under game engine load.
 
@@ -225,7 +225,7 @@ This document tracks the three major milestones for meniOS development.
 - [ ] #106 - Microkernel message passing IPC
 - [ ] #107 - Capability-based security
 - [x] #220 - ioctl syscall ✅
-- [ ] #221 - Fast syscall instruction (ready now!)
+- [x] #221 - Fast syscall instruction ✅ fast syscall/sysret path live
 
 **Dependencies**:
 - #110 requires #109
@@ -271,9 +271,9 @@ This document tracks the three major milestones for meniOS development.
 ## 📈 Overall Progress
 
 - **Total Issues Across Milestones**: 81 issues (was 70)
-- **Completed**: 57 issues (70.4%)
-- **In Progress**: 24 issues
-- **Ready to Start**: 5 issues (no dependencies: #109, #221, #190, #191; unblocked by Buddy core implementation)
+- **Completed**: 59 issues (72.8%)
+- **In Progress**: 22 issues
+- **Ready to Start**: 3 issues (no dependencies: #109, #190, #191)
 - **Next Up**: Buddy Allocator COMPLETE! 🎉 Focus now shifts to FAT32 write support (#189) to unlock TCC/binutils ports (#190, #191)
 
 ## 🚀 Immediate Next Steps
@@ -295,7 +295,6 @@ All phases finished! Core buddy allocator implementation (Phase 1 ✅), critical
 
 2. **Doom Milestone** (Independent work available):
    - #109 - pthread API (no dependencies)
-   - #221 - Fast syscall instruction (no dependencies)
 
 3. **Critical Blocker**:
    - #189 - FAT32 write support (blocks #190, #191 for native compilation)
@@ -336,6 +335,7 @@ Recommended completion order for maximum impact:
 - **2025-10-11**: Closed #197 (tab completion) ✅
 - **2025-10-11**: Closed #199 (Ctrl+R reverse search) ✅
 - **2025-10-11**: Closed #213 (Shell Ctrl+C integration) ✅
+- **2025-10-12**: Closed #221 (fast syscall/sysret path) ✅
 - **2025-10-11**: Closed #161 (Basic REPL and command parsing) ✅
 - **2025-10-11**: Closed #164 (Basic I/O redirection) ✅
 - **2025-10-11**: Closed #187 (/bin/ps and /bin/kill utilities) ✅

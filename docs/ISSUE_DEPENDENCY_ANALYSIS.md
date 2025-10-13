@@ -385,16 +385,16 @@ These issues form the backbone of the system and should be prioritized:
 - **Device Control (COMPLETE!)**: #220 (ioctl syscall)
 - **Performance**: #205 (I/O scheduler)
 
-### 🔥 **Ready to Implement** (9 issues - no dependencies!):
+### 🔥 **Ready to Implement** (8 issues - no dependencies!):
 - **#194** - Syscall ABI docs (critical path)
 - **#195** - Userland build system (dependencies met: #192✅, #193✅)
 - **#188** - env utility ✅ (built-in /bin/env ships with default env dump)
 - ✅ **#197** - Tab completion delivered using filesystem scanning
 - **#213** - Shell Ctrl+C ✅ (dependencies met: #210✅, #211✅, #212✅)
-- **#221** - Fast syscall instruction
+- ~~**#221** - Fast syscall instruction~~ ✅ shipped (syscall/sysret path live)
 
 ### 📋 **Total Open Issues**: ~69 issues (estimated)
-- **IPC**: 3 remaining (#105-#107, #214, #221)
+- **IPC**: 2 remaining (#105-#107, #214)
   - Pipes: ✅ COMPLETE! (#102 + #206-#209 = 5/5) 🎉
   - Signals: 1 remaining (#214) - 5/6 complete! (#103, #210-#213) ✅✅✅✅✅ - Ctrl+C working!
   - Shared Memory: ✅ COMPLETE! (5/5) 🎉🎉🎉
@@ -402,7 +402,7 @@ These issues form the backbone of the system and should be prioritized:
   - Microkernel IPC: 1 (#106)
   - Capability security: 1 (#107)
   - ioctl: ✅ COMPLETE! (1/1) 🎉
-  - Fast syscalls: 1 (#221)
+  - Fast syscalls: ✅ delivered (#221)
 - **Shell & utilities**: 0 remaining in this bucket (ps/kill complete)
 - **Shell UX**: 1 (#201) - history (#156) ✅, Ctrl+A/E (#198) ✅, Ctrl+L (#200) ✅, Ctrl+R (#199) ✅, pwd prompt (#222) ✅, tab completion (#197) ✅
 - **Toolchain**: 4 remaining (#29, #194-#196) - 2/8 complete! ✅✅ (GCC milestone)

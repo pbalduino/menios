@@ -3590,6 +3590,12 @@ static bool line_attempt_completion(line_state_t* state) {
 static int read_stdin_char(void) {
   char ch = 0;
   long rc = read(STDIN_FILENO, &ch, 1);
+#ifdef MENIOS_HOST_TEST
+  if(rc <= 0) {
+    return -1;
+  }
+  return (unsigned char)ch;
+#else
   if(rc <= 0) {
     fprintf(stderr, "mosh: read rc=%ld errno=%d\n", rc, errno);
     return -1;
@@ -3597,6 +3603,7 @@ static int read_stdin_char(void) {
   fprintf(stderr, "mosh: read char=0x%02x (%c)\n", (unsigned char)ch,
           (ch >= 32 && ch < 127) ? ch : '.');
   return (unsigned char)ch;
+#endif
 }
 
 static char history_entries[MOSH_HISTORY_LIMIT][MOSH_MAX_LINE_LENGTH];

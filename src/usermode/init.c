@@ -1,5 +1,6 @@
 #include <stddef.h>
 #include <stdint.h>
+#include <menios/syscall_user.h>
 
 #define SYS_WRITE   1
 #define SYS_OPEN    2
@@ -27,32 +28,6 @@ static char* shell_envp[] = { env_path, env_home, env_pwd, NULL };
 static char tty_path_console[] = "/dev/tty0";
 static char tty_path_serial[] = "/dev/ttyS0";
 
-static inline long syscall0(long number) {
-  long ret;
-  asm volatile("int $0x80" : "=a"(ret) : "a"(number) : "rcx", "r11", "memory");
-  return ret;
-}
-
-static inline long syscall1(long number, long arg1) {
-  long ret;
-  asm volatile("int $0x80" : "=a"(ret) : "a"(number), "D"(arg1) : "rcx", "r11", "memory");
-  return ret;
-}
-
-static inline long syscall2(long number, long arg1, long arg2) {
-  long ret;
-  asm volatile("int $0x80" : "=a"(ret) : "a"(number), "D"(arg1), "S"(arg2) : "rcx", "r11", "memory");
-  return ret;
-}
-
-static inline long syscall3(long number, long arg1, long arg2, long arg3) {
-  long ret;
-  asm volatile("int $0x80" : "=a"(ret)
-               : "a"(number), "D"(arg1), "S"(arg2), "d"(arg3)
-               : "rcx", "r11", "memory");
-  return ret;
-}
-
 static size_t str_len(const char* s) {
   size_t len = 0;
   while(s[len] != '\0') {
@@ -65,7 +40,7 @@ static void write_str(int fd, const char* text) {
   if(text == NULL) {
     return;
   }
-  syscall3(SYS_WRITE, fd, (long)text, (long)str_len(text));
+  __menios_syscall3(SYS_WRITE, fd, (long)text, (long)str_len(text));
 }
 
 static void write_log(const char* text) {
@@ -103,11 +78,11 @@ static void write_log_num(const char* prefix, long value) {
 }
 
 static void sleep_us(uint64_t usec) {
-  syscall2(SYS_SLEEP, (long)usec, 0);
+  __menios_syscall2(SYS_SLEEP, (long)usec, 0);
 }
 
 static void bind_stdio(void) {
-  long fd = syscall3(SYS_OPEN, (long)tty_path_console, O_RDWR, 0);
+  long fd = __menios_syscall3(SYS_OPEN, (long)tty_path_console, O_RDWR, 0);
   if(fd < 0) {
     write_str(STDERR_FILENO, "[init] failed to open /dev/tty0\n");
     write_log_num("[init] tty0 open rc=", fd);
@@ -119,7 +94,7 @@ static void bind_stdio(void) {
     if(fd == target) {
       continue;
     }
-    long rc = syscall2(SYS_DUP2, fd, target);
+    long rc = __menios_syscall2(SYS_DUP2, fd, target);
     if(rc < 0) {
       write_str(STDERR_FILENO, "[init] dup2 failed\n");
       write_log_num("[init] dup2 failed target=", target);
@@ -129,14 +104,14 @@ static void bind_stdio(void) {
   }
 
   if(fd > STDERR_FILENO) {
-    syscall1(SYS_CLOSE, fd);
+    __menios_syscall1(SYS_CLOSE, fd);
   }
   write_log("[init] tty0 dup complete\n");
 
-  long serial_fd = syscall3(SYS_OPEN, (long)tty_path_serial, O_WRONLY, 0);
+  long serial_fd = __menios_syscall3(SYS_OPEN, (long)tty_path_serial, O_WRONLY, 0);
   if(serial_fd >= 0) {
     write_log("[init] opened /dev/ttyS0\n");
-    long rc = syscall2(SYS_DUP2, serial_fd, STDERR_FILENO);
+    long rc = __menios_syscall2(SYS_DUP2, serial_fd, STDERR_FILENO);
     if(rc < 0) {
       write_str(STDERR_FILENO, "[init] dup2 serial failed\n");
       write_log_num("[init] dup2 serial rc=", rc);
@@ -144,7 +119,7 @@ static void bind_stdio(void) {
     write_str(STDERR_FILENO, "[init] stderr -> /dev/ttyS0\n");
     write_log("[init] stderr duplicated to serial\n");
     if(serial_fd > STDERR_FILENO) {
-      syscall1(SYS_CLOSE, serial_fd);
+      __menios_syscall1(SYS_CLOSE, serial_fd);
     }
   } else {
     write_str(STDERR_FILENO, "[init] failed to open /dev/ttyS0\n");
@@ -158,7 +133,7 @@ static long exec_program(char* path) {
   write_log("[init] exec_program called\n");
   write_log(path);
   write_log("\n");
-  return syscall3(SYS_EXECVE, (long)path, (long)argv, (long)shell_envp);
+  return __menios_syscall3(SYS_EXECVE, (long)path, (long)argv, (long)shell_envp);
 }
 
 static void run_shell(void) {
@@ -179,7 +154,7 @@ static void run_shell(void) {
     if(rc < 0) {
       write_str(STDERR_FILENO, "[init] execve(/bin/user_demo) failed\n");
       write_log("[init] fallback exec failed\n");
-      syscall1(SYS_EXIT, 1);
+      __menios_syscall1(SYS_EXIT, 1);
     }
   }
   write_log("[init] run_shell completed\n");
@@ -194,11 +169,11 @@ void _start(void) {
   write_log("[init] TEMP_DISABLE_SUPERVISION active\n");
   run_shell();
   write_log("[init] shell exited (TEMP_DISABLE_SUPERVISION)\n");
-  syscall1(SYS_EXIT, 0);
+  __menios_syscall1(SYS_EXIT, 0);
 #else
   for(;;) {
     write_log("[init] calling fork\n");
-    long pid = syscall0(SYS_FORK);
+    long pid = __menios_syscall0(SYS_FORK);
     write_log_num("[init] fork rc=", pid);
     if(pid == 0) {
       write_str(STDERR_FILENO, "[init] child fork branch\n");
@@ -206,7 +181,7 @@ void _start(void) {
       run_shell();
       write_str(STDERR_FILENO, "[init] child after run_shell\n");
       write_log("[init] child after run_shell\n");
-      syscall1(SYS_EXIT, 1);
+      __menios_syscall1(SYS_EXIT, 1);
     }
 
     if(pid < 0) {
@@ -220,7 +195,7 @@ void _start(void) {
     write_log("[init] parent fork branch\n");
 
     int status = 0;
-    long rc = syscall3(SYS_WAITPID, pid, (long)&status, 0);
+    long rc = __menios_syscall3(SYS_WAITPID, pid, (long)&status, 0);
     write_log_num("[init] waitpid rc=", rc);
     write_log_num("[init] waitpid status=", status);
     if(rc < 0) {

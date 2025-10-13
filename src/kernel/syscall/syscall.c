@@ -9,6 +9,7 @@
 #include <kernel/shm.h>
 #include <kernel/signal.h>
 #include <kernel/syscall.h>
+#include <kernel/syscall_entry.h>
 #include <kernel/vfs.h>
 #include <kernel/vm.h>
 #include <sys/fcntl.h>
@@ -384,6 +385,8 @@ static void syscall_register(uint64_t number, syscall_handler_t handler) {
 }
 
 void syscall_init(void) {
+  syscall_arch_init();
+
   for(size_t i = 0; i < SYSCALL_MAX; i++) {
     syscall_table[i] = syscall_stub_unimplemented;
   }
@@ -421,22 +424,35 @@ void syscall_init(void) {
   syscall_register(SYS_GETCWD, syscall_getcwd_handler);
   syscall_register(SYS_GETPAGESIZE, syscall_getpagesize_handler);
 
-  serial_printf("syscall_init: initialized dispatcher (INT 0x80)\n");
+  serial_printf("syscall_init: dispatcher ready (syscall/sysret)\n");
 }
 
 uint64_t syscall_dispatch(syscall_frame_t* frame) {
   uint64_t number = frame->rax;
+
+  serial_printf("syscall_dispatch: pid=%u number=%lu rip=%lx cs=%lx rsp=%lx\n",
+                current ? current->pid : 0u,
+                number,
+                (unsigned long)frame->rip,
+                (unsigned long)frame->cs,
+                (unsigned long)frame->rsp);
 
   if(number < SYSCALL_MAX) {
     syscall_handler_t handler = syscall_table[number];
     if(handler) {
       uint64_t result = handler(frame);
       frame->rax = result;
+      serial_printf("syscall_dispatch: post-handler rip=%lx cs=%lx rsp=%lx\n",
+                    (unsigned long)frame->rip,
+                    (unsigned long)frame->cs,
+                    (unsigned long)frame->rsp);
       return syscall_finalize(frame);
     }
   }
 
   frame->rax = (uint64_t)(-ENOSYS);
+  serial_printf("syscall_dispatch: unknown syscall rip=%lx\n",
+                (unsigned long)frame->rip);
   return syscall_finalize(frame);
 }
 

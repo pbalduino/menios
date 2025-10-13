@@ -48,5 +48,6 @@ extern void gdt_load(gdt_pointer_t* gdt_descriptor);
 void gdt_init();
 void gdt_set_entry(int index, uint64_t base, uint32_t limit, uint8_t access, uint8_t granularity);
 void tss_update_kernel_stack(uint64_t stack_top);
+uint64_t gdt_get_tss_stack_top(void);
 
 #endif

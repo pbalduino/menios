@@ -1,5 +1,6 @@
 #ifndef MENIOS_KERNEL
 #include <menios/syscall.h>
+#include <menios/syscall_user.h>
 #include <stdarg.h>
 #include <stddef.h>
 #include <stdint.h>
@@ -15,23 +16,15 @@ int open(const char* path, int oflag, ...) {
     va_end(ap);
   }
 
-  register uint64_t rax asm("rax") = SYS_OPEN;
-  register const char* rdi asm("rdi") = path;
-  register int rsi asm("rsi") = oflag;
-  register int rdx asm("rdx") = mode;
+  long rc = __menios_syscall3(SYS_OPEN, (long)path, (long)oflag, (long)mode);
 
-  asm volatile("int $0x80"
-               : "+a"(rax)
-               : "D"(rdi), "S"(rsi), "d"(rdx)
-               : "rcx", "r11", "memory");
-
-  if((int64_t)rax < 0) {
-    errno = (int)(-((int64_t)rax));
+  if(rc < 0) {
+    errno = (int)(-rc);
     return -1;
   }
 
   errno = 0;
-  return (int)rax;
+  return (int)rc;
 }
 
 int fcntl(int fd, int cmd, ...) {
@@ -43,23 +36,18 @@ int fcntl(int fd, int cmd, ...) {
     va_end(ap);
   }
 
-  register uint64_t rax asm("rax") = SYS_FCNTL;
-  register uint64_t rdi asm("rdi") = (uint64_t)fd;
-  register uint64_t rsi asm("rsi") = (uint64_t)cmd;
-  register uint64_t rdx asm("rdx") = arg;
+  long rc = __menios_syscall3(SYS_FCNTL,
+                              (long)fd,
+                              (long)cmd,
+                              (long)arg);
 
-  asm volatile("int $0x80"
-               : "+a"(rax)
-               : "D"(rdi), "S"(rsi), "d"(rdx)
-               : "rcx", "r11", "memory");
-
-  if((int64_t)rax < 0) {
-    errno = (int)(-((int64_t)rax));
+  if(rc < 0) {
+    errno = (int)(-rc);
     return -1;
   }
 
   errno = 0;
-  return (int)rax;
+  return (int)rc;
 }
 
 #endif

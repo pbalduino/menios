@@ -7,11 +7,14 @@ stable specification.
 
 ## Entry mechanism
 
-- **Trap instruction**: user mode issues `int $0x80`.  The IDT entry for vector
-  0x80 transitions to ring 0 and builds a `syscall_frame_t` (see
-  `include/kernel/syscall.h`).  The faster `syscall` instruction is not yet in
-  use (tracked by issue #221).
-- **CPU mode**: long mode (x86-64).  All arguments and return values are 64-bit.
+- **Fast path**: user mode executes the `syscall` instruction. The MSR-programmed
+  entry stub (`src/kernel/lidt.s:sym=syscall_entry`) switches to the per-CPU
+  kernel stack, materialises a `syscall_frame_t`, and tail-calls
+  `syscall_dispatch`.
+- **Compatibility**: the legacy `int $0x80` gate remains in the IDT for
+  debugging, but production binaries should use the wrappers in
+  `include/menios/syscall_user.h` which emit `syscall` directly.
+- **CPU mode**: long mode (x86-64). All arguments and return values are 64-bit.
 
 ### Register usage
 
@@ -24,7 +27,7 @@ stable specification.
 | `r10`    | Argument 3 | Preserved. |
 | `r8`     | Argument 4 | Preserved. |
 | `r9`     | Argument 5 | Preserved. |
-| `rcx`, `r11` | Undefined after return (`int $0x80` clobbers them). |
+| `rcx`, `r11` | Used internally by `syscall`; always destroyed. |
 | Stack pointer | Must remain 16-byte aligned.  The kernel neither adjusts nor validates the user stack. |
 
 The inline helpers in `include/menios/syscall_user.h` already follow this
@@ -160,9 +163,9 @@ promise.  Below is a summary of the calls that ship in meniOS v0.1.0.
 ### IPC status
 
 Beyond shared memory the kernel does not yet expose sockets, message queues, or
-other IPC surfaces.  Future milestones (see issues #105–#107 and #221) will
-extend the ABI; for now userland should rely on pipes, signals, shared memory,
-and the supervision helpers documented above.
+other IPC surfaces.  Future milestones (issues #105–#107) will extend the ABI;
+for now userland should rely on pipes, signals, shared memory, and the
+supervision helpers documented above.
 
 ## Example: making a six-argument call
 
@@ -178,7 +181,7 @@ void *anon_page(void) {
   register long r8  asm("r8")  = -1;                    // fd (ignored)
   register long r9  asm("r9")  = 0;                     // offset
 
-  asm volatile("int $0x80"
+  asm volatile("syscall"
                : "+a"(rax)
                : "D"(rdi), "S"(rsi), "d"(rdx), "r"(r10), "r"(r8), "r"(r9)
                : "rcx", "r11", "memory");

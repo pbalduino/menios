@@ -5,6 +5,7 @@
 #include <kernel/pmm.h>
 #include <kernel/proc.h>
 #include <kernel/serial.h>
+#include <kernel/syscall_entry.h>
 #include <kernel/thread.h>
 #include <kernel/tsc.h>
 #include <kernel/timer.h>
@@ -490,6 +491,7 @@ void proc_switch(void* arg) {
   uint64_t kernel_stack = proc_kernel_stack_top(current);
   if(kernel_stack != 0) {
     tss_update_kernel_stack(kernel_stack);
+    syscall_set_kernel_stack(kernel_stack);
   }
 }
 
@@ -1688,6 +1690,7 @@ void scheduler_init() {
   uint64_t kernel_stack = proc_kernel_stack_top(current);
   if(kernel_stack != 0) {
     tss_update_kernel_stack(kernel_stack);
+    syscall_set_kernel_stack(kernel_stack);
   }
   register_timer_callback(proc_switch);
   printf(".OK\n");
