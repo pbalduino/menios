@@ -294,15 +294,14 @@ syscall_entry:
   swapgs
 
   mov [gs:SYSCALL_CONTEXT_USER_RSP], rsp
+  mov [gs:SYSCALL_CONTEXT_USER_RIP], rcx
+  mov [gs:SYSCALL_CONTEXT_USER_RFLAGS], r11
   mov rsp, [gs:SYSCALL_CONTEXT_KERNEL_RSP]
   test rsp, rsp
   jnz .syscall_stack_ready
   hlt
 .syscall_stack_ready:
   and rsp, 0xfffffffffffffff0
-
-  mov [gs:SYSCALL_CONTEXT_USER_RIP], rcx
-  mov [gs:SYSCALL_CONTEXT_USER_RFLAGS], r11
 
   push qword USER_DATA_SELECTOR
   push qword [gs:SYSCALL_CONTEXT_USER_RSP]
@@ -326,16 +325,6 @@ syscall_entry:
   push r14
   push r15
 
-  mov qword [rsp + SYSCALL_FRAME_R11], 0
-  mov qword [rsp + SYSCALL_FRAME_RCX], 0
-
-  mov rax, [rsp + SYSCALL_FRAME_RIP]
-  mov [gs:SYSCALL_CONTEXT_USER_RIP], rax
-  mov rax, [rsp + SYSCALL_FRAME_RFLAGS]
-  mov [gs:SYSCALL_CONTEXT_USER_RFLAGS], rax
-  mov rax, [rsp + SYSCALL_FRAME_RSP]
-  mov [gs:SYSCALL_CONTEXT_USER_RSP], rax
-
   mov rdi, rsp
   call syscall_dispatch
 
@@ -355,11 +344,5 @@ syscall_entry:
   pop rbx
   pop rax
 
-  add rsp, 5 * 8
-
-  mov rcx, [gs:SYSCALL_CONTEXT_USER_RIP]
-  mov r11, [gs:SYSCALL_CONTEXT_USER_RFLAGS]
-  mov rsp, [gs:SYSCALL_CONTEXT_USER_RSP]
-
   swapgs
-  sysretq
+  iretq
