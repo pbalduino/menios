@@ -97,9 +97,11 @@ This document tracks the three major milestones for meniOS development.
 **Goal**: Migrate userland allocator from first-fit to buddy allocator system
 **GitHub Milestone**: [Buddy Allocator](https://github.com/pbalduino/menios/milestone/4)
 
-**Status**: 9/9 complete (100%) 🎉
+**Status**: 12/20 complete (60.0%)
 
 **Assigned Issues**:
+
+#### Core Implementation (9 issues) ✅ COMPLETE
 - [x] #245 - Survey Current Heap Implementation ✅
 - [x] #246 - Define Buddy Allocator Orders and Configuration ✅
 - [x] #247 - Rewrite Arena Setup for Buddy Allocator ✅
@@ -109,6 +111,23 @@ This document tracks the three major milestones for meniOS development.
 - [x] #251 - Update Direct mmap Path for Large Allocations ✅
 - [x] #252 - Add Buddy Allocator Diagnostics and Tests ✅
 - [x] #253 - Cleanup and Document Buddy Allocator Migration ✅
+
+#### Critical Fixes (3 issues) ✅ COMPLETE
+- [x] #263 - Kernel heap: stale virtual mappings after region release ✅
+- [x] #264 - Kernel heap: partial mapping rollback missing ✅
+- [x] #265 - User buddy allocator: thread safety ✅
+
+#### High Priority Fixes (5 issues)
+- [ ] #266 - Buddy allocator: improve double-free detection and diagnostics
+- [ ] #267 - Buddy allocator: missing NULL check in grow_heap
+- [ ] #268 - Buddy allocator: direct mmap alignment calculation error
+- [ ] #273 - Buddy allocator: use-after-free risk in buddy_coalesce_block
+- [ ] #272 - Kernel heap: virtual address exhaustion
+
+#### Performance Improvements (3 issues)
+- [ ] #269 - Buddy allocator: O(A×O) linear search across arenas
+- [ ] #270 - Kernel heap: O(n²) coalescing in kfree
+- [ ] #271 - Buddy allocator: freelist linear search during coalescing
 
 **Critical Path**: #245 → #246 → #247 → #248 → #249 → #250/#251 → #252 → #253 ✅
 
@@ -251,23 +270,35 @@ This document tracks the three major milestones for meniOS development.
 
 ## 📈 Overall Progress
 
-- **Total Issues Across Milestones**: 70 issues
-- **Completed**: 51 issues (72.9%)
-- **In Progress**: 19 issues
-- **Ready to Start**: 5 issues (no dependencies: #109, #221, #190, #191; unblocked by Buddy completion)
-- **Next Up**: TCC/binutils ports (#190, #191) - Buddy Allocator complete, ready for native compilation!
+- **Total Issues Across Milestones**: 81 issues (was 70)
+- **Completed**: 51 issues (63.0%)
+- **In Progress**: 30 issues
+- **Ready to Start**: 5 issues (no dependencies: #109, #221, #190, #191; unblocked by Buddy core implementation)
+- **Next Up**: Complete Buddy Allocator reliability fixes (#266-#268, #272-#273), then TCC/binutils ports (#190, #191)
 
 ## 🚀 Immediate Next Steps
 
-### 🎉 Buddy Allocator Milestone Complete!
-The Buddy Allocator milestone is now 100% complete, unblocking both GCC and Doom milestones!
+### 🎯 Buddy Allocator: Reliability Phase
+Core buddy allocator implementation complete (Phase 1 ✅) and critical security issues resolved (Phase 2 ✅). Now focusing on:
+
+**Phase 3 - Reliability Fixes (High Priority)**:
+- #267 - Missing NULL check in grow_heap (dangling arena pointer)
+- #268 - Direct mmap alignment calculation error (large alignments)
+- #273 - Use-after-free risk in buddy_coalesce_block
+- #272 - Kernel heap virtual address exhaustion
+- #266 - Double-free detection improvements
+
+**Phase 4 - Performance Optimizations**:
+- #269 - O(A×O) arena linear search optimization
+- #270 - Kernel O(n²) coalescing fix (doubly-linked lists)
+- #271 - Freelist linear search optimization (bitmap/hash table)
 
 ### Ready to Start Now (Dependencies Met):
-1. **GCC Milestone** (UNBLOCKED! 🚀):
-   - #190 - TCC port (Buddy Allocator ✅, needs #189 FAT32 writes)
-   - #191 - binutils port (Buddy Allocator ✅, needs #189 FAT32 writes)
+1. **GCC Milestone** (Partial unblock 🚀):
+   - #190 - TCC port (Buddy core ✅, needs #189 FAT32 writes + reliability fixes)
+   - #191 - binutils port (Buddy core ✅, needs #189 FAT32 writes + reliability fixes)
 
-2. **Doom Milestone** (Partial unblock):
+2. **Doom Milestone** (Independent work available):
    - #109 - pthread API (no dependencies)
    - #221 - Fast syscall instruction (no dependencies)
 
@@ -278,23 +309,23 @@ The Buddy Allocator milestone is now 100% complete, unblocking both GCC and Doom
 
 ### Parallel Development
 Many issues can be worked on in parallel:
-- **Buddy Allocator**: ✅ COMPLETE! (100%)
-- **GCC**: Unblocked! #190/#191 can start now (blocked only by #189 FAT32 writes)
+- **Buddy Allocator**: Core ✅ COMPLETE (60%), Reliability phase in progress
+- **GCC**: Partially unblocked - #190/#191 can start with caution (needs #189 + stability fixes)
 - **Doom Threading**: #109, #112, #113 are independent (can start now!)
 - **Doom IPC**: Different IPC mechanisms can progress in parallel
 - **Mosh UX**: All features complete! ✅
 
 ### Critical Dependencies
-- **Buddy Allocator milestone** ✅ COMPLETE - Foundation now ready for both GCC and Doom!
-- **GCC milestone** - Buddy dependency met ✅, now blocked only by #189 (FAT32 writes)
-- **Doom milestone** - Buddy dependency met ✅, can leverage efficient heap for game engine
+- **Buddy Allocator milestone** - Core implementation ✅, reliability fixes in progress (60% complete)
+- **GCC milestone** - Core dependency met ✅, full production readiness needs Phases 3-4 + #189
+- **Doom milestone** - Can leverage buddy allocator for development, production needs reliability fixes
 - **Mosh milestone** ✅ COMPLETE - Development environment ready!
 
 ### Completion Order
 Recommended completion order for maximum impact:
 1. **Mosh** ✅ COMPLETE (100%) - Development environment ready! 🎉
-2. **Buddy Allocator** ✅ COMPLETE (100%) - Foundation for complex apps ready! 🎉
-3. **GCC** - Enables native development (62.5% complete, unblocked! Only needs #189) 🚀
+2. **Buddy Allocator** - IN PROGRESS (60%) - Core done ✅, reliability & performance remaining
+3. **GCC** - Enables native development (62.5% complete, waiting on Buddy reliability + #189)
 4. **Doom** - Demonstrates full OS capabilities (38.5% complete, threading/IPC ready to start)
 
 ### Recent Changes
@@ -360,9 +391,17 @@ Recommended completion order for maximum impact:
   - Handles large allocations and unusual alignments (posix_memalign, memalign, valloc, pvalloc)
 - **2025-10-14**: Closed #252 (Buddy Allocator Diagnostics and Tests) ✅ - Buddy Allocator milestone 88.9% complete!
   - Added `menios_malloc_stats()` and comprehensive regression tests
-- **2025-10-14**: Closed #253 (Cleanup and Documentation) ✅ - Buddy Allocator milestone 100% COMPLETE! 🎉
+- **2025-10-14**: Closed #253 (Cleanup and Documentation) ✅ - Buddy Allocator Phase 1 complete!
   - Legacy first-fit code removed, buddy design fully documented
-  - **MILESTONE ACHIEVEMENT**: Buddy Allocator complete! Unblocks GCC (#190, #191) and Doom milestones!
+  - Core implementation finished, moving to reliability and performance phases
+- **2025-10-14**: Completed memory allocation analysis - identified 23 issues across security, performance, and design
+  - Created `docs/memory_issues.md` with comprehensive analysis
+  - Closed #263 (kernel stale mappings) ✅, #264 (partial rollback) ✅, #265 (thread safety) ✅
+- **2025-10-14**: Created 8 new Buddy Allocator issues (#266-#273) for reliability and performance
+  - High priority: #266 (double-free detection), #267 (NULL check), #268 (alignment), #273 (use-after-free), #272 (VA exhaustion)
+  - Performance: #269 (arena search), #270 (kernel coalescing), #271 (freelist search)
+  - Buddy Allocator milestone expanded to 20 issues (was 9), now 60% complete
+  - Total project issues: 81 (was 70)
 
 ---
 

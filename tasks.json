@@ -41,6 +41,19 @@
     "assignees": []
   },
   {
+    "title": "Missing NULL check in grow_heap",
+    "github_issue": {
+      "number": 267,
+      "url": "https://github.com/pbalduino/menios/issues/267",
+      "state": "CLOSED"
+    },
+    "labels": [
+      "enhancement",
+      "closed"
+    ],
+    "assignees": []
+  },
+  {
     "title": "Improve user-mode page fault handling - kill process instead of halting OS",
     "github_issue": {
       "number": 262,

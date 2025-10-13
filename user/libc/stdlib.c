@@ -605,6 +605,17 @@ static int grow_heap(size_t size) {
 
   block_header_t* root = buddy_materialize_block(arena, 0u, BUDDY_MAX_ORDER);
   if(root == NULL) {
+    if(arena_list_head == arena) {
+      arena_list_head = arena->next;
+      if(arena_list_head != NULL) {
+        arena_list_head->prev = NULL;
+      }
+    } else if(arena->prev != NULL) {
+      arena->prev->next = arena->next;
+      if(arena->next != NULL) {
+        arena->next->prev = arena->prev;
+      }
+    }
     munmap(mapping, mapping_size);
     errno = ENOMEM;
     return -1;

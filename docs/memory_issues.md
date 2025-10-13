@@ -161,7 +161,7 @@ assert((uintptr_t)header + sizeof(block_header_t) + padded <= (uintptr_t)mapping
 
 ---
 
-### 6. **Kernel Heap: Magic Number Check Bypassed** (Security: Medium) — [Issue #271](https://github.com/pbalduino/menios/issues/271)
+### 6. **Kernel Heap: Magic Number Check Bypassed** (Security: Medium)
 **Location**: `kmalloc.c:640-643`
 ```c
 if(node->magic != HEAP_MAGIC) {
@@ -249,7 +249,7 @@ for(int attempt = 0; attempt < 2; ++attempt) {
 
 ---
 
-### 8. **Kernel Heap: O(n²) Coalescing on Free** (Performance: High)
+### 8. **Kernel Heap: O(n²) Coalescing on Free** (Performance: High) — [Issue #270](https://github.com/pbalduino/menios/issues/270)
 **Location**: `kmalloc.c:655, 668`
 ```c
 heap_node_p prev = heap_find_previous(node);  // O(n) scan
@@ -287,7 +287,7 @@ typedef struct heap_node_t {
 
 ---
 
-### 9. **Buddy Allocator: Freelist Linear Search for Coalescing** (Performance: Medium)
+### 9. **Buddy Allocator: Freelist Linear Search for Coalescing** (Performance: Medium) — [Issue #271](https://github.com/pbalduino/menios/issues/271)
 **Location**: `stdlib.c:218-223`
 ```c
 for(block_header_t* node = arena->buddy_freelists[index]; node != NULL; node = node->buddy_next) {
@@ -806,7 +806,7 @@ for(size_t page = 0; page < page_count; page++) {
 
 ---
 
-### 22. **Kernel Heap: Monotonic Virtual Address Consumption** (Resource: High)
+### 22. **Kernel Heap: Monotonic Virtual Address Consumption** (Resource: High) — [Issue #272](https://github.com/pbalduino/menios/issues/272)
 **Location**: `kmalloc.c:42-71`
 **Problem**: `heap_next_vaddr` only increases; released regions never return their virtual span. A workload that repeatedly allocates, frees, and then grows the heap will eventually exhaust the 64 MiB heap window even though plenty of RAM is available.
 
@@ -833,15 +833,15 @@ for(size_t page = 0; page < page_count; page++) {
 
 | # | Issue | Severity | Type | Fix Effort | Status |
 |---|-------|----------|------|------------|--------|
-| 1 | Double-free silent failure | High | Security | Low | 🔴 OPEN |
-| 2 | Use-after-free in coalesce | Critical | Security | Low | 🔴 OPEN |
-| 3 | Missing NULL check in grow_heap | High | Reliability | Low | 🔴 OPEN |
+| 1 | Double-free silent failure | High | Security | Low | [#266](https://github.com/pbalduino/menios/issues/266) |
+| 2 | Use-after-free in coalesce | Critical | Security | Low | [#273](https://github.com/pbalduino/menios/issues/273) |
+| 3 | Missing NULL check in grow_heap | High | Reliability | Low | ✅ CLOSED ([#267](https://github.com/pbalduino/menios/issues/267)) |
 | 4 | Integer overflow in buddy_order_size | Medium | Security | Low | 🔴 OPEN |
-| 5 | Direct mmap alignment calculation | High | Correctness | Medium | 🔴 OPEN |
+| 5 | Direct mmap alignment calculation | High | Correctness | Medium | [#268](https://github.com/pbalduino/menios/issues/268) |
 | 6 | Kernel heap magic bypass | Medium | Security | Low | 🔴 OPEN |
-| 7 | Buddy linear search across arenas | Medium | Performance | High | 🔴 OPEN |
-| 8 | Kernel O(n²) coalescing | High | Performance | Medium | 🔴 OPEN |
-| 9 | Buddy freelist linear search | Medium | Performance | High | 🔴 OPEN |
+| 7 | Buddy linear search across arenas | Medium | Performance | High | [#269](https://github.com/pbalduino/menios/issues/269) |
+| 8 | Kernel O(n²) coalescing | High | Performance | Medium | [#270](https://github.com/pbalduino/menios/issues/270) |
+| 9 | Buddy freelist linear search | Medium | Performance | High | [#271](https://github.com/pbalduino/menios/issues/271) |
 | 10 | Unbounded arena growth | High | Resource | Low | 🔴 OPEN |
 | 11 | Fixed region descriptor pool | Medium | Scalability | Low | 🔴 OPEN |
 | 12 | No per-process memory limit | Low | Security | High | 🔴 OPEN |
@@ -854,7 +854,7 @@ for(size_t page = 0; page < page_count; page++) {
 | 19 | No allocation profiling | Low | Debuggability | Medium | 🔴 OPEN |
 | 20 | Kernel heap leaves stale mappings on region release | Critical | Security | Medium | ✅ CLOSED ([#263](https://github.com/pbalduino/menios/issues/263)) |
 | 21 | Kernel heap partial map rollback missing | High | Reliability | Medium | ✅ CLOSED ([#264](https://github.com/pbalduino/menios/issues/264)) |
-| 22 | Kernel heap virtual address exhaustion | High | Resource | Medium | 🔴 OPEN |
+| 22 | Kernel heap virtual address exhaustion | High | Resource | Medium | [#272](https://github.com/pbalduino/menios/issues/272) |
 | 23 | User buddy allocator lacks locking | Critical | Correctness | Medium | ✅ CLOSED ([#265](https://github.com/pbalduino/menios/issues/265)) |
 
 ---
@@ -865,20 +865,22 @@ for(size_t page = 0; page < page_count; page++) {
 1. ~~**Fix Issue #20** ([#263](https://github.com/pbalduino/menios/issues/263)) — stale virtual mappings after region release – security-critical aliasing bug~~ ✅ Done (region pages are now unmapped before frames are released)
 2. ~~**Fix Issue #21** ([#264](https://github.com/pbalduino/menios/issues/264)) — partial map rollback – prevents the same aliasing on failure paths~~ ✅ Done (mapping failures now roll back and clean partial mappings)
 3. ~~**Fix Issue #23** ([#265](https://github.com/pbalduino/menios/issues/265)) — allocator locking – user-mode heap is currently unsafe for concurrency~~ ✅ Done (global allocator lock now guards all heap operations)
-4. **Fix Issue #3** (grow_heap NULL handling) – avoids dangling arenas after allocation failures
-5. **Fix Issue #5** (direct mmap alignment) – plugs subtle corruption for high-alignment callers
+4. ~~**Fix Issue #3** ([#267](https://github.com/pbalduino/menios/issues/267)) — grow_heap NULL handling – avoids dangling arenas after allocation failures~~ ✅ Done (grow_heap now unlinks any failed arena before returning)
+5. **Fix Issue #5** ([#268](https://github.com/pbalduino/menios/issues/268)) — direct mmap alignment – plugs subtle corruption for high-alignment callers
+6. **Fix Issue #2** ([#273](https://github.com/pbalduino/menios/issues/273)) — use-after-free in coalesce – critical security issue
 
 ### High Priority (Next Sprint):
-6. **Fix Issue #22** (virtual address recycling for kmalloc) – prevents premature heap exhaustion
-7. **Fix Issue #10** (unbounded arena growth) – caps userland heap expansion
-8. **Fix Issue #7** (buddy arena linear search) – improves scaling before adding slab caches
-9. **Fix Issue #8** (kernel O(n²) coalescing) – removes pathological frees
-10. **Fix Issue #11** (region descriptor limit) – avoids kmalloc hard-failures under churn
+7. **Fix Issue #22** ([#272](https://github.com/pbalduino/menios/issues/272)) — virtual address recycling for kmalloc – prevents premature heap exhaustion
+8. **Fix Issue #10** (unbounded arena growth) – caps userland heap expansion
+9. **Fix Issue #7** ([#269](https://github.com/pbalduino/menios/issues/269)) — buddy arena linear search – improves scaling before adding slab caches
+10. **Fix Issue #8** ([#270](https://github.com/pbalduino/menios/issues/270)) — kernel O(n²) coalescing – removes pathological frees
+11. **Fix Issue #11** (region descriptor limit) – avoids kmalloc hard-failures under churn
 
 ### Medium Priority (Technical Debt):
-11. **Fix Issue #9** (freelist linear search) – tighten buddy coalesce cost
-12. **Fix Issue #15** (compactor zeroing) – decide on perf vs scrub policy
-13. **Add Issue #16** (arena retirement) – reclaim unused user arenas
+12. **Fix Issue #9** ([#271](https://github.com/pbalduino/menios/issues/271)) — freelist linear search – tighten buddy coalesce cost
+13. **Fix Issue #1** ([#266](https://github.com/pbalduino/menios/issues/266)) — double-free detection improvements – better production diagnostics
+14. **Fix Issue #15** (compactor zeroing) – decide on perf vs scrub policy
+15. **Add Issue #16** (arena retirement) – reclaim unused user arenas
 
 ### Long-Term (Nice to Have):
 14. **Add Issue #18** (slab layer) – already tracked in roadmap
