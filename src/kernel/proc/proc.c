@@ -582,12 +582,12 @@ static inline virt_addr_t user_stack_top(uint32_t pid) {
 
 static inline virt_addr_t user_mmap_base(uint32_t pid) {
   (void)pid;
-  return 0x0000000100000000ull; // 4 GiB — leaves low canonical addresses for binary/stack
+  return 0x0000000040000000ull; // 1 GiB — keep within 32-bit syscall return range
 }
 
 static inline virt_addr_t user_mmap_limit(uint32_t pid) {
   (void)pid;
-  return 0x00007fff00000000ull; // just below canonical user ceiling (~128 TiB window)
+  return 0x0000000080000000ull; // 2 GiB window for mmap allocations
 }
 
 static inline bool segment_can_extend(const proc_user_segment_t* segment,
@@ -1139,22 +1139,29 @@ int proc_exec_image(proc_info_p proc,
   }
   serial_printf("proc_exec_image: new_root=%lx\n", (unsigned long)new_root);
 
-  proc_info_t staging;
-  memset(&staging, 0, sizeof(staging));
-  staging.pid = proc->pid;
-  staging.address_space_root = new_root;
+  proc_info_t* staging = kmalloc(sizeof(proc_info_t));
+  if(staging == NULL) {
+    pmm_free_pages(new_root, 1);
+    kfree(elf_copy);
+    serial_printf("proc_exec_image: staging allocation failed\n");
+    return -ENOMEM;
+  }
+
+  memset(staging, 0, sizeof(*staging));
+  staging->pid = proc->pid;
+  staging->address_space_root = new_root;
 
   proc_file_table_prepare_exec(proc);
   serial_printf("proc_exec_image: file table prepared\n");
 
   virt_addr_t stack_top = user_stack_top(proc->pid);
   virt_addr_t stack_base_vaddr = stack_top - PROC_USER_STACK_SIZE;
-  staging.user_stack_base_vaddr = stack_base_vaddr;
-  staging.user_stack_size = PROC_USER_STACK_SIZE;
+  staging->user_stack_base_vaddr = stack_base_vaddr;
+  staging->user_stack_size = PROC_USER_STACK_SIZE;
 
   int result = -ENOMEM;
 
-  if(!vm_region_add(&staging,
+  if(!vm_region_add(staging,
                     stack_base_vaddr,
                     PROC_USER_STACK_SIZE,
                     VM_REGION_STACK,
@@ -1164,7 +1171,7 @@ int proc_exec_image(proc_info_p proc,
   }
   serial_printf("proc_exec_image: stack region added\n");
 
-  vm_region_t* stack_region = vm_region_find(&staging, stack_base_vaddr);
+  vm_region_t* stack_region = vm_region_find(staging, stack_base_vaddr);
   if(stack_region == NULL) {
     goto fail;
   }
@@ -1187,7 +1194,7 @@ int proc_exec_image(proc_info_p proc,
   }
   serial_printf("proc_exec_image: initial stack mapped\n");
 
-  if(!proc_register_user_segment(&staging, initial_stack_phys, 1)) {
+  if(!proc_register_user_segment(staging, initial_stack_phys, 1)) {
     pmm_unmap_page_in_root(new_root, initial_stack_page);
     pmm_free_pages(initial_stack_phys, 1);
     serial_printf("proc_exec_image: register stack segment failed\n");
@@ -1198,7 +1205,7 @@ int proc_exec_image(proc_info_p proc,
   vm_region_note_mapping(stack_region, initial_stack_page, PAGE_SIZE);
 
   uint64_t entry = 0;
-  if(!elf64_load_image(&staging, new_root, elf_copy, size, &entry)) {
+  if(!elf64_load_image(staging, new_root, elf_copy, size, &entry)) {
     serial_printf("proc_exec_image: elf64_load_image failed\n");
     result = -ENOEXEC;
     goto fail;
@@ -1217,16 +1224,16 @@ int proc_exec_image(proc_info_p proc,
   }
 
   proc->address_space_root = new_root;
-  proc->user_stack_base_vaddr = staging.user_stack_base_vaddr;
-  proc->user_stack_size = staging.user_stack_size;
-  proc->user_segment_count = staging.user_segment_count;
+  proc->user_stack_base_vaddr = staging->user_stack_base_vaddr;
+  proc->user_stack_size = staging->user_stack_size;
+  proc->user_segment_count = staging->user_segment_count;
   memcpy(proc->user_segments,
-         staging.user_segments,
-         staging.user_segment_count * sizeof(proc_user_segment_t));
-  proc->vm_region_count = staging.vm_region_count;
+         staging->user_segments,
+         staging->user_segment_count * sizeof(proc_user_segment_t));
+  proc->vm_region_count = staging->vm_region_count;
   memcpy(proc->vm_regions,
-         staging.vm_regions,
-         staging.vm_region_count * sizeof(vm_region_t));
+         staging->vm_regions,
+         staging->vm_region_count * sizeof(vm_region_t));
   proc->shm_attachment_count = 0;
   proc->user_mode = true;
   proc->mmap_base = user_mmap_base(proc->pid);
@@ -1234,6 +1241,7 @@ int proc_exec_image(proc_info_p proc,
   proc->mmap_limit = user_mmap_limit(proc->pid);
 
   kfree(elf_copy);
+  elf_copy = NULL;
 
   if(current == proc) {
     write_cr3(proc->address_space_root);
@@ -1264,7 +1272,8 @@ int proc_exec_image(proc_info_p proc,
     proc->cpu_state = kmalloc(sizeof(cpu_state_t));
     if(proc->cpu_state == NULL) {
       serial_printf("proc_exec_image: cpu_state allocation failed\n");
-      return -ENOMEM;
+      result = -ENOMEM;
+      goto fail;
     }
   }
 
@@ -1277,14 +1286,23 @@ int proc_exec_image(proc_info_p proc,
   memcpy(proc->cpu_state, frame, sizeof(syscall_frame_t));
   serial_printf("proc_exec_image: completed successfully\n");
 
+  kfree(staging);
+
   return 0;
 
 fail:
-  proc_release_user_memory(&staging);
+  if(staging != NULL) {
+    proc_release_user_memory(staging);
+  }
   if(new_root != 0) {
     pmm_free_pages(new_root, 1);
   }
-  kfree(elf_copy);
+  if(elf_copy != NULL) {
+    kfree(elf_copy);
+  }
+  if(staging != NULL) {
+    kfree(staging);
+  }
   serial_printf("proc_exec_image: failing with result=%d\n", result);
   return result;
 }

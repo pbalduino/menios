@@ -14,6 +14,38 @@
 
 static atomic_flag allocator_lock = ATOMIC_FLAG_INIT;
 
+_Static_assert(sizeof(void*) == 8, "menios libc expects 64-bit pointers");
+
+#ifndef MENIOS_HOST_TEST
+static size_t debug_append_str(char* buffer, size_t pos, size_t capacity, const char* text) {
+  while(text != NULL && *text != '\0' && pos < capacity) {
+    buffer[pos++] = *text++;
+  }
+  return pos;
+}
+
+static size_t debug_append_hex(char* buffer, size_t pos, size_t capacity, uint64_t value) {
+  static const char hex_digits[] = "0123456789abcdef";
+  char tmp[16];
+  size_t idx = 0u;
+
+  if(value == 0) {
+    tmp[idx++] = '0';
+  } else {
+    while(value != 0 && idx < sizeof(tmp)) {
+      tmp[idx++] = hex_digits[value & 0xFu];
+      value >>= 4u;
+    }
+  }
+
+  while(idx > 0u && pos < capacity) {
+    buffer[pos++] = tmp[--idx];
+  }
+
+  return pos;
+}
+#endif
+
 static inline void allocator_lock_guard(void) {
   while(atomic_flag_test_and_set_explicit(&allocator_lock, memory_order_acquire)) {
     __asm__ __volatile__("pause");
@@ -683,6 +715,25 @@ static int grow_heap(size_t size) {
   }
   arena_list_head = arena;
 
+#ifndef MENIOS_HOST_TEST
+  {
+    char logbuf[160];
+    size_t pos = 0u;
+    pos = debug_append_str(logbuf, pos, sizeof(logbuf), "grow_heap: mapping=0x");
+    pos = debug_append_hex(logbuf, pos, sizeof(logbuf), (uint64_t)mapping);
+    pos = debug_append_str(logbuf, pos, sizeof(logbuf), " buddy_base=0x");
+    pos = debug_append_hex(logbuf, pos, sizeof(logbuf), (uint64_t)arena->buddy_base);
+    pos = debug_append_str(logbuf, pos, sizeof(logbuf), " buddy_size=0x");
+    pos = debug_append_hex(logbuf, pos, sizeof(logbuf), (uint64_t)arena->buddy_size);
+    pos = debug_append_str(logbuf, pos, sizeof(logbuf), " header=0x");
+    pos = debug_append_hex(logbuf, pos, sizeof(logbuf), (uint64_t)(uintptr_t)arena);
+    if(pos < sizeof(logbuf)) {
+      logbuf[pos++] = '\n';
+    }
+    (void)write(STDERR_FILENO, logbuf, pos);
+  }
+#endif
+
   for(size_t i = 0; i < BUDDY_ORDER_COUNT; ++i) {
     arena->buddy_freelists[i] = NULL;
     arena->buddy_order_next[i] = NULL;
@@ -842,6 +893,27 @@ void* malloc(size_t size) {
   if(block == NULL) {
     return NULL;
   }
+
+#ifndef MENIOS_HOST_TEST
+  {
+    char logbuf[128];
+    size_t pos = 0u;
+    pos = debug_append_str(logbuf, pos, sizeof(logbuf), "malloc: size=0x");
+    pos = debug_append_hex(logbuf, pos, sizeof(logbuf), (uint64_t)size);
+    pos = debug_append_str(logbuf, pos, sizeof(logbuf), " aligned=0x");
+    pos = debug_append_hex(logbuf, pos, sizeof(logbuf), (uint64_t)aligned);
+    pos = debug_append_str(logbuf, pos, sizeof(logbuf), " ptr=0x");
+    pos = debug_append_hex(logbuf, pos, sizeof(logbuf), (uint64_t)block_payload(block));
+    pos = debug_append_str(logbuf, pos, sizeof(logbuf), " arena=0x");
+    pos = debug_append_hex(logbuf, pos, sizeof(logbuf), (uint64_t)block->arena);
+    pos = debug_append_str(logbuf, pos, sizeof(logbuf), " order=0x");
+    pos = debug_append_hex(logbuf, pos, sizeof(logbuf), (uint64_t)block->buddy_order);
+    if(pos < sizeof(logbuf)) {
+      logbuf[pos++] = '\n';
+    }
+    (void)write(STDERR_FILENO, logbuf, pos);
+  }
+#endif
 
   return block_payload(block);
 }

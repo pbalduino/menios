@@ -1,165 +1,21 @@
 [
   {
-    "title": "User buddy allocator lacks thread safety",
+    "title": "Boot failure: init process crashes with page fault at 0x40bac8, preventing mosh from starting",
     "github_issue": {
-      "number": 265,
-      "url": "https://github.com/pbalduino/menios/issues/265",
-      "state": "CLOSED"
+      "number": 274,
+      "url": "https://github.com/pbalduino/menios/issues/274",
+      "state": "OPEN"
     },
     "labels": [
-      "enhancement",
-      "closed"
-    ],
-    "assignees": []
-  },
-  {
-    "title": "Kernel heap: partial mapping failures leak virtual address aliases",
-    "github_issue": {
-      "number": 264,
-      "url": "https://github.com/pbalduino/menios/issues/264",
-      "state": "CLOSED"
-    },
-    "labels": [
-      "enhancement",
-      "kernel",
-      "closed"
-    ],
-    "assignees": []
-  },
-  {
-    "title": "Kernel heap leaves stale virtual mappings after region release",
-    "github_issue": {
-      "number": 263,
-      "url": "https://github.com/pbalduino/menios/issues/263",
-      "state": "CLOSED"
-    },
-    "labels": [
-      "enhancement",
-      "kernel",
-      "closed"
-    ],
-    "assignees": []
-  },
-  {
-    "title": "Missing NULL check in grow_heap",
-    "github_issue": {
-      "number": 267,
-      "url": "https://github.com/pbalduino/menios/issues/267",
-      "state": "CLOSED"
-    },
-    "labels": [
-      "enhancement",
-      "closed"
-    ],
-    "assignees": []
-  },
-  {
-    "title": "Direct mmap alignment calculation error",
-    "github_issue": {
-      "number": 268,
-      "url": "https://github.com/pbalduino/menios/issues/268",
-      "state": "CLOSED"
-    },
-    "labels": [
-      "enhancement",
-      "closed"
-    ],
-    "assignees": []
-  },
-  {
-    "title": "Improve double-free detection and diagnostics",
-    "github_issue": {
-      "number": 266,
-      "url": "https://github.com/pbalduino/menios/issues/266",
-      "state": "CLOSED"
-    },
-    "labels": [
-      "enhancement",
-      "closed"
-    ],
-    "assignees": []
-  },
-  {
-    "title": "Kernel heap virtual address exhaustion",
-    "github_issue": {
-      "number": 272,
-      "url": "https://github.com/pbalduino/menios/issues/272",
-      "state": "CLOSED"
-    },
-    "labels": [
-      "enhancement",
-      "kernel",
-      "closed"
-    ],
-    "assignees": []
-  },
-  {
-    "title": "Buddy allocator arena scanning is O(A×O)",
-    "github_issue": {
-      "number": 269,
-      "url": "https://github.com/pbalduino/menios/issues/269",
-      "state": "CLOSED"
-    },
-    "labels": [
-      "enhancement",
-      "closed"
-    ],
-    "assignees": []
-  },
-  {
-    "title": "Kernel heap: O(n²) coalescing in kfree",
-    "github_issue": {
-      "number": 270,
-      "url": "https://github.com/pbalduino/menios/issues/270",
-      "state": "CLOSED"
-    },
-    "labels": [
-      "enhancement",
-      "kernel",
-      "closed"
-    ],
-    "assignees": []
-  },
-  {
-    "title": "Buddy allocator freelist linear search",
-    "github_issue": {
-      "number": 271,
-      "url": "https://github.com/pbalduino/menios/issues/271",
-      "state": "CLOSED"
-    },
-    "labels": [
-      "enhancement",
-      "closed"
-    ],
-    "assignees": []
-  },
-  {
-    "title": "Use-after-free risk in buddy_coalesce_block",
-    "github_issue": {
-      "number": 273,
-      "url": "https://github.com/pbalduino/menios/issues/273",
-      "state": "CLOSED"
-    },
-    "labels": [
-      "enhancement",
-      "closed"
-    ],
-    "assignees": []
-  },
-  {
-    "title": "Improve user-mode page fault handling - kill process instead of halting OS",
-    "github_issue": {
-      "number": 262,
-      "url": "https://github.com/pbalduino/menios/issues/262",
-      "state": "CLOSED"
-    },
-    "labels": [
-      "enhancement",
+      "bug",
       "init",
+      "mosh",
       "kernel",
-      "closed"
+      "blocked"
     ],
-    "assignees": []
+    "assignees": [
+      "pbalduino"
+    ]
   },
   {
     "title": "Structured System Logging with SQLite",
