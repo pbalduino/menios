@@ -6,6 +6,8 @@
 #include <kernel/serial.h>
 #include <kernel/vm_region.h>
 
+#include <signal.h>
+
 #include <stdbool.h>
 #include <stdarg.h>
 #include <stdio.h>
@@ -180,6 +182,16 @@ void idt_pf_isr_handler(idt_exception_p cpu_state) {
   }
 
   if(handled) {
+    return;
+  }
+
+  if(info.user && current != NULL && current != &kernel_process_info) {
+    exception_log("  User page fault at 0x%016lx (present=%s write=%s), terminating pid=%u\n",
+                  cr2,
+                  info.present ? "yes" : "no",
+                  info.write ? "yes" : "no",
+                  current->pid);
+    proc_exit_signal(SIGSEGV);
     return;
   }
 

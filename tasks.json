@@ -151,12 +151,13 @@
     "github_issue": {
       "number": 262,
       "url": "https://github.com/pbalduino/menios/issues/262",
-      "state": "OPEN"
+      "state": "CLOSED"
     },
     "labels": [
       "enhancement",
       "init",
-      "kernel"
+      "kernel",
+      "closed"
     ],
     "assignees": []
   },

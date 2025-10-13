@@ -450,7 +450,7 @@ static heap_region_t heap_region_entries[HEAP_REGION_CAP];
 2. **RLIMIT_DATA** (heap data segment limit):
    Track only brk/mmap(MAP_ANONYMOUS) allocations, not code/stack.
 
-**Note**: This is a kernel-level feature, not a libc fix. Requires significant kernel work (issue #262 is related: better fault handling).
+**Note**: This is a kernel-level feature, not a libc fix. User-mode fault handling now terminates the offending process instead of halting the kernel (Issue #262 ✅).
 
 ---
 
@@ -841,8 +841,8 @@ for(size_t page = 0; page < page_count; page++) {
 | 5 | Direct mmap alignment calculation | High | Correctness | Medium | ✅ CLOSED ([#268](https://github.com/pbalduino/menios/issues/268)) |
 | 6 | Kernel heap magic bypass | Medium | Security | Low | 🔴 OPEN |
 | 7 | Buddy linear search across arenas | Medium | Performance | High | ✅ CLOSED ([#269](https://github.com/pbalduino/menios/issues/269)) |
-| 8 | Kernel O(n²) coalescing | High | Performance | Medium | [#270](https://github.com/pbalduino/menios/issues/270) |
-| 9 | Buddy freelist linear search | Medium | Performance | High | [#271](https://github.com/pbalduino/menios/issues/271) |
+| 8 | Kernel O(n²) coalescing | High | Performance | Medium | ✅ CLOSED ([#270](https://github.com/pbalduino/menios/issues/270)) |
+| 9 | Buddy freelist linear search | Medium | Performance | High | ✅ CLOSED ([#271](https://github.com/pbalduino/menios/issues/271)) |
 | 10 | Unbounded arena growth | High | Resource | Low | 🔴 OPEN |
 | 11 | Fixed region descriptor pool | Medium | Scalability | Low | 🔴 OPEN |
 | 12 | No per-process memory limit | Low | Security | High | 🔴 OPEN |
@@ -922,4 +922,4 @@ for(size_t page = 0; page < page_count; page++) {
 
 **Last Updated**: 2025-10-14
 **Reviewers**: TBD
-**Related Issues**: #262 (user-mode fault handling), Buddy Allocator milestone (#245-#253 ✅ COMPLETE)
+**Related Issues**: ~~#262 (user-mode fault handling)~~ ✅, Buddy Allocator milestone (#245-#253 ✅ COMPLETE)

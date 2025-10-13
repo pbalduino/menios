@@ -41,13 +41,13 @@ MeniOS has made significant progress with core kernel functionality now solidly 
 - **Memory Protection**: Kernel/user separation with per-process page tables
 
 ### 🎉 **Next Major Milestones**
-With the shell shipped in v0.1.0 and Buddy Allocator complete, the focus shifts to native compilation and advanced OS capabilities:
+With the shell shipped in v0.1.0 and Buddy Allocator FULLY COMPLETE (100%), the focus shifts to native compilation and advanced OS capabilities:
 
-1. **GCC Toolchain Milestone** (UNBLOCKED! 🚀) – The Buddy Allocator foundation is now complete (#245-#253 ✅)! Ready to implement TCC port (#190) and binutils (#191). Only blocked by #189 (FAT32 write support) for native compilation output.
+1. **GCC Toolchain Milestone** (FULLY UNBLOCKED! 🚀) – The Buddy Allocator is now 100% COMPLETE with all phases done: Core implementation (9/9) ✅, Critical security (3/3) ✅, Reliability (5/5) ✅, and Performance (3/3) ✅! Ready to implement TCC port (#190) and binutils (#191). Only blocked by #189 (FAT32 write support) for native compilation output.
 
-2. **FAT32 Write Support** (CRITICAL PATH 📁) – Issue #189 is now the critical blocker for native compilation. Enables TCC/binutils to write compiled binaries to disk.
+2. **FAT32 Write Support** (CRITICAL PATH 📁) – Issue #189 is now the ONLY blocker for native compilation. Enables TCC/binutils to write compiled binaries to disk.
 
-3. **Doom Capabilities** – With robust memory management now complete (Buddy Allocator ✅) and threading support (#108 ✅), ready to unlock the final pieces: pthread API (#109), audio subsystem (#33), advanced IPC (#105-#107), and fast syscalls (#221).
+3. **Doom Capabilities** – With robust memory management FULLY COMPLETE (Buddy Allocator 20/20 ✅) and threading support (#108 ✅), ready to unlock the final pieces: pthread API (#109), audio subsystem (#33), advanced IPC (#105-#107), and fast syscalls (#221).
 
 ### 🆕 **Threading Support Added**
 A complete threading roadmap has been designed with 6 new issues:
@@ -159,9 +159,9 @@ Expect the log to show the `[user_demo]` messages on screen and in `com1.log`, c
 - [x] **#253**: Cleanup and Document Buddy Allocator Migration ✅ COMPLETE!
   - Legacy first-fit code removed, buddy design fully documented
 
-**Status**: 19/20 complete (95%) - Core implementation ✅ COMPLETE! Critical security fixes ✅ COMPLETE! Reliability phase ✅ COMPLETE.
+**Status**: 20/20 complete (100%) 🎉 - Core implementation ✅ COMPLETE! Critical security fixes ✅ COMPLETE! Reliability phase ✅ COMPLETE! Performance phase ✅ COMPLETE!
 
-#### **Buddy Allocator - Post-Implementation** (Issues #263-#273) 🔨 Reliability Phase COMPLETE
+#### **Buddy Allocator - Post-Implementation** (Issues #263-#273) 🎉 ALL PHASES COMPLETE!
 - [x] **#263**: Kernel heap stale virtual mappings ✅ COMPLETE!
 - [x] **#264**: Kernel heap partial mapping rollback ✅ COMPLETE!
 - [x] **#265**: User buddy allocator thread safety ✅ COMPLETE!
@@ -226,10 +226,10 @@ Remaining major components for Doom:
 
 See [`road_to_doom.md`](docs/road/road_to_doom.md) for the complete roadmap and [`tasks.json`](tasks.json) for detailed task tracking.
 
-**📊 Progress Assessment**: With **52 issues completed across 81 total** (64.2%), meniOS is making phenomenal progress! Major recent completions include:
+**📊 Progress Assessment**: With **57 issues completed across 81 total** (70.4%), meniOS is making phenomenal progress! Major recent completions include:
 - ✅ **Shell Milestone**: 27/27 complete (100%)—v0.1.0 ships the full interactive shell experience! 🎉
 - ✅ **Toolchain Core**: 5/8 complete (62.5%)—crt0 (#192) ✅, libc (#193) ✅, ABI docs (#194) ✅, build system (#195) ✅, cross-compiler (#29) ✅
-- 🔨 **Buddy Allocator**: 13/20 complete (65%)—Core implementation ✅ (9/9), Critical security fixes ✅ (3/3), Reliability phase in progress (1/5), Performance pending (0/3)
+- 🎉 **Buddy Allocator**: 20/20 complete (100%)—Core implementation ✅ (9/9), Critical security fixes ✅ (3/3), Reliability fixes ✅ (5/5), Performance optimizations ✅ (3/3)
 - ✅ **Synchronization**: All primitives complete! (#36, #37, #39, #40) - 4/4 done!
 - ✅ **Shell UX**: Tab completion (#197) ✅, History (#156) ✅, Ctrl+A/E (#198) ✅, Ctrl+L (#200) ✅, Ctrl+R (#199) ✅, Job control (#158) ✅, pwd prompt (#222) ✅!
 - ✅ **Threading Foundation**: Kernel threading (#108) - ready for pthread!
@@ -239,13 +239,13 @@ See [`road_to_doom.md`](docs/road/road_to_doom.md) for the complete roadmap and 
 - ✅ **Performance**: I/O scheduler (#205) ✅
 - ✅ **Memory**: Userspace allocator (#95) ✅
 
-**The critical path forward**: Buddy allocator reliability fixes are finished. Focus now shifts to **FAT32 write support** (#189) to unblock GCC native compilation (#190, #191)!
+**The critical path forward**: Buddy allocator is COMPLETE (100%)! 🎉 Focus now shifts to **FAT32 write support** (#189) to unblock GCC native compilation (#190, #191)!
 
 **🎯 Milestone Status**:
 - 🎉 **Mosh** (Shell): 27/27 complete (100%) - v0.1.0 shipped!
-- 🔨 **Buddy Allocator** (Memory): 13/20 complete (65%) - Core ✅, Critical security ✅, Reliability 1/5 complete (#267 ✅)
-- 🚀 **GCC** (Toolchain): 5/8 complete (62.5%) - core done, #190/#191 partially unblocked (needs reliability fixes + #189)
-- 🎮 **Doom** (Full OS): 10/26 complete (38.5%) - Buddy core dependency met ✅, threading/IPC ready to start!
+- 🎉 **Buddy Allocator** (Memory): 20/20 complete (100%) - Core ✅, Critical security ✅, Reliability ✅, Performance ✅ FULLY UNBLOCKS GCC & DOOM!
+- 🚀 **GCC** (Toolchain): 5/8 complete (62.5%) - core done, #190/#191 FULLY UNBLOCKED (only needs #189 FAT32 writes)!
+- 🎮 **Doom** (Full OS): 10/26 complete (38.5%) - Buddy allocator COMPLETE ✅, threading/IPC ready to start!
 
 ## Architecture Overview
 
@@ -338,9 +338,9 @@ We welcome contributions from developers of all skill levels! 🚀
 - **High Priority - In Progress** (2 issues active):
   - **📁 Critical Blocker**: #189 (FAT32 write support) - blocks native compilation!
 - **Ready to Start** (5 issues available):
-  - **🚀 GCC Native Compilation** (Partially unblocked): #190 (TCC port), #191 (binutils port) - Buddy core ✅, reliability ✅, perf ✅, needs #189
+  - **🚀 GCC Native Compilation** (FULLY UNBLOCKED): #190 (TCC port), #191 (binutils port) - Buddy allocator ✅ COMPLETE, only needs #189 FAT32 writes!
   - **🧵 Threading**: #109 (pthread API), #221 (fast syscalls - 3-5x speedup!)
-- **Milestone Status**: Buddy Allocator core complete (9/9) ✅, critical + reliability fixes done (5/5) ✅, performance in progress (2/3)
+- **Milestone Status**: Buddy Allocator COMPLETE (20/20) ✅ 🎉 - Core (9/9) ✅, Critical security (3/3) ✅, Reliability (5/5) ✅, Performance (3/3) ✅
 - **Report Issues**: Use our issue templates to report bugs or request features
 - **Security Issues**: Please review our [Security Policy](SECURITY.md) for responsible disclosure
 - **Code Style**: Follow the guidelines in [`CODING.md`](CODING.md)
