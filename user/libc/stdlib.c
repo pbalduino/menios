@@ -298,6 +298,7 @@ static block_header_t* buddy_coalesce_block(block_header_t* block) {
 #ifdef MENIOS_HOST_TEST
 
 void __menios_allocator_reset(void) {
+  allocator_lock_guard();
   arena_header_t* arena = arena_list_head;
   while(arena != NULL) {
     arena_header_t* next = arena->next;
@@ -308,9 +309,11 @@ void __menios_allocator_reset(void) {
   }
 
   arena_list_head = NULL;
+  allocator_unlock_guard();
 }
 
 int __menios_allocator_grow_heap_for_test(size_t size) {
+  allocator_lock_guard();
   int rc = grow_heap(size);
 #ifdef MENIOS_HOST_TEST
   if(rc != 0) {
@@ -323,36 +326,49 @@ int __menios_allocator_grow_heap_for_test(size_t size) {
     (void)write(STDERR_FILENO, suffix, sizeof(suffix) - 1u);
   }
 #endif
+  allocator_unlock_guard();
   return rc;
 }
 
 block_header_t* __menios_buddy_debug_pop(uint32_t order) {
-  if(!buddy_order_valid(order)) {
-    return NULL;
-  }
-
-  for(arena_header_t* arena = arena_list_head; arena != NULL; arena = arena->next) {
-    block_header_t* block = buddy_freelist_pop(arena, order);
-    if(block != NULL) {
-      return block;
+  block_header_t* result = NULL;
+  allocator_lock_guard();
+  if(buddy_order_valid(order)) {
+    for(arena_header_t* arena = arena_list_head; arena != NULL; arena = arena->next) {
+      block_header_t* block = buddy_freelist_pop(arena, order);
+      if(block != NULL) {
+        result = block;
+        break;
+      }
     }
   }
-  return NULL;
+  allocator_unlock_guard();
+  return result;
 }
 
 void __menios_buddy_debug_push(block_header_t* block) {
   if(block == NULL || block->arena == NULL) {
     return;
   }
+  allocator_lock_guard();
   buddy_freelist_push(block->arena, block);
+  allocator_unlock_guard();
 }
 
 block_header_t* __menios_buddy_debug_split(block_header_t* block, uint32_t target_order) {
-  return buddy_split_to_order(block, target_order);
+  block_header_t* result = NULL;
+  allocator_lock_guard();
+  result = buddy_split_to_order(block, target_order);
+  allocator_unlock_guard();
+  return result;
 }
 
 block_header_t* __menios_buddy_debug_coalesce(block_header_t* block) {
-  return buddy_coalesce_block(block);
+  block_header_t* result = NULL;
+  allocator_lock_guard();
+  result = buddy_coalesce_block(block);
+  allocator_unlock_guard();
+  return result;
 }
 
 uint32_t __menios_buddy_debug_order(const block_header_t* block) {
@@ -449,26 +465,38 @@ static uint32_t buddy_order_for_size(size_t total) {
 }
 
 static block_header_t* buddy_acquire_block(uint32_t order) {
+  block_header_t* result = NULL;
+
   if(!buddy_order_valid(order)) {
     return NULL;
   }
 
+  allocator_lock_guard();
   for(int attempt = 0; attempt < 2; ++attempt) {
     for(arena_header_t* arena = arena_list_head; arena != NULL; arena = arena->next) {
       for(uint32_t current = order; current <= BUDDY_MAX_ORDER; ++current) {
         block_header_t* candidate = buddy_freelist_pop(arena, current);
         if(candidate != NULL) {
-          return buddy_split_to_order(candidate, order);
+          result = buddy_split_to_order(candidate, order);
+          break;
         }
       }
+      if(result != NULL) {
+        break;
+      }
+    }
+
+    if(result != NULL) {
+      break;
     }
 
     if(grow_heap(buddy_block_size(order)) != 0) {
       break;
     }
   }
+  allocator_unlock_guard();
 
-  return NULL;
+  return result;
 }
 
 static block_header_t* buddy_allocate_block(size_t payload_size) {
@@ -974,3 +1002,20 @@ void exit(int status) {
   _exit(status);
 }
 #endif
+#include <threads.h>
+
+static mtx_t allocator_lock;
+static once_flag allocator_once = ONCE_FLAG_INIT;
+
+static void allocator_initialize_lock(void) {
+  mtx_init(&allocator_lock, mtx_plain);
+}
+
+static inline void allocator_lock_guard(void) {
+  call_once(&allocator_once, allocator_initialize_lock);
+  mtx_lock(&allocator_lock);
+}
+
+static inline void allocator_unlock_guard(void) {
+  mtx_unlock(&allocator_lock);
+}

@@ -56,12 +56,19 @@ static void* heap_map_region(phys_addr_t phys_base, size_t page_count) {
   }
 
   virt_addr_t virt = heap_next_vaddr;
+  phys_addr_t root = read_cr3();
 
   for(size_t page = 0; page < page_count; page++) {
     phys_addr_t phys = phys_base + (page * PAGE_SIZE);
     virt_addr_t vaddr = virt + (page * PAGE_SIZE);
     if(!pmm_map_page(vaddr, phys, true, false)) {
       serial_printf("heap_map_region: map failed at %lx\n", (unsigned long)vaddr);
+      for(size_t rollback = 0; rollback < page; ++rollback) {
+        virt_addr_t rollback_vaddr = virt + (rollback * PAGE_SIZE);
+        if(!pmm_remove_mapping_in_root(root, rollback_vaddr)) {
+          serial_printf("heap_map_region: rollback failed at %lx\n", (unsigned long)rollback_vaddr);
+        }
+      }
       return NULL;
     }
   }
@@ -329,7 +336,14 @@ static void heap_release_region_if_unused(heap_node_p node) {
     heap_tail = prev;
   }
 
-  pmm_free_pages(region->phys_base, region->page_count);
+  phys_addr_t root = read_cr3();
+  virt_addr_t base = (virt_addr_t)region->base;
+  for(size_t page = 0; page < region->page_count; ++page) {
+    virt_addr_t vaddr = base + (page * PAGE_SIZE);
+    if(!pmm_unmap_page_in_root(root, vaddr)) {
+      serial_printf("heap_release_region: failed to unmap %lx\n", (unsigned long)vaddr);
+    }
+  }
 
   heap_unregister_region(region);
 }

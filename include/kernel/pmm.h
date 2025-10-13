@@ -165,6 +165,7 @@ bool pmm_map_page_in_root(phys_addr_t root_phys, virt_addr_t vaddr, phys_addr_t 
 bool pmm_map_page(virt_addr_t vaddr, phys_addr_t paddr, bool writable, bool user);
 pml4_walk_result_t pmm_walk_address(phys_addr_t root_phys, virt_addr_t vaddr);
 bool pmm_unmap_page_in_root(phys_addr_t root_phys, virt_addr_t vaddr);
+bool pmm_remove_mapping_in_root(phys_addr_t root_phys, virt_addr_t vaddr);
 bool pmm_get_mapping(phys_addr_t root_phys, virt_addr_t vaddr, phys_addr_t* out_phys, bool* out_writable, bool* out_user);
 phys_addr_t pmm_clone_kernel_address_space(void);
 phys_addr_t pmm_get_kernel_cr3(void);

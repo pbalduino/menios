@@ -1,157 +1,165 @@
 [
   {
-    "title": "Cleanup and Document Buddy Allocator Migration",
+    "title": "User buddy allocator lacks thread safety",
     "github_issue": {
-      "number": 253,
-      "url": "https://github.com/pbalduino/menios/issues/253",
-      "state": "CLOSED"
+      "number": 265,
+      "url": "https://github.com/pbalduino/menios/issues/265",
+      "state": "OPEN"
     },
     "labels": [
-      "documentation",
       "enhancement"
     ],
-    "assignees": [
-      "pbalduino"
-    ]
+    "assignees": []
   },
   {
-    "title": "Add Buddy Allocator Diagnostics and Tests",
+    "title": "Kernel heap: partial mapping failures leak virtual address aliases",
     "github_issue": {
-      "number": 252,
-      "url": "https://github.com/pbalduino/menios/issues/252",
+      "number": 264,
+      "url": "https://github.com/pbalduino/menios/issues/264",
       "state": "CLOSED"
     },
     "labels": [
       "enhancement",
-      "testing"
+      "kernel",
+      "closed"
     ],
-    "assignees": [
-      "pbalduino"
-    ]
+    "assignees": []
   },
   {
-    "title": "Update Direct mmap Path for Large Allocations",
+    "title": "Kernel heap leaves stale virtual mappings after region release",
     "github_issue": {
-      "number": 251,
-      "url": "https://github.com/pbalduino/menios/issues/251",
-      "state": "CLOSED"
-    },
-    "labels": [
-      "enhancement"
-    ],
-    "assignees": [
-      "pbalduino"
-    ]
-  },
-  {
-    "title": "Adapt realloc/reallocarray for Buddy Allocator",
-    "github_issue": {
-      "number": 250,
-      "url": "https://github.com/pbalduino/menios/issues/250",
-      "state": "CLOSED"
-    },
-    "labels": [
-      "enhancement"
-    ],
-    "assignees": [
-      "pbalduino"
-    ]
-  },
-  {
-    "title": "Integrate Buddy Allocator with malloc/free",
-    "github_issue": {
-      "number": 249,
-      "url": "https://github.com/pbalduino/menios/issues/249",
-      "state": "CLOSED"
-    },
-    "labels": [
-      "enhancement"
-    ],
-    "assignees": [
-      "pbalduino"
-    ]
-  },
-  {
-    "title": "Implement Buddy Split and Coalesce Operations",
-    "github_issue": {
-      "number": 248,
-      "url": "https://github.com/pbalduino/menios/issues/248",
-      "state": "CLOSED"
-    },
-    "labels": [
-      "enhancement"
-    ],
-    "assignees": [
-      "pbalduino"
-    ]
-  },
-  {
-    "title": "Rewrite Arena Setup for Buddy Allocator",
-    "github_issue": {
-      "number": 247,
-      "url": "https://github.com/pbalduino/menios/issues/247",
-      "state": "CLOSED"
-    },
-    "labels": [
-      "enhancement"
-    ],
-    "assignees": [
-      "pbalduino"
-    ]
-  },
-  {
-    "title": "Define Buddy Allocator Orders and Configuration",
-    "github_issue": {
-      "number": 246,
-      "url": "https://github.com/pbalduino/menios/issues/246",
-      "state": "CLOSED"
-    },
-    "labels": [
-      "enhancement"
-    ],
-    "assignees": [
-      "pbalduino"
-    ]
-  },
-  {
-    "title": "Survey Current Heap Implementation",
-    "github_issue": {
-      "number": 245,
-      "url": "https://github.com/pbalduino/menios/issues/245",
-      "state": "CLOSED"
-    },
-    "labels": [
-      "enhancement"
-    ],
-    "assignees": [
-      "pbalduino"
-    ]
-  },
-  {
-    "title": "Implement /proc filesystem (procfs)",
-    "github_issue": {
-      "number": 244,
-      "url": "https://github.com/pbalduino/menios/issues/244",
+      "number": 263,
+      "url": "https://github.com/pbalduino/menios/issues/263",
       "state": "CLOSED"
     },
     "labels": [
       "enhancement",
+      "kernel",
+      "closed"
+    ],
+    "assignees": []
+  },
+  {
+    "title": "Improve user-mode page fault handling - kill process instead of halting OS",
+    "github_issue": {
+      "number": 262,
+      "url": "https://github.com/pbalduino/menios/issues/262",
+      "state": "OPEN"
+    },
+    "labels": [
+      "enhancement",
+      "init",
       "kernel"
     ],
+    "assignees": []
+  },
+  {
+    "title": "Structured System Logging with SQLite",
+    "github_issue": {
+      "number": 261,
+      "url": "https://github.com/pbalduino/menios/issues/261",
+      "state": "OPEN"
+    },
+    "labels": [
+      "enhancement"
+    ],
     "assignees": [
       "pbalduino"
     ]
   },
   {
-    "title": "Add /bin/mem utility to inspect meniOS memory status",
+    "title": "Structured System Logging with SQLite",
     "github_issue": {
-      "number": 243,
-      "url": "https://github.com/pbalduino/menios/issues/243",
-      "state": "CLOSED"
+      "number": 260,
+      "url": "https://github.com/pbalduino/menios/issues/260",
+      "state": "OPEN"
     },
     "labels": [
-      "enhancement",
-      "nice to have"
+      "enhancement"
+    ],
+    "assignees": [
+      "pbalduino"
+    ]
+  },
+  {
+    "title": "Package Management Database with SQLite",
+    "github_issue": {
+      "number": 259,
+      "url": "https://github.com/pbalduino/menios/issues/259",
+      "state": "OPEN"
+    },
+    "labels": [
+      "enhancement"
+    ],
+    "assignees": [
+      "pbalduino"
+    ]
+  },
+  {
+    "title": "Resume from Hibernation",
+    "github_issue": {
+      "number": 258,
+      "url": "https://github.com/pbalduino/menios/issues/258",
+      "state": "OPEN"
+    },
+    "labels": [
+      "enhancement"
+    ],
+    "assignees": [
+      "pbalduino"
+    ]
+  },
+  {
+    "title": "SQLite-based Hibernate Metadata Management",
+    "github_issue": {
+      "number": 257,
+      "url": "https://github.com/pbalduino/menios/issues/257",
+      "state": "OPEN"
+    },
+    "labels": [
+      "enhancement"
+    ],
+    "assignees": [
+      "pbalduino"
+    ]
+  },
+  {
+    "title": "Memory Snapshot and Restore for Hibernation",
+    "github_issue": {
+      "number": 256,
+      "url": "https://github.com/pbalduino/menios/issues/256",
+      "state": "OPEN"
+    },
+    "labels": [
+      "enhancement"
+    ],
+    "assignees": [
+      "pbalduino"
+    ]
+  },
+  {
+    "title": "Process State Serialization for Hibernation",
+    "github_issue": {
+      "number": 255,
+      "url": "https://github.com/pbalduino/menios/issues/255",
+      "state": "OPEN"
+    },
+    "labels": [
+      "enhancement"
+    ],
+    "assignees": [
+      "pbalduino"
+    ]
+  },
+  {
+    "title": "Hibernation Infrastructure and Framework",
+    "github_issue": {
+      "number": 254,
+      "url": "https://github.com/pbalduino/menios/issues/254",
+      "state": "OPEN"
+    },
+    "labels": [
+      "enhancement"
     ],
     "assignees": [
       "pbalduino"

@@ -472,7 +472,9 @@ static bool pdpt_has_present_entries(const page_directory_pointer_t* pdpt) {
   return false;
 }
 
-bool pmm_unmap_page_in_root(phys_addr_t root_phys, virt_addr_t vaddr) {
+static bool pmm_unmap_page_internal(phys_addr_t root_phys,
+                                    virt_addr_t vaddr,
+                                    bool free_frame) {
   if(root_phys == 0) {
     return false;
   }
@@ -517,8 +519,18 @@ bool pmm_unmap_page_in_root(phys_addr_t root_phys, virt_addr_t vaddr) {
     }
   }
 
-  pmm_free_pages(frame, 1);
+  if(free_frame) {
+    pmm_free_pages(frame, 1);
+  }
   return true;
+}
+
+bool pmm_unmap_page_in_root(phys_addr_t root_phys, virt_addr_t vaddr) {
+  return pmm_unmap_page_internal(root_phys, vaddr, true);
+}
+
+bool pmm_remove_mapping_in_root(phys_addr_t root_phys, virt_addr_t vaddr) {
+  return pmm_unmap_page_internal(root_phys, vaddr, false);
 }
 
 bool pmm_get_mapping(phys_addr_t root_phys, virt_addr_t vaddr, phys_addr_t* out_phys, bool* out_writable, bool* out_user) {

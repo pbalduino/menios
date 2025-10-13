@@ -852,8 +852,8 @@ for(size_t page = 0; page < page_count; page++) {
 | 17 | No NUMA awareness | Low | Performance | High | 🔴 OPEN |
 | 18 | No slab layer | Medium | Efficiency | High | 🔴 OPEN |
 | 19 | No allocation profiling | Low | Debuggability | Medium | 🔴 OPEN |
-| 20 | Kernel heap leaves stale mappings on region release | Critical | Security | Medium | [#263](https://github.com/pbalduino/menios/issues/263) |
-| 21 | Kernel heap partial map rollback missing | High | Reliability | Medium | [#264](https://github.com/pbalduino/menios/issues/264) |
+| 20 | Kernel heap leaves stale mappings on region release | Critical | Security | Medium | ✅ CLOSED ([#263](https://github.com/pbalduino/menios/issues/263)) |
+| 21 | Kernel heap partial map rollback missing | High | Reliability | Medium | ✅ CLOSED ([#264](https://github.com/pbalduino/menios/issues/264)) |
 | 22 | Kernel heap virtual address exhaustion | High | Resource | Medium | 🔴 OPEN |
 | 23 | User buddy allocator lacks locking | Critical | Correctness | Medium | [#265](https://github.com/pbalduino/menios/issues/265) |
 
@@ -862,8 +862,8 @@ for(size_t page = 0; page < page_count; page++) {
 ## 🎯 **RECOMMENDED PRIORITY ORDER**
 
 ### Immediate (Before Production Use):
-1. **Fix Issue #20** ([#263](https://github.com/pbalduino/menios/issues/263)) — stale virtual mappings after region release – security-critical aliasing bug
-2. **Fix Issue #21** ([#264](https://github.com/pbalduino/menios/issues/264)) — partial map rollback – prevents the same aliasing on failure paths
+1. ~~**Fix Issue #20** ([#263](https://github.com/pbalduino/menios/issues/263)) — stale virtual mappings after region release – security-critical aliasing bug~~ ✅ Done (region pages are now unmapped before frames are released)
+2. ~~**Fix Issue #21** ([#264](https://github.com/pbalduino/menios/issues/264)) — partial map rollback – prevents the same aliasing on failure paths~~ ✅ Done (mapping failures now roll back and clean partial mappings)
 3. **Fix Issue #23** ([#265](https://github.com/pbalduino/menios/issues/265)) — allocator locking – user-mode heap is currently unsafe for concurrency
 4. **Fix Issue #3** (grow_heap NULL handling) – avoids dangling arenas after allocation failures
 5. **Fix Issue #5** (direct mmap alignment) – plugs subtle corruption for high-alignment callers
