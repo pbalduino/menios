@@ -53,7 +53,7 @@ Services needed for any compiler to function properly.
 | **Threading Foundation** | #108 | ✅ DONE | Kernel threading infrastructure |
 | pthread API | #109 | ⛳ TODO | GCC uses threads (ready now!) |
 | Thread-safe libc | #110-111 | ⛳ TODO | For multithreaded compilation |
-| Fast Syscalls | #221 | ⛳ TODO | 3-5x faster syscall performance |
+| Fast Syscalls | #221 | ✅ DONE | 3-5x faster syscall performance |
 
 > **Update (v0.1.x)**: FAT32 now supports overwriting and creating short-name files (used for `/bin` updates). Long filenames, directory creation, and more advanced cluster management remain on the backlog (#189).
 

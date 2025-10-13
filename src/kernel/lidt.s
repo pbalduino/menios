@@ -7,6 +7,7 @@ global idt_period_timer_isr_asm_handler
 global ps2kb_isr_handler
 global ahci_isr_handler
 global syscall_isr_handler
+global syscall_entry
 
 extern idt_generic_isr_handler
 extern idt_df_isr_handler
@@ -16,6 +17,22 @@ extern timer_handler
 extern ps2kb_handler
 extern ahci_irq_handler
 extern syscall_dispatch
+
+%define SYSCALL_CONTEXT_KERNEL_RSP 0
+%define SYSCALL_CONTEXT_USER_RSP   8
+%define SYSCALL_CONTEXT_USER_RIP   16
+%define SYSCALL_CONTEXT_USER_RFLAGS 24
+
+%define SYSCALL_FRAME_R11   32
+%define SYSCALL_FRAME_RCX   96
+%define SYSCALL_FRAME_RIP   120
+%define SYSCALL_FRAME_CS    128
+%define SYSCALL_FRAME_RFLAGS 136
+%define SYSCALL_FRAME_RSP   144
+%define SYSCALL_FRAME_SS    152
+
+%define USER_CODE_SELECTOR  0x3B
+%define USER_DATA_SELECTOR  0x43
 
 idt_load:
   lidt [rdi]   ; Load the IDT from the memory location pointed to by rdi
@@ -272,3 +289,77 @@ syscall_isr_handler:
   pop rax
 
   iretq
+
+syscall_entry:
+  swapgs
+
+  mov [gs:SYSCALL_CONTEXT_USER_RSP], rsp
+  mov rsp, [gs:SYSCALL_CONTEXT_KERNEL_RSP]
+  test rsp, rsp
+  jnz .syscall_stack_ready
+  hlt
+.syscall_stack_ready:
+  and rsp, 0xfffffffffffffff0
+
+  mov [gs:SYSCALL_CONTEXT_USER_RIP], rcx
+  mov [gs:SYSCALL_CONTEXT_USER_RFLAGS], r11
+
+  push qword USER_DATA_SELECTOR
+  push qword [gs:SYSCALL_CONTEXT_USER_RSP]
+  push r11
+  push qword USER_CODE_SELECTOR
+  push rcx
+
+  push rax
+  push rbx
+  push rcx
+  push rdx
+  push rbp
+  push rsi
+  push rdi
+  push r8
+  push r9
+  push r10
+  push r11
+  push r12
+  push r13
+  push r14
+  push r15
+
+  mov qword [rsp + SYSCALL_FRAME_R11], 0
+  mov qword [rsp + SYSCALL_FRAME_RCX], 0
+
+  mov rax, [rsp + SYSCALL_FRAME_RIP]
+  mov [gs:SYSCALL_CONTEXT_USER_RIP], rax
+  mov rax, [rsp + SYSCALL_FRAME_RFLAGS]
+  mov [gs:SYSCALL_CONTEXT_USER_RFLAGS], rax
+  mov rax, [rsp + SYSCALL_FRAME_RSP]
+  mov [gs:SYSCALL_CONTEXT_USER_RSP], rax
+
+  mov rdi, rsp
+  call syscall_dispatch
+
+  pop r15
+  pop r14
+  pop r13
+  pop r12
+  pop r11
+  pop r10
+  pop r9
+  pop r8
+  pop rdi
+  pop rsi
+  pop rbp
+  pop rdx
+  pop rcx
+  pop rbx
+  pop rax
+
+  add rsp, 5 * 8
+
+  mov rcx, [gs:SYSCALL_CONTEXT_USER_RIP]
+  mov r11, [gs:SYSCALL_CONTEXT_USER_RFLAGS]
+  mov rsp, [gs:SYSCALL_CONTEXT_USER_RSP]
+
+  swapgs
+  sysretq

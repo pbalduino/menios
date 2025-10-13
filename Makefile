@@ -647,6 +647,7 @@ ifeq ($(OS_NAME),linux)
 			src/kernel/fs/pipe.c \
 			src/kernel/fs/tmpfs.c \
 			src/kernel/syscall/syscall.c \
+			src/kernel/syscall/entry.c \
 			src/kernel/mem/pmm.c \
 			src/kernel/console/vprintk.c \
 		src/kernel/console/ansi.c \
@@ -677,6 +678,7 @@ ifeq ($(OS_NAME),linux)
 		src/kernel/fs/pipe.c \
 		src/kernel/fs/tmpfs.c \
 		src/kernel/syscall/syscall.c \
+			src/kernel/syscall/entry.c \
 		src/kernel/mem/pmm.c \
 		src/kernel/console/vprintk.c \
 		src/kernel/console/ansi.c \
@@ -707,6 +709,7 @@ ifeq ($(OS_NAME),linux)
 		src/kernel/fs/pipe.c \
 		src/kernel/fs/tmpfs.c \
 		src/kernel/syscall/syscall.c \
+			src/kernel/syscall/entry.c \
 		src/kernel/mem/pmm.c \
 		src/kernel/console/vprintk.c \
 		src/kernel/console/ansi.c \
@@ -737,6 +740,7 @@ ifeq ($(OS_NAME),linux)
 		src/kernel/fs/pipe.c \
 		src/kernel/fs/tmpfs.c \
 		src/kernel/syscall/syscall.c \
+			src/kernel/syscall/entry.c \
 		src/kernel/mem/pmm.c \
 		src/kernel/console/vprintk.c \
 		src/kernel/console/ansi.c \
@@ -767,6 +771,7 @@ ifeq ($(OS_NAME),linux)
 		src/kernel/fs/pipe.c \
 		src/kernel/fs/tmpfs.c \
 		src/kernel/syscall/syscall.c \
+			src/kernel/syscall/entry.c \
 		src/kernel/mem/pmm.c \
 		src/kernel/console/vprintk.c \
 		src/kernel/console/ansi.c \
@@ -798,6 +803,7 @@ ifeq ($(OS_NAME),linux)
 		src/kernel/fs/pipe.c \
 		src/kernel/fs/tmpfs.c \
 		src/kernel/syscall/syscall.c \
+			src/kernel/syscall/entry.c \
 		src/kernel/mem/pmm.c \
 		src/kernel/console/vprintk.c \
 		src/kernel/console/ansi.c \

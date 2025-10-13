@@ -272,7 +272,7 @@ Basic command-line tools for shell interaction:
 29. ✅ **#185** – PATH search configuration (COMPLETE!)
 30. ~~**#187** – Add process management tools (ps, kill)~~ ✅
 31. **#188** – env utility ✅
-32. **#221** – Migrate to fast syscall instruction for 3-5x performance boost
+32. ✅ **#221** – Fast syscall/sysret path for 3-5x performance boost (completed)
 
 ### Future: Native Compilation
 33. **#190** – Port TCC (Tiny C Compiler) to meniOS

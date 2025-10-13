@@ -174,7 +174,7 @@ digraph IssueDependencies {
         issue106 [label="#106: microkernel\nIPC", fillcolor="#DDA0DD"];
         issue107 [label="#107: capability-based\nsecurity", fillcolor="#DDA0DD"];
         issue220 [label="#220: ioctl\nsyscall", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED
-        issue221 [label="#221: Fast syscall\ninstruction", fillcolor="#E6E6FA"];
+        issue221 [label="#221: Fast syscall\ninstruction", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED
     }
 
     subgraph cluster_graphics {

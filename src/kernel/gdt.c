@@ -109,3 +109,7 @@ void gdt_init() {
 void tss_update_kernel_stack(uint64_t stack_top) {
   tss.rsp0 = stack_top;
 }
+
+uint64_t gdt_get_tss_stack_top(void) {
+  return tss.rsp0;
+}

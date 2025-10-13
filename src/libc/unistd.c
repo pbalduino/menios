@@ -10,56 +10,34 @@
 #include <unistd.h>
 
 ssize_t read(int fd, void* buffer, size_t length) {
-  register uint64_t rax asm("rax") = SYS_READ;
-  register uint64_t rdi asm("rdi") = (uint64_t)fd;
-  register void* rsi asm("rsi") = buffer;
-  register size_t rdx asm("rdx") = length;
+  long rc = __menios_syscall3(SYS_READ, (long)fd, (long)buffer, (long)length);
 
-  asm volatile("int $0x80"
-               : "+a"(rax)
-               : "D"(rdi), "S"(rsi), "d"(rdx)
-               : "rcx", "r11", "memory");
-
-  if((int64_t)rax < 0) {
-    errno = (int)(-((int64_t)rax));
+  if(rc < 0) {
+    errno = (int)(-rc);
     return -1;
   }
 
   errno = 0;
-  return (ssize_t)rax;
+  return (ssize_t)rc;
 }
 
 ssize_t write(int fd, const void* buffer, size_t length) {
-  register uint64_t rax asm("rax") = SYS_WRITE;
-  register uint64_t rdi asm("rdi") = (uint64_t)fd;
-  register const void* rsi asm("rsi") = buffer;
-  register size_t rdx asm("rdx") = length;
+  long rc = __menios_syscall3(SYS_WRITE, (long)fd, (long)buffer, (long)length);
 
-  asm volatile("int $0x80"
-               : "+a"(rax)
-               : "D"(rdi), "S"(rsi), "d"(rdx)
-               : "rcx", "r11", "memory");
-
-  if((int64_t)rax < 0) {
-    errno = (int)(-((int64_t)rax));
+  if(rc < 0) {
+    errno = (int)(-rc);
     return -1;
   }
 
   errno = 0;
-  return (ssize_t)rax;
+  return (ssize_t)rc;
 }
 
 int close(int fd) {
-  register uint64_t rax asm("rax") = SYS_CLOSE;
-  register uint64_t rdi asm("rdi") = (uint64_t)fd;
+  long rc = __menios_syscall1(SYS_CLOSE, (long)fd);
 
-  asm volatile("int $0x80"
-               : "+a"(rax)
-               : "D"(rdi)
-               : "rcx", "r11", "memory");
-
-  if((int64_t)rax < 0) {
-    errno = (int)(-((int64_t)rax));
+  if(rc < 0) {
+    errno = (int)(-rc);
     return -1;
   }
 
@@ -68,53 +46,34 @@ int close(int fd) {
 }
 
 int dup(int fd) {
-  register uint64_t rax asm("rax") = SYS_DUP;
-  register uint64_t rdi asm("rdi") = (uint64_t)fd;
+  long rc = __menios_syscall1(SYS_DUP, (long)fd);
 
-  asm volatile("int $0x80"
-               : "+a"(rax)
-               : "D"(rdi)
-               : "rcx", "r11", "memory");
-
-  if((int64_t)rax < 0) {
-    errno = (int)(-((int64_t)rax));
+  if(rc < 0) {
+    errno = (int)(-rc);
     return -1;
   }
 
   errno = 0;
-  return (int)rax;
+  return (int)rc;
 }
 
 int dup2(int oldfd, int newfd) {
-  register uint64_t rax asm("rax") = SYS_DUP2;
-  register uint64_t rdi asm("rdi") = (uint64_t)oldfd;
-  register uint64_t rsi asm("rsi") = (uint64_t)newfd;
+  long rc = __menios_syscall2(SYS_DUP2, (long)oldfd, (long)newfd);
 
-  asm volatile("int $0x80"
-               : "+a"(rax)
-               : "D"(rdi), "S"(rsi)
-               : "rcx", "r11", "memory");
-
-  if((int64_t)rax < 0) {
-    errno = (int)(-((int64_t)rax));
+  if(rc < 0) {
+    errno = (int)(-rc);
     return -1;
   }
 
   errno = 0;
-  return (int)rax;
+  return (int)rc;
 }
 
 int pipe(int pipefd[2]) {
-  register uint64_t rax asm("rax") = SYS_PIPE;
-  register int* rdi asm("rdi") = pipefd;
+  long rc = __menios_syscall1(SYS_PIPE, (long)pipefd);
 
-  asm volatile("int $0x80"
-               : "+a"(rax)
-               : "D"(rdi)
-               : "rcx", "r11", "memory");
-
-  if((int64_t)rax < 0) {
-    errno = (int)(-((int64_t)rax));
+  if(rc < 0) {
+    errno = (int)(-rc);
     return -1;
   }
 
@@ -123,23 +82,18 @@ int pipe(int pipefd[2]) {
 }
 
 off_t lseek(int fd, off_t offset, int whence) {
-  register uint64_t rax asm("rax") = SYS_LSEEK;
-  register uint64_t rdi asm("rdi") = (uint64_t)fd;
-  register off_t rsi asm("rsi") = offset;
-  register uint64_t rdx asm("rdx") = (uint64_t)whence;
+  long rc = __menios_syscall3(SYS_LSEEK,
+                              (long)fd,
+                              (long)offset,
+                              (long)whence);
 
-  asm volatile("int $0x80"
-               : "+a"(rax)
-               : "D"(rdi), "S"(rsi), "d"(rdx)
-               : "rcx", "r11", "memory");
-
-  if((int64_t)rax < 0) {
-    errno = (int)(-((int64_t)rax));
+  if(rc < 0) {
+    errno = (int)(-rc);
     return (off_t)-1;
   }
 
   errno = 0;
-  return (off_t)rax;
+  return (off_t)rc;
 }
 
 int ioctl(int fd, unsigned long request, ...) {
@@ -148,23 +102,18 @@ int ioctl(int fd, unsigned long request, ...) {
   void* argp = va_arg(ap, void*);
   va_end(ap);
 
-  register uint64_t rax asm("rax") = SYS_IOCTL;
-  register uint64_t rdi asm("rdi") = (uint64_t)fd;
-  register unsigned long rsi asm("rsi") = request;
-  register uint64_t rdx asm("rdx") = (uint64_t)argp;
+  long rc = __menios_syscall3(SYS_IOCTL,
+                              (long)fd,
+                              (long)request,
+                              (long)argp);
 
-  asm volatile("int $0x80"
-               : "+a"(rax)
-               : "D"(rdi), "S"(rsi), "d"(rdx)
-               : "rcx", "r11", "memory");
-
-  if((int64_t)rax < 0) {
-    errno = (int)(-((int64_t)rax));
+  if(rc < 0) {
+    errno = (int)(-rc);
     return -1;
   }
 
   errno = 0;
-  return (int)rax;
+  return (int)rc;
 }
 
 pid_t fork(void) {
