@@ -3,6 +3,9 @@
 #include <errno.h>
 #include <stdint.h>
 #include <stdlib.h>
+#ifdef MENIOS_HOST_TEST
+#include "../user/libc/allocator_debug.h"
+#endif
 
 #ifdef MENIOS_HOST_TEST
 #define LARGE_ALLOCATION (16 * 1024 * 1024u)
@@ -60,10 +63,36 @@ void test_stats_reflect_buddy_free_bytes_after_free(void) {
   TEST_ASSERT_TRUE(after.buddy_free_payload_bytes >= mid.buddy_free_payload_bytes);
 }
 
+void test_stats_record_double_free_attempts(void) {
+#ifdef MENIOS_HOST_TEST
+  menios_malloc_stats_t before = {0};
+  TEST_ASSERT_EQUAL_INT(0, menios_malloc_stats(&before));
+
+  uint8_t* ptr = malloc(128);
+  if(ptr == NULL) {
+    TEST_IGNORE_MESSAGE("malloc returned NULL; skipping double-free stats test");
+    return;
+  }
+
+  free(ptr);
+  __menios_buddy_debug_abort_on_double_free(false);
+  errno = 0;
+  free(ptr);
+  __menios_buddy_debug_abort_on_double_free(true);
+
+  menios_malloc_stats_t after = {0};
+  TEST_ASSERT_EQUAL_INT(0, menios_malloc_stats(&after));
+  TEST_ASSERT_EQUAL_size_t(before.double_free_attempts + 1u, after.double_free_attempts);
+#else
+  TEST_IGNORE_MESSAGE("double-free stats test requires MENIOS_HOST_TEST");
+#endif
+}
+
 int main(void) {
   UNITY_BEGIN();
   RUN_TEST(test_stats_rejects_null_pointer);
   RUN_TEST(test_stats_track_direct_allocations);
   RUN_TEST(test_stats_reflect_buddy_free_bytes_after_free);
+  RUN_TEST(test_stats_record_double_free_attempts);
   return UNITY_END();
 }

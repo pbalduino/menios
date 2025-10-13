@@ -67,6 +67,19 @@
     "assignees": []
   },
   {
+    "title": "Improve double-free detection and diagnostics",
+    "github_issue": {
+      "number": 266,
+      "url": "https://github.com/pbalduino/menios/issues/266",
+      "state": "CLOSED"
+    },
+    "labels": [
+      "enhancement",
+      "closed"
+    ],
+    "assignees": []
+  },
+  {
     "title": "Use-after-free risk in buddy_coalesce_block",
     "github_issue": {
       "number": 273,

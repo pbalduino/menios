@@ -21,5 +21,6 @@ uintptr_t __menios_buddy_debug_offset(const block_header_t* block);
 arena_header_t* __menios_buddy_debug_arena(const block_header_t* block);
 size_t __menios_buddy_debug_freelist_length(uint32_t order);
 void __menios_buddy_debug_poison_after_remove(bool enable);
+void __menios_buddy_debug_abort_on_double_free(bool enable);
 
 #endif /* MENIOS_HOST_TEST */

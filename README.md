@@ -166,7 +166,7 @@ Expect the log to show the `[user_demo]` messages on screen and in `com1.log`, c
 - [x] **#264**: Kernel heap partial mapping rollback ✅ COMPLETE!
 - [x] **#265**: User buddy allocator thread safety ✅ COMPLETE!
 - [x] **#267**: Missing NULL check in grow_heap ✅ COMPLETE!
-- [ ] **#266**: Improve double-free detection and diagnostics
+- [x] **#266**: Improve double-free detection and diagnostics ✅
 - [x] **#268**: Direct mmap alignment calculation error
 - [ ] **#272**: Kernel heap virtual address exhaustion
 - [x] **#273**: Use-after-free risk in buddy_coalesce_block ✅
@@ -239,7 +239,7 @@ See [`road_to_doom.md`](docs/road/road_to_doom.md) for the complete roadmap and 
 - ✅ **Performance**: I/O scheduler (#205) ✅
 - ✅ **Memory**: Userspace allocator (#95) ✅
 
-**The critical path forward**: Complete Buddy Allocator reliability fixes (#266, #272 — #268 ✅, #273 ✅), then **FAT32 write support** (#189) to unblock GCC native compilation (#190, #191)!
+**The critical path forward**: Complete Buddy Allocator reliability fixes (#272 — #266 ✅, #268 ✅, #273 ✅), then **FAT32 write support** (#189) to unblock GCC native compilation (#190, #191)!
 
 **🎯 Milestone Status**:
 - 🎉 **Mosh** (Shell): 27/27 complete (100%) - v0.1.0 shipped!
@@ -336,7 +336,7 @@ We welcome contributions from developers of all skill levels! 🚀
 - **New Contributors**: Start with our [Contributing Guide](CONTRIBUTING.md) for a complete development workflow
 - **Find Tasks**: Check [GitHub Issues](https://github.com/pbalduino/menios/issues) or browse [`tasks.json`](tasks.json) for detailed task tracking
 - **High Priority - In Progress** (7 issues active):
-  - **🔨 Buddy Allocator Reliability**: #266, #272 (high priority correctness fixes, ~~#267 ✅~~, ~~#268 ✅~~, ~~#273 ✅~~)
+  - **🔨 Buddy Allocator Reliability**: #272 (high priority correctness fixes, ~~#266 ✅~~, ~~#267 ✅~~, ~~#268 ✅~~, ~~#273 ✅~~)
   - **⚡ Buddy Allocator Performance**: #269, #270, #271 (performance optimizations)
 - **Ready to Start** (5 issues available):
   - **🚀 GCC Native Compilation** (Partially unblocked): #190 (TCC port), #191 (binutils port) - Buddy core ✅, needs reliability fixes + #189

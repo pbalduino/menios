@@ -32,7 +32,7 @@ static void buddy_release_block(block_header_t* block) {
 - In development/test builds, convert the guard into an assertion or panic.
 - In production builds, at minimum emit a rate-limited warning and bump a diagnostic counter exposed through `menios_malloc_stats()` so tooling can spot the corruption attempt.
 
-**Status (2025-10-14)**: ✔️ Addressed. `buddy_release_block()` now emits a diagnostic, sets `errno = EINVAL`, and aborts under `MENIOS_HOST_TEST`, preventing silent double-frees.
+**Status (2025-10-14)**: ✔️ Addressed. `buddy_release_block()` now emits a diagnostic, bumps a `double_free_attempts` counter surfaced through `menios_malloc_stats()`, sets `errno = EINVAL`, and (optionally) aborts under `MENIOS_HOST_TEST`, preventing silent double-frees.
 
 ---
 
@@ -830,7 +830,7 @@ for(size_t page = 0; page < page_count; page++) {
 
 | # | Issue | Severity | Type | Fix Effort | Status |
 |---|-------|----------|------|------------|--------|
-| 1 | Double-free silent failure | High | Security | Low | [#266](https://github.com/pbalduino/menios/issues/266) |
+| 1 | Double-free silent failure | High | Security | Low | ✅ CLOSED ([#266](https://github.com/pbalduino/menios/issues/266)) |
 | 2 | Use-after-free in coalesce | Critical | Security | Low | ✅ CLOSED ([#273](https://github.com/pbalduino/menios/issues/273)) |
 | 3 | Missing NULL check in grow_heap | High | Reliability | Low | ✅ CLOSED ([#267](https://github.com/pbalduino/menios/issues/267)) |
 | 4 | Integer overflow in buddy_order_size | Medium | Security | Low | 🔴 OPEN |
@@ -875,7 +875,7 @@ for(size_t page = 0; page < page_count; page++) {
 
 ### Medium Priority (Technical Debt):
 12. **Fix Issue #9** ([#271](https://github.com/pbalduino/menios/issues/271)) — freelist linear search – tighten buddy coalesce cost
-13. **Fix Issue #1** ([#266](https://github.com/pbalduino/menios/issues/266)) — double-free detection improvements – better production diagnostics
+13. ~~**Fix Issue #1** ([#266](https://github.com/pbalduino/menios/issues/266)) — double-free detection improvements – better production diagnostics~~ ✅
 14. **Fix Issue #15** (compactor zeroing) – decide on perf vs scrub policy
 15. **Add Issue #16** (arena retirement) – reclaim unused user arenas
 

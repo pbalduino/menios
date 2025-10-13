@@ -119,6 +119,7 @@ _Static_assert((sizeof(block_header_t) % DEFAULT_ALIGNMENT) == 0,
 static arena_header_t* arena_list_head = NULL;
 static size_t direct_allocation_count = 0;
 static size_t direct_total_bytes = 0;
+static size_t double_free_attempts = 0;
 
 static int grow_heap(size_t size);
 
@@ -270,9 +271,14 @@ static block_header_t* buddy_split_to_order(block_header_t* block, uint32_t targ
 
 #ifdef MENIOS_HOST_TEST
 static bool buddy_debug_poison_after_remove = false;
+static bool buddy_debug_abort_on_double_free = true;
 
 void __menios_buddy_debug_poison_after_remove(bool enable) {
   buddy_debug_poison_after_remove = enable;
+}
+
+void __menios_buddy_debug_abort_on_double_free(bool enable) {
+  buddy_debug_abort_on_double_free = enable;
 }
 #endif
 
@@ -602,8 +608,11 @@ static void buddy_release_block(block_header_t* block) {
   if(block->buddy_flags & BUDDY_FLAG_FREE) {
     static const char msg[] = "buddy_release_block: double free detected\n";
     (void)write(STDERR_FILENO, msg, sizeof(msg) - 1u);
+    ++double_free_attempts;
 #ifdef MENIOS_HOST_TEST
-    abort();
+    if(buddy_debug_abort_on_double_free) {
+      abort();
+    }
 #endif
     errno = EINVAL;
     allocator_unlock_guard();
@@ -948,6 +957,7 @@ int menios_malloc_stats(menios_malloc_stats_t* stats) {
 
   snapshot.direct_allocations = direct_allocation_count;
   snapshot.direct_bytes = direct_total_bytes;
+  snapshot.double_free_attempts = double_free_attempts;
 
   *stats = snapshot;
   allocator_unlock_guard();

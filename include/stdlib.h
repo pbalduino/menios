@@ -28,6 +28,7 @@ typedef struct {
   size_t buddy_free_blocks;
   size_t direct_allocations;
   size_t direct_bytes;
+  size_t double_free_attempts;
 } menios_malloc_stats_t;
 
 int   posix_memalign(void** memptr, size_t alignment, size_t size);

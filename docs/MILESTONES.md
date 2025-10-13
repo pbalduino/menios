@@ -97,7 +97,7 @@ This document tracks the three major milestones for meniOS development.
 **Goal**: Migrate userland allocator from first-fit to buddy allocator system
 **GitHub Milestone**: [Buddy Allocator](https://github.com/pbalduino/menios/milestone/4)
 
-**Status**: 15/20 complete (75.0%)
+**Status**: 16/20 complete (80.0%)
 
 **Assigned Issues**:
 
@@ -118,7 +118,7 @@ This document tracks the three major milestones for meniOS development.
 - [x] #265 - User buddy allocator: thread safety ✅
 
 #### High Priority Fixes (5 issues)
-- [ ] #266 - Buddy allocator: improve double-free detection and diagnostics
+- [x] #266 - Buddy allocator: improve double-free detection and diagnostics ✅
 - [x] #267 - Buddy allocator: missing NULL check in grow_heap ✅
 - [x] #268 - Buddy allocator: direct mmap alignment calculation error ✅
 - [x] #273 - Buddy allocator: use-after-free risk in buddy_coalesce_block ✅
@@ -274,7 +274,7 @@ This document tracks the three major milestones for meniOS development.
 - **Completed**: 52 issues (64.2%)
 - **In Progress**: 29 issues
 - **Ready to Start**: 5 issues (no dependencies: #109, #221, #190, #191; unblocked by Buddy core implementation)
-- **Next Up**: Complete Buddy Allocator reliability fixes (#266, #272 — #268 ✅, #273 ✅), then TCC/binutils ports (#190, #191)
+- **Next Up**: Complete Buddy Allocator reliability fixes (#272 — #266 ✅, #268 ✅, #273 ✅), then TCC/binutils ports (#190, #191)
 
 ## 🚀 Immediate Next Steps
 
@@ -286,7 +286,7 @@ Core buddy allocator implementation complete (Phase 1 ✅) and critical security
 - ~~#268 - Direct mmap alignment calculation error (large alignments)~~ ✅
 - ~~#273 - Use-after-free risk in buddy_coalesce_block~~ ✅
 - #272 - Kernel heap virtual address exhaustion
-- #266 - Double-free detection improvements
+- ~~#266 - Double-free detection improvements~~ ✅
 
 **Phase 4 - Performance Optimizations**:
 - #269 - O(A×O) arena linear search optimization
@@ -398,7 +398,7 @@ Recommended completion order for maximum impact:
   - Created `docs/memory_issues.md` with comprehensive analysis
   - Closed #263 (kernel stale mappings) ✅, #264 (partial rollback) ✅, #265 (thread safety) ✅
 - **2025-10-14**: Created 8 new Buddy Allocator issues (#266-#273) for reliability and performance
-  - High priority: #266 (double-free detection), #267 (NULL check), #272 (VA exhaustion), ~~#273 (use-after-free)~~, ~~#268 (alignment)~~
+  - High priority: ~~#266 (double-free detection)~~, #267 (NULL check), #272 (VA exhaustion), ~~#273 (use-after-free)~~, ~~#268 (alignment)~~
   - Performance: #269 (arena search), #270 (kernel coalescing), #271 (freelist search)
   - Buddy Allocator milestone expanded to 20 issues (was 9)
   - Total project issues: 81 (was 70)
