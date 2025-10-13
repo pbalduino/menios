@@ -6,10 +6,23 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdatomic.h>
 #include <sys/errno.h>
 #include <sys/mman.h>
 #include <unistd.h>
 #include <stdio.h>
+
+static atomic_flag allocator_lock = ATOMIC_FLAG_INIT;
+
+static inline void allocator_lock_guard(void) {
+  while(atomic_flag_test_and_set_explicit(&allocator_lock, memory_order_acquire)) {
+    __asm__ __volatile__("pause");
+  }
+}
+
+static inline void allocator_unlock_guard(void) {
+  atomic_flag_clear_explicit(&allocator_lock, memory_order_release);
+}
 
 #ifndef MAP_ANONYMOUS
 #define MAP_ANONYMOUS MAP_ANON
@@ -528,7 +541,9 @@ static block_header_t* buddy_allocate_block(size_t payload_size) {
 }
 
 static void buddy_release_block(block_header_t* block) {
+  allocator_lock_guard();
   if(block == NULL || block->arena == NULL) {
+    allocator_unlock_guard();
     return;
   }
 
@@ -539,6 +554,7 @@ static void buddy_release_block(block_header_t* block) {
     abort();
 #endif
     errno = EINVAL;
+    allocator_unlock_guard();
     return;
   }
 
@@ -548,6 +564,7 @@ static void buddy_release_block(block_header_t* block) {
   block->buddy_prev = NULL;
   block->size = buddy_payload_capacity(block->buddy_order);
   buddy_coalesce_block(block);
+  allocator_unlock_guard();
 }
 
 static int grow_heap(size_t size) {
@@ -636,8 +653,10 @@ static void* allocate_direct(size_t size, size_t alignment) {
   header->flags = BLOCK_FLAG_DIRECT;
   header->padding_reserved = 0u;
   header->padding_align = 0u;
+  allocator_lock_guard();
   direct_allocation_count++;
   direct_total_bytes += total;
+  allocator_unlock_guard();
   return block_payload(header);
 }
 
@@ -680,6 +699,7 @@ void free(void* ptr) {
   block_header_t* block = payload_to_block(ptr);
   if(block_is_direct(block)) {
     if(block->mapping_base != NULL && block->mapping_size != 0) {
+      allocator_lock_guard();
       if(direct_allocation_count > 0) {
         direct_allocation_count--;
       }
@@ -688,6 +708,7 @@ void free(void* ptr) {
       } else {
         direct_total_bytes = 0;
       }
+      allocator_unlock_guard();
       (void)munmap(block->mapping_base, block->mapping_size);
     }
     return;
@@ -789,6 +810,7 @@ int menios_malloc_stats(menios_malloc_stats_t* stats) {
     return -1;
   }
 
+  allocator_lock_guard();
   menios_malloc_stats_t snapshot = {0};
 
   for(arena_header_t* arena = arena_list_head; arena != NULL; arena = arena->next) {
@@ -807,6 +829,7 @@ int menios_malloc_stats(menios_malloc_stats_t* stats) {
   snapshot.direct_bytes = direct_total_bytes;
 
   *stats = snapshot;
+  allocator_unlock_guard();
   return 0;
 }
 
@@ -1002,20 +1025,3 @@ void exit(int status) {
   _exit(status);
 }
 #endif
-#include <threads.h>
-
-static mtx_t allocator_lock;
-static once_flag allocator_once = ONCE_FLAG_INIT;
-
-static void allocator_initialize_lock(void) {
-  mtx_init(&allocator_lock, mtx_plain);
-}
-
-static inline void allocator_lock_guard(void) {
-  call_once(&allocator_once, allocator_initialize_lock);
-  mtx_lock(&allocator_lock);
-}
-
-static inline void allocator_unlock_guard(void) {
-  mtx_unlock(&allocator_lock);
-}

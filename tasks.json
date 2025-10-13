@@ -4,10 +4,11 @@
     "github_issue": {
       "number": 265,
       "url": "https://github.com/pbalduino/menios/issues/265",
-      "state": "OPEN"
+      "state": "CLOSED"
     },
     "labels": [
-      "enhancement"
+      "enhancement",
+      "closed"
     ],
     "assignees": []
   },

@@ -10,7 +10,7 @@
 
 ## 🔴 **CRITICAL ISSUES**
 
-### 1. **Buddy Allocator: Double-Free Detection Is a Silent No-Op** (Security: High)
+### 1. **Buddy Allocator: Double-Free Detection Is a Silent No-Op** (Security: High) — [Issue #266](https://github.com/pbalduino/menios/issues/266)
 **Location**: `stdlib.c:490-505`
 ```c
 static void buddy_release_block(block_header_t* block) {
@@ -36,7 +36,7 @@ static void buddy_release_block(block_header_t* block) {
 
 ---
 
-### 2. **Use-After-Free Risk in `buddy_coalesce_block`** (Security: Critical)
+### 2. **Use-After-Free Risk in `buddy_coalesce_block`** (Security: Critical) — [Issue #267](https://github.com/pbalduino/menios/issues/267)
 **Location**: `stdlib.c:281-283`
 ```c
 if(buddy->buddy_offset < block->buddy_offset) {
@@ -58,7 +58,7 @@ if(buddy_off < block->buddy_offset) {
 
 ---
 
-### 3. **Missing NULL Check in `grow_heap`** (Reliability: High)
+### 3. **Missing NULL Check in `grow_heap`** (Reliability: High) — [Issue #268](https://github.com/pbalduino/menios/issues/268)
 **Location**: `stdlib.c:555-560`
 ```c
 block_header_t* root = buddy_materialize_block(arena, 0u, BUDDY_MAX_ORDER);
@@ -120,7 +120,7 @@ static inline size_t buddy_order_size(uint32_t order) {
 
 ---
 
-### 5. **Direct mmap Alignment Calculation Error** (Correctness: High)
+### 5. **Direct mmap Alignment Calculation Error** (Correctness: High) — [Issue #268](https://github.com/pbalduino/menios/issues/268)
 **Location**: `stdlib.c:590-592`
 ```c
 uintptr_t base = (uintptr_t)mapping + sizeof(block_header_t);
@@ -161,7 +161,7 @@ assert((uintptr_t)header + sizeof(block_header_t) + padded <= (uintptr_t)mapping
 
 ---
 
-### 6. **Kernel Heap: Magic Number Check Bypassed** (Security: Medium)
+### 6. **Kernel Heap: Magic Number Check Bypassed** (Security: Medium) — [Issue #271](https://github.com/pbalduino/menios/issues/271)
 **Location**: `kmalloc.c:640-643`
 ```c
 if(node->magic != HEAP_MAGIC) {
@@ -195,7 +195,7 @@ if(node->magic != HEAP_MAGIC) {
 
 ## 🟡 **PERFORMANCE ISSUES**
 
-### 7. **Buddy Allocator: Linear Search Across All Arenas** (Performance: Medium)
+### 7. **Buddy Allocator: Linear Search Across All Arenas** (Performance: Medium) — [Issue #269](https://github.com/pbalduino/menios/issues/269)
 **Location**: `stdlib.c:444-452`
 ```c
 for(int attempt = 0; attempt < 2; ++attempt) {
@@ -855,7 +855,7 @@ for(size_t page = 0; page < page_count; page++) {
 | 20 | Kernel heap leaves stale mappings on region release | Critical | Security | Medium | ✅ CLOSED ([#263](https://github.com/pbalduino/menios/issues/263)) |
 | 21 | Kernel heap partial map rollback missing | High | Reliability | Medium | ✅ CLOSED ([#264](https://github.com/pbalduino/menios/issues/264)) |
 | 22 | Kernel heap virtual address exhaustion | High | Resource | Medium | 🔴 OPEN |
-| 23 | User buddy allocator lacks locking | Critical | Correctness | Medium | [#265](https://github.com/pbalduino/menios/issues/265) |
+| 23 | User buddy allocator lacks locking | Critical | Correctness | Medium | ✅ CLOSED ([#265](https://github.com/pbalduino/menios/issues/265)) |
 
 ---
 
@@ -864,7 +864,7 @@ for(size_t page = 0; page < page_count; page++) {
 ### Immediate (Before Production Use):
 1. ~~**Fix Issue #20** ([#263](https://github.com/pbalduino/menios/issues/263)) — stale virtual mappings after region release – security-critical aliasing bug~~ ✅ Done (region pages are now unmapped before frames are released)
 2. ~~**Fix Issue #21** ([#264](https://github.com/pbalduino/menios/issues/264)) — partial map rollback – prevents the same aliasing on failure paths~~ ✅ Done (mapping failures now roll back and clean partial mappings)
-3. **Fix Issue #23** ([#265](https://github.com/pbalduino/menios/issues/265)) — allocator locking – user-mode heap is currently unsafe for concurrency
+3. ~~**Fix Issue #23** ([#265](https://github.com/pbalduino/menios/issues/265)) — allocator locking – user-mode heap is currently unsafe for concurrency~~ ✅ Done (global allocator lock now guards all heap operations)
 4. **Fix Issue #3** (grow_heap NULL handling) – avoids dangling arenas after allocation failures
 5. **Fix Issue #5** (direct mmap alignment) – plugs subtle corruption for high-alignment callers
 
