@@ -278,6 +278,8 @@ typedef struct heap_node_t {
 1. Update `heap_grow()` to set `node->prev = previous_tail` (line 376)
 2. Update `heap_split_node()` to maintain `prev` pointers (line 405)
 3. Replace `heap_find_previous()` with direct `node->prev` access in `kfree()` (line 655)
+
+**Status (2025-10-14)**: ✅ Fixed. Heap nodes now store `prev` pointers, `heap_merge_forward()` preserves them, and both `kfree()` and region release paths perform O(1) predecessor updates.
 4. Update all list manipulation to maintain bidirectional links
 
 **Estimated Impact**: Reduces `kfree()` from O(n) to O(1) for the predecessor lookup, keeping only the O(k) merge-forward cost where k = number of contiguous free blocks (typically small).
@@ -872,7 +874,7 @@ for(size_t page = 0; page < page_count; page++) {
 7. ~~**Fix Issue #22** ([#272](https://github.com/pbalduino/menios/issues/272)) — virtual address recycling for kmalloc – prevents premature heap exhaustion~~ ✅
 8. **Fix Issue #10** (unbounded arena growth) – caps userland heap expansion
 9. ~~**Fix Issue #7** ([#269](https://github.com/pbalduino/menios/issues/269)) — buddy arena linear search – improves scaling before adding slab caches~~ ✅
-10. **Fix Issue #8** ([#270](https://github.com/pbalduino/menios/issues/270)) — kernel O(n²) coalescing – removes pathological frees
+10. ~~**Fix Issue #8** ([#270](https://github.com/pbalduino/menios/issues/270)) — kernel O(n²) coalescing – removes pathological frees~~ ✅
 11. **Fix Issue #11** (region descriptor limit) – avoids kmalloc hard-failures under churn
 
 ### Medium Priority (Technical Debt):

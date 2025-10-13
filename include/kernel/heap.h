@@ -28,6 +28,7 @@ typedef struct heap_node_t {
   uint8_t              status; // 1 byte
   uint32_t             size;   // 4 bytes
   struct heap_node_t*  next;   // 8 bytes
+  struct heap_node_t*  prev;   // 8 bytes
   uint8_t              data[];
 } heap_node_t; 
 

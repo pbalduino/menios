@@ -393,22 +393,6 @@ static heap_region_t* heap_region_from_node(heap_node_p node) {
   return NULL;
 }
 
-static heap_node_p heap_find_previous(heap_node_p target) {
-  heap_node_p prev = NULL;
-  heap_node_p cursor = heap;
-
-  while(cursor) {
-    if(cursor == target) {
-      return prev;
-    }
-
-    prev = cursor;
-    cursor = cursor->next;
-  }
-
-  return NULL;
-}
-
 static bool nodes_are_contiguous(heap_node_p left, heap_node_p right) {
   if(left == NULL || right == NULL) {
     return false;
@@ -477,18 +461,28 @@ static void heap_release_region_if_unused(heap_node_p node) {
     return;
   }
 
-  heap_node_p prev = heap_find_previous(node);
+  heap_node_p prev = node->prev;
   heap_node_p next = node->next;
 
   if(prev) {
     prev->next = next;
   } else {
     heap = next;
+    if(heap != NULL) {
+      heap->prev = NULL;
+    }
+  }
+
+  if(next != NULL) {
+    next->prev = prev;
   }
 
   if(heap_tail == node) {
     heap_tail = prev;
   }
+
+  node->prev = NULL;
+  node->next = NULL;
 
   virt_addr_t base = (virt_addr_t)region->base;
   heap_unmap_pages(base, region->page_count);
@@ -525,6 +519,7 @@ static bool heap_grow(size_t minimum_size) {
   node->magic = HEAP_MAGIC;
   node->size = requested - HEAP_HEADER_SIZE;
   node->next = NULL;
+  node->prev = NULL;
   node->status = HEAP_FREE;
 
   heap_node_p previous_tail = heap_tail;
@@ -535,6 +530,9 @@ static bool heap_grow(size_t minimum_size) {
 
   if(previous_tail) {
     previous_tail->next = node;
+    node->prev = previous_tail;
+  } else {
+    node->prev = NULL;
   }
 
   heap_tail = node;
@@ -553,6 +551,9 @@ static bool heap_grow(size_t minimum_size) {
       heap_tail = NULL;
     }
 
+    node->prev = NULL;
+    node->next = NULL;
+
     pmm_free_pages(phys_base, page_count);
     return false;
   }
@@ -564,11 +565,16 @@ static void heap_split_node(heap_node_p node, size_t requested_size) {
   size_t available = node->size;
 
   if(available >= requested_size + HEAP_HEADER_SIZE + HEAP_ALIGNMENT) {
+    heap_node_p old_next = node->next;
     heap_node_p next = (heap_node_p)(((uintptr_t)node) + HEAP_HEADER_SIZE + requested_size);
     next->magic = HEAP_MAGIC;
     next->size = available - requested_size - HEAP_HEADER_SIZE;
     next->status = HEAP_FREE;
-    next->next = node->next;
+    next->next = old_next;
+    next->prev = node;
+    if(old_next != NULL) {
+      old_next->prev = next;
+    }
 
     node->size = requested_size;
     node->next = next;
@@ -630,6 +636,7 @@ void init_heap(void* addr, size_t size) {
     node->size = aligned_size - HEAP_HEADER_SIZE;
     node->status = HEAP_FREE;
     node->next = NULL;
+    node->prev = NULL;
 
     heap = node;
     heap_tail = node;
@@ -787,6 +794,9 @@ static void heap_merge_forward(heap_node_p node) {
     heap_node_p next = node->next;
     node->size += next->size + HEAP_HEADER_SIZE;
     node->next = next->next;
+    if(node->next != NULL) {
+      node->next->prev = node;
+    }
 
     if(heap_tail == next) {
       heap_tail = node;
@@ -818,20 +828,24 @@ void kfree(void* ptr) {
   node->status = HEAP_FREE;
   heap_freed = true;
 
-  heap_node_p prev = heap_find_previous(node);
+  heap_node_p prev = node->prev;
 
   if(prev && prev->status == HEAP_FREE && nodes_are_contiguous(prev, node)) {
     prev->size += node->size + HEAP_HEADER_SIZE;
     prev->next = node->next;
-
+    if(node->next != NULL) {
+      node->next->prev = prev;
+    }
     if(heap_tail == node) {
       heap_tail = prev;
     }
-
     node = prev;
   }
 
   heap_merge_forward(node);
+  if(node->next != NULL) {
+    node->next->prev = node;
+  }
   heap_release_region_if_unused(node);
 
   spinlock_unlock(&heap_lock);

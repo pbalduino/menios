@@ -107,6 +107,20 @@
     "assignees": []
   },
   {
+    "title": "Kernel heap: O(n²) coalescing in kfree",
+    "github_issue": {
+      "number": 270,
+      "url": "https://github.com/pbalduino/menios/issues/270",
+      "state": "CLOSED"
+    },
+    "labels": [
+      "enhancement",
+      "kernel",
+      "closed"
+    ],
+    "assignees": []
+  },
+  {
     "title": "Use-after-free risk in buddy_coalesce_block",
     "github_issue": {
       "number": 273,

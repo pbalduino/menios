@@ -159,7 +159,7 @@ Expect the log to show the `[user_demo]` messages on screen and in `com1.log`, c
 - [x] **#253**: Cleanup and Document Buddy Allocator Migration ✅ COMPLETE!
   - Legacy first-fit code removed, buddy design fully documented
 
-**Status**: 18/20 complete (90%) - Core implementation ✅ COMPLETE! Critical security fixes ✅ COMPLETE! Reliability phase ✅ COMPLETE.
+**Status**: 19/20 complete (95%) - Core implementation ✅ COMPLETE! Critical security fixes ✅ COMPLETE! Reliability phase ✅ COMPLETE.
 
 #### **Buddy Allocator - Post-Implementation** (Issues #263-#273) 🔨 Reliability Phase COMPLETE
 - [x] **#263**: Kernel heap stale virtual mappings ✅ COMPLETE!
@@ -171,7 +171,7 @@ Expect the log to show the `[user_demo]` messages on screen and in `com1.log`, c
 - [x] **#272**: Kernel heap virtual address exhaustion ✅
 - [x] **#273**: Use-after-free risk in buddy_coalesce_block ✅
 - [x] **#269**: O(A×O) arena linear search optimization ✅ (per-order non-empty arena lists)
-- [ ] **#270**: Kernel O(n²) coalescing fix (performance)
+- [x] **#270**: Kernel O(n²) coalescing fix ✅ (buddy list now doubly linked)
 - [ ] **#271**: Freelist linear search optimization (performance)
 
 #### **Toolchain (Issues #29, #192-#195)** 🚀 Core Complete, Ready for Native Compilation!
@@ -335,13 +335,13 @@ We welcome contributions from developers of all skill levels! 🚀
 
 - **New Contributors**: Start with our [Contributing Guide](CONTRIBUTING.md) for a complete development workflow
 - **Find Tasks**: Check [GitHub Issues](https://github.com/pbalduino/menios/issues) or browse [`tasks.json`](tasks.json) for detailed task tracking
-- **High Priority - In Progress** (4 issues active):
-  - **⚡ Buddy Allocator Performance**: #269, #270, #271 (performance optimizations)
+- **High Priority - In Progress** (3 issues active):
+  - **⚡ Buddy Allocator Performance**: #271 (freelist optimisation)
   - **📁 Critical Blocker**: #189 (FAT32 write support) - blocks native compilation!
 - **Ready to Start** (5 issues available):
-  - **🚀 GCC Native Compilation** (Partially unblocked): #190 (TCC port), #191 (binutils port) - Buddy core ✅, reliability ✅, needs #189
+  - **🚀 GCC Native Compilation** (Partially unblocked): #190 (TCC port), #191 (binutils port) - Buddy core ✅, reliability ✅, perf ⚡ almost done, needs #189
   - **🧵 Threading**: #109 (pthread API), #221 (fast syscalls - 3-5x speedup!)
-- **Milestone Status**: Buddy Allocator core complete (9/9) ✅, critical + reliability fixes done (5/5) ✅, performance in progress (1/3)
+- **Milestone Status**: Buddy Allocator core complete (9/9) ✅, critical + reliability fixes done (5/5) ✅, performance in progress (2/3)
 - **Report Issues**: Use our issue templates to report bugs or request features
 - **Security Issues**: Please review our [Security Policy](SECURITY.md) for responsible disclosure
 - **Code Style**: Follow the guidelines in [`CODING.md`](CODING.md)
