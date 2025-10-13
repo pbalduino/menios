@@ -159,6 +159,8 @@ assert(header >= mapping);
 assert((uintptr_t)header + sizeof(block_header_t) + padded <= (uintptr_t)mapping + total);
 ```
 
+**Status (2025-10-14)**: ✅ Fixed. `allocate_direct()` now performs overflow-safe alignment (`align_up_checked_size`, `align_up_checked_uintptr`) and verifies the header/payload stay within the mapped span before returning. Requests that cannot be satisfied cleanly fall back to `ENOMEM` instead of producing corrupt pointers.
+
 ---
 
 ### 6. **Kernel Heap: Magic Number Check Bypassed** (Security: Medium)
@@ -837,7 +839,7 @@ for(size_t page = 0; page < page_count; page++) {
 | 2 | Use-after-free in coalesce | Critical | Security | Low | [#273](https://github.com/pbalduino/menios/issues/273) |
 | 3 | Missing NULL check in grow_heap | High | Reliability | Low | ✅ CLOSED ([#267](https://github.com/pbalduino/menios/issues/267)) |
 | 4 | Integer overflow in buddy_order_size | Medium | Security | Low | 🔴 OPEN |
-| 5 | Direct mmap alignment calculation | High | Correctness | Medium | [#268](https://github.com/pbalduino/menios/issues/268) |
+| 5 | Direct mmap alignment calculation | High | Correctness | Medium | ✅ CLOSED ([#268](https://github.com/pbalduino/menios/issues/268)) |
 | 6 | Kernel heap magic bypass | Medium | Security | Low | 🔴 OPEN |
 | 7 | Buddy linear search across arenas | Medium | Performance | High | [#269](https://github.com/pbalduino/menios/issues/269) |
 | 8 | Kernel O(n²) coalescing | High | Performance | Medium | [#270](https://github.com/pbalduino/menios/issues/270) |
@@ -866,7 +868,7 @@ for(size_t page = 0; page < page_count; page++) {
 2. ~~**Fix Issue #21** ([#264](https://github.com/pbalduino/menios/issues/264)) — partial map rollback – prevents the same aliasing on failure paths~~ ✅ Done (mapping failures now roll back and clean partial mappings)
 3. ~~**Fix Issue #23** ([#265](https://github.com/pbalduino/menios/issues/265)) — allocator locking – user-mode heap is currently unsafe for concurrency~~ ✅ Done (global allocator lock now guards all heap operations)
 4. ~~**Fix Issue #3** ([#267](https://github.com/pbalduino/menios/issues/267)) — grow_heap NULL handling – avoids dangling arenas after allocation failures~~ ✅ Done (grow_heap now unlinks any failed arena before returning)
-5. **Fix Issue #5** ([#268](https://github.com/pbalduino/menios/issues/268)) — direct mmap alignment – plugs subtle corruption for high-alignment callers
+5. ~~Fix Issue #5~~ ([#268](https://github.com/pbalduino/menios/issues/268)) — direct mmap alignment guardrails landed; large-alignment callers now fail fast with `ENOMEM` ✅
 6. **Fix Issue #2** ([#273](https://github.com/pbalduino/menios/issues/273)) — use-after-free in coalesce – critical security issue
 
 ### High Priority (Next Sprint):

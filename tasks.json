@@ -54,6 +54,19 @@
     "assignees": []
   },
   {
+    "title": "Direct mmap alignment calculation error",
+    "github_issue": {
+      "number": 268,
+      "url": "https://github.com/pbalduino/menios/issues/268",
+      "state": "CLOSED"
+    },
+    "labels": [
+      "enhancement",
+      "closed"
+    ],
+    "assignees": []
+  },
+  {
     "title": "Improve user-mode page fault handling - kill process instead of halting OS",
     "github_issue": {
       "number": 262,

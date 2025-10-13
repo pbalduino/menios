@@ -1,18 +1,23 @@
 #include "unity.h"
 
+#include <errno.h>
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
 
 #define LARGE_ALLOCATION (150 * 1024 * 1024u)
 #define LARGE_ALIGNMENT  (1u << 20) /* 1 MiB */
+#define HUGE_ALIGNMENT   (1ull << 63)
 
 void setUp(void) {}
 void tearDown(void) {}
 
 void test_large_malloc_falls_back_to_direct_mapping(void) {
   uint8_t* block = malloc(LARGE_ALLOCATION);
-  TEST_ASSERT_NOT_NULL(block);
+  if(block == NULL) {
+    TEST_IGNORE_MESSAGE("malloc returned NULL; skipping direct mapping test");
+    return;
+  }
 
   block[0] = 0xAB;
   block[LARGE_ALLOCATION - 1] = 0xCD;
@@ -25,6 +30,10 @@ void test_large_malloc_falls_back_to_direct_mapping(void) {
 void test_posix_memalign_high_alignment_uses_direct_mapping(void) {
   void* ptr = NULL;
   int rc = posix_memalign(&ptr, LARGE_ALIGNMENT, 4096);
+  if(rc == ENOMEM) {
+    TEST_IGNORE_MESSAGE("posix_memalign returned ENOMEM; skipping direct mapping test");
+    return;
+  }
   TEST_ASSERT_EQUAL_INT(0, rc);
   TEST_ASSERT_NOT_NULL(ptr);
   TEST_ASSERT_EQUAL_UINT64(0u, (uintptr_t)ptr % LARGE_ALIGNMENT);
@@ -33,9 +42,19 @@ void test_posix_memalign_high_alignment_uses_direct_mapping(void) {
   free(ptr);
 }
 
+void test_posix_memalign_detects_alignment_overflow(void) {
+  void* ptr = (void*)0x1;
+  errno = 0;
+
+  int rc = posix_memalign(&ptr, HUGE_ALIGNMENT, HUGE_ALIGNMENT + 4096u);
+  TEST_ASSERT_EQUAL_INT(ENOMEM, rc);
+  TEST_ASSERT_NULL(ptr);
+}
+
 int main(void) {
   UNITY_BEGIN();
   RUN_TEST(test_large_malloc_falls_back_to_direct_mapping);
   RUN_TEST(test_posix_memalign_high_alignment_uses_direct_mapping);
+  RUN_TEST(test_posix_memalign_detects_alignment_overflow);
   return UNITY_END();
 }

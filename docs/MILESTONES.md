@@ -97,7 +97,7 @@ This document tracks the three major milestones for meniOS development.
 **Goal**: Migrate userland allocator from first-fit to buddy allocator system
 **GitHub Milestone**: [Buddy Allocator](https://github.com/pbalduino/menios/milestone/4)
 
-**Status**: 12/20 complete (60.0%)
+**Status**: 14/20 complete (70.0%)
 
 **Assigned Issues**:
 
@@ -119,8 +119,8 @@ This document tracks the three major milestones for meniOS development.
 
 #### High Priority Fixes (5 issues)
 - [ ] #266 - Buddy allocator: improve double-free detection and diagnostics
-- [ ] #267 - Buddy allocator: missing NULL check in grow_heap
-- [ ] #268 - Buddy allocator: direct mmap alignment calculation error
+- [x] #267 - Buddy allocator: missing NULL check in grow_heap ✅
+- [x] #268 - Buddy allocator: direct mmap alignment calculation error ✅
 - [ ] #273 - Buddy allocator: use-after-free risk in buddy_coalesce_block
 - [ ] #272 - Kernel heap: virtual address exhaustion
 
@@ -271,10 +271,10 @@ This document tracks the three major milestones for meniOS development.
 ## 📈 Overall Progress
 
 - **Total Issues Across Milestones**: 81 issues (was 70)
-- **Completed**: 51 issues (63.0%)
-- **In Progress**: 30 issues
+- **Completed**: 52 issues (64.2%)
+- **In Progress**: 29 issues
 - **Ready to Start**: 5 issues (no dependencies: #109, #221, #190, #191; unblocked by Buddy core implementation)
-- **Next Up**: Complete Buddy Allocator reliability fixes (#266-#268, #272-#273), then TCC/binutils ports (#190, #191)
+- **Next Up**: Complete Buddy Allocator reliability fixes (#266, #272-#273 — #268 ✅), then TCC/binutils ports (#190, #191)
 
 ## 🚀 Immediate Next Steps
 
@@ -282,8 +282,8 @@ This document tracks the three major milestones for meniOS development.
 Core buddy allocator implementation complete (Phase 1 ✅) and critical security issues resolved (Phase 2 ✅). Now focusing on:
 
 **Phase 3 - Reliability Fixes (High Priority)**:
-- #267 - Missing NULL check in grow_heap (dangling arena pointer)
-- #268 - Direct mmap alignment calculation error (large alignments)
+- ~~#267 - Missing NULL check in grow_heap (dangling arena pointer)~~ ✅ Done
+- ~~#268 - Direct mmap alignment calculation error (large alignments)~~ ✅
 - #273 - Use-after-free risk in buddy_coalesce_block
 - #272 - Kernel heap virtual address exhaustion
 - #266 - Double-free detection improvements
@@ -324,7 +324,7 @@ Many issues can be worked on in parallel:
 ### Completion Order
 Recommended completion order for maximum impact:
 1. **Mosh** ✅ COMPLETE (100%) - Development environment ready! 🎉
-2. **Buddy Allocator** - IN PROGRESS (60%) - Core done ✅, reliability & performance remaining
+2. **Buddy Allocator** - IN PROGRESS (65%) - Core done ✅, reliability phase 1/5 complete
 3. **GCC** - Enables native development (62.5% complete, waiting on Buddy reliability + #189)
 4. **Doom** - Demonstrates full OS capabilities (38.5% complete, threading/IPC ready to start)
 
@@ -398,10 +398,13 @@ Recommended completion order for maximum impact:
   - Created `docs/memory_issues.md` with comprehensive analysis
   - Closed #263 (kernel stale mappings) ✅, #264 (partial rollback) ✅, #265 (thread safety) ✅
 - **2025-10-14**: Created 8 new Buddy Allocator issues (#266-#273) for reliability and performance
-  - High priority: #266 (double-free detection), #267 (NULL check), #268 (alignment), #273 (use-after-free), #272 (VA exhaustion)
+  - High priority: #266 (double-free detection), #267 (NULL check), #272 (VA exhaustion), #273 (use-after-free), ~~#268 (alignment)~~
   - Performance: #269 (arena search), #270 (kernel coalescing), #271 (freelist search)
-  - Buddy Allocator milestone expanded to 20 issues (was 9), now 60% complete
+  - Buddy Allocator milestone expanded to 20 issues (was 9)
   - Total project issues: 81 (was 70)
+- **2025-10-14**: Closed #267 (grow_heap NULL check) ✅ - Buddy Allocator 65% complete (13/20)
+  - Arena is now properly unlinked before cleanup if buddy_materialize_block fails
+  - Prevents dangling pointer crashes on subsequent allocations
 
 ---
 

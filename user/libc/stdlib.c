@@ -421,6 +421,42 @@ static inline size_t align_up(size_t value, size_t alignment) {
   return (value + (alignment - 1)) & ~(alignment - 1);
 }
 
+static bool align_up_checked_size(size_t value, size_t alignment, size_t* out) {
+  if(out == NULL || alignment == 0) {
+    return false;
+  }
+
+  if((alignment & (alignment - 1)) != 0) {
+    return false;
+  }
+
+  size_t mask = alignment - 1u;
+  if(value > SIZE_MAX - mask) {
+    return false;
+  }
+
+  *out = (value + mask) & ~mask;
+  return true;
+}
+
+static bool align_up_checked_uintptr(uintptr_t value, size_t alignment, uintptr_t* out) {
+  if(out == NULL || alignment == 0 || alignment > UINTPTR_MAX) {
+    return false;
+  }
+
+  if((alignment & (alignment - 1)) != 0) {
+    return false;
+  }
+
+  uintptr_t mask = (uintptr_t)alignment - 1u;
+  if(value > UINTPTR_MAX - mask) {
+    return false;
+  }
+
+  *out = (value + mask) & ~mask;
+  return true;
+}
+
 static inline void* block_payload(block_header_t* block) {
   return (void*)(block + 1);
 }
@@ -630,7 +666,17 @@ static void* allocate_direct(size_t size, size_t alignment) {
     alignment = DEFAULT_ALIGNMENT;
   }
 
-  size_t padded = align_up(size, alignment);
+  size_t padded = 0u;
+  if(!align_up_checked_size(size, alignment, &padded)) {
+    errno = ENOMEM;
+    return NULL;
+  }
+
+  if(alignment > SIZE_MAX - sizeof(block_header_t)) {
+    errno = ENOMEM;
+    return NULL;
+  }
+
   size_t extra = alignment + sizeof(block_header_t);
   if(padded > SIZE_MAX - extra) {
     errno = ENOMEM;
@@ -638,6 +684,11 @@ static void* allocate_direct(size_t size, size_t alignment) {
   }
 
   size_t total = padded + extra;
+  if(total > UINTPTR_MAX) {
+    errno = ENOMEM;
+    return NULL;
+  }
+
   void* mapping = mmap(NULL,
                        total,
                        PROT_READ | PROT_WRITE,
@@ -649,9 +700,52 @@ static void* allocate_direct(size_t size, size_t alignment) {
     return NULL;
   }
 
-  uintptr_t base = (uintptr_t)mapping + sizeof(block_header_t);
-  uintptr_t aligned_addr = align_up(base, alignment);
-  block_header_t* header = (block_header_t*)(aligned_addr - sizeof(block_header_t));
+  uintptr_t mapping_start = (uintptr_t)mapping;
+  if(mapping_start > UINTPTR_MAX - total) {
+    munmap(mapping, total);
+    errno = ENOMEM;
+    return NULL;
+  }
+
+  uintptr_t mapping_end = mapping_start + total;
+
+  if(sizeof(block_header_t) > mapping_end - mapping_start) {
+    munmap(mapping, total);
+    errno = ENOMEM;
+    return NULL;
+  }
+
+  uintptr_t base = mapping_start + sizeof(block_header_t);
+  uintptr_t aligned_addr = 0u;
+  if(!align_up_checked_uintptr(base, alignment, &aligned_addr)) {
+    munmap(mapping, total);
+    errno = ENOMEM;
+    return NULL;
+  }
+
+  if(aligned_addr > mapping_end) {
+    munmap(mapping, total);
+    errno = ENOMEM;
+    return NULL;
+  }
+
+  if(padded != 0u) {
+    uintptr_t required_end = aligned_addr + (uintptr_t)padded;
+    if(required_end < aligned_addr || required_end > mapping_end) {
+      munmap(mapping, total);
+      errno = ENOMEM;
+      return NULL;
+    }
+  }
+
+  uintptr_t header_addr = aligned_addr - sizeof(block_header_t);
+  if(header_addr < mapping_start) {
+    munmap(mapping, total);
+    errno = ENOMEM;
+    return NULL;
+  }
+
+  block_header_t* header = (block_header_t*)header_addr;
   header->buddy_next = NULL;
   header->buddy_prev = NULL;
   header->arena = NULL;
