@@ -268,6 +268,14 @@ static block_header_t* buddy_split_to_order(block_header_t* block, uint32_t targ
   return block;
 }
 
+#ifdef MENIOS_HOST_TEST
+static bool buddy_debug_poison_after_remove = false;
+
+void __menios_buddy_debug_poison_after_remove(bool enable) {
+  buddy_debug_poison_after_remove = enable;
+}
+#endif
+
 static block_header_t* buddy_coalesce_block(block_header_t* block) {
   if(block == NULL || block->arena == NULL) {
     return NULL;
@@ -279,28 +287,36 @@ static block_header_t* buddy_coalesce_block(block_header_t* block) {
   block->buddy_prev = NULL;
 
   while(block->buddy_order < BUDDY_MAX_ORDER) {
-    size_t size = buddy_order_size(block->buddy_order);
-    uintptr_t buddy_offset = block->buddy_offset ^ size;
+    uint32_t current_order = block->buddy_order;
+    size_t span = buddy_order_size(current_order);
+    uintptr_t buddy_offset = block->buddy_offset ^ span;
     if(buddy_offset >= arena->buddy_size) {
       break;
     }
-    block_header_t* buddy = buddy_freelist_find(arena, block->buddy_order, buddy_offset);
+    block_header_t* buddy = buddy_freelist_find(arena, current_order, buddy_offset);
     if(buddy == NULL) {
       break;
     }
 
     buddy_freelist_remove(arena, buddy);
 
-    if(buddy->buddy_offset < block->buddy_offset) {
-      block = buddy;
+#ifdef MENIOS_HOST_TEST
+    if(buddy_debug_poison_after_remove) {
+      buddy->buddy_offset = UINTPTR_MAX;
+      buddy->buddy_order = BUDDY_MIN_ORDER;
+    }
+#endif
+
+    uintptr_t combined_offset = block->buddy_offset < buddy_offset ? block->buddy_offset : buddy_offset;
+    uint32_t merged_order = current_order + 1u;
+
+    block_header_t* merged = buddy_materialize_block(arena, combined_offset, merged_order);
+    if(merged == NULL) {
+      buddy_freelist_push(arena, buddy);
+      break;
     }
 
-    block->buddy_offset &= ~(size);
-    block->buddy_order += 1u;
-    block->size = buddy_order_size(block->buddy_order) - sizeof(block_header_t);
-    block->buddy_flags = BUDDY_FLAG_FREE;
-    block->buddy_next = NULL;
-    block->buddy_prev = NULL;
+    block = merged;
   }
 
   buddy_freelist_push(arena, block);

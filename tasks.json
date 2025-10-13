@@ -67,6 +67,19 @@
     "assignees": []
   },
   {
+    "title": "Use-after-free risk in buddy_coalesce_block",
+    "github_issue": {
+      "number": 273,
+      "url": "https://github.com/pbalduino/menios/issues/273",
+      "state": "CLOSED"
+    },
+    "labels": [
+      "enhancement",
+      "closed"
+    ],
+    "assignees": []
+  },
+  {
     "title": "Improve user-mode page fault handling - kill process instead of halting OS",
     "github_issue": {
       "number": 262,

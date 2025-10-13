@@ -17,6 +17,7 @@ static void initialise_arena(void) {
 
 void setUp(void) {
   __menios_allocator_reset();
+  __menios_buddy_debug_poison_after_remove(false);
   initialise_arena();
 }
 
@@ -68,9 +69,30 @@ void test_buddy_coalesce_merges_to_root(void) {
   }
 }
 
+void test_buddy_coalesce_with_poisoned_metadata(void) {
+  const uint32_t target_order = 18u;
+  TEST_ASSERT_EQUAL_size_t(1u, __menios_buddy_debug_freelist_length(BUDDY_MAX_ORDER));
+  block_header_t* root = __menios_buddy_debug_pop(BUDDY_MAX_ORDER);
+  TEST_ASSERT_NOT_NULL(root);
+  uintptr_t expected_offset = __menios_buddy_debug_offset(root);
+
+  block_header_t* block = __menios_buddy_debug_split(root, target_order);
+  TEST_ASSERT_NOT_NULL(block);
+
+  __menios_buddy_debug_poison_after_remove(true);
+  block_header_t* merged = __menios_buddy_debug_coalesce(block);
+  __menios_buddy_debug_poison_after_remove(false);
+
+  TEST_ASSERT_NOT_NULL(merged);
+  TEST_ASSERT_EQUAL_UINT32(BUDDY_MAX_ORDER, __menios_buddy_debug_order(merged));
+  TEST_ASSERT_EQUAL_UINT64(expected_offset, __menios_buddy_debug_offset(merged));
+  TEST_ASSERT_EQUAL_size_t(1u, __menios_buddy_debug_freelist_length(BUDDY_MAX_ORDER));
+}
+
 int main(void) {
   UNITY_BEGIN();
   RUN_TEST(test_buddy_split_down_to_target);
   RUN_TEST(test_buddy_coalesce_merges_to_root);
+  RUN_TEST(test_buddy_coalesce_with_poisoned_metadata);
   return UNITY_END();
 }

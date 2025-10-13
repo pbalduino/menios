@@ -36,7 +36,7 @@ static void buddy_release_block(block_header_t* block) {
 
 ---
 
-### 2. **Use-After-Free Risk in `buddy_coalesce_block`** (Security: Critical) — [Issue #267](https://github.com/pbalduino/menios/issues/267)
+### 2. **Use-After-Free Risk in `buddy_coalesce_block`** (Security: Critical) — [Issue #273](https://github.com/pbalduino/menios/issues/273)
 **Location**: `stdlib.c:281-283`
 ```c
 if(buddy->buddy_offset < block->buddy_offset) {
@@ -47,14 +47,9 @@ if(buddy->buddy_offset < block->buddy_offset) {
 
 **Impact**: If `buddy_freelist_remove` is ever modified to clear `buddy_offset` or other fields, this code will use stale data, leading to incorrect buddy merging and heap corruption.
 
-**Recommended Fix**: Cache `buddy->buddy_offset` before calling `buddy_freelist_remove()`:
-```c
-uintptr_t buddy_off = buddy->buddy_offset;
-buddy_freelist_remove(arena, buddy);
-if(buddy_off < block->buddy_offset) {
-    block = buddy;
-}
-```
+**Recommended Fix**: Avoid dereferencing the `buddy` header after it is removed from the freelist. Capture the computed buddy offset/order up front, remove the node, then re-materialize the merged block from the arena base using those cached values. Host-only tests can poison the removed node to guarantee we do not rely on its fields.
+
+**Status (2025-10-14)**: ✅ Fixed. `buddy_coalesce_block()` now derives the buddy offset from the active block, re-materializes the merged header at the combined offset/order, and exposes a host-only poison hook used by `test/test_buddy_allocator.c` to guard against future regressions.
 
 ---
 
@@ -836,7 +831,7 @@ for(size_t page = 0; page < page_count; page++) {
 | # | Issue | Severity | Type | Fix Effort | Status |
 |---|-------|----------|------|------------|--------|
 | 1 | Double-free silent failure | High | Security | Low | [#266](https://github.com/pbalduino/menios/issues/266) |
-| 2 | Use-after-free in coalesce | Critical | Security | Low | [#273](https://github.com/pbalduino/menios/issues/273) |
+| 2 | Use-after-free in coalesce | Critical | Security | Low | ✅ CLOSED ([#273](https://github.com/pbalduino/menios/issues/273)) |
 | 3 | Missing NULL check in grow_heap | High | Reliability | Low | ✅ CLOSED ([#267](https://github.com/pbalduino/menios/issues/267)) |
 | 4 | Integer overflow in buddy_order_size | Medium | Security | Low | 🔴 OPEN |
 | 5 | Direct mmap alignment calculation | High | Correctness | Medium | ✅ CLOSED ([#268](https://github.com/pbalduino/menios/issues/268)) |
@@ -869,7 +864,7 @@ for(size_t page = 0; page < page_count; page++) {
 3. ~~**Fix Issue #23** ([#265](https://github.com/pbalduino/menios/issues/265)) — allocator locking – user-mode heap is currently unsafe for concurrency~~ ✅ Done (global allocator lock now guards all heap operations)
 4. ~~**Fix Issue #3** ([#267](https://github.com/pbalduino/menios/issues/267)) — grow_heap NULL handling – avoids dangling arenas after allocation failures~~ ✅ Done (grow_heap now unlinks any failed arena before returning)
 5. ~~Fix Issue #5~~ ([#268](https://github.com/pbalduino/menios/issues/268)) — direct mmap alignment guardrails landed; large-alignment callers now fail fast with `ENOMEM` ✅
-6. **Fix Issue #2** ([#273](https://github.com/pbalduino/menios/issues/273)) — use-after-free in coalesce – critical security issue
+6. ~~Fix Issue #2~~ ([#273](https://github.com/pbalduino/menios/issues/273)) — use-after-free in coalesce resolved by re-materializing merged blocks ✅
 
 ### High Priority (Next Sprint):
 7. **Fix Issue #22** ([#272](https://github.com/pbalduino/menios/issues/272)) — virtual address recycling for kmalloc – prevents premature heap exhaustion

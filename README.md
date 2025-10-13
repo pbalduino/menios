@@ -169,7 +169,7 @@ Expect the log to show the `[user_demo]` messages on screen and in `com1.log`, c
 - [ ] **#266**: Improve double-free detection and diagnostics
 - [x] **#268**: Direct mmap alignment calculation error
 - [ ] **#272**: Kernel heap virtual address exhaustion
-- [ ] **#273**: Use-after-free risk in buddy_coalesce_block
+- [x] **#273**: Use-after-free risk in buddy_coalesce_block ✅
 - [ ] **#269**: O(A×O) arena linear search optimization (performance)
 - [ ] **#270**: Kernel O(n²) coalescing fix (performance)
 - [ ] **#271**: Freelist linear search optimization (performance)
@@ -239,7 +239,7 @@ See [`road_to_doom.md`](docs/road/road_to_doom.md) for the complete roadmap and 
 - ✅ **Performance**: I/O scheduler (#205) ✅
 - ✅ **Memory**: Userspace allocator (#95) ✅
 
-**The critical path forward**: Complete Buddy Allocator reliability fixes (#266, #272-#273 — #268 ✅), then **FAT32 write support** (#189) to unblock GCC native compilation (#190, #191)!
+**The critical path forward**: Complete Buddy Allocator reliability fixes (#266, #272 — #268 ✅, #273 ✅), then **FAT32 write support** (#189) to unblock GCC native compilation (#190, #191)!
 
 **🎯 Milestone Status**:
 - 🎉 **Mosh** (Shell): 27/27 complete (100%) - v0.1.0 shipped!
@@ -336,7 +336,7 @@ We welcome contributions from developers of all skill levels! 🚀
 - **New Contributors**: Start with our [Contributing Guide](CONTRIBUTING.md) for a complete development workflow
 - **Find Tasks**: Check [GitHub Issues](https://github.com/pbalduino/menios/issues) or browse [`tasks.json`](tasks.json) for detailed task tracking
 - **High Priority - In Progress** (7 issues active):
-  - **🔨 Buddy Allocator Reliability**: #266, #272, #273 (high priority correctness fixes, ~~#267 ✅~~, ~~#268 ✅~~)
+  - **🔨 Buddy Allocator Reliability**: #266, #272 (high priority correctness fixes, ~~#267 ✅~~, ~~#268 ✅~~, ~~#273 ✅~~)
   - **⚡ Buddy Allocator Performance**: #269, #270, #271 (performance optimizations)
 - **Ready to Start** (5 issues available):
   - **🚀 GCC Native Compilation** (Partially unblocked): #190 (TCC port), #191 (binutils port) - Buddy core ✅, needs reliability fixes + #189
