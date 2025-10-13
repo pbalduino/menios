@@ -159,18 +159,18 @@ Expect the log to show the `[user_demo]` messages on screen and in `com1.log`, c
 - [x] **#253**: Cleanup and Document Buddy Allocator Migration ✅ COMPLETE!
   - Legacy first-fit code removed, buddy design fully documented
 
-**Status**: 13/20 complete (65%) - Core implementation ✅ COMPLETE! Critical security fixes ✅ COMPLETE! Reliability phase 1/5 complete.
+**Status**: 18/20 complete (90%) - Core implementation ✅ COMPLETE! Critical security fixes ✅ COMPLETE! Reliability phase ✅ COMPLETE.
 
-#### **Buddy Allocator - Post-Implementation** (Issues #263-#273) 🔨 Reliability Phase In Progress
+#### **Buddy Allocator - Post-Implementation** (Issues #263-#273) 🔨 Reliability Phase COMPLETE
 - [x] **#263**: Kernel heap stale virtual mappings ✅ COMPLETE!
 - [x] **#264**: Kernel heap partial mapping rollback ✅ COMPLETE!
 - [x] **#265**: User buddy allocator thread safety ✅ COMPLETE!
 - [x] **#267**: Missing NULL check in grow_heap ✅ COMPLETE!
 - [x] **#266**: Improve double-free detection and diagnostics ✅
-- [x] **#268**: Direct mmap alignment calculation error
-- [ ] **#272**: Kernel heap virtual address exhaustion
+- [x] **#268**: Direct mmap alignment calculation error ✅
+- [x] **#272**: Kernel heap virtual address exhaustion ✅
 - [x] **#273**: Use-after-free risk in buddy_coalesce_block ✅
-- [ ] **#269**: O(A×O) arena linear search optimization (performance)
+- [x] **#269**: O(A×O) arena linear search optimization ✅ (per-order non-empty arena lists)
 - [ ] **#270**: Kernel O(n²) coalescing fix (performance)
 - [ ] **#271**: Freelist linear search optimization (performance)
 
@@ -239,7 +239,7 @@ See [`road_to_doom.md`](docs/road/road_to_doom.md) for the complete roadmap and 
 - ✅ **Performance**: I/O scheduler (#205) ✅
 - ✅ **Memory**: Userspace allocator (#95) ✅
 
-**The critical path forward**: Complete Buddy Allocator reliability fixes (#272 — #266 ✅, #268 ✅, #273 ✅), then **FAT32 write support** (#189) to unblock GCC native compilation (#190, #191)!
+**The critical path forward**: Buddy allocator reliability fixes are finished. Focus now shifts to **FAT32 write support** (#189) to unblock GCC native compilation (#190, #191)!
 
 **🎯 Milestone Status**:
 - 🎉 **Mosh** (Shell): 27/27 complete (100%) - v0.1.0 shipped!
@@ -335,14 +335,13 @@ We welcome contributions from developers of all skill levels! 🚀
 
 - **New Contributors**: Start with our [Contributing Guide](CONTRIBUTING.md) for a complete development workflow
 - **Find Tasks**: Check [GitHub Issues](https://github.com/pbalduino/menios/issues) or browse [`tasks.json`](tasks.json) for detailed task tracking
-- **High Priority - In Progress** (7 issues active):
-  - **🔨 Buddy Allocator Reliability**: #272 (high priority correctness fixes, ~~#266 ✅~~, ~~#267 ✅~~, ~~#268 ✅~~, ~~#273 ✅~~)
+- **High Priority - In Progress** (4 issues active):
   - **⚡ Buddy Allocator Performance**: #269, #270, #271 (performance optimizations)
-- **Ready to Start** (5 issues available):
-  - **🚀 GCC Native Compilation** (Partially unblocked): #190 (TCC port), #191 (binutils port) - Buddy core ✅, needs reliability fixes + #189
   - **📁 Critical Blocker**: #189 (FAT32 write support) - blocks native compilation!
+- **Ready to Start** (5 issues available):
+  - **🚀 GCC Native Compilation** (Partially unblocked): #190 (TCC port), #191 (binutils port) - Buddy core ✅, reliability ✅, needs #189
   - **🧵 Threading**: #109 (pthread API), #221 (fast syscalls - 3-5x speedup!)
-- **Milestone Status**: Buddy Allocator core complete (9/9) ✅, critical security fixes done (3/3) ✅, reliability phase 1/5 complete (#267 ✅), performance pending (0/3)
+- **Milestone Status**: Buddy Allocator core complete (9/9) ✅, critical + reliability fixes done (5/5) ✅, performance in progress (1/3)
 - **Report Issues**: Use our issue templates to report bugs or request features
 - **Security Issues**: Please review our [Security Policy](SECURITY.md) for responsible disclosure
 - **Code Style**: Follow the guidelines in [`CODING.md`](CODING.md)

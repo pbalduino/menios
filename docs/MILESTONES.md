@@ -122,10 +122,10 @@ This document tracks the three major milestones for meniOS development.
 - [x] #267 - Buddy allocator: missing NULL check in grow_heap ✅
 - [x] #268 - Buddy allocator: direct mmap alignment calculation error ✅
 - [x] #273 - Buddy allocator: use-after-free risk in buddy_coalesce_block ✅
-- [ ] #272 - Kernel heap: virtual address exhaustion
+- [x] #272 - Kernel heap: virtual address exhaustion ✅
 
 #### Performance Improvements (3 issues)
-- [ ] #269 - Buddy allocator: O(A×O) linear search across arenas
+- [x] #269 - Buddy allocator: O(A×O) linear search across arenas ✅
 - [ ] #270 - Kernel heap: O(n²) coalescing in kfree
 - [ ] #271 - Buddy allocator: freelist linear search during coalescing
 
@@ -271,22 +271,15 @@ This document tracks the three major milestones for meniOS development.
 ## 📈 Overall Progress
 
 - **Total Issues Across Milestones**: 81 issues (was 70)
-- **Completed**: 52 issues (64.2%)
-- **In Progress**: 29 issues
+- **Completed**: 55 issues (67.9%)
+- **In Progress**: 26 issues
 - **Ready to Start**: 5 issues (no dependencies: #109, #221, #190, #191; unblocked by Buddy core implementation)
-- **Next Up**: Complete Buddy Allocator reliability fixes (#272 — #266 ✅, #268 ✅, #273 ✅), then TCC/binutils ports (#190, #191)
+- **Next Up**: Address Buddy Allocator performance optimisations (#269-#271) and land FAT32 write support (#189) to unlock TCC/binutils ports (#190, #191)
 
 ## 🚀 Immediate Next Steps
 
-### 🎯 Buddy Allocator: Reliability Phase
-Core buddy allocator implementation complete (Phase 1 ✅) and critical security issues resolved (Phase 2 ✅). Now focusing on:
-
-**Phase 3 - Reliability Fixes (High Priority)**:
-- ~~#267 - Missing NULL check in grow_heap (dangling arena pointer)~~ ✅ Done
-- ~~#268 - Direct mmap alignment calculation error (large alignments)~~ ✅
-- ~~#273 - Use-after-free risk in buddy_coalesce_block~~ ✅
-- #272 - Kernel heap virtual address exhaustion
-- ~~#266 - Double-free detection improvements~~ ✅
+### 🎯 Buddy Allocator: Performance Phase
+Core buddy allocator implementation complete (Phase 1 ✅), critical security issues resolved (Phase 2 ✅), and reliability fixes closed (Phase 3 ✅). Remaining work focuses on performance and scalability:
 
 **Phase 4 - Performance Optimizations**:
 - #269 - O(A×O) arena linear search optimization
@@ -398,7 +391,7 @@ Recommended completion order for maximum impact:
   - Created `docs/memory_issues.md` with comprehensive analysis
   - Closed #263 (kernel stale mappings) ✅, #264 (partial rollback) ✅, #265 (thread safety) ✅
 - **2025-10-14**: Created 8 new Buddy Allocator issues (#266-#273) for reliability and performance
-  - High priority: ~~#266 (double-free detection)~~, #267 (NULL check), #272 (VA exhaustion), ~~#273 (use-after-free)~~, ~~#268 (alignment)~~
+  - High priority: ~~#266 (double-free detection)~~, #267 (NULL check), ~~#272 (VA exhaustion)~~, ~~#273 (use-after-free)~~, ~~#268 (alignment)~~
   - Performance: #269 (arena search), #270 (kernel coalescing), #271 (freelist search)
   - Buddy Allocator milestone expanded to 20 issues (was 9)
   - Total project issues: 81 (was 70)

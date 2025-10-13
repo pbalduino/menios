@@ -39,23 +39,39 @@ static heap_region_t   heap_region_entries[HEAP_REGION_CAP];
 static bool            heap_region_used[HEAP_REGION_CAP];
 static virt_addr_t     heap_next_vaddr = KHEAP_BASE;
 
+typedef struct heap_vrange_t {
+  virt_addr_t base;
+  size_t      size;
+  struct heap_vrange_t* next;
+} heap_vrange_t;
+
+static heap_vrange_t   heap_vrange_entries[HEAP_REGION_CAP];
+static bool            heap_vrange_used[HEAP_REGION_CAP];
+static heap_vrange_t*  heap_vrange_head;
+
+static void heap_virtual_reset(void);
+static heap_vrange_t* heap_vrange_alloc(void);
+static void heap_vrange_free(heap_vrange_t* entry);
+static bool heap_virtual_acquire(size_t bytes, virt_addr_t* out, bool* used_free);
+static void heap_virtual_release(virt_addr_t base, size_t bytes);
+static size_t heap_virtual_free_range_count(void);
+
 static inline void heap_reset_lock(void) {
   spinlock_init(&heap_lock);
   heap_next_vaddr = KHEAP_BASE;
-}
-
-static inline bool heap_virtual_available(size_t bytes) {
-  return heap_next_vaddr + bytes <= KHEAP_LIMIT;
+  heap_virtual_reset();
 }
 
 static void* heap_map_region(phys_addr_t phys_base, size_t page_count) {
   size_t bytes = page_count * PAGE_SIZE;
-  if(!heap_virtual_available(bytes)) {
+  bool used_free_range = false;
+  virt_addr_t virt;
+
+  if(!heap_virtual_acquire(bytes, &virt, &used_free_range)) {
     serial_printf("heap_map_region: virtual arena exhausted (requested %zu bytes)\n", bytes);
     return NULL;
   }
 
-  virt_addr_t virt = heap_next_vaddr;
   phys_addr_t root = read_cr3();
 
   for(size_t page = 0; page < page_count; page++) {
@@ -69,11 +85,17 @@ static void* heap_map_region(phys_addr_t phys_base, size_t page_count) {
           serial_printf("heap_map_region: rollback failed at %lx\n", (unsigned long)rollback_vaddr);
         }
       }
+      if(used_free_range) {
+        heap_virtual_release(virt, bytes);
+      }
       return NULL;
     }
   }
 
-  heap_next_vaddr += bytes;
+  if(!used_free_range) {
+    heap_next_vaddr += bytes;
+  }
+
   return (void*)virt;
 }
 
@@ -156,10 +178,142 @@ static void heap_free_region_entry(heap_region_t* region) {
   }
 }
 
+static void heap_unmap_pages(virt_addr_t base, size_t page_count) {
+  phys_addr_t root = read_cr3();
+  for(size_t page = 0; page < page_count; ++page) {
+    virt_addr_t vaddr = base + (page * PAGE_SIZE);
+    if(!pmm_unmap_page_in_root(root, vaddr)) {
+      serial_printf("heap_unmap_pages: failed to unmap %lx\n", (unsigned long)vaddr);
+    }
+  }
+}
+
 static void heap_reset_regions(void) {
   memset(heap_region_used, 0, sizeof(heap_region_used));
   heap_regions_head = NULL;
   heap_regions_tail = NULL;
+}
+
+static void heap_virtual_reset(void) {
+  memset(heap_vrange_used, 0, sizeof(heap_vrange_used));
+  heap_vrange_head = NULL;
+}
+
+static heap_vrange_t* heap_vrange_alloc(void) {
+  for(size_t idx = 0; idx < HEAP_REGION_CAP; ++idx) {
+    if(!heap_vrange_used[idx]) {
+      heap_vrange_used[idx] = true;
+      heap_vrange_entries[idx].next = NULL;
+      return &heap_vrange_entries[idx];
+    }
+  }
+  serial_printf("heap_virtual: descriptor pool exhausted\n");
+  return NULL;
+}
+
+static void heap_vrange_free(heap_vrange_t* entry) {
+  if(entry == NULL) {
+    return;
+  }
+  size_t idx = (size_t)(entry - heap_vrange_entries);
+  if(idx < HEAP_REGION_CAP) {
+    heap_vrange_used[idx] = false;
+    heap_vrange_entries[idx].next = NULL;
+  }
+}
+
+static void heap_virtual_release(virt_addr_t base, size_t bytes) {
+  if(bytes == 0) {
+    return;
+  }
+
+  virt_addr_t start = base;
+  virt_addr_t end = base + bytes;
+
+  heap_vrange_t* prev = NULL;
+  heap_vrange_t* curr = heap_vrange_head;
+
+  while(curr && curr->base < start) {
+    prev = curr;
+    curr = curr->next;
+  }
+
+  heap_vrange_t* target = NULL;
+
+  if(prev && prev->base + prev->size == start) {
+    prev->size += bytes;
+    target = prev;
+  } else {
+    heap_vrange_t* entry = heap_vrange_alloc();
+    if(entry == NULL) {
+      return;
+    }
+    entry->base = start;
+    entry->size = bytes;
+    entry->next = curr;
+    if(prev) {
+      prev->next = entry;
+    } else {
+      heap_vrange_head = entry;
+    }
+    target = entry;
+  }
+
+  while(target->next && (target->base + target->size) == target->next->base) {
+    heap_vrange_t* next = target->next;
+    target->size += next->size;
+    target->next = next->next;
+    heap_vrange_free(next);
+  }
+}
+
+static bool heap_virtual_acquire(size_t bytes, virt_addr_t* out, bool* used_free) {
+  if(bytes == 0 || out == NULL || used_free == NULL) {
+    return false;
+  }
+
+  heap_vrange_t* prev = NULL;
+  heap_vrange_t* curr = heap_vrange_head;
+
+  while(curr) {
+    if(curr->size >= bytes) {
+      virt_addr_t base = curr->base;
+      if(curr->size == bytes) {
+        if(prev) {
+          prev->next = curr->next;
+        } else {
+          heap_vrange_head = curr->next;
+        }
+        heap_vrange_free(curr);
+      } else {
+        curr->base += bytes;
+        curr->size -= bytes;
+      }
+      *used_free = true;
+      *out = base;
+      return true;
+    }
+    prev = curr;
+    curr = curr->next;
+  }
+
+  if(heap_next_vaddr + bytes > KHEAP_LIMIT) {
+    return false;
+  }
+
+  *used_free = false;
+  *out = heap_next_vaddr;
+  return true;
+}
+
+static size_t heap_virtual_free_range_count(void) {
+  size_t count = 0;
+  heap_vrange_t* cursor = heap_vrange_head;
+  while(cursor) {
+    ++count;
+    cursor = cursor->next;
+  }
+  return count;
 }
 
 static heap_region_t* heap_register_region(heap_node_p base,
@@ -336,15 +490,10 @@ static void heap_release_region_if_unused(heap_node_p node) {
     heap_tail = prev;
   }
 
-  phys_addr_t root = read_cr3();
   virt_addr_t base = (virt_addr_t)region->base;
-  for(size_t page = 0; page < region->page_count; ++page) {
-    virt_addr_t vaddr = base + (page * PAGE_SIZE);
-    if(!pmm_unmap_page_in_root(root, vaddr)) {
-      serial_printf("heap_release_region: failed to unmap %lx\n", (unsigned long)vaddr);
-    }
-  }
+  heap_unmap_pages(base, region->page_count);
 
+  heap_virtual_release(base, region->size_bytes);
   heap_unregister_region(region);
 }
 
@@ -392,6 +541,9 @@ static bool heap_grow(size_t minimum_size) {
 
   if(heap_register_region(node, requested, phys_base, page_count, true) == NULL) {
     serial_printf("heap_grow: failed to register region\n");
+
+    heap_unmap_pages((virt_addr_t)node, page_count);
+    heap_virtual_release((virt_addr_t)node, requested);
 
     if(previous_tail) {
       previous_tail->next = NULL;
@@ -747,3 +899,37 @@ heap_stats_t heap_get_stats(void) {
 
   return stats;
 }
+
+#ifdef MENIOS_HOST_TEST
+void __kmalloc_debug_reset_virtual(void) {
+  heap_virtual_reset();
+  heap_next_vaddr = KHEAP_BASE;
+}
+
+bool __kmalloc_debug_reserve_range(size_t bytes, virt_addr_t* out_vaddr) {
+  bool used_free = false;
+  virt_addr_t base;
+  if(!heap_virtual_acquire(bytes, &base, &used_free)) {
+    return false;
+  }
+  if(!used_free) {
+    heap_next_vaddr += bytes;
+  }
+  if(out_vaddr != NULL) {
+    *out_vaddr = base;
+  }
+  return true;
+}
+
+void __kmalloc_debug_release_range(virt_addr_t base, size_t bytes) {
+  heap_virtual_release(base, bytes);
+}
+
+size_t __kmalloc_debug_free_range_count(void) {
+  return heap_virtual_free_range_count();
+}
+
+virt_addr_t __kmalloc_debug_next_vaddr(void) {
+  return heap_next_vaddr;
+}
+#endif

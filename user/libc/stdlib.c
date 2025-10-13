@@ -111,12 +111,15 @@ typedef struct arena_header {
   uint8_t* buddy_base;            /* start of buddy-managed payload */
   size_t buddy_size;              /* size of buddy-managed payload */
   block_header_t* buddy_freelists[BUDDY_ORDER_COUNT];
+  struct arena_header* buddy_order_next[BUDDY_ORDER_COUNT];
+  struct arena_header* buddy_order_prev[BUDDY_ORDER_COUNT];
 } arena_header_t;
 
 _Static_assert((sizeof(block_header_t) % DEFAULT_ALIGNMENT) == 0,
                "block header must stay aligned");
 
 static arena_header_t* arena_list_head = NULL;
+static arena_header_t* arena_order_heads[BUDDY_ORDER_COUNT] = {0};
 static size_t direct_allocation_count = 0;
 static size_t direct_total_bytes = 0;
 static size_t double_free_attempts = 0;
@@ -166,12 +169,38 @@ static block_header_t* buddy_materialize_block(arena_header_t* arena,
   return block;
 }
 
+static void buddy_order_list_insert(arena_header_t* arena, size_t index) {
+  arena_header_t* head = arena_order_heads[index];
+  arena->buddy_order_prev[index] = NULL;
+  arena->buddy_order_next[index] = head;
+  if(head != NULL) {
+    head->buddy_order_prev[index] = arena;
+  }
+  arena_order_heads[index] = arena;
+}
+
+static void buddy_order_list_remove(arena_header_t* arena, size_t index) {
+  arena_header_t* prev = arena->buddy_order_prev[index];
+  arena_header_t* next = arena->buddy_order_next[index];
+  if(prev != NULL) {
+    prev->buddy_order_next[index] = next;
+  } else if(arena_order_heads[index] == arena) {
+    arena_order_heads[index] = next;
+  }
+  if(next != NULL) {
+    next->buddy_order_prev[index] = prev;
+  }
+  arena->buddy_order_prev[index] = NULL;
+  arena->buddy_order_next[index] = NULL;
+}
+
 static void buddy_freelist_push(arena_header_t* arena, block_header_t* block) {
   if(block == NULL || arena == NULL || !buddy_order_valid(block->buddy_order)) {
     return;
   }
 
   size_t index = buddy_order_index(block->buddy_order);
+  bool was_empty = (arena->buddy_freelists[index] == NULL);
   block->buddy_flags &= (uint32_t)~BUDDY_FLAG_USED;
   block->buddy_flags |= BUDDY_FLAG_FREE;
   block->buddy_prev = NULL;
@@ -180,6 +209,9 @@ static void buddy_freelist_push(arena_header_t* arena, block_header_t* block) {
     block->buddy_next->buddy_prev = block;
   }
   arena->buddy_freelists[index] = block;
+  if(was_empty) {
+    buddy_order_list_insert(arena, index);
+  }
 }
 
 static void buddy_freelist_remove(arena_header_t* arena, block_header_t* block) {
@@ -206,6 +238,10 @@ static void buddy_freelist_remove(arena_header_t* arena, block_header_t* block) 
   block->buddy_prev = NULL;
   block->buddy_flags &= (uint32_t)~BUDDY_FLAG_FREE;
   block->buddy_flags |= BUDDY_FLAG_USED;
+
+  if(arena->buddy_freelists[index] == NULL) {
+    buddy_order_list_remove(arena, index);
+  }
 }
 
 static block_header_t* buddy_freelist_pop(arena_header_t* arena, uint32_t order) {
@@ -344,6 +380,9 @@ void __menios_allocator_reset(void) {
   }
 
   arena_list_head = NULL;
+  for(size_t i = 0; i < BUDDY_ORDER_COUNT; ++i) {
+    arena_order_heads[i] = NULL;
+  }
   allocator_unlock_guard();
 }
 
@@ -543,17 +582,17 @@ static block_header_t* buddy_acquire_block(uint32_t order) {
   }
 
   allocator_lock_guard();
-  for(int attempt = 0; attempt < 2; ++attempt) {
-    for(arena_header_t* arena = arena_list_head; arena != NULL; arena = arena->next) {
-      for(uint32_t current = order; current <= BUDDY_MAX_ORDER; ++current) {
+  for(int attempt = 0; attempt < 2 && result == NULL; ++attempt) {
+    for(uint32_t current = order; current <= BUDDY_MAX_ORDER && result == NULL; ++current) {
+      size_t index = buddy_order_index(current);
+      arena_header_t* arena = arena_order_heads[index];
+      while(arena != NULL && result == NULL) {
+        arena_header_t* next = arena->buddy_order_next[index];
         block_header_t* candidate = buddy_freelist_pop(arena, current);
         if(candidate != NULL) {
           result = buddy_split_to_order(candidate, order);
-          break;
         }
-      }
-      if(result != NULL) {
-        break;
+        arena = next;
       }
     }
 
@@ -662,6 +701,8 @@ static int grow_heap(size_t size) {
 
   for(size_t i = 0; i < BUDDY_ORDER_COUNT; ++i) {
     arena->buddy_freelists[i] = NULL;
+    arena->buddy_order_next[i] = NULL;
+    arena->buddy_order_prev[i] = NULL;
   }
 
   block_header_t* root = buddy_materialize_block(arena, 0u, BUDDY_MAX_ORDER);

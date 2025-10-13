@@ -596,15 +596,15 @@ int __attribute__((weak)) fat32_unlink_adapter(void* fs_ctx, const char* path) {
   return -ENOSYS;
 }
 
-void* kmalloc(size_t size) {
+void* __attribute__((weak)) kmalloc(size_t size) {
   return malloc(size);
 }
 
-void kfree(void* ptr) {
+void __attribute__((weak)) kfree(void* ptr) {
   free(ptr);
 }
 
-void* krealloc(void* ptr, size_t size) {
+void* __attribute__((weak)) krealloc(void* ptr, size_t size) {
   if(size == 0) {
     free(ptr);
     return NULL;
@@ -619,7 +619,7 @@ void* krealloc(void* ptr, size_t size) {
   return new_ptr;
 }
 
-void* kcalloc(size_t nelem, size_t elsize) {
+void* __attribute__((weak)) kcalloc(size_t nelem, size_t elsize) {
   size_t total = nelem * elsize;
   void* ptr = malloc(total);
   if(ptr) {

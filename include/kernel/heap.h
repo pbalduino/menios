@@ -6,6 +6,9 @@ extern "C" {
 #endif
 
 #include <types.h>
+#ifdef MENIOS_HOST_TEST
+#include <stdbool.h>
+#endif
 
 #define HEAP_SIZE   0x400
 #define HEAP_FREE    0
@@ -54,6 +57,14 @@ heap_stats_t heap_get_stats(void);
 void dump_heap(heap_node_p heap, size_t size);
 
 void heap_compactor();
+
+#ifdef MENIOS_HOST_TEST
+void __kmalloc_debug_reset_virtual(void);
+bool __kmalloc_debug_reserve_range(size_t bytes, virt_addr_t* out_vaddr);
+void __kmalloc_debug_release_range(virt_addr_t base, size_t size);
+size_t __kmalloc_debug_free_range_count(void);
+virt_addr_t __kmalloc_debug_next_vaddr(void);
+#endif
 
 #ifdef __cplusplus
 }

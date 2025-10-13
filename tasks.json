@@ -80,6 +80,33 @@
     "assignees": []
   },
   {
+    "title": "Kernel heap virtual address exhaustion",
+    "github_issue": {
+      "number": 272,
+      "url": "https://github.com/pbalduino/menios/issues/272",
+      "state": "CLOSED"
+    },
+    "labels": [
+      "enhancement",
+      "kernel",
+      "closed"
+    ],
+    "assignees": []
+  },
+  {
+    "title": "Buddy allocator arena scanning is O(A×O)",
+    "github_issue": {
+      "number": 269,
+      "url": "https://github.com/pbalduino/menios/issues/269",
+      "state": "CLOSED"
+    },
+    "labels": [
+      "enhancement",
+      "closed"
+    ],
+    "assignees": []
+  },
+  {
     "title": "Use-after-free risk in buddy_coalesce_block",
     "github_issue": {
       "number": 273,
