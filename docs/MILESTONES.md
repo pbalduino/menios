@@ -271,8 +271,8 @@ This document tracks the three major milestones for meniOS development.
 ## 📈 Overall Progress
 
 - **Total Issues Across Milestones**: 81 issues (was 70)
-- **Completed**: 56 issues (69.1%)
-- **In Progress**: 25 issues
+- **Completed**: 57 issues (70.4%)
+- **In Progress**: 24 issues
 - **Ready to Start**: 5 issues (no dependencies: #109, #221, #190, #191; unblocked by Buddy core implementation)
 - **Next Up**: Wrap up Buddy Allocator performance (#271) and land FAT32 write support (#189) to unlock TCC/binutils ports (#190, #191)
 
@@ -284,7 +284,7 @@ Core buddy allocator implementation complete (Phase 1 ✅), critical security is
 **Phase 4 - Performance Optimizations**:
 - ~~#269 - O(A×O) arena linear search optimization~~ ✅
 - ~~#270 - Kernel O(n²) coalescing fix (doubly-linked lists)~~ ✅
-- #271 - Freelist linear search optimization (bitmap/hash table)
+- ~~#271 - Freelist linear search optimization (bitmap/hash table)~~ ✅
 
 ### Ready to Start Now (Dependencies Met):
 1. **GCC Milestone** (Partial unblock 🚀):

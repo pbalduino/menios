@@ -172,7 +172,7 @@ Expect the log to show the `[user_demo]` messages on screen and in `com1.log`, c
 - [x] **#273**: Use-after-free risk in buddy_coalesce_block ✅
 - [x] **#269**: O(A×O) arena linear search optimization ✅ (per-order non-empty arena lists)
 - [x] **#270**: Kernel O(n²) coalescing fix ✅ (buddy list now doubly linked)
-- [ ] **#271**: Freelist linear search optimization (performance)
+- [x] **#271**: Freelist linear search optimization (performance) ✅
 
 #### **Toolchain (Issues #29, #192-#195)** 🚀 Core Complete, Ready for Native Compilation!
 - [x] **#192**: crt0 runtime startup code ✅ COMPLETE!
@@ -335,11 +335,10 @@ We welcome contributions from developers of all skill levels! 🚀
 
 - **New Contributors**: Start with our [Contributing Guide](CONTRIBUTING.md) for a complete development workflow
 - **Find Tasks**: Check [GitHub Issues](https://github.com/pbalduino/menios/issues) or browse [`tasks.json`](tasks.json) for detailed task tracking
-- **High Priority - In Progress** (3 issues active):
-  - **⚡ Buddy Allocator Performance**: #271 (freelist optimisation)
+- **High Priority - In Progress** (2 issues active):
   - **📁 Critical Blocker**: #189 (FAT32 write support) - blocks native compilation!
 - **Ready to Start** (5 issues available):
-  - **🚀 GCC Native Compilation** (Partially unblocked): #190 (TCC port), #191 (binutils port) - Buddy core ✅, reliability ✅, perf ⚡ almost done, needs #189
+  - **🚀 GCC Native Compilation** (Partially unblocked): #190 (TCC port), #191 (binutils port) - Buddy core ✅, reliability ✅, perf ✅, needs #189
   - **🧵 Threading**: #109 (pthread API), #221 (fast syscalls - 3-5x speedup!)
 - **Milestone Status**: Buddy Allocator core complete (9/9) ✅, critical + reliability fixes done (5/5) ✅, performance in progress (2/3)
 - **Report Issues**: Use our issue templates to report bugs or request features

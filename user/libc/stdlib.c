@@ -257,22 +257,6 @@ static block_header_t* buddy_freelist_pop(arena_header_t* arena, uint32_t order)
   return block;
 }
 
-static block_header_t* buddy_freelist_find(arena_header_t* arena,
-                                           uint32_t order,
-                                           uintptr_t offset) {
-  if(arena == NULL || !buddy_order_valid(order)) {
-    return NULL;
-  }
-
-  size_t index = buddy_order_index(order);
-  for(block_header_t* node = arena->buddy_freelists[index]; node != NULL; node = node->buddy_next) {
-    if(node->buddy_offset == offset) {
-      return node;
-    }
-  }
-  return NULL;
-}
-
 static block_header_t* buddy_split_to_order(block_header_t* block, uint32_t target_order) {
   if(block == NULL || block->arena == NULL || !buddy_order_valid(target_order)) {
     return NULL;
@@ -335,8 +319,8 @@ static block_header_t* buddy_coalesce_block(block_header_t* block) {
     if(buddy_offset >= arena->buddy_size) {
       break;
     }
-    block_header_t* buddy = buddy_freelist_find(arena, current_order, buddy_offset);
-    if(buddy == NULL) {
+    block_header_t* buddy = buddy_block_from_offset(arena, buddy_offset);
+    if(buddy == NULL || buddy->buddy_order != current_order || (buddy->buddy_flags & BUDDY_FLAG_FREE) == 0u) {
       break;
     }
 
