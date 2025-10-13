@@ -130,7 +130,12 @@ extern "C" {
 #define ERESTARTSYS    512
 #define ERESTARTNOINTR    513
 
+#if !defined(MENIOS_KERNEL)
+int* __menios_errno_location(void);
+#define errno (*__menios_errno_location())
+#else
 extern int errno;
+#endif
 
 #ifdef __cplusplus
 }

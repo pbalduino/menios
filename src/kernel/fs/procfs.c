@@ -1,10 +1,10 @@
 #include <kernel/procfs.h>
 
 #include <errno.h>
-#include <stdio.h>
 #include <string.h>
 #include <sys/fcntl.h>
 
+#include <kernel/console.h>
 #include <kernel/file.h>
 #include <kernel/heap.h>
 #include <kernel/pmm.h>
@@ -257,15 +257,18 @@ static bool procfs_generate_meminfo(char** out_buffer, size_t* out_size) {
     return false;
   }
 
-  int written = snprintf(buffer,
-                         256,
-                         "usable_bytes: %llu\nfree_bytes: %llu\nused_bytes: %llu\nusable_pages: %zu\nfree_pages: %zu\n",
-                         (unsigned long long)usable_bytes,
-                         (unsigned long long)free_bytes,
-                         (unsigned long long)used_bytes,
-                         stats.usable_pages,
-                         stats.free_pages);
-  if(written < 0) {
+  int written = vprintk(buffer,
+                        "usable_bytes: %llu\n"
+                        "free_bytes: %llu\n"
+                        "used_bytes: %llu\n"
+                        "usable_pages: %zu\n"
+                        "free_pages: %zu\n",
+                        (unsigned long long)usable_bytes,
+                        (unsigned long long)free_bytes,
+                        (unsigned long long)used_bytes,
+                        stats.usable_pages,
+                        stats.free_pages);
+  if(written < 0 || written >= 256) {
     kfree(buffer);
     return false;
   }

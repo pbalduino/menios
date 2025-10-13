@@ -638,7 +638,7 @@ ifeq ($(OS_NAME),linux)
 
 	# Skip host-unsafe tests until proper stubs land.
 	for file in $(shell find -L test -type f -name 'test_*.c' ! -name 'test_kmalloc.c' ! -name 'test_malloc_stress.c' ! -name 'test_buddy_allocator.c' ! -name 'test_malloc_stats.c'); do \
-		gcc -std=gnu11 -DMENIOS_NO_DEBUG -DUNITY_EXCLUDE_SETJMP_H -I./include \
+		gcc -std=gnu11 -DMENIOS_NO_DEBUG -DMENIOS_HOST_TEST -DUNITY_EXCLUDE_SETJMP_H -I./include \
 			$$file \
 			test/unity.c \
 			test/stubs.c \
@@ -649,15 +649,16 @@ ifeq ($(OS_NAME),linux)
 			src/kernel/syscall/syscall.c \
 			src/kernel/mem/pmm.c \
 			src/kernel/console/vprintk.c \
-			src/kernel/console/ansi.c \
-			src/kernel/proc/kcondvar.c \
-			src/kernel/proc/kmutex.c \
-		src/kernel/proc/signal.c \
-		src/kernel/ipc/shm.c \
-		src/kernel/user/vm_region.c \
-			src/kernel/timer/tsc.c \
-			src/libc/itoa.c \
-			src/libc/string.c \
+		src/kernel/console/ansi.c \
+		src/kernel/proc/kcondvar.c \
+		src/kernel/proc/kmutex.c \
+	src/kernel/proc/signal.c \
+	src/kernel/ipc/shm.c \
+	src/kernel/user/vm_region.c \
+		src/kernel/timer/tsc.c \
+		src/libc/itoa.c \
+		src/libc/string.c \
+		src/libc/errno.c \
 		-o "$$file".bin ; \
 		echo "Testing $$file" ; \
 		"$$file".bin ; \
@@ -687,6 +688,7 @@ ifeq ($(OS_NAME),linux)
 		src/kernel/timer/tsc.c \
 		src/libc/itoa.c \
 		src/libc/string.c \
+		src/libc/errno.c \
 		user/libc/stdlib.c \
 	-o test/test_buddy_allocator.c.bin ; \
 	echo "Testing test/test_buddy_allocator.c" ; \
@@ -716,6 +718,7 @@ ifeq ($(OS_NAME),linux)
 		src/kernel/timer/tsc.c \
 		src/libc/itoa.c \
 		src/libc/string.c \
+		src/libc/errno.c \
 		user/libc/stdlib.c \
 	-o test/test_malloc_stats.c.bin ; \
 	echo "Testing test/test_malloc_stats.c" ; \
@@ -745,6 +748,7 @@ ifeq ($(OS_NAME),linux)
 		src/kernel/timer/tsc.c \
 		src/libc/itoa.c \
 		src/libc/string.c \
+		src/libc/errno.c \
 		user/libc/stdlib.c \
 	-o test/test_malloc_stress.c.bin ; \
 	echo "Testing test/test_malloc_stress.c" ; \

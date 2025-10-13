@@ -3591,8 +3591,11 @@ static int read_stdin_char(void) {
   char ch = 0;
   long rc = read(STDIN_FILENO, &ch, 1);
   if(rc <= 0) {
+    fprintf(stderr, "mosh: read rc=%ld errno=%d\n", rc, errno);
     return -1;
   }
+  fprintf(stderr, "mosh: read char=0x%02x (%c)\n", (unsigned char)ch,
+          (ch >= 32 && ch < 127) ? ch : '.');
   return (unsigned char)ch;
 }
 

@@ -438,7 +438,7 @@ static heap_node_p heap_find_suitable_node(size_t size) {
 
 static void heap_set_errno(int err) {
   if(current) {
-    current->errno = err;
+    current->err_no = err;
   }
 }
 

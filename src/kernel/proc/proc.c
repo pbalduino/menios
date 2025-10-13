@@ -590,16 +590,39 @@ static inline virt_addr_t user_mmap_limit(uint32_t pid) {
   return 0x00007fff00000000ull; // just below canonical user ceiling (~128 TiB window)
 }
 
+static inline bool segment_can_extend(const proc_user_segment_t* segment,
+                                      phys_addr_t phys) {
+  if(segment == NULL) {
+    return false;
+  }
+
+  phys_addr_t expected = segment->phys + (phys_addr_t)segment->pages * PAGE_SIZE;
+  return expected == phys;
+}
+
 static bool proc_register_user_segment_internal(proc_info_p proc, phys_addr_t phys, size_t pages) {
   if(pages == 0 || phys == 0) {
     return false;
   }
+
+  if(proc->user_segment_count > 0) {
+    proc_user_segment_t* last = &proc->user_segments[proc->user_segment_count - 1];
+    if(segment_can_extend(last, phys)) {
+      if(last->pages > SIZE_MAX - pages) {
+        return false;
+      }
+      last->pages += pages;
+      return true;
+    }
+  }
+
   if(proc->user_segment_count >= PROC_MAX_USER_SEGMENTS) {
     return false;
   }
-  proc->user_segments[proc->user_segment_count].phys = phys;
-  proc->user_segments[proc->user_segment_count].pages = pages;
-  proc->user_segment_count++;
+
+  proc_user_segment_t* slot = &proc->user_segments[proc->user_segment_count++];
+  slot->phys = phys;
+  slot->pages = pages;
   return true;
 }
 
@@ -607,19 +630,75 @@ bool proc_register_user_segment(proc_info_p proc, phys_addr_t phys, size_t pages
   return proc_register_user_segment_internal(proc, phys, pages);
 }
 
+static void proc_collapse_segment(proc_info_p proc, size_t index) {
+  if(proc == NULL || index >= proc->user_segment_count) {
+    return;
+  }
+
+  for(size_t j = index + 1; j < proc->user_segment_count; ++j) {
+    proc->user_segments[j - 1] = proc->user_segments[j];
+  }
+  proc->user_segment_count--;
+}
+
 void proc_unregister_user_segment(proc_info_p proc, phys_addr_t phys, size_t pages) {
   if(proc == NULL || pages == 0) {
     return;
   }
 
-  for(size_t i = 0; i < proc->user_segment_count; i++) {
-    if(proc->user_segments[i].phys == phys && proc->user_segments[i].pages == pages) {
-      for(size_t j = i + 1; j < proc->user_segment_count; j++) {
-        proc->user_segments[j - 1] = proc->user_segments[j];
-      }
-      proc->user_segment_count--;
-      break;
+  const phys_addr_t bytes = (phys_addr_t)pages * PAGE_SIZE;
+  const phys_addr_t remove_start = phys;
+  const phys_addr_t remove_end = remove_start + bytes;
+
+  for(size_t i = 0; i < proc->user_segment_count; ++i) {
+    proc_user_segment_t* segment = &proc->user_segments[i];
+    const phys_addr_t seg_start = segment->phys;
+    const phys_addr_t seg_end = seg_start + (phys_addr_t)segment->pages * PAGE_SIZE;
+
+    if(remove_start < seg_start || remove_end > seg_end) {
+      continue;
     }
+
+    if(remove_start == seg_start && remove_end == seg_end) {
+      proc_collapse_segment(proc, i);
+      return;
+    }
+
+    if(remove_start == seg_start) {
+      segment->phys = remove_end;
+      segment->pages -= pages;
+      return;
+    }
+
+    if(remove_end == seg_end) {
+      segment->pages -= pages;
+      return;
+    }
+
+    const phys_addr_t prefix_bytes = remove_start - seg_start;
+    const size_t prefix_pages = (size_t)(prefix_bytes / PAGE_SIZE);
+    const size_t suffix_pages = segment->pages - prefix_pages - pages;
+
+    segment->pages = prefix_pages;
+
+    if(suffix_pages == 0) {
+      return;
+    }
+
+    if(proc->user_segment_count >= PROC_MAX_USER_SEGMENTS) {
+      // Cannot record the suffix separately; leak prevention takes precedence.
+      return;
+    }
+
+    for(size_t j = proc->user_segment_count; j > i + 1; --j) {
+      proc->user_segments[j] = proc->user_segments[j - 1];
+    }
+
+    proc_user_segment_t* tail = &proc->user_segments[i + 1];
+    tail->phys = remove_end;
+    tail->pages = suffix_pages;
+    proc->user_segment_count++;
+    return;
   }
 }
 
@@ -949,7 +1028,7 @@ proc_info_p proc_fork(proc_info_p parent, const syscall_frame_t* frame, int* err
   child->mmap_base = parent->mmap_base;
   child->mmap_next = parent->mmap_next;
   child->mmap_limit = parent->mmap_limit;
-  child->errno = 0;
+  child->err_no = 0;
   child->exit_code = 0;
   child->sleep_until = 0;
   child->last_dispatch_us = 0;
@@ -1329,6 +1408,11 @@ static bool proc_setup_exec_stack(proc_info_p proc,
   frame->rdi = argc;
   frame->rsi = argv_user;
   frame->rdx = envp_user;
+  serial_printf("proc_setup_exec_stack: argc=%lu argv=%lx envp=%lx sp=%lx\n",
+                (unsigned long)argc,
+                (unsigned long)argv_user,
+                (unsigned long)envp_user,
+                (unsigned long)sp);
 
   if(argv_ptrs) {
     kfree(argv_ptrs);

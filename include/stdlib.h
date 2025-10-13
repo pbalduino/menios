@@ -41,6 +41,7 @@ int menios_malloc_stats(menios_malloc_stats_t* stats);
 long strtol(const char* nptr, char** endptr, int base);
 
 void exit(int) __dead2;
+void abort(void) __dead2;
 
 #ifdef __cplusplus
 }

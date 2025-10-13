@@ -67,23 +67,31 @@ void* kmmap(void *addr, size_t length, int prot, int flags, int fd, off_t offset
 
   if(current == NULL || !current->user_mode) {
     if(current) {
-      current->errno = ENOSYS;
+      current->err_no = ENOSYS;
     }
     return MAP_FAILED;
   }
 
   if(!mmap_flags_supported(flags)) {
-    current->errno = EINVAL;
+    current->err_no = EINVAL;
     return MAP_FAILED;
   }
 
   size_t aligned_len = page_align_up_size(length);
   if(check_overflow(0, aligned_len)) {
-    current->errno = EINVAL;
+    current->err_no = EINVAL;
     return MAP_FAILED;
   }
 
   virt_addr_t base_hint = current->mmap_next ? current->mmap_next : current->mmap_base;
+  serial_printf("kmmap: pid=%u base_hint=%lx mmap_base=%lx mmap_next=%lx len=%lu hint=%p flags=%x\n",
+                current->pid,
+                (unsigned long)base_hint,
+                (unsigned long)current->mmap_base,
+                (unsigned long)current->mmap_next,
+                (unsigned long)aligned_len,
+                addr,
+                flags);
   if(base_hint < current->mmap_base || base_hint >= current->mmap_limit) {
     base_hint = current->mmap_base;
     current->mmap_next = current->mmap_base;
@@ -95,14 +103,14 @@ void* kmmap(void *addr, size_t length, int prot, int flags, int fd, off_t offset
   bool hint = (addr != NULL);
 
   if(check_overflow(base, aligned_len)) {
-    current->errno = EINVAL;
+    current->err_no = EINVAL;
     return MAP_FAILED;
   }
 
   virt_addr_t end = base + aligned_len;
 
   if(base < current->mmap_base || end > current->mmap_limit || base >= end) {
-    current->errno = ENOMEM;
+    current->err_no = ENOMEM;
     return MAP_FAILED;
   }
 
@@ -110,18 +118,18 @@ void* kmmap(void *addr, size_t length, int prot, int flags, int fd, off_t offset
     while(end <= current->mmap_limit && vm_range_overlaps(current, base, aligned_len)) {
       base = page_align_up_addr(end);
       if(check_overflow(base, aligned_len)) {
-        current->errno = ENOMEM;
+        current->err_no = ENOMEM;
         return MAP_FAILED;
       }
       end = base + aligned_len;
     }
 
     if(end > current->mmap_limit || base >= end) {
-      current->errno = ENOMEM;
+      current->err_no = ENOMEM;
       return MAP_FAILED;
     }
   } else if(vm_range_overlaps(current, base, aligned_len)) {
-    current->errno = EINVAL;
+    current->err_no = EINVAL;
     return MAP_FAILED;
   }
 
@@ -133,7 +141,7 @@ void* kmmap(void *addr, size_t length, int prot, int flags, int fd, off_t offset
   };
 
   if(!vm_map(current, &params)) {
-    current->errno = ENOMEM;
+    current->err_no = ENOMEM;
     return MAP_FAILED;
   }
 
@@ -144,14 +152,28 @@ void* kmmap(void *addr, size_t length, int prot, int flags, int fd, off_t offset
     }
   }
 
-  current->errno = 0;
+  serial_printf("kmmap: pid=%u returning base=%lx len=%lu\n",
+                current->pid,
+                (unsigned long)base,
+                (unsigned long)aligned_len);
+
+  if(base == 0) {
+    serial_printf("kmmap: refusing to return NULL mapping (len=%lu) base_hint=%lx\n",
+                  (unsigned long)aligned_len,
+                  (unsigned long)base_hint);
+    vm_unmap(current, base, aligned_len);
+    current->err_no = ENOMEM;
+    return MAP_FAILED;
+  }
+
+  current->err_no = 0;
   return (void*)base;
 }
 
 int kmunmap(void *addr, size_t len) {
   if(current == NULL || !current->user_mode || addr == NULL || len == 0) {
     if(current) {
-      current->errno = EINVAL;
+      current->err_no = EINVAL;
     }
     return -EINVAL;
   }
@@ -160,7 +182,7 @@ int kmunmap(void *addr, size_t len) {
   size_t aligned_len = page_align_up_size(len);
 
   if(check_overflow(base, aligned_len)) {
-    current->errno = EINVAL;
+    current->err_no = EINVAL;
     return -EINVAL;
   }
 
@@ -174,12 +196,12 @@ int kmunmap(void *addr, size_t len) {
   }
 
   if(region == NULL || region->length != aligned_len) {
-    current->errno = EINVAL;
+    current->err_no = EINVAL;
     return -EINVAL;
   }
 
   if(!vm_unmap(current, base, aligned_len)) {
-    current->errno = EFAULT;
+    current->err_no = EFAULT;
     return -EFAULT;
   }
 
@@ -187,6 +209,6 @@ int kmunmap(void *addr, size_t len) {
     current->mmap_next = base;
   }
 
-  current->errno = 0;
+  current->err_no = 0;
   return 0;
 }

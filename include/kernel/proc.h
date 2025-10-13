@@ -54,9 +54,9 @@ struct syscall_frame_t;
 
 #define RLIMIT_DATA (4 * 1024 * 1024)
 
-#define PROC_STACK_SIZE (16 * 1024)
-#define PROC_USER_STACK_SIZE (16 * 1024)
-#define PROC_MAX_USER_SEGMENTS 256
+#define PROC_STACK_SIZE (64 * 1024)
+#define PROC_USER_STACK_SIZE (1 * 1024 * 1024)
+#define PROC_MAX_USER_SEGMENTS 4096
 #define PROC_MAX_VM_REGIONS 32
 #define PROC_CWD_MAX 256
 
@@ -132,7 +132,7 @@ typedef struct proc_info_t {
   int          exit_code;
   int          stop_status;
   int          continue_status;
-  int          errno;
+  int          err_no;
   uint64_t     exec_time;
   char         name[32];
   proc_info_p  first_child;

@@ -47,7 +47,7 @@ static proc_info_p kmutex_dequeue_waiter(kmutex_t* mutex) {
 int kmutex_lock(kmutex_t* mutex) {
   if(mutex == NULL) {
     if(current) {
-      current->errno = EINVAL;
+      current->err_no = EINVAL;
     }
     return -EINVAL;
   }
@@ -60,7 +60,7 @@ int kmutex_lock(kmutex_t* mutex) {
     if(mutex->owner == NULL) {
       mutex->owner = current;
       if(current) {
-        current->errno = 0;
+        current->err_no = 0;
       }
       spinlock_unlock(&mutex->lock);
       if(pending_node) {
@@ -73,7 +73,7 @@ int kmutex_lock(kmutex_t* mutex) {
     if(mutex->owner == current) {
       spinlock_unlock(&mutex->lock);
       if(current) {
-        current->errno = EDEADLK;
+        current->err_no = EDEADLK;
       }
       serial_error("kmutex_lock: recursive lock detected\n");
       if(pending_node) {
@@ -96,7 +96,7 @@ int kmutex_lock(kmutex_t* mutex) {
       if(pending_node == NULL) {
         spinlock_unlock(&mutex->lock);
         if(current) {
-          current->errno = ENOMEM;
+          current->err_no = ENOMEM;
         }
         return -ENOMEM;
       }
@@ -119,7 +119,7 @@ int kmutex_lock(kmutex_t* mutex) {
 bool kmutex_trylock(kmutex_t* mutex) {
   if(mutex == NULL) {
     if(current) {
-      current->errno = EINVAL;
+      current->err_no = EINVAL;
     }
     return false;
   }
@@ -130,7 +130,7 @@ bool kmutex_trylock(kmutex_t* mutex) {
     mutex->owner = current;
     acquired = true;
     if(current) {
-      current->errno = 0;
+      current->err_no = 0;
     }
   }
   spinlock_unlock(&mutex->lock);
@@ -140,7 +140,7 @@ bool kmutex_trylock(kmutex_t* mutex) {
 int kmutex_unlock(kmutex_t* mutex) {
   if(mutex == NULL) {
     if(current) {
-      current->errno = EINVAL;
+      current->err_no = EINVAL;
     }
     return -EINVAL;
   }
@@ -150,7 +150,7 @@ int kmutex_unlock(kmutex_t* mutex) {
   if(mutex->owner != current) {
     spinlock_unlock(&mutex->lock);
     if(current) {
-      current->errno = EPERM;
+      current->err_no = EPERM;
     }
     serial_error("kmutex_unlock: current does not own mutex\n");
     return -EPERM;
@@ -165,7 +165,7 @@ int kmutex_unlock(kmutex_t* mutex) {
     proc_mark_ready(next);
   }
   if(current) {
-    current->errno = 0;
+    current->err_no = 0;
   }
   return 0;
 }

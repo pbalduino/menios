@@ -221,6 +221,7 @@ static void irq_eoi(void) {
 
 void ps2kb_handler() {
   uint8_t scancode = inb(PS2_DATA_PORT);
+  serial_printf("ps2kb: scancode=0x%02x extended=%d\n", scancode, extended_code ? 1 : 0);
 
   if(scancode == 0xE0) {
     extended_code = true;
@@ -294,6 +295,7 @@ void ps2kb_handler() {
 
   if(!release) {
     char ch = translate_scancode(code);
+    serial_printf("ps2kb: translated '%c' (code=0x%02x)\n", ch ? ch : '?', code);
     if(ch != 0) {
       buffer_push((uint8_t)ch);
     }

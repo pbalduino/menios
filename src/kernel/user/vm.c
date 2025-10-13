@@ -40,7 +40,17 @@ static bool map_pages(proc_info_p proc,
     if(region != NULL) {
       vm_region_note_mapping(region, vaddr, PAGE_SIZE);
     }
-    proc_register_user_segment(proc, paddr, 1);
+    if(!proc_register_user_segment(proc, paddr, 1)) {
+      pmm_unmap_page_in_root(proc->address_space_root, vaddr);
+      for(size_t rollback = 0; rollback < page; rollback++) {
+        size_t idx = page - rollback - 1;
+        virt_addr_t r_vaddr = base + (idx * PAGE_SIZE);
+        phys_addr_t r_paddr = phys + (idx * PAGE_SIZE);
+        pmm_unmap_page_in_root(proc->address_space_root, r_vaddr);
+        proc_unregister_user_segment(proc, r_paddr, 1);
+      }
+      return false;
+    }
   }
 
   return true;

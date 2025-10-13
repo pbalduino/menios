@@ -9,6 +9,7 @@
 #include <sys/errno.h>
 #include <sys/mman.h>
 #include <unistd.h>
+#include <stdio.h>
 
 #ifndef MAP_ANONYMOUS
 #define MAP_ANONYMOUS MAP_ANON
@@ -310,7 +311,19 @@ void __menios_allocator_reset(void) {
 }
 
 int __menios_allocator_grow_heap_for_test(size_t size) {
-  return grow_heap(size);
+  int rc = grow_heap(size);
+#ifdef MENIOS_HOST_TEST
+  if(rc != 0) {
+    static const char prefix[] = "grow_heap failed errno=";
+    char number[32];
+    (void)itoa(errno, number, 10);
+    static const char suffix[] = "\n";
+    (void)write(STDERR_FILENO, prefix, sizeof(prefix) - 1u);
+    (void)write(STDERR_FILENO, number, strlen(number));
+    (void)write(STDERR_FILENO, suffix, sizeof(suffix) - 1u);
+  }
+#endif
+  return rc;
 }
 
 block_header_t* __menios_buddy_debug_pop(uint32_t order) {
@@ -492,6 +505,12 @@ static void buddy_release_block(block_header_t* block) {
   }
 
   if(block->buddy_flags & BUDDY_FLAG_FREE) {
+    static const char msg[] = "buddy_release_block: double free detected\n";
+    (void)write(STDERR_FILENO, msg, sizeof(msg) - 1u);
+#ifdef MENIOS_HOST_TEST
+    abort();
+#endif
+    errno = EINVAL;
     return;
   }
 

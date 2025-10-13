@@ -65,7 +65,7 @@ static struct proc_info_t* owning_proc(void) {
 
 static inline void set_errno(int err) {
   if(current) {
-    current->errno = err;
+    current->err_no = err;
   }
 }
 
@@ -213,7 +213,7 @@ int64_t file_read(file_t* file, void* buffer, size_t length) {
   if(result < 0) {
     set_errno((int)-result);
   } else if(current) {
-    current->errno = 0;
+    current->err_no = 0;
   }
   return result;
 }
@@ -231,7 +231,7 @@ int64_t file_write(file_t* file, const void* buffer, size_t length) {
   if(result < 0) {
     set_errno((int)-result);
   } else if(current) {
-    current->errno = 0;
+    current->err_no = 0;
   }
   return result;
 }
@@ -250,7 +250,7 @@ int64_t file_seek(file_t* file, int64_t offset, int whence) {
   if(result < 0) {
     set_errno((int)-result);
   } else if(current) {
-    current->errno = 0;
+    current->err_no = 0;
   }
   return result;
 }
@@ -269,7 +269,7 @@ int file_ioctl(file_t* file, unsigned long request, void* argp) {
   if(rc < 0) {
     set_errno(-rc);
   } else if(current) {
-    current->errno = 0;
+    current->err_no = 0;
   }
   return rc;
 }
@@ -355,7 +355,7 @@ int proc_file_install_at(struct proc_info_t* proc, int fd, file_t* file, uint32_
   proc->files[fd].file = file;
   proc->files[fd].flags = flags;
   if(current) {
-    current->errno = 0;
+    current->err_no = 0;
   }
   return fd;
 }
@@ -388,7 +388,7 @@ file_t* proc_file_get(struct proc_info_t* proc, int fd, uint32_t* flags_out) {
   }
   file_ref(file);
   if(current) {
-    current->errno = 0;
+    current->err_no = 0;
   }
   return file;
 }
@@ -404,7 +404,7 @@ int proc_file_set_flags(struct proc_info_t* proc, int fd, uint32_t flags) {
   }
   proc->files[fd].flags = flags;
   if(current) {
-    current->errno = 0;
+    current->err_no = 0;
   }
   return 0;
 }
@@ -423,7 +423,7 @@ int proc_file_close(struct proc_info_t* proc, int fd) {
   proc->files[fd].flags = 0;
   file_unref(file);
   if(current) {
-    current->errno = 0;
+    current->err_no = 0;
   }
   return 0;
 }
@@ -460,7 +460,7 @@ int proc_file_dup(struct proc_info_t* proc, int oldfd, int newfd, bool cloexec) 
       proc->files[target_fd].flags |= FD_FLAG_CLOEXEC;
     }
     if(current) {
-      current->errno = 0;
+      current->err_no = 0;
     }
     return target_fd;
   }
@@ -478,7 +478,7 @@ int proc_file_dup(struct proc_info_t* proc, int oldfd, int newfd, bool cloexec) 
   proc->files[target_fd].flags = flags;
 
   if(current) {
-    current->errno = 0;
+    current->err_no = 0;
   }
   return target_fd;
 }

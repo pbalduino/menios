@@ -456,7 +456,7 @@ static uint64_t syscall_read_handler(syscall_frame_t* frame) {
   size_t length = (size_t)frame->rdx;
   file_t* file = proc_file_get(current, fd, NULL);
   if(file == NULL) {
-    int err = current->errno ? current->errno : EBADF;
+    int err = current->err_no ? current->err_no : EBADF;
     frame->rax = (uint64_t)(-err);
     return frame->rax;
   }
@@ -498,7 +498,7 @@ static uint64_t syscall_write_handler(syscall_frame_t* frame) {
                 sample);
   file_t* file = proc_file_get(current, fd, NULL);
   if(file == NULL) {
-    int err = current->errno ? current->errno : EBADF;
+    int err = current->err_no ? current->err_no : EBADF;
     frame->rax = (uint64_t)(-err);
     return frame->rax;
   }
@@ -588,7 +588,7 @@ static uint64_t syscall_lseek_handler(syscall_frame_t* frame) {
 
   file_t* file = proc_file_get(current, fd, NULL);
   if(file == NULL) {
-    int err = current->errno ? current->errno : EBADF;
+    int err = current->err_no ? current->err_no : EBADF;
     frame->rax = (uint64_t)(-err);
     return frame->rax;
   }
@@ -609,7 +609,7 @@ static uint64_t syscall_mmap_handler(syscall_frame_t* frame) {
 
   void* result = kmmap(addr, length, prot, flags, fd, offset);
   if(result == MAP_FAILED) {
-    int err = current ? current->errno : ENOMEM;
+    int err = current ? current->err_no : ENOMEM;
     if(err == 0) {
       err = ENOMEM;
     }
@@ -735,7 +735,7 @@ static uint64_t syscall_execve_handler(syscall_frame_t* frame) {
   char path[SYSCALL_PATH_MAX];
   if(!copy_user_string(user_path, path, sizeof(path))) {
     if(current) {
-      current->errno = EFAULT;
+      current->err_no = EFAULT;
     }
     frame->rax = (uint64_t)(-EFAULT);
     return frame->rax;
@@ -744,7 +744,7 @@ static uint64_t syscall_execve_handler(syscall_frame_t* frame) {
   char absolute[VFS_PATH_MAX];
   if(!vfs_build_absolute_path(current->cwd, path, absolute, sizeof(absolute))) {
     if(current) {
-      current->errno = ENAMETOOLONG;
+      current->err_no = ENAMETOOLONG;
     }
     frame->rax = (uint64_t)(-ENAMETOOLONG);
     return frame->rax;
@@ -764,7 +764,7 @@ static uint64_t syscall_execve_handler(syscall_frame_t* frame) {
     serial_printf("execve: clone_user_vector argv failed err=%d\n", vector_err);
     free_string_vector(argv, argc);
     if(current) {
-      current->errno = vector_err ? -vector_err : EFAULT;
+      current->err_no = vector_err ? -vector_err : EFAULT;
     }
     frame->rax = (uint64_t)(vector_err ? vector_err : -EFAULT);
     return frame->rax;
@@ -780,7 +780,7 @@ static uint64_t syscall_execve_handler(syscall_frame_t* frame) {
     serial_printf("execve: clone_user_vector envp failed err=%d\n", vector_err);
     free_string_vector(argv, argc);
     if(current) {
-      current->errno = vector_err ? -vector_err : EFAULT;
+      current->err_no = vector_err ? -vector_err : EFAULT;
     }
     frame->rax = (uint64_t)(vector_err ? vector_err : -EFAULT);
     return frame->rax;
@@ -799,7 +799,7 @@ static uint64_t syscall_execve_handler(syscall_frame_t* frame) {
     free_string_vector(argv, argc);
     free_string_vector(envp, envc);
     if(current) {
-      current->errno = ENOENT;
+      current->err_no = ENOENT;
     }
     frame->rax = (uint64_t)(-ENOENT);
     return frame->rax;
@@ -810,7 +810,7 @@ static uint64_t syscall_execve_handler(syscall_frame_t* frame) {
     free_string_vector(argv, argc);
     free_string_vector(envp, envc);
     if(current) {
-      current->errno = EFBIG;
+      current->err_no = EFBIG;
     }
     frame->rax = (uint64_t)(-EFBIG);
     return frame->rax;
@@ -1305,7 +1305,7 @@ static uint64_t syscall_fcntl_handler(syscall_frame_t* frame) {
   uint32_t fd_flags = 0;
   file_t* file = proc_file_get(current, fd, &fd_flags);
   if(file == NULL) {
-    int err = current->errno ? current->errno : EBADF;
+    int err = current->err_no ? current->err_no : EBADF;
     frame->rax = (uint64_t)(-err);
     return frame->rax;
   }
@@ -1347,7 +1347,7 @@ static uint64_t syscall_ioctl_handler(syscall_frame_t* frame) {
 
   file_t* file = proc_file_get(current, fd, NULL);
   if(file == NULL) {
-    int err = current->errno ? current->errno : EBADF;
+    int err = current->err_no ? current->err_no : EBADF;
     frame->rax = (uint64_t)(-err);
     return frame->rax;
   }

@@ -45,7 +45,7 @@ static kcondvar_wait_node_t* kcondvar_dequeue(kcondvar_t* cv) {
 void kcondvar_wait(kcondvar_t* cv, kmutex_t* mutex) {
   if(cv == NULL || mutex == NULL) {
     if(current) {
-      current->errno = EINVAL;
+      current->err_no = EINVAL;
     }
     return;
   }
@@ -53,7 +53,7 @@ void kcondvar_wait(kcondvar_t* cv, kmutex_t* mutex) {
   kcondvar_wait_node_t* node = kmalloc(sizeof(*node));
   if(node == NULL) {
     if(current) {
-      current->errno = ENOMEM;
+      current->err_no = ENOMEM;
     }
     return;
   }

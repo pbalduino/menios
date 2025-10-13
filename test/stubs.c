@@ -636,7 +636,7 @@ void* kmmap(void* addr, size_t length, int prot, int flags, int fd, off_t offset
   (void)fd;
   (void)offset;
   if(current) {
-    current->errno = ENOSYS;
+    current->err_no = ENOSYS;
   }
   return MAP_FAILED;
 }
