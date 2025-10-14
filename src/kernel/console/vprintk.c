@@ -4,6 +4,7 @@
 #include <stdbool.h>
 #include <stdarg.h>
 #include <stdint.h>
+#include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -14,22 +15,42 @@ typedef enum {
   LEN_LONGLONG
 } length_modifier_t;
 
-static int append_chars(char* dest, int pos, char ch, int count) {
+static inline void store_char(char* dest, size_t capacity, int pos, char value) {
+  if(dest == NULL || capacity == 0) {
+    return;
+  }
+
+  size_t limit = capacity - 1;
+  if((size_t)pos <= limit) {
+    dest[pos] = value;
+  }
+}
+
+static int append_chars(char* dest, size_t capacity, int pos, char ch, int count) {
   while(count-- > 0) {
-    dest[pos++] = ch;
+    store_char(dest, capacity, pos, ch);
+    pos++;
   }
   return pos;
 }
 
-static int append_buffer(char* dest, int pos, const char* buf, int len) {
+static int append_buffer(char* dest, size_t capacity, int pos, const char* buf, int len) {
   for(int i = 0; i < len; i++) {
-    dest[pos++] = buf[i];
+    store_char(dest, capacity, pos, buf[i]);
+    pos++;
   }
   return pos;
 }
 
-static int format_string(char* dest, int pos, const char* value, bool left_align, bool zero_pad,
-                         int width, bool precision_specified, int precision) {
+static int format_string(char* dest,
+                         size_t capacity,
+                         int pos,
+                         const char* value,
+                         bool left_align,
+                         bool zero_pad,
+                         int width,
+                         bool precision_specified,
+                         int precision) {
   if(value == NULL) {
     value = "(null)";
   }
@@ -43,38 +64,55 @@ static int format_string(char* dest, int pos, const char* value, bool left_align
   int padding = width > length ? width - length : 0;
 
   if(!left_align) {
-    pos = append_chars(dest, pos, pad_char, padding);
+    pos = append_chars(dest, capacity, pos, pad_char, padding);
   }
 
-  pos = append_buffer(dest, pos, value, length);
+  pos = append_buffer(dest, capacity, pos, value, length);
 
   if(left_align) {
-    pos = append_chars(dest, pos, ' ', padding);
+    pos = append_chars(dest, capacity, pos, ' ', padding);
   }
 
   return pos;
 }
 
-static int format_char(char* dest, int pos, char value, bool left_align, bool zero_pad, int width) {
+static int format_char(char* dest,
+                       size_t capacity,
+                       int pos,
+                       char value,
+                       bool left_align,
+                       bool zero_pad,
+                       int width) {
   char pad_char = (zero_pad && !left_align) ? '0' : ' ';
   int padding = width > 1 ? width - 1 : 0;
 
   if(!left_align) {
-    pos = append_chars(dest, pos, pad_char, padding);
+    pos = append_chars(dest, capacity, pos, pad_char, padding);
   }
 
-  dest[pos++] = value;
+  store_char(dest, capacity, pos, value);
+  pos++;
 
   if(left_align) {
-    pos = append_chars(dest, pos, ' ', padding);
+    pos = append_chars(dest, capacity, pos, ' ', padding);
   }
 
   return pos;
 }
 
-static int format_number(char* dest, int pos, uint64_t value, int base, bool uppercase,
-                         bool left_align, bool zero_pad, bool precision_specified, int precision,
-                         int width, const char* prefix, int prefix_len) {
+static int format_number(char* dest,
+                         size_t capacity,
+                         int pos,
+                         uint64_t value,
+                         int base,
+                         bool uppercase,
+                         bool left_align,
+                         bool zero_pad,
+                         bool precision_specified,
+                         int precision,
+                         int width,
+                         const char* prefix,
+                         int prefix_len) {
   char digits[65];
   int digit_len = 0;
 
@@ -120,47 +158,42 @@ static int format_number(char* dest, int pos, uint64_t value, int base, bool upp
   int space_pad = width > total_len ? width - total_len : 0;
 
   if(!left_align) {
-    pos = append_chars(dest, pos, ' ', space_pad);
+    pos = append_chars(dest, capacity, pos, ' ', space_pad);
   }
 
   if(prefix_len > 0) {
-    pos = append_buffer(dest, pos, prefix, prefix_len);
+    pos = append_buffer(dest, capacity, pos, prefix, prefix_len);
   }
 
-  pos = append_chars(dest, pos, '0', zero_digits);
+  pos = append_chars(dest, capacity, pos, '0', zero_digits);
 
   for(int i = digit_len - 1; i >= 0; i--) {
-    dest[pos++] = digits[i];
+    store_char(dest, capacity, pos, digits[i]);
+    pos++;
   }
 
   if(left_align) {
-    pos = append_chars(dest, pos, ' ', space_pad);
+    pos = append_chars(dest, capacity, pos, ' ', space_pad);
   }
 
   return pos;
 }
 
-int vprintk(char *str, const char *format, ...) {
-  va_list args;
-  va_start(args, format);
-  int len = vsprintk(str, format, args);
-  va_end(args);
-  return len;
-}
-
-int vsprintk(char* str, const char* format, va_list args) {
+static int vsprintk_internal(char* str, size_t capacity, const char* format, va_list args) {
   int result_len = 0;
 
   for(int pos = 0; format[pos] != '\0';) {
     if(format[pos] != '%') {
-      str[result_len++] = format[pos++];
+      store_char(str, capacity, result_len, format[pos++]);
+      result_len++;
       continue;
     }
 
     pos++;
 
     if(format[pos] == '%') {
-      str[result_len++] = '%';
+      store_char(str, capacity, result_len, '%');
+      result_len++;
       pos++;
       continue;
     }
@@ -249,13 +282,20 @@ int vsprintk(char* str, const char* format, va_list args) {
     switch(specifier) {
     case 'c': {
       int value = va_arg(args, int);
-      result_len = format_char(str, result_len, (char)value, left_align, zero_pad, width);
+      result_len = format_char(str, capacity, result_len, (char)value, left_align, zero_pad, width);
       break;
     }
     case 's': {
       const char* value = va_arg(args, const char*);
-      result_len = format_string(str, result_len, value, left_align, zero_pad, width,
-                                 precision_specified, precision);
+      result_len = format_string(str,
+                                 capacity,
+                                 result_len,
+                                 value,
+                                 left_align,
+                                 zero_pad,
+                                 width,
+                                 precision_specified,
+                                 precision);
       break;
     }
     case 'p': {
@@ -264,8 +304,19 @@ int vsprintk(char* str, const char* format, va_list args) {
       prefix_storage[0] = '0';
       prefix_storage[1] = 'x';
       prefix_storage[2] = '\0';
-      result_len = format_number(str, result_len, value, 16, false, left_align, zero_pad,
-                                 precision_specified, precision, width, prefix_storage, 2);
+      result_len = format_number(str,
+                                 capacity,
+                                 result_len,
+                                 value,
+                                 16,
+                                 false,
+                                 left_align,
+                                 zero_pad,
+                                 precision_specified,
+                                 precision,
+                                 width,
+                                 prefix_storage,
+                                 2);
       break;
     }
     case 'd':
@@ -295,15 +346,24 @@ int vsprintk(char* str, const char* format, va_list args) {
         prefix_storage[prefix_len++] = '-';
       }
 
-      result_len = format_number(str, result_len, magnitude, 10, false, left_align, zero_pad,
-                                 precision_specified, precision, width, prefix_storage,
+      result_len = format_number(str,
+                                 capacity,
+                                 result_len,
+                                 magnitude,
+                                 10,
+                                 false,
+                                 left_align,
+                                 zero_pad,
+                                 precision_specified,
+                                 precision,
+                                 width,
+                                 prefix_storage,
                                  prefix_len);
       break;
     }
     case 'z': {
-      // length modifier for size_t, adjust and re-process next specifier
       length = LEN_LONGLONG;
-      pos++; // skip 'z'
+      pos++;
       if(format[pos] == '\0') {
         break;
       }
@@ -325,15 +385,36 @@ int vsprintk(char* str, const char* format, va_list args) {
           if(negative) {
             prefix_storage[prefix_len++] = '-';
           }
-          result_len = format_number(str, result_len, magnitude, 10, false, left_align, zero_pad,
-                                     precision_specified, precision, width, prefix_storage,
+          result_len = format_number(str,
+                                     capacity,
+                                     result_len,
+                                     magnitude,
+                                     10,
+                                     false,
+                                     left_align,
+                                     zero_pad,
+                                     precision_specified,
+                                     precision,
+                                     width,
+                                     prefix_storage,
                                      prefix_len);
           continue;
         }
         case 'u': {
           uint64_t value = (uint64_t)va_arg(args, size_t);
-          result_len = format_number(str, result_len, value, 10, false, left_align, zero_pad,
-                                     precision_specified, precision, width, NULL, 0);
+          result_len = format_number(str,
+                                     capacity,
+                                     result_len,
+                                     value,
+                                     10,
+                                     false,
+                                     left_align,
+                                     zero_pad,
+                                     precision_specified,
+                                     precision,
+                                     width,
+                                     NULL,
+                                     0);
           continue;
         }
         case 'x':
@@ -346,9 +427,19 @@ int vsprintk(char* str, const char* format, va_list args) {
             prefix_storage[prefix_len++] = '0';
             prefix_storage[prefix_len++] = uppercase ? 'X' : 'x';
           }
-          result_len = format_number(str, result_len, value, 16, uppercase, left_align, zero_pad,
-                                     precision_specified, precision, width,
-                                     prefix_len ? prefix_storage : NULL, prefix_len);
+          result_len = format_number(str,
+                                     capacity,
+                                     result_len,
+                                     value,
+                                     16,
+                                     uppercase,
+                                     left_align,
+                                     zero_pad,
+                                     precision_specified,
+                                     precision,
+                                     width,
+                                     prefix_len ? prefix_storage : NULL,
+                                     prefix_len);
           continue;
         }
         case 'o': {
@@ -358,16 +449,25 @@ int vsprintk(char* str, const char* format, va_list args) {
           if(alternate_form && value != 0) {
             prefix_storage[prefix_len++] = '0';
           }
-          result_len = format_number(str, result_len, value, 8, false, left_align, zero_pad,
-                                     precision_specified, precision, width,
-                                     prefix_len ? prefix_storage : NULL, prefix_len);
+          result_len = format_number(str,
+                                     capacity,
+                                     result_len,
+                                     value,
+                                     8,
+                                     false,
+                                     left_align,
+                                     zero_pad,
+                                     precision_specified,
+                                     precision,
+                                     width,
+                                     prefix_len ? prefix_storage : NULL,
+                                     prefix_len);
           continue;
         }
         default:
-          // Unknown combination, treat as literal
-          str[result_len++] = '%';
-          str[result_len++] = 'z';
-          str[result_len++] = specifier;
+          store_char(str, capacity, result_len++, '%');
+          store_char(str, capacity, result_len++, 'z');
+          store_char(str, capacity, result_len++, specifier);
           continue;
       }
     }
@@ -381,8 +481,19 @@ int vsprintk(char* str, const char* format, va_list args) {
         value = va_arg(args, unsigned int);
       }
 
-      result_len = format_number(str, result_len, value, 10, false, left_align, zero_pad,
-                                 precision_specified, precision, width, NULL, 0);
+      result_len = format_number(str,
+                                 capacity,
+                                 result_len,
+                                 value,
+                                 10,
+                                 false,
+                                 left_align,
+                                 zero_pad,
+                                 precision_specified,
+                                 precision,
+                                 width,
+                                 NULL,
+                                 0);
       break;
     }
     case 'x':
@@ -404,9 +515,19 @@ int vsprintk(char* str, const char* format, va_list args) {
         prefix_storage[prefix_len++] = uppercase ? 'X' : 'x';
       }
 
-      result_len = format_number(str, result_len, value, 16, uppercase, left_align, zero_pad,
-                                 precision_specified, precision, width,
-                                 prefix_len ? prefix_storage : NULL, prefix_len);
+      result_len = format_number(str,
+                                 capacity,
+                                 result_len,
+                                 value,
+                                 16,
+                                 uppercase,
+                                 left_align,
+                                 zero_pad,
+                                 precision_specified,
+                                 precision,
+                                 width,
+                                 prefix_len ? prefix_storage : NULL,
+                                 prefix_len);
       break;
     }
     case 'o': {
@@ -425,23 +546,59 @@ int vsprintk(char* str, const char* format, va_list args) {
         prefix_storage[prefix_len++] = '0';
       }
 
-      result_len = format_number(str, result_len, value, 8, false, left_align, zero_pad,
-                                 precision_specified, precision, width,
-                                 prefix_len ? prefix_storage : NULL, prefix_len);
+      result_len = format_number(str,
+                                 capacity,
+                                 result_len,
+                                 value,
+                                 8,
+                                 false,
+                                 left_align,
+                                 zero_pad,
+                                 precision_specified,
+                                 precision,
+                                 width,
+                                 prefix_len ? prefix_storage : NULL,
+                                 prefix_len);
       break;
     }
     case '%': {
-      result_len = format_char(str, result_len, '%', left_align, zero_pad, width > 1 ? width : 1);
+      result_len = format_char(str,
+                               capacity,
+                               result_len,
+                               '%',
+                               left_align,
+                               zero_pad,
+                               width > 1 ? width : 1);
       break;
     }
     default: {
-      str[result_len++] = specifier;
+      store_char(str, capacity, result_len++, specifier);
       break;
     }
     }
   }
 
-  str[result_len] = '\0';
+  if(str != NULL && capacity > 0) {
+    size_t limit = capacity - 1;
+    size_t index = (size_t)result_len <= limit ? (size_t)result_len : limit;
+    str[index] = '\0';
+  }
 
   return result_len;
+}
+
+int vprintk(char *str, const char *format, ...) {
+  va_list args;
+  va_start(args, format);
+  int len = vsprintk_internal(str, SIZE_MAX, format, args);
+  va_end(args);
+  return len;
+}
+
+int vsprintk(char* str, const char* format, va_list args) {
+  return vsprintk_internal(str, SIZE_MAX, format, args);
+}
+
+int vsnprintk(char* str, size_t capacity, const char* format, va_list args) {
+  return vsprintk_internal(str, capacity, format, args);
 }

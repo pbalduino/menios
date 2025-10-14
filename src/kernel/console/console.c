@@ -65,8 +65,8 @@ int vprintf(const char* format, va_list args) {
 }
 
 int fvprintf(FILE *file, const char *format, va_list args){
-  char buffer[1024];
-  int len = vsprintk(buffer, format, args);
+  char buffer[2048];
+  int len = vsnprintk(buffer, sizeof(buffer), format, args);
 
   spinlock_lock(&fvprintf_lock);
   fputs(buffer, file);

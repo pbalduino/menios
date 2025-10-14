@@ -67,8 +67,8 @@ int serial_puts(const char* text) {
 }
 
 int serial_vprintf(const char *format, va_list args){
-  char buffer[1024];
-  int len = vsprintk(buffer, format, args);
+  char buffer[2048];
+  int len = vsnprintk(buffer, sizeof(buffer), format, args);
 
   uint64_t flags = spinlock_lock_irqsave(&serial_printf_lock);
   serial_puts(buffer);
