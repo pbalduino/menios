@@ -24,6 +24,9 @@ typedef struct syscall_cpu_context_t {
 
 static syscall_cpu_context_t syscall_cpu_context __attribute__((aligned(16)));
 
+uint64_t syscall_last_return_value = 0;
+uint64_t syscall_last_return_slot_value = 0;
+
 void syscall_arch_init(void) {
 #ifdef MENIOS_HOST_TEST
   (void)0;

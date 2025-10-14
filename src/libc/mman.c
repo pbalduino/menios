@@ -42,6 +42,20 @@ void* mmap(void* addr, size_t length, int prot, int flags, int fd, off_t offset)
                               (long)flags,
                               (long)fd,
                               (long)offset);
+  long rc_trace = __menios_syscall_last_result;
+
+  {
+    char rawbuf[64];
+    size_t rawpos = 0u;
+    rawpos = log_append_str(rawbuf, rawpos, sizeof(rawbuf), "mmap raw rc=0x");
+    rawpos = log_append_hex(rawbuf, rawpos, sizeof(rawbuf), (uint64_t)rc);
+    rawpos = log_append_str(rawbuf, rawpos, sizeof(rawbuf), " trace=0x");
+    rawpos = log_append_hex(rawbuf, rawpos, sizeof(rawbuf), (uint64_t)rc_trace);
+    if(rawpos < sizeof(rawbuf)) {
+      rawbuf[rawpos++] = '\n';
+    }
+    (void)write(2, rawbuf, rawpos);
+  }
 
   if(rc < 0) {
     errno = (int)(-rc);

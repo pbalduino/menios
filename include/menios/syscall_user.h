@@ -51,12 +51,15 @@ static inline long __menios_syscall6(long number,
 
 #else
 
+static volatile long __attribute__((unused)) __menios_syscall_last_result;
+
 static inline long __menios_syscall0(long number) {
   register long rax asm("rax") = number;
   asm volatile("syscall"
                : "+a"(rax)
                :
                : "rcx", "r11", "memory");
+  __menios_syscall_last_result = rax;
   return rax;
 }
 
@@ -66,6 +69,7 @@ static inline long __menios_syscall1(long number, long arg1) {
                : "+a"(rax)
                : "D"(arg1)
                : "rcx", "r11", "memory");
+  __menios_syscall_last_result = rax;
   return rax;
 }
 
@@ -75,6 +79,7 @@ static inline long __menios_syscall2(long number, long arg1, long arg2) {
                : "+a"(rax)
                : "D"(arg1), "S"(arg2)
                : "rcx", "r11", "memory");
+  __menios_syscall_last_result = rax;
   return rax;
 }
 
@@ -84,6 +89,7 @@ static inline long __menios_syscall3(long number, long arg1, long arg2, long arg
                : "+a"(rax)
                : "D"(arg1), "S"(arg2), "d"(arg3)
                : "rcx", "r11", "memory");
+  __menios_syscall_last_result = rax;
   return rax;
 }
 
@@ -94,6 +100,7 @@ static inline long __menios_syscall4(long number, long arg1, long arg2, long arg
                : "+a"(rax)
                : "D"(arg1), "S"(arg2), "d"(arg3), "r"(r10)
                : "rcx", "r11", "memory");
+  __menios_syscall_last_result = rax;
   return rax;
 }
 
@@ -110,6 +117,7 @@ static inline long __menios_syscall5(long number,
                : "+a"(rax)
                : "D"(arg1), "S"(arg2), "d"(arg3), "r"(r10), "r"(r8)
                : "rcx", "r11", "memory");
+  __menios_syscall_last_result = rax;
   return rax;
 }
 
@@ -128,6 +136,7 @@ static inline long __menios_syscall6(long number,
                : "+a"(rax)
                : "D"(arg1), "S"(arg2), "d"(arg3), "r"(r10), "r"(r8), "r"(r9)
                : "rcx", "r11", "memory");
+  __menios_syscall_last_result = rax;
   return rax;
 }
 

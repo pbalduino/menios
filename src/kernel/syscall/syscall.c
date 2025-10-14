@@ -18,6 +18,13 @@
 #include <string.h>
 #include <stdlib.h>
 
+#include <stdint.h>
+
+#ifndef MENIOS_HOST_TEST
+extern uint64_t syscall_last_return_value;
+extern uint64_t syscall_last_return_slot_value;
+#endif
+
 #define SYSCALL_MAX 256
 
 static uint64_t syscall_stub_unimplemented(syscall_frame_t* frame);
@@ -276,12 +283,30 @@ static uint64_t syscall_finalize(syscall_frame_t* frame) {
     return frame->rax;
   }
 
+  serial_printf("syscall_finalize: entry pid=%u rax=%lx\n",
+                current ? current->pid : 0u,
+                (unsigned long)frame->rax);
+
+#ifndef MENIOS_HOST_TEST
+  syscall_last_return_value = frame->rax;
+#endif
+
   proc_signal_delivery_t delivery =
       proc_signal_handle_pending(current, (cpu_state_t*)frame);
   if(delivery == PROC_SIGNAL_DELIVERY_TERMINATED ||
      delivery == PROC_SIGNAL_DELIVERY_STOPPED) {
     proc_switch((void*)frame);
   }
+
+  serial_printf("syscall_finalize: exit pid=%u rax=%lx delivery=%d\n",
+                current ? current->pid : 0u,
+                (unsigned long)frame->rax,
+                (int)delivery);
+#ifndef MENIOS_HOST_TEST
+  serial_printf("syscall_finalize: stored=%lx slot=%lx\n",
+                (unsigned long)syscall_last_return_value,
+                (unsigned long)syscall_last_return_slot_value);
+#endif
   return frame->rax;
 }
 
@@ -442,10 +467,11 @@ uint64_t syscall_dispatch(syscall_frame_t* frame) {
     if(handler) {
       uint64_t result = handler(frame);
       frame->rax = result;
-      serial_printf("syscall_dispatch: post-handler rip=%lx cs=%lx rsp=%lx\n",
+      serial_printf("syscall_dispatch: post-handler rip=%lx cs=%lx rsp=%lx rax=%lx\n",
                     (unsigned long)frame->rip,
                     (unsigned long)frame->cs,
-                    (unsigned long)frame->rsp);
+                    (unsigned long)frame->rsp,
+                    (unsigned long)frame->rax);
       return syscall_finalize(frame);
     }
   }

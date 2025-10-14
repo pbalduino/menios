@@ -12,7 +12,7 @@
 
 #define HEAP_ALIGNMENT      16UL
 #define HEAP_MINIMUM_PAGES   1UL
-#define HEAP_REGION_CAP     64UL
+#define HEAP_REGION_CAP     2048UL
 
 #define KHEAP_BASE  0xffffc00000000000ull
 #define KHEAP_SIZE  (64ull * 1024 * 1024ull)
@@ -540,9 +540,6 @@ static bool heap_grow(size_t minimum_size) {
   if(heap_register_region(node, requested, phys_base, page_count, true) == NULL) {
     serial_printf("heap_grow: failed to register region\n");
 
-    heap_unmap_pages((virt_addr_t)node, page_count);
-    heap_virtual_release((virt_addr_t)node, requested);
-
     if(previous_tail) {
       previous_tail->next = NULL;
       heap_tail = previous_tail;
@@ -553,6 +550,9 @@ static bool heap_grow(size_t minimum_size) {
 
     node->prev = NULL;
     node->next = NULL;
+
+    heap_unmap_pages((virt_addr_t)node, page_count);
+    heap_virtual_release((virt_addr_t)node, requested);
 
     pmm_free_pages(phys_base, page_count);
     return false;

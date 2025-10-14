@@ -28,6 +28,22 @@ static char* shell_envp[] = { env_path, env_home, env_pwd, NULL };
 static char tty_path_console[] = "/dev/tty0";
 static char tty_path_serial[] = "/dev/ttyS0";
 
+#ifdef RUN_MALLOC_STRESS
+static char stress_path[] = "/bin/malloc_stress";
+static char stress_arg_slots[] = "--slots=4096";
+static char stress_arg_max_size[] = "--max-size=262144"; /* 256 KiB */
+static char stress_arg_target[] = "--target-mb=256";
+static char stress_arg_progress[] = "--progress=100";
+static char* stress_argv[] = {
+  stress_path,
+  stress_arg_slots,
+  stress_arg_max_size,
+  stress_arg_target,
+  stress_arg_progress,
+  NULL,
+};
+#endif
+
 static size_t str_len(const char* s) {
   size_t len = 0;
   while(s[len] != '\0') {
@@ -128,8 +144,7 @@ static void bind_stdio(void) {
   write_log("[init] bind_stdio finished\n");
 }
 
-static long exec_program(char* path) {
-  char* argv[] = { path, NULL };
+static long exec_program(char* path, char* const argv[]) {
   write_log("[init] exec_program called\n");
   write_log(path);
   write_log("\n");
@@ -137,19 +152,31 @@ static long exec_program(char* path) {
 }
 
 static void run_shell(void) {
+#ifdef RUN_MALLOC_STRESS
+  write_log("[init] launching malloc_stress test\n");
+  write_str(STDOUT_FILENO, "[init] launching malloc_stress\n");
+  long rc = exec_program(stress_path, stress_argv);
+  write_log_num("[init] exec /bin/malloc_stress rc=", rc);
+  if(rc < 0) {
+    write_str(STDERR_FILENO, "[init] execve(/bin/malloc_stress) failed\n");
+  }
+  return;
+#else
   static char mosh_path[] = "/bin/mosh";
   static char fallback_path[] = "/bin/user_demo";
+  char* mosh_argv[] = { mosh_path, NULL };
+  char* fallback_argv[] = { fallback_path, NULL };
 
   write_log("[init] entering run_shell\n");
   write_str(STDERR_FILENO, "[init] entering run_shell\n");
   write_str(STDOUT_FILENO, "[init] launching mosh\n");
   write_log("[init] launching mosh\n");
-  long rc = exec_program(mosh_path);
+  long rc = exec_program(mosh_path, mosh_argv);
   write_log_num("[init] exec /bin/mosh rc=", rc);
   if(rc < 0) {
     write_str(STDERR_FILENO, "[init] execve(/bin/mosh) failed, falling back to user_demo\n");
     write_log("[init] mosh exec failed\n");
-    rc = exec_program(fallback_path);
+    rc = exec_program(fallback_path, fallback_argv);
     write_log_num("[init] exec /bin/user_demo rc=", rc);
     if(rc < 0) {
       write_str(STDERR_FILENO, "[init] execve(/bin/user_demo) failed\n");
@@ -158,6 +185,7 @@ static void run_shell(void) {
     }
   }
   write_log("[init] run_shell completed\n");
+#endif
 }
 
 void _start(void) {

@@ -666,6 +666,37 @@ static bool  builtin_set_test_counter(char* line, int* out_status);
 static bool  builtin_test_counter_lt(int* out_status);
 #endif
 
+static size_t debug_append_str(char* buffer, size_t pos, size_t capacity, const char* text) {
+  if(text == NULL) {
+    return pos;
+  }
+  while(*text != '\0' && pos < capacity) {
+    buffer[pos++] = *text++;
+  }
+  return pos;
+}
+
+static size_t debug_append_hex(char* buffer, size_t pos, size_t capacity, uintptr_t value) {
+  static const char digits[] = "0123456789abcdef";
+  if(pos + 2 < capacity) {
+    buffer[pos++] = '0';
+    buffer[pos++] = 'x';
+  }
+
+  bool started = false;
+  for(int shift = (int)(sizeof(uintptr_t) * 8) - 4; shift >= 0; shift -= 4) {
+    unsigned nibble = (unsigned)((value >> shift) & 0xFu);
+    if(nibble != 0u || started || shift == 0) {
+      if(pos < capacity) {
+        buffer[pos++] = digits[nibble];
+      }
+      started = true;
+    }
+  }
+
+  return pos;
+}
+
 #ifdef MOSH_TEST
 long mosh_test_syscall0(long number);
 long mosh_test_syscall1(long number, long arg1);
@@ -4781,7 +4812,63 @@ static void shell_loop(void) {
 #ifndef MOSH_TEST
 int main(int argc, char** argv, char** envp) {
   (void)argc;
-  (void)argv;
+  const uintptr_t MIN_USER_PTR = 0x1000u;
+  uintptr_t argv_raw = (uintptr_t)argv;
+  uintptr_t envp_raw = (uintptr_t)envp;
+
+  const char* argv0 = "(null)";
+  uintptr_t argv0_raw = 0u;
+  if(argv != NULL && argv_raw >= MIN_USER_PTR) {
+    const char* candidate = argv[0];
+    argv0_raw = (uintptr_t)candidate;
+    if(candidate != NULL && argv0_raw >= MIN_USER_PTR) {
+      argv0 = candidate;
+    }
+  }
+
+  bool envp_valid = (envp != NULL) && (envp_raw >= MIN_USER_PTR);
+  uintptr_t env0_raw = 0u;
+  const char* env0 = "(null)";
+  if(envp_valid) {
+    const char* candidate = envp[0];
+    env0_raw = (uintptr_t)candidate;
+    if(candidate != NULL) {
+      if(env0_raw >= MIN_USER_PTR) {
+        env0 = candidate;
+      } else {
+        envp_valid = false;
+        env0 = "(invalid)";
+      }
+    }
+  }
+  if(!envp_valid) {
+    envp = NULL;
+  }
+
+  {
+    char buffer[224];
+    size_t pos = 0u;
+    pos = debug_append_str(buffer, pos, sizeof(buffer), "[mosh] main entry argv=");
+    pos = debug_append_hex(buffer, pos, sizeof(buffer), argv_raw);
+    pos = debug_append_str(buffer, pos, sizeof(buffer), " argv0=");
+    pos = debug_append_hex(buffer, pos, sizeof(buffer), argv0_raw);
+    pos = debug_append_str(buffer, pos, sizeof(buffer), " envp=");
+    pos = debug_append_hex(buffer, pos, sizeof(buffer), envp_raw);
+    pos = debug_append_str(buffer, pos, sizeof(buffer), " env0=");
+    pos = debug_append_hex(buffer, pos, sizeof(buffer), env0_raw);
+    pos = debug_append_str(buffer, pos, sizeof(buffer), " envp_valid=");
+    pos = debug_append_str(buffer, pos, sizeof(buffer), envp_valid ? "yes" : "no");
+    if(pos < sizeof(buffer)) {
+      buffer[pos++] = '\n';
+    }
+    (void)write(STDERR_FILENO, buffer, pos);
+    write_str(STDERR_FILENO, "[mosh] argv0: ");
+    write_str(STDERR_FILENO, argv0);
+    write_str(STDERR_FILENO, "\n");
+    write_str(STDERR_FILENO, "[mosh] env0: ");
+    write_str(STDERR_FILENO, env0);
+    write_str(STDERR_FILENO, "\n");
+  }
   env_release_heap_entries();
   process_envp = (envp != NULL) ? envp : fallback_envp;
   str_copy(current_directory, sizeof(current_directory), "/");

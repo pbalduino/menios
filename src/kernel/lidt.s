@@ -17,6 +17,9 @@ extern timer_handler
 extern ps2kb_handler
 extern ahci_irq_handler
 extern syscall_dispatch
+extern serial_printf
+extern syscall_last_return_value
+extern syscall_last_return_slot_value
 
 %define SYSCALL_CONTEXT_KERNEL_RSP 0
 %define SYSCALL_CONTEXT_USER_RSP   8
@@ -272,6 +275,9 @@ syscall_isr_handler:
   mov rdi, rsp
   call syscall_dispatch
 
+  ; Update the saved rax slot with the syscall return value before restoring registers.
+  mov [rsp + 14 * 8], rax
+
   pop r15
   pop r14
   pop r13
@@ -328,6 +334,19 @@ syscall_entry:
   mov rdi, rsp
   call syscall_dispatch
 
+  mov [rsp + 14 * 8], rax
+  mov [rel syscall_last_return_value], rax
+  mov rdx, [rsp + 14 * 8]
+  mov [rel syscall_last_return_slot_value], rdx
+  mov rdi, sysret_value_fmt
+  mov rsi, rax
+  mov rdx, [rsp + 14 * 8]
+  call serial_printf
+  mov rcx, [rsp + 13 * 8]
+  mov rbx, [rsp + 12 * 8]
+  mov [rel syscall_last_return_slot_value], rcx
+  mov [rel syscall_last_return_value], rbx
+
   pop r15
   pop r14
   pop r13
@@ -346,3 +365,7 @@ syscall_entry:
 
   swapgs
   iretq
+
+section .rodata
+sysret_value_fmt:
+  db "[sysret] value=%lx slot=%lx", 10, 0
