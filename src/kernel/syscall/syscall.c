@@ -291,6 +291,10 @@ static uint64_t syscall_finalize(syscall_frame_t* frame) {
   syscall_last_return_value = frame->rax;
 #endif
 
+  if(current != NULL && current->cpu_state != NULL) {
+    current->cpu_state->rax = frame->rax;
+  }
+
   proc_signal_delivery_t delivery =
       proc_signal_handle_pending(current, (cpu_state_t*)frame);
   if(delivery == PROC_SIGNAL_DELIVERY_TERMINATED ||
@@ -929,9 +933,15 @@ static uint64_t syscall_waitpid_handler(syscall_frame_t* frame) {
     proc_request_sleep(0);
     proc_switch((void*)frame);
     if(current != caller) {
+      serial_printf("waitpid: yielding to pid=%u frame->rax=%lx\n",
+                    current ? current->pid : 0u,
+                    (unsigned long)frame->rax);
       return frame->rax;
     }
     caller->state = PROC_STATE_RUNNING;
+    serial_printf("waitpid: resumed caller pid=%u frame->rax=%lx\n",
+                  caller->pid,
+                  (unsigned long)frame->rax);
   }
 }
 

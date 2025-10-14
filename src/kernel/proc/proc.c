@@ -375,6 +375,12 @@ void proc_switch(void* arg) {
   last_exec = now;
 
   if(current != NULL) {
+    if(current->cpu_state != NULL) {
+  serial_printf("proc_switch: save pid=%u prev_rax=%lx frame->rax=%lx\n",
+                current->pid,
+                current->cpu_state ? current->cpu_state->rax : 0xffffffffffffffffull,
+                ((cpu_state_t*)frame)->rax);
+    }
     proc_signal_handle_pending(current, frame);
   }
 
@@ -486,6 +492,9 @@ void proc_switch(void* arg) {
     write_cr3(desired_cr3);
   }
 
+  serial_printf("proc_switch: restore pid=%u cpu_state->rax=%lx\n",
+                current->pid,
+                current->cpu_state->rax);
   memcpy(frame, current->cpu_state, sizeof(cpu_state_t));
 
   uint64_t kernel_stack = proc_kernel_stack_top(current);

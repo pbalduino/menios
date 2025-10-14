@@ -335,17 +335,6 @@ syscall_entry:
   call syscall_dispatch
 
   mov [rsp + 14 * 8], rax
-  mov [rel syscall_last_return_value], rax
-  mov rdx, [rsp + 14 * 8]
-  mov [rel syscall_last_return_slot_value], rdx
-  mov rdi, sysret_value_fmt
-  mov rsi, rax
-  mov rdx, [rsp + 14 * 8]
-  call serial_printf
-  mov rcx, [rsp + 13 * 8]
-  mov rbx, [rsp + 12 * 8]
-  mov [rel syscall_last_return_slot_value], rcx
-  mov [rel syscall_last_return_value], rbx
 
   pop r15
   pop r14
