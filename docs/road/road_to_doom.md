@@ -263,20 +263,21 @@ Basic command-line tools for shell interaction:
 
 **IPC - Other**:
 24. ✅ **#220** – ioctl syscall for device-specific operations ✅ *Completed*
+25. 🚧 **#221** – Fast syscall/sysret path (IN PROGRESS - return path truncates 64-bit values, blocks #274)
 
 ### System Services
-25. **#33** – Bring up the audio subsystem for Doom's sound effects/music
-26. **#189** – Add FAT32 write support for save games and config files
-27. ✅ **#205** – Elevator I/O scheduler (COMPLETE!)
-28. ✅ **#183** – Provide basic `/bin` utilities (echo, cat, env, true, false) (COMPLETE!)
-29. ✅ **#185** – PATH search configuration (COMPLETE!)
-30. ~~**#187** – Add process management tools (ps, kill)~~ ✅
-31. **#188** – env utility ✅
-32. ✅ **#221** – Fast syscall/sysret path for 3-5x performance boost (completed)
+26. **#33** – Bring up the audio subsystem for Doom's sound effects/music
+27. **#189** – Add FAT32 write support for save games and config files
+28. ✅ **#205** – Elevator I/O scheduler (COMPLETE!)
+29. ✅ **#183** – Provide basic `/bin` utilities (echo, cat, env, true, false) (COMPLETE!)
+30. ✅ **#185** – PATH search configuration (COMPLETE!)
+31. ~~**#187** – Add process management tools (ps, kill)~~ ✅
+32. **#188** – env utility ✅
 
 ### Future: Native Compilation
 33. **#190** – Port TCC (Tiny C Compiler) to meniOS
 34. **#191** – Port binutils (as, ld) for native development
+35. **#274** – Fix boot regression caused by syscall/sysret truncation (blocked by #221)
 
 These items unlock the bulk of the remaining roadmap phases (threaded libc, IPC,
 networking) and pave the way for shipping a Doom-capable user environment.

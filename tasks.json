@@ -1,6 +1,6 @@
 [
   {
-    "title": "Boot failure: init process crashes with page fault at 0x40bac8, preventing mosh from starting",
+    "title": "[Blocker] Boot failure: init process crashes with page fault at 0x40bac8, preventing mosh from starting",
     "github_issue": {
       "number": 274,
       "url": "https://github.com/pbalduino/menios/issues/274",
@@ -10,8 +10,7 @@
       "bug",
       "init",
       "mosh",
-      "kernel",
-      "blocked"
+      "kernel"
     ],
     "assignees": [
       "pbalduino"
@@ -411,7 +410,7 @@
     "github_issue": {
       "number": 221,
       "url": "https://github.com/pbalduino/menios/issues/221",
-      "state": "CLOSED"
+      "state": "OPEN"
     },
     "labels": [
       "enhancement",
@@ -522,7 +521,8 @@
       "state": "OPEN"
     },
     "labels": [
-      "enhancement"
+      "enhancement",
+      "kernel"
     ],
     "assignees": [
       "pbalduino"

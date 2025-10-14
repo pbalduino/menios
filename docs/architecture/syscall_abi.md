@@ -7,14 +7,16 @@ stable specification.
 
 ## Entry mechanism
 
-- **Fast path**: user mode executes the `syscall` instruction. The MSR-programmed
+> **⚠️ KNOWN ISSUE (#274, #221)**: The syscall/sysret implementation currently has a critical bug where the return path truncates 64-bit values to 32 bits. This causes mmap to return invalid pointers (e.g., kernel returns 0x40000000 but userland receives 0x10), leading to immediate SIGSEGV. Work is in progress to fix the syscall/sysret return path to properly preserve full 64-bit return values.
+
+- **Fast path (IN PROGRESS)**: user mode executes the `syscall` instruction. The MSR-programmed
   entry stub (`src/kernel/lidt.s:sym=syscall_entry`) switches to the per-CPU
   kernel stack, materialises a `syscall_frame_t`, and tail-calls
-  `syscall_dispatch`.
+  `syscall_dispatch`. **Note**: The return path currently truncates 64-bit values.
 - **Compatibility**: the legacy `int $0x80` gate remains in the IDT for
   debugging, but production binaries should use the wrappers in
   `include/menios/syscall_user.h` which emit `syscall` directly.
-- **CPU mode**: long mode (x86-64). All arguments and return values are 64-bit.
+- **CPU mode**: long mode (x86-64). All arguments and return values are 64-bit (once #221 is fixed).
 
 ### Register usage
 
@@ -199,11 +201,11 @@ void *anon_page(void) {
 - The ABI intentionally mimics Linux where practical, but only the calls listed
   above are guaranteed to exist.  Expect differences in flag handling and error
   coverage.
-- Future work may switch the trap mechanism from `int $0x80` to the `syscall`
-  instruction; code should prefer the wrapper macros from
-  `include/menios/syscall_user.h` so the change is transparent.
+- **Current status**: The `syscall` instruction is implemented but has a critical
+  bug in the return path (#221, #274) that truncates 64-bit values. Until this
+  is fixed, the system may experience boot failures.
 - Be conservative with path lengths and buffer sizes.  Exceeding the documented
   limits results in `-ENAMETOOLONG`, `-EFAULT`, or `-ERANGE`.
 
 This document will evolve as the GCC milestone lands and new system calls are
-added.
+added. The syscall/sysret implementation will be corrected in issue #221.
