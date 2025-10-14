@@ -933,9 +933,14 @@ static uint64_t syscall_waitpid_handler(syscall_frame_t* frame) {
     proc_request_sleep(0);
     proc_switch((void*)frame);
     if(current != caller) {
-      serial_printf("waitpid: yielding to pid=%u frame->rax=%lx\n",
+      uint64_t resume_rax = frame->rax;
+      if(current != NULL && current->cpu_state != NULL) {
+        resume_rax = current->cpu_state->rax;
+        frame->rax = resume_rax;
+      }
+      serial_printf("waitpid: unexpected resume in pid=%u resume_rax=%lx\n",
                     current ? current->pid : 0u,
-                    (unsigned long)frame->rax);
+                    (unsigned long)resume_rax);
       return frame->rax;
     }
     caller->state = PROC_STATE_RUNNING;
