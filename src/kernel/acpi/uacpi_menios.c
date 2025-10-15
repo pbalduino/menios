@@ -285,7 +285,11 @@ uacpi_status uacpi_kernel_raw_memory_write(
 }
 
 uacpi_thread_id uacpi_kernel_get_thread_id(void) {
-  return (uacpi_thread_id)&current->pid;
+  if(current == NULL) {
+    return NULL;
+  }
+
+  return (uacpi_thread_id)current;
 }
 
 uacpi_status uacpi_kernel_pci_read(
