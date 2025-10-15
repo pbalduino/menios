@@ -4,6 +4,7 @@
 #include <kernel/kernel.h>
 #include <kernel/pmm.h>
 #include <kernel/proc.h>
+#include <kernel/context_switch.h>
 #include <kernel/serial.h>
 #include <kernel/syscall_entry.h>
 #include <kernel/thread.h>
@@ -200,10 +201,7 @@ static void proc_free_resources(proc_info_p proc) {
     proc->address_space_root = 0;
   }
 
-  if(proc->cpu_state) {
-    kfree(proc->cpu_state);
-    proc->cpu_state = NULL;
-  }
+  proc->cpu_state = NULL;
 
   if(proc->stack_pointer) {
     kfree(proc->stack_pointer);
@@ -343,10 +341,7 @@ static void scheduler_cleanup_process(proc_info_p proc) {
     proc->address_space_root = 0;
   }
 
-  if(proc->cpu_state) {
-    kfree(proc->cpu_state);
-    proc->cpu_state = NULL;
-  }
+  proc->cpu_state = NULL;
 
   kfree(proc);
 }
@@ -359,12 +354,11 @@ void proc_debug(cpu_state_p state) {
   serial_printf("proc_debug: rdx: %lx r8:  %lx r9:  %lx r10: %lx\n", state->rdx, state->r8, state->r9, state->r10);
 }
 
-void proc_switch(void* arg) {
+cpu_state_p proc_switch(cpu_state_p frame) {
   if(current == NULL) {
     current = &kernel_process_info;
   }
 
-  cpu_state_p frame = (cpu_state_p)arg;
   uint64_t now = scheduler_now_us();
 
   if(last_exec == 0) {
@@ -386,6 +380,7 @@ void proc_switch(void* arg) {
 
   if(current && current->cpu_state) {
     memcpy(current->cpu_state, frame, sizeof(cpu_state_t));
+    current->kernel_rsp = (uint64_t)frame;
   }
 
   scheduler_wake_sleepers(now);
@@ -411,7 +406,7 @@ void proc_switch(void* arg) {
   if(!forced && current != NULL && current->state == PROC_STATE_RUNNING) {
     if(current->time_slice_remaining_us > 0 && highest_ready <= current->priority) {
       current->last_dispatch_us = now;
-      return;
+      return frame;
     }
   }
 
@@ -495,18 +490,20 @@ void proc_switch(void* arg) {
   serial_printf("proc_switch: restore pid=%u cpu_state->rax=%lx\n",
                 current->pid,
                 current->cpu_state->rax);
-  serial_printf("proc_switch: copy cpu_state->rax=%lx into frame %p\n",
-                current->cpu_state->rax,
-                (void*)frame);
-  if(current->cpu_state != frame) {
-    memcpy(frame, current->cpu_state, sizeof(cpu_state_t));
-  }
+  serial_printf("proc_switch: resume frame=%p\n", (void*)current->cpu_state);
 
   uint64_t kernel_stack = proc_kernel_stack_top(current);
   if(kernel_stack != 0) {
     tss_update_kernel_stack(kernel_stack);
     syscall_set_kernel_stack(kernel_stack);
   }
+
+  cpu_state_p next_frame = current->cpu_state;
+  uint64_t next_rsp = current->kernel_rsp ? current->kernel_rsp : (uint64_t)next_frame;
+  uint64_t dummy_prev = (uint64_t)frame;
+  uint64_t* prev_slot = previous ? &previous->kernel_rsp : &dummy_prev;
+  context_switch(prev_slot, next_rsp);
+  return next_frame;
 }
 
 void proc_create(proc_info_p proc, const char* name, void (*entrypoint)(void *), void* arg) {
@@ -563,20 +560,22 @@ void proc_create(proc_info_p proc, const char* name, void (*entrypoint)(void *),
   proc->waitpid_target = -1;
   proc->waitpid_waiting = false;
 
-  proc->cpu_state = kmalloc(sizeof(cpu_state_t));
-  if(proc->cpu_state == NULL) {
-    serial_printf("proc_create: Failed to allocate cpu state for process %s\n", name);
-    halt();
-  }
+  proc->cpu_state = (cpu_state_t*)((uint8_t*)proc->stack_base + PROC_STACK_SIZE - sizeof(cpu_state_t));
   memset(proc->cpu_state, 0, sizeof(cpu_state_t));
+  proc->kernel_rsp = (uint64_t)proc->cpu_state;
   proc->cpu_state->rip = (uint64_t)entrypoint;
   proc->cpu_state->rdi = (uint64_t)arg;
   proc->cpu_state->rsp = (uint64_t)proc->stack_base + PROC_STACK_SIZE;
   proc->cpu_state->rbp = proc->cpu_state->rsp;
   proc->cpu_state->rflags = 0x246;
-  serial_printf("proc_create: cs: %lx ss: %lx\n", current->cpu_state->cs, current->cpu_state->ss);
-  proc->cpu_state->cs = KERNEL_CODE_SEGMENT;
-  proc->cpu_state->ss = KERNEL_DATA_SEGMENT;
+  uint16_t cs = KERNEL_CODE_SEGMENT;
+  uint16_t ss = KERNEL_DATA_SEGMENT;
+  if(current != NULL && current->cpu_state != NULL) {
+    cs = current->cpu_state->cs;
+    ss = current->cpu_state->ss;
+  }
+  proc->cpu_state->cs = cs;
+  proc->cpu_state->ss = ss;
   proc->address_space_root = pmm_get_kernel_cr3();
   proc->user_segment_count = 0;
   proc->shm_attachment_count = 0;
@@ -1075,13 +1074,9 @@ proc_info_p proc_fork(proc_info_p parent, const syscall_frame_t* frame, int* err
   memset(child->stack_base, 0, PROC_STACK_SIZE);
   serial_printf("proc_fork: stack allocated aligned=%p\n", child->stack_base);
 
-  child->cpu_state = kmalloc(sizeof(cpu_state_t));
-  if(child->cpu_state == NULL) {
-    serial_printf("proc_fork: cpu_state allocation failed\n");
-    proc_free_resources(child);
-    return NULL;
-  }
+  child->cpu_state = (cpu_state_t*)((uint8_t*)child->stack_base + PROC_STACK_SIZE - sizeof(cpu_state_t));
   memset(child->cpu_state, 0, sizeof(cpu_state_t));
+  child->kernel_rsp = (uint64_t)child->cpu_state;
   serial_printf("proc_fork: cpu_state allocated\n");
 
   phys_addr_t new_root = pmm_clone_kernel_address_space();

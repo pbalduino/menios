@@ -310,7 +310,7 @@ static uint64_t syscall_finalize(syscall_frame_t* frame) {
       proc_signal_handle_pending(current, (cpu_state_t*)frame);
   if(delivery == PROC_SIGNAL_DELIVERY_TERMINATED ||
      delivery == PROC_SIGNAL_DELIVERY_STOPPED) {
-    proc_switch((void*)frame);
+    frame = proc_switch(frame);
   }
 
   serial_printf("syscall_finalize: exit pid=%u rax=%lx delivery=%d\n",
@@ -943,10 +943,9 @@ static uint64_t syscall_waitpid_handler(syscall_frame_t* frame) {
 
     caller->state = PROC_STATE_WAITING;
     proc_request_block();
-    proc_switch((void*)frame);
-    if(current != caller) {
-      return frame->rax;
-    }
+    do {
+      frame = proc_switch(frame);
+    } while(current != caller);
     caller->state = PROC_STATE_RUNNING;
     continue;
   }
@@ -1330,16 +1329,22 @@ static uint64_t syscall_proc_kill_handler(syscall_frame_t* frame) {
 }
 
 static uint64_t syscall_yield_handler(syscall_frame_t* frame) {
+  proc_info_p caller = current;
   proc_request_yield();
-  proc_switch((void*)frame);
+  do {
+    frame = proc_switch(frame);
+  } while(current != caller);
   frame->rax = 0;
   return 0;
 }
 
 static uint64_t syscall_sleep_handler(syscall_frame_t* frame) {
   uint64_t usec = frame->rdi;
+  proc_info_p caller = current;
   proc_request_sleep(usec);
-  proc_switch((void*)frame);
+  do {
+    frame = proc_switch(frame);
+  } while(current != caller);
   frame->rax = 0;
   return 0;
 }
@@ -1347,8 +1352,12 @@ static uint64_t syscall_sleep_handler(syscall_frame_t* frame) {
 static uint64_t syscall_exit_handler(syscall_frame_t* frame) {
   int status = (int)frame->rdi;
   proc_exit(status);
-  proc_switch((void*)frame);
-  return frame->rax;
+  while(true) {
+    frame = proc_switch(frame);
+    if(current != NULL) {
+      return frame->rax;
+    }
+  }
 }
 
 static uint64_t syscall_fcntl_handler(syscall_frame_t* frame) {
