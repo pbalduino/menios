@@ -4,6 +4,8 @@
 #include <kernel/mman.h>
 #include <kernel/mutex.h>
 #include <kernel/spinlock.h>
+#include <kernel/semaphore.h>
+#include <kernel/thread.h>
 #include <kernel/pmm.h>
 #include <kernel/proc.h>
 #include <kernel/serial.h>
@@ -16,7 +18,7 @@
 #include <string.h>
 
 typedef struct uacpi_kevent {
-  bool signaled;
+  ksem_t sem;
 } uacpi_kevent;
 
 static volatile struct limine_rsdp_request rsdp_request = {
@@ -172,27 +174,42 @@ void uacpi_kernel_unlock_spinlock(uacpi_handle handle, uacpi_cpu_flags flags) {
 }
 
 void uacpi_kernel_signal_event(uacpi_handle handle) {
+  if(handle == NULL) {
+    return;
+  }
+
   uacpi_kevent* event = (uacpi_kevent*)handle;
-  event->signaled = true;
-  serial_printf("uacpi_kernel_signal_event: %p - %d\n", event, event->signaled);
+  ksem_post(&event->sem);
 }
 
 void uacpi_kernel_reset_event(uacpi_handle handle) {
+  if(handle == NULL) {
+    return;
+  }
+
   uacpi_kevent* event = (uacpi_kevent*)handle;
-  event->signaled = false;
-  serial_printf("uacpi_kernel_reset_event: %p - %d\n", event, event->signaled);
+  while(ksem_trywait(&event->sem)) {
+  }
 }
 
 uacpi_handle uacpi_kernel_create_event(void) {
-  uacpi_kevent* event = kmalloc(sizeof(uacpi_kevent));
-  event->signaled = false;
-  serial_printf("uacpi_kernel_create_event: %p - %d\n", event, event->signaled);
+  uacpi_kevent* event = kmalloc(sizeof(*event));
+  if(event == NULL) {
+    return NULL;
+  }
+
+  ksem_init(&event->sem, 0);
   return event;
 }
 
 void uacpi_kernel_free_event(uacpi_handle handle) {
-  serial_printf("uacpi_kernel_free_event: %p\n", handle);
-  kfree(handle);
+  if(handle == NULL) {
+    return;
+  }
+
+  uacpi_kevent* event = (uacpi_kevent*)handle;
+  ksem_destroy(&event->sem);
+  kfree(event);
 }
 
 uacpi_handle uacpi_kernel_create_spinlock(void) {
@@ -226,9 +243,41 @@ void uacpi_kernel_sleep(uacpi_u64 msec) {
   serial_printf("uacpi_kernel_sleep not implemented\n");
 }
 
-uacpi_bool uacpi_kernel_wait_for_event(uacpi_handle, uacpi_u16) {
-  serial_printf("uacpi_kernel_wait_for_event not implemented\n");
-  return UACPI_STATUS_OK;
+uacpi_bool uacpi_kernel_wait_for_event(uacpi_handle handle, uacpi_u16 timeout) {
+  if(handle == NULL) {
+    return UACPI_FALSE;
+  }
+
+  uacpi_kevent* event = (uacpi_kevent*)handle;
+
+  if(ksem_trywait(&event->sem)) {
+    return UACPI_TRUE;
+  }
+
+  if(timeout == 0) {
+    return UACPI_FALSE;
+  }
+
+  if(timeout == 0xFFFF) {
+    ksem_wait(&event->sem);
+    return UACPI_TRUE;
+  }
+
+  uacpi_u16 remaining = timeout;
+  while(remaining > 0) {
+    if(ksem_trywait(&event->sem)) {
+      return UACPI_TRUE;
+    }
+
+    ksleep(1);
+    if(remaining > 1) {
+      remaining -= 1;
+    } else {
+      remaining = 0;
+    }
+  }
+
+  return UACPI_FALSE;
 }
 
 uacpi_status uacpi_kernel_handle_firmware_request(uacpi_firmware_request*) {
