@@ -240,7 +240,11 @@ uacpi_u64 uacpi_kernel_get_ticks(void) {
 }
 
 void uacpi_kernel_sleep(uacpi_u64 msec) {
-  serial_printf("uacpi_kernel_sleep not implemented\n");
+  if(msec == 0) {
+    return;
+  }
+
+  ksleep((uint64_t)msec);
 }
 
 uacpi_bool uacpi_kernel_wait_for_event(uacpi_handle handle, uacpi_u16 timeout) {
