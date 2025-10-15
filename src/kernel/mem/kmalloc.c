@@ -12,10 +12,10 @@
 
 #define HEAP_ALIGNMENT      16UL
 #define HEAP_MINIMUM_PAGES   1UL
-#define HEAP_REGION_CAP     2048UL
+#define HEAP_REGION_CAP     8192UL
 
 #define KHEAP_BASE  0xffffc00000000000ull
-#define KHEAP_SIZE  (64ull * 1024 * 1024ull)
+#define KHEAP_SIZE  (256ull * 1024 * 1024ull)
 #define KHEAP_LIMIT (KHEAP_BASE + KHEAP_SIZE)
 
 typedef struct heap_region_t heap_region_t;
@@ -54,7 +54,6 @@ static heap_vrange_t* heap_vrange_alloc(void);
 static void heap_vrange_free(heap_vrange_t* entry);
 static bool heap_virtual_acquire(size_t bytes, virt_addr_t* out, bool* used_free);
 static void heap_virtual_release(virt_addr_t base, size_t bytes);
-static size_t heap_virtual_free_range_count(void);
 
 static inline void heap_reset_lock(void) {
   spinlock_init(&heap_lock);
@@ -228,7 +227,7 @@ static void heap_virtual_release(virt_addr_t base, size_t bytes) {
   }
 
   virt_addr_t start = base;
-  virt_addr_t end = base + bytes;
+  (void)start;
 
   heap_vrange_t* prev = NULL;
   heap_vrange_t* curr = heap_vrange_head;
@@ -304,16 +303,6 @@ static bool heap_virtual_acquire(size_t bytes, virt_addr_t* out, bool* used_free
   *used_free = false;
   *out = heap_next_vaddr;
   return true;
-}
-
-static size_t heap_virtual_free_range_count(void) {
-  size_t count = 0;
-  heap_vrange_t* cursor = heap_vrange_head;
-  while(cursor) {
-    ++count;
-    cursor = cursor->next;
-  }
-  return count;
 }
 
 static heap_region_t* heap_register_region(heap_node_p base,
@@ -915,6 +904,16 @@ heap_stats_t heap_get_stats(void) {
 }
 
 #ifdef MENIOS_HOST_TEST
+static size_t heap_virtual_free_range_count(void) {
+  size_t count = 0;
+  heap_vrange_t* cursor = heap_vrange_head;
+  while(cursor) {
+    ++count;
+    cursor = cursor->next;
+  }
+  return count;
+}
+
 void __kmalloc_debug_reset_virtual(void) {
   heap_virtual_reset();
   heap_next_vaddr = KHEAP_BASE;

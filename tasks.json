@@ -1,5 +1,38 @@
 [
   {
+    "title": "Create boot protocol abstraction layer for multi-platform support",
+    "github_issue": {
+      "number": 277,
+      "url": "https://github.com/pbalduino/menios/issues/277",
+      "state": "OPEN"
+    },
+    "labels": [
+      "enhancement",
+      "kernel",
+      "research"
+    ],
+    "assignees": [
+      "pbalduino"
+    ]
+  },
+  {
+    "title": "Review and implement UACPI kernel interface functions using current multitasking primitives",
+    "github_issue": {
+      "number": 276,
+      "url": "https://github.com/pbalduino/menios/issues/276",
+      "state": "OPEN"
+    },
+    "labels": [
+      "enhancement",
+      "kernel",
+      "review",
+      "blocked"
+    ],
+    "assignees": [
+      "pbalduino"
+    ]
+  },
+  {
     "title": "[Blocker] Boot failure: init process crashes with page fault at 0x40bac8, preventing mosh from starting",
     "github_issue": {
       "number": 274,
@@ -1384,7 +1417,8 @@
     },
     "labels": [
       "enhancement",
-      "nice to have"
+      "nice to have",
+      "blocked"
     ],
     "assignees": [
       "pbalduino"

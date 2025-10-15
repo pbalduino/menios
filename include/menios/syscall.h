@@ -29,6 +29,7 @@ extern "C" {
 #define SYS_KILL       66
 #define SYS_SIGACTION  67
 #define SYS_SIGPROCMASK 68
+#define SYS_GETSOCKOPT 69
 #define SYS_FCNTL      72
 #define SYS_IOCTL      73
 #define SYS_SHMGET     74

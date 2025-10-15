@@ -21,6 +21,11 @@ extern serial_printf
 extern syscall_last_return_value
 extern syscall_last_return_slot_value
 
+%define ENABLE_SYSCALL_TRACE 1
+%ifdef ENABLE_SYSCALL_TRACE
+extern syscall_trace_return
+%endif
+
 %define SYSCALL_CONTEXT_KERNEL_RSP 0
 %define SYSCALL_CONTEXT_USER_RSP   8
 %define SYSCALL_CONTEXT_USER_RIP   16
@@ -278,6 +283,11 @@ syscall_isr_handler:
   ; Update the saved rax slot with the syscall return value before restoring registers.
   mov [rsp + 14 * 8], rax
 
+%ifdef ENABLE_SYSCALL_TRACE
+  mov rdi, [rsp + 14 * 8]
+  call syscall_trace_return
+%endif
+
   pop r15
   pop r14
   pop r13
@@ -335,6 +345,11 @@ syscall_entry:
   call syscall_dispatch
 
   mov [rsp + 14 * 8], rax
+
+%ifdef ENABLE_SYSCALL_TRACE
+  mov rdi, [rsp + 14 * 8]
+  call syscall_trace_return
+%endif
 
   pop r15
   pop r14

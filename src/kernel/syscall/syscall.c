@@ -21,8 +21,18 @@
 #include <stdint.h>
 
 #ifndef MENIOS_HOST_TEST
+#define ENABLE_SYSCALL_TRACE 1
+
 extern uint64_t syscall_last_return_value;
 extern uint64_t syscall_last_return_slot_value;
+
+#ifdef ENABLE_SYSCALL_TRACE
+void syscall_trace_return(uint64_t value) {
+  serial_printf("[sysret-trace] pid=%u rax=%lx\n",
+                current ? current->pid : 0u,
+                (unsigned long)value);
+}
+#endif
 #endif
 
 #define SYSCALL_MAX 256
@@ -53,6 +63,7 @@ static uint64_t syscall_proc_kill_handler(syscall_frame_t* frame);
 static uint64_t syscall_kill_handler(syscall_frame_t* frame);
 static uint64_t syscall_sigaction_handler(syscall_frame_t* frame);
 static uint64_t syscall_sigprocmask_handler(syscall_frame_t* frame);
+static uint64_t syscall_getsockopt_handler(syscall_frame_t* frame);
 static uint64_t syscall_proc_list_handler(syscall_frame_t* frame);
 static uint64_t syscall_ioctl_handler(syscall_frame_t* frame);
 static uint64_t syscall_shmget_handler(syscall_frame_t* frame);
@@ -439,6 +450,7 @@ void syscall_init(void) {
   syscall_register(SYS_KILL, syscall_kill_handler);
   syscall_register(SYS_SIGACTION, syscall_sigaction_handler);
   syscall_register(SYS_SIGPROCMASK, syscall_sigprocmask_handler);
+  syscall_register(SYS_GETSOCKOPT, syscall_getsockopt_handler);
   syscall_register(SYS_PROC_LIST, syscall_proc_list_handler);
   syscall_register(SYS_YIELD, syscall_yield_handler);
   syscall_register(SYS_SLEEP, syscall_sleep_handler);
@@ -930,23 +942,13 @@ static uint64_t syscall_waitpid_handler(syscall_frame_t* frame) {
     }
 
     caller->state = PROC_STATE_WAITING;
-    proc_request_sleep(0);
+    proc_request_block();
     proc_switch((void*)frame);
     if(current != caller) {
-      uint64_t resume_rax = frame->rax;
-      if(current != NULL && current->cpu_state != NULL) {
-        resume_rax = current->cpu_state->rax;
-        frame->rax = resume_rax;
-      }
-      serial_printf("waitpid: unexpected resume in pid=%u resume_rax=%lx\n",
-                    current ? current->pid : 0u,
-                    (unsigned long)resume_rax);
       return frame->rax;
     }
     caller->state = PROC_STATE_RUNNING;
-    serial_printf("waitpid: resumed caller pid=%u frame->rax=%lx\n",
-                  caller->pid,
-                  (unsigned long)frame->rax);
+    continue;
   }
 }
 
@@ -1612,6 +1614,15 @@ static uint64_t syscall_shmctl_handler(syscall_frame_t* frame) {
 
   shm_region_unref(region);
   frame->rax = result;
+  return frame->rax;
+}
+
+static uint64_t syscall_getsockopt_handler(syscall_frame_t* frame) {
+  (void)frame;
+  if(current != NULL) {
+    current->err_no = ENOSYS;
+  }
+  frame->rax = (uint64_t)(-ENOSYS);
   return frame->rax;
 }
 

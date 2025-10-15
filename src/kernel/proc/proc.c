@@ -495,7 +495,12 @@ void proc_switch(void* arg) {
   serial_printf("proc_switch: restore pid=%u cpu_state->rax=%lx\n",
                 current->pid,
                 current->cpu_state->rax);
-  memcpy(frame, current->cpu_state, sizeof(cpu_state_t));
+  serial_printf("proc_switch: copy cpu_state->rax=%lx into frame %p\n",
+                current->cpu_state->rax,
+                (void*)frame);
+  if(current->cpu_state != frame) {
+    memcpy(frame, current->cpu_state, sizeof(cpu_state_t));
+  }
 
   uint64_t kernel_stack = proc_kernel_stack_top(current);
   if(kernel_stack != 0) {
@@ -925,6 +930,16 @@ void proc_request_sleep(uint64_t duration_us) {
                 (unsigned long)__builtin_return_address(0));
 }
 
+void proc_request_block(void) {
+  if(current == NULL) {
+    return;
+  }
+
+  current->sleep_until = UINT64_MAX;
+  current->time_slice_remaining_us = 0;
+  scheduler_actions |= (SCHED_ACTION_SLEEP | SCHED_ACTION_FORCE);
+}
+
 void proc_mark_ready(proc_info_p proc) {
   if(proc == NULL) {
     return;
@@ -938,6 +953,7 @@ void proc_mark_ready(proc_info_p proc) {
   __asm__ volatile("pushfq; pop %0" : "=r"(flags) :: "memory");
   disable_interrupts();
 
+  sleep_queue_remove(proc);
   proc->state = PROC_STATE_READY;
   proc->time_slice_remaining_us = proc->quantum_us;
   proc->sleep_until = 0;
