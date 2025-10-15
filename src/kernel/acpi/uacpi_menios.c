@@ -6,6 +6,7 @@
 #include <kernel/spinlock.h>
 #include <kernel/semaphore.h>
 #include <kernel/thread.h>
+#include <kernel/tsc.h>
 #include <kernel/pmm.h>
 #include <kernel/proc.h>
 #include <kernel/serial.h>
@@ -236,7 +237,8 @@ void uacpi_kernel_free_mutex(uacpi_handle mutex) {
 }
 
 uacpi_u64 uacpi_kernel_get_ticks(void) {
-  return 0;
+  uint64_t ns = ns_from_boot();
+  return ns / 100ull;
 }
 
 void uacpi_kernel_sleep(uacpi_u64 msec) {
