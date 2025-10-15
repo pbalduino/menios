@@ -9,4 +9,20 @@ Issue #22 tracks hardware discovery in meniOS. The registry now works as follows
 
 This lays the groundwork for plugging in PCI and other bus enumerators while keeping all detected devices visible from the kernel side.
 
-_Last updated: 2025-09-26_
+## ACPI Runtime Integration
+
+Runtime services are handled through uACPI. The glue layer in
+`src/kernel/acpi/uacpi_menios.c` now relies on the kernel's multitasking
+primitives so AML methods can block without stalling the system:
+
+- Events use `ksem_t`, allowing `Signal()/Wait()` pairs to coordinate work across
+  threads and interrupt contexts.
+- `Sleep()` delegates to `ksleep()`, so AML delays respect the scheduler.
+- Tick queries call `ns_from_boot()` and return 100 ns units, providing the
+  monotonic clock required for AML timeouts.
+
+Deferred work scheduling still needs to be wired into a dedicated kernel thread,
+and PCI/IO helpers remain stubs, but the new primitives unblock AML handlers
+that previously failed at runtime.
+
+_Last updated: 2025-10-15_
