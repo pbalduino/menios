@@ -21,18 +21,39 @@
 #include <stdint.h>
 
 #ifndef MENIOS_HOST_TEST
-#define ENABLE_SYSCALL_TRACE 1
+
+#ifndef CONFIG_DEBUG_SYSCALL
+#define CONFIG_DEBUG_SYSCALL 0
+#endif
+
+#if CONFIG_DEBUG_SYSCALL
+#define SYSCALL_TRACE_ENABLED 1
+#else
+#define SYSCALL_TRACE_ENABLED 0
+#endif
 
 extern uint64_t syscall_last_return_value;
 extern uint64_t syscall_last_return_slot_value;
 
-#ifdef ENABLE_SYSCALL_TRACE
+#if SYSCALL_TRACE_ENABLED
 void syscall_trace_return(uint64_t value) {
   serial_printf("[sysret-trace] pid=%u rax=%lx\n",
                 current ? current->pid : 0u,
                 (unsigned long)value);
 }
 #endif
+
+#if SYSCALL_TRACE_ENABLED
+#define SYSCALL_TRACE(...) serial_printf(__VA_ARGS__)
+#else
+#define SYSCALL_TRACE(...) ((void)0)
+#endif
+
+#else
+
+#define SYSCALL_TRACE_ENABLED 0
+#define SYSCALL_TRACE(...) ((void)0)
+
 #endif
 
 #define SYSCALL_MAX 256
@@ -294,12 +315,12 @@ static uint64_t syscall_finalize(syscall_frame_t* frame) {
     return frame->rax;
   }
 
-  serial_printf("syscall_finalize: entry pid=%u rax=%lx\n",
+  SYSCALL_TRACE("syscall_finalize: entry pid=%u rax=%lx\n",
                 current ? current->pid : 0u,
                 (unsigned long)frame->rax);
 
   if(current != NULL && current->pid == 2 && frame != NULL) {
-    serial_printf("syscall_finalize frame pid=2 rip=%lx rsp=%lx rdi=%lx rsi=%lx rdx=%lx rcx=%lx\n",
+    SYSCALL_TRACE("syscall_finalize frame pid=2 rip=%lx rsp=%lx rdi=%lx rsi=%lx rdx=%lx rcx=%lx\n",
                   (unsigned long)frame->rip,
                   (unsigned long)frame->rsp,
                   (unsigned long)frame->rdi,
@@ -323,12 +344,12 @@ static uint64_t syscall_finalize(syscall_frame_t* frame) {
     frame = (syscall_frame_t*)proc_switch((cpu_state_p)frame);
   }
 
-  serial_printf("syscall_finalize: exit pid=%u rax=%lx delivery=%d\n",
+  SYSCALL_TRACE("syscall_finalize: exit pid=%u rax=%lx delivery=%d\n",
                 current ? current->pid : 0u,
                 (unsigned long)frame->rax,
                 (int)delivery);
   if(current != NULL && current->pid == 2 && frame != NULL) {
-    serial_printf("syscall_finalize exit frame pid=2 rip=%lx rsp=%lx rdi=%lx rsi=%lx rdx=%lx rcx=%lx\n",
+    SYSCALL_TRACE("syscall_finalize exit frame pid=2 rip=%lx rsp=%lx rdi=%lx rsi=%lx rdx=%lx rcx=%lx\n",
                   (unsigned long)frame->rip,
                   (unsigned long)frame->rsp,
                   (unsigned long)frame->rdi,
@@ -337,7 +358,7 @@ static uint64_t syscall_finalize(syscall_frame_t* frame) {
                   (unsigned long)frame->rcx);
   }
 #ifndef MENIOS_HOST_TEST
-  serial_printf("syscall_finalize: stored=%lx slot=%lx\n",
+  SYSCALL_TRACE("syscall_finalize: stored=%lx slot=%lx\n",
                 (unsigned long)syscall_last_return_value,
                 (unsigned long)syscall_last_return_slot_value);
 #endif
@@ -499,7 +520,7 @@ uint64_t syscall_dispatch(syscall_frame_t* frame) {
     current->syscall_gs_needs_restore = false;
   }
 
-  serial_printf("syscall_dispatch: pid=%u number=%lu rip=%lx cs=%lx rsp=%lx\n",
+  SYSCALL_TRACE("syscall_dispatch: pid=%u number=%lu rip=%lx cs=%lx rsp=%lx\n",
                 current ? current->pid : 0u,
                 number,
                 (unsigned long)frame->rip,
@@ -511,7 +532,7 @@ uint64_t syscall_dispatch(syscall_frame_t* frame) {
     if(handler) {
       uint64_t result = handler(frame);
       frame->rax = result;
-      serial_printf("syscall_dispatch: post-handler rip=%lx cs=%lx rsp=%lx rax=%lx\n",
+      SYSCALL_TRACE("syscall_dispatch: post-handler rip=%lx cs=%lx rsp=%lx rax=%lx\n",
                     (unsigned long)frame->rip,
                     (unsigned long)frame->cs,
                     (unsigned long)frame->rsp,
@@ -521,7 +542,7 @@ uint64_t syscall_dispatch(syscall_frame_t* frame) {
   }
 
   frame->rax = (uint64_t)(-ENOSYS);
-  serial_printf("syscall_dispatch: unknown syscall rip=%lx\n",
+  SYSCALL_TRACE("syscall_dispatch: unknown syscall rip=%lx\n",
                 (unsigned long)frame->rip);
   return syscall_finalize(frame);
 }
@@ -577,7 +598,7 @@ static uint64_t syscall_write_handler(syscall_frame_t* frame) {
   } else {
     sample[0] = '\0';
   }
-  serial_printf("write: pid=%u fd=%d len=%lu sample='%s'\n",
+  SYSCALL_TRACE("write: pid=%u fd=%d len=%lu sample='%s'\n",
                 current->pid,
                 fd,
                 (unsigned long)length,
@@ -642,7 +663,7 @@ static uint64_t syscall_open_handler(syscall_frame_t* frame) {
   file_t* file = NULL;
   int rc = vfs_open(absolute, flags, &file);
   if(rc < 0) {
-    serial_printf("syscall_open: pid=%u path=%s flags=0x%x rc=%d\n",
+    SYSCALL_TRACE("syscall_open: pid=%u path=%s flags=0x%x rc=%d\n",
                   current->pid,
                   absolute,
                   flags,
@@ -790,10 +811,10 @@ static uint64_t syscall_dup2_handler(syscall_frame_t* frame) {
 
 static uint64_t syscall_fork_handler(syscall_frame_t* frame) {
   int err = 0;
-  serial_printf("syscall_fork: pid=%u entering\n", current ? current->pid : 0);
+  SYSCALL_TRACE("syscall_fork: pid=%u entering\n", current ? current->pid : 0);
   proc_info_p child = proc_fork(current, frame, &err);
   if(child == NULL) {
-    serial_printf("syscall_fork: failure err=%d\n", err);
+    SYSCALL_TRACE("syscall_fork: failure err=%d\n", err);
     if(err == 0) {
       err = -ENOMEM;
     }
@@ -802,7 +823,7 @@ static uint64_t syscall_fork_handler(syscall_frame_t* frame) {
   }
 
   frame->rax = (uint64_t)child->pid;
-  serial_printf("syscall_fork: returning child pid=%lu\n", frame->rax);
+  SYSCALL_TRACE("syscall_fork: returning child pid=%lu\n", frame->rax);
   return frame->rax;
 }
 
@@ -836,8 +857,8 @@ static uint64_t syscall_execve_handler(syscall_frame_t* frame) {
     return frame->rax;
   }
 
-  serial_printf("execve: pid=%u path=%s\n", current ? current->pid : 0, absolute);
-  serial_printf("execve: frame->rsi=%p frame->rdx=%p\n", (void*)frame->rsi, (void*)frame->rdx);
+  SYSCALL_TRACE("execve: pid=%u path=%s\n", current ? current->pid : 0, absolute);
+  SYSCALL_TRACE("execve: frame->rsi=%p frame->rdx=%p\n", (void*)frame->rsi, (void*)frame->rdx);
 
   char** argv = NULL;
   size_t argc = 0;
@@ -847,7 +868,7 @@ static uint64_t syscall_execve_handler(syscall_frame_t* frame) {
                         &argv,
                         &argc,
                         &vector_err)) {
-    serial_printf("execve: clone_user_vector argv failed err=%d\n", vector_err);
+    SYSCALL_TRACE("execve: clone_user_vector argv failed err=%d\n", vector_err);
     free_string_vector(argv, argc);
     if(current) {
       current->err_no = vector_err ? -vector_err : EFAULT;
@@ -863,7 +884,7 @@ static uint64_t syscall_execve_handler(syscall_frame_t* frame) {
                         &envp,
                         &envc,
                         &vector_err)) {
-    serial_printf("execve: clone_user_vector envp failed err=%d\n", vector_err);
+    SYSCALL_TRACE("execve: clone_user_vector envp failed err=%d\n", vector_err);
     free_string_vector(argv, argc);
     if(current) {
       current->err_no = vector_err ? -vector_err : EFAULT;
@@ -871,14 +892,14 @@ static uint64_t syscall_execve_handler(syscall_frame_t* frame) {
     frame->rax = (uint64_t)(vector_err ? vector_err : -EFAULT);
     return frame->rax;
   }
-  serial_printf("execve: argc=%lu envc=%lu\n",
+  SYSCALL_TRACE("execve: argc=%lu envc=%lu\n",
                 (unsigned long)argc,
                 (unsigned long)envc);
 
   void* image = NULL;
   size_t size = 0;
   if(!vfs_read_all(absolute, &image, &size) || image == NULL || size == 0) {
-    serial_printf("execve: vfs_read_all failed size=%lu\n", (unsigned long)size);
+    SYSCALL_TRACE("execve: vfs_read_all failed size=%lu\n", (unsigned long)size);
     if(image != NULL) {
       kfree(image);
     }
@@ -910,7 +931,7 @@ static uint64_t syscall_execve_handler(syscall_frame_t* frame) {
   };
 
   int err = proc_exec_image(current, image, size, frame, &exec_args);
-  serial_printf("execve: proc_exec_image err=%d\n", err);
+  SYSCALL_TRACE("execve: proc_exec_image err=%d\n", err);
   kfree(image);
   free_string_vector(argv, argc);
   free_string_vector(envp, envc);
@@ -925,7 +946,7 @@ static uint64_t syscall_waitpid_handler(syscall_frame_t* frame) {
     return frame->rax;
   }
 
-  serial_printf("waitpid: caller pid=%u pid=%d\n", caller->pid, (int)frame->rdi);
+  SYSCALL_TRACE("waitpid: caller pid=%u pid=%d\n", caller->pid, (int)frame->rdi);
 
   int pid = (int)frame->rdi;
   int* status_ptr = (int*)frame->rsi;
@@ -935,7 +956,7 @@ static uint64_t syscall_waitpid_handler(syscall_frame_t* frame) {
   for(;;) {
     int status = 0;
     int result = proc_waitpid(caller, pid, options, &status);
-    serial_printf("waitpid: loop result=%d status=%d\n", result, status);
+    SYSCALL_TRACE("waitpid: loop result=%d status=%d\n", result, status);
 
     if(result > 0) {
       if(status_ptr != NULL) {
