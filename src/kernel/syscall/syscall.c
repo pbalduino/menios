@@ -41,6 +41,10 @@ void syscall_trace_return(uint64_t value) {
                 current ? current->pid : 0u,
                 (unsigned long)value);
 }
+#else
+void syscall_trace_return(uint64_t value) {
+  (void)value;
+}
 #endif
 
 #if SYSCALL_TRACE_ENABLED
@@ -1190,7 +1194,8 @@ static uint64_t syscall_proc_list_handler(syscall_frame_t* frame) {
       continue;
     }
 
-    if(proc->state == PROC_STATE_TERMINATED) {
+    if(proc->state == PROC_STATE_TERMINATED ||
+       proc->state == PROC_STATE_ZOMBIE) {
       continue;
     }
 

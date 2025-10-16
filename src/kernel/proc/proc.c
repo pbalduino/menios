@@ -81,6 +81,38 @@ static scheduler_queue_t ready_queues[PROC_PRIORITY_COUNT];
 static proc_info_p sleep_queue_head = NULL;
 static uint32_t scheduler_actions = 0;
 
+static void proc_table_insert(proc_info_p proc) {
+  if(proc == NULL) {
+    return;
+  }
+
+  for(size_t i = 0; i < PROC_MAX; ++i) {
+    if(procs[i] == proc) {
+      return; // already registered
+    }
+    if(procs[i] == NULL) {
+      procs[i] = proc;
+      return;
+    }
+  }
+
+  serial_printf("proc_table_insert: no free slot for pid=%u\n", proc->pid);
+  halt();
+}
+
+static void proc_table_remove(proc_info_p proc) {
+  if(proc == NULL) {
+    return;
+  }
+
+  for(size_t i = 0; i < PROC_MAX; ++i) {
+    if(procs[i] == proc) {
+      procs[i] = NULL;
+      return;
+    }
+  }
+}
+
 static void scheduler_timer_callback(void* arg) {
   (void)proc_switch((cpu_state_p)arg);
 }
@@ -263,6 +295,8 @@ static void proc_free_resources(proc_info_p proc) {
     return;
   }
 
+  proc_table_remove(proc);
+
   proc_shm_detach_all(proc);
   proc_release_user_memory(proc);
   proc_file_table_cleanup(proc);
@@ -393,6 +427,8 @@ static void scheduler_cleanup_process(proc_info_p proc) {
   if(proc == NULL || proc == &kernel_process_info) {
     return;
   }
+
+  proc_table_remove(proc);
 
   proc_shm_detach_all(proc);
   if(proc->stack_pointer) {
@@ -617,6 +653,7 @@ void proc_create(proc_info_p proc, const char* name, void (*entrypoint)(void *),
   proc->children_count = 0;
   proc->parent = current;
   proc->pid = last_pid++;
+  proc_table_insert(proc);
   proc_file_table_init(proc);
   if(current != NULL) {
     proc_file_table_clone(proc, current);
@@ -1146,6 +1183,7 @@ proc_info_p proc_fork(proc_info_p parent, const syscall_frame_t* frame, int* err
 
   child->parent = parent;
   child->pid = last_pid++;
+  proc_table_insert(child);
   strncpy(child->name, parent->name, sizeof(child->name) - 1);
   child->name[sizeof(child->name) - 1] = '\0';
   child->user_mode = parent->user_mode;
