@@ -1,3 +1,4 @@
+#include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
 #include <string.h>
@@ -273,6 +274,22 @@ void test_default_environment_provides_path(void) {
   TEST_ASSERT_EQUAL_STRING("/bin", env_get("PATH"));
 }
 
+static void test_variable_expansion_long_braced_literal(void) {
+  const char* input = "echo ${ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789} tail";
+  char output[128];
+  bool ok = shell_expand_variables(input, output, sizeof(output));
+  TEST_ASSERT_TRUE(ok);
+  TEST_ASSERT_EQUAL_STRING(input, output);
+}
+
+static void test_variable_expansion_long_unbraced_literal(void) {
+  const char* input = "echo $ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789 tail";
+  char output[128];
+  bool ok = shell_expand_variables(input, output, sizeof(output));
+  TEST_ASSERT_TRUE(ok);
+  TEST_ASSERT_EQUAL_STRING(input, output);
+}
+
 int main(void) {
   UNITY_BEGIN();
 
@@ -304,6 +321,8 @@ int main(void) {
   RUN_TEST(test_reverse_search_no_match_beeps);
   RUN_TEST(test_reverse_search_cancel_restores_line);
   RUN_TEST(test_ctrl_c_clears_line);
+  RUN_TEST(test_variable_expansion_long_braced_literal);
+  RUN_TEST(test_variable_expansion_long_unbraced_literal);
 
   return UNITY_END();
 }

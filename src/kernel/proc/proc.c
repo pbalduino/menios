@@ -23,6 +23,11 @@
 uint64_t last_pid = 0;
 static uint64_t last_exec = 0;
 
+static void __attribute__((noreturn)) proc_first_entry(void);
+static void proc_prepare_switch_frame(proc_info_p proc);
+
+extern void proc_enter_userspace(syscall_frame_t* frame) __attribute__((noreturn));
+
 proc_info_t kernel_process_info = {
   .first_child = NULL,
   .sibling_next = NULL,
@@ -65,6 +70,62 @@ typedef struct scheduler_queue_t {
 static scheduler_queue_t ready_queues[PROC_PRIORITY_COUNT];
 static proc_info_p sleep_queue_head = NULL;
 static uint32_t scheduler_actions = 0;
+
+static void scheduler_timer_callback(void* arg) {
+  (void)proc_switch((cpu_state_p)arg);
+}
+
+static void proc_prepare_switch_frame(proc_info_p proc) {
+  if(proc == NULL || proc->stack_base == NULL) {
+    if(proc != NULL) {
+      proc->cpu_state = NULL;
+      proc->kernel_rsp = 0;
+    }
+    return;
+  }
+
+  uint8_t* top = (uint8_t*)proc->stack_base + PROC_STACK_SIZE;
+  top -= sizeof(syscall_frame_t);
+  proc->cpu_state = (cpu_state_t*)top;
+  memset(proc->cpu_state, 0, sizeof(cpu_state_t));
+
+  top -= sizeof(uint64_t);
+  *((uint64_t*)top) = (uint64_t)proc_first_entry;
+  proc->kernel_rsp = (uint64_t)top;
+}
+
+static void __attribute__((noreturn)) proc_first_entry(void) {
+  proc_info_p proc = current;
+  if(proc == NULL) {
+    halt();
+  }
+
+  if(!proc->user_mode) {
+    uint64_t kernel_sp = (uint64_t)((uint8_t*)proc->stack_base + PROC_STACK_SIZE);
+    kernel_sp -= 8; // SysV ABI: align before call so callee sees 16-byte alignment
+    __asm__ volatile("mov %0, %%rsp" :: "r"(kernel_sp) : "rsp");
+    proc = current;
+  }
+
+  enable_interrupts();
+
+  if(proc->user_mode) {
+    syscall_frame_t* frame = (syscall_frame_t*)proc->cpu_state;
+    if(frame == NULL) {
+      halt();
+    }
+    proc_enter_userspace(frame);
+  }
+
+  void (*entrypoint)(void*) = proc->entrypoint;
+  void* arg = proc->arguments;
+  if(entrypoint != NULL) {
+    entrypoint(arg);
+  }
+
+  proc_exit(0);
+  halt();
+}
 
 static inline int encode_stopped_status(int signo) {
   return ((signo & 0x7f) << 8) | 0x7f;
@@ -379,8 +440,19 @@ cpu_state_p proc_switch(cpu_state_p frame) {
   }
 
   if(current && current->cpu_state) {
+    serial_printf("proc_switch: memcpy save pid=%u frame=%p dest=%p size=%zu\n",
+                  current->pid,
+                  (void*)frame,
+                  (void*)current->cpu_state,
+                  sizeof(cpu_state_t));
+    serial_printf("proc_switch: frame values rip=%lx rsp=%lx rdi=%lx rsi=%lx rdx=%lx rcx=%lx\n",
+                  ((cpu_state_t*)frame)->rip,
+                  ((cpu_state_t*)frame)->rsp,
+                  ((cpu_state_t*)frame)->rdi,
+                  ((cpu_state_t*)frame)->rsi,
+                  ((cpu_state_t*)frame)->rdx,
+                  ((cpu_state_t*)frame)->rcx);
     memcpy(current->cpu_state, frame, sizeof(cpu_state_t));
-    current->kernel_rsp = (uint64_t)frame;
   }
 
   scheduler_wake_sleepers(now);
@@ -411,6 +483,13 @@ cpu_state_p proc_switch(cpu_state_p frame) {
   }
 
   proc_info_p previous = current;
+
+  if(previous != NULL &&
+     previous->syscall_gs_active &&
+     !previous->syscall_gs_needs_restore) {
+    __asm__ volatile("swapgs" ::: "memory");
+    previous->syscall_gs_needs_restore = true;
+  }
 
   if(previous != NULL) {
     if(to_sleep) {
@@ -482,6 +561,11 @@ cpu_state_p proc_switch(cpu_state_p frame) {
   current->time_slice_remaining_us = current->quantum_us;
   current->last_dispatch_us = now;
 
+  if(current->syscall_gs_needs_restore) {
+    __asm__ volatile("swapgs" ::: "memory");
+    current->syscall_gs_needs_restore = false;
+  }
+
   phys_addr_t desired_cr3 = current->address_space_root ? current->address_space_root : pmm_get_kernel_cr3();
   if(read_cr3() != desired_cr3) {
     write_cr3(desired_cr3);
@@ -490,7 +574,14 @@ cpu_state_p proc_switch(cpu_state_p frame) {
   serial_printf("proc_switch: restore pid=%u cpu_state->rax=%lx\n",
                 current->pid,
                 current->cpu_state->rax);
-  serial_printf("proc_switch: resume frame=%p\n", (void*)current->cpu_state);
+  serial_printf("proc_switch: resume frame=%p rip=%lx rsp=%lx rdi=%lx rsi=%lx rdx=%lx rcx=%lx\n",
+                (void*)current->cpu_state,
+                current->cpu_state->rip,
+                current->cpu_state->rsp,
+                current->cpu_state->rdi,
+                current->cpu_state->rsi,
+                current->cpu_state->rdx,
+                current->cpu_state->rcx);
 
   uint64_t kernel_stack = proc_kernel_stack_top(current);
   if(kernel_stack != 0) {
@@ -499,9 +590,11 @@ cpu_state_p proc_switch(cpu_state_p frame) {
   }
 
   cpu_state_p next_frame = current->cpu_state;
-  uint64_t next_rsp = current->kernel_rsp ? current->kernel_rsp : (uint64_t)next_frame;
-  uint64_t dummy_prev = (uint64_t)frame;
-  uint64_t* prev_slot = previous ? &previous->kernel_rsp : &dummy_prev;
+  uint64_t next_rsp = current->kernel_rsp;
+  if(next_rsp == 0) {
+    next_rsp = (uint64_t)next_frame;
+  }
+  uint64_t* prev_slot = previous ? &previous->kernel_rsp : &next_rsp;
   context_switch(prev_slot, next_rsp);
   return next_frame;
 }
@@ -559,10 +652,9 @@ void proc_create(proc_info_p proc, const char* name, void (*entrypoint)(void *),
   proc->last_dispatch_us = 0;
   proc->waitpid_target = -1;
   proc->waitpid_waiting = false;
-
-  proc->cpu_state = (cpu_state_t*)((uint8_t*)proc->stack_base + PROC_STACK_SIZE - sizeof(cpu_state_t));
-  memset(proc->cpu_state, 0, sizeof(cpu_state_t));
-  proc->kernel_rsp = (uint64_t)proc->cpu_state;
+  proc->syscall_gs_active = false;
+  proc->syscall_gs_needs_restore = false;
+  proc_prepare_switch_frame(proc);
   proc->cpu_state->rip = (uint64_t)entrypoint;
   proc->cpu_state->rdi = (uint64_t)arg;
   proc->cpu_state->rsp = (uint64_t)proc->stack_base + PROC_STACK_SIZE;
@@ -1074,9 +1166,7 @@ proc_info_p proc_fork(proc_info_p parent, const syscall_frame_t* frame, int* err
   memset(child->stack_base, 0, PROC_STACK_SIZE);
   serial_printf("proc_fork: stack allocated aligned=%p\n", child->stack_base);
 
-  child->cpu_state = (cpu_state_t*)((uint8_t*)child->stack_base + PROC_STACK_SIZE - sizeof(cpu_state_t));
-  memset(child->cpu_state, 0, sizeof(cpu_state_t));
-  child->kernel_rsp = (uint64_t)child->cpu_state;
+  proc_prepare_switch_frame(child);
   serial_printf("proc_fork: cpu_state allocated\n");
 
   phys_addr_t new_root = pmm_clone_kernel_address_space();
@@ -1699,6 +1789,7 @@ void scheduler_init() {
     }
   }
   memset(current->cpu_state, 0, sizeof(cpu_state_t));
+  current->kernel_rsp = (uint64_t)current->cpu_state;
 
   current->pid = last_pid++;
   current->address_space_root = pmm_get_kernel_cr3();
@@ -1712,7 +1803,7 @@ void scheduler_init() {
     tss_update_kernel_stack(kernel_stack);
     syscall_set_kernel_stack(kernel_stack);
   }
-  register_timer_callback(proc_switch);
+  register_timer_callback(scheduler_timer_callback);
   printf(".OK\n");
 }
 

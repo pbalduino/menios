@@ -298,6 +298,16 @@ static uint64_t syscall_finalize(syscall_frame_t* frame) {
                 current ? current->pid : 0u,
                 (unsigned long)frame->rax);
 
+  if(current != NULL && current->pid == 2 && frame != NULL) {
+    serial_printf("syscall_finalize frame pid=2 rip=%lx rsp=%lx rdi=%lx rsi=%lx rdx=%lx rcx=%lx\n",
+                  (unsigned long)frame->rip,
+                  (unsigned long)frame->rsp,
+                  (unsigned long)frame->rdi,
+                  (unsigned long)frame->rsi,
+                  (unsigned long)frame->rdx,
+                  (unsigned long)frame->rcx);
+  }
+
 #ifndef MENIOS_HOST_TEST
   syscall_last_return_value = frame->rax;
 #endif
@@ -310,18 +320,31 @@ static uint64_t syscall_finalize(syscall_frame_t* frame) {
       proc_signal_handle_pending(current, (cpu_state_t*)frame);
   if(delivery == PROC_SIGNAL_DELIVERY_TERMINATED ||
      delivery == PROC_SIGNAL_DELIVERY_STOPPED) {
-    frame = proc_switch(frame);
+    frame = (syscall_frame_t*)proc_switch((cpu_state_p)frame);
   }
 
   serial_printf("syscall_finalize: exit pid=%u rax=%lx delivery=%d\n",
                 current ? current->pid : 0u,
                 (unsigned long)frame->rax,
                 (int)delivery);
+  if(current != NULL && current->pid == 2 && frame != NULL) {
+    serial_printf("syscall_finalize exit frame pid=2 rip=%lx rsp=%lx rdi=%lx rsi=%lx rdx=%lx rcx=%lx\n",
+                  (unsigned long)frame->rip,
+                  (unsigned long)frame->rsp,
+                  (unsigned long)frame->rdi,
+                  (unsigned long)frame->rsi,
+                  (unsigned long)frame->rdx,
+                  (unsigned long)frame->rcx);
+  }
 #ifndef MENIOS_HOST_TEST
   serial_printf("syscall_finalize: stored=%lx slot=%lx\n",
                 (unsigned long)syscall_last_return_value,
                 (unsigned long)syscall_last_return_slot_value);
 #endif
+  if(current != NULL) {
+    current->syscall_gs_active = false;
+    current->syscall_gs_needs_restore = false;
+  }
   return frame->rax;
 }
 
@@ -470,6 +493,11 @@ void syscall_init(void) {
 
 uint64_t syscall_dispatch(syscall_frame_t* frame) {
   uint64_t number = frame->rax;
+
+  if(current != NULL) {
+    current->syscall_gs_active = true;
+    current->syscall_gs_needs_restore = false;
+  }
 
   serial_printf("syscall_dispatch: pid=%u number=%lu rip=%lx cs=%lx rsp=%lx\n",
                 current ? current->pid : 0u,
@@ -944,7 +972,7 @@ static uint64_t syscall_waitpid_handler(syscall_frame_t* frame) {
     caller->state = PROC_STATE_WAITING;
     proc_request_block();
     do {
-      frame = proc_switch(frame);
+      frame = (syscall_frame_t*)proc_switch((cpu_state_p)frame);
     } while(current != caller);
     caller->state = PROC_STATE_RUNNING;
     continue;
@@ -1332,7 +1360,7 @@ static uint64_t syscall_yield_handler(syscall_frame_t* frame) {
   proc_info_p caller = current;
   proc_request_yield();
   do {
-    frame = proc_switch(frame);
+    frame = (syscall_frame_t*)proc_switch((cpu_state_p)frame);
   } while(current != caller);
   frame->rax = 0;
   return 0;
@@ -1343,7 +1371,7 @@ static uint64_t syscall_sleep_handler(syscall_frame_t* frame) {
   proc_info_p caller = current;
   proc_request_sleep(usec);
   do {
-    frame = proc_switch(frame);
+    frame = (syscall_frame_t*)proc_switch((cpu_state_p)frame);
   } while(current != caller);
   frame->rax = 0;
   return 0;
@@ -1352,12 +1380,11 @@ static uint64_t syscall_sleep_handler(syscall_frame_t* frame) {
 static uint64_t syscall_exit_handler(syscall_frame_t* frame) {
   int status = (int)frame->rdi;
   proc_exit(status);
-  while(true) {
-    frame = proc_switch(frame);
-    if(current != NULL) {
-      return frame->rax;
-    }
+  syscall_frame_t* resumed = (syscall_frame_t*)proc_switch((cpu_state_p)frame);
+  if(resumed != NULL && resumed != frame) {
+    memcpy(frame, resumed, sizeof(syscall_frame_t));
   }
+  return frame->rax;
 }
 
 static uint64_t syscall_fcntl_handler(syscall_frame_t* frame) {

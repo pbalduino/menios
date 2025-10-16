@@ -76,6 +76,8 @@ void proc_request_sleep(uint64_t duration_us) {
   (void)duration_us;
 }
 
+void proc_request_block(void) {}
+
 void proc_mark_ready(proc_info_p proc) {
   if(proc) {
     proc->state = PROC_STATE_READY;
@@ -110,8 +112,8 @@ void proc_mark_continued(proc_info_p proc) {
   }
 }
 
-void proc_switch(void* frame) {
-  (void)frame;
+cpu_state_p proc_switch(cpu_state_p state) {
+  return state;
 }
 
 void memzero(void* s, uint64_t n) {

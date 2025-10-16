@@ -235,6 +235,7 @@ void _start(void) {
 
     write_str(STDOUT_FILENO, "[init] shell exited, restarting\n");
     write_log("[init] restarting shell\n");
+    sleep_us(250000);
   }
 #endif
 }

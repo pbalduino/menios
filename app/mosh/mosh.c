@@ -54,6 +54,11 @@ static size_t str_len(const char* s);
 static bool   str_eq(const char* a, const char* b);
 static void   str_copy(char* dest, size_t capacity, const char* src);
 static bool   strip_background_marker(char* text);
+static void   debug_write_ptr(int fd, const void* ptr);
+static void   debug_log_expand_start(const char* input, char* output, size_t capacity);
+static void   debug_log_expand_dollar(const char* cursor);
+static void   debug_dump_bytes(const char* label, const char* data);
+static bool   debug_ptr_readable(const void* ptr);
 
 typedef struct {
   char*  argv[MOSH_MAX_ARGS];
@@ -1181,6 +1186,144 @@ static bool shell_append_text(char* output, size_t capacity, size_t* index, cons
   return true;
 }
 
+static bool shell_expand_emit_dollar_literal(const char** cursor,
+                                             char* output,
+                                             size_t capacity,
+                                             size_t* out_index) {
+  if(output == NULL || cursor == NULL || *cursor == NULL || out_index == NULL) {
+    return false;
+  }
+  if(*out_index + 1 >= capacity) {
+    return false;
+  }
+  output[(*out_index)++] = '$';
+  (*cursor)++;
+  return true;
+}
+
+static bool shell_expand_dollar(const char** cursor,
+                                char* output,
+                                size_t capacity,
+                                size_t* out_index) {
+  if(cursor == NULL || *cursor == NULL) {
+    return false;
+  }
+
+  const char* dollar = *cursor;
+  write_str(STDERR_FILENO, "[mosh] dollar enter ptr=");
+  debug_write_ptr(STDERR_FILENO, dollar);
+  write_str(STDERR_FILENO, " next=");
+  if(debug_ptr_readable(dollar)) {
+    char ch = *dollar;
+    char buf[4] = { ch, '\0', '\0', '\0' };
+    if(ch == '\n') {
+      write_str(STDERR_FILENO, "\\n");
+    } else if(ch == '\r') {
+      write_str(STDERR_FILENO, "\\r");
+    } else {
+      write_str(STDERR_FILENO, buf);
+    }
+  } else {
+    write_str(STDERR_FILENO, "<invalid>");
+  }
+  write_str(STDERR_FILENO, "\n");
+  if(output == NULL || out_index == NULL) {
+    return false;
+  }
+
+  if(!debug_ptr_readable(dollar) || !debug_ptr_readable(dollar + 1)) {
+    write_str(STDERR_FILENO, "[mosh] dollar fallback invalid cursor\n");
+    return shell_expand_emit_dollar_literal(cursor, output, capacity, out_index);
+  }
+
+  char name_buffer[MOSH_MAX_VAR_NAME];
+  size_t name_len = 0;
+  bool overflow = false;
+
+  const char* ptr = dollar + 1;
+  char next = *ptr;
+  if(next == '\0') {
+    return shell_expand_emit_dollar_literal(cursor, output, capacity, out_index);
+  }
+
+  if(next == '$') {
+    if(*out_index + 1 >= capacity) {
+      return false;
+    }
+    output[(*out_index)++] = '$';
+    *cursor = ptr + 1;
+    return true;
+  }
+
+  if(next == '{') {
+    ptr++;
+    while(*ptr != '\0' && *ptr != '}') {
+      if(name_len + 1 >= sizeof(name_buffer)) {
+        overflow = true;
+      } else {
+        name_buffer[name_len++] = *ptr;
+      }
+      ptr++;
+    }
+
+    if(*ptr != '}') {
+      return shell_expand_emit_dollar_literal(cursor, output, capacity, out_index);
+    }
+
+    if(overflow || name_len == 0) {
+      return shell_expand_emit_dollar_literal(cursor, output, capacity, out_index);
+    }
+
+    name_buffer[name_len] = '\0';
+    const char* value = shell_var_get(name_buffer);
+    if(value == NULL) {
+      value = "";
+    }
+    if(!shell_append_text(output, capacity, out_index, value)) {
+      return false;
+    }
+    *cursor = ptr + 1;
+    return true;
+  }
+
+  if(shell_is_digit(next)) {
+    while(shell_is_digit(*ptr)) {
+      if(name_len + 1 >= sizeof(name_buffer)) {
+        overflow = true;
+      } else {
+        name_buffer[name_len++] = *ptr;
+      }
+      ptr++;
+    }
+  } else if(shell_is_ident_start(next)) {
+    while(shell_is_ident_char(*ptr)) {
+      if(name_len + 1 >= sizeof(name_buffer)) {
+        overflow = true;
+      } else {
+        name_buffer[name_len++] = *ptr;
+      }
+      ptr++;
+    }
+  } else {
+    return shell_expand_emit_dollar_literal(cursor, output, capacity, out_index);
+  }
+
+  if(name_len == 0 || overflow) {
+    return shell_expand_emit_dollar_literal(cursor, output, capacity, out_index);
+  }
+
+  name_buffer[name_len] = '\0';
+  const char* value = shell_var_get(name_buffer);
+  if(value == NULL) {
+    value = "";
+  }
+  if(!shell_append_text(output, capacity, out_index, value)) {
+    return false;
+  }
+  *cursor = ptr;
+  return true;
+}
+
 static bool shell_expand_variables(const char* input, char* output, size_t capacity) {
   if(output == NULL || capacity == 0) {
     return false;
@@ -1190,87 +1333,101 @@ static bool shell_expand_variables(const char* input, char* output, size_t capac
     return true;
   }
 
+  debug_log_expand_start(input, output, capacity);
+
   size_t out_index = 0;
   output[0] = '\0';
 
-  for(size_t i = 0; input[i] != '\0'; i++) {
-    char ch = input[i];
-    if(ch == '$') {
-      i++;
-      if(input[i] == '\0') {
-        if(out_index + 1 >= capacity) {
-          return false;
-        }
-        output[out_index++] = '$';
-        break;
-      }
+  const char* cursor = input;
+  while(true) {
+    if(!debug_ptr_readable(cursor)) {
+      write_str(STDERR_FILENO, "[mosh] expand invalid cursor=");
+      debug_write_ptr(STDERR_FILENO, cursor);
+      write_str(STDERR_FILENO, "\n");
+      return false;
+    }
+    char ch = *cursor;
+    write_str(STDERR_FILENO, "[mosh] expand char ptr=");
+    debug_write_ptr(STDERR_FILENO, cursor);
+    write_str(STDERR_FILENO, " ch=");
+    char display[5];
+    display[0] = ch;
+    display[1] = '\0';
+    if(ch == '\n') {
+      write_str(STDERR_FILENO, "\\n");
+    } else if(ch == '\r') {
+      write_str(STDERR_FILENO, "\\r");
+    } else {
+      write_str(STDERR_FILENO, display);
+    }
+    write_str(STDERR_FILENO, "\n");
+    if(ch == '\0') {
+      break;
+    }
 
-      if(input[i] == '$') {
+    if(ch == '$') {
+      write_str(STDERR_FILENO, "[mosh] dollar guard cursor=");
+      debug_write_ptr(STDERR_FILENO, cursor);
+      write_str(STDERR_FILENO, " next=");
+      const char* next_ptr = cursor + 1;
+      debug_write_ptr(STDERR_FILENO, next_ptr);
+      write_str(STDERR_FILENO, " ch=");
+      if(debug_ptr_readable(cursor)) {
+        char current = *cursor;
+        if(current == '\n') {
+          write_str(STDERR_FILENO, "\\n");
+        } else if(current == '\r') {
+          write_str(STDERR_FILENO, "\\r");
+        } else {
+          char buf[2] = { current, '\0' };
+          write_str(STDERR_FILENO, buf);
+        }
+      } else {
+        write_str(STDERR_FILENO, "<invalid>");
+      }
+      write_str(STDERR_FILENO, " next_ch=");
+      if(debug_ptr_readable(next_ptr)) {
+        char next_ch = *next_ptr;
+        if(next_ch == '\n') {
+          write_str(STDERR_FILENO, "\\n");
+        } else if(next_ch == '\r') {
+          write_str(STDERR_FILENO, "\\r");
+        } else {
+          char buf[2] = { next_ch, '\0' };
+          write_str(STDERR_FILENO, buf);
+        }
+      } else {
+        write_str(STDERR_FILENO, "<invalid>");
+      }
+      write_str(STDERR_FILENO, "\n");
+
+      if(!debug_ptr_readable(cursor) || !debug_ptr_readable(next_ptr)) {
+        write_str(STDERR_FILENO, "[mosh] dollar guard treating literal due to invalid pointer\n");
         if(out_index + 1 >= capacity) {
           return false;
         }
         output[out_index++] = '$';
+        cursor++;
         continue;
       }
 
-      char name[MOSH_MAX_VAR_NAME];
-      size_t name_len = 0;
-      if(input[i] == '{') {
-        size_t start = ++i;
-        while(input[i] != '\0' && input[i] != '}' && name_len + 1 < sizeof(name)) {
-          name[name_len++] = input[i++];
-        }
-        if(input[i] == '}') {
-          // matched closing brace, proceed normally.
-        } else {
-          // Unmatched brace, treat as literal.
-          if(out_index + 1 >= capacity) {
-            return false;
-          }
-          output[out_index++] = '$';
-          i = start - 1;
-          continue;
-        }
-      } else {
-        size_t start = i;
-        if(shell_is_digit(input[i])) {
-          while(shell_is_digit(input[i]) && name_len + 1 < sizeof(name)) {
-            name[name_len++] = input[i++];
-          }
-        } else if(shell_is_ident_start(input[i])) {
-          while(shell_is_ident_char(input[i]) && name_len + 1 < sizeof(name)) {
-            name[name_len++] = input[i++];
-          }
-        }
-        i--;
-        if(name_len == 0) {
-          if(out_index + 1 >= capacity) {
-            return false;
-          }
-          output[out_index++] = '$';
-          continue;
-        }
-      }
-
-      name[name_len] = '\0';
-      const char* value = shell_var_get(name);
-      if(value == NULL) {
-        value = "";
-      }
-      if(!shell_append_text(output, capacity, &out_index, value)) {
+      debug_log_expand_dollar(cursor);
+      if(!shell_expand_dollar(&cursor, output, capacity, &out_index)) {
         return false;
       }
       continue;
     }
 
-    if(ch == '\\' && input[i + 1] != '\0') {
-      ch = input[++i];
+    if(ch == '\\' && cursor[1] != '\0') {
+      cursor++;
+      ch = *cursor;
     }
 
     if(out_index + 1 >= capacity) {
       return false;
     }
     output[out_index++] = ch;
+    cursor++;
   }
 
   if(out_index >= capacity) {
@@ -4466,6 +4623,197 @@ static bool contains_slash(const char* text) {
   return false;
 }
 
+static size_t format_hex_uintptr(uintptr_t value, char* out, size_t capacity) {
+  if(out == NULL || capacity == 0) {
+    return 0;
+  }
+  if(capacity < 3) {
+    out[0] = '\0';
+    return 0;
+  }
+
+  static const char hex_digits[] = "0123456789abcdef";
+  size_t len = 0;
+  out[len++] = '0';
+  if(len < capacity) {
+    out[len++] = 'x';
+  }
+
+  bool started = false;
+  for(int shift = (int)(sizeof(uintptr_t) * 8 - 4); shift >= 0; shift -= 4) {
+    uint8_t nibble = (uint8_t)((value >> shift) & 0xfu);
+    if(!started && nibble == 0 && shift != 0) {
+      continue;
+    }
+    started = true;
+    if(len + 1 >= capacity) {
+      break;
+    }
+    out[len++] = hex_digits[nibble];
+  }
+
+  if(!started) {
+    if(len + 1 < capacity) {
+      out[len++] = '0';
+    }
+  }
+
+  if(len < capacity) {
+    out[len] = '\0';
+  } else {
+    out[capacity - 1] = '\0';
+    len = capacity - 1;
+  }
+  return len;
+}
+
+static size_t format_signed_long(long value, char* out, size_t capacity) {
+  if(out == NULL || capacity == 0) {
+    return 0;
+  }
+
+  size_t index = 0;
+  unsigned long magnitude;
+  if(value < 0) {
+    if(index + 1 >= capacity) {
+      out[0] = '\0';
+      return 0;
+    }
+    out[index++] = '-';
+    magnitude = (unsigned long)(-value);
+  } else {
+    magnitude = (unsigned long)value;
+  }
+
+  size_t written = format_unsigned_value((size_t)magnitude, &out[index], capacity - index);
+  return index + written;
+}
+
+static void debug_write_ptr(int fd, const void* ptr) {
+  char buf[2 + sizeof(uintptr_t) * 2 + 1];
+  format_hex_uintptr((uintptr_t)ptr, buf, sizeof(buf));
+  write_str(fd, buf);
+}
+
+static void debug_write_long_field(int fd, const char* label, long value) {
+  if(label != NULL) {
+    write_str(fd, label);
+  }
+  char buf[32];
+  format_signed_long(value, buf, sizeof(buf));
+  write_str(fd, buf);
+}
+
+static void debug_write_int_field(int fd, const char* label, int value) {
+  if(label != NULL) {
+    write_str(fd, label);
+  }
+  char buf[16];
+  format_signed_value(value, buf, sizeof(buf));
+  write_str(fd, buf);
+}
+
+static void debug_log_exec_attempt(const char* stage,
+                                   const char* path,
+                                   char* const* argv,
+                                   char* const* envp) {
+  write_str(STDERR_FILENO, "[mosh] exec attempt stage=");
+  write_str(STDERR_FILENO, (stage != NULL) ? stage : "?");
+  write_str(STDERR_FILENO, " path_ptr=");
+  debug_write_ptr(STDERR_FILENO, path);
+  write_str(STDERR_FILENO, " argv=");
+  debug_write_ptr(STDERR_FILENO, argv);
+  write_str(STDERR_FILENO, " argv0=");
+  debug_write_ptr(STDERR_FILENO, (argv != NULL) ? argv[0] : NULL);
+  write_str(STDERR_FILENO, " envp=");
+  debug_write_ptr(STDERR_FILENO, envp);
+  write_str(STDERR_FILENO, " env0=");
+  debug_write_ptr(STDERR_FILENO, (envp != NULL && envp[0] != NULL) ? envp[0] : NULL);
+  write_str(STDERR_FILENO, "\n");
+}
+
+static void debug_log_exec_result(const char* stage,
+                                  const char* path,
+                                  long rc) {
+  write_str(STDERR_FILENO, "[mosh] exec result stage=");
+  write_str(STDERR_FILENO, (stage != NULL) ? stage : "?");
+  write_str(STDERR_FILENO, " path_ptr=");
+  debug_write_ptr(STDERR_FILENO, path);
+  write_str(STDERR_FILENO, " rc=");
+  debug_write_long_field(STDERR_FILENO, NULL, rc);
+  write_str(STDERR_FILENO, " errno=");
+  debug_write_int_field(STDERR_FILENO, NULL, errno);
+  write_str(STDERR_FILENO, "\n");
+}
+
+static void debug_log_expand_start(const char* input, char* output, size_t capacity) {
+  write_str(STDERR_FILENO, "[mosh] expand start input=");
+  debug_write_ptr(STDERR_FILENO, input);
+  write_str(STDERR_FILENO, " output=");
+  debug_write_ptr(STDERR_FILENO, output);
+  write_str(STDERR_FILENO, " cap=");
+  char buf[32];
+  format_unsigned_value(capacity, buf, sizeof(buf));
+  write_str(STDERR_FILENO, buf);
+  write_str(STDERR_FILENO, " input_text=");
+  if(input != NULL) {
+    if(debug_ptr_readable(input)) {
+      write_bytes(STDERR_FILENO, input, str_len(input));
+    } else {
+      write_str(STDERR_FILENO, "<invalid>");
+    }
+  } else {
+    write_str(STDERR_FILENO, "(null)");
+  }
+  write_str(STDERR_FILENO, "\n");
+  debug_dump_bytes("[mosh] expand input", input);
+}
+
+static void debug_log_expand_dollar(const char* cursor) {
+  write_str(STDERR_FILENO, "[mosh] expand dollar cursor=");
+  debug_write_ptr(STDERR_FILENO, cursor);
+  write_str(STDERR_FILENO, " values=");
+  if(cursor != NULL) {
+    if(debug_ptr_readable(cursor)) {
+      write_bytes(STDERR_FILENO, cursor, str_len(cursor));
+    } else {
+      write_str(STDERR_FILENO, "<invalid>");
+    }
+  }
+  write_str(STDERR_FILENO, "\n");
+  debug_dump_bytes("[mosh] expand dollar bytes", cursor);
+}
+
+static void debug_dump_bytes(const char* label, const char* data) {
+  write_str(STDERR_FILENO, label);
+  if(data == NULL) {
+    write_str(STDERR_FILENO, "(null)\n");
+    return;
+  }
+  write_str(STDERR_FILENO, " bytes=");
+  if(debug_ptr_readable(data)) {
+    const unsigned char* bytes = (const unsigned char*)data;
+    for(size_t idx = 0; idx < 64 && bytes[idx] != '\0'; idx++) {
+      char buf[4];
+      buf[0] = "0123456789abcdef"[(bytes[idx] >> 4) & 0xf];
+      buf[1] = "0123456789abcdef"[bytes[idx] & 0xf];
+      buf[2] = ' ';
+      buf[3] = '\0';
+      write_str(STDERR_FILENO, buf);
+    }
+  } else {
+    write_str(STDERR_FILENO, "<invalid>");
+  }
+  write_str(STDERR_FILENO, "\n");
+}
+
+static bool debug_ptr_readable(const void* ptr) {
+  uintptr_t value = (uintptr_t)ptr;
+  const uintptr_t MIN_USER_PTR = 0x1000u;
+  const uintptr_t MAX_USER_PTR = 0x00007fffffffffffULL;
+  return value >= MIN_USER_PTR && value <= MAX_USER_PTR;
+}
+
 static void exec_command(char** argv, size_t argc) {
   if(argv == NULL || argc == 0 || argv[0] == NULL) {
     _exit(0);
@@ -4476,7 +4824,9 @@ static void exec_command(char** argv, size_t argc) {
   const char* command = argv[0];
 
   if(contains_slash(command)) {
+    debug_log_exec_attempt("direct", command, argv, envp);
     long rc = mosh_execve(command, argv, envp);
+    debug_log_exec_result("direct", command, rc);
     if(rc < 0) {
       write_str(STDERR_FILENO, "mosh: exec failed\n");
       _exit(126);
@@ -4501,7 +4851,9 @@ static void exec_command(char** argv, size_t argc) {
     bool at_end = (segment[segment_len] == '\0');
 
     if(segment_len == 0) {
+      debug_log_exec_attempt("empty_path", command, argv, envp);
       long rc = mosh_execve(command, argv, envp);
+      debug_log_exec_result("empty_path", command, rc);
       if(rc >= 0) {
         return;
       }
@@ -4520,7 +4872,9 @@ static void exec_command(char** argv, size_t argc) {
           candidate[pos++] = command[i];
         }
         candidate[pos] = '\0';
+        debug_log_exec_attempt("path", candidate, argv, envp);
         long rc = mosh_execve(candidate, argv, envp);
+        debug_log_exec_result("path", candidate, rc);
         if(rc >= 0) {
           return;
         }
@@ -4676,14 +5030,19 @@ static int launch_command(char* line) {
       shell_starts_with_keyword(trimmed_raw, "for") ||
       shell_starts_with_keyword(trimmed_raw, "function") ||
       shell_is_inline_function_signature(trimmed_raw))) {
-    char expanded_segment[MOSH_MAX_FUNCTION_BODY];
-    if(!shell_expand_variables(trimmed_raw, expanded_segment, sizeof(expanded_segment))) {
-      write_str(STDOUT_FILENO, "mosh: expansion too long\n");
-      shell_set_status_code(1);
-      return encode_raw_status_from_code(shell_last_status);
-    }
     char working_segment[MOSH_MAX_FUNCTION_BODY];
-    str_copy(working_segment, sizeof(working_segment), expanded_segment);
+    if(strchr(trimmed_raw, '$') != NULL) {
+      char expanded_segment[MOSH_MAX_FUNCTION_BODY];
+      write_str(STDERR_FILENO, "[mosh] expand ctx=launch_command:trimmed\n");
+      if(!shell_expand_variables(trimmed_raw, expanded_segment, sizeof(expanded_segment))) {
+        write_str(STDOUT_FILENO, "mosh: expansion too long\n");
+        shell_set_status_code(1);
+        return encode_raw_status_from_code(shell_last_status);
+      }
+      str_copy(working_segment, sizeof(working_segment), expanded_segment);
+    } else {
+      str_copy(working_segment, sizeof(working_segment), trimmed_raw);
+    }
     int builtin_status = 0;
     if(handle_builtin(trimmed_raw, working_segment, &builtin_status)) {
       return builtin_status;
@@ -4709,15 +5068,28 @@ static int launch_command(char* line) {
       return encode_raw_status_from_code(shell_last_status);
     }
 
-    char expanded_segment[MOSH_MAX_FUNCTION_BODY];
-    if(!shell_expand_variables(raw_segment, expanded_segment, sizeof(expanded_segment))) {
-      write_str(STDOUT_FILENO, "mosh: expansion too long\n");
-      shell_set_status_code(1);
-      return encode_raw_status_from_code(shell_last_status);
+    write_str(STDERR_FILENO, "[mosh] segment raw=");
+    if(debug_ptr_readable(raw_segment)) {
+      write_bytes(STDERR_FILENO, raw_segment, str_len(raw_segment));
+    } else {
+      write_str(STDERR_FILENO, "<invalid>");
     }
+    write_str(STDERR_FILENO, "\n");
+    debug_dump_bytes("[mosh] segment raw", raw_segment);
 
     char working_segment[MOSH_MAX_FUNCTION_BODY];
-    str_copy(working_segment, sizeof(working_segment), expanded_segment);
+    if(strchr(raw_segment, '$') != NULL) {
+      write_str(STDERR_FILENO, "[mosh] expand ctx=launch_command:segment\n");
+      char expanded_segment[MOSH_MAX_FUNCTION_BODY];
+      if(!shell_expand_variables(raw_segment, expanded_segment, sizeof(expanded_segment))) {
+        write_str(STDOUT_FILENO, "mosh: expansion too long\n");
+        shell_set_status_code(1);
+        return encode_raw_status_from_code(shell_last_status);
+      }
+      str_copy(working_segment, sizeof(working_segment), expanded_segment);
+    } else {
+      str_copy(working_segment, sizeof(working_segment), raw_segment);
+    }
 
     int builtin_status = 0;
     if(handle_builtin(raw_segment, working_segment, &builtin_status)) {

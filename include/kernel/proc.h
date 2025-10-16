@@ -160,6 +160,8 @@ typedef struct proc_info_t {
   bool         stopped;
   bool         stop_status_pending;
   bool         continued_pending;
+  bool         syscall_gs_active;
+  bool         syscall_gs_needs_restore;
 } proc_info_t;
 
 typedef proc_info_t* proc_info_p;

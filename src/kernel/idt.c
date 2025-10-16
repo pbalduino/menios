@@ -191,6 +191,12 @@ void idt_pf_isr_handler(idt_exception_p cpu_state) {
                   info.present ? "yes" : "no",
                   info.write ? "yes" : "no",
                   current->pid);
+    exception_log("    rip=0x%016lx cs=0x%04lx rflags=0x%016lx rsp=0x%016lx ss=0x%04lx\n",
+                  fault_rip,
+                  fault_cs,
+                  fault_rflags,
+                  fault_rsp,
+                  privilege_transition ? (uint64_t)fault_ss : (uint64_t)ss);
     proc_exit_signal(SIGSEGV);
     return;
   }
