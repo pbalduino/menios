@@ -138,6 +138,7 @@ typedef struct proc_info_t {
   proc_info_p  first_child;
   proc_info_p  sibling_next;
   cpu_state_t* cpu_state;
+  uint64_t     kernel_rsp;
   void*        stack_pointer;
   uintptr_t*   stack_base;
   virt_addr_t  user_stack_base_vaddr;
@@ -159,6 +160,8 @@ typedef struct proc_info_t {
   bool         stopped;
   bool         stop_status_pending;
   bool         continued_pending;
+  bool         syscall_gs_active;
+  bool         syscall_gs_needs_restore;
 } proc_info_t;
 
 typedef proc_info_t* proc_info_p;
@@ -172,7 +175,7 @@ void proc_create(proc_info_p proc, const char* name, void (*entrypoint)(void *),
 void proc_execute(proc_info_p proc);
 void proc_exit(int code);
 void proc_exit_signal(int signo);
-void proc_switch(void* state);
+cpu_state_p proc_switch(cpu_state_p state);
 void proc_create_user(proc_info_p proc, const char* name, const void* code_blob, size_t code_size, void* arg);
 bool proc_register_user_segment(proc_info_p proc, phys_addr_t phys, size_t pages);
 void proc_unregister_user_segment(proc_info_p proc, phys_addr_t phys, size_t pages);

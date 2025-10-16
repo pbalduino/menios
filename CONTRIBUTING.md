@@ -179,6 +179,28 @@ We welcome various types of contributions:
    - References to issues or tasks addressed"
    ```
 
+   **Commit Message Guidelines**:
+   - Use **past tense** for commit messages (e.g., "Fixed", "Added", "Refactored", not "Fix", "Add", "Refactor")
+   - Keep the first line under 72 characters
+   - Use the body to explain *what* and *why*, not *how*
+   - Reference relevant issues with `#issue-number`
+
+   **Good Examples**:
+   ```
+   Fixed buffer overflow in vsprintk
+
+   Added support for ARM64 boot protocol
+
+   Refactored scheduler to keep per-process frames
+   ```
+
+   **Bad Examples**:
+   ```
+   Fix buffer overflow          # Present tense
+   add arm64 support            # Uncapitalized, present tense
+   Refactor the scheduler code  # Present tense
+   ```
+
 2. **Push and Create PR**
    ```bash
    git push origin feature/your-feature-name

@@ -4,6 +4,7 @@
 #include <kernel/kernel.h>
 #include <kernel/pmm.h>
 #include <kernel/proc.h>
+#include <kernel/context_switch.h>
 #include <kernel/serial.h>
 #include <kernel/syscall_entry.h>
 #include <kernel/thread.h>
@@ -19,8 +20,23 @@
 #include <string.h>
 #include <types.h>
 
+#ifndef CONFIG_DEBUG_SCHEDULER
+#define CONFIG_DEBUG_SCHEDULER 0
+#endif
+
+#if CONFIG_DEBUG_SCHEDULER
+#define SCHED_TRACE(...) serial_printf(__VA_ARGS__)
+#else
+#define SCHED_TRACE(...) ((void)0)
+#endif
+
 uint64_t last_pid = 0;
 static uint64_t last_exec = 0;
+
+static void __attribute__((noreturn)) proc_first_entry(void);
+static void proc_prepare_switch_frame(proc_info_p proc);
+
+extern void proc_enter_userspace(syscall_frame_t* frame) __attribute__((noreturn));
 
 proc_info_t kernel_process_info = {
   .first_child = NULL,
@@ -64,6 +80,94 @@ typedef struct scheduler_queue_t {
 static scheduler_queue_t ready_queues[PROC_PRIORITY_COUNT];
 static proc_info_p sleep_queue_head = NULL;
 static uint32_t scheduler_actions = 0;
+
+static void proc_table_insert(proc_info_p proc) {
+  if(proc == NULL) {
+    return;
+  }
+
+  for(size_t i = 0; i < PROC_MAX; ++i) {
+    if(procs[i] == proc) {
+      return; // already registered
+    }
+    if(procs[i] == NULL) {
+      procs[i] = proc;
+      return;
+    }
+  }
+
+  serial_printf("proc_table_insert: no free slot for pid=%u\n", proc->pid);
+  halt();
+}
+
+static void proc_table_remove(proc_info_p proc) {
+  if(proc == NULL) {
+    return;
+  }
+
+  for(size_t i = 0; i < PROC_MAX; ++i) {
+    if(procs[i] == proc) {
+      procs[i] = NULL;
+      return;
+    }
+  }
+}
+
+static void scheduler_timer_callback(void* arg) {
+  (void)proc_switch((cpu_state_p)arg);
+}
+
+static void proc_prepare_switch_frame(proc_info_p proc) {
+  if(proc == NULL || proc->stack_base == NULL) {
+    if(proc != NULL) {
+      proc->cpu_state = NULL;
+      proc->kernel_rsp = 0;
+    }
+    return;
+  }
+
+  uint8_t* top = (uint8_t*)proc->stack_base + PROC_STACK_SIZE;
+  top -= sizeof(syscall_frame_t);
+  proc->cpu_state = (cpu_state_t*)top;
+  memset(proc->cpu_state, 0, sizeof(cpu_state_t));
+
+  top -= sizeof(uint64_t);
+  *((uint64_t*)top) = (uint64_t)proc_first_entry;
+  proc->kernel_rsp = (uint64_t)top;
+}
+
+static void __attribute__((noreturn)) proc_first_entry(void) {
+  proc_info_p proc = current;
+  if(proc == NULL) {
+    halt();
+  }
+
+  if(!proc->user_mode) {
+    uint64_t kernel_sp = (uint64_t)((uint8_t*)proc->stack_base + PROC_STACK_SIZE);
+    kernel_sp -= 8; // SysV ABI: align before call so callee sees 16-byte alignment
+    __asm__ volatile("mov %0, %%rsp" :: "r"(kernel_sp) : "rsp");
+    proc = current;
+  }
+
+  enable_interrupts();
+
+  if(proc->user_mode) {
+    syscall_frame_t* frame = (syscall_frame_t*)proc->cpu_state;
+    if(frame == NULL) {
+      halt();
+    }
+    proc_enter_userspace(frame);
+  }
+
+  void (*entrypoint)(void*) = proc->entrypoint;
+  void* arg = proc->arguments;
+  if(entrypoint != NULL) {
+    entrypoint(arg);
+  }
+
+  proc_exit(0);
+  halt();
+}
 
 static inline int encode_stopped_status(int signo) {
   return ((signo & 0x7f) << 8) | 0x7f;
@@ -126,10 +230,10 @@ static void proc_link_child(proc_info_p parent, proc_info_p child) {
   child->sibling_next = parent->first_child;
   parent->first_child = child;
   parent->children_count++;
-  serial_printf("proc: parent=%s(pid=%u) forked child pid=%u\n",
-                parent->name,
-                parent->pid,
-                child->pid);
+  SCHED_TRACE("proc: parent=%s(pid=%u) forked child pid=%u\n",
+              parent->name,
+              parent->pid,
+              child->pid);
 }
 
 #define SCHED_ACTION_FORCE (1u << 0)
@@ -191,6 +295,8 @@ static void proc_free_resources(proc_info_p proc) {
     return;
   }
 
+  proc_table_remove(proc);
+
   proc_shm_detach_all(proc);
   proc_release_user_memory(proc);
   proc_file_table_cleanup(proc);
@@ -200,10 +306,7 @@ static void proc_free_resources(proc_info_p proc) {
     proc->address_space_root = 0;
   }
 
-  if(proc->cpu_state) {
-    kfree(proc->cpu_state);
-    proc->cpu_state = NULL;
-  }
+  proc->cpu_state = NULL;
 
   if(proc->stack_pointer) {
     kfree(proc->stack_pointer);
@@ -325,6 +428,8 @@ static void scheduler_cleanup_process(proc_info_p proc) {
     return;
   }
 
+  proc_table_remove(proc);
+
   proc_shm_detach_all(proc);
   if(proc->stack_pointer) {
     kfree(proc->stack_pointer);
@@ -343,28 +448,24 @@ static void scheduler_cleanup_process(proc_info_p proc) {
     proc->address_space_root = 0;
   }
 
-  if(proc->cpu_state) {
-    kfree(proc->cpu_state);
-    proc->cpu_state = NULL;
-  }
+  proc->cpu_state = NULL;
 
   kfree(proc);
 }
 
 void proc_debug(cpu_state_p state) {
-  serial_printf("proc_debug: %p\n", state);
-  serial_printf("            cs:  %lx ss:  %lx rfl: %lx\n", state->cs, state->ss, state->rflags);
-  serial_printf("proc_debug: rbp: %lx rdi: %lx rip: %lx rsi: %lx\n", state->rbp, state->rdi, state->rip, state->rsi);
-  serial_printf("proc_debug: rsp: %lx rax: %lx rbx: %lx rcx: %lx\n", state->rsp, state->rax, state->rbx, state->rcx);
-  serial_printf("proc_debug: rdx: %lx r8:  %lx r9:  %lx r10: %lx\n", state->rdx, state->r8, state->r9, state->r10);
+  SCHED_TRACE("proc_debug: %p\n", state);
+  SCHED_TRACE("            cs:  %lx ss:  %lx rfl: %lx\n", state->cs, state->ss, state->rflags);
+  SCHED_TRACE("proc_debug: rbp: %lx rdi: %lx rip: %lx rsi: %lx\n", state->rbp, state->rdi, state->rip, state->rsi);
+  SCHED_TRACE("proc_debug: rsp: %lx rax: %lx rbx: %lx rcx: %lx\n", state->rsp, state->rax, state->rbx, state->rcx);
+  SCHED_TRACE("proc_debug: rdx: %lx r8:  %lx r9:  %lx r10: %lx\n", state->rdx, state->r8, state->r9, state->r10);
 }
 
-void proc_switch(void* arg) {
+cpu_state_p proc_switch(cpu_state_p frame) {
   if(current == NULL) {
     current = &kernel_process_info;
   }
 
-  cpu_state_p frame = (cpu_state_p)arg;
   uint64_t now = scheduler_now_us();
 
   if(last_exec == 0) {
@@ -376,15 +477,27 @@ void proc_switch(void* arg) {
 
   if(current != NULL) {
     if(current->cpu_state != NULL) {
-  serial_printf("proc_switch: save pid=%u prev_rax=%lx frame->rax=%lx\n",
-                current->pid,
-                current->cpu_state ? current->cpu_state->rax : 0xffffffffffffffffull,
-                ((cpu_state_t*)frame)->rax);
+      SCHED_TRACE("proc_switch: save pid=%u prev_rax=%lx frame->rax=%lx\n",
+                  current->pid,
+                  current->cpu_state ? current->cpu_state->rax : 0xffffffffffffffffull,
+                  ((cpu_state_t*)frame)->rax);
     }
     proc_signal_handle_pending(current, frame);
   }
 
   if(current && current->cpu_state) {
+    SCHED_TRACE("proc_switch: memcpy save pid=%u frame=%p dest=%p size=%zu\n",
+                current->pid,
+                (void*)frame,
+                (void*)current->cpu_state,
+                sizeof(cpu_state_t));
+    SCHED_TRACE("proc_switch: frame values rip=%lx rsp=%lx rdi=%lx rsi=%lx rdx=%lx rcx=%lx\n",
+                ((cpu_state_t*)frame)->rip,
+                ((cpu_state_t*)frame)->rsp,
+                ((cpu_state_t*)frame)->rdi,
+                ((cpu_state_t*)frame)->rsi,
+                ((cpu_state_t*)frame)->rdx,
+                ((cpu_state_t*)frame)->rcx);
     memcpy(current->cpu_state, frame, sizeof(cpu_state_t));
   }
 
@@ -411,11 +524,18 @@ void proc_switch(void* arg) {
   if(!forced && current != NULL && current->state == PROC_STATE_RUNNING) {
     if(current->time_slice_remaining_us > 0 && highest_ready <= current->priority) {
       current->last_dispatch_us = now;
-      return;
+      return frame;
     }
   }
 
   proc_info_p previous = current;
+
+  if(previous != NULL &&
+     previous->syscall_gs_active &&
+     !previous->syscall_gs_needs_restore) {
+    __asm__ volatile("swapgs" ::: "memory");
+    previous->syscall_gs_needs_restore = true;
+  }
 
   if(previous != NULL) {
     if(to_sleep) {
@@ -487,26 +607,42 @@ void proc_switch(void* arg) {
   current->time_slice_remaining_us = current->quantum_us;
   current->last_dispatch_us = now;
 
+  if(current->syscall_gs_needs_restore) {
+    __asm__ volatile("swapgs" ::: "memory");
+    current->syscall_gs_needs_restore = false;
+  }
+
   phys_addr_t desired_cr3 = current->address_space_root ? current->address_space_root : pmm_get_kernel_cr3();
   if(read_cr3() != desired_cr3) {
     write_cr3(desired_cr3);
   }
 
-  serial_printf("proc_switch: restore pid=%u cpu_state->rax=%lx\n",
-                current->pid,
-                current->cpu_state->rax);
-  serial_printf("proc_switch: copy cpu_state->rax=%lx into frame %p\n",
-                current->cpu_state->rax,
-                (void*)frame);
-  if(current->cpu_state != frame) {
-    memcpy(frame, current->cpu_state, sizeof(cpu_state_t));
-  }
+  SCHED_TRACE("proc_switch: restore pid=%u cpu_state->rax=%lx\n",
+              current->pid,
+              current->cpu_state->rax);
+  SCHED_TRACE("proc_switch: resume frame=%p rip=%lx rsp=%lx rdi=%lx rsi=%lx rdx=%lx rcx=%lx\n",
+              (void*)current->cpu_state,
+              current->cpu_state->rip,
+              current->cpu_state->rsp,
+              current->cpu_state->rdi,
+              current->cpu_state->rsi,
+              current->cpu_state->rdx,
+              current->cpu_state->rcx);
 
   uint64_t kernel_stack = proc_kernel_stack_top(current);
   if(kernel_stack != 0) {
     tss_update_kernel_stack(kernel_stack);
     syscall_set_kernel_stack(kernel_stack);
   }
+
+  cpu_state_p next_frame = current->cpu_state;
+  uint64_t next_rsp = current->kernel_rsp;
+  if(next_rsp == 0) {
+    next_rsp = (uint64_t)next_frame;
+  }
+  uint64_t* prev_slot = previous ? &previous->kernel_rsp : &next_rsp;
+  context_switch(prev_slot, next_rsp);
+  return next_frame;
 }
 
 void proc_create(proc_info_p proc, const char* name, void (*entrypoint)(void *), void* arg) {
@@ -517,6 +653,7 @@ void proc_create(proc_info_p proc, const char* name, void (*entrypoint)(void *),
   proc->children_count = 0;
   proc->parent = current;
   proc->pid = last_pid++;
+  proc_table_insert(proc);
   proc_file_table_init(proc);
   if(current != NULL) {
     proc_file_table_clone(proc, current);
@@ -526,7 +663,7 @@ void proc_create(proc_info_p proc, const char* name, void (*entrypoint)(void *),
   proc->stop_status_pending = false;
   proc->stop_status = 0;
 
-  serial_printf("proc_create: Creating process %s - %s with arg %lx\n", name, proc->name, arg);
+  SCHED_TRACE("proc_create: Creating process %s - %s with arg %lx\n", name, proc->name, arg);
 
   // ensure the stack is aligned to a 16-byte boundary
   proc->stack_pointer = kmalloc(PROC_STACK_SIZE + 0xF);
@@ -537,7 +674,7 @@ void proc_create(proc_info_p proc, const char* name, void (*entrypoint)(void *),
   uintptr_t aligned = ((uintptr_t)proc->stack_pointer + 0xF) & ~((uintptr_t)0xF);
   proc->stack_base = (uintptr_t*)aligned;
   memset(proc->stack_base, 0, PROC_STACK_SIZE);
-  serial_printf("proc_create: entrypoint @ %p, args @ %p\n", entrypoint, arg);
+  SCHED_TRACE("proc_create: entrypoint @ %p, args @ %p\n", entrypoint, arg);
   proc->state = PROC_STATE_NEW;
   proc->entrypoint = entrypoint;
   proc->arguments = arg;
@@ -562,21 +699,22 @@ void proc_create(proc_info_p proc, const char* name, void (*entrypoint)(void *),
   proc->last_dispatch_us = 0;
   proc->waitpid_target = -1;
   proc->waitpid_waiting = false;
-
-  proc->cpu_state = kmalloc(sizeof(cpu_state_t));
-  if(proc->cpu_state == NULL) {
-    serial_printf("proc_create: Failed to allocate cpu state for process %s\n", name);
-    halt();
-  }
-  memset(proc->cpu_state, 0, sizeof(cpu_state_t));
+  proc->syscall_gs_active = false;
+  proc->syscall_gs_needs_restore = false;
+  proc_prepare_switch_frame(proc);
   proc->cpu_state->rip = (uint64_t)entrypoint;
   proc->cpu_state->rdi = (uint64_t)arg;
   proc->cpu_state->rsp = (uint64_t)proc->stack_base + PROC_STACK_SIZE;
   proc->cpu_state->rbp = proc->cpu_state->rsp;
   proc->cpu_state->rflags = 0x246;
-  serial_printf("proc_create: cs: %lx ss: %lx\n", current->cpu_state->cs, current->cpu_state->ss);
-  proc->cpu_state->cs = KERNEL_CODE_SEGMENT;
-  proc->cpu_state->ss = KERNEL_DATA_SEGMENT;
+  uint16_t cs = KERNEL_CODE_SEGMENT;
+  uint16_t ss = KERNEL_DATA_SEGMENT;
+  if(current != NULL && current->cpu_state != NULL) {
+    cs = current->cpu_state->cs;
+    ss = current->cpu_state->ss;
+  }
+  proc->cpu_state->cs = cs;
+  proc->cpu_state->ss = ss;
   proc->address_space_root = pmm_get_kernel_cr3();
   proc->user_segment_count = 0;
   proc->shm_attachment_count = 0;
@@ -923,11 +1061,11 @@ void proc_request_sleep(uint64_t duration_us) {
   current->sleep_until = scheduler_now_us() + duration_us;
   current->time_slice_remaining_us = 0;
   scheduler_actions |= (SCHED_ACTION_SLEEP | SCHED_ACTION_FORCE);
-  serial_printf("proc_request_sleep: pid=%u duration=%lu\n",
-                current->pid,
-                (unsigned long)duration_us);
-  serial_printf("proc_request_sleep: caller=%lx\n",
-                (unsigned long)__builtin_return_address(0));
+  SCHED_TRACE("proc_request_sleep: pid=%u duration=%lu\n",
+              current->pid,
+              (unsigned long)duration_us);
+  SCHED_TRACE("proc_request_sleep: caller=%lx\n",
+              (unsigned long)__builtin_return_address(0));
 }
 
 void proc_request_block(void) {
@@ -1031,7 +1169,7 @@ proc_info_p proc_fork(proc_info_p parent, const syscall_frame_t* frame, int* err
     return NULL;
   }
 
-  serial_printf("proc_fork: parent pid=%u entering\n", parent->pid);
+  SCHED_TRACE("proc_fork: parent pid=%u entering\n", parent->pid);
   proc_info_p child = kmalloc(sizeof(proc_info_t));
   if(child == NULL) {
     serial_printf("proc_fork: kmalloc proc_info failed\n");
@@ -1041,10 +1179,11 @@ proc_info_p proc_fork(proc_info_p parent, const syscall_frame_t* frame, int* err
   proc_file_table_init(child);
   proc_file_table_clone(child, parent);
   proc_signal_state_copy(child, parent);
-  serial_printf("proc_fork: proc_info allocated\n");
+  SCHED_TRACE("proc_fork: proc_info allocated\n");
 
   child->parent = parent;
   child->pid = last_pid++;
+  proc_table_insert(child);
   strncpy(child->name, parent->name, sizeof(child->name) - 1);
   child->name[sizeof(child->name) - 1] = '\0';
   child->user_mode = parent->user_mode;
@@ -1073,16 +1212,10 @@ proc_info_p proc_fork(proc_info_p parent, const syscall_frame_t* frame, int* err
   uintptr_t aligned = ((uintptr_t)child->stack_pointer + 0xF) & ~((uintptr_t)0xF);
   child->stack_base = (uintptr_t*)aligned;
   memset(child->stack_base, 0, PROC_STACK_SIZE);
-  serial_printf("proc_fork: stack allocated aligned=%p\n", child->stack_base);
+  SCHED_TRACE("proc_fork: stack allocated aligned=%p\n", child->stack_base);
 
-  child->cpu_state = kmalloc(sizeof(cpu_state_t));
-  if(child->cpu_state == NULL) {
-    serial_printf("proc_fork: cpu_state allocation failed\n");
-    proc_free_resources(child);
-    return NULL;
-  }
-  memset(child->cpu_state, 0, sizeof(cpu_state_t));
-  serial_printf("proc_fork: cpu_state allocated\n");
+  proc_prepare_switch_frame(child);
+  SCHED_TRACE("proc_fork: cpu_state allocated\n");
 
   phys_addr_t new_root = pmm_clone_kernel_address_space();
   if(new_root == 0) {
@@ -1091,7 +1224,7 @@ proc_info_p proc_fork(proc_info_p parent, const syscall_frame_t* frame, int* err
     return NULL;
   }
   child->address_space_root = new_root;
-  serial_printf("proc_fork: new address space=%lx\n", (unsigned long)new_root);
+  SCHED_TRACE("proc_fork: new address space=%lx\n", (unsigned long)new_root);
 
   child->user_segment_count = 0;
   child->shm_attachment_count = 0;
@@ -1102,7 +1235,7 @@ proc_info_p proc_fork(proc_info_p parent, const syscall_frame_t* frame, int* err
     proc_free_resources(child);
     return NULL;
   }
-  serial_printf("proc_fork: vm_clone complete\n");
+  SCHED_TRACE("proc_fork: vm_clone complete\n");
 
   if(!proc_shm_inherit(child, parent)) {
     serial_printf("proc_fork: shared memory inheritance failed\n");
@@ -1112,20 +1245,20 @@ proc_info_p proc_fork(proc_info_p parent, const syscall_frame_t* frame, int* err
 
   memcpy(child->cpu_state, frame, sizeof(syscall_frame_t));
   child->cpu_state->rax = 0;
-  serial_printf("proc_fork: child pid=%u rax=%lu rip=%lx\n",
-                child->pid,
-                child->cpu_state->rax,
-                child->cpu_state->rip);
+  SCHED_TRACE("proc_fork: child pid=%u rax=%lu rip=%lx\n",
+              child->pid,
+              child->cpu_state->rax,
+              child->cpu_state->rip);
 
   proc_set_priority(child, parent->priority);
   child->time_slice_remaining_us = child->quantum_us;
   child->state = PROC_STATE_READY;
 
   proc_link_child(parent, child);
-  serial_printf("proc_fork: linked child pid=%u\n", child->pid);
+  SCHED_TRACE("proc_fork: linked child pid=%u\n", child->pid);
 
   proc_execute(child);
-  serial_printf("proc_fork: scheduled child pid=%u\n", child->pid);
+  SCHED_TRACE("proc_fork: scheduled child pid=%u\n", child->pid);
 
   if(err_out) {
     *err_out = 0;
@@ -1147,7 +1280,7 @@ int proc_exec_image(proc_info_p proc,
     return -EINVAL;
   }
 
-  serial_printf("proc_exec_image: pid=%u size=%lu\n", proc->pid, (unsigned long)size);
+  SCHED_TRACE("proc_exec_image: pid=%u size=%lu\n", proc->pid, (unsigned long)size);
 
   uint8_t* elf_copy = kmalloc(size);
   if(elf_copy == NULL) {
@@ -1156,7 +1289,7 @@ int proc_exec_image(proc_info_p proc,
   }
 
   memcpy(elf_copy, image, size);
-  serial_printf("proc_exec_image: elf copied\n");
+  SCHED_TRACE("proc_exec_image: elf copied\n");
 
   phys_addr_t new_root = pmm_clone_kernel_address_space();
   if(new_root == 0) {
@@ -1164,7 +1297,7 @@ int proc_exec_image(proc_info_p proc,
     serial_printf("proc_exec_image: clone address space failed\n");
     return -ENOMEM;
   }
-  serial_printf("proc_exec_image: new_root=%lx\n", (unsigned long)new_root);
+  SCHED_TRACE("proc_exec_image: new_root=%lx\n", (unsigned long)new_root);
 
   proc_info_t* staging = kmalloc(sizeof(proc_info_t));
   if(staging == NULL) {
@@ -1179,7 +1312,7 @@ int proc_exec_image(proc_info_p proc,
   staging->address_space_root = new_root;
 
   proc_file_table_prepare_exec(proc);
-  serial_printf("proc_exec_image: file table prepared\n");
+  SCHED_TRACE("proc_exec_image: file table prepared\n");
 
   virt_addr_t stack_top = user_stack_top(proc->pid);
   virt_addr_t stack_base_vaddr = stack_top - PROC_USER_STACK_SIZE;
@@ -1196,7 +1329,7 @@ int proc_exec_image(proc_info_p proc,
     serial_printf("proc_exec_image: vm_region_add stack failed\n");
     goto fail;
   }
-  serial_printf("proc_exec_image: stack region added\n");
+  SCHED_TRACE("proc_exec_image: stack region added\n");
 
   vm_region_t* stack_region = vm_region_find(staging, stack_base_vaddr);
   if(stack_region == NULL) {
@@ -1208,7 +1341,7 @@ int proc_exec_image(proc_info_p proc,
     serial_printf("proc_exec_image: initial stack alloc failed\n");
     goto fail;
   }
-  serial_printf("proc_exec_image: initial stack phys=%lx\n", (unsigned long)initial_stack_phys);
+  SCHED_TRACE("proc_exec_image: initial stack phys=%lx\n", (unsigned long)initial_stack_phys);
 
   void* stack_page_ptr = (void*)physical_to_virtual(initial_stack_phys);
   memset(stack_page_ptr, 0, PAGE_SIZE);
@@ -1219,7 +1352,7 @@ int proc_exec_image(proc_info_p proc,
     serial_printf("proc_exec_image: map initial stack failed\n");
     goto fail;
   }
-  serial_printf("proc_exec_image: initial stack mapped\n");
+  SCHED_TRACE("proc_exec_image: initial stack mapped\n");
 
   if(!proc_register_user_segment(staging, initial_stack_phys, 1)) {
     pmm_unmap_page_in_root(new_root, initial_stack_page);
@@ -1227,7 +1360,7 @@ int proc_exec_image(proc_info_p proc,
     serial_printf("proc_exec_image: register stack segment failed\n");
     goto fail;
   }
-  serial_printf("proc_exec_image: stack segment registered\n");
+  SCHED_TRACE("proc_exec_image: stack segment registered\n");
 
   vm_region_note_mapping(stack_region, initial_stack_page, PAGE_SIZE);
 
@@ -1237,7 +1370,7 @@ int proc_exec_image(proc_info_p proc,
     result = -ENOEXEC;
     goto fail;
   }
-  serial_printf("proc_exec_image: elf loaded entry=%lx\n", entry);
+  SCHED_TRACE("proc_exec_image: elf loaded entry=%lx\n", entry);
 
   proc->brk = 0;
   proc->heap = 0;
@@ -1311,7 +1444,7 @@ int proc_exec_image(proc_info_p proc,
   }
 
   memcpy(proc->cpu_state, frame, sizeof(syscall_frame_t));
-  serial_printf("proc_exec_image: completed successfully\n");
+  SCHED_TRACE("proc_exec_image: completed successfully\n");
 
   kfree(staging);
 
@@ -1453,11 +1586,11 @@ static bool proc_setup_exec_stack(proc_info_p proc,
   frame->rdi = argc;
   frame->rsi = argv_user;
   frame->rdx = envp_user;
-  serial_printf("proc_setup_exec_stack: argc=%lu argv=%lx envp=%lx sp=%lx\n",
-                (unsigned long)argc,
-                (unsigned long)argv_user,
-                (unsigned long)envp_user,
-                (unsigned long)sp);
+  SCHED_TRACE("proc_setup_exec_stack: argc=%lu argv=%lx envp=%lx sp=%lx\n",
+              (unsigned long)argc,
+              (unsigned long)argv_user,
+              (unsigned long)envp_user,
+              (unsigned long)sp);
 
   if(argv_ptrs) {
     kfree(argv_ptrs);
@@ -1680,7 +1813,7 @@ void proc_execute(proc_info_p proc) {
   proc->time_slice_remaining_us = proc->quantum_us;
   proc->last_dispatch_us = 0;
   ready_queue_push(proc);
-  serial_printf("proc_execute: queued process %s (priority %u)\n", proc->name, proc->priority);
+  SCHED_TRACE("proc_execute: queued process %s (priority %u)\n", proc->name, proc->priority);
 }
 
 void scheduler_init() {
@@ -1704,6 +1837,7 @@ void scheduler_init() {
     }
   }
   memset(current->cpu_state, 0, sizeof(cpu_state_t));
+  current->kernel_rsp = (uint64_t)current->cpu_state;
 
   current->pid = last_pid++;
   current->address_space_root = pmm_get_kernel_cr3();
@@ -1717,7 +1851,7 @@ void scheduler_init() {
     tss_update_kernel_stack(kernel_stack);
     syscall_set_kernel_stack(kernel_stack);
   }
-  register_timer_callback(proc_switch);
+  register_timer_callback(scheduler_timer_callback);
   printf(".OK\n");
 }
 
@@ -1735,7 +1869,7 @@ static void proc_exit_with_status(int status) {
   current->stopped = false;
   current->stop_status_pending = false;
   current->continued_pending = false;
-  serial_printf("proc_exit: Process %s exited with status %d\n", current->name, status);
+  SCHED_TRACE("proc_exit: Process %s exited with status %d\n", current->name, status);
 
   proc_info_p parent = current->parent;
   if(parent != NULL && parent->waitpid_waiting) {

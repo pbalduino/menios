@@ -191,6 +191,34 @@ This document outlines the coding style guidelines for meniOS, inspired by the L
     #endif
     ```
 
+## 6. Commit Messages
+
+- **Rule**: Use past tense for commit messages to describe what was done.
+
+- **Good Examples**:
+
+    ```
+    Fixed buffer overflow in vsprintk
+
+    Added support for ARM64 boot protocol
+
+    Refactored scheduler to keep per-process frames
+    ```
+
+- **Bad Examples**:
+
+    ```
+    Fix buffer overflow          # Present tense
+    add arm64 support            # Uncapitalized, present tense
+    Refactor the scheduler code  # Present tense
+    ```
+
+- **Additional Guidelines**:
+  - Keep the first line under 72 characters
+  - Capitalize the first letter
+  - Use the body to explain *what* and *why*, not *how*
+  - Reference relevant issues with `#issue-number`
+
 For any scenarios or coding practices not covered by this document, please refer to the Linux Coding Style guidelines. Updates to this document will be communicated as necessary.
 
 By following these guidelines, the meniOS codebase will maintain a consistent and readable format, improving collaboration and code maintenance.
