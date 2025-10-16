@@ -9,6 +9,8 @@ extern "C" {
 
 #define __dead2 __attribute__((__noreturn__))
 
+#define RAND_MAX 0x7fffffff
+
 char* itoa(int32_t num, char* str, int32_t base);
 char* utoa(uint32_t num, char* str, int32_t base);
 
@@ -38,6 +40,9 @@ void* valloc(size_t size);
 void* pvalloc(size_t size);
 size_t malloc_usable_size(void* ptr);
 int menios_malloc_stats(menios_malloc_stats_t* stats);
+
+int rand(void);
+void srand(unsigned int seed);
 
 long strtol(const char* nptr, char** endptr, int base);
 

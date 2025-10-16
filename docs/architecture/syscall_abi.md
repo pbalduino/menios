@@ -162,6 +162,21 @@ promise.  Below is a summary of the calls that ship in meniOS v0.1.0.
   (0–255) or `-EAGAIN` if no input is waiting.  Used by `mosh`'s interactive
   loop.
 
+### Time and date
+
+- **`SYS_TIME` (81)** — `time_t time(time_t *tloc);`
+  Returns the current time as seconds since the Unix epoch (January 1, 1970).
+  If `tloc` is non-NULL and accessible, the time is also stored at that address.
+  Returns the time value or `-EFAULT` if `tloc` is invalid.
+- **`SYS_GETTIMEOFDAY` (82)** — `int gettimeofday(struct timeval *tv, struct timezone *tz);`
+  Retrieves the current time with microsecond precision.  The `tv` parameter
+  receives seconds and microseconds since the Unix epoch.  The `tz` parameter
+  is ignored (for POSIX compatibility).  Returns zero on success or `-EFAULT`
+  if `tv` is NULL or inaccessible.
+- **`SYS_GETPAGESIZE` (80)** — `long getpagesize(void);`
+  Returns the system page size (typically 4096 bytes).  Used by the userland
+  allocator and other memory management utilities.
+
 ### IPC status
 
 Beyond shared memory the kernel does not yet expose sockets, message queues, or

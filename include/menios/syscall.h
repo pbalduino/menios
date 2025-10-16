@@ -39,6 +39,8 @@ extern "C" {
 #define SYS_CHDIR      78
 #define SYS_GETCWD     79
 #define SYS_GETPAGESIZE 80
+#define SYS_TIME        81
+#define SYS_GETTIMEOFDAY 82
 
 #ifdef __cplusplus
 }

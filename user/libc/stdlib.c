@@ -22,6 +22,32 @@ static atomic_flag allocator_lock = ATOMIC_FLAG_INIT;
 
 _Static_assert(sizeof(void*) == 8, "menios libc expects 64-bit pointers");
 
+#define LCG_MULTIPLIER 1103515245u
+#define LCG_INCREMENT  12345u
+
+static atomic_uint rand_state = ATOMIC_VAR_INIT(1u);
+
+int rand(void) {
+  unsigned int expected = atomic_load_explicit(&rand_state, memory_order_relaxed);
+  unsigned int desired;
+  do {
+    desired = expected * LCG_MULTIPLIER + LCG_INCREMENT;
+  } while(!atomic_compare_exchange_weak_explicit(&rand_state,
+                                                 &expected,
+                                                 desired,
+                                                 memory_order_relaxed,
+                                                 memory_order_relaxed));
+
+  return (int)((desired >> 1u) & RAND_MAX);
+}
+
+void srand(unsigned int seed) {
+  if(seed == 0u) {
+    seed = 1u;
+  }
+  atomic_store_explicit(&rand_state, seed, memory_order_relaxed);
+}
+
 #ifndef MENIOS_HOST_TEST
 static size_t debug_append_str(char* buffer, size_t pos, size_t capacity, const char* text) {
   while(text != NULL && *text != '\0' && pos < capacity) {

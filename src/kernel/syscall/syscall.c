@@ -10,10 +10,12 @@
 #include <kernel/signal.h>
 #include <kernel/syscall.h>
 #include <kernel/syscall_entry.h>
+#include <kernel/tsc.h>
 #include <kernel/vfs.h>
 #include <kernel/vm.h>
 #include <sys/fcntl.h>
 #include <sys/shm.h>
+#include <sys/time.h>
 #include <sys/wait.h>
 #include <string.h>
 #include <stdlib.h>
@@ -97,6 +99,8 @@ static uint64_t syscall_shmat_handler(syscall_frame_t* frame);
 static uint64_t syscall_shmdt_handler(syscall_frame_t* frame);
 static uint64_t syscall_shmctl_handler(syscall_frame_t* frame);
 static uint64_t syscall_getpagesize_handler(syscall_frame_t* frame);
+static uint64_t syscall_time_handler(syscall_frame_t* frame);
+static uint64_t syscall_gettimeofday_handler(syscall_frame_t* frame);
 
 static syscall_handler_t syscall_table[SYSCALL_MAX];
 
@@ -513,6 +517,8 @@ void syscall_init(void) {
   syscall_register(SYS_CHDIR, syscall_chdir_handler);
   syscall_register(SYS_GETCWD, syscall_getcwd_handler);
   syscall_register(SYS_GETPAGESIZE, syscall_getpagesize_handler);
+  syscall_register(SYS_TIME, syscall_time_handler);
+  syscall_register(SYS_GETTIMEOFDAY, syscall_gettimeofday_handler);
 
   serial_printf("syscall_init: dispatcher ready (syscall/sysret)\n");
 }
@@ -1702,4 +1708,55 @@ static uint64_t syscall_getsockopt_handler(syscall_frame_t* frame) {
 static uint64_t syscall_getpagesize_handler(syscall_frame_t* frame) {
   (void)frame;
   return (uint64_t)PAGE_SIZE;
+}
+
+static uint64_t syscall_time_handler(syscall_frame_t* frame) {
+  time_t* user_ptr = (time_t*)frame->rdi;
+  useconds_t now_us = unix_time_us();
+  time_t now = (time_t)(now_us / 1000000ull);
+
+  if(user_ptr != NULL) {
+    if(!proc_user_buffer_accessible(current, user_ptr, sizeof(time_t))) {
+      frame->rax = (uint64_t)(-EFAULT);
+      return frame->rax;
+    }
+    *user_ptr = now;
+  }
+
+  frame->rax = (uint64_t)now;
+  return frame->rax;
+}
+
+static uint64_t syscall_gettimeofday_handler(syscall_frame_t* frame) {
+  struct timeval* tv = (struct timeval*)frame->rdi;
+  struct timezone* tz = (struct timezone*)frame->rsi;
+
+  if(tv != NULL) {
+    if(!proc_user_buffer_accessible(current, tv, sizeof(struct timeval))) {
+      frame->rax = (uint64_t)(-EFAULT);
+      return frame->rax;
+    }
+  }
+
+  if(tz != NULL) {
+    if(!proc_user_buffer_accessible(current, tz, sizeof(struct timezone))) {
+      frame->rax = (uint64_t)(-EFAULT);
+      return frame->rax;
+    }
+  }
+
+  useconds_t now_us = unix_time_us();
+
+  if(tv != NULL) {
+    tv->tv_sec = (time_t)(now_us / 1000000ull);
+    tv->tv_usec = (suseconds_t)(now_us % 1000000ull);
+  }
+
+  if(tz != NULL) {
+    tz->tz_minuteswest = 0;
+    tz->tz_dsttime = 0;
+  }
+
+  frame->rax = 0;
+  return frame->rax;
 }

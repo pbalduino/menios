@@ -128,6 +128,7 @@ USERLIBC_SOURCES = \
 	src/libc/mman.c \
 	src/libc/sysv_ipc.c \
 	src/libc/string.c \
+		src/libc/time.c \
 	src/libc/signal.c \
 	src/libc/unistd.c
 
@@ -658,8 +659,9 @@ ifeq ($(OS_NAME),linux)
 	src/kernel/user/vm_region.c \
 		src/kernel/timer/tsc.c \
 		src/libc/itoa.c \
-		src/libc/string.c \
-		src/libc/errno.c \
+	src/libc/string.c \
+		src/libc/time.c \
+	src/libc/errno.c \
 		-o "$$file".bin ; \
 		echo "Testing $$file" ; \
 		"$$file".bin ; \
@@ -690,7 +692,8 @@ ifeq ($(OS_NAME),linux)
 		src/kernel/timer/tsc.c \
 		src/libc/itoa.c \
 		src/libc/string.c \
-		src/libc/errno.c \
+		src/libc/time.c \
+	src/libc/errno.c \
 		user/libc/stdlib.c \
 	-o test/test_buddy_allocator.c.bin ; \
 	echo "Testing test/test_buddy_allocator.c" ; \
@@ -721,7 +724,8 @@ ifeq ($(OS_NAME),linux)
 		src/kernel/timer/tsc.c \
 		src/libc/itoa.c \
 		src/libc/string.c \
-		src/libc/errno.c \
+		src/libc/time.c \
+	src/libc/errno.c \
 		user/libc/stdlib.c \
 	-o test/test_malloc_direct.c.bin ; \
 	echo "Testing test/test_malloc_direct.c" ; \
@@ -752,7 +756,8 @@ ifeq ($(OS_NAME),linux)
 		src/kernel/timer/tsc.c \
 		src/libc/itoa.c \
 		src/libc/string.c \
-		src/libc/errno.c \
+		src/libc/time.c \
+	src/libc/errno.c \
 		user/libc/stdlib.c \
 	-o test/test_malloc_stats.c.bin ; \
 	echo "Testing test/test_malloc_stats.c" ; \
@@ -784,7 +789,8 @@ ifeq ($(OS_NAME),linux)
 		src/kernel/mem/kmalloc.c \
 		src/libc/itoa.c \
 		src/libc/string.c \
-		src/libc/errno.c \
+		src/libc/time.c \
+	src/libc/errno.c \
 		user/libc/stdlib.c \
 	-o test/test_heap_virtual.c.bin ; \
 	echo "Testing test/test_heap_virtual.c" ; \
@@ -815,7 +821,8 @@ ifeq ($(OS_NAME),linux)
 		src/kernel/timer/tsc.c \
 		src/libc/itoa.c \
 		src/libc/string.c \
-		src/libc/errno.c \
+		src/libc/time.c \
+	src/libc/errno.c \
 		user/libc/stdlib.c \
 	-o test/test_malloc_stress.c.bin ; \
 	echo "Testing test/test_malloc_stress.c" ; \

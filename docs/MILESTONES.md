@@ -407,10 +407,17 @@ Recommended completion order for maximum impact:
   - **Buddy Allocator milestone reaches 100% (20/20) - PRODUCTION READY!** 🎉
   - All phases complete: Core (9/9) ✅, Critical Security (3/3) ✅, Reliability (5/5) ✅, Performance (3/3) ✅
   - GCC and Doom milestones now FULLY UNBLOCKED!
+- **2025-10-16**: Closed #238 (rand() and time() support) ✅
+  - Closed #239 (Kernel time syscalls: SYS_TIME, SYS_GETTIMEOFDAY) ✅
+  - Closed #240 (time() and gettimeofday() in userland libc) ✅
+  - Closed #241 (rand() and srand() in userland libc) ✅
+  - Implemented thread-safe PRNG with LCG algorithm in libc
+  - Added SYS_TIME (81) and SYS_GETTIMEOFDAY (82) syscalls
+  - Both time functions return proper Unix timestamps
 
 ---
 
-**Last Updated**: 2025-10-14
+**Last Updated**: 2025-10-16
 **See Also**:
 - [Road to Shell](road/road_to_shell.md)
 - [Road to Buddy Allocator](road/road_to_buddy_allocator.md) 🆕
