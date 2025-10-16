@@ -211,6 +211,28 @@ char* strchr(const char* s, int c) {
   return NULL;
 }
 
+char* strrchr(const char* s, int c) {
+  if(s == NULL) {
+    return NULL;
+  }
+
+  const char* last = NULL;
+  unsigned char target = (unsigned char)c;
+
+  while(*s != '\0') {
+    if((unsigned char)*s == target) {
+      last = s;
+    }
+    s++;
+  }
+
+  if(target == '\0') {
+    return (char*)s;
+  }
+
+  return (char*)last;
+}
+
 /**
  * Copies up to size characters from source string to destination buffer
  * @param dst Pointer to the destination buffer

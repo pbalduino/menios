@@ -1,5 +1,84 @@
 [
   {
+    "title": "Improved ps command to match Linux behavior",
+    "github_issue": {
+      "number": 283,
+      "url": "https://github.com/pbalduino/menios/issues/283",
+      "state": "OPEN"
+    },
+    "labels": [
+      "enhancement",
+      "mosh"
+    ],
+    "assignees": [
+      "pbalduino"
+    ]
+  },
+  {
+    "title": "Implement I/O port resource management system",
+    "github_issue": {
+      "number": 281,
+      "url": "https://github.com/pbalduino/menios/issues/281",
+      "state": "OPEN"
+    },
+    "labels": [
+      "enhancement",
+      "nice to have",
+      "kernel"
+    ],
+    "assignees": [
+      "pbalduino"
+    ]
+  },
+  {
+    "title": "Implement PCI configuration space access API",
+    "github_issue": {
+      "number": 280,
+      "url": "https://github.com/pbalduino/menios/issues/280",
+      "state": "OPEN"
+    },
+    "labels": [
+      "enhancement",
+      "nice to have",
+      "drivers",
+      "kernel"
+    ],
+    "assignees": [
+      "pbalduino"
+    ]
+  },
+  {
+    "title": "Implement dynamic IRQ handler registration/unregistration API",
+    "github_issue": {
+      "number": 279,
+      "url": "https://github.com/pbalduino/menios/issues/279",
+      "state": "OPEN"
+    },
+    "labels": [
+      "enhancement",
+      "drivers",
+      "kernel"
+    ],
+    "assignees": [
+      "pbalduino"
+    ]
+  },
+  {
+    "title": "Implement kernel work queue system for deferred work execution",
+    "github_issue": {
+      "number": 278,
+      "url": "https://github.com/pbalduino/menios/issues/278",
+      "state": "OPEN"
+    },
+    "labels": [
+      "enhancement",
+      "kernel"
+    ],
+    "assignees": [
+      "pbalduino"
+    ]
+  },
+  {
     "title": "Create boot protocol abstraction layer for multi-platform support",
     "github_issue": {
       "number": 277,

@@ -17,6 +17,7 @@
 #include <sys/wait.h>
 #include <string.h>
 #include <stdlib.h>
+#include <stdio.h>
 
 #include <stdint.h>
 
@@ -1141,24 +1142,22 @@ static uint64_t syscall_getcwd_handler(syscall_frame_t* frame) {
   return frame->rax;
 }
 
-static const char* proc_state_label(proc_state_t state) {
+static char proc_state_code(proc_state_t state) {
   switch(state) {
-    case PROC_STATE_NEW:
-      return "new";
-    case PROC_STATE_READY:
-      return "ready";
     case PROC_STATE_RUNNING:
-      return "running";
+      return 'R';
+    case PROC_STATE_READY:
+      return 'R';
     case PROC_STATE_WAITING:
-      return "waiting";
+      return 'W';
     case PROC_STATE_SLEEPING:
-      return "sleep";
+      return 'S';
     case PROC_STATE_ZOMBIE:
-      return "zombie";
-    case PROC_STATE_TERMINATED:
-      return "terminated";
+      return 'Z';
+    case PROC_STATE_NEW:
+      return 'I';
     default:
-      return "unknown";
+      return '?';
   }
 }
 
@@ -1179,7 +1178,7 @@ static uint64_t syscall_proc_list_handler(syscall_frame_t* frame) {
   char output[(PROC_MAX * 64) + 32];
   size_t out_len = 0;
 
-  const char header[] = "PID   STATE     NAME\n";
+  const char header[] = "  PID STAT CMD\n";
   size_t header_len = strlen(header);
   if(header_len >= sizeof(output)) {
     frame->rax = (uint64_t)(-ENOSPC);
@@ -1199,34 +1198,46 @@ static uint64_t syscall_proc_list_handler(syscall_frame_t* frame) {
       continue;
     }
 
-    const char* state = proc_state_label(proc->state);
     const char* name = proc->name[0] != '\0' ? proc->name : "(unnamed)";
+    char state_code = proc_state_code(proc->state);
 
     char pid_buf[32];
     memset(pid_buf, 0, sizeof(pid_buf));
     lutoa((uint64_t)proc->pid, pid_buf, 10);
-
     size_t pid_len = strlen(pid_buf);
-    size_t state_len = strlen(state);
     size_t name_len = strnlen(name, sizeof(proc->name));
 
-    size_t needed = pid_len + 1 + state_len + 1 + name_len + 1;
-    if(out_len + needed >= sizeof(output)) {
+    char line[sizeof(proc->name) + 32];
+    size_t line_len = 0;
+
+    size_t pid_field = 5;
+    if(pid_len < pid_field) {
+      for(size_t pad = 0; pad < pid_field - pid_len; ++pad) {
+        line[line_len++] = ' ';
+      }
+    }
+    memcpy(line + line_len, pid_buf, pid_len);
+    line_len += pid_len;
+    line[line_len++] = ' ';
+
+    for(size_t pad = 0; pad < 3; ++pad) {
+      line[line_len++] = ' ';
+    }
+    line[line_len++] = state_code;
+    line[line_len++] = ' ';
+
+    memcpy(line + line_len, name, name_len);
+    line_len += name_len;
+    line[line_len++] = '\n';
+    line[line_len] = '\0';
+
+    if(out_len + line_len >= sizeof(output)) {
       frame->rax = (uint64_t)(-ENOSPC);
       return frame->rax;
     }
 
-    char* dest = output + out_len;
-    memcpy(dest, pid_buf, pid_len);
-    dest += pid_len;
-    *dest++ = ' ';
-    memcpy(dest, state, state_len);
-    dest += state_len;
-    *dest++ = ' ';
-    memcpy(dest, name, name_len);
-    dest += name_len;
-    *dest++ = '\n';
-    out_len += needed;
+    memcpy(output + out_len, line, line_len);
+    out_len += line_len;
   }
 
   if(out_len >= capacity) {

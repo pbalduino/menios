@@ -1446,6 +1446,17 @@ int proc_exec_image(proc_info_p proc,
   memcpy(proc->cpu_state, frame, sizeof(syscall_frame_t));
   SCHED_TRACE("proc_exec_image: completed successfully\n");
 
+  if(args != NULL && args->argc > 0 && args->argv != NULL && args->argv[0] != NULL) {
+    const char* path = args->argv[0];
+    const char* base = strrchr(path, '/');
+    const char* name = base ? base + 1 : path;
+    if(name != NULL && name[0] != '\0') {
+      memset(proc->name, 0, sizeof(proc->name));
+      strncpy(proc->name, name, sizeof(proc->name) - 1);
+      proc->name[sizeof(proc->name) - 1] = '\0';
+    }
+  }
+
   kfree(staging);
 
   return 0;

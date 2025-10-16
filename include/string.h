@@ -34,6 +34,7 @@ int32_t	strncmp(const char *s1, const char *s2, size_t size);
 char* strchr(const char *s, int c);
 char*	strfind(const char *s, char c);
 char *strstr (const char *str_1, const char *str_2);
+char* strrchr(const char* s, int c);
 
 #ifdef __cplusplus
 }
