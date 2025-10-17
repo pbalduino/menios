@@ -886,3 +886,69 @@ int clock_getres(clockid_t clk_id, struct timespec* res) {
   return real_clock_getres(clk_id, res);
 #endif
 }
+
+int setitimer(int which, const struct itimerval* new_value, struct itimerval* old_value) {
+  if(new_value == NULL) {
+#ifndef MENIOS_KERNEL
+    errno = EFAULT;
+#endif
+    return -1;
+  }
+
+#ifndef MENIOS_HOST_TEST
+  long rc = __menios_syscall3(SYS_SETITIMER, (long)which, (long)new_value, (long)old_value);
+  if(rc < 0) {
+#ifndef MENIOS_KERNEL
+    errno = (int)(-rc);
+#endif
+    return -1;
+  }
+  return 0;
+#else
+  typedef int (*host_setitimer_fn)(int, const struct itimerval*, struct itimerval*);
+  static host_setitimer_fn real_setitimer = NULL;
+  if(real_setitimer == NULL) {
+    real_setitimer = (host_setitimer_fn)resolve_host_symbol("setitimer");
+    if(real_setitimer == NULL) {
+#ifndef MENIOS_KERNEL
+      errno = ENOSYS;
+#endif
+      return -1;
+    }
+  }
+  return real_setitimer(which, new_value, old_value);
+#endif
+}
+
+int getitimer(int which, struct itimerval* value) {
+  if(value == NULL) {
+#ifndef MENIOS_KERNEL
+    errno = EFAULT;
+#endif
+    return -1;
+  }
+
+#ifndef MENIOS_HOST_TEST
+  long rc = __menios_syscall2(SYS_GETITIMER, (long)which, (long)value);
+  if(rc < 0) {
+#ifndef MENIOS_KERNEL
+    errno = (int)(-rc);
+#endif
+    return -1;
+  }
+  return 0;
+#else
+  typedef int (*host_getitimer_fn)(int, struct itimerval*);
+  static host_getitimer_fn real_getitimer = NULL;
+  if(real_getitimer == NULL) {
+    real_getitimer = (host_getitimer_fn)resolve_host_symbol("getitimer");
+    if(real_getitimer == NULL) {
+#ifndef MENIOS_KERNEL
+      errno = ENOSYS;
+#endif
+      return -1;
+    }
+  }
+  return real_getitimer(which, value);
+#endif
+}

@@ -188,6 +188,55 @@ Basic command-line tools for shell interaction:
 - **Dependencies**: Issue #103 (signals), Issue #153 (procfs helpful but not required)
 - **Impact**: Process monitoring and control from shell
 
+### **Phase 8: Doom Integration** (NEW - 4 issues)
+Port layer, graphics, input, and build integration for running Doom:
+
+#### **Pixel-Addressable Framebuffer** (Issue #301)
+- **Status**: TODO - `/dev/fb0` currently only supports text mode
+- **Dependencies**: #31 ✅, #89 ✅, #220 ✅
+- **Scope**:
+  - mmap support for direct video RAM access
+  - ioctl interface for geometry/format queries (FBIOGET_VSCREENINFO)
+  - Expose width, height, pitch, pixel format to userland
+- **Current Gap**: `src/kernel/file.c:507` routes through `fb_putchar` only
+- **Impact**: DG_DrawFrame() needs raw scanline blitting to video memory
+
+#### **Real Key Events Delivery** (Issue #302)
+- **Status**: TODO - PS/2 driver only reports ASCII key-down
+- **Dependencies**: #32 ✅, #220 ✅
+- **Scope**:
+  - Report both key press AND release events with scan codes
+  - Expose /dev/input/kbd0 or similar device for raw events
+  - Track modifier key state (Shift, Ctrl, Alt)
+  - Handle extended scan codes (0xE0 prefix for arrows, etc.)
+- **Current Gap**: `src/kernel/driver/ps2kb/ps2kb.c:245-300` only pushes ASCII on key-down
+- **Impact**: Doom input loop (app/doom/i_input.c:286-319) requires press/release pairs
+
+#### **Wire Up meniOS Port Layer** (Issue #300)
+- **Status**: TODO - `app/doom/doomgeneric_menios.c:1` is empty
+- **Dependencies**: #301, #302, #287 ✅, #240 ✅
+- **Scope**:
+  - Implement DG_Init() to initialize graphics + input
+  - Implement DG_DrawFrame() to blit frames using mmap'd framebuffer
+  - Implement DG_GetKey() to poll keyboard events
+  - Implement DG_SleepMs() using nanosleep() (#287 ✅)
+  - Implement DG_GetTicksMs() using gettimeofday() (#240 ✅)
+  - Implement main() to drive doomgeneric_Tick() game loop
+- **Current Gap**: Port layer callbacks not implemented
+- **Impact**: Doom engine needs platform-specific glue code
+
+#### **Doom Build Integration** (Issue #303)
+- **Status**: TODO - Makefile targets desktop Xlib/SDL
+- **Dependencies**: #192 ✅, #193 ✅, #195 ✅, #29 ✅, #300
+- **Scope**:
+  - Add MENIOS_BUILD=1 target to app/doom/Makefile
+  - Compile against meniOS SDK (libc, headers)
+  - Use doomgeneric_menios.c instead of doomgeneric_xlib.c
+  - Link with x86_64-elf toolchain
+  - Copy binary to /bin/doom in disk image
+- **Current Gap**: `app/doom/Makefile` hardcoded for desktop
+- **Impact**: Need native meniOS binary for ELF loader
+
 ## 🎮 **Doom-Specific Requirements**
 
 ### **Memory Requirements**
@@ -269,21 +318,24 @@ Basic command-line tools for shell interaction:
 
 **IPC - Other**:
 24. ✅ **#220** – ioctl syscall for device-specific operations ✅ *Completed*
-25. 🚧 **#221** – Fast syscall/sysret path (IN PROGRESS - return path truncates 64-bit values, blocks #274)
+25. ✅ **#221** – Fast syscall/sysret path ✅ *Completed* - proper 64-bit return values, all syscalls use SYSCALL instruction
 
 ### System Services
 26. **#33** – Bring up the audio subsystem for Doom's sound effects/music
-27. **#189** – Add FAT32 write support for save games and config files
-28. ✅ **#205** – Elevator I/O scheduler (COMPLETE!)
-29. ✅ **#183** – Provide basic `/bin` utilities (echo, cat, env, true, false) (COMPLETE!)
-30. ✅ **#185** – PATH search configuration (COMPLETE!)
-31. ~~**#187** – Add process management tools (ps, kill)~~ ✅
-32. **#188** – env utility ✅
+27. ✅ **#189** – Add FAT32 write support for save games and config files ✅ *Completed*
+28. ✅ **#205** – Elevator I/O scheduler ✅ *Completed*
+29. ✅ **#183** – Provide basic `/bin` utilities (echo, cat, env, true, false) ✅ *Completed*
+30. ✅ **#185** – PATH search configuration ✅ *Completed*
+31. ✅ **#187** – Add process management tools (ps, kill) ✅ *Completed*
+32. ✅ **#188** – env utility ✅ *Completed*
+33. ✅ **#286** – Kernel RTC driver and time management ✅ *Completed*
+34. ✅ **#287** – nanosleep() and sleep queue ✅ *Completed*
+35. ✅ **#288** – Interval timers (setitimer) ✅ *Completed*
+36. ✅ **#290** – Time conversion utilities (gmtime/mktime/strftime) ✅ *Completed*
 
 ### Future: Native Compilation
-33. **#190** – Port TCC (Tiny C Compiler) to meniOS
-34. **#191** – Port binutils (as, ld) for native development
-35. **#274** – Fix boot regression caused by syscall/sysret truncation (blocked by #221)
+37. **#190** – Port TCC (Tiny C Compiler) to meniOS
+38. **#191** – Port binutils (as, ld) for native development
 
 These items unlock the bulk of the remaining roadmap phases (threaded libc, IPC,
 networking) and pave the way for shipping a Doom-capable user environment.
@@ -322,18 +374,27 @@ The solid foundation work (memory management, scheduling, synchronization) now e
 
 ## 🎯 **GitHub Milestone Tracking**
 
-The Doom milestone on GitHub now tracks 25 issues:
-- **Status**: 10/25 complete (40%)
+The Doom milestone on GitHub now tracks 27 issues (was 30, removed #105-#107):
+- **Status**: 13/27 complete (48.1%)
 - **Completed**:
   - Graphics & Input: #31 ✅, #32 ✅
+  - Memory: #95 ✅
+  - File System: #189 ✅ (FAT32 writes complete!)
   - IPC - Pipes: #102 ✅ (parent)
-  - IPC - Signals: #103 ✅ (parent), #210 ✅, #211 ✅, #212 ✅
+  - IPC - Signals: #103 ✅ (parent), #210 ✅, #211 ✅, #212 ✅, #213 ✅
   - IPC - Shared Memory: #215 ✅, #216 ✅, #217 ✅, #218 ✅, #219 ✅ (ALL COMPLETE!)
-  - IPC - Other: #220 ✅ (ioctl)
-- **In Progress**: Threading (#109-#113), Signals (#213-#214), IPC (#105-#107, #221), File System (#189), Audio (#33)
-- **Recently Completed**: Memory (#95) – userspace arena allocator with malloc/calloc/realloc support, `SYS_GETPAGESIZE` syscall, regression/stress tests, and `/bin/malloc_stress` utility for on-device verification
+  - IPC - Other: #220 ✅ (ioctl), #221 ✅ (fast syscalls)
+- **New Issues (Doom Integration)**: #300 (port layer), #301 (framebuffer mmap), #302 (key events), #303 (build integration)
+- **In Progress**: Threading (#109-#113), Signals (#214), Audio (#33), Mouse (#143), Doom Integration (#300-#303)
+- **Ready to Start**: #301, #302 (Doom integration - infrastructure complete!)
+- **Removed**: #105 (Unix sockets), #106 (microkernel IPC), #107 (capabilities) - not required for Doom
 
-**Recent Major Achievement**: Shared Memory IPC is now 100% complete, bringing Doom milestone to 40%!
+**Recent Major Achievements**:
+- ✅ FAT32 write support (#189, #291-#293) - Save games now possible!
+- ✅ VFS streaming I/O (#294-#298) - Efficient asset loading ready!
+- ✅ Time management (#286, #287, #288, #290) - Complete timing system for game loop!
+- ✅ Fast syscalls (#221) - High-performance system calls with 64-bit returns!
+- 🆕 Doom integration issues created (#300-#303) - Clear path to running Doom!
 
 See [MILESTONES.md](../MILESTONES.md) for detailed milestone tracking across all three major goals (Mosh, GCC, Doom).
 

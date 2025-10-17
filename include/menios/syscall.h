@@ -45,6 +45,8 @@ extern "C" {
 #define SYS_CLOCK_GETTIME 84
 #define SYS_CLOCK_SETTIME 85
 #define SYS_CLOCK_GETRES  86
+#define SYS_SETITIMER     87
+#define SYS_GETITIMER     88
 
 #ifdef __cplusplus
 }

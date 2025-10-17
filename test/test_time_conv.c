@@ -3,6 +3,7 @@
 #include <errno.h>
 #include <string.h>
 #include <time.h>
+#include <sys/time.h>
 
 void setUp(void) {}
 void tearDown(void) {}
@@ -190,6 +191,18 @@ void test_clock_gettime_invalid_clock(void) {
   }
 }
 
+void test_setitimer_disarms_timer(void) {
+  struct itimerval new_value;
+  memset(&new_value, 0, sizeof(new_value));
+  struct itimerval old_value;
+  TEST_ASSERT_EQUAL_INT(0, setitimer(ITIMER_REAL, &new_value, &old_value));
+
+  struct itimerval current;
+  TEST_ASSERT_EQUAL_INT(0, getitimer(ITIMER_REAL, &current));
+  TEST_ASSERT_TRUE(current.it_value.tv_sec >= 0);
+  TEST_ASSERT_TRUE(current.it_value.tv_usec >= 0);
+}
+
 int main(void) {
   UNITY_BEGIN();
   RUN_TEST(test_gmtime_conversion);
@@ -205,5 +218,6 @@ int main(void) {
   RUN_TEST(test_clock_gettime_monotonic_monotonic_increases);
   RUN_TEST(test_clock_getres_reports_resolution);
   RUN_TEST(test_clock_gettime_invalid_clock);
+  RUN_TEST(test_setitimer_disarms_timer);
   return UNITY_END();
 }

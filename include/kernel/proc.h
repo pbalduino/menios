@@ -78,6 +78,17 @@ typedef struct proc_shm_attachment_t {
 
 #define PROC_MAX_SHM_ATTACHMENTS 32
 
+typedef struct proc_itimer_t {
+  bool     active;
+  uint64_t expires_us;
+  uint64_t interval_us;
+} proc_itimer_t;
+
+#define PROC_ITIMER_REAL 0
+#define PROC_ITIMER_VIRTUAL 1
+#define PROC_ITIMER_PROF 2
+#define PROC_ITIMER_MAX 3
+
 typedef struct cpu_state_t {
   uint64_t r15;
   uint64_t r14;
@@ -162,6 +173,7 @@ typedef struct proc_info_t {
   bool         continued_pending;
   bool         syscall_gs_active;
   bool         syscall_gs_needs_restore;
+  proc_itimer_t timers[PROC_ITIMER_MAX];
 } proc_info_t;
 
 typedef proc_info_t* proc_info_p;

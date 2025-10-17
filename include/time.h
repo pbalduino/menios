@@ -60,6 +60,8 @@ int usleep(useconds_t usec);
 int clock_gettime(clockid_t clk_id, struct timespec* tp);
 int clock_settime(clockid_t clk_id, const struct timespec* tp);
 int clock_getres(clockid_t clk_id, struct timespec* res);
+int setitimer(int which, const struct itimerval* new_value, struct itimerval* old_value);
+int getitimer(int which, struct itimerval* value);
 
 #ifdef __cplusplus
 }

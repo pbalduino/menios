@@ -13,6 +13,7 @@
 #include <kernel/shm.h>
 #include <kernel/user/elf_loader.h>
 #include <kernel/syscall.h>
+#include <kernel/signal.h>
 #include <kernel/vm.h>
 #include <sys/wait.h>
 #include <errno.h>
@@ -423,6 +424,54 @@ static void scheduler_wake_sleepers(uint64_t now) {
   }
 }
 
+static void scheduler_check_itimers(uint64_t now) {
+  for(size_t idx = 0; idx < PROC_MAX; idx++) {
+    proc_info_p proc = procs[idx];
+    if(proc == NULL || proc == &kernel_process_info) {
+      continue;
+    }
+
+    proc_itimer_t* timer = &proc->timers[PROC_ITIMER_REAL];
+    if(!timer->active) {
+      continue;
+    }
+
+    if(timer->expires_us > now) {
+      continue;
+    }
+
+    proc_signal_send(proc, SIGALRM);
+
+    if(timer->interval_us == 0) {
+      timer->active = false;
+      continue;
+    }
+
+    uint64_t interval = timer->interval_us;
+    uint64_t next_expiry = timer->expires_us;
+
+    if(next_expiry <= now) {
+      uint64_t delta = now - next_expiry;
+      uint64_t steps = delta / interval + 1;
+      if(steps > (UINT64_MAX / interval)) {
+        timer->active = false;
+        continue;
+      }
+      next_expiry += steps * interval;
+    }
+
+    if(next_expiry <= now) {
+      if(UINT64_MAX - now < interval) {
+        timer->active = false;
+        continue;
+      }
+      next_expiry = now + interval;
+    }
+
+    timer->expires_us = next_expiry;
+  }
+}
+
 static void scheduler_cleanup_process(proc_info_p proc) {
   if(proc == NULL || proc == &kernel_process_info) {
     return;
@@ -502,6 +551,7 @@ cpu_state_p proc_switch(cpu_state_p frame) {
   }
 
   scheduler_wake_sleepers(now);
+  scheduler_check_itimers(now);
 
   bool forced = (scheduler_actions & SCHED_ACTION_FORCE) != 0;
   bool to_sleep = (scheduler_actions & SCHED_ACTION_SLEEP) != 0;
@@ -1179,6 +1229,7 @@ proc_info_p proc_fork(proc_info_p parent, const syscall_frame_t* frame, int* err
   proc_file_table_init(child);
   proc_file_table_clone(child, parent);
   proc_signal_state_copy(child, parent);
+  memcpy(child->timers, parent->timers, sizeof(parent->timers));
   SCHED_TRACE("proc_fork: proc_info allocated\n");
 
   child->parent = parent;

@@ -180,9 +180,6 @@ digraph IssueDependencies {
         issue219 [label="#219: Shared mem\ndocs", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED
 
         // Other IPC
-        issue105 [label="#105: Unix domain\nsockets", fillcolor="#E6E6FA"];
-        issue106 [label="#106: microkernel\nIPC", fillcolor="#DDA0DD"];
-        issue107 [label="#107: capability-based\nsecurity", fillcolor="#DDA0DD"];
         issue220 [label="#220: ioctl\nsyscall", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED
         issue221 [label="#221: Fast syscall\ninstruction", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED
     }
@@ -195,6 +192,18 @@ digraph IssueDependencies {
         issue31 [label="#31: Userspace\ngraphics interface", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED
         issue32 [label="#32: Input\nsubsystem", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED
         issue33 [label="#33: Audio\nsubsystem", fillcolor="#FFB6E8"];
+        issue143 [label="#143: Mouse\ndriver", fillcolor="#FFB6E8"];
+    }
+
+    subgraph cluster_doom_integration {
+        label="Doom Integration";
+        style=filled;
+        fillcolor="#FFE4F0";
+
+        issue300 [label="#300: meniOS port layer\ndoomgeneric_menios.c", fillcolor="#FFB6E8"];
+        issue301 [label="#301: Framebuffer mmap\n/dev/fb0 pixel access", fillcolor="#FFB6E8"];
+        issue302 [label="#302: Real key events\nscan codes, up/down", fillcolor="#FFB6E8"];
+        issue303 [label="#303: Doom build\nintegration", fillcolor="#FFB6E8"];
     }
 
     subgraph cluster_system_services {
@@ -211,6 +220,7 @@ digraph IssueDependencies {
         issue244 [label="#244: /proc\nfilesystem", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED
         issue286 [label="#286: Kernel RTC driver\nand time mgmt", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED
         issue287 [label="#287: nanosleep()\nand sleep queue", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED
+        issue288 [label="#288: Interval timers\nsetitimer()", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED
         issue290 [label="#290: Time conversions\ngmtime/mktime/strftime", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED
         issue299 [label="#299: Timezone support\nIANA tz database", fillcolor="#E6E6FA"];  // Long term (needs network)
     }
@@ -389,11 +399,7 @@ digraph IssueDependencies {
     issue217 -> issue218 [color=purple, penwidth=2];
     issue218 -> issue219 [color=purple];
 
-    // IPC integration
-    issue208 -> issue106 [label="pipes"];
-    issue213 -> issue106 [label="signals"];
-    issue217 -> issue106 [label="shmem"];
-    issue106 -> issue107;
+    // IPC integration (removed #105-#107 from Doom milestone)
 
     // ioctl dependencies
     issue96 -> issue220 [label="#96: fd mgmt", style=dashed, color=gray];
@@ -426,6 +432,22 @@ digraph IssueDependencies {
     issue96 -> issue31 [color=purple, style=dashed];  // fd mgmt -> graphics
     issue32 -> issue31 [color=purple];  // input -> graphics
 
+    // Doom Integration dependencies
+    issue31 -> issue301 [color=red, penwidth=2, style=dashed];  // graphics infra -> framebuffer mmap
+    issue89 -> issue301 [color=red, style=dashed];  // mmap syscall -> framebuffer mmap
+    issue220 -> issue301 [color=red, style=dashed];  // ioctl -> framebuffer geometry
+    issue32 -> issue302 [color=red, penwidth=2, style=dashed];  // input infra -> key events
+    issue220 -> issue302 [color=red, style=dashed];  // ioctl -> keyboard control
+    issue301 -> issue300 [color=red, penwidth=3, label="DOOM"];  // framebuffer -> port layer
+    issue302 -> issue300 [color=red, penwidth=3, label="DOOM"];  // key events -> port layer
+    issue287 -> issue300 [color=red, style=dashed];  // nanosleep -> DG_SleepMs
+    issue240 -> issue300 [color=red, style=dashed];  // gettimeofday -> DG_GetTicksMs
+    issue192 -> issue303 [color=red, style=dashed];  // crt0 -> doom build
+    issue193 -> issue303 [color=red, style=dashed];  // libc -> doom build
+    issue195 -> issue303 [color=red, style=dashed];  // userland build -> doom build
+    issue29 -> issue303 [color=red, style=dashed];  // cross-compiler -> doom build
+    issue300 -> issue303 [color=red, penwidth=3, label="DOOM"];  // port layer -> build integration
+
     // Time/Random dependencies - ALL COMPLETE ✅
     issue238 -> issue239 [color=brown, style=dashed, label="breakdown"];  // parent -> kernel time
     issue238 -> issue240 [color=brown, style=dashed, label="breakdown"];  // parent -> libc time
@@ -434,8 +456,10 @@ digraph IssueDependencies {
     issue239 -> issue240 [color=brown, style=dashed];  // kernel time syscalls -> libc time ✅
     issue239 -> issue226 [color=brown];  // kernel time syscalls -> RTC management
     issue239 -> issue287 [color=brown, style=dashed];  // kernel time syscalls -> nanosleep ✅
+    issue239 -> issue288 [color=brown, style=dashed];  // kernel time syscalls -> setitimer ✅
     issue286 -> issue226 [color=brown, style=dashed];  // RTC driver -> RTC management (part of #226 breakdown)
     issue287 -> issue226 [color=brown, style=dashed];  // nanosleep -> RTC management (part of #226 breakdown)
+    issue288 -> issue226 [color=brown, style=dashed];  // setitimer -> RTC management (part of #226 breakdown)
     issue193 -> issue241 [label="libc", color=brown, style=dashed];  // libc -> rand() ✅
     issue239 -> issue290 [color=brown, style=dashed];  // kernel time syscalls -> time conversions ✅
     issue290 -> issue299 [color=brown];  // time conversions -> timezone support (foundation)

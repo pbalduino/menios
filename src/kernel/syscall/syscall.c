@@ -86,6 +86,8 @@ static uint64_t syscall_nanosleep_handler(syscall_frame_t* frame);
 static uint64_t syscall_clock_gettime_handler(syscall_frame_t* frame);
 static uint64_t syscall_clock_settime_handler(syscall_frame_t* frame);
 static uint64_t syscall_clock_getres_handler(syscall_frame_t* frame);
+static uint64_t syscall_setitimer_handler(syscall_frame_t* frame);
+static uint64_t syscall_getitimer_handler(syscall_frame_t* frame);
 static uint64_t syscall_exit_handler(syscall_frame_t* frame);
 static uint64_t syscall_fcntl_handler(syscall_frame_t* frame);
 static uint64_t syscall_waitpid_handler(syscall_frame_t* frame);
@@ -170,6 +172,40 @@ static bool timespec_to_microseconds(const struct timespec* ts, uint64_t* out_us
   }
   *out_us = (uint64_t)total_us;
   return true;
+}
+
+static bool timeval_valid(const struct timeval* tv) {
+  if(tv == NULL) {
+    return false;
+  }
+  if(tv->tv_sec < 0) {
+    return false;
+  }
+  if(tv->tv_usec < 0 || tv->tv_usec >= 1000000) {
+    return false;
+  }
+  return true;
+}
+
+static bool timeval_to_microseconds(const struct timeval* tv, uint64_t* out_us) {
+  if(!timeval_valid(tv) || out_us == NULL) {
+    return false;
+  }
+  __uint128_t total_us = (__uint128_t)(unsigned long long)tv->tv_sec * 1000000ull +
+                         (__uint128_t)(unsigned long long)tv->tv_usec;
+  if(total_us > UINT64_MAX) {
+    return false;
+  }
+  *out_us = (uint64_t)total_us;
+  return true;
+}
+
+static void microseconds_to_timeval(uint64_t usec, struct timeval* tv) {
+  if(tv == NULL) {
+    return;
+  }
+  tv->tv_sec = (time_t)(usec / 1000000ull);
+  tv->tv_usec = (suseconds_t)(usec % 1000000ull);
 }
 
 static bool copy_user_string(const char* user_ptr, char* dest, size_t capacity) {
@@ -574,6 +610,8 @@ void syscall_init(void) {
   syscall_register(SYS_CLOCK_GETTIME, syscall_clock_gettime_handler);
   syscall_register(SYS_CLOCK_SETTIME, syscall_clock_settime_handler);
   syscall_register(SYS_CLOCK_GETRES, syscall_clock_getres_handler);
+  syscall_register(SYS_SETITIMER, syscall_setitimer_handler);
+  syscall_register(SYS_GETITIMER, syscall_getitimer_handler);
   syscall_register(SYS_EXIT, syscall_exit_handler);
   syscall_register(SYS_FCNTL, syscall_fcntl_handler);
   syscall_register(SYS_IOCTL, syscall_ioctl_handler);
@@ -1664,6 +1702,137 @@ static uint64_t syscall_clock_getres_handler(syscall_frame_t* frame) {
   }
 
   memcpy(user_res, &ts, sizeof(ts));
+  frame->rax = 0;
+  return 0;
+}
+
+static proc_itimer_t* proc_get_itimer(proc_info_p proc, int which) {
+  if(proc == NULL) {
+    return NULL;
+  }
+
+  switch(which) {
+    case ITIMER_REAL:
+      return &proc->timers[PROC_ITIMER_REAL];
+    default:
+      return NULL;
+  }
+}
+
+static uint64_t syscall_setitimer_handler(syscall_frame_t* frame) {
+  int which = (int)frame->rdi;
+  const struct itimerval* user_new = (const struct itimerval*)frame->rsi;
+  struct itimerval* user_old = (struct itimerval*)frame->rdx;
+
+  proc_info_p proc = current;
+  if(proc == NULL || !proc->user_mode) {
+    frame->rax = (uint64_t)(-ENOSYS);
+    return frame->rax;
+  }
+
+  proc_itimer_t* timer = proc_get_itimer(proc, which);
+  if(timer == NULL) {
+    frame->rax = (uint64_t)(-EINVAL);
+    return frame->rax;
+  }
+
+  struct itimerval new_value;
+  if(user_new == NULL ||
+     !proc_user_buffer_accessible(proc, user_new, sizeof(struct itimerval))) {
+    frame->rax = (uint64_t)(-EFAULT);
+    return frame->rax;
+  }
+  memcpy(&new_value, user_new, sizeof(new_value));
+
+  uint64_t now = realtime_now_us();
+
+  if(user_old != NULL) {
+    if(!proc_user_buffer_accessible(proc, user_old, sizeof(struct itimerval))) {
+      frame->rax = (uint64_t)(-EFAULT);
+      return frame->rax;
+    }
+
+    struct itimerval old_value;
+    if(timer->active && timer->expires_us > now) {
+      uint64_t remaining = timer->expires_us - now;
+      microseconds_to_timeval(remaining, &old_value.it_value);
+    } else {
+      old_value.it_value.tv_sec = 0;
+      old_value.it_value.tv_usec = 0;
+    }
+    microseconds_to_timeval(timer->interval_us, &old_value.it_interval);
+    memcpy(user_old, &old_value, sizeof(old_value));
+  }
+
+  uint64_t value_us = 0;
+  uint64_t interval_us = 0;
+
+  if(!timeval_to_microseconds(&new_value.it_value, &value_us)) {
+    frame->rax = (uint64_t)(-EINVAL);
+    return frame->rax;
+  }
+  if(!timeval_to_microseconds(&new_value.it_interval, &interval_us)) {
+    frame->rax = (uint64_t)(-EINVAL);
+    return frame->rax;
+  }
+
+  if(value_us == 0) {
+    timer->active = false;
+    timer->interval_us = interval_us;
+    timer->expires_us = 0;
+    frame->rax = 0;
+    return 0;
+  }
+
+  timer->interval_us = interval_us;
+  timer->active = true;
+
+  if(UINT64_MAX - now <= value_us) {
+    timer->expires_us = UINT64_MAX;
+  } else {
+    timer->expires_us = now + value_us;
+  }
+
+  frame->rax = 0;
+  return 0;
+}
+
+static uint64_t syscall_getitimer_handler(syscall_frame_t* frame) {
+  int which = (int)frame->rdi;
+  struct itimerval* user_value = (struct itimerval*)frame->rsi;
+
+  proc_info_p proc = current;
+  if(proc == NULL || !proc->user_mode) {
+    frame->rax = (uint64_t)(-ENOSYS);
+    return frame->rax;
+  }
+
+  if(user_value == NULL ||
+     !proc_user_buffer_accessible(proc, user_value, sizeof(struct itimerval))) {
+    frame->rax = (uint64_t)(-EFAULT);
+    return frame->rax;
+  }
+
+  proc_itimer_t* timer = proc_get_itimer(proc, which);
+  if(timer == NULL) {
+    frame->rax = (uint64_t)(-EINVAL);
+    return frame->rax;
+  }
+
+  uint64_t now = realtime_now_us();
+  struct itimerval value;
+
+  if(timer->active && timer->expires_us > now) {
+    uint64_t remaining = timer->expires_us - now;
+    microseconds_to_timeval(remaining, &value.it_value);
+  } else {
+    value.it_value.tv_sec = 0;
+    value.it_value.tv_usec = 0;
+  }
+
+  microseconds_to_timeval(timer->interval_us, &value.it_interval);
+  memcpy(user_value, &value, sizeof(value));
+
   frame->rax = 0;
   return 0;
 }

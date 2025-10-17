@@ -177,7 +177,7 @@ This document tracks the three major milestones for meniOS development.
 **Goal**: Run Doom (1993) in userland on meniOS
 **GitHub Milestone**: [Doom](https://github.com/pbalduino/menios/milestone/3)
 
-**Status**: 11/26 complete (42.3%)
+**Status**: 13/27 complete (48.1%)
 
 **Note**: Depends on **Buddy Allocator milestone** for efficient memory management under game engine load.
 
@@ -188,6 +188,12 @@ This document tracks the three major milestones for meniOS development.
 - [x] #32 - Input subsystem ✅
 - [ ] #33 - Audio subsystem
 - [ ] #143 - Mouse driver
+
+#### Doom Integration (4 issues - NEW)
+- [ ] #300 - Wire up meniOS port layer (doomgeneric_menios.c)
+- [ ] #301 - Expose pixel-addressable framebuffer (/dev/fb0 mmap)
+- [ ] #302 - Deliver real key events (scan codes, key up/down)
+- [ ] #303 - Build integration for Doom userland binary
 
 #### Threading Support (5 issues)
 - [ ] #109 - pthread API implementation (ready now!)
@@ -220,22 +226,21 @@ This document tracks the three major milestones for meniOS development.
 - [x] #218 - Comprehensive test suite ✅
 - [x] #219 - Documentation and examples ✅
 
-#### IPC - Other (4 issues)
-- [ ] #105 - Unix domain sockets
-- [ ] #106 - Microkernel message passing IPC
-- [ ] #107 - Capability-based security
+#### IPC - Other (2 issues)
 - [x] #220 - ioctl syscall ✅
-- [x] #221 - Fast syscall instruction ✅ fast syscall/sysret path live
+- [x] #221 - Fast syscall instruction ✅
 
 **Dependencies**:
 - #110 requires #109
 - #111 requires #109
 - #213 requires #212 ✅ COMPLETE
 - #214 requires #213, #109
-- #106 requires #102 ✅, #103 ✅ (pipes & signals)
-- #107 requires #106
+- #301 requires #31 ✅, #89 ✅, #220 ✅ (framebuffer infrastructure)
+- #302 requires #32 ✅, #220 ✅ (input infrastructure)
+- #300 requires #301, #302, #287 ✅, #240 ✅, #288 ✅ (Doom port layer needs graphics + input + timing)
+- #303 requires #192 ✅, #193 ✅, #195 ✅, #29 ✅, #300 (build integration)
 
-**Progress**: IPC infrastructure well underway - Pipes ✅, Signals (5/6), Shared Memory ✅ all complete!
+**Progress**: IPC infrastructure well underway - Pipes ✅, Signals (5/6), Shared Memory ✅ all complete! Doom integration issues added (#300-#303) - framebuffer, input, port layer, and build integration.
 
 ---
 
@@ -270,11 +275,13 @@ This document tracks the three major milestones for meniOS development.
 
 ## 📈 Overall Progress
 
-- **Total Issues Across Milestones**: 81 issues (was 70)
-- **Completed**: 59 issues (72.8%)
-- **In Progress**: 22 issues
+- **Total Issues Across Milestones**: 82 issues (was 85, removed #105-#107 from Doom)
+- **Completed**: 63 issues (76.8%)
+- **In Progress**: 19 issues
 - **Ready to Start**: 3 issues (no dependencies: #109, #190, #191)
-- **Next Up**: Buddy Allocator COMPLETE! 🎉 Focus now shifts to FAT32 write support (#189) to unlock TCC/binutils ports (#190, #191)
+- **New Issues**: #300-#303 (Doom integration - framebuffer, input, port layer, build)
+- **Recently Completed**: #221 ✅ (fast syscalls), #288 ✅ (setitimer)
+- **Next Up**: Buddy Allocator COMPLETE! ✅ FAT32 writes COMPLETE! ✅ Time management COMPLETE! ✅ TCC/binutils (#190, #191) and Doom (#300-#303) ready to start!
 
 ## 🚀 Immediate Next Steps
 
@@ -487,6 +494,22 @@ Recommended completion order for maximum impact:
   - System time initialization from hardware clock at boot
   - Kernel maintains accurate system time via timer interrupts
   - Foundation for wall-clock time syscalls and scheduling
+- **2025-10-17**: Closed #221 (Fast syscall instruction - syscall/sysret) ✅
+  - Implemented fast syscall/sysret path for x86-64
+  - Proper 64-bit return value handling (#274 fixed)
+  - Significant performance improvement over legacy int 0x80
+  - All syscalls now use SYSCALL instruction
+  - Foundation for high-performance system calls
+- **2025-10-17**: Closed #288 (Interval timers - setitimer) ✅
+  - Part of #226 (RTC and time management) breakdown
+  - Implemented setitimer() syscall for ITIMER_REAL, ITIMER_VIRTUAL, ITIMER_PROF
+  - Interval timers deliver SIGALRM on expiration
+  - Enables timeout mechanisms and periodic signal delivery
+  - Foundation for alarm(), ualarm(), and timer-based operations
+- **2025-10-17**: Removed #105, #106, #107 from Doom milestone
+  - Unix domain sockets, microkernel IPC, and capability-based security moved out
+  - These are advanced IPC features not required for Doom
+  - Doom milestone now focuses on core game requirements
 
 ---
 
