@@ -88,6 +88,7 @@ static uint64_t syscall_clock_settime_handler(syscall_frame_t* frame);
 static uint64_t syscall_clock_getres_handler(syscall_frame_t* frame);
 static uint64_t syscall_setitimer_handler(syscall_frame_t* frame);
 static uint64_t syscall_getitimer_handler(syscall_frame_t* frame);
+static uint64_t syscall_alarm_handler(syscall_frame_t* frame);
 static uint64_t syscall_exit_handler(syscall_frame_t* frame);
 static uint64_t syscall_fcntl_handler(syscall_frame_t* frame);
 static uint64_t syscall_waitpid_handler(syscall_frame_t* frame);
@@ -612,6 +613,7 @@ void syscall_init(void) {
   syscall_register(SYS_CLOCK_GETRES, syscall_clock_getres_handler);
   syscall_register(SYS_SETITIMER, syscall_setitimer_handler);
   syscall_register(SYS_GETITIMER, syscall_getitimer_handler);
+  syscall_register(SYS_ALARM, syscall_alarm_handler);
   syscall_register(SYS_EXIT, syscall_exit_handler);
   syscall_register(SYS_FCNTL, syscall_fcntl_handler);
   syscall_register(SYS_IOCTL, syscall_ioctl_handler);
@@ -1835,6 +1837,58 @@ static uint64_t syscall_getitimer_handler(syscall_frame_t* frame) {
 
   frame->rax = 0;
   return 0;
+}
+
+static uint64_t syscall_alarm_handler(syscall_frame_t* frame) {
+  unsigned int seconds = (unsigned int)frame->rdi;
+
+  proc_info_p proc = current;
+  if(proc == NULL || !proc->user_mode) {
+    frame->rax = (uint64_t)(-ENOSYS);
+    return frame->rax;
+  }
+
+  proc_itimer_t* timer = proc_get_itimer(proc, ITIMER_REAL);
+  if(timer == NULL) {
+    frame->rax = (uint64_t)(-EINVAL);
+    return frame->rax;
+  }
+
+  uint64_t now = realtime_now_us();
+  uint64_t remaining_seconds = 0;
+
+  if(timer->active && timer->expires_us > now) {
+    uint64_t delta = timer->expires_us - now;
+    remaining_seconds = delta / 1000000ull;
+    if((delta % 1000000ull) != 0) {
+      remaining_seconds++;
+    }
+    if(remaining_seconds > UINT_MAX) {
+      remaining_seconds = UINT_MAX;
+    }
+  }
+
+  if(seconds == 0) {
+    timer->active = false;
+    timer->interval_us = 0;
+    timer->expires_us = 0;
+    frame->rax = (uint64_t)((unsigned int)remaining_seconds);
+    return frame->rax;
+  }
+
+  uint64_t value_us = (uint64_t)seconds * 1000000ull;
+
+  timer->interval_us = 0;
+  timer->active = true;
+
+  if(UINT64_MAX - now <= value_us) {
+    timer->expires_us = UINT64_MAX;
+  } else {
+    timer->expires_us = now + value_us;
+  }
+
+  frame->rax = (uint64_t)((unsigned int)remaining_seconds);
+  return frame->rax;
 }
 
 static uint64_t syscall_exit_handler(syscall_frame_t* frame) {

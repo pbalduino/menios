@@ -782,6 +782,32 @@ unsigned int sleep(unsigned int seconds) {
   return seconds;
 }
 
+unsigned int alarm(unsigned int seconds) {
+#ifndef MENIOS_HOST_TEST
+  long rc = __menios_syscall1(SYS_ALARM, (long)seconds);
+  if(rc < 0) {
+#ifndef MENIOS_KERNEL
+    errno = (int)(-rc);
+#endif
+    return 0;
+  }
+  return (unsigned int)rc;
+#else
+  typedef unsigned int (*host_alarm_fn)(unsigned int);
+  static host_alarm_fn real_alarm = NULL;
+  if(real_alarm == NULL) {
+    real_alarm = (host_alarm_fn)resolve_host_symbol("alarm");
+    if(real_alarm == NULL) {
+#ifndef MENIOS_KERNEL
+      errno = ENOSYS;
+#endif
+      return 0;
+    }
+  }
+  return real_alarm(seconds);
+#endif
+}
+
 int usleep(useconds_t usec) {
   struct timespec req;
   microseconds_to_timespec((uint64_t)usec, &req);

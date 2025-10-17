@@ -56,6 +56,7 @@ size_t strftime(char* restrict dest,
                 const struct tm* restrict tm);
 int nanosleep(const struct timespec* req, struct timespec* rem);
 unsigned int sleep(unsigned int seconds);
+unsigned int alarm(unsigned int seconds);
 int usleep(useconds_t usec);
 int clock_gettime(clockid_t clk_id, struct timespec* tp);
 int clock_settime(clockid_t clk_id, const struct timespec* tp);

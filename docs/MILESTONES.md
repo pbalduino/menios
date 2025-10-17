@@ -506,6 +506,11 @@ Recommended completion order for maximum impact:
   - Interval timers deliver SIGALRM on expiration
   - Enables timeout mechanisms and periodic signal delivery
   - Foundation for alarm(), ualarm(), and timer-based operations
+- **2025-10-17**: Closed #289 (alarm() syscall) ✅
+  - Implemented SYS_ALARM wrapper over the ITIMER_REAL engine
+  - Returns remaining seconds from prior alarms with POSIX rounding semantics
+  - libc exposes alarm() with host fallback for MENIOS_HOST_TEST builds
+  - Regression coverage added in `test/test_syscall_alarm.c`
 - **2025-10-17**: Removed #105, #106, #107 from Doom milestone
   - Unix domain sockets, microkernel IPC, and capability-based security moved out
   - These are advanced IPC features not required for Doom
