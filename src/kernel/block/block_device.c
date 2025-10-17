@@ -39,6 +39,26 @@ void block_device_system_init(void) {
   block_device_initialized = true;
 }
 
+#define BLOCK_DEVICE_READAHEAD_WINDOW 4u
+
+static void block_device_readahead(block_device_t* device, uint64_t start_lba, uint32_t window) {
+  if(device == NULL || device->ops == NULL || device->ops->read_blocks == NULL) {
+    return;
+  }
+  if(start_lba >= device->block_count) {
+    return;
+  }
+  uint64_t remaining = device->block_count - start_lba;
+  uint32_t count = window < remaining ? window : (uint32_t)remaining;
+  for(uint32_t i = 0; i < count; i++) {
+    buffer_head_t* bh = bread(device, start_lba + i);
+    if(bh == NULL) {
+      break;
+    }
+    brelse(bh);
+  }
+}
+
 static bool block_device_name_exists(const char* name) {
   for(block_device_t* node = block_device_head; node != NULL; node = node->next) {
     if(strncmp(node->name, name, sizeof(node->name)) == 0) {
@@ -71,6 +91,8 @@ bool block_device_register(block_device_t* device) {
   device->queue_direction_up = true;
   device->queue_busy = false;
   device->queue_last_lba = 0;
+  device->readahead_last_lba = UINT64_MAX;
+  device->readahead_last_count = 0;
 
   device->next = block_device_head;
   block_device_head = device;
@@ -299,19 +321,33 @@ bool block_device_read(block_device_t* device, uint64_t lba, void* buffer, size_
   if(lba + block_count > device->block_count) {
     return false;
   }
+  bool sequential = false;
+  if(device->readahead_last_count > 0 && device->readahead_last_lba != UINT64_MAX) {
+    uint64_t expected = device->readahead_last_lba + device->readahead_last_count;
+    if(lba == expected) {
+      sequential = true;
+    }
+  }
+
   uint8_t* out = (uint8_t*)buffer;
   size_t block_size = device->block_size;
   for(size_t i = 0; i < block_count; i++) {
     buffer_head_t* bh = bread(device, lba + i);
     if(bh == NULL) {
-      for(size_t j = 0; j < i; j++) {
-        // previously read buffers already released
-      }
       return false;
     }
     memcpy(out + i * block_size, bh->data, block_size);
     brelse(bh);
   }
+
+  device->readahead_last_lba = lba;
+  device->readahead_last_count = (uint32_t)block_count;
+
+  uint64_t next_lba = lba + block_count;
+  if(sequential || block_count > 1) {
+    block_device_readahead(device, next_lba, BLOCK_DEVICE_READAHEAD_WINDOW);
+  }
+
   return true;
 }
 
@@ -336,10 +372,6 @@ bool block_device_write(block_device_t* device, uint64_t lba, const void* buffer
     bh->block_size = block_size;
     bh->valid = true;
     bdirty(bh);
-    if(!bwrite(bh)) {
-      brelse(bh);
-      return false;
-    }
     brelse(bh);
   }
   return true;

@@ -36,6 +36,8 @@ struct block_device_t {
   bool                 queue_direction_up;
   bool                 queue_busy;
   uint64_t             queue_last_lba;
+  uint64_t             readahead_last_lba;
+  uint32_t             readahead_last_count;
 };
 
 typedef bool (*block_device_iter_t)(block_device_t* device, void* context);

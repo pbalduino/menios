@@ -39,9 +39,9 @@
 
 ### 4. Read-Ahead and Write-Behind (#298)
 
-- Detect sequential access patterns and prefetch blocks.
-- Queue asynchronous write-back of dirty blocks.
-- Provide tunables for block counts, trigger thresholds.
+- Detect sequential access patterns and prefetch upcoming blocks via the buffer cache.
+- Mark writes dirty and defer disk I/O until eviction/flush, with a dirty-limit heuristic to throttle write-back.
+- Tunables: global dirty-buffer threshold (`BCACHE_DIRTY_LIMIT`) and a fixed readahead window.
 
 ## Testing Strategy
 
@@ -55,4 +55,3 @@
 - Interaction between streaming writes and existing buffered mode (e.g., tmpfs, devfs).
 - Recoverability: ensuring dirty cache buffers are flushed before shutdown.
 - Memory footprint: bounding cache size and streaming buffers for large workloads.
-

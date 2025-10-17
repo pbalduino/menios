@@ -10,6 +10,7 @@
 #define BCACHE_MAX_BUFFERS        512u
 #define BCACHE_HASH_BUCKETS       256u
 #define BCACHE_MAX_BLOCK_BYTES    4096u
+#define BCACHE_DIRTY_LIMIT        128u
 
 typedef struct buffer_slot {
   buffer_head_t head;
@@ -23,6 +24,7 @@ static buffer_slot_t bcache_pool[BCACHE_MAX_BUFFERS];
 static buffer_head_t* bcache_hash[BCACHE_HASH_BUCKETS];
 static buffer_head_t* bcache_lru_head = NULL;
 static buffer_head_t* bcache_lru_tail = NULL;
+static size_t        bcache_dirty_count = 0;
 
 static inline uint32_t bcache_hash_key(block_device_t* device, uint64_t lba) {
   return (uint32_t)(((uintptr_t)device >> 4) ^ (uint32_t)lba) & (BCACHE_HASH_BUCKETS - 1u);
@@ -110,8 +112,11 @@ static bool bcache_flush_locked(buffer_head_t* bh) {
   kmutex_unlock(&bcache_lock);
   bool ok = dev->ops->write_blocks(dev, lba, local, 1);
   kmutex_lock(&bcache_lock);
-  if(ok) {
+  if(ok && bh->dirty) {
     bh->dirty = false;
+    if(bcache_dirty_count > 0) {
+      bcache_dirty_count--;
+    }
   }
   return ok;
 }
@@ -248,6 +253,7 @@ void block_cache_shutdown(void) {
   memset(bcache_hash, 0, sizeof(bcache_hash));
   bcache_lru_head = NULL;
   bcache_lru_tail = NULL;
+  bcache_dirty_count = 0;
   bcache_initialized = false;
   kmutex_unlock(&bcache_lock);
 }
@@ -316,7 +322,18 @@ void bdirty(buffer_head_t* bh) {
     return;
   }
   kmutex_lock(&bcache_lock);
-  bh->dirty = true;
+  if(!bh->dirty) {
+    bh->dirty = true;
+    bcache_dirty_count++;
+  }
+  if(bcache_dirty_count > BCACHE_DIRTY_LIMIT) {
+    for(buffer_head_t* tail = bcache_lru_tail; tail != NULL; tail = tail->lru_prev) {
+      if(tail->dirty && tail->refcount == 0 && !tail->busy) {
+        bcache_flush_locked(tail);
+        break;
+      }
+    }
+  }
   kmutex_unlock(&bcache_lock);
 }
 
@@ -341,7 +358,12 @@ bool bwrite(buffer_head_t* bh) {
   }
 
   kmutex_lock(&bcache_lock);
-  bh->dirty = false;
+  if(bh->dirty) {
+    bh->dirty = false;
+    if(bcache_dirty_count > 0) {
+      bcache_dirty_count--;
+    }
+  }
   kmutex_unlock(&bcache_lock);
   return true;
 }
