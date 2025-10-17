@@ -194,10 +194,11 @@ digraph IssueDependencies {
 
         issue225 [label="#225: Cron job\nscheduling", fillcolor="#FFE4B5"];
         issue226 [label="#226: RTC and time\nmanagement", fillcolor="#FFE4B5"];
-        issue239 [label="#239: Kernel time\nsyscalls", fillcolor="#E0FFFF"];
-        issue240 [label="#240: time() in\nlibc", fillcolor="#E0FFFF"];
-        issue241 [label="#241: rand() in\nlibc", fillcolor="#E0FFFF"];
-        issue244 [label="#244: /proc\nfilesystem", fillcolor="#90EE90", style="filled,dashed"];
+        issue238 [label="#238: rand() and time()\nsupport (parent)", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED
+        issue239 [label="#239: Kernel time\nsyscalls", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED
+        issue240 [label="#240: time() in\nlibc", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED
+        issue241 [label="#241: rand() in\nlibc", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED
+        issue244 [label="#244: /proc\nfilesystem", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED
     }
 
     subgraph cluster_utilities {
@@ -391,10 +392,13 @@ digraph IssueDependencies {
     issue96 -> issue31 [color=purple, style=dashed];  // fd mgmt -> graphics
     issue32 -> issue31 [color=purple];  // input -> graphics
 
-    // Time/Random dependencies
-    issue239 -> issue240 [color=brown];  // kernel time syscalls -> libc time
+    // Time/Random dependencies - ALL COMPLETE ✅
+    issue238 -> issue239 [color=brown, style=dashed, label="breakdown"];  // parent -> kernel time
+    issue238 -> issue240 [color=brown, style=dashed, label="breakdown"];  // parent -> libc time
+    issue238 -> issue241 [color=brown, style=dashed, label="breakdown"];  // parent -> rand
+    issue239 -> issue240 [color=brown, style=dashed];  // kernel time syscalls -> libc time ✅
     issue239 -> issue226 [color=brown];  // kernel time syscalls -> RTC management
-    issue193 -> issue241 [label="libc", color=brown];  // libc -> rand()
+    issue193 -> issue241 [label="libc", color=brown, style=dashed];  // libc -> rand() ✅
 
     // Procfs dependencies
     issue65 -> issue244 [label="VFS", style=dashed, color=gray];  // VFS -> procfs
