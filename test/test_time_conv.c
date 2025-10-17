@@ -145,6 +145,11 @@ void test_strftime_formats(void) {
   TEST_ASSERT_EQUAL_UINT64(0, len);
 }
 
+void test_nanosleep_zero_duration(void) {
+  struct timespec req = {0, 0};
+  TEST_ASSERT_EQUAL_INT(0, nanosleep(&req, NULL));
+}
+
 int main(void) {
   UNITY_BEGIN();
   RUN_TEST(test_gmtime_conversion);
@@ -155,5 +160,6 @@ int main(void) {
   RUN_TEST(test_ctime_r_returns_buffer);
   RUN_TEST(test_difftime_basic);
   RUN_TEST(test_strftime_formats);
+  RUN_TEST(test_nanosleep_zero_duration);
   return UNITY_END();
 }

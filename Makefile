@@ -86,7 +86,7 @@ MALLOC_STRESS_ELF = $(OBJDIR)/usermode/malloc_stress.elf
 MEM_ELF = $(OBJDIR)/usermode/mem.elf
 
 USER_PROGRAM_ELFS = $(MOSH_ELF) $(ECHO_ELF) $(CAT_ELF) $(ENV_ELF) $(TRUE_ELF) $(FALSE_ELF) $(LS_ELF) $(KILL_ELF) $(PS_ELF) $(MALLOC_STRESS_ELF) $(MEM_ELF)
-USERLAND_BINS = mosh echo cat env true false ls kill ps malloc_stress mem fs_tester
+USERLAND_BINS = mosh echo cat env true false ls kill ps malloc_stress mem
 
 
 ARCH_FLAGS := -march=x86-64
@@ -720,14 +720,15 @@ ifeq ($(OS_NAME),linux)
 		src/kernel/console/ansi.c \
 		src/kernel/proc/kcondvar.c \
 		src/kernel/proc/kmutex.c \
-		src/kernel/proc/signal.c \
-		src/kernel/ipc/shm.c \
+src/kernel/proc/signal.c \
+src/kernel/ipc/shm.c \
 		src/kernel/user/vm_region.c \
-		src/kernel/timer/tsc.c \
-		src/libc/itoa.c \
-		src/libc/string.c \
-		src/libc/time.c \
-	src/libc/errno.c \
+	src/kernel/timer/tsc.c \
+	src/kernel/block/block_cache.c \
+	src/libc/itoa.c \
+src/libc/string.c \
+	src/libc/time.c \
+src/libc/errno.c \
 		user/libc/stdlib.c \
 	-o test/test_malloc_direct.c.bin ; \
 	echo "Testing test/test_malloc_direct.c" ; \

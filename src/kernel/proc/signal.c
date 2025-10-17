@@ -168,6 +168,11 @@ int proc_signal_send(proc_info_p proc, int signo) {
   }
 
   proc_signal_enqueue(proc, signo);
+  if((proc->signal_blocked & bit) == 0) {
+    if(proc->state == PROC_STATE_SLEEPING || proc->state == PROC_STATE_WAITING) {
+      proc_mark_ready(proc);
+    }
+  }
   return 0;
 }
 

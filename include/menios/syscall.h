@@ -41,6 +41,7 @@ extern "C" {
 #define SYS_GETPAGESIZE 80
 #define SYS_TIME        81
 #define SYS_GETTIMEOFDAY 82
+#define SYS_NANOSLEEP   83
 
 #ifdef __cplusplus
 }

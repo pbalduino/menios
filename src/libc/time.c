@@ -8,6 +8,9 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include <limits.h>
+#ifdef MENIOS_HOST_TEST
+#include <dlfcn.h>
+#endif
 
 #define ASCTIME_BUFFER_SIZE 26
 
@@ -323,6 +326,46 @@ static bool append_signed_number(char* dest, size_t max, size_t* pos, long value
     }
   }
   return true;
+}
+
+static bool timespec_valid(const struct timespec* ts) {
+  if(ts == NULL) {
+    return false;
+  }
+  if(ts->tv_sec < 0) {
+    return false;
+  }
+  if(ts->tv_nsec < 0 || ts->tv_nsec >= 1000000000L) {
+    return false;
+  }
+  return true;
+}
+
+static bool timespec_to_microseconds(const struct timespec* ts, uint64_t* out_us) {
+  if(!timespec_valid(ts) || out_us == NULL) {
+    return false;
+  }
+
+  __uint128_t total_ns = (__uint128_t)(unsigned long long)ts->tv_sec * 1000000000ull +
+                         (__uint128_t)(unsigned long long)ts->tv_nsec;
+  __uint128_t total_us = (total_ns + 999u) / 1000u;
+  if(total_us == 0) {
+    total_us = (total_ns == 0) ? 0 : 1;
+  }
+  if(total_us > UINT64_MAX) {
+    return false;
+  }
+  *out_us = (uint64_t)total_us;
+  return true;
+}
+
+static void microseconds_to_timespec(uint64_t usec, struct timespec* ts) {
+  if(ts == NULL) {
+    return;
+  }
+  ts->tv_sec = (time_t)(usec / 1000000ull);
+  uint64_t rem_us = usec % 1000000ull;
+  ts->tv_nsec = (long)(rem_us * 1000ull);
 }
 
 static bool format_asctime_line(const struct tm* tm, char* buf, size_t size) {
@@ -669,4 +712,72 @@ size_t strftime(char* restrict dest,
   }
 
   return pos;
+}
+
+int nanosleep(const struct timespec* req, struct timespec* rem) {
+  if(req == NULL) {
+#ifndef MENIOS_KERNEL
+    errno = EINVAL;
+#endif
+    return -1;
+  }
+
+#ifndef MENIOS_HOST_TEST
+  long rc = __menios_syscall2(SYS_NANOSLEEP, (long)req, (long)rem);
+  if(rc < 0) {
+#ifndef MENIOS_KERNEL
+    errno = (int)(-rc);
+#endif
+    return -1;
+  }
+  return 0;
+#else
+  typedef int (*host_nanosleep_fn)(const struct timespec*, struct timespec*);
+  static host_nanosleep_fn real_nanosleep = NULL;
+  if(real_nanosleep == NULL) {
+    real_nanosleep = (host_nanosleep_fn)dlsym(RTLD_NEXT, "nanosleep");
+    if(real_nanosleep == NULL) {
+      real_nanosleep = (host_nanosleep_fn)dlsym(RTLD_DEFAULT, "nanosleep");
+    }
+    if(real_nanosleep == NULL) {
+#ifndef MENIOS_KERNEL
+      errno = ENOSYS;
+#endif
+      return -1;
+    }
+  }
+  return real_nanosleep(req, rem);
+#endif
+}
+
+unsigned int sleep(unsigned int seconds) {
+  uint64_t total_us = (uint64_t)seconds * 1000000ull;
+  struct timespec req;
+  microseconds_to_timespec(total_us, &req);
+
+  struct timespec rem;
+
+  if(nanosleep(&req, &rem) == 0) {
+    return 0;
+  }
+
+#ifndef MENIOS_KERNEL
+  if(errno == EINTR) {
+    uint64_t rem_us;
+    if(timespec_to_microseconds(&rem, &rem_us)) {
+      unsigned int left = (unsigned int)(rem_us / 1000000ull);
+      if((rem_us % 1000000ull) != 0 && left < UINT_MAX) {
+        left++;
+      }
+      return left;
+    }
+  }
+#endif
+  return seconds;
+}
+
+int usleep(useconds_t usec) {
+  struct timespec req;
+  microseconds_to_timespec((uint64_t)usec, &req);
+  return nanosleep(&req, NULL);
 }

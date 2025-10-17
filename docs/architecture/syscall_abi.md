@@ -126,8 +126,13 @@ promise.  Below is a summary of the calls that ship in meniOS v0.1.0.
   Marks the current thread ready and switches to the scheduler.  Always returns
   zero after rescheduling.
 - **`SYS_SLEEP` (35)** — `int usleep(uint64_t usec);`
-  Puts the caller to sleep for at least the requested microseconds (based on
-  the scheduler tick).  Returns zero when the sleep completes.
+  Parks the caller for at least the requested microseconds (rounded up to the
+  scheduler tick).  Always returns zero and is not interruptible by signals.
+- **`SYS_NANOSLEEP` (83)** —
+  `int nanosleep(const struct timespec *req, struct timespec *rem);`
+  Suspends the caller for the requested duration with microsecond resolution.
+  Returns zero on success.  If interrupted by a signal, writes the remaining
+  time to `rem` (when non-NULL) and returns `-EINTR`.
 
 ### Signals
 

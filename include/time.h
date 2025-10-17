@@ -25,6 +25,11 @@ struct tm {
   int tm_isdst;
 };
 
+struct timespec {
+  time_t tv_sec;
+  long   tv_nsec;
+};
+
 struct tm* gmtime(const time_t* timer);
 struct tm* gmtime_r(const time_t* timer, struct tm* result);
 struct tm* localtime(const time_t* timer);
@@ -39,6 +44,9 @@ size_t strftime(char* restrict dest,
                 size_t max,
                 const char* restrict format,
                 const struct tm* restrict tm);
+int nanosleep(const struct timespec* req, struct timespec* rem);
+unsigned int sleep(unsigned int seconds);
+int usleep(useconds_t usec);
 
 #ifdef __cplusplus
 }

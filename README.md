@@ -12,51 +12,61 @@ A hobby operating system kernel written in C and Assembly, targeting x86-64 arch
 
 Version 0.1.0 is the first public milestone where meniOS boots straight into a fully interactive shell experience. Highlights of this release:
 
-- **Mosh shell milestone complete**: init now supervises `/bin/mosh`, which delivers a polished prompt, command history, tab completion, reverse search, Ctrl shortcuts, and directory-aware `cd` UX.
-- **Robust command execution pipeline**: fork/exec/wait, pipes, redirection (stdin/stdout/stderr, append, fd duplication), logical operators, and background job control (`jobs`, `bg`, `fg`, Ctrl+Z) all work end-to-end.
-- **Utility toolbox**: core `/bin` programs (`echo`, `cat`, `env`, `true`, `false`, `ls`, `kill`, `ps`) ship in-tree, along with tmpfs write support and environment persistence (`export`, `unset`).
-- **Signal integration**: Ctrl+C cleanly terminates foreground jobs while preserving the supervising init loop.
-- **Regression coverage**: expanded Unity test suites exercise the line editor, waitpid edge cases, and shell execution paths to protect the milestone.
+- **Mosh shell milestone complete**: init now supervises `/bin/mosh`, which delivers a polished prompt, command history, tab completion, reverse search, Ctrl shortcuts, and directory-aware `cd` UX
+- **Robust command execution pipeline**: fork/exec/wait, pipes, redirection (stdin/stdout/stderr, append, fd duplication), logical operators, and background job control (`jobs`, `bg`, `fg`, Ctrl+Z) all work end-to-end
+- **Utility toolbox**: core `/bin` programs (`echo`, `cat`, `env`, `true`, `false`, `ls`, `kill`, `ps`, `mem`) ship in-tree
+- **Signal integration**: Ctrl+C cleanly terminates foreground jobs while preserving the supervising init loop
+- **Regression coverage**: expanded Unity test suites exercise the line editor, waitpid edge cases, and shell execution paths
 
-This release marks meniOS’s transition from kernel experiments to an OS you can boot, explore, and script.
+This release marks meniOS's transition from kernel experiments to an OS you can boot, explore, and script.
 
-If you are tracking the steps toward a usable shell, see
-[Road to Shell Readiness](docs/road/road_to_shell.md) for the current checklist.
+If you are tracking the steps toward a usable shell, see [Road to Shell Readiness](docs/road/road_to_shell.md) for the current checklist.
 
 ## Current Status
 
-MeniOS has made significant progress with core kernel functionality now solidly implemented. The system boots with Limine bootloader and provides:
+**📊 Progress**: 69/91 issues complete (75.8%)
 
-### ✅ **Completed Core Infrastructure**
-- **✅ Memory Management**: Physical memory mapping, virtual memory allocation, and kernel heap management (Issues #35, #57)
-- **✅ Process Scheduling**: Preemptive userland scheduler with kernel threads and time slicing (Issue #34)
-- **✅ Synchronization**: COMPLETE! Blocking mutexes, condition variables, semaphores, and read-write locks with scheduler integration (Issues #36, #37, #39, #40) 🎉
-- **Console System**: ANSI escape sequence support with scrolling and color output
-- **Input/Output**: PS/2 keyboard driver with buffered input
-- **Debugging**: Page fault and GPF handlers for system diagnostics
-- **Testing**: Unit test framework using Unity for kernel components
-- **Privilege Setup**: Ring 3 GDT selectors, 64-bit TSS, and user-mode entry trampoline
-- **Syscalls**: INT 0x80 dispatcher with initial `write(1, …)` and `exit(status)` support
-- **User Demo**: Kernel launches Ring 3 thread with ELF loader exercising full syscall path
-- **Memory Protection**: Kernel/user separation with per-process page tables
+MeniOS has made significant progress with core kernel functionality now solidly implemented. The system boots with Limine bootloader and provides a complete interactive shell environment.
 
-### 🎉 **Next Major Milestones**
-With the shell shipped in v0.1.0 and Buddy Allocator FULLY COMPLETE (100%), the focus shifts to native compilation and advanced OS capabilities:
+### ✅ **Completed Milestones**
 
-1. **GCC Toolchain Milestone** (FULLY UNBLOCKED! 🚀) – The Buddy Allocator is now 100% COMPLETE with all phases done: Core implementation (9/9) ✅, Critical security (3/3) ✅, Reliability (5/5) ✅, and Performance (3/3) ✅! FAT32 write support (#189) is now COMPLETE! TCC port (#190) and binutils (#191) are ready to start - **NO BLOCKERS!**
+| Milestone | Status | Issues | Progress |
+|-----------|--------|--------|----------|
+| **🐚 Mosh (Shell)** | ✅ COMPLETE | 27/27 | 100% |
+| **🧮 Buddy Allocator** | ✅ COMPLETE | 20/20 | 100% |
+| **🔧 GCC (Toolchain)** | 🚀 Phase 4 Ready | 5/8 | 62.5% |
+| **🎮 Doom (Full OS)** | 🟢 Active | 11/26 | 42.3% |
 
-2. **FAT32 Write Support** (CRITICAL PATH 📁) – ✅ **100% COMPLETE!** Issue #189 broken into 3 phases: Phase 1 (#291 ✅ DONE), Phase 2 (#292 ✅ DONE - VFS integration), Phase 3 (#293 ✅ DONE - testing). File creation, truncation, and persistence all working! TCC (#190) and binutils (#191) are now **FULLY UNBLOCKED** and can write compiled binaries to disk!
+### 🎉 **Recent Major Achievements** (2025-10-17)
 
-3. **Doom Capabilities** – With robust memory management FULLY COMPLETE (Buddy Allocator 20/20 ✅) and threading support (#108 ✅), ready to unlock the final pieces once syscall/sysret is fixed (#221): pthread API (#109), audio subsystem (#33), and advanced IPC (#105-#107).
+1. **FAT32 Write Support** (#189) ✅ **100% COMPLETE**
+   - File creation, truncation, persistence (#291, #292, #293)
+   - O_CREAT, O_TRUNC, O_EXCL flags working
+   - Comprehensive regression tests
 
-### 🆕 **Threading Support Added**
-A complete threading roadmap has been designed with 6 new issues:
-- **#108**: Kernel threading infrastructure
-- **#109**: pthread API and POSIX threading support
-- **#110**: Thread-safe C library (libc)
-- **#111**: Advanced pthread synchronization primitives
-- **#112**: Thread debugging and profiling support
-- **#113**: Thread-aware system calls and kernel integration
+2. **VFS Streaming I/O** (#294) ✅ **100% COMPLETE**
+   - Block cache with LRU eviction (#295)
+   - FAT32 refactored to use cache (#296)
+   - Streaming read/write operations (#297)
+   - Read-ahead and write-behind (#298)
+   - sync()/fsync() syscalls
+
+3. **Time Conversion Utilities** (#290) ✅ **COMPLETE**
+   - gmtime_r(), mktime(), strftime()
+   - Foundation for timezone support (#299)
+
+### 🚀 **Ready to Start NOW** (Zero Dependencies!)
+
+- **#190 - TCC Port** (Tiny C Compiler) - **FULLY UNBLOCKED!**
+- **#191 - binutils Port** (Assembler and Linker) - **FULLY UNBLOCKED!**
+- **#109 - pthread API** (Kernel threading complete)
+
+**Critical Dependencies Met**:
+- ✅ Buddy Allocator (100%) - Robust memory management
+- ✅ FAT32 Write Support (100%) - Can write compiled binaries
+- ✅ VFS Streaming I/O (100%) - Efficient file operations
+- ✅ I/O Scheduler (100%) - Performance optimized
+- ✅ Fast Syscalls (100%) - syscall/sysret with 64-bit returns
 
 ## Quick Start
 
@@ -65,15 +75,11 @@ A complete threading roadmap has been designed with 6 new issues:
 **Linux:**
 - gcc
 - x86_64-elf binutils/GCC toolchain (optional but recommended)
-- ld
-- make
-- qemu
+- ld, make, qemu
 
 **MacOS:**
-- Docker
-- make
-- qemu
-- x86_64-elf binutils/GCC toolchain (installable via homebrew tap such as `nativeos/i386-elf-toolchain`) if you plan to build userland natively
+- Docker, make, qemu
+- x86_64-elf toolchain (via homebrew tap like `nativeos/i386-elf-toolchain`)
 
 ### Building and Running
 
@@ -83,174 +89,77 @@ make build           # build kernel + disk image (runs userland on Linux)
 make run             # launch the image in QEMU
 ```
 
-The separated `userland` target allows you to iterate on libc or `/bin` utilities without recompiling the kernel image. `make build` assembles the kernel, regenerates the Limine assets, produces `menios.hdd` and `menios.iso`, and copies the freshly built user programs into `/bin`. All generated artifacts live under `build/` (`build/bin` for boot assets, `build/obj` for intermediates). When the kernel reaches `halt()` the QEMU instance exits automatically via the debug-exit device, so `make run` returns to your shell without manual intervention. The default `QEMU_OPTS` wire an AHCI controller (`-device ahci`) with the disk attached to `ahci.0`, ensuring the kernel exercises its SATA/AHCI path during every run.
+The separated `userland` target allows you to iterate on libc or `/bin` utilities without recompiling the kernel. `make build` assembles the kernel, regenerates the Limine assets, produces `menios.hdd` and `menios.iso`, and copies the freshly built user programs into `/bin`. When the kernel reaches `halt()` the QEMU instance exits automatically, so `make run` returns to your shell without manual intervention.
 
 #### Using a cross compiler
 
-The build scripts prefer an `x86_64-elf` cross toolchain when one is available.  Set `MENIOS_HOST_CC` (and optionally `MENIOS_CROSS_PREFIX`) if your compiler lives under a different prefix:
+The build scripts prefer an `x86_64-elf` cross toolchain when available. Set `MENIOS_HOST_CC` (and optionally `MENIOS_CROSS_PREFIX`) if your compiler lives under a different prefix:
 
 ```bash
 export MENIOS_HOST_CC=/opt/cross/bin/x86_64-elf-gcc
 export MENIOS_CROSS_PREFIX=x86_64-elf   # default
 ```
 
-If the cross toolchain is not found the build falls back to the host compiler, but using the dedicated cross toolchain avoids pulling in glibc/host headers and mirrors the environment we expect for future self-hosting.
-
-### Verify the User Demo
-
-During boot, meniOS schedules the embedded `user_demo` ELF immediately after hardware probing. The program now:
-
-- forces the stack to grow across an 8 KiB boundary (exercising lazy stack paging),
-- emits three `write(1, …)` syscalls with status messages, and
-- exits with status 42 via `SYS_exit`.
-
-Expect the log to show the `[user_demo]` messages on screen and in `com1.log`, confirming that the INT 0x80 path, lazy stack allocation, and non-zero exit codes work. If you need quieter serial output, toggle the verbose syscall traces in `src/kernel/syscall/syscall.c` (search for `serial_printf` inside `syscall_write_handler`).
+If the cross toolchain is not found the build falls back to the host compiler.
 
 ## Development Progress
 
-### ✅ **Major Milestones Completed**
-- [x] **Foundation Complete**: Memory management, scheduling, and synchronization (Issues #34, #35, #36, #40, #57)
-- [x] Integration with Limine bootloader v10
-- [x] Physical memory mapping and management with virtual memory allocation
-- [x] Kernel malloc implementation with heap management
-- [x] Preemptive scheduler with kernel threads and time slicing
-- [x] Mutex implementation with blocking and scheduler integration
-- [x] Condition variables for advanced synchronization
-- [x] ANSI console with scrolling and color support
-- [x] Complete vsprintk function with all format specifiers
-- [x] PS/2 keyboard driver with proper input handling
-- [x] Virtual-to-physical address translation (page table walking)
-- [x] Ring 3 user mode infrastructure with syscall interface
-- [x] ELF loader for user programs
-- [x] Per-process virtual memory with kernel/user separation
-- [x] Kernel block device abstraction layer (Issue #114)
-- [x] SATA/AHCI DMA block driver with interrupt completion (Issue #62)
-- [x] DMA-friendly allocation helpers (Issue #115)
-- [x] Global block cache for block devices (Issue #63)
-- [x] Kernel VFS layer backed by FAT32 filesystem (Issue #65)
-- [x] GPT-aware FAT32 filesystem mounting and file access (Issue #64)
-- [x] Filesystem syscalls (`open`/`read`/`write`/`lseek`/`close`) (Issue #60)
+### ✅ **Completed Core Infrastructure**
 
-### 🔥 **Ready to Implement** (Dependencies Met)
-- [x] **File descriptor management and pipes** (Issue #96)
-- [x] Stdin routed through descriptor table for interactive user input
-- [x] **Memory mapping syscalls (mmap/munmap)** (Issue #89) - Enabled by completed VM work
-- [x] **Kernel threading infrastructure** (Issue #108)
-- [x] **Fork/exec process creation** (Issue #93) - Enabled by VM and file descriptor work
+- **Memory Management**: Physical/virtual memory, kernel heap, buddy allocator, mmap/munmap (Issues #35, #57, #89, #245-#273)
+- **Process Management**: Preemptive scheduler, kernel threads, fork/exec/wait (Issues #34, #93, #108)
+- **Synchronization**: Mutexes, condition variables, semaphores, read-write locks (Issues #36, #37, #39, #40)
+- **File System**: VFS layer, FAT32 read/write, streaming I/O, block cache (Issues #60, #65, #189, #294)
+- **IPC**: Pipes, FIFOs, signals, shared memory, fast syscalls (Issues #102, #103, #206-#219, #221)
+- **Shell**: Interactive mosh shell, job control, tab completion, history (v0.1.0 shipped!)
+- **Toolchain**: Cross-compiler, crt0, libc, build system (Issues #29, #192-#195)
 
-### 🚧 **In Progress & Planned**
+### 🔄 **Active Development**
 
-#### **Critical Path: Memory Management - Buddy Allocator (Issues #245-#253)** 🎉 COMPLETE!
-- [x] **#245**: Survey Current Heap Implementation ✅ COMPLETE!
-- [x] **#246**: Define Buddy Allocator Orders and Configuration ✅ COMPLETE!
-  - Orders 7–27 (128 B–128 MiB), 128 MiB arenas, 21 freelists
-- [x] **#247**: Rewrite Arena Setup for Buddy Allocator ✅ COMPLETE!
-  - New arenas seed order-27 root blocks with per-order freelists
-- [x] **#248**: Implement Buddy Split and Coalesce Operations ✅ COMPLETE!
-  - Core buddy algorithms with host regression tests
-- [x] **#249**: Integrate Buddy Allocator with malloc/free ✅ COMPLETE!
-  - malloc() and free() now route through buddy allocator
-- [x] **#250**: Adapt realloc/reallocarray for Buddy Allocator ✅ COMPLETE!
-  - In-place expansion via buddy merging, proper splitting on shrink
-- [x] **#251**: Update Direct mmap Path for Large Allocations ✅ COMPLETE!
-  - Handles large allocations and unusual alignments (posix_memalign, etc.)
-- [x] **#252**: Add Buddy Allocator Diagnostics and Tests ✅ COMPLETE!
-  - Comprehensive regression tests and `menios_malloc_stats()` diagnostics
-- [x] **#253**: Cleanup and Document Buddy Allocator Migration ✅ COMPLETE!
-  - Legacy first-fit code removed, buddy design fully documented
+#### **Native Compilation** (READY TO START!)
+- **#190**: TCC port - **ZERO BLOCKERS**
+- **#191**: binutils port - **ZERO BLOCKERS**
+- #196: Fish shell research
 
-**Status**: 20/20 complete (100%) 🎉 - Core implementation ✅ COMPLETE! Critical security fixes ✅ COMPLETE! Reliability phase ✅ COMPLETE! Performance phase ✅ COMPLETE!
-
-#### **Buddy Allocator - Post-Implementation** (Issues #263-#273) 🎉 ALL PHASES COMPLETE!
-- [x] **#263**: Kernel heap stale virtual mappings ✅ COMPLETE!
-- [x] **#264**: Kernel heap partial mapping rollback ✅ COMPLETE!
-- [x] **#265**: User buddy allocator thread safety ✅ COMPLETE!
-- [x] **#267**: Missing NULL check in grow_heap ✅ COMPLETE!
-- [x] **#266**: Improve double-free detection and diagnostics ✅
-- [x] **#268**: Direct mmap alignment calculation error ✅
-- [x] **#272**: Kernel heap virtual address exhaustion ✅
-- [x] **#273**: Use-after-free risk in buddy_coalesce_block ✅
-- [x] **#269**: O(A×O) arena linear search optimization ✅ (per-order non-empty arena lists)
-- [x] **#270**: Kernel O(n²) coalescing fix ✅ (buddy list now doubly linked)
-- [x] **#271**: Freelist linear search optimization (performance) ✅
-
-#### **Toolchain (Issues #29, #192-#195)** 🚀 Core Complete, Ready for Native Compilation!
-- [x] **#192**: crt0 runtime startup code ✅ COMPLETE!
-- [x] **#193**: Minimal userland libc (syscalls, strings, memory, stdio) ✅ COMPLETE!
-- [x] **#194**: Syscall ABI documentation ✅ COMPLETE!
-- [x] **#195**: Userland build system ✅ COMPLETE!
-- [x] **#29**: Cross-compiler toolchain integration ✅ COMPLETE!
-- [ ] **#190**: TCC port (**FULLY UNBLOCKED!** Buddy ✅, FAT32 writes ✅, Streaming I/O ✅)
-- [ ] **#191**: binutils port (**FULLY UNBLOCKED!** Buddy ✅, FAT32 writes ✅, Streaming I/O ✅)
-
-#### **Shell Milestone (Issues #180-#188)** 🎯 9/9 Complete!
-- [x] **Environment**: Environment variables (#148) ✅, seeding (#180) ✅, PATH search (#185) ✅
-- [x] **Environment**: env utility (#188) ✅
-- [x] **Testing & Validation**: tmpfs (#181) ✅, waitpid tests (#182) ✅, line editor coverage (#184) ✅
-- [x] **Utilities**: /bin tools (#183) ✅
-- [x] **Utilities**: ps/kill (#187) ✅
-- [x] **Pipeline Support**: Pipeline placeholders (#186) ✅
-
-#### **Shell UX Features (Issues #197-#201)**
-- [x] **Keyboard Shortcuts**: Tab completion (#197) ✅, Ctrl+A/E (#198) ✅, Ctrl+L (#200) ✅, Ctrl+R (#199) ✅
-- [ ] **Mouse Support**: Selection and copy/paste (#201, depends on #143/#144)
+#### **Threading Support** (Foundation Complete)
+- ✅ #108: Kernel threading - DONE
+- **#109**: pthread API - **READY NOW**
+- #110: Thread-safe libc
+- #111: Advanced pthread synchronization
 
 #### **System Features**
-- [ ] **Threading Support**: Complete pthread API and multithreading (Issues #109-#113) - Foundation complete (#108) ✅
-- [x] **IPC - Pipes & FIFOs**: ✅ **COMPLETE!** Data structure (#206) ✅, Syscall API (#207) ✅, Shell pipelines (#208) ✅, Named FIFOs (#209) ✅
-- [x] **IPC - Signals**: Bookkeeping (#210) ✅, Syscalls (#211) ✅, Delivery path (#212) ✅, Shell Ctrl+C (#213) ✅
-- [ ] **IPC - Signals**: Advanced features (#214)
-- [x] **IPC - Shared Memory**: ✅ **COMPLETE!** Manager (#215) ✅, Syscalls (#216) ✅, Cleanup (#217) ✅, Tests (#218) ✅, Documentation (#219) ✅ *(see docs/design/shared_memory.md)*
-- [x] **IPC - Device Control**: ioctl (#220) ✅ **COMPLETE**
-- [x] **IPC - Other**: Fast syscalls (#221) ✅ **COMPLETE** - syscall/sysret with proper 64-bit return values (#274 fixed)
-- [ ] **IPC - Other**: Unix domain sockets (#105), Microkernel IPC (#106-#107)
-- [x] **Filesystem - I/O Scheduler**: Elevator I/O scheduler (#205) ✅ COMPLETE
-- [x] **Filesystem - Write Support**: FAT32 write support (#189) ✅ **100% COMPLETE!** (#291, #292, #293 all done)
-- [x] **Filesystem - Streaming I/O**: VFS streaming I/O and buffer cache (#294) ✅ **COMPLETE!** All 4 phases done: block cache (#295), FAT32 refactor (#296), VFS streaming (#297), read-ahead/write-behind (#298)
-- [ ] **Networking**: Complete TCP/IP stack (Issues #67-#73)
-- [ ] **Graphics**: Framebuffer interface and input subsystem (Issues #31-#33)
+- #33: Audio subsystem for Doom
+- #214: Advanced signal features (optional)
+- #226: RTC and time management
+- #299: Timezone support (IANA tz database)
 
-#### **Native Compilation (Long Term, Issues #190-#191, #196)**
-- [ ] **TCC Port**: Tiny C Compiler for meniOS (#190)
-- [ ] **binutils Port**: Assembler and linker (#191)
-- [ ] **Fish Shell**: Research modern shell porting (#196)
+### 📊 **Detailed Progress by Category**
 
-### Road to Doom 🎮
+#### **Buddy Allocator** ✅ 100% COMPLETE (20/20)
+- Core implementation (9/9) ✅
+- Critical security fixes (3/3) ✅
+- Reliability improvements (5/5) ✅
+- Performance optimizations (3/3) ✅
 
-**Foundation ✅ COMPLETE**: The core kernel infrastructure needed for userspace applications is now solid!
+#### **Shell (Mosh)** ✅ 100% COMPLETE (27/27)
+- Interactive REPL, command execution
+- Pipelines, I/O redirection
+- Job control (Ctrl+Z, bg/fg, jobs)
+- Tab completion, reverse search (Ctrl+R)
+- Environment variables, PATH search
+- /bin utilities (echo, cat, env, ps, kill, ls, mem)
 
-Remaining major components for Doom:
-- **File System**: VFS layer, write support, file I/O syscalls
-- **Graphics**: Framebuffer interface, double buffering, palette control
-- **Input**: Userspace keyboard/mouse drivers and event system
-- **Audio**: PCM output, mixing, streaming syscalls
-- **Toolchain**: Cross-compiler, libc subset, build system
+#### **IPC Mechanisms**
+- Pipes & FIFOs ✅ 100% (#206-#209)
+- Signals ✅ 80% (#210-#213, #214 optional)
+- Shared Memory ✅ 100% (#215-#219)
+- Fast Syscalls ✅ 100% (#221)
 
-See [`road_to_doom.md`](docs/road/road_to_doom.md) for the complete roadmap and [`tasks.json`](tasks.json) for detailed task tracking.
-
-**📊 Progress Assessment**: With **68 issues completed across 90 total** (75.6%), meniOS is making phenomenal progress! Major recent completions include:
-- ✅ **Shell Milestone**: 27/27 complete (100%)—v0.1.0 ships the full interactive shell experience! 🎉
-- ✅ **Toolchain Core**: 5/8 complete (62.5%)—crt0 (#192) ✅, libc (#193) ✅, ABI docs (#194) ✅, build system (#195) ✅, cross-compiler (#29) ✅
-- 🎉 **Buddy Allocator**: 20/20 complete (100%)—Core implementation ✅ (9/9), Critical security fixes ✅ (3/3), Reliability fixes ✅ (5/5), Performance optimizations ✅ (3/3)
-- ✅ **Synchronization**: All primitives complete! (#36, #37, #39, #40) - 4/4 done!
-- ✅ **Shell UX**: Tab completion (#197) ✅, History (#156) ✅, Ctrl+A/E (#198) ✅, Ctrl+L (#200) ✅, Ctrl+R (#199) ✅, Job control (#158) ✅, pwd prompt (#222) ✅!
-- ✅ **Threading Foundation**: Kernel threading (#108) - ready for pthread!
-- ✅ **IPC - Pipes & FIFOs**: **COMPLETE!** All 5 issues done (#102, #206-#209) - 5/5! 🎉
-- ✅ **IPC - Signals**: Delivery path working! (#103, #210-#213) - 5/6 complete! 🎉
-- ✅ **IPC - Shared Memory**: **COMPLETE!** All 5 issues done (#215-#219) - 5/5! 🎉🎉🎉
-- ✅ **Performance**: I/O scheduler (#205) ✅
-- ✅ **Fast syscalls**: (#221) ✅ **COMPLETE!** - syscall/sysret with proper 64-bit return values (fixed #274)
-- ✅ **Memory**: Userspace allocator (#95) ✅
-- ✅ **FAT32 Write Support**: ✅ **100% COMPLETE!** (#189, #291, #292, #293) - File creation, truncation, and persistence! 🎉
-- ✅ **VFS Streaming I/O**: ✅ **COMPLETE!** (#294-#298) - Block cache, streaming operations, read-ahead/write-behind! 🎉
-
-**The critical path forward**: Buddy allocator (100%), FAT32 writes (100%), and VFS streaming I/O (100%) are ALL COMPLETE! 🎉 TCC (#190) and binutils (#191) are **FULLY UNBLOCKED** with zero dependencies!
-
-**🎯 Milestone Status**:
-- 🎉 **Mosh** (Shell): 27/27 complete (100%) - v0.1.0 shipped!
-- 🎉 **Buddy Allocator** (Memory): 20/20 complete (100%) - Core ✅, Critical security ✅, Reliability ✅, Performance ✅ FULLY UNBLOCKS GCC & DOOM!
-- 🚀 **GCC** (Toolchain): 5/8 complete (62.5%) - core done, #190/#191 **FULLY UNBLOCKED** - zero dependencies!
-- 🎮 **Doom** (Full OS): 11/26 complete (42.3%) - Buddy allocator COMPLETE ✅, FAT32 writes COMPLETE ✅, threading/IPC ready!
+#### **File System**
+- VFS layer ✅ 100%
+- FAT32 read/write ✅ 100%
+- Streaming I/O ✅ 100%
+- I/O scheduler ✅ 100%
 
 ## Architecture Overview
 
@@ -269,25 +178,18 @@ See [`road_to_doom.md`](docs/road/road_to_doom.md) for the complete roadmap and 
 ┌─────────────────────────────┴───────────────────────────────┐
 │                      KERNEL SPACE ✅                       │
 │  ┌─────────────────┐  ┌─────────────────┐  ┌──────────────┐ │
-│  │ Process Mgmt ✅ │  │ Memory Mgmt ✅  │  │ I/O Subsys   │ │
-│  │ • Scheduler ✅  │  │ • Virtual Mem ✅│  │ • Console ✅ │ │
-│  │ • Kernel Threads│  │ • Physical Mem ✅│  │ • PS/2 Input │ │
-│  │ • Sync Prims ✅ │  │ • Page Tables ✅│  │ • Framebuffer│ │
-│  └─────────────────┘  └─────────────────┘  └──────────────┘ │
-│                              │                             │
-│  ┌─────────────────┐  ┌─────────────────┐  ┌──────────────┐ │
-│  │ Debug/Diag      │  │ File System     │  │ Hardware     │ │
-│  │ • Page Faults ✅│  │ • VFS (Planned) │  │ • Interrupts │ │
-│  │ • GPF Handler ✅│  │ • Block Drivers │  │ • Timers     │ │
-│  │ • Unit Tests ✅ │  │ • File I/O      │  │ • Hardware   │ │
+│  │ Process Mgmt ✅ │  │ Memory Mgmt ✅  │  │ I/O Subsys ✅│ │
+│  │ • Scheduler ✅  │  │ • Buddy Alloc ✅│  │ • Console ✅ │ │
+│  │ • fork/exec ✅  │  │ • Virtual Mem ✅│  │ • Block I/O ✅│ │
+│  │ • Signals ✅    │  │ • mmap/munmap ✅│  │ • FAT32 R/W ✅│ │
 │  └─────────────────┘  └─────────────────┘  └──────────────┘ │
 │                                                             │
-│  ┌─────────────────────────────────────────────────────────┐ │
-│  │            🆕 Threading Support (Planned)               │ │
-│  │  • Kernel threading infrastructure (#108)              │ │
-│  │  • pthread API (#109) • Thread-safe libc (#110)       │ │
-│  │  • Advanced synchronization (#111) • Debugging (#112) │ │
-│  └─────────────────────────────────────────────────────────┘ │
+│  ┌─────────────────┐  ┌─────────────────┐  ┌──────────────┐ │
+│  │ IPC ✅          │  │ File System ✅  │  │ Toolchain ✅ │ │
+│  │ • Pipes ✅      │  │ • VFS ✅        │  │ • crt0 ✅    │ │
+│  │ • FIFOs ✅      │  │ • FAT32 ✅      │  │ • libc ✅    │ │
+│  │ • Shared Mem ✅ │  │ • Streaming ✅  │  │ • cross-gcc ✅│ │
+│  └─────────────────┘  └─────────────────┘  └──────────────┘ │
 └─────────────────────────────┬───────────────────────────────┘
                               │ Hardware Abstraction
 ┌─────────────────────────────┴───────────────────────────────┐
@@ -300,58 +202,71 @@ See [`road_to_doom.md`](docs/road/road_to_doom.md) for the complete roadmap and 
 ## Known Issues and Limitations
 
 ### Current Limitations
-- **Filesystem**: FAT32 now supports reads, writes, file creation, and truncation ✅; streaming I/O with block cache complete ✅; long filenames and directory creation remain TODO.
-- **Limited hardware support**: Only basic PS/2 keyboard, VGA framebuffer
-- **No network stack**: No networking capabilities (Issues #67-#73)
-- **Graphics**: Basic framebuffer, no hardware acceleration
-- **Audio**: No audio subsystem implemented yet
+- **Filesystem**: FAT32 read/write complete ✅; long filenames and directory creation remain TODO
+- **Hardware**: Only basic PS/2 keyboard and VGA framebuffer
+- **Networking**: No network stack yet (Issues #67-#73)
+- **Audio**: No audio subsystem implemented yet (#33)
 
 ### Active Development Areas
-- **Threading**: Complete multithreading support in development (Issues #108-#113)
-- **IPC**: Advanced inter-process communication planned (Issues #102-#107)
-- **File I/O**: File descriptor management and filesystem support (Issues #96, #60, #62-#65)
-- **Process Management**: Fork/exec and full process lifecycle (Issue #93)
+- **Native Compilation**: TCC and binutils ports ready to start (#190, #191)
+- **Threading**: pthread API ready for implementation (#109)
+- **Timezone Support**: IANA tz database integration planned (#299)
 
 ### Testing Environment
-- **QEMU only**: Primary testing on QEMU emulator, real hardware testing limited
-- **x86-64 focus**: No support for other architectures planned currently
-- **Development tools**: Requires cross-compilation toolchain for full development
+- **QEMU**: Primary testing platform
+- **x86-64**: Single architecture focus
+- **Cross-compilation**: Recommended for development
 
 ## Project Structure
 
-- **`src/`** - Kernel source code (C and Assembly)
-- **`include/`** - Header files
-- **`tests/`** - Unit tests using Unity framework
-- **`build/`** - Build artifacts and bootloader assets
-- **`docs/`** - Architecture documentation and design decisions
-- **`tasks.json`** - Detailed task tracking with GitHub issue integration
-- **`docs/road/road_to_shell.md`** - Shell milestone roadmap (v0.1.0 complete!)
-- **`docs/road/road_to_buddy_allocator.md`** - Buddy allocator migration roadmap (NEW!)
-- **`docs/road/road_to_gcc.md`** - Toolchain development roadmap
-- **`docs/road/road_to_doom.md`** - Comprehensive roadmap for userland Doom support
-- **`docs/issue_dependencies.dot/.png`** - Visual dependency chart of all issues
-- **`docs/ISSUE_DEPENDENCY_ANALYSIS.md`** - Detailed dependency analysis and implementation strategy
-- **`docs/MILESTONES.md`** - Milestone tracking (Mosh ✅, Buddy Allocator 🔨, GCC, Doom)
+- `src/` - Kernel source code (C and Assembly)
+- `include/` - Header files
+- `tests/` - Unit tests using Unity framework
+- `build/` - Build artifacts and bootloader assets
+- `docs/` - Architecture documentation and design decisions
+- `docs/road/` - Milestone roadmaps:
+  - [road_to_shell.md](docs/road/road_to_shell.md) - Shell milestone (✅ v0.1.0 complete!)
+  - [road_to_buddy_allocator.md](docs/road/road_to_buddy_allocator.md) - Memory management (✅ complete!)
+  - [road_to_gcc.md](docs/road/road_to_gcc.md) - Toolchain development (🚀 Phase 4 ready!)
+  - [road_to_doom.md](docs/road/road_to_doom.md) - Game porting requirements
+- `docs/issue_dependencies.dot/.png` - Visual dependency chart
+- `docs/MILESTONES.md` - Comprehensive milestone tracking
 
 ## Contributing
 
 We welcome contributions from developers of all skill levels! 🚀
 
-- **New Contributors**: Start with our [Contributing Guide](CONTRIBUTING.md) for a complete development workflow
-- **Find Tasks**: Check [GitHub Issues](https://github.com/pbalduino/menios/issues) or browse [`tasks.json`](tasks.json) for detailed task tracking
-- **Ready to Start** (3 issues available - **ZERO DEPENDENCIES!**):
-  - **🚀 GCC Native Compilation** (**FULLY UNBLOCKED!**): #190 (TCC port), #191 (binutils port) - Buddy allocator ✅ COMPLETE, FAT32 writes ✅ COMPLETE, Streaming I/O ✅ COMPLETE!
-  - **🧵 Threading**: #109 (pthread API - no dependencies!)
-- **Recent Completions** (2025-10-17):
-  - ✅ **FAT32 Write Support** (#189, #291-#293) - 100% COMPLETE! 🎉
-  - ✅ **VFS Streaming I/O** (#294-#298) - Block cache, streaming ops, read-ahead/write-behind - 100% COMPLETE! 🎉
-- **Milestone Status**:
-  - Buddy Allocator ✅ 100% (20/20)
-  - FAT32 Writes ✅ 100% (4/4)
-  - VFS Streaming I/O ✅ 100% (5/5)
-- **Report Issues**: Use our issue templates to report bugs or request features
-- **Security Issues**: Please review our [Security Policy](SECURITY.md) for responsible disclosure
-- **Code Style**: Follow the guidelines in [`CODING.md`](CODING.md)
+### Ready to Start (Zero Dependencies!)
+
+1. **#190 - TCC Port** (**FULLY UNBLOCKED!**)
+   - Tiny C Compiler for native compilation
+   - All dependencies met: Buddy allocator ✅, FAT32 writes ✅, Streaming I/O ✅
+
+2. **#191 - binutils Port** (**FULLY UNBLOCKED!**)
+   - Assembler and linker for native toolchain
+   - All dependencies met: Buddy allocator ✅, FAT32 writes ✅, Streaming I/O ✅
+
+3. **#109 - pthread API** (READY NOW!)
+   - POSIX threading for userland applications
+   - Kernel threading infrastructure complete (#108 ✅)
+
+### Recent Completions (2025-10-17)
+- ✅ **FAT32 Write Support** (#189, #291-#293) - File creation and persistence
+- ✅ **VFS Streaming I/O** (#294-#298) - Block cache and optimizations
+- ✅ **Time Conversions** (#290) - gmtime/mktime/strftime
+
+### Milestone Status
+- **Mosh (Shell)**: ✅ 100% (27/27) - v0.1.0 shipped
+- **Buddy Allocator**: ✅ 100% (20/20) - Production ready
+- **FAT32 Writes**: ✅ 100% (4/4) - Complete
+- **VFS Streaming I/O**: ✅ 100% (5/5) - Complete
+
+### Get Started
+- **New Contributors**: Start with our [Contributing Guide](CONTRIBUTING.md)
+- **Find Tasks**: Check [GitHub Issues](https://github.com/pbalduino/menios/issues)
+- **Report Issues**: Use our issue templates
+- **Security**: Review our [Security Policy](SECURITY.md)
+- **Code Style**: Follow guidelines in [CODING.md](CODING.md)
 - **Community**: Read our [Code of Conduct](CODE_OF_CONDUCT.md)
 
 Whether you're interested in kernel development, want to learn about operating systems, or just want to help us reach the goal of running Doom in userland, there's a place for you in the meniOS community!
@@ -363,16 +278,11 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 **Copyright (c) 2020-2025 Plínio Balduino**
 
 ## References
-  - Intel® 64 and IA-32 Architectures Software Developer's Manual Combined Volumes: 1, 2A, 2B, 2C, 2D, 3A, 3B, 3C, 3D, and 4: https://www.intel.com/content/www/us/en/developer/articles/technical/intel-sdm.html
-  - PIC:  https://pdos.csail.mit.edu/6.828/2014/readings/hardware/8259A.pdf
-          http://www.brokenthorn.com/Resources/OSDevPic.html
-  - APIC: http://web.archive.org/web/20070112195752/http://developer.intel.com/design/pentium/datashts/24201606.pdf
-  - ATA:  http://learnitonweb.com/2020/05/22/12-developing-an-operating-system-tutorial-episode-6-ata-pio-driver-osdev/
-          http://www.t13.org/Documents/UploadedDocuments/docs2016/di529r14-ATAATAPI_Command_Set_-_4.pdf p.74
-  - ASM:  https://bitismyth.wordpress.com/assembly-bunker/
-  - Mem:  https://arjunsreedharan.org/post/148675821737/memory-allocators-101-write-a-simple-memory
-  - AMD:  https://developer.amd.com/resources/developer-guides-manuals/
-          https://www.amd.com/system/files/TechDocs/48751_16h_bkdg.pdf
-  - Limine Protocol: https://codeberg.org/Limine/limine-protocol/src/branch/trunk/PROTOCOL.md
+
+- **Intel® 64 and IA-32 Architectures Software Developer's Manual**: https://www.intel.com/content/www/us/en/developer/articles/technical/intel-sdm.html
+- **PIC**: https://pdos.csail.mit.edu/6.828/2014/readings/hardware/8259A.pdf
+- **APIC**: http://web.archive.org/web/20070112195752/http://developer.intel.com/design/pentium/datashts/24201606.pdf
+- **ATA**: http://learnitonweb.com/2020/05/22/12-developing-an-operating-system-tutorial-episode-6-ata-pio-driver-osdev/
+- **Limine Protocol**: https://codeberg.org/Limine/limine-protocol/src/branch/trunk/PROTOCOL.md
 
 ![image](https://user-images.githubusercontent.com/32979/212723683-73387eaf-4a48-4193-83b6-5ec155360a50.png)

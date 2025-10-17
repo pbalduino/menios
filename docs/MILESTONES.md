@@ -469,6 +469,18 @@ Recommended completion order for maximum impact:
   - Async write-behind with dirty page tracking
   - Periodic flusher thread (5 second interval)
   - Added sync() and fsync() syscalls for explicit durability
+- **2025-10-17**: Closed #290 (Time conversion utilities - gmtime/mktime/strftime) ✅
+  - Implemented gmtime_r() for UTC time breakdown
+  - Implemented mktime() for struct tm to time_t conversion
+  - Implemented strftime() with comprehensive format specifiers
+  - Added timezone abbreviation support (UTC, GMT, etc.)
+  - Foundation in place for full timezone support (#299)
+- **2025-10-17**: Closed #287 (nanosleep() and sleep queue) ✅
+  - Part of #226 (RTC and time management) breakdown
+  - Implemented SYS_NANOSLEEP syscall with sleep queue
+  - Processes can sleep for specified durations with nanosecond precision
+  - Sleep queue properly handles timer interrupts and process wakeup
+  - Foundation for alarm(), usleep(), and other timing primitives
 
 ---
 

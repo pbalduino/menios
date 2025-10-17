@@ -33,9 +33,10 @@ higher-priority task becomes ready.
 
 ## Sleep & Yield Primitives
 
-- New syscalls (`SYS_YIELD`, `SYS_SLEEP`) expose cooperative hooks for userland.
-  `SYS_SLEEP` takes a duration in microseconds and parks the process until the
-  deadline expires.
+- New syscalls (`SYS_YIELD`, `SYS_SLEEP`, `SYS_NANOSLEEP`) expose cooperative
+  hooks for userland. `SYS_SLEEP` accepts a microsecond duration, while
+  `SYS_NANOSLEEP` mirrors POSIX semantics (with microsecond resolution and
+  signal interruption support).
 - Kernel threads use the same helpers; `ksleep()` now blocks via the scheduler
   rather than spinning on the TSC.
 - Blocking mutexes and condition variables are wired into the scheduler via

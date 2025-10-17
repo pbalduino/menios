@@ -16,6 +16,8 @@
 #include <sys/fcntl.h>
 #include <sys/shm.h>
 #include <sys/time.h>
+#include <time.h>
+#include <limits.h>
 #include <sys/wait.h>
 #include <string.h>
 #include <stdlib.h>
@@ -80,6 +82,7 @@ static uint64_t syscall_fork_handler(syscall_frame_t* frame);
 static uint64_t syscall_execve_handler(syscall_frame_t* frame);
 static uint64_t syscall_yield_handler(syscall_frame_t* frame);
 static uint64_t syscall_sleep_handler(syscall_frame_t* frame);
+static uint64_t syscall_nanosleep_handler(syscall_frame_t* frame);
 static uint64_t syscall_exit_handler(syscall_frame_t* frame);
 static uint64_t syscall_fcntl_handler(syscall_frame_t* frame);
 static uint64_t syscall_waitpid_handler(syscall_frame_t* frame);
@@ -507,6 +510,7 @@ void syscall_init(void) {
   syscall_register(SYS_PROC_LIST, syscall_proc_list_handler);
   syscall_register(SYS_YIELD, syscall_yield_handler);
   syscall_register(SYS_SLEEP, syscall_sleep_handler);
+  syscall_register(SYS_NANOSLEEP, syscall_nanosleep_handler);
   syscall_register(SYS_EXIT, syscall_exit_handler);
   syscall_register(SYS_FCNTL, syscall_fcntl_handler);
   syscall_register(SYS_IOCTL, syscall_ioctl_handler);
@@ -1416,6 +1420,94 @@ static uint64_t syscall_sleep_handler(syscall_frame_t* frame) {
   do {
     frame = (syscall_frame_t*)proc_switch((cpu_state_p)frame);
   } while(current != caller);
+  frame->rax = 0;
+  return 0;
+}
+
+static uint64_t syscall_nanosleep_handler(syscall_frame_t* frame) {
+  const struct timespec* user_req = (const struct timespec*)frame->rdi;
+  struct timespec* user_rem = (struct timespec*)frame->rsi;
+
+  if(current == NULL) {
+    frame->rax = (uint64_t)(-EINVAL);
+    return frame->rax;
+  }
+
+  if(user_req == NULL ||
+     !proc_user_buffer_accessible(current, user_req, sizeof(struct timespec))) {
+    frame->rax = (uint64_t)(-EFAULT);
+    return frame->rax;
+  }
+
+  struct timespec req;
+  memcpy(&req, user_req, sizeof(req));
+
+  if(req.tv_sec < 0 || req.tv_nsec < 0 || req.tv_nsec >= 1000000000L) {
+    frame->rax = (uint64_t)(-EINVAL);
+    return frame->rax;
+  }
+
+  if(req.tv_sec == 0 && req.tv_nsec == 0) {
+    if(user_rem != NULL &&
+       proc_user_buffer_accessible(current, user_rem, sizeof(struct timespec))) {
+      struct timespec zero = {0, 0};
+      memcpy(user_rem, &zero, sizeof(zero));
+    }
+    frame->rax = 0;
+    return 0;
+  }
+
+  __uint128_t total_ns = (__uint128_t)(unsigned long long)req.tv_sec * 1000000000ull +
+                         (__uint128_t)(unsigned long long)req.tv_nsec;
+  __uint128_t total_us = (total_ns + 999u) / 1000u;
+  if(total_us == 0) {
+    total_us = 1;
+  }
+  if(total_us > UINT64_MAX) {
+    frame->rax = (uint64_t)(-EINVAL);
+    return frame->rax;
+  }
+
+  uint64_t duration_us = (uint64_t)total_us;
+  uint64_t start_us = unix_time_us();
+  uint64_t target_us = (UINT64_MAX - duration_us < start_us)
+                         ? UINT64_MAX
+                         : start_us + duration_us;
+
+  proc_info_p caller = current;
+  proc_request_sleep(duration_us);
+
+  do {
+    frame = (syscall_frame_t*)proc_switch((cpu_state_p)frame);
+  } while(current != caller);
+
+  uint64_t end_us = unix_time_us();
+  uint64_t remaining_us = (target_us > end_us) ? (target_us - end_us) : 0;
+
+  if(remaining_us > 0) {
+    if(user_rem != NULL) {
+      if(!proc_user_buffer_accessible(current, user_rem, sizeof(struct timespec))) {
+        frame->rax = (uint64_t)(-EFAULT);
+        return frame->rax;
+      }
+      struct timespec rem;
+      rem.tv_sec = (time_t)(remaining_us / 1000000ull);
+      rem.tv_nsec = (long)((remaining_us % 1000000ull) * 1000ull);
+      memcpy(user_rem, &rem, sizeof(rem));
+    }
+    frame->rax = (uint64_t)(-EINTR);
+    return frame->rax;
+  }
+
+  if(user_rem != NULL) {
+    if(!proc_user_buffer_accessible(current, user_rem, sizeof(struct timespec))) {
+      frame->rax = (uint64_t)(-EFAULT);
+      return frame->rax;
+    }
+    struct timespec zero = {0, 0};
+    memcpy(user_rem, &zero, sizeof(zero));
+  }
+
   frame->rax = 0;
   return 0;
 }
