@@ -150,6 +150,46 @@ void test_nanosleep_zero_duration(void) {
   TEST_ASSERT_EQUAL_INT(0, nanosleep(&req, NULL));
 }
 
+void test_clock_gettime_realtime(void) {
+  struct timespec ts;
+  TEST_ASSERT_EQUAL_INT(0, clock_gettime(CLOCK_REALTIME, &ts));
+  TEST_ASSERT_TRUE(ts.tv_sec >= 0);
+  TEST_ASSERT_TRUE(ts.tv_nsec >= 0);
+  TEST_ASSERT_TRUE(ts.tv_nsec < 1000000000L);
+}
+
+void test_clock_gettime_monotonic_monotonic_increases(void) {
+  struct timespec first;
+  struct timespec second;
+  TEST_ASSERT_EQUAL_INT(0, clock_gettime(CLOCK_MONOTONIC, &first));
+  TEST_ASSERT_EQUAL_INT(0, clock_gettime(CLOCK_MONOTONIC, &second));
+  if(second.tv_sec == first.tv_sec) {
+    TEST_ASSERT_TRUE(second.tv_nsec >= first.tv_nsec);
+  } else {
+    TEST_ASSERT_TRUE(second.tv_sec >= first.tv_sec);
+  }
+}
+
+void test_clock_getres_reports_resolution(void) {
+  struct timespec res;
+  TEST_ASSERT_EQUAL_INT(0, clock_getres(CLOCK_REALTIME, &res));
+  TEST_ASSERT_TRUE(res.tv_nsec > 0);
+}
+
+void test_clock_gettime_invalid_clock(void) {
+  errno = 0;
+  struct timespec ts;
+  int rc = clock_gettime(12345, &ts);
+  if(rc == 0) {
+    return;
+  }
+  TEST_ASSERT_EQUAL_INT(-1, rc);
+
+  if(errno != 0) {
+    TEST_ASSERT_EQUAL_INT(EINVAL, errno);
+  }
+}
+
 int main(void) {
   UNITY_BEGIN();
   RUN_TEST(test_gmtime_conversion);
@@ -161,5 +201,9 @@ int main(void) {
   RUN_TEST(test_difftime_basic);
   RUN_TEST(test_strftime_formats);
   RUN_TEST(test_nanosleep_zero_duration);
+  RUN_TEST(test_clock_gettime_realtime);
+  RUN_TEST(test_clock_gettime_monotonic_monotonic_increases);
+  RUN_TEST(test_clock_getres_reports_resolution);
+  RUN_TEST(test_clock_gettime_invalid_clock);
   return UNITY_END();
 }

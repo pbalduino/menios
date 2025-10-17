@@ -176,6 +176,18 @@ promise.  Below is a summary of the calls that ship in meniOS v0.1.0.
   receives seconds and microseconds since the Unix epoch.  The `tz` parameter
   is ignored (for POSIX compatibility).  Returns zero on success or `-EFAULT`
   if `tv` is NULL or inaccessible.
+- **`SYS_CLOCK_GETTIME` (84)** —
+  `int clock_gettime(clockid_t clk_id, struct timespec *tp);`
+  Supports `CLOCK_REALTIME` (wall clock with microsecond resolution and
+  adjustable via `clock_settime`) and `CLOCK_MONOTONIC` (time since boot).
+  Returns zero on success or `-EINVAL` for unsupported clocks.
+- **`SYS_CLOCK_SETTIME` (85)** —
+  `int clock_settime(clockid_t clk_id, const struct timespec *tp);`
+  Currently allows adjusting `CLOCK_REALTIME`.  Other clocks return `-EINVAL`.
+- **`SYS_CLOCK_GETRES` (86)** —
+  `int clock_getres(clockid_t clk_id, struct timespec *res);`
+  Reports the kernel's nominal resolution (microsecond granularity) for
+  `CLOCK_REALTIME` and `CLOCK_MONOTONIC`.
 - **`SYS_GETPAGESIZE` (80)** — `long getpagesize(void);`
   Returns the system page size (typically 4096 bytes).  Used by the userland
   allocator and other memory management utilities.

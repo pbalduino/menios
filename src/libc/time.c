@@ -10,6 +10,15 @@
 #include <limits.h>
 #ifdef MENIOS_HOST_TEST
 #include <dlfcn.h>
+#include <errno.h>
+
+static void* resolve_host_symbol(const char* name) {
+  void* sym = dlsym(RTLD_NEXT, name);
+  if(sym == NULL) {
+    sym = dlsym(RTLD_DEFAULT, name);
+  }
+  return sym;
+}
 #endif
 
 #define ASCTIME_BUFFER_SIZE 26
@@ -735,10 +744,7 @@ int nanosleep(const struct timespec* req, struct timespec* rem) {
   typedef int (*host_nanosleep_fn)(const struct timespec*, struct timespec*);
   static host_nanosleep_fn real_nanosleep = NULL;
   if(real_nanosleep == NULL) {
-    real_nanosleep = (host_nanosleep_fn)dlsym(RTLD_NEXT, "nanosleep");
-    if(real_nanosleep == NULL) {
-      real_nanosleep = (host_nanosleep_fn)dlsym(RTLD_DEFAULT, "nanosleep");
-    }
+    real_nanosleep = (host_nanosleep_fn)resolve_host_symbol("nanosleep");
     if(real_nanosleep == NULL) {
 #ifndef MENIOS_KERNEL
       errno = ENOSYS;
@@ -780,4 +786,103 @@ int usleep(useconds_t usec) {
   struct timespec req;
   microseconds_to_timespec((uint64_t)usec, &req);
   return nanosleep(&req, NULL);
+}
+
+int clock_gettime(clockid_t clk_id, struct timespec* tp) {
+  if(tp == NULL) {
+#ifndef MENIOS_KERNEL
+    errno = EFAULT;
+#endif
+    return -1;
+  }
+
+#ifndef MENIOS_HOST_TEST
+  long rc = __menios_syscall2(SYS_CLOCK_GETTIME, (long)clk_id, (long)tp);
+  if(rc < 0) {
+#ifndef MENIOS_KERNEL
+    errno = (int)(-rc);
+#endif
+    return -1;
+  }
+  return 0;
+#else
+  typedef int (*host_clock_gettime_fn)(clockid_t, struct timespec*);
+  static host_clock_gettime_fn real_clock_gettime = NULL;
+  if(real_clock_gettime == NULL) {
+    real_clock_gettime = (host_clock_gettime_fn)resolve_host_symbol("clock_gettime");
+    if(real_clock_gettime == NULL) {
+#ifndef MENIOS_KERNEL
+      errno = ENOSYS;
+#endif
+      return -1;
+    }
+  }
+  return real_clock_gettime(clk_id, tp);
+#endif
+}
+
+int clock_settime(clockid_t clk_id, const struct timespec* tp) {
+  if(tp == NULL) {
+#ifndef MENIOS_KERNEL
+    errno = EFAULT;
+#endif
+    return -1;
+  }
+
+#ifndef MENIOS_HOST_TEST
+  long rc = __menios_syscall2(SYS_CLOCK_SETTIME, (long)clk_id, (long)tp);
+  if(rc < 0) {
+#ifndef MENIOS_KERNEL
+    errno = (int)(-rc);
+#endif
+    return -1;
+  }
+  return 0;
+#else
+  typedef int (*host_clock_settime_fn)(clockid_t, const struct timespec*);
+  static host_clock_settime_fn real_clock_settime = NULL;
+  if(real_clock_settime == NULL) {
+    real_clock_settime = (host_clock_settime_fn)resolve_host_symbol("clock_settime");
+    if(real_clock_settime == NULL) {
+#ifndef MENIOS_KERNEL
+      errno = ENOSYS;
+#endif
+      return -1;
+    }
+  }
+  return real_clock_settime(clk_id, tp);
+#endif
+}
+
+int clock_getres(clockid_t clk_id, struct timespec* res) {
+  if(res == NULL) {
+#ifndef MENIOS_KERNEL
+    errno = EFAULT;
+#endif
+    return -1;
+  }
+
+#ifndef MENIOS_HOST_TEST
+  long rc = __menios_syscall2(SYS_CLOCK_GETRES, (long)clk_id, (long)res);
+  if(rc < 0) {
+#ifndef MENIOS_KERNEL
+    errno = (int)(-rc);
+#endif
+    return -1;
+  }
+  return 0;
+#else
+  typedef int (*host_clock_getres_fn)(clockid_t, struct timespec*);
+  static host_clock_getres_fn real_clock_getres = NULL;
+  if(real_clock_getres == NULL) {
+    real_clock_getres = (host_clock_getres_fn)resolve_host_symbol("clock_getres");
+    if(real_clock_getres == NULL) {
+#ifndef MENIOS_KERNEL
+      errno = ENOSYS;
+#endif
+      return -1;
+    }
+  }
+  return real_clock_getres(clk_id, res);
+#endif
 }

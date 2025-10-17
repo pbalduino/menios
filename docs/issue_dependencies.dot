@@ -209,6 +209,7 @@ digraph IssueDependencies {
         issue240 [label="#240: time() in\nlibc", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED
         issue241 [label="#241: rand() in\nlibc", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED
         issue244 [label="#244: /proc\nfilesystem", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED
+        issue286 [label="#286: Kernel RTC driver\nand time mgmt", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED
         issue287 [label="#287: nanosleep()\nand sleep queue", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED
         issue290 [label="#290: Time conversions\ngmtime/mktime/strftime", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED
         issue299 [label="#299: Timezone support\nIANA tz database", fillcolor="#E6E6FA"];  // Long term (needs network)
@@ -429,9 +430,11 @@ digraph IssueDependencies {
     issue238 -> issue239 [color=brown, style=dashed, label="breakdown"];  // parent -> kernel time
     issue238 -> issue240 [color=brown, style=dashed, label="breakdown"];  // parent -> libc time
     issue238 -> issue241 [color=brown, style=dashed, label="breakdown"];  // parent -> rand
+    issue286 -> issue239 [color=brown, style=dashed];  // RTC driver -> kernel time syscalls ✅
     issue239 -> issue240 [color=brown, style=dashed];  // kernel time syscalls -> libc time ✅
     issue239 -> issue226 [color=brown];  // kernel time syscalls -> RTC management
     issue239 -> issue287 [color=brown, style=dashed];  // kernel time syscalls -> nanosleep ✅
+    issue286 -> issue226 [color=brown, style=dashed];  // RTC driver -> RTC management (part of #226 breakdown)
     issue287 -> issue226 [color=brown, style=dashed];  // nanosleep -> RTC management (part of #226 breakdown)
     issue193 -> issue241 [label="libc", color=brown, style=dashed];  // libc -> rand() ✅
     issue239 -> issue290 [color=brown, style=dashed];  // kernel time syscalls -> time conversions ✅

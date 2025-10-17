@@ -83,6 +83,9 @@ static uint64_t syscall_execve_handler(syscall_frame_t* frame);
 static uint64_t syscall_yield_handler(syscall_frame_t* frame);
 static uint64_t syscall_sleep_handler(syscall_frame_t* frame);
 static uint64_t syscall_nanosleep_handler(syscall_frame_t* frame);
+static uint64_t syscall_clock_gettime_handler(syscall_frame_t* frame);
+static uint64_t syscall_clock_settime_handler(syscall_frame_t* frame);
+static uint64_t syscall_clock_getres_handler(syscall_frame_t* frame);
 static uint64_t syscall_exit_handler(syscall_frame_t* frame);
 static uint64_t syscall_fcntl_handler(syscall_frame_t* frame);
 static uint64_t syscall_waitpid_handler(syscall_frame_t* frame);
@@ -111,6 +114,63 @@ static syscall_handler_t syscall_table[SYSCALL_MAX];
 #define EXECVE_MAX_ARGS   64
 #define EXECVE_MAX_ENVP   64
 #define EXECVE_MAX_STRING 4096
+
+static int64_t realtime_offset_us = 0;
+
+static uint64_t realtime_now_us(void) {
+  uint64_t base = unix_time_us();
+  int64_t adjusted = (int64_t)base + realtime_offset_us;
+  if(adjusted < 0) {
+    adjusted = 0;
+  }
+  return (uint64_t)adjusted;
+}
+
+static void fill_timespec_from_us(struct timespec* ts, uint64_t usec) {
+  if(ts == NULL) {
+    return;
+  }
+  ts->tv_sec = (time_t)(usec / 1000000ull);
+  uint64_t rem = usec % 1000000ull;
+  ts->tv_nsec = (long)(rem * 1000ull);
+}
+
+static void fill_timespec_from_ns(struct timespec* ts, uint64_t nsec) {
+  if(ts == NULL) {
+    return;
+  }
+  ts->tv_sec = (time_t)(nsec / 1000000000ull);
+  ts->tv_nsec = (long)(nsec % 1000000000ull);
+}
+
+static bool timespec_valid(const struct timespec* ts) {
+  if(ts == NULL) {
+    return false;
+  }
+  if(ts->tv_nsec < 0 || ts->tv_nsec >= 1000000000L) {
+    return false;
+  }
+  return true;
+}
+
+static bool timespec_to_microseconds(const struct timespec* ts, uint64_t* out_us) {
+  if(!timespec_valid(ts) || out_us == NULL) {
+    return false;
+  }
+
+  if(ts->tv_sec < 0) {
+    return false;
+  }
+
+  __uint128_t total_ns = (__uint128_t)(unsigned long long)ts->tv_sec * 1000000000ull +
+                         (__uint128_t)(unsigned long long)ts->tv_nsec;
+  __uint128_t total_us = (total_ns + 999u) / 1000u;
+  if(total_us > UINT64_MAX) {
+    return false;
+  }
+  *out_us = (uint64_t)total_us;
+  return true;
+}
 
 static bool copy_user_string(const char* user_ptr, char* dest, size_t capacity) {
   if(current == NULL || user_ptr == NULL || dest == NULL || capacity == 0) {
@@ -511,6 +571,9 @@ void syscall_init(void) {
   syscall_register(SYS_YIELD, syscall_yield_handler);
   syscall_register(SYS_SLEEP, syscall_sleep_handler);
   syscall_register(SYS_NANOSLEEP, syscall_nanosleep_handler);
+  syscall_register(SYS_CLOCK_GETTIME, syscall_clock_gettime_handler);
+  syscall_register(SYS_CLOCK_SETTIME, syscall_clock_settime_handler);
+  syscall_register(SYS_CLOCK_GETRES, syscall_clock_getres_handler);
   syscall_register(SYS_EXIT, syscall_exit_handler);
   syscall_register(SYS_FCNTL, syscall_fcntl_handler);
   syscall_register(SYS_IOCTL, syscall_ioctl_handler);
@@ -1512,6 +1575,99 @@ static uint64_t syscall_nanosleep_handler(syscall_frame_t* frame) {
   return 0;
 }
 
+static uint64_t syscall_clock_gettime_handler(syscall_frame_t* frame) {
+  clockid_t clk_id = (clockid_t)frame->rdi;
+  struct timespec* user_tp = (struct timespec*)frame->rsi;
+
+  if(user_tp == NULL ||
+     !proc_user_buffer_accessible(current, user_tp, sizeof(struct timespec))) {
+    frame->rax = (uint64_t)(-EFAULT);
+    return frame->rax;
+  }
+
+  struct timespec ts;
+
+  switch(clk_id) {
+    case CLOCK_REALTIME: {
+      uint64_t now_us = realtime_now_us();
+      fill_timespec_from_us(&ts, now_us);
+      break;
+    }
+    case CLOCK_MONOTONIC: {
+      uint64_t ns = (uint64_t)ns_from_boot();
+      fill_timespec_from_ns(&ts, ns);
+      break;
+    }
+    default:
+      frame->rax = (uint64_t)(-EINVAL);
+      return frame->rax;
+  }
+
+  memcpy(user_tp, &ts, sizeof(ts));
+  frame->rax = 0;
+  return 0;
+}
+
+static uint64_t syscall_clock_settime_handler(syscall_frame_t* frame) {
+  clockid_t clk_id = (clockid_t)frame->rdi;
+  const struct timespec* user_tp = (const struct timespec*)frame->rsi;
+
+  if(clk_id != CLOCK_REALTIME) {
+    frame->rax = (uint64_t)(-EINVAL);
+    return frame->rax;
+  }
+
+  if(user_tp == NULL ||
+     !proc_user_buffer_accessible(current, user_tp, sizeof(struct timespec))) {
+    frame->rax = (uint64_t)(-EFAULT);
+    return frame->rax;
+  }
+
+  struct timespec ts;
+  memcpy(&ts, user_tp, sizeof(ts));
+
+  uint64_t desired_us;
+  if(!timespec_to_microseconds(&ts, &desired_us)) {
+    frame->rax = (uint64_t)(-EINVAL);
+    return frame->rax;
+  }
+
+  uint64_t now_us = unix_time_us();
+  int64_t delta = (int64_t)desired_us - (int64_t)now_us;
+  realtime_offset_us = delta;
+
+  frame->rax = 0;
+  return 0;
+}
+
+static uint64_t syscall_clock_getres_handler(syscall_frame_t* frame) {
+  clockid_t clk_id = (clockid_t)frame->rdi;
+  struct timespec* user_res = (struct timespec*)frame->rsi;
+
+  if(user_res == NULL ||
+     !proc_user_buffer_accessible(current, user_res, sizeof(struct timespec))) {
+    frame->rax = (uint64_t)(-EFAULT);
+    return frame->rax;
+  }
+
+  struct timespec ts;
+
+  switch(clk_id) {
+    case CLOCK_REALTIME:
+    case CLOCK_MONOTONIC:
+      ts.tv_sec = 0;
+      ts.tv_nsec = 1000; // 1 microsecond resolution
+      break;
+    default:
+      frame->rax = (uint64_t)(-EINVAL);
+      return frame->rax;
+  }
+
+  memcpy(user_res, &ts, sizeof(ts));
+  frame->rax = 0;
+  return 0;
+}
+
 static uint64_t syscall_exit_handler(syscall_frame_t* frame) {
   int status = (int)frame->rdi;
   proc_exit(status);
@@ -1804,7 +1960,7 @@ static uint64_t syscall_getpagesize_handler(syscall_frame_t* frame) {
 
 static uint64_t syscall_time_handler(syscall_frame_t* frame) {
   time_t* user_ptr = (time_t*)frame->rdi;
-  useconds_t now_us = unix_time_us();
+  uint64_t now_us = realtime_now_us();
   time_t now = (time_t)(now_us / 1000000ull);
 
   if(user_ptr != NULL) {
@@ -1837,7 +1993,7 @@ static uint64_t syscall_gettimeofday_handler(syscall_frame_t* frame) {
     }
   }
 
-  useconds_t now_us = unix_time_us();
+  uint64_t now_us = realtime_now_us();
 
   if(tv != NULL) {
     tv->tv_sec = (time_t)(now_us / 1000000ull);
