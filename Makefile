@@ -861,3 +861,13 @@ TEMP_DISABLE_SUPERVISION_FLAGS = -DTEMP_DISABLE_SUPERVISION
 
 build-temp-disable:
 	$(MAKE) EXTRA_CFLAGS=${TEMP_DISABLE_SUPERVISION_FLAGS} build
+
+.PHONY: get-doom-wad
+get-doom-wad:
+	@echo "Downloading doom.wad..."
+	@if [ ! -f $(OUTPUT_DIR)/bin/doom.wad ]; then \
+		mkdir -p $(OUTPUT_DIR)/bin; \
+		curl -L https://distro.ibiblio.org/slitaz/sources/packages/d/doom1.wad -o $(OUTPUT_DIR)/bin/doom.wad; \
+	else \
+		echo "doom.wad already exists at $(OUTPUT_DIR)/bin/doom.wad"; \
+	fi
