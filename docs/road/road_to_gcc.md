@@ -48,7 +48,7 @@ Services needed for any compiler to function properly.
 | • Signal syscalls | #211 | ✅ DONE | kill(), sigaction() |
 | • Signal delivery | #212 | ✅ DONE | User handlers |
 | • Shell Ctrl+C | #213 | ✅ Done | Process control |
-| File Write Support | #189 | ⛳ TODO | Compiler output requires writes |
+| File Write Support | #189 | ✅ COMPLETE | Compiler output requires writes |
 | I/O Scheduler | #205 | ✅ DONE | Better performance for concurrent disk I/O |
 | **Threading Foundation** | #108 | ✅ DONE | Kernel threading infrastructure |
 | pthread API | #109 | ⛳ TODO | GCC uses threads (ready now!) |
@@ -78,22 +78,26 @@ Running compilers natively on meniOS.
 
 | Component | Issue | Status | Complexity | Priority |
 | --- | --- | --- | --- | --- |
-| TCC Port | #190 | ⛳ TODO | Medium | Nice to have |
-| binutils Port | #191 | ⛳ TODO | High | Nice to have |
+| TCC Port | #190 | 🚀 READY | Medium | Nice to have |
+| binutils Port | #191 | 🚀 READY | High | Nice to have |
 | GCC Port | - | ⛳ TODO | Very High | Future |
 
 **Dependencies for TCC (#190):**
-- #29 (cross-compiler complete)
+- ✅ #29 (cross-compiler complete) - COMPLETE
 - ✅ #193 (libc) - COMPLETE
 - ✅ Pipes & FIFOs - **FULLY COMPLETE!** (#206 ✅, #207 ✅, #208 ✅, #209 ✅)
-- #189 (file writes)
-- ✅ #205 (I/O scheduler) - COMPLETE - Performance boost available!
+- ✅ #189 (file writes) - **COMPLETE!** (#291, #292, #293 all done)
+- ✅ #294 (VFS streaming I/O) - **COMPLETE!** (#295, #296, #297, #298 all done)
+- ✅ #205 (I/O scheduler) - COMPLETE
+- **🎉 ALL DEPENDENCIES MET - ZERO BLOCKERS!**
 
 **Dependencies for binutils (#191):**
-- #29 (cross-compiler complete)
+- ✅ #29 (cross-compiler complete) - COMPLETE
 - ✅ #193 (libc) - COMPLETE
-- #189 (file writes)
-- ✅ #205 (I/O scheduler) - COMPLETE - Performance boost available!
+- ✅ #189 (file writes) - **COMPLETE!** (#291, #292, #293 all done)
+- ✅ #294 (VFS streaming I/O) - **COMPLETE!** (#295, #296, #297, #298 all done)
+- ✅ #205 (I/O scheduler) - COMPLETE
+- **🎉 ALL DEPENDENCIES MET - ZERO BLOCKERS!**
 
 **Timeline Estimate:** 6-12 months
 
@@ -262,5 +266,5 @@ See [MILESTONES.md](../MILESTONES.md) for detailed milestone tracking across all
 
 ---
 
-**Last Updated**: 2025-10-08
-**Next Review**: After #194 and #195 completion
+**Last Updated**: 2025-10-17
+**Next Review**: Ready to start TCC (#190) and binutils (#191) - all dependencies complete!

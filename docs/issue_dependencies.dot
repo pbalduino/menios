@@ -144,12 +144,12 @@ digraph IssueDependencies {
         issue293 [label="#293: FAT32\nregression tests", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED
         issue205 [label="#205: Elevator\nI/O scheduler", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED
 
-        // VFS streaming I/O and buffer cache (parent and breakdown)
-        issue294 [label="#294: VFS streaming I/O\nand buffer cache (parent)", fillcolor="#FFE4B5"];
-        issue295 [label="#295: Block cache\ninfrastructure", fillcolor="#E0FFFF"];
-        issue296 [label="#296: FAT32 block-level\nI/O", fillcolor="#E0FFFF"];
-        issue297 [label="#297: VFS streaming\nread/write", fillcolor="#E0FFFF"];
-        issue298 [label="#298: Read-ahead\nwrite-behind", fillcolor="#E0FFFF"];
+        // VFS streaming I/O and buffer cache (parent and breakdown) - ALL COMPLETE ✅
+        issue294 [label="#294: VFS streaming I/O\nand buffer cache (parent)", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED
+        issue295 [label="#295: Block cache\ninfrastructure", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED
+        issue296 [label="#296: FAT32 block-level\nI/O", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED
+        issue297 [label="#297: VFS streaming\nread/write", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED
+        issue298 [label="#298: Read-ahead\nwrite-behind", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED
     }
 
     subgraph cluster_ipc {
@@ -338,19 +338,19 @@ digraph IssueDependencies {
     issue291 -> issue293 [color=purple, style=dashed];  // primitives -> tests ✅
     issue292 -> issue293 [color=purple, style=dashed];  // VFS integration -> tests ✅
 
-    // VFS streaming I/O and buffer cache - breakdown
+    // VFS streaming I/O and buffer cache - breakdown (ALL COMPLETE ✅)
     issue65 -> issue294 [style=dashed, color=gray, label="VFS layer"];  // VFS -> streaming I/O parent
     issue205 -> issue294 [style=dashed, color=gray, label="I/O scheduler"];  // I/O scheduler -> streaming I/O parent
-    issue294 -> issue295 [color=teal, style=dashed, label="breakdown"];  // parent -> block cache
-    issue294 -> issue296 [color=teal, style=dashed, label="breakdown"];  // parent -> FAT32 block I/O
-    issue294 -> issue297 [color=teal, style=dashed, label="breakdown"];  // parent -> VFS streaming
-    issue294 -> issue298 [color=teal, style=dashed, label="breakdown"];  // parent -> read-ahead/write-behind
-    issue295 -> issue296 [color=teal, penwidth=2, label="cache→FAT32"];  // block cache -> FAT32 block I/O
-    issue296 -> issue297 [color=teal, penwidth=2, label="FAT32→VFS"];  // FAT32 block I/O -> VFS streaming
-    issue297 -> issue298 [color=teal, penwidth=2, label="streaming→perf"];  // VFS streaming -> read-ahead/write-behind
+    issue294 -> issue295 [color=teal, style=dashed, label="breakdown"];  // parent -> block cache ✅
+    issue294 -> issue296 [color=teal, style=dashed, label="breakdown"];  // parent -> FAT32 block I/O ✅
+    issue294 -> issue297 [color=teal, style=dashed, label="breakdown"];  // parent -> VFS streaming ✅
+    issue294 -> issue298 [color=teal, style=dashed, label="breakdown"];  // parent -> read-ahead/write-behind ✅
+    issue295 -> issue296 [color=teal, penwidth=2, style=dashed, label="cache→FAT32"];  // block cache -> FAT32 block I/O ✅
+    issue296 -> issue297 [color=teal, penwidth=2, style=dashed, label="FAT32→VFS"];  // FAT32 block I/O -> VFS streaming ✅
+    issue297 -> issue298 [color=teal, penwidth=2, style=dashed, label="streaming→perf"];  // VFS streaming -> read-ahead/write-behind ✅
 
-    // Streaming I/O benefits ext2
-    issue298 -> issue60 [color=teal, label="enables ext2", style=dashed];  // read-ahead/write-behind -> ext2 (unblocks future work)
+    // Streaming I/O benefits ext2 (COMPLETE ✅)
+    issue298 -> issue60 [color=teal, label="enables ext2", style=dashed];  // read-ahead/write-behind -> ext2 (ready now!)
 
     // I/O scheduler dependencies (✅ COMPLETE)
     issue114 -> issue205 [label="#114: block device", style=dashed, color=gray];

@@ -86,7 +86,7 @@ MALLOC_STRESS_ELF = $(OBJDIR)/usermode/malloc_stress.elf
 MEM_ELF = $(OBJDIR)/usermode/mem.elf
 
 USER_PROGRAM_ELFS = $(MOSH_ELF) $(ECHO_ELF) $(CAT_ELF) $(ENV_ELF) $(TRUE_ELF) $(FALSE_ELF) $(LS_ELF) $(KILL_ELF) $(PS_ELF) $(MALLOC_STRESS_ELF) $(MEM_ELF)
-USERLAND_BINS = mosh echo cat env true false ls kill ps malloc_stress mem
+USERLAND_BINS = mosh echo cat env true false ls kill ps malloc_stress mem fs_tester
 
 
 ARCH_FLAGS := -march=x86-64

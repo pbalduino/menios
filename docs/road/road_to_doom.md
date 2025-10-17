@@ -119,14 +119,20 @@ We can mount and read from disk images today; write support is still limited.
 - **Limitation**: FS writes remain largely TODO (FAT32 is currently read-only - see #189).
 - **Impact**: Doom-sized assets can now be loaded from disk.
 
-#### **Filesystem Write Support** (Issue #189) 🚧 **Pending**
-- **Scope**: FAT32 write support for file creation, modification, deletion
-- **Impact**: Save games, configuration files, native compilation output
+#### **Filesystem Write Support** (Issue #189) ✅ **COMPLETE**
+- ✅ **Status**: FAT32 write support fully implemented! (#291, #292, #293 all done)
+- **Scope**: File creation, modification, truncation with O_CREAT/O_TRUNC/O_EXCL
+- **Impact**: Save games, configuration files, native compilation output - **ALL WORKING!**
 
 #### **I/O Scheduler** (Issue #205) ✅ **COMPLETE**
 - ✅ **Status**: Elevator-based block I/O scheduler is now implemented!
 - **Impact**: Reduced seek latency for concurrent disk operations (shell + Doom asset streaming)
 - **Benefits**: Better performance when multiple processes access disk simultaneously
+
+#### **VFS Streaming I/O and Buffer Cache** (Issue #294) ✅ **COMPLETE**
+- ✅ **Status**: VFS streaming I/O fully implemented! (#295, #296, #297, #298 all done)
+- **Scope**: Block cache with LRU eviction, streaming read/write, read-ahead, write-behind
+- **Impact**: Handles arbitrarily large files, efficient I/O for game asset loading, foundation for ext2
 
 ### **Phase 5: Graphics & Input**
 Visual output and user interaction:

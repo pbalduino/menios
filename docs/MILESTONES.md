@@ -438,6 +438,37 @@ Recommended completion order for maximum impact:
   - Validated O_CREAT, O_TRUNC, and O_EXCL behavior
   - Confirmed data persistence across writes
   - TCC (#190) and binutils (#191) now FULLY UNBLOCKED!
+- **2025-10-17**: Closed #294 (VFS: Streaming I/O and buffer cache - parent) ✅
+  - **All 4 phases complete!** 🎉
+  - Replaced slurp-and-flush model with streaming block-by-block I/O
+  - Implemented LRU block cache with bread()/bwrite() primitives
+  - FAT32 refactored to use block cache for all disk operations
+  - Added read-ahead and write-behind optimizations
+  - Fixed-size cache (4 MiB) handles arbitrarily large files
+  - Foundation ready for ext2 filesystem (#60)
+- **2025-10-17**: Closed #295 (Block cache infrastructure) ✅
+  - Part of #294 - Phase 1 complete
+  - Implemented buffer_head structure with LRU eviction
+  - Hash table for O(1) block lookup
+  - bread() and bwrite() primitives for block I/O
+  - Cache eviction policy handles memory pressure
+- **2025-10-17**: Closed #296 (FAT32 block-level I/O) ✅
+  - Part of #294 - Phase 2 complete
+  - Refactored FAT32 to use bread()/bwrite() instead of direct ATA reads
+  - FAT table and directory entries now cached
+  - Reduced memory footprint - no need to load entire FAT table
+- **2025-10-17**: Closed #297 (VFS streaming operations) ✅
+  - Part of #294 - Phase 3 complete
+  - Replaced vfs_read() slurp with block-by-block streaming
+  - Replaced vfs_write() flush-on-close with incremental writes
+  - Implemented lseek() for arbitrary file positioning
+  - Removed per-file memory buffers
+- **2025-10-17**: Closed #298 (Read-ahead and write-behind) ✅
+  - Part of #294 - Phase 4 complete
+  - Sequential access detection with 4-block prefetch
+  - Async write-behind with dirty page tracking
+  - Periodic flusher thread (5 second interval)
+  - Added sync() and fsync() syscalls for explicit durability
 
 ---
 

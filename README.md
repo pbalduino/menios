@@ -180,8 +180,8 @@ Expect the log to show the `[user_demo]` messages on screen and in `com1.log`, c
 - [x] **#194**: Syscall ABI documentation ✅ COMPLETE!
 - [x] **#195**: Userland build system ✅ COMPLETE!
 - [x] **#29**: Cross-compiler toolchain integration ✅ COMPLETE!
-- [ ] **#190**: TCC port (Buddy ✅ UNBLOCKED! Only needs #189 FAT32 writes)
-- [ ] **#191**: binutils port (Buddy ✅ UNBLOCKED! Only needs #189 FAT32 writes)
+- [ ] **#190**: TCC port (**FULLY UNBLOCKED!** Buddy ✅, FAT32 writes ✅, Streaming I/O ✅)
+- [ ] **#191**: binutils port (**FULLY UNBLOCKED!** Buddy ✅, FAT32 writes ✅, Streaming I/O ✅)
 
 #### **Shell Milestone (Issues #180-#188)** 🎯 9/9 Complete!
 - [x] **Environment**: Environment variables (#148) ✅, seeding (#180) ✅, PATH search (#185) ✅
@@ -205,7 +205,8 @@ Expect the log to show the `[user_demo]` messages on screen and in `com1.log`, c
 - [x] **IPC - Other**: Fast syscalls (#221) ✅ **COMPLETE** - syscall/sysret with proper 64-bit return values (#274 fixed)
 - [ ] **IPC - Other**: Unix domain sockets (#105), Microkernel IPC (#106-#107)
 - [x] **Filesystem - I/O Scheduler**: Elevator I/O scheduler (#205) ✅ COMPLETE
-- [ ] **Filesystem - Write Support**: FAT32 write support (#189)
+- [x] **Filesystem - Write Support**: FAT32 write support (#189) ✅ **100% COMPLETE!** (#291, #292, #293 all done)
+- [x] **Filesystem - Streaming I/O**: VFS streaming I/O and buffer cache (#294) ✅ **COMPLETE!** All 4 phases done: block cache (#295), FAT32 refactor (#296), VFS streaming (#297), read-ahead/write-behind (#298)
 - [ ] **Networking**: Complete TCP/IP stack (Issues #67-#73)
 - [ ] **Graphics**: Framebuffer interface and input subsystem (Issues #31-#33)
 
@@ -227,7 +228,7 @@ Remaining major components for Doom:
 
 See [`road_to_doom.md`](docs/road/road_to_doom.md) for the complete roadmap and [`tasks.json`](tasks.json) for detailed task tracking.
 
-**📊 Progress Assessment**: With **59 issues completed across 81 total** (72.8%), meniOS is making phenomenal progress! Major recent completions include:
+**📊 Progress Assessment**: With **68 issues completed across 90 total** (75.6%), meniOS is making phenomenal progress! Major recent completions include:
 - ✅ **Shell Milestone**: 27/27 complete (100%)—v0.1.0 ships the full interactive shell experience! 🎉
 - ✅ **Toolchain Core**: 5/8 complete (62.5%)—crt0 (#192) ✅, libc (#193) ✅, ABI docs (#194) ✅, build system (#195) ✅, cross-compiler (#29) ✅
 - 🎉 **Buddy Allocator**: 20/20 complete (100%)—Core implementation ✅ (9/9), Critical security fixes ✅ (3/3), Reliability fixes ✅ (5/5), Performance optimizations ✅ (3/3)
@@ -240,14 +241,16 @@ See [`road_to_doom.md`](docs/road/road_to_doom.md) for the complete roadmap and 
 - ✅ **Performance**: I/O scheduler (#205) ✅
 - ✅ **Fast syscalls**: (#221) ✅ **COMPLETE!** - syscall/sysret with proper 64-bit return values (fixed #274)
 - ✅ **Memory**: Userspace allocator (#95) ✅
+- ✅ **FAT32 Write Support**: ✅ **100% COMPLETE!** (#189, #291, #292, #293) - File creation, truncation, and persistence! 🎉
+- ✅ **VFS Streaming I/O**: ✅ **COMPLETE!** (#294-#298) - Block cache, streaming operations, read-ahead/write-behind! 🎉
 
-**The critical path forward**: Buddy allocator is COMPLETE (100%)! 🎉 Focus now shifts to **FAT32 write support** (#189) to unblock GCC native compilation (#190, #191)!
+**The critical path forward**: Buddy allocator (100%), FAT32 writes (100%), and VFS streaming I/O (100%) are ALL COMPLETE! 🎉 TCC (#190) and binutils (#191) are **FULLY UNBLOCKED** with zero dependencies!
 
 **🎯 Milestone Status**:
 - 🎉 **Mosh** (Shell): 27/27 complete (100%) - v0.1.0 shipped!
 - 🎉 **Buddy Allocator** (Memory): 20/20 complete (100%) - Core ✅, Critical security ✅, Reliability ✅, Performance ✅ FULLY UNBLOCKS GCC & DOOM!
-- 🚀 **GCC** (Toolchain): 5/8 complete (62.5%) - core done, #190/#191 FULLY UNBLOCKED (only needs #189 FAT32 writes)!
-- 🎮 **Doom** (Full OS): 11/26 complete (42.3%) - Buddy allocator COMPLETE ✅, threading/IPC ready pending syscall fix (#221)
+- 🚀 **GCC** (Toolchain): 5/8 complete (62.5%) - core done, #190/#191 **FULLY UNBLOCKED** - zero dependencies!
+- 🎮 **Doom** (Full OS): 11/26 complete (42.3%) - Buddy allocator COMPLETE ✅, FAT32 writes COMPLETE ✅, threading/IPC ready!
 
 ## Architecture Overview
 
@@ -297,8 +300,7 @@ See [`road_to_doom.md`](docs/road/road_to_doom.md) for the complete roadmap and 
 ## Known Issues and Limitations
 
 ### Current Limitations
-- **Filesystem**: Read-only FAT32 and tmpfs support exist; write support and broader FS coverage are still TODO (Issues #60, #62-#65).
-- **FAT32 writes**: Existing files can now be overwritten and new short-name files created in `/bin`; long filenames and directory creation remain TODO (#189).
+- **Filesystem**: FAT32 now supports reads, writes, file creation, and truncation ✅; streaming I/O with block cache complete ✅; long filenames and directory creation remain TODO.
 - **Limited hardware support**: Only basic PS/2 keyboard, VGA framebuffer
 - **No network stack**: No networking capabilities (Issues #67-#73)
 - **Graphics**: Basic framebuffer, no hardware acceleration
@@ -337,12 +339,16 @@ We welcome contributions from developers of all skill levels! 🚀
 
 - **New Contributors**: Start with our [Contributing Guide](CONTRIBUTING.md) for a complete development workflow
 - **Find Tasks**: Check [GitHub Issues](https://github.com/pbalduino/menios/issues) or browse [`tasks.json`](tasks.json) for detailed task tracking
-- **High Priority - In Progress** (2 issues active):
-  - **📁 Critical Blocker**: #189 (FAT32 write support) - blocks native compilation!
-- **Ready to Start** (3 issues available):
-  - **🚀 GCC Native Compilation** (FULLY UNBLOCKED): #190 (TCC port), #191 (binutils port) - Buddy allocator ✅ COMPLETE, only needs #189 FAT32 writes!
+- **Ready to Start** (3 issues available - **ZERO DEPENDENCIES!**):
+  - **🚀 GCC Native Compilation** (**FULLY UNBLOCKED!**): #190 (TCC port), #191 (binutils port) - Buddy allocator ✅ COMPLETE, FAT32 writes ✅ COMPLETE, Streaming I/O ✅ COMPLETE!
   - **🧵 Threading**: #109 (pthread API - no dependencies!)
-- **Milestone Status**: Buddy Allocator COMPLETE (20/20) ✅ 🎉 - Core (9/9) ✅, Critical security (3/3) ✅, Reliability (5/5) ✅, Performance (3/3) ✅
+- **Recent Completions** (2025-10-17):
+  - ✅ **FAT32 Write Support** (#189, #291-#293) - 100% COMPLETE! 🎉
+  - ✅ **VFS Streaming I/O** (#294-#298) - Block cache, streaming ops, read-ahead/write-behind - 100% COMPLETE! 🎉
+- **Milestone Status**:
+  - Buddy Allocator ✅ 100% (20/20)
+  - FAT32 Writes ✅ 100% (4/4)
+  - VFS Streaming I/O ✅ 100% (5/5)
 - **Report Issues**: Use our issue templates to report bugs or request features
 - **Security Issues**: Please review our [Security Policy](SECURITY.md) for responsible disclosure
 - **Code Style**: Follow the guidelines in [`CODING.md`](CODING.md)
