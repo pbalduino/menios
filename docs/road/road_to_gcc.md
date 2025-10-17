@@ -49,6 +49,7 @@ Services needed for any compiler to function properly.
 | • Signal delivery | #212 | ✅ DONE | User handlers |
 | • Shell Ctrl+C | #213 | ✅ Done | Process control |
 | Libc time conversions (gmtime/mktime/strftime) | #290 | ✅ DONE | Required for build system timestamps |
+| Interval timers (`setitimer`) | #288 | ✅ DONE | Enables SIGALRM-based timeouts |
 | File Write Support | #189 | ✅ COMPLETE | Compiler output requires writes |
 | I/O Scheduler | #205 | ✅ DONE | Better performance for concurrent disk I/O |
 | **Threading Foundation** | #108 | ✅ DONE | Kernel threading infrastructure |

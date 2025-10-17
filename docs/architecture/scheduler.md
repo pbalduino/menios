@@ -37,6 +37,9 @@ higher-priority task becomes ready.
   hooks for userland. `SYS_SLEEP` accepts a microsecond duration, while
   `SYS_NANOSLEEP` mirrors POSIX semantics (with microsecond resolution and
   signal interruption support).
+- Per-process interval timers (`setitimer` via `SYS_SETITIMER`) run off the
+  scheduler tick; when `ITIMER_REAL` expires the kernel enqueues `SIGALRM` and
+  optionally reloads the timer using the requested interval.
 - Kernel threads use the same helpers; `ksleep()` now blocks via the scheduler
   rather than spinning on the TSC.
 - Blocking mutexes and condition variables are wired into the scheduler via

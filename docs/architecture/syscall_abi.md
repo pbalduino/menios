@@ -188,6 +188,14 @@ promise.  Below is a summary of the calls that ship in meniOS v0.1.0.
   `int clock_getres(clockid_t clk_id, struct timespec *res);`
   Reports the kernel's nominal resolution (microsecond granularity) for
   `CLOCK_REALTIME` and `CLOCK_MONOTONIC`.
+- **`SYS_SETITIMER` (87)** —
+  `int setitimer(int which, const struct itimerval *new_value,
+  struct itimerval *old_value);`
+  Currently supports `ITIMER_REAL` (delivers `SIGALRM`). Interval timers are
+  maintained with microsecond granularity.
+- **`SYS_GETITIMER` (88)** —
+  `int getitimer(int which, struct itimerval *curr_value);`
+  Reports the pending expiration and interval for supported timers.
 - **`SYS_GETPAGESIZE` (80)** — `long getpagesize(void);`
   Returns the system page size (typically 4096 bytes).  Used by the userland
   allocator and other memory management utilities.
