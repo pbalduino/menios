@@ -26,6 +26,8 @@ int execve(const char* path, char* const argv[], char* const envp[]);
 void _exit(int status) __attribute__((noreturn));
 int chdir(const char* path);
 char* getcwd(char* buffer, size_t size);
+int pause(void);
+unsigned int alarm(unsigned int seconds);
 
 int brk(void *addr);
 

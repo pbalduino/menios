@@ -21,6 +21,7 @@ typedef struct sigaction {
 
 #define SIGINT   2
 #define SIGKILL  9
+#define SIGALRM 14
 #define SIGSEGV 11
 #define SIGTERM 15
 #define SIGCONT 18
@@ -38,6 +39,7 @@ typedef struct sigaction {
 int kill(pid_t pid, int signo);
 int sigaction(int signo, const struct sigaction* act, struct sigaction* oldact);
 int sigprocmask(int how, const sigset_t* set, sigset_t* oldset);
+sighandler_t signal(int signo, sighandler_t handler);
 
 #ifdef __cplusplus
 }

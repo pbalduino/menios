@@ -165,13 +165,19 @@ static bool timespec_to_microseconds(const struct timespec* ts, uint64_t* out_us
     return false;
   }
 
-  __uint128_t total_ns = (__uint128_t)(unsigned long long)ts->tv_sec * 1000000000ull +
-                         (__uint128_t)(unsigned long long)ts->tv_nsec;
-  __uint128_t total_us = (total_ns + 999u) / 1000u;
-  if(total_us > UINT64_MAX) {
+  uint64_t sec = (uint64_t)ts->tv_sec;
+  if(sec > UINT64_MAX / 1000000ull) {
     return false;
   }
-  *out_us = (uint64_t)total_us;
+
+  uint64_t base_us = sec * 1000000ull;
+  uint64_t extra_us = ((uint64_t)ts->tv_nsec + 999ull) / 1000ull;
+
+  if(UINT64_MAX - base_us < extra_us) {
+    return false;
+  }
+
+  *out_us = base_us + extra_us;
   return true;
 }
 
@@ -192,12 +198,18 @@ static bool timeval_to_microseconds(const struct timeval* tv, uint64_t* out_us) 
   if(!timeval_valid(tv) || out_us == NULL) {
     return false;
   }
-  __uint128_t total_us = (__uint128_t)(unsigned long long)tv->tv_sec * 1000000ull +
-                         (__uint128_t)(unsigned long long)tv->tv_usec;
-  if(total_us > UINT64_MAX) {
+  uint64_t sec = (uint64_t)tv->tv_sec;
+  if(sec > UINT64_MAX / 1000000ull) {
     return false;
   }
-  *out_us = (uint64_t)total_us;
+
+  uint64_t base_us = sec * 1000000ull;
+  uint64_t extra = (uint64_t)tv->tv_usec;
+  if(UINT64_MAX - base_us < extra) {
+    return false;
+  }
+
+  *out_us = base_us + extra;
   return true;
 }
 
@@ -1560,18 +1572,22 @@ static uint64_t syscall_nanosleep_handler(syscall_frame_t* frame) {
     return 0;
   }
 
-  __uint128_t total_ns = (__uint128_t)(unsigned long long)req.tv_sec * 1000000000ull +
-                         (__uint128_t)(unsigned long long)req.tv_nsec;
-  __uint128_t total_us = (total_ns + 999u) / 1000u;
-  if(total_us == 0) {
-    total_us = 1;
-  }
-  if(total_us > UINT64_MAX) {
+  uint64_t sec = (uint64_t)req.tv_sec;
+  if(sec > UINT64_MAX / 1000000ull) {
     frame->rax = (uint64_t)(-EINVAL);
     return frame->rax;
   }
 
-  uint64_t duration_us = (uint64_t)total_us;
+  uint64_t duration_us = sec * 1000000ull;
+  uint64_t extra_us = ((uint64_t)req.tv_nsec + 999ull) / 1000ull;
+  if(extra_us == 0) {
+    extra_us = (req.tv_nsec == 0) ? 0 : 1;
+  }
+  if(UINT64_MAX - duration_us < extra_us) {
+    frame->rax = (uint64_t)(-EINVAL);
+    return frame->rax;
+  }
+  duration_us += extra_us;
   uint64_t start_us = unix_time_us();
   uint64_t target_us = (UINT64_MAX - duration_us < start_us)
                          ? UINT64_MAX

@@ -355,16 +355,19 @@ static bool timespec_to_microseconds(const struct timespec* ts, uint64_t* out_us
     return false;
   }
 
-  __uint128_t total_ns = (__uint128_t)(unsigned long long)ts->tv_sec * 1000000000ull +
-                         (__uint128_t)(unsigned long long)ts->tv_nsec;
-  __uint128_t total_us = (total_ns + 999u) / 1000u;
-  if(total_us == 0) {
-    total_us = (total_ns == 0) ? 0 : 1;
-  }
-  if(total_us > UINT64_MAX) {
+  uint64_t sec = (uint64_t)ts->tv_sec;
+  if(sec > UINT64_MAX / 1000000ull) {
     return false;
   }
-  *out_us = (uint64_t)total_us;
+
+  uint64_t base_us = sec * 1000000ull;
+  uint64_t extra_us = ((uint64_t)ts->tv_nsec + 999ull) / 1000ull;
+
+  if(UINT64_MAX - base_us < extra_us) {
+    return false;
+  }
+
+  *out_us = base_us + extra_us;
   return true;
 }
 
@@ -504,9 +507,14 @@ char* ctime_r(const time_t* timer, char* buf) {
   return asctime_r(&tm_storage, buf);
 }
 
+#if !defined(MENIOS_KERNEL)
+#if defined(__GNUC__) && !defined(__SSE2__)
+__attribute__((target("sse2")))
+#endif
 double difftime(time_t end, time_t beginning) {
   return (double)end - (double)beginning;
 }
+#endif
 
 size_t strftime(char* restrict dest,
                 size_t max,

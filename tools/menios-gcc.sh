@@ -12,7 +12,7 @@ else
   CC="gcc"
 fi
 CFLAGS="-ffreestanding -fno-stack-protector -m64 -mno-red-zone -mno-80387 -mno-mmx -mno-sse -mno-sse2 -nostdlib -nostartfiles -isystem ${SDK_ROOT}/include"
-LDFLAGS="-nostdlib -nostartfiles ${SDK_ROOT}/lib/crt0.o -L${SDK_ROOT}/lib -lmeniosc -static -T ${SDK_ROOT}/lib/user_elf.ld"
+LDFLAGS="-nostdlib -nostartfiles ${SDK_ROOT}/lib/crt0.o -L${SDK_ROOT}/lib -lmeniosc -lgcc -static -T ${SDK_ROOT}/lib/user_elf.ld"
 COMPILE_ONLY=0
 for arg in "$@"; do
   case "$arg" in

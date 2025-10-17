@@ -84,9 +84,10 @@ KILL_ELF = $(OBJDIR)/usermode/kill.elf
 PS_ELF = $(OBJDIR)/usermode/ps.elf
 MALLOC_STRESS_ELF = $(OBJDIR)/usermode/malloc_stress.elf
 MEM_ELF = $(OBJDIR)/usermode/mem.elf
+ALARM_DEMO_ELF = $(OBJDIR)/usermode/alarm_demo.elf
 
-USER_PROGRAM_ELFS = $(MOSH_ELF) $(ECHO_ELF) $(CAT_ELF) $(ENV_ELF) $(TRUE_ELF) $(FALSE_ELF) $(LS_ELF) $(KILL_ELF) $(PS_ELF) $(MALLOC_STRESS_ELF) $(MEM_ELF)
-USERLAND_BINS = mosh echo cat env true false ls kill ps malloc_stress mem
+USER_PROGRAM_ELFS = $(MOSH_ELF) $(ECHO_ELF) $(CAT_ELF) $(ENV_ELF) $(TRUE_ELF) $(FALSE_ELF) $(LS_ELF) $(KILL_ELF) $(PS_ELF) $(MALLOC_STRESS_ELF) $(MEM_ELF) $(ALARM_DEMO_ELF)
+USERLAND_BINS = mosh echo cat env true false ls kill ps malloc_stress mem alarm_demo
 
 
 ARCH_FLAGS := -march=x86-64
@@ -490,6 +491,14 @@ else
 	$(DOCKER) run --rm $(DOCKER_RUN_FLAGS) $(DOCKER_ENV) --mount type=bind,source=$$(pwd),target=/mnt $(DOCKER_IMAGE) /bin/sh -c "cd /mnt && make EXTRA_CFLAGS='$(EXTRA_CFLAGS)' $@"
 endif
 
+$(ALARM_DEMO_ELF): app/alarm_demo/alarm_demo.c | sdk
+ifeq ($(OS_NAME),linux)
+	@mkdir -p $(dir $@)
+	$(SDK_BIN_DIR)/menios-gcc $(EXTRA_CFLAGS) $< -o $@
+else
+	$(DOCKER) run --rm $(DOCKER_RUN_FLAGS) $(DOCKER_ENV) --mount type=bind,source=$$(pwd),target=/mnt $(DOCKER_IMAGE) /bin/sh -c "cd /mnt && make EXTRA_CFLAGS='$(EXTRA_CFLAGS)' $@"
+endif
+
 $(MALLOC_STRESS_ELF): app/malloc_stress/malloc_stress.c | sdk
 ifeq ($(OS_NAME),linux)
 	@mkdir -p $(dir $@)
@@ -611,6 +620,7 @@ ifeq ($(OS_NAME),linux)
 	mcopy -i $(IMAGE_NAME).hdd@@2M $(OUTPUT_DIR)/bin/ps ::/bin/ps
 	mcopy -i $(IMAGE_NAME).hdd@@2M $(OUTPUT_DIR)/bin/malloc_stress ::/bin/malloc_stress
 	mcopy -i $(IMAGE_NAME).hdd@@2M $(OUTPUT_DIR)/bin/mem ::/bin/mem
+	mcopy -i $(IMAGE_NAME).hdd@@2M $(OUTPUT_DIR)/bin/alarm_demo ::/bin/alarm_demo
 	$(OUTPUT_DIR)/limine bios-install $(IMAGE_NAME).hdd 1
 
 	@echo Building ISO
