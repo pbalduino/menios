@@ -140,7 +140,7 @@ digraph IssueDependencies {
         issue65 [label="#65: VFS layer", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED
         issue189 [label="#189: FAT32\nwrite support (parent)", fillcolor="#FFE4B5"];
         issue291 [label="#291: FAT32 create/\ntruncate primitives", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED
-        issue292 [label="#292: VFS O_CREAT/\nO_TRUNC/O_EXCL", fillcolor="#FFE4B5"];
+        issue292 [label="#292: VFS O_CREAT/\nO_TRUNC/O_EXCL", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED
         issue293 [label="#293: FAT32\nregression tests", fillcolor="#E0FFFF"];
         issue205 [label="#205: Elevator\nI/O scheduler", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED
     }

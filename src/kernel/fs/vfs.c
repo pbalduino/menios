@@ -571,21 +571,40 @@ static int vfs_open_buffered(const vfs_fs_driver_t* driver,
     writable = true;
   }
 
-  if(writable) {
-    if(read_only) {
-      return -EROFS;
-    }
-    if(driver->write_all == NULL) {
-      return -ENOSYS;
-    }
+  bool append_requested = (flags & O_APPEND) != 0;
+  bool metadata_mutation = (flags & (O_CREAT | O_TRUNC)) != 0;
+  bool write_requested = writable || append_requested;
+  if((write_requested || metadata_mutation) && read_only) {
+    return -EROFS;
   }
 
-  if((flags & (O_CREAT | O_TRUNC | O_APPEND | O_EXCL)) != 0) {
-    return read_only ? -EROFS : -ENOSYS;
+  if(write_requested && driver->write_all == NULL) {
+    return -ENOSYS;
   }
 
   if(driver->read_all == NULL) {
     return -ENOSYS;
+  }
+
+  if(flags & O_CREAT) {
+    if(driver->create_file == NULL) {
+      return -ENOSYS;
+    }
+    bool exclusive = (flags & O_EXCL) != 0;
+    if(!driver->create_file(fs_ctx, relative_path, exclusive)) {
+      return exclusive ? -EEXIST : -EIO;
+    }
+  } else if(flags & O_EXCL) {
+    return -EINVAL;
+  }
+
+  if(flags & O_TRUNC) {
+    if(driver->truncate_file == NULL) {
+      return -ENOSYS;
+    }
+    if(!driver->truncate_file(fs_ctx, relative_path)) {
+      return -EIO;
+    }
   }
 
   void* data = NULL;
@@ -614,7 +633,7 @@ static int vfs_open_buffered(const vfs_fs_driver_t* driver,
   strncpy(ctx->relative, relative_path, sizeof(ctx->relative) - 1);
   ctx->relative[sizeof(ctx->relative) - 1] = '\0';
 
-  if((flags & O_APPEND) != 0) {
+  if(append_requested) {
     ctx->offset = ctx->size;
   }
 
@@ -740,6 +759,34 @@ static bool fat32_write_all_adapter(void* fs_ctx, const char* path, const void* 
   return ok;
 }
 
+static bool fat32_create_file_adapter(void* fs_ctx, const char* path, bool exclusive) {
+  const fs_mount_t* mount = (const fs_mount_t*)fs_ctx;
+  if(mount == NULL) {
+    return false;
+  }
+  if(fs_file_create(mount, path, exclusive)) {
+    return true;
+  }
+  if(path != NULL && path[0] == '/' && path[1] != '\0') {
+    return fs_file_create(mount, path + 1, exclusive);
+  }
+  return false;
+}
+
+static bool fat32_truncate_file_adapter(void* fs_ctx, const char* path) {
+  const fs_mount_t* mount = (const fs_mount_t*)fs_ctx;
+  if(mount == NULL) {
+    return false;
+  }
+  if(fs_file_truncate(mount, path)) {
+    return true;
+  }
+  if(path != NULL && path[0] == '/' && path[1] != '\0') {
+    return fs_file_truncate(mount, path + 1);
+  }
+  return false;
+}
+
 static void fat32_destroy_adapter(void* fs_ctx) {
   fs_unmount((fs_mount_t*)fs_ctx);
 }
@@ -750,6 +797,8 @@ static const vfs_fs_driver_t fat32_driver = {
   .read_all = fat32_read_all_adapter,
   .write = fat32_write_adapter,
   .write_all = fat32_write_all_adapter,
+  .create_file = fat32_create_file_adapter,
+  .truncate_file = fat32_truncate_file_adapter,
   .open = fat32_open_adapter,
   .unlink = fat32_unlink_adapter,
   .destroy = fat32_destroy_adapter,

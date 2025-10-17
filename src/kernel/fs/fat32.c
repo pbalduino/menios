@@ -2095,23 +2095,6 @@ int fat32_open_adapter(void* fs_ctx, const char* path, int flags, file_t** out_f
     return -1;
   }
 
-  fs_mount_t* mount = (fs_mount_t*)fs_ctx;
-  fat32_fs_t* fs = &mount->fat32;
-
-  bool exclusive = (flags & O_EXCL) != 0;
-
-  if((flags & O_CREAT) != 0) {
-    if(!fat32_create_entry(fs, path, exclusive, false, NULL)) {
-      return exclusive ? -EEXIST : -EIO;
-    }
-  }
-
-  if((flags & O_TRUNC) != 0) {
-    if(!fat32_truncate_file_entry(fs, path)) {
-      return -EIO;
-    }
-  }
-
   return -ENOSYS;
 }
 

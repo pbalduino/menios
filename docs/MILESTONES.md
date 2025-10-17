@@ -424,6 +424,13 @@ Recommended completion order for maximum impact:
   - Added exported wrappers: `fs_path_create_file()` and `fs_file_truncate()`
   - Exposed existing FAT32 internal functions to VFS layer
   - Foundation in place for O_CREAT/O_TRUNC support (#292)
+- **2025-10-17**: Closed #292 (VFS O_CREAT/O_TRUNC/O_EXCL support) ✅
+  - Part of #189 (FAT32 write support) - Phase 2 complete
+  - VFS now honors O_CREAT flag for file creation
+  - VFS now honors O_TRUNC flag for truncating existing files
+  - VFS now honors O_EXCL flag for atomic file creation
+  - Removed `-ENOSYS` guard for write operations
+  - Userland programs can now create and overwrite files via `open()`
 
 ---
 
