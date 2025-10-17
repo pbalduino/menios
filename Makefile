@@ -656,8 +656,9 @@ ifeq ($(OS_NAME),linux)
 		src/kernel/proc/kmutex.c \
 	src/kernel/proc/signal.c \
 	src/kernel/ipc/shm.c \
-	src/kernel/user/vm_region.c \
+			src/kernel/user/vm_region.c \
 		src/kernel/timer/tsc.c \
+		src/kernel/block/block_cache.c \
 		src/libc/itoa.c \
 	src/libc/string.c \
 		src/libc/time.c \
@@ -690,6 +691,7 @@ ifeq ($(OS_NAME),linux)
 		src/kernel/ipc/shm.c \
 		src/kernel/user/vm_region.c \
 		src/kernel/timer/tsc.c \
+		src/kernel/block/block_cache.c \
 		src/libc/itoa.c \
 		src/libc/string.c \
 		src/libc/time.c \
@@ -787,6 +789,7 @@ ifeq ($(OS_NAME),linux)
 		src/kernel/user/vm_region.c \
 		src/kernel/timer/tsc.c \
 		src/kernel/mem/kmalloc.c \
+		src/kernel/block/block_cache.c \
 		src/libc/itoa.c \
 		src/libc/string.c \
 		src/libc/time.c \
@@ -819,6 +822,7 @@ ifeq ($(OS_NAME),linux)
 		src/kernel/ipc/shm.c \
 		src/kernel/user/vm_region.c \
 		src/kernel/timer/tsc.c \
+		src/kernel/block/block_cache.c \
 		src/libc/itoa.c \
 		src/libc/string.c \
 		src/libc/time.c \

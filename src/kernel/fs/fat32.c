@@ -9,6 +9,7 @@
 #include <sys/fcntl.h>
 
 #include <kernel/block_device.h>
+#include <kernel/block_cache.h>
 #include <kernel/heap.h>
 #include <kernel/serial.h>
 #include <kernel/file.h>
@@ -381,8 +382,25 @@ static bool fat32_read_cluster(const fat32_fs_t* fs, uint32_t cluster, void* buf
     return false;
   }
 
+  block_device_t* device = fs->device;
+  if(device == NULL || device->block_size == 0) {
+    return false;
+  }
+
   uint64_t lba = fs->data_start_lba + (uint64_t)(cluster - 2u) * fs->sectors_per_cluster;
-  return block_device_read(fs->device, lba, buffer, fs->sectors_per_cluster);
+  uint8_t* out = (uint8_t*)buffer;
+  size_t sector_size = device->block_size;
+
+  for(uint32_t i = 0; i < fs->sectors_per_cluster; i++) {
+    buffer_head_t* bh = bread(device, lba + i);
+    if(bh == NULL) {
+      return false;
+    }
+    memcpy(out + i * sector_size, bh->data, sector_size);
+    brelse(bh);
+  }
+
+  return true;
 }
 
 static bool fat32_write_cluster(const fat32_fs_t* fs, uint32_t cluster, const void* buffer) {
@@ -390,19 +408,64 @@ static bool fat32_write_cluster(const fat32_fs_t* fs, uint32_t cluster, const vo
     return false;
   }
 
+  block_device_t* device = fs->device;
+  if(device == NULL || device->block_size == 0) {
+    return false;
+  }
+
   uint64_t lba = fs->data_start_lba + (uint64_t)(cluster - 2u) * fs->sectors_per_cluster;
-  return block_device_write(fs->device, lba, buffer, fs->sectors_per_cluster);
+  const uint8_t* src = (const uint8_t*)buffer;
+  size_t sector_size = device->block_size;
+
+  for(uint32_t i = 0; i < fs->sectors_per_cluster; i++) {
+    buffer_head_t* bh = bget(device, lba + i);
+    if(bh == NULL) {
+      return false;
+    }
+    memcpy(bh->data, src + i * sector_size, sector_size);
+    bh->block_size = sector_size;
+    bh->valid = true;
+    bdirty(bh);
+    if(!bwrite(bh)) {
+      brelse(bh);
+      return false;
+    }
+    brelse(bh);
+  }
+
+  return true;
 }
 
 static bool fat32_zero_cluster(const fat32_fs_t* fs, uint32_t cluster) {
-  uint8_t* zero = kmalloc(fs->cluster_size_bytes);
-  if(zero == NULL) {
+  if(cluster < 2u) {
     return false;
   }
-  memset(zero, 0, fs->cluster_size_bytes);
-  bool ok = fat32_write_cluster(fs, cluster, zero);
-  kfree(zero);
-  return ok;
+
+  block_device_t* device = fs->device;
+  if(device == NULL || device->block_size == 0) {
+    return false;
+  }
+
+  uint64_t lba = fs->data_start_lba + (uint64_t)(cluster - 2u) * fs->sectors_per_cluster;
+  size_t sector_size = device->block_size;
+
+  for(uint32_t i = 0; i < fs->sectors_per_cluster; i++) {
+    buffer_head_t* bh = bget(device, lba + i);
+    if(bh == NULL) {
+      return false;
+    }
+    memset(bh->data, 0, sector_size);
+    bh->block_size = sector_size;
+    bh->valid = true;
+    bdirty(bh);
+    if(!bwrite(bh)) {
+      brelse(bh);
+      return false;
+    }
+    brelse(bh);
+  }
+
+  return true;
 }
 
 static size_t fat32_count_clusters(const fat32_fs_t* fs,
