@@ -33,12 +33,15 @@ typedef struct vfs_file_buffer_t {
   size_t                 offset;
   bool                   dirty;
   bool                   writable;
+  bool                   streaming;
+  bool                   size_known;
   const vfs_fs_driver_t* driver;
   void*                  fs_ctx;
   char                   relative[VFS_PATH_MAX];
 } vfs_file_buffer_t;
 
 static const file_ops_t vfs_file_ops;
+static bool vfs_stream_refresh_size(vfs_file_buffer_t* ctx);
 
 static vfs_mount_entry_t* vfs_mounts = NULL;
 static kmutex_t           vfs_lock;
@@ -429,7 +432,26 @@ static int64_t vfs_file_read_impl(file_t* file, void* buffer, size_t length) {
   }
 
   vfs_file_buffer_t* ctx = (vfs_file_buffer_t*)file->private_data;
-  if(ctx == NULL || ctx->data == NULL) {
+  if(ctx == NULL) {
+    return -EINVAL;
+  }
+
+  if(ctx->streaming) {
+    if(ctx->driver == NULL || ctx->driver->read == NULL) {
+      return -ENOSYS;
+    }
+    size_t bytes = 0;
+    if(!ctx->driver->read(ctx->fs_ctx, ctx->relative, ctx->offset, buffer, length, &bytes)) {
+      return -EIO;
+    }
+    ctx->offset += bytes;
+    if(ctx->size_known && ctx->offset > ctx->size) {
+      ctx->size = ctx->offset;
+    }
+    return (int64_t)bytes;
+  }
+
+  if(ctx->data == NULL) {
     return -EINVAL;
   }
 
@@ -450,7 +472,7 @@ static int64_t vfs_file_write_impl(file_t* file, const void* buffer, size_t leng
   }
 
   vfs_file_buffer_t* ctx = (vfs_file_buffer_t*)file->private_data;
-  if(ctx == NULL || ctx->data == NULL) {
+  if(ctx == NULL) {
     return -EINVAL;
   }
 
@@ -460,6 +482,30 @@ static int64_t vfs_file_write_impl(file_t* file, const void* buffer, size_t leng
 
   if(length == 0) {
     return 0;
+  }
+
+  if(ctx->streaming) {
+    if(ctx->driver == NULL || ctx->driver->write == NULL) {
+      return -ENOSYS;
+    }
+    size_t written = 0;
+    if(!ctx->driver->write(ctx->fs_ctx, ctx->relative, ctx->offset, buffer, length, &written)) {
+      return -EIO;
+    }
+    ctx->offset += written;
+    if(ctx->size_known) {
+      if(ctx->offset > ctx->size) {
+        ctx->size = ctx->offset;
+      }
+    } else {
+      ctx->size = ctx->offset;
+      ctx->size_known = true;
+    }
+    return (int64_t)written;
+  }
+
+  if(ctx->data == NULL) {
+    return -EINVAL;
   }
 
   size_t required = ctx->offset + length;
@@ -503,7 +549,7 @@ static int vfs_file_close_impl(file_t* file) {
   }
 
   int rc = 0;
-  if(ctx->dirty && ctx->writable && ctx->driver && ctx->driver->write_all) {
+  if(!ctx->streaming && ctx->dirty && ctx->writable && ctx->driver && ctx->driver->write_all) {
     if(!ctx->driver->write_all(ctx->fs_ctx, ctx->relative, ctx->data, ctx->size)) {
       rc = -EIO;
     }
@@ -536,6 +582,11 @@ static int64_t vfs_file_seek_impl(file_t* file, int64_t offset, int whence) {
       base = (int64_t)ctx->offset;
       break;
     case SEEK_END:
+      if(ctx->streaming && !ctx->size_known) {
+        if(!vfs_stream_refresh_size(ctx)) {
+          return -ENOSYS;
+        }
+      }
       base = (int64_t)ctx->size;
       break;
     default:
@@ -543,8 +594,21 @@ static int64_t vfs_file_seek_impl(file_t* file, int64_t offset, int whence) {
   }
 
   int64_t new_offset = base + offset;
-  if(new_offset < 0 || (uint64_t)new_offset > ctx->size) {
+  if(new_offset < 0) {
     return -EINVAL;
+  }
+
+  if(!ctx->streaming) {
+    if((uint64_t)new_offset > ctx->size) {
+      return -EINVAL;
+    }
+  } else if(ctx->size_known && (uint64_t)new_offset > ctx->size) {
+    if(ctx->writable) {
+      ctx->size = (size_t)new_offset;
+      ctx->size_known = true;
+    } else {
+      return -EINVAL;
+    }
   }
 
   ctx->offset = (size_t)new_offset;
@@ -578,12 +642,20 @@ static int vfs_open_buffered(const vfs_fs_driver_t* driver,
     return -EROFS;
   }
 
-  if(write_requested && driver->write_all == NULL) {
-    return -ENOSYS;
+  bool streaming = false;
+  if(write_requested || metadata_mutation) {
+    if(driver->write == NULL) {
+      return -ENOSYS;
+    }
+    streaming = true;
   }
 
-  if(driver->read_all == NULL) {
-    return -ENOSYS;
+  if(!streaming && driver->read_all == NULL) {
+    if(driver->read != NULL) {
+      streaming = true;
+    } else {
+      return -ENOSYS;
+    }
   }
 
   if(flags & O_CREAT) {
@@ -607,6 +679,83 @@ static int vfs_open_buffered(const vfs_fs_driver_t* driver,
     }
   }
 
+  size_t file_size = 0;
+  bool size_known = false;
+
+  if(streaming) {
+    if((flags & O_TRUNC) || (flags & O_CREAT)) {
+      file_size = 0;
+      size_known = true;
+    } else if(driver->stat && driver->stat(fs_ctx, relative_path, &file_size)) {
+      size_known = true;
+    } else if(driver->read_all != NULL && !metadata_mutation) {
+      void* tmp = NULL;
+      size_t tmp_size = 0;
+      if(driver->read_all(fs_ctx, relative_path, &tmp, &tmp_size)) {
+        file_size = tmp_size;
+        size_known = true;
+      }
+      if(tmp) {
+        kfree(tmp);
+      }
+    }
+  }
+
+  if(streaming) {
+    vfs_file_buffer_t* ctx = kmalloc(sizeof(vfs_file_buffer_t));
+    if(ctx == NULL) {
+      return -ENOMEM;
+    }
+
+    ctx->data = NULL;
+    ctx->size = size_known ? file_size : 0;
+    ctx->capacity = 0;
+    ctx->offset = 0;
+    ctx->dirty = false;
+    ctx->writable = writable;
+    ctx->streaming = true;
+    ctx->size_known = size_known;
+    ctx->driver = driver;
+    ctx->fs_ctx = fs_ctx;
+    strncpy(ctx->relative, relative_path, sizeof(ctx->relative) - 1);
+    ctx->relative[sizeof(ctx->relative) - 1] = '\0';
+
+    if(append_requested) {
+      if(!ctx->size_known && !vfs_stream_refresh_size(ctx) && driver->read_all != NULL) {
+        void* tmp = NULL;
+        size_t tmp_size = 0;
+        if(driver->read_all(fs_ctx, relative_path, &tmp, &tmp_size)) {
+          ctx->size = tmp_size;
+          ctx->size_known = true;
+        }
+        if(tmp) {
+          kfree(tmp);
+        }
+      }
+      if(ctx->size_known) {
+        ctx->offset = ctx->size;
+      }
+    }
+
+    uint32_t mode = FILE_MODE_READ;
+    if(writable) {
+      mode |= FILE_MODE_WRITE;
+    }
+
+    file_t* file = file_create(&vfs_file_ops, ctx, mode);
+    if(file == NULL) {
+      kfree(ctx);
+      return -ENOMEM;
+    }
+
+    *out_file = file;
+    return 0;
+  }
+
+  if(driver->read_all == NULL) {
+    return -ENOSYS;
+  }
+
   void* data = NULL;
   size_t size = 0;
   if(!driver->read_all(fs_ctx, relative_path, &data, &size)) {
@@ -628,6 +777,8 @@ static int vfs_open_buffered(const vfs_fs_driver_t* driver,
   ctx->offset = 0;
   ctx->dirty = false;
   ctx->writable = writable;
+  ctx->streaming = false;
+  ctx->size_known = true;
   ctx->driver = driver;
   ctx->fs_ctx = fs_ctx;
   strncpy(ctx->relative, relative_path, sizeof(ctx->relative) - 1);
@@ -759,6 +910,17 @@ static bool fat32_write_all_adapter(void* fs_ctx, const char* path, const void* 
   return ok;
 }
 
+static bool fat32_stat_adapter(void* fs_ctx, const char* path, size_t* out_size) {
+  const fs_mount_t* mount = (const fs_mount_t*)fs_ctx;
+  if(fs_file_stat(mount, path, out_size)) {
+    return true;
+  }
+  if(path != NULL && path[0] == '/' && path[1] != '\0') {
+    return fs_file_stat(mount, path + 1, out_size);
+  }
+  return false;
+}
+
 static bool fat32_create_file_adapter(void* fs_ctx, const char* path, bool exclusive) {
   const fs_mount_t* mount = (const fs_mount_t*)fs_ctx;
   if(mount == NULL) {
@@ -799,10 +961,24 @@ static const vfs_fs_driver_t fat32_driver = {
   .write_all = fat32_write_all_adapter,
   .create_file = fat32_create_file_adapter,
   .truncate_file = fat32_truncate_file_adapter,
+  .stat = fat32_stat_adapter,
   .open = fat32_open_adapter,
   .unlink = fat32_unlink_adapter,
   .destroy = fat32_destroy_adapter,
 };
+
+static bool vfs_stream_refresh_size(vfs_file_buffer_t* ctx) {
+  if(ctx == NULL || !ctx->streaming || ctx->driver == NULL || ctx->driver->stat == NULL) {
+    return false;
+  }
+  size_t new_size = 0;
+  if(ctx->driver->stat(ctx->fs_ctx, ctx->relative, &new_size)) {
+    ctx->size = new_size;
+    ctx->size_known = true;
+    return true;
+  }
+  return false;
+}
 
 bool vfs_mount_fat32_root(block_device_t* device) {
   static bool mounted = false;

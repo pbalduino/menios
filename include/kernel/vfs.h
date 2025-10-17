@@ -26,6 +26,7 @@ typedef struct vfs_fs_driver_t {
   bool (*write_all)(void* fs_ctx, const char* path, const void* buffer, size_t size);
   bool (*create_file)(void* fs_ctx, const char* path, bool exclusive);
   bool (*truncate_file)(void* fs_ctx, const char* path);
+  bool (*stat)(void* fs_ctx, const char* path, size_t* out_size);
   int (*open)(void* fs_ctx, const char* path, int flags, file_t** out_file);
   int (*unlink)(void* fs_ctx, const char* path);
   void (*destroy)(void* fs_ctx);

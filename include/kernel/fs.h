@@ -37,6 +37,7 @@ bool fs_file_read(const fs_mount_t* mount, const char* path, size_t offset, void
 bool fs_file_read_all(const fs_mount_t* mount, const char* path, void** out_buffer, size_t* out_size);
 bool fs_file_write(const fs_mount_t* mount, const char* path, size_t offset, const void* buffer, size_t length, size_t* bytes_written);
 bool fs_file_write_all(const fs_mount_t* mount, const char* path, const void* buffer, size_t size);
+bool fs_file_stat(const fs_mount_t* mount, const char* path, size_t* out_size);
 bool fs_file_create(const fs_mount_t* mount, const char* path, bool exclusive);
 bool fs_file_truncate(const fs_mount_t* mount, const char* path);
 bool fs_directory_create(const fs_mount_t* mount, const char* path, bool exclusive);

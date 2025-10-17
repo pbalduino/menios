@@ -299,14 +299,20 @@ bool block_device_read(block_device_t* device, uint64_t lba, void* buffer, size_
   if(lba + block_count > device->block_count) {
     return false;
   }
-  if(block_cache_try_read(device, lba, buffer, block_count)) {
-    return true;
+  uint8_t* out = (uint8_t*)buffer;
+  size_t block_size = device->block_size;
+  for(size_t i = 0; i < block_count; i++) {
+    buffer_head_t* bh = bread(device, lba + i);
+    if(bh == NULL) {
+      for(size_t j = 0; j < i; j++) {
+        // previously read buffers already released
+      }
+      return false;
+    }
+    memcpy(out + i * block_size, bh->data, block_size);
+    brelse(bh);
   }
-  bool ok = block_device_submit(device, lba, buffer, block_count, false);
-  if(ok) {
-    block_cache_store(device, lba, buffer, block_count);
-  }
-  return ok;
+  return true;
 }
 
 bool block_device_write(block_device_t* device, uint64_t lba, const void* buffer, size_t block_count) {
@@ -319,11 +325,24 @@ bool block_device_write(block_device_t* device, uint64_t lba, const void* buffer
   if(lba + block_count > device->block_count) {
     return false;
   }
-  bool ok = block_device_submit(device, lba, (void*)buffer, block_count, true);
-  if(ok) {
-    block_cache_update(device, lba, buffer, block_count);
+  const uint8_t* src = (const uint8_t*)buffer;
+  size_t block_size = device->block_size;
+  for(size_t i = 0; i < block_count; i++) {
+    buffer_head_t* bh = bget(device, lba + i);
+    if(bh == NULL) {
+      return false;
+    }
+    memcpy(bh->data, src + i * block_size, block_size);
+    bh->block_size = block_size;
+    bh->valid = true;
+    bdirty(bh);
+    if(!bwrite(bh)) {
+      brelse(bh);
+      return false;
+    }
+    brelse(bh);
   }
-  return ok;
+  return true;
 }
 
 bool block_device_flush(block_device_t* device) {

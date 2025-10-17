@@ -1,218 +1,405 @@
 #include <kernel/block_cache.h>
 
-#include <string.h>
-
+#include <kernel/condvar.h>
 #include <kernel/heap.h>
 #include <kernel/mutex.h>
 #include <kernel/serial.h>
 
-#define BLOCK_CACHE_MAX_ENTRIES     256u
-#define BLOCK_CACHE_MAX_BLOCK_BYTES 4096u
+#include <string.h>
 
-typedef struct block_cache_entry_t {
-  block_device_t*            device;
-  uint64_t                   lba;
-  size_t                     block_size;
-  struct block_cache_entry_t* prev;
-  struct block_cache_entry_t* next;
-  bool                       valid;
-  uint8_t                    data[BLOCK_CACHE_MAX_BLOCK_BYTES];
-} block_cache_entry_t;
+#define BCACHE_MAX_BUFFERS        512u
+#define BCACHE_HASH_BUCKETS       256u
+#define BCACHE_MAX_BLOCK_BYTES    4096u
 
-static bool                 block_cache_initialized = false;
-static kmutex_t             block_cache_lock;
-static block_cache_entry_t  block_cache_entries[BLOCK_CACHE_MAX_ENTRIES];
-static block_cache_entry_t* block_cache_lru_head = NULL;
-static block_cache_entry_t* block_cache_lru_tail = NULL;
+typedef struct buffer_slot {
+  buffer_head_t head;
+  uint8_t       storage[BCACHE_MAX_BLOCK_BYTES];
+} buffer_slot_t;
 
-static bool block_cache_device_supported(block_device_t* device) {
-  if(device == NULL) {
-    return false;
-  }
-  if(device->block_size == 0 || device->block_size > BLOCK_CACHE_MAX_BLOCK_BYTES) {
-    return false;
-  }
-  return true;
+static bool          bcache_initialized = false;
+static kmutex_t      bcache_lock;
+static kcondvar_t    bcache_cv;
+static buffer_slot_t bcache_pool[BCACHE_MAX_BUFFERS];
+static buffer_head_t* bcache_hash[BCACHE_HASH_BUCKETS];
+static buffer_head_t* bcache_lru_head = NULL;
+static buffer_head_t* bcache_lru_tail = NULL;
+
+static inline uint32_t bcache_hash_key(block_device_t* device, uint64_t lba) {
+  return (uint32_t)(((uintptr_t)device >> 4) ^ (uint32_t)lba) & (BCACHE_HASH_BUCKETS - 1u);
 }
 
-static void block_cache_lru_detach(block_cache_entry_t* entry) {
-  if(entry->prev) {
-    entry->prev->next = entry->next;
+static void bcache_lru_detach(buffer_head_t* bh) {
+  if(bh->lru_prev) {
+    bh->lru_prev->lru_next = bh->lru_next;
   }
-  if(entry->next) {
-    entry->next->prev = entry->prev;
+  if(bh->lru_next) {
+    bh->lru_next->lru_prev = bh->lru_prev;
   }
-  if(block_cache_lru_head == entry) {
-    block_cache_lru_head = entry->next;
+  if(bcache_lru_head == bh) {
+    bcache_lru_head = bh->lru_next;
   }
-  if(block_cache_lru_tail == entry) {
-    block_cache_lru_tail = entry->prev;
+  if(bcache_lru_tail == bh) {
+    bcache_lru_tail = bh->lru_prev;
   }
-  entry->prev = NULL;
-  entry->next = NULL;
+  bh->lru_prev = NULL;
+  bh->lru_next = NULL;
 }
 
-static void block_cache_lru_push_front(block_cache_entry_t* entry) {
-  entry->prev = NULL;
-  entry->next = block_cache_lru_head;
-  if(block_cache_lru_head) {
-    block_cache_lru_head->prev = entry;
+static void bcache_lru_push_front(buffer_head_t* bh) {
+  bh->lru_prev = NULL;
+  bh->lru_next = bcache_lru_head;
+  if(bcache_lru_head) {
+    bcache_lru_head->lru_prev = bh;
   }
-  block_cache_lru_head = entry;
-  if(block_cache_lru_tail == NULL) {
-    block_cache_lru_tail = entry;
+  bcache_lru_head = bh;
+  if(bcache_lru_tail == NULL) {
+    bcache_lru_tail = bh;
   }
 }
 
-static block_cache_entry_t* block_cache_find(block_device_t* device, uint64_t lba) {
-  for(block_cache_entry_t* entry = block_cache_lru_head; entry != NULL; entry = entry->next) {
-    if(entry->valid && entry->device == device && entry->lba == lba) {
-      return entry;
+static void bcache_hash_insert(buffer_head_t* bh) {
+  uint32_t key = bcache_hash_key(bh->device, bh->lba);
+  bh->hash_next = bcache_hash[key];
+  bcache_hash[key] = bh;
+}
+
+static void bcache_hash_remove(buffer_head_t* bh) {
+  uint32_t key = bcache_hash_key(bh->device, bh->lba);
+  buffer_head_t** prev = &bcache_hash[key];
+  while(*prev) {
+    if(*prev == bh) {
+      *prev = bh->hash_next;
+      bh->hash_next = NULL;
+      return;
+    }
+    prev = &(*prev)->hash_next;
+  }
+}
+
+static buffer_head_t* bcache_hash_lookup(block_device_t* device, uint64_t lba) {
+  uint32_t key = bcache_hash_key(device, lba);
+  for(buffer_head_t* bh = bcache_hash[key]; bh != NULL; bh = bh->hash_next) {
+    if(bh->valid && bh->device == device && bh->lba == lba) {
+      return bh;
     }
   }
   return NULL;
 }
 
-static block_cache_entry_t* block_cache_acquire_entry(block_device_t* device, uint64_t lba, size_t block_size) {
-  block_cache_entry_t* entry = block_cache_find(device, lba);
-  if(entry) {
-    block_cache_lru_detach(entry);
-    block_cache_lru_push_front(entry);
-    return entry;
-  }
-
-  for(size_t i = 0; i < BLOCK_CACHE_MAX_ENTRIES; i++) {
-    if(!block_cache_entries[i].valid) {
-      entry = &block_cache_entries[i];
-      block_cache_lru_detach(entry);
-      block_cache_lru_push_front(entry);
-      entry->device = device;
-      entry->lba = lba;
-      entry->block_size = block_size;
-      entry->valid = true;
-      return entry;
+static buffer_head_t* bcache_select_victim(void) {
+  for(buffer_head_t* bh = bcache_lru_tail; bh != NULL; bh = bh->lru_prev) {
+    if(bh->refcount == 0 && !bh->busy) {
+      return bh;
     }
   }
-
-  entry = block_cache_lru_tail;
-  if(entry == NULL) {
-    return NULL;
-  }
-
-  block_cache_lru_detach(entry);
-  entry->device = device;
-  entry->lba = lba;
-  entry->block_size = block_size;
-  entry->valid = true;
-  block_cache_lru_push_front(entry);
-  return entry;
+  return NULL;
 }
 
-static void block_cache_invalidate_entry(block_cache_entry_t* entry) {
-  if(entry == NULL) {
+static bool bcache_flush_locked(buffer_head_t* bh) {
+  if(bh == NULL || !bh->dirty || !bh->valid || bh->device == NULL) {
+    return true;
+  }
+  block_device_t* dev = bh->device;
+  if(dev->ops == NULL || dev->ops->write_blocks == NULL) {
+    return false;
+  }
+  uint64_t lba = bh->lba;
+  uint32_t block_size = bh->block_size;
+  uint8_t local[BCACHE_MAX_BLOCK_BYTES];
+  memcpy(local, bh->data, block_size);
+  kmutex_unlock(&bcache_lock);
+  bool ok = dev->ops->write_blocks(dev, lba, local, 1);
+  kmutex_lock(&bcache_lock);
+  if(ok) {
+    bh->dirty = false;
+  }
+  return ok;
+}
+
+static buffer_head_t* bcache_alloc_locked(void) {
+  for(size_t i = 0; i < BCACHE_MAX_BUFFERS; i++) {
+    buffer_head_t* bh = &bcache_pool[i].head;
+    if(!bh->allocated) {
+      bh->allocated = true;
+      bh->data = bcache_pool[i].storage;
+      return bh;
+    }
+  }
+  return NULL;
+}
+
+static buffer_head_t* bcache_get_locked(block_device_t* device, uint64_t lba, bool* fresh_block) {
+  while(true) {
+    buffer_head_t* bh = bcache_hash_lookup(device, lba);
+    if(bh != NULL) {
+      if(bh->busy) {
+        kcondvar_wait(&bcache_cv, &bcache_lock);
+        continue;
+      }
+      bh->busy = true;
+      bh->refcount++;
+      bcache_lru_detach(bh);
+      bcache_lru_push_front(bh);
+      *fresh_block = false;
+      return bh;
+    }
+
+    buffer_head_t* victim = bcache_select_victim();
+    if(victim == NULL) {
+      buffer_head_t* unused = bcache_alloc_locked();
+      if(unused) {
+        victim = unused;
+        victim->refcount = 0;
+        victim->dirty = false;
+        victim->valid = false;
+        victim->busy = false;
+        victim->device = NULL;
+        victim->lba = 0;
+        victim->block_size = 0;
+      }
+    }
+
+    if(victim == NULL) {
+      kcondvar_wait(&bcache_cv, &bcache_lock);
+      continue;
+    }
+
+    victim->busy = true;
+
+    if(victim->valid && victim->dirty) {
+      if(!bcache_flush_locked(victim)) {
+        serial_printf("block_cache: failed to flush dirty buffer (device=%p lba=%llu)\n",
+                      victim->device,
+                      (unsigned long long)victim->lba);
+      }
+    }
+
+    if(victim->valid) {
+      bcache_hash_remove(victim);
+    }
+
+    victim->device = device;
+    victim->lba = lba;
+    victim->block_size = device->block_size;
+    victim->valid = false;
+    victim->dirty = false;
+    victim->refcount = 1;
+    bcache_hash_insert(victim);
+    bcache_lru_detach(victim);
+    bcache_lru_push_front(victim);
+    *fresh_block = true;
+    return victim;
+  }
+}
+
+static void bcache_release_locked(buffer_head_t* bh) {
+  if(bh == NULL) {
     return;
   }
-  block_cache_lru_detach(entry);
-  entry->valid = false;
-  entry->device = NULL;
-  entry->lba = 0;
-  entry->block_size = 0;
+  if(bh->refcount == 0) {
+    return;
+  }
+  bh->refcount--;
+  bh->busy = false;
+  bcache_lru_detach(bh);
+  bcache_lru_push_front(bh);
+  kcondvar_broadcast(&bcache_cv);
 }
 
 void block_cache_init(void) {
-  if(block_cache_initialized) {
+  if(bcache_initialized) {
     return;
   }
-  kmutex_init(&block_cache_lock);
-  memset(block_cache_entries, 0, sizeof(block_cache_entries));
-  block_cache_lru_head = NULL;
-  block_cache_lru_tail = NULL;
-  block_cache_initialized = true;
+  kmutex_init(&bcache_lock);
+  kcondvar_init(&bcache_cv);
+  memset(bcache_hash, 0, sizeof(bcache_hash));
+  memset(bcache_pool, 0, sizeof(bcache_pool));
+  bcache_lru_head = NULL;
+  bcache_lru_tail = NULL;
+  for(size_t i = 0; i < BCACHE_MAX_BUFFERS; i++) {
+    buffer_head_t* bh = &bcache_pool[i].head;
+    bh->data = bcache_pool[i].storage;
+  }
+  bcache_initialized = true;
 }
 
 void block_cache_shutdown(void) {
-  if(!block_cache_initialized) {
+  if(!bcache_initialized) {
     return;
   }
-  kmutex_lock(&block_cache_lock);
-  for(size_t i = 0; i < BLOCK_CACHE_MAX_ENTRIES; i++) {
-    block_cache_invalidate_entry(&block_cache_entries[i]);
+  kmutex_lock(&bcache_lock);
+  for(size_t i = 0; i < BCACHE_MAX_BUFFERS; i++) {
+    buffer_head_t* bh = &bcache_pool[i].head;
+    if(bh->dirty && bh->valid) {
+      bcache_flush_locked(bh);
+    }
+    bh->allocated = false;
+    bh->valid = false;
+    bh->dirty = false;
+    bh->busy = false;
+    bh->refcount = 0;
+    bh->device = NULL;
+    bh->lba = 0;
+    bh->block_size = 0;
+    bh->hash_next = NULL;
+    bh->lru_prev = NULL;
+    bh->lru_next = NULL;
   }
-  block_cache_lru_head = NULL;
-  block_cache_lru_tail = NULL;
-  kmutex_unlock(&block_cache_lock);
-  block_cache_initialized = false;
+  memset(bcache_hash, 0, sizeof(bcache_hash));
+  bcache_lru_head = NULL;
+  bcache_lru_tail = NULL;
+  bcache_initialized = false;
+  kmutex_unlock(&bcache_lock);
 }
 
-bool block_cache_try_read(block_device_t* device, uint64_t lba, void* buffer, size_t block_count) {
-  if(!block_cache_initialized || !block_cache_device_supported(device) || buffer == NULL || block_count == 0) {
+buffer_head_t* bread(block_device_t* device, uint64_t lba) {
+  if(device == NULL || device->block_size == 0 || device->block_size > BCACHE_MAX_BLOCK_BYTES) {
+    return NULL;
+  }
+  if(device->ops == NULL || device->ops->read_blocks == NULL) {
+    return NULL;
+  }
+
+  kmutex_lock(&bcache_lock);
+  bool fresh = false;
+  buffer_head_t* bh = bcache_get_locked(device, lba, &fresh);
+  kmutex_unlock(&bcache_lock);
+  if(bh == NULL) {
+    return NULL;
+  }
+
+  if(fresh) {
+    if(!device->ops->read_blocks(device, lba, bh->data, 1)) {
+      kmutex_lock(&bcache_lock);
+      bh->valid = false;
+      bh->refcount = 0;
+      bh->busy = false;
+      bcache_hash_remove(bh);
+      bcache_lru_detach(bh);
+      bcache_lru_push_front(bh);
+      kcondvar_broadcast(&bcache_cv);
+      kmutex_unlock(&bcache_lock);
+      return NULL;
+    }
+    kmutex_lock(&bcache_lock);
+    bh->valid = true;
+    bh->dirty = false;
+    bh->block_size = device->block_size;
+    kmutex_unlock(&bcache_lock);
+  }
+
+  return bh;
+}
+
+buffer_head_t* bget(block_device_t* device, uint64_t lba) {
+  if(device == NULL || device->block_size == 0 || device->block_size > BCACHE_MAX_BLOCK_BYTES) {
+    return NULL;
+  }
+  kmutex_lock(&bcache_lock);
+  bool fresh = false;
+  buffer_head_t* bh = bcache_get_locked(device, lba, &fresh);
+  kmutex_unlock(&bcache_lock);
+  if(bh == NULL) {
+    return NULL;
+  }
+  if(fresh) {
+    memset(bh->data, 0, device->block_size);
+    kmutex_lock(&bcache_lock);
+    bh->valid = true;
+    kmutex_unlock(&bcache_lock);
+  }
+  return bh;
+}
+
+void bdirty(buffer_head_t* bh) {
+  if(bh == NULL) {
+    return;
+  }
+  kmutex_lock(&bcache_lock);
+  bh->dirty = true;
+  kmutex_unlock(&bcache_lock);
+}
+
+bool bwrite(buffer_head_t* bh) {
+  if(bh == NULL || bh->device == NULL || bh->device->ops == NULL || bh->device->ops->write_blocks == NULL) {
+    return false;
+  }
+  uint8_t local[BCACHE_MAX_BLOCK_BYTES];
+  block_device_t* dev;
+  uint64_t lba;
+  uint32_t block_size;
+
+  kmutex_lock(&bcache_lock);
+  dev = bh->device;
+  lba = bh->lba;
+  block_size = bh->block_size;
+  memcpy(local, bh->data, block_size);
+  kmutex_unlock(&bcache_lock);
+
+  if(!dev->ops->write_blocks(dev, lba, local, 1)) {
     return false;
   }
 
-  uint8_t* out = (uint8_t*)buffer;
-  kmutex_lock(&block_cache_lock);
-  for(size_t idx = 0; idx < block_count; idx++) {
-    block_cache_entry_t* entry = block_cache_find(device, lba + idx);
-    if(entry == NULL || !entry->valid || entry->block_size != device->block_size) {
-      kmutex_unlock(&block_cache_lock);
-      return false;
-    }
-    block_cache_lru_detach(entry);
-    block_cache_lru_push_front(entry);
-    memcpy(out + idx * device->block_size, entry->data, device->block_size);
-  }
-  kmutex_unlock(&block_cache_lock);
+  kmutex_lock(&bcache_lock);
+  bh->dirty = false;
+  kmutex_unlock(&bcache_lock);
   return true;
 }
 
-void block_cache_store(block_device_t* device, uint64_t lba, const void* buffer, size_t block_count) {
-  if(!block_cache_initialized || !block_cache_device_supported(device) || buffer == NULL || block_count == 0) {
+void brelse(buffer_head_t* bh) {
+  if(bh == NULL) {
     return;
   }
-
-  const uint8_t* src = (const uint8_t*)buffer;
-  kmutex_lock(&block_cache_lock);
-  for(size_t idx = 0; idx < block_count; idx++) {
-    block_cache_entry_t* entry = block_cache_acquire_entry(device, lba + idx, device->block_size);
-    if(entry == NULL) {
-      continue;
-    }
-    memcpy(entry->data, src + idx * device->block_size, device->block_size);
-  }
-  kmutex_unlock(&block_cache_lock);
-}
-
-void block_cache_update(block_device_t* device, uint64_t lba, const void* buffer, size_t block_count) {
-  if(!block_cache_initialized || !block_cache_device_supported(device) || buffer == NULL || block_count == 0) {
-    return;
-  }
-
-  const uint8_t* src = (const uint8_t*)buffer;
-  kmutex_lock(&block_cache_lock);
-  for(size_t idx = 0; idx < block_count; idx++) {
-    block_cache_entry_t* entry = block_cache_acquire_entry(device, lba + idx, device->block_size);
-    if(entry == NULL) {
-      continue;
-    }
-    memcpy(entry->data, src + idx * device->block_size, device->block_size);
-  }
-  kmutex_unlock(&block_cache_lock);
-}
-
-void block_cache_invalidate_device(block_device_t* device) {
-  if(!block_cache_initialized || device == NULL) {
-    return;
-  }
-  kmutex_lock(&block_cache_lock);
-  for(size_t i = 0; i < BLOCK_CACHE_MAX_ENTRIES; i++) {
-    if(block_cache_entries[i].valid && block_cache_entries[i].device == device) {
-      block_cache_invalidate_entry(&block_cache_entries[i]);
-    }
-  }
-  kmutex_unlock(&block_cache_lock);
+  kmutex_lock(&bcache_lock);
+  bcache_release_locked(bh);
+  kmutex_unlock(&bcache_lock);
 }
 
 void block_cache_flush_device(block_device_t* device) {
-  (void)device;
-  // Write-through cache: nothing to flush for now.
+  if(device == NULL) {
+    return;
+  }
+  kmutex_lock(&bcache_lock);
+  for(size_t i = 0; i < BCACHE_MAX_BUFFERS; i++) {
+    buffer_head_t* bh = &bcache_pool[i].head;
+    if(bh->device == device && bh->dirty && bh->valid) {
+      if(!bcache_flush_locked(bh)) {
+        serial_printf("block_cache: flush_device failed (device=%p lba=%llu)\n",
+                      device,
+                      (unsigned long long)bh->lba);
+      }
+    }
+  }
+  kmutex_unlock(&bcache_lock);
+}
+
+void block_cache_invalidate_device(block_device_t* device) {
+  if(device == NULL) {
+    return;
+  }
+  kmutex_lock(&bcache_lock);
+  for(size_t i = 0; i < BCACHE_MAX_BUFFERS; i++) {
+    buffer_head_t* bh = &bcache_pool[i].head;
+    if(bh->device == device) {
+      if(bh->dirty && bh->valid) {
+        if(!bcache_flush_locked(bh)) {
+          serial_printf("block_cache: invalidate flush failed (device=%p lba=%llu)\n",
+                        device,
+                        (unsigned long long)bh->lba);
+        }
+      }
+      if(bh->valid) {
+        bcache_hash_remove(bh);
+      }
+      bh->valid = false;
+      bh->dirty = false;
+      bh->device = NULL;
+      bh->lba = 0;
+      bh->block_size = 0;
+      bcache_lru_detach(bh);
+      bcache_lru_push_front(bh);
+    }
+  }
+  kcondvar_broadcast(&bcache_cv);
+  kmutex_unlock(&bcache_lock);
 }

@@ -45,6 +45,86 @@
     ]
   },
   {
+    "title": "VFS: Streaming I/O and buffer cache",
+    "github_issue": {
+      "number": 294,
+      "url": "https://github.com/pbalduino/menios/issues/294",
+      "state": "OPEN"
+    },
+    "labels": [
+      "enhancement",
+      "performance",
+      "kernel"
+    ],
+    "assignees": [
+      "pbalduino"
+    ]
+  },
+  {
+    "title": "Block cache infrastructure (bread/bwrite/LRU)",
+    "github_issue": {
+      "number": 295,
+      "url": "https://github.com/pbalduino/menios/issues/295",
+      "state": "CLOSED"
+    },
+    "labels": [
+      "enhancement",
+      "performance",
+      "kernel"
+    ],
+    "assignees": [
+      "pbalduino"
+    ]
+  },
+  {
+    "title": "Refactor FAT32 to use block cache (bread/bwrite)",
+    "github_issue": {
+      "number": 296,
+      "url": "https://github.com/pbalduino/menios/issues/296",
+      "state": "OPEN"
+    },
+    "labels": [
+      "enhancement",
+      "performance",
+      "kernel"
+    ],
+    "assignees": [
+      "pbalduino"
+    ]
+  },
+  {
+    "title": "VFS streaming read/write operations (replace slurp-and-flush)",
+    "github_issue": {
+      "number": 297,
+      "url": "https://github.com/pbalduino/menios/issues/297",
+      "state": "OPEN"
+    },
+    "labels": [
+      "enhancement",
+      "performance",
+      "kernel"
+    ],
+    "assignees": [
+      "pbalduino"
+    ]
+  },
+  {
+    "title": "Read-ahead and write-behind optimization",
+    "github_issue": {
+      "number": 298,
+      "url": "https://github.com/pbalduino/menios/issues/298",
+      "state": "OPEN"
+    },
+    "labels": [
+      "enhancement",
+      "performance",
+      "kernel"
+    ],
+    "assignees": [
+      "pbalduino"
+    ]
+  },
+  {
     "title": "Add time conversion utilities (mktime, gmtime, localtime)",
     "github_issue": {
       "number": 290,

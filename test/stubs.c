@@ -177,6 +177,15 @@ __attribute__((weak)) bool fs_file_truncate(const fs_mount_t* mount, const char*
   return false;
 }
 
+__attribute__((weak)) bool fs_file_stat(const fs_mount_t* mount, const char* path, size_t* out_size) {
+  (void)mount;
+  (void)path;
+  if(out_size) {
+    *out_size = 0;
+  }
+  return false;
+}
+
 void logk(const char* fmt, ...) {
   va_list args;
   va_start(args, fmt);
