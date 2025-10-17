@@ -431,6 +431,13 @@ Recommended completion order for maximum impact:
   - VFS now honors O_EXCL flag for atomic file creation
   - Removed `-ENOSYS` guard for write operations
   - Userland programs can now create and overwrite files via `open()`
+- **2025-10-17**: Closed #293 (FAT32 regression tests) ✅
+  - Part of #189 (FAT32 write support) - Phase 3 complete
+  - **Issue #189 (FAT32 write support) now 100% COMPLETE!** 🎉
+  - Added comprehensive regression tests for file creation and truncation
+  - Validated O_CREAT, O_TRUNC, and O_EXCL behavior
+  - Confirmed data persistence across writes
+  - TCC (#190) and binutils (#191) now FULLY UNBLOCKED!
 
 ---
 

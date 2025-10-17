@@ -43,9 +43,9 @@ MeniOS has made significant progress with core kernel functionality now solidly 
 ### 🎉 **Next Major Milestones**
 With the shell shipped in v0.1.0 and Buddy Allocator FULLY COMPLETE (100%), the focus shifts to native compilation and advanced OS capabilities:
 
-1. **GCC Toolchain Milestone** (FULLY UNBLOCKED! 🚀) – The Buddy Allocator is now 100% COMPLETE with all phases done: Core implementation (9/9) ✅, Critical security (3/3) ✅, Reliability (5/5) ✅, and Performance (3/3) ✅! Ready to implement TCC port (#190) and binutils (#191). Only blocked by #189 (FAT32 write support) for native compilation output.
+1. **GCC Toolchain Milestone** (FULLY UNBLOCKED! 🚀) – The Buddy Allocator is now 100% COMPLETE with all phases done: Core implementation (9/9) ✅, Critical security (3/3) ✅, Reliability (5/5) ✅, and Performance (3/3) ✅! FAT32 write support (#189) is now COMPLETE! TCC port (#190) and binutils (#191) are ready to start - **NO BLOCKERS!**
 
-2. **FAT32 Write Support** (CRITICAL PATH 📁) – Issue #189 broken into 3 phases: Phase 1 (#291 ✅ DONE), Phase 2 (#292 ✅ DONE - VFS integration), Phase 3 (#293 - testing). File creation and truncation now working! Enables TCC/binutils to write compiled binaries to disk.
+2. **FAT32 Write Support** (CRITICAL PATH 📁) – ✅ **100% COMPLETE!** Issue #189 broken into 3 phases: Phase 1 (#291 ✅ DONE), Phase 2 (#292 ✅ DONE - VFS integration), Phase 3 (#293 ✅ DONE - testing). File creation, truncation, and persistence all working! TCC (#190) and binutils (#191) are now **FULLY UNBLOCKED** and can write compiled binaries to disk!
 
 3. **Doom Capabilities** – With robust memory management FULLY COMPLETE (Buddy Allocator 20/20 ✅) and threading support (#108 ✅), ready to unlock the final pieces once syscall/sysret is fixed (#221): pthread API (#109), audio subsystem (#33), and advanced IPC (#105-#107).
 

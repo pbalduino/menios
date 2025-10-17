@@ -138,11 +138,18 @@ digraph IssueDependencies {
         issue96 [label="#96: File descriptor\nmanagement", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED
         issue60 [label="#60: Filesystem\nsyscalls", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED
         issue65 [label="#65: VFS layer", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED
-        issue189 [label="#189: FAT32\nwrite support (parent)", fillcolor="#FFE4B5"];
+        issue189 [label="#189: FAT32\nwrite support (parent)", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED - ALL PHASES COMPLETE!
         issue291 [label="#291: FAT32 create/\ntruncate primitives", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED
         issue292 [label="#292: VFS O_CREAT/\nO_TRUNC/O_EXCL", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED
-        issue293 [label="#293: FAT32\nregression tests", fillcolor="#E0FFFF"];
+        issue293 [label="#293: FAT32\nregression tests", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED
         issue205 [label="#205: Elevator\nI/O scheduler", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED
+
+        // VFS streaming I/O and buffer cache (parent and breakdown)
+        issue294 [label="#294: VFS streaming I/O\nand buffer cache (parent)", fillcolor="#FFE4B5"];
+        issue295 [label="#295: Block cache\ninfrastructure", fillcolor="#E0FFFF"];
+        issue296 [label="#296: FAT32 block-level\nI/O", fillcolor="#E0FFFF"];
+        issue297 [label="#297: VFS streaming\nread/write", fillcolor="#E0FFFF"];
+        issue298 [label="#298: Read-ahead\nwrite-behind", fillcolor="#E0FFFF"];
     }
 
     subgraph cluster_ipc {
@@ -292,17 +299,17 @@ digraph IssueDependencies {
     issue194 -> issue29 [color=orange];
     issue195 -> issue29 [color=orange, penwidth=2];
 
-    // Native compilation dependencies - BUDDY ALLOCATOR COMPLETE ✅
+    // Native compilation dependencies - FULLY UNBLOCKED! ✅
     issue29 -> issue190 [color=purple, style=dashed];
     issue193 -> issue190 [color=purple, style=dashed];
     issue208 -> issue190 [color=purple, label="pipes", style=dashed];
-    issue189 -> issue190 [color=purple];
+    issue189 -> issue190 [color=purple, style=dashed];  // FAT32 write ✅ COMPLETE!
     issue205 -> issue190 [color=teal, label="I/O perf", style=dashed];
     issue253 -> issue190 [color=green, penwidth=3, label="BUDDY\nCOMPLETE ✅", style=dashed];  // Buddy milestone complete!
 
     issue29 -> issue191 [color=purple, style=dashed];
     issue193 -> issue191 [color=purple, style=dashed];
-    issue189 -> issue191 [color=purple];
+    issue189 -> issue191 [color=purple, style=dashed];  // FAT32 write ✅ COMPLETE!
     issue205 -> issue191 [color=teal, label="I/O perf", style=dashed];
     issue253 -> issue191 [color=green, penwidth=3, label="BUDDY\nCOMPLETE ✅", style=dashed];  // Buddy milestone complete!
 
@@ -322,14 +329,28 @@ digraph IssueDependencies {
     issue208 -> issue203 [label="shell pipelines", style=dotted];
     issue165 -> issue203 [label="#165: pipeline", style=dotted];
 
-    // File system write support - FAT32 breakdown
+    // File system write support - FAT32 breakdown (ALL COMPLETE ✅)
     issue60 -> issue189 [style=dashed, color=gray];
     issue189 -> issue291 [color=purple, style=dashed, label="breakdown"];  // parent -> primitives ✅
-    issue189 -> issue292 [color=purple, label="breakdown"];  // parent -> VFS integration
-    issue189 -> issue293 [color=purple, label="breakdown"];  // parent -> tests
-    issue291 -> issue292 [color=purple, penwidth=2];  // primitives -> VFS integration
-    issue291 -> issue293 [color=purple];  // primitives -> tests
-    issue292 -> issue293 [color=purple];  // VFS integration -> tests
+    issue189 -> issue292 [color=purple, style=dashed, label="breakdown"];  // parent -> VFS integration ✅
+    issue189 -> issue293 [color=purple, style=dashed, label="breakdown"];  // parent -> tests ✅
+    issue291 -> issue292 [color=purple, penwidth=2, style=dashed];  // primitives -> VFS integration ✅
+    issue291 -> issue293 [color=purple, style=dashed];  // primitives -> tests ✅
+    issue292 -> issue293 [color=purple, style=dashed];  // VFS integration -> tests ✅
+
+    // VFS streaming I/O and buffer cache - breakdown
+    issue65 -> issue294 [style=dashed, color=gray, label="VFS layer"];  // VFS -> streaming I/O parent
+    issue205 -> issue294 [style=dashed, color=gray, label="I/O scheduler"];  // I/O scheduler -> streaming I/O parent
+    issue294 -> issue295 [color=teal, style=dashed, label="breakdown"];  // parent -> block cache
+    issue294 -> issue296 [color=teal, style=dashed, label="breakdown"];  // parent -> FAT32 block I/O
+    issue294 -> issue297 [color=teal, style=dashed, label="breakdown"];  // parent -> VFS streaming
+    issue294 -> issue298 [color=teal, style=dashed, label="breakdown"];  // parent -> read-ahead/write-behind
+    issue295 -> issue296 [color=teal, penwidth=2, label="cache→FAT32"];  // block cache -> FAT32 block I/O
+    issue296 -> issue297 [color=teal, penwidth=2, label="FAT32→VFS"];  // FAT32 block I/O -> VFS streaming
+    issue297 -> issue298 [color=teal, penwidth=2, label="streaming→perf"];  // VFS streaming -> read-ahead/write-behind
+
+    // Streaming I/O benefits ext2
+    issue298 -> issue60 [color=teal, label="enables ext2", style=dashed];  // read-ahead/write-behind -> ext2 (unblocks future work)
 
     // I/O scheduler dependencies (✅ COMPLETE)
     issue114 -> issue205 [label="#114: block device", style=dashed, color=gray];
