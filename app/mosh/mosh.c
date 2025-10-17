@@ -9,6 +9,7 @@
 #include <sys/fcntl.h>
 #include <sys/types.h>
 #include <sys/wait.h>
+#include <time.h>
 #include <unistd.h>
 #include <menios/syscall.h>
 #ifndef MOSH_TEST
@@ -5123,7 +5124,7 @@ static int launch_command(char* line) {
 }
 
 static const char* shell_prompt(void) {
-  static char prompt[MOSH_MAX_PATH + 16];
+  static char prompt[MOSH_MAX_PATH + 32];
   const char prefix[] = "mosh:";
   const char suffix[] = "> ";
   const char* dir = current_directory;
@@ -5133,6 +5134,51 @@ static const char* shell_prompt(void) {
   }
 
   size_t offset = 0;
+
+  {
+    const char fallback_time[] = "--:--:--";
+    const char* time_src = fallback_time;
+    char time_buf[sizeof(fallback_time) + 11];
+    time_t now = time(NULL);
+    if(now != (time_t)-1) {
+      const struct tm* tm_ptr = localtime(&now);
+      if(tm_ptr != NULL) {
+        int p = 0;
+        struct tm tm_copy = *tm_ptr;
+        time_buf[p++] = '\x1b';
+        time_buf[p++] = '[';
+        time_buf[p++] = '9';
+        time_buf[p++] = '2';
+        time_buf[p++] = 'm';
+        if(tm_copy.tm_hour >= 0 && tm_copy.tm_hour < 24 && tm_copy.tm_min >= 0 && tm_copy.tm_min < 60 &&
+           tm_copy.tm_sec >= 0 && tm_copy.tm_sec < 60) {
+          time_buf[p++] = (char)('0' + (tm_copy.tm_hour / 10));
+          time_buf[p++] = (char)('0' + (tm_copy.tm_hour % 10));
+          time_buf[p++] = ':';
+          time_buf[p++] = (char)('0' + (tm_copy.tm_min / 10));
+          time_buf[p++] = (char)('0' + (tm_copy.tm_min % 10));
+          time_buf[p++] = ':';
+          time_buf[p++] = (char)('0' + (tm_copy.tm_sec / 10));
+          time_buf[p++] = (char)('0' + (tm_copy.tm_sec % 10));
+          time_src = time_buf;
+        }
+        time_buf[p++] = '\x1b';
+        time_buf[p++] = '[';
+        time_buf[p++] = '3';
+        time_buf[p++] = '9';
+        time_buf[p++] = 'm';
+        time_buf[p++] = '\0';
+      }
+    }
+
+    for(size_t i = 0; time_src[i] != '\0' && offset < sizeof(prompt) - 1; i++) {
+      prompt[offset++] = time_src[i];
+    }
+    if(offset < sizeof(prompt) - 1) {
+      prompt[offset++] = ' ';
+    }
+  }
+
   for(size_t i = 0; i < sizeof(prefix) - 1 && offset < sizeof(prompt) - 1; i++) {
     prompt[offset++] = prefix[i];
   }
