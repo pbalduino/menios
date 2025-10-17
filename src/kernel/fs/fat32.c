@@ -2433,6 +2433,24 @@ bool fs_file_write_all(const fs_mount_t* mount,
   return size == written;
 }
 
+bool fs_file_create(const fs_mount_t* mount, const char* path, bool exclusive) {
+  if(mount == NULL || mount->type != FS_TYPE_FAT32 || path == NULL) {
+    return false;
+  }
+
+  fat32_fs_t* fs = (fat32_fs_t*)&mount->fat32;
+  return fat32_create_entry(fs, path, exclusive, false, NULL);
+}
+
+bool fs_file_truncate(const fs_mount_t* mount, const char* path) {
+  if(mount == NULL || mount->type != FS_TYPE_FAT32 || path == NULL) {
+    return false;
+  }
+
+  fat32_fs_t* fs = (fat32_fs_t*)&mount->fat32;
+  return fat32_truncate_file_entry(fs, path);
+}
+
 bool fs_directory_create(const fs_mount_t* mount, const char* path, bool exclusive) {
   if(mount == NULL || mount->type != FS_TYPE_FAT32) {
     return false;

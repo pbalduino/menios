@@ -138,7 +138,10 @@ digraph IssueDependencies {
         issue96 [label="#96: File descriptor\nmanagement", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED
         issue60 [label="#60: Filesystem\nsyscalls", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED
         issue65 [label="#65: VFS layer", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED
-        issue189 [label="#189: FAT32\nwrite support", fillcolor="#FFE4B5"];
+        issue189 [label="#189: FAT32\nwrite support (parent)", fillcolor="#FFE4B5"];
+        issue291 [label="#291: FAT32 create/\ntruncate primitives", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED
+        issue292 [label="#292: VFS O_CREAT/\nO_TRUNC/O_EXCL", fillcolor="#FFE4B5"];
+        issue293 [label="#293: FAT32\nregression tests", fillcolor="#E0FFFF"];
         issue205 [label="#205: Elevator\nI/O scheduler", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED
     }
 
@@ -319,8 +322,14 @@ digraph IssueDependencies {
     issue208 -> issue203 [label="shell pipelines", style=dotted];
     issue165 -> issue203 [label="#165: pipeline", style=dotted];
 
-    // File system write support
+    // File system write support - FAT32 breakdown
     issue60 -> issue189 [style=dashed, color=gray];
+    issue189 -> issue291 [color=purple, style=dashed, label="breakdown"];  // parent -> primitives ✅
+    issue189 -> issue292 [color=purple, label="breakdown"];  // parent -> VFS integration
+    issue189 -> issue293 [color=purple, label="breakdown"];  // parent -> tests
+    issue291 -> issue292 [color=purple, penwidth=2];  // primitives -> VFS integration
+    issue291 -> issue293 [color=purple];  // primitives -> tests
+    issue292 -> issue293 [color=purple];  // VFS integration -> tests
 
     // I/O scheduler dependencies (✅ COMPLETE)
     issue114 -> issue205 [label="#114: block device", style=dashed, color=gray];

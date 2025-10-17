@@ -25,8 +25,6 @@ If you are tracking the steps toward a usable shell, see
 
 ## Current Status
 
-> **⚠️ KNOWN REGRESSION**: The system currently has a boot regression (#274) caused by incomplete syscall/sysret migration (#221). The kernel correctly returns 64-bit pointers from mmap, but the return path truncates values to 32 bits, causing userland to receive invalid addresses. Work is underway to complete the syscall/sysret implementation.
-
 MeniOS has made significant progress with core kernel functionality now solidly implemented. The system boots with Limine bootloader and provides:
 
 ### ✅ **Completed Core Infrastructure**
@@ -47,7 +45,7 @@ With the shell shipped in v0.1.0 and Buddy Allocator FULLY COMPLETE (100%), the 
 
 1. **GCC Toolchain Milestone** (FULLY UNBLOCKED! 🚀) – The Buddy Allocator is now 100% COMPLETE with all phases done: Core implementation (9/9) ✅, Critical security (3/3) ✅, Reliability (5/5) ✅, and Performance (3/3) ✅! Ready to implement TCC port (#190) and binutils (#191). Only blocked by #189 (FAT32 write support) for native compilation output.
 
-2. **FAT32 Write Support** (CRITICAL PATH 📁) – Issue #189 is now the ONLY blocker for native compilation. Enables TCC/binutils to write compiled binaries to disk.
+2. **FAT32 Write Support** (CRITICAL PATH 📁) – Issue #189 broken into 3 phases: Phase 1 (#291 ✅ DONE - primitives exposed), Phase 2 (#292 - VFS integration), Phase 3 (#293 - testing). Enables TCC/binutils to write compiled binaries to disk.
 
 3. **Doom Capabilities** – With robust memory management FULLY COMPLETE (Buddy Allocator 20/20 ✅) and threading support (#108 ✅), ready to unlock the final pieces once syscall/sysret is fixed (#221): pthread API (#109), audio subsystem (#33), and advanced IPC (#105-#107).
 
@@ -204,7 +202,7 @@ Expect the log to show the `[user_demo]` messages on screen and in `com1.log`, c
 - [ ] **IPC - Signals**: Advanced features (#214)
 - [x] **IPC - Shared Memory**: ✅ **COMPLETE!** Manager (#215) ✅, Syscalls (#216) ✅, Cleanup (#217) ✅, Tests (#218) ✅, Documentation (#219) ✅ *(see docs/design/shared_memory.md)*
 - [x] **IPC - Device Control**: ioctl (#220) ✅ **COMPLETE**
-- [ ] **IPC - Other**: Fast syscalls (#221) 🚧 **IN PROGRESS** - syscall/sysret entry exists but return path truncates 64-bit values (blocks #274)
+- [x] **IPC - Other**: Fast syscalls (#221) ✅ **COMPLETE** - syscall/sysret with proper 64-bit return values (#274 fixed)
 - [ ] **IPC - Other**: Unix domain sockets (#105), Microkernel IPC (#106-#107)
 - [x] **Filesystem - I/O Scheduler**: Elevator I/O scheduler (#205) ✅ COMPLETE
 - [ ] **Filesystem - Write Support**: FAT32 write support (#189)
@@ -240,7 +238,7 @@ See [`road_to_doom.md`](docs/road/road_to_doom.md) for the complete roadmap and 
 - ✅ **IPC - Signals**: Delivery path working! (#103, #210-#213) - 5/6 complete! 🎉
 - ✅ **IPC - Shared Memory**: **COMPLETE!** All 5 issues done (#215-#219) - 5/5! 🎉🎉🎉
 - ✅ **Performance**: I/O scheduler (#205) ✅
-- 🚧 **Fast syscalls**: (#221) - syscall/sysret entry exists but return path has 64-bit truncation issue (#274)
+- ✅ **Fast syscalls**: (#221) ✅ **COMPLETE!** - syscall/sysret with proper 64-bit return values (fixed #274)
 - ✅ **Memory**: Userspace allocator (#95) ✅
 
 **The critical path forward**: Buddy allocator is COMPLETE (100%)! 🎉 Focus now shifts to **FAT32 write support** (#189) to unblock GCC native compilation (#190, #191)!

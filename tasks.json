@@ -1,5 +1,155 @@
 [
   {
+    "title": "Regression tests for FAT32 create/overwrite",
+    "github_issue": {
+      "number": 293,
+      "url": "https://github.com/pbalduino/menios/issues/293",
+      "state": "OPEN"
+    },
+    "labels": [
+      "enhancement",
+      "testing"
+    ],
+    "assignees": [
+      "pbalduino"
+    ]
+  },
+  {
+    "title": "Teach vfs_open to honour O_CREAT/O_TRUNC/O_EXCL",
+    "github_issue": {
+      "number": 292,
+      "url": "https://github.com/pbalduino/menios/issues/292",
+      "state": "OPEN"
+    },
+    "labels": [
+      "enhancement",
+      "kernel"
+    ],
+    "assignees": [
+      "pbalduino"
+    ]
+  },
+  {
+    "title": "Expose FAT32 create/truncate primitives",
+    "github_issue": {
+      "number": 291,
+      "url": "https://github.com/pbalduino/menios/issues/291",
+      "state": "CLOSED"
+    },
+    "labels": [
+      "enhancement",
+      "kernel"
+    ],
+    "assignees": [
+      "pbalduino"
+    ]
+  },
+  {
+    "title": "Add time conversion utilities (mktime, gmtime, localtime)",
+    "github_issue": {
+      "number": 290,
+      "url": "https://github.com/pbalduino/menios/issues/290",
+      "state": "OPEN"
+    },
+    "labels": [
+      "enhancement"
+    ],
+    "assignees": [
+      "pbalduino"
+    ]
+  },
+  {
+    "title": "Implement alarm() syscall",
+    "github_issue": {
+      "number": 289,
+      "url": "https://github.com/pbalduino/menios/issues/289",
+      "state": "OPEN"
+    },
+    "labels": [
+      "enhancement",
+      "kernel"
+    ],
+    "assignees": [
+      "pbalduino"
+    ]
+  },
+  {
+    "title": "Implement interval timers (setitimer/getitimer syscalls)",
+    "github_issue": {
+      "number": 288,
+      "url": "https://github.com/pbalduino/menios/issues/288",
+      "state": "OPEN"
+    },
+    "labels": [
+      "enhancement",
+      "kernel"
+    ],
+    "assignees": [
+      "pbalduino"
+    ]
+  },
+  {
+    "title": "Implement nanosleep() syscall and sleep queue management",
+    "github_issue": {
+      "number": 287,
+      "url": "https://github.com/pbalduino/menios/issues/287",
+      "state": "OPEN"
+    },
+    "labels": [
+      "enhancement",
+      "kernel"
+    ],
+    "assignees": [
+      "pbalduino"
+    ]
+  },
+  {
+    "title": "Implement clock_gettime(), clock_settime(), and clock_getres() syscalls",
+    "github_issue": {
+      "number": 286,
+      "url": "https://github.com/pbalduino/menios/issues/286",
+      "state": "OPEN"
+    },
+    "labels": [
+      "enhancement",
+      "kernel"
+    ],
+    "assignees": [
+      "pbalduino"
+    ]
+  },
+  {
+    "title": "Implement kernel timekeeper and system time management",
+    "github_issue": {
+      "number": 285,
+      "url": "https://github.com/pbalduino/menios/issues/285",
+      "state": "OPEN"
+    },
+    "labels": [
+      "enhancement",
+      "kernel"
+    ],
+    "assignees": [
+      "pbalduino"
+    ]
+  },
+  {
+    "title": "Implement RTC (Real-Time Clock) hardware driver",
+    "github_issue": {
+      "number": 284,
+      "url": "https://github.com/pbalduino/menios/issues/284",
+      "state": "OPEN"
+    },
+    "labels": [
+      "enhancement",
+      "drivers",
+      "kernel"
+    ],
+    "assignees": [
+      "pbalduino"
+    ]
+  },
+  {
     "title": "Improved ps command to match Linux behavior",
     "github_issue": {
       "number": 283,
@@ -251,63 +401,6 @@
       "enhancement",
       "nice to have",
       "mosh"
-    ],
-    "assignees": [
-      "pbalduino"
-    ]
-  },
-  {
-    "title": "Implement rand() and srand() in userland libc",
-    "github_issue": {
-      "number": 241,
-      "url": "https://github.com/pbalduino/menios/issues/241",
-      "state": "OPEN"
-    },
-    "labels": [
-      "enhancement"
-    ],
-    "assignees": [
-      "pbalduino"
-    ]
-  },
-  {
-    "title": "Implement time() and gettimeofday() in userland libc",
-    "github_issue": {
-      "number": 240,
-      "url": "https://github.com/pbalduino/menios/issues/240",
-      "state": "OPEN"
-    },
-    "labels": [
-      "enhancement"
-    ],
-    "assignees": [
-      "pbalduino"
-    ]
-  },
-  {
-    "title": "Implement kernel time syscalls (SYS_TIME, SYS_GETTIMEOFDAY)",
-    "github_issue": {
-      "number": 239,
-      "url": "https://github.com/pbalduino/menios/issues/239",
-      "state": "CLOSED"
-    },
-    "labels": [
-      "enhancement",
-      "kernel"
-    ],
-    "assignees": [
-      "pbalduino"
-    ]
-  },
-  {
-    "title": "Add rand() and time() support to meniOS libc",
-    "github_issue": {
-      "number": 238,
-      "url": "https://github.com/pbalduino/menios/issues/238",
-      "state": "CLOSED"
-    },
-    "labels": [
-      "enhancement"
     ],
     "assignees": [
       "pbalduino"

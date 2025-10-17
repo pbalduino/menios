@@ -414,10 +414,20 @@ Recommended completion order for maximum impact:
   - Implemented thread-safe PRNG with LCG algorithm in libc
   - Added SYS_TIME (81) and SYS_GETTIMEOFDAY (82) syscalls
   - Both time functions return proper Unix timestamps
+- **2025-10-17**: Closed #274 (Boot regression: syscall return path truncation) ✅
+  - Fixed syscall/sysret return path to preserve full 64-bit values
+  - mmap now correctly returns 64-bit pointers to userland
+  - Boot regression resolved - system boots successfully
+  - Issue #221 (fast syscalls) now fully complete with proper 64-bit ABI
+- **2025-10-17**: Closed #291 (Expose FAT32 create/truncate primitives) ✅
+  - Part of #189 (FAT32 write support) - Phase 1 complete
+  - Added exported wrappers: `fs_path_create_file()` and `fs_file_truncate()`
+  - Exposed existing FAT32 internal functions to VFS layer
+  - Foundation in place for O_CREAT/O_TRUNC support (#292)
 
 ---
 
-**Last Updated**: 2025-10-16
+**Last Updated**: 2025-10-17
 **See Also**:
 - [Road to Shell](road/road_to_shell.md)
 - [Road to Buddy Allocator](road/road_to_buddy_allocator.md) 🆕
