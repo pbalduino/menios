@@ -125,9 +125,9 @@ digraph IssueDependencies {
         issue193 [label="#193: Minimal\nlibc", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED
         issue194 [label="#194: Syscall\nABI docs", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED
         issue195 [label="#195: Userland\nbuild system", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED
+        issue304 [label="#304: scanf family\nsscanf/scanf/fscanf", fillcolor="#DDA0DD"];  // GCC milestone
         issue190 [label="#190: TCC\nport", fillcolor="#DDA0DD"];
         issue191 [label="#191: binutils\nport", fillcolor="#DDA0DD"];
-        issue196 [label="#196: Fish shell\nresearch", fillcolor="#DDA0DD"];
     }
 
     subgraph cluster_io {
@@ -312,6 +312,7 @@ digraph IssueDependencies {
     issue193 -> issue29 [color=orange, style=dashed];
     issue194 -> issue29 [color=orange];
     issue195 -> issue29 [color=orange, penwidth=2];
+    issue193 -> issue304 [color=orange, style=dashed, label="libc"];  // libc -> scanf family
 
     // Native compilation dependencies - FULLY UNBLOCKED! ✅
     issue29 -> issue190 [color=purple, style=dashed];
@@ -442,6 +443,8 @@ digraph IssueDependencies {
     issue302 -> issue300 [color=red, penwidth=3, label="DOOM"];  // key events -> port layer
     issue287 -> issue300 [color=red, style=dashed];  // nanosleep -> DG_SleepMs
     issue240 -> issue300 [color=red, style=dashed];  // gettimeofday -> DG_GetTicksMs
+    issue288 -> issue300 [color=red, style=dashed];  // setitimer -> game timing
+    issue304 -> issue300 [color=red, penwidth=2, label="config\nparsing"];  // scanf -> config parsing
     issue192 -> issue303 [color=red, style=dashed];  // crt0 -> doom build
     issue193 -> issue303 [color=red, style=dashed];  // libc -> doom build
     issue195 -> issue303 [color=red, style=dashed];  // userland build -> doom build

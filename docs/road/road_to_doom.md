@@ -212,9 +212,20 @@ Port layer, graphics, input, and build integration for running Doom:
 - **Current Gap**: `src/kernel/driver/ps2kb/ps2kb.c:245-300` only pushes ASCII on key-down
 - **Impact**: Doom input loop (app/doom/i_input.c:286-319) requires press/release pairs
 
+#### **scanf Family Implementation** (Issue #304)
+- **Status**: TODO - libc only implements output side (printf family)
+- **Dependencies**: #193 ✅
+- **Scope**:
+  - Implement sscanf(), scanf(), fscanf() and variadic counterparts
+  - Core format parser for %d, %i, %u, %x, %s, %c, %n specifiers
+  - Width specifiers and assignment suppression (*)
+  - Parse config files and command-line arguments
+- **Current Gap**: `user/libc/stdio.c` has zero scanf code, headers declare but no implementation
+- **Impact**: Doom config parsing (app/doom/m_config.c, m_misc.c) requires sscanf
+
 #### **Wire Up meniOS Port Layer** (Issue #300)
 - **Status**: TODO - `app/doom/doomgeneric_menios.c:1` is empty
-- **Dependencies**: #301, #302, #287 ✅, #240 ✅
+- **Dependencies**: #301, #302, #287 ✅, #240 ✅, #304
 - **Scope**:
   - Implement DG_Init() to initialize graphics + input
   - Implement DG_DrawFrame() to blit frames using mmap'd framebuffer
@@ -385,8 +396,9 @@ The Doom milestone on GitHub now tracks 27 issues (was 30, removed #105-#107):
   - IPC - Shared Memory: #215 ✅, #216 ✅, #217 ✅, #218 ✅, #219 ✅ (ALL COMPLETE!)
   - IPC - Other: #220 ✅ (ioctl), #221 ✅ (fast syscalls)
 - **New Issues (Doom Integration)**: #300 (port layer), #301 (framebuffer mmap), #302 (key events), #303 (build integration)
-- **In Progress**: Threading (#109-#113), Signals (#214), Audio (#33), Mouse (#143), Doom Integration (#300-#303)
-- **Ready to Start**: #301, #302 (Doom integration - infrastructure complete!)
+- **New Dependency**: #304 (scanf family - required for config parsing in #300)
+- **In Progress**: Threading (#109-#113), Signals (#214), Audio (#33), Mouse (#143), Doom Integration (#300-#303), scanf (#304)
+- **Ready to Start**: #301, #302, #304 (Doom integration - infrastructure complete!)
 - **Removed**: #105 (Unix sockets), #106 (microkernel IPC), #107 (capabilities) - not required for Doom
 
 **Recent Major Achievements**:
@@ -395,6 +407,7 @@ The Doom milestone on GitHub now tracks 27 issues (was 30, removed #105-#107):
 - ✅ Time management (#286, #287, #288, #290) - Complete timing system for game loop!
 - ✅ Fast syscalls (#221) - High-performance system calls with 64-bit returns!
 - 🆕 Doom integration issues created (#300-#303) - Clear path to running Doom!
+- 🆕 scanf family (#304) - Config file parsing support for Doom!
 
 See [MILESTONES.md](../MILESTONES.md) for detailed milestone tracking across all three major goals (Mosh, GCC, Doom).
 

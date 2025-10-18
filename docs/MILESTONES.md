@@ -161,15 +161,16 @@ This document tracks the three major milestones for meniOS development.
 - [x] #29 - Cross-compiler toolchain integration ✅
 - [ ] #190 - TCC (Tiny C Compiler) port
 - [ ] #191 - binutils (as, ld) port
-- [ ] #196 - Fish shell research
+- [ ] #304 - scanf family (sscanf/scanf/fscanf) implementation
 
 **Critical Path**: #192 ✅ → #193 ✅ → #194 ✅ → #195 ✅ → #29 ✅ → #190/#191
 
 **Dependencies**:
-- #190 requires #29 ✅, #189 (FAT32 writes), **Buddy Allocator milestone** (robust memory for compiler)
-- #191 requires #29 ✅, #189 (FAT32 writes), **Buddy Allocator milestone** (robust memory for linker)
+- #190 requires #29 ✅, #189 ✅ (FAT32 writes COMPLETE), **Buddy Allocator milestone** ✅ (COMPLETE)
+- #191 requires #29 ✅, #189 ✅ (FAT32 writes COMPLETE), **Buddy Allocator milestone** ✅ (COMPLETE)
+- #304 requires #193 ✅ (libc foundation)
 
-**Progress**: Core toolchain complete! crt0, libc, syscall ABI docs, separated build system, and x86_64-elf cross-compiler integration all done. Remaining: TCC/binutils ports for native compilation and Fish shell research.
+**Progress**: Core toolchain complete! crt0, libc, syscall ABI docs, separated build system, and x86_64-elf cross-compiler integration all done. Remaining: TCC/binutils ports for native compilation, and scanf family for formatted input parsing.
 
 ---
 
@@ -237,10 +238,10 @@ This document tracks the three major milestones for meniOS development.
 - #214 requires #213, #109
 - #301 requires #31 ✅, #89 ✅, #220 ✅ (framebuffer infrastructure)
 - #302 requires #32 ✅, #220 ✅ (input infrastructure)
-- #300 requires #301, #302, #287 ✅, #240 ✅, #288 ✅ (Doom port layer needs graphics + input + timing)
+- #300 requires #301, #302, #287 ✅, #240 ✅, #288 ✅, #304 (Doom port layer needs graphics + input + timing + scanf for config parsing)
 - #303 requires #192 ✅, #193 ✅, #195 ✅, #29 ✅, #300 (build integration)
 
-**Progress**: IPC infrastructure well underway - Pipes ✅, Signals (5/6), Shared Memory ✅ all complete! Doom integration issues added (#300-#303) - framebuffer, input, port layer, and build integration.
+**Progress**: IPC infrastructure well underway - Pipes ✅, Signals (5/6), Shared Memory ✅ all complete! Doom integration issues added (#300-#303) - framebuffer, input, port layer, and build integration. scanf family (#304) added for config file parsing.
 
 ---
 
@@ -275,13 +276,13 @@ This document tracks the three major milestones for meniOS development.
 
 ## 📈 Overall Progress
 
-- **Total Issues Across Milestones**: 82 issues (was 85, removed #105-#107 from Doom)
-- **Completed**: 63 issues (76.8%)
-- **In Progress**: 19 issues
-- **Ready to Start**: 3 issues (no dependencies: #109, #190, #191)
-- **New Issues**: #300-#303 (Doom integration - framebuffer, input, port layer, build)
+- **Total Issues Across Milestones**: 83 issues (was 82, added #304 for scanf family)
+- **Completed**: 63 issues (75.9%)
+- **In Progress**: 20 issues
+- **Ready to Start**: 4 issues (no dependencies: #109, #190, #191, #304)
+- **New Issues**: #300-#303 (Doom integration), #304 (scanf family)
 - **Recently Completed**: #221 ✅ (fast syscalls), #288 ✅ (setitimer)
-- **Next Up**: Buddy Allocator COMPLETE! ✅ FAT32 writes COMPLETE! ✅ Time management COMPLETE! ✅ TCC/binutils (#190, #191) and Doom (#300-#303) ready to start!
+- **Next Up**: Buddy Allocator COMPLETE! ✅ FAT32 writes COMPLETE! ✅ Time management COMPLETE! ✅ TCC/binutils (#190, #191) ready! scanf family (#304) for Doom config parsing!
 
 ## 🚀 Immediate Next Steps
 
@@ -297,14 +298,12 @@ All phases finished! Core buddy allocator implementation (Phase 1 ✅), critical
 
 ### Ready to Start Now (Dependencies Met):
 1. **GCC Milestone** (FULLY UNBLOCKED 🚀):
-   - #190 - TCC port (Buddy Allocator ✅ COMPLETE, only needs #189 FAT32 writes)
-   - #191 - binutils port (Buddy Allocator ✅ COMPLETE, only needs #189 FAT32 writes)
+   - #190 - TCC port (Buddy Allocator ✅ COMPLETE, FAT32 writes ✅ COMPLETE)
+   - #191 - binutils port (Buddy Allocator ✅ COMPLETE, FAT32 writes ✅ COMPLETE)
+   - #304 - scanf family implementation (libc foundation ✅ COMPLETE)
 
 2. **Doom Milestone** (Independent work available):
    - #109 - pthread API (no dependencies)
-
-3. **Critical Blocker**:
-   - #189 - FAT32 write support (blocks #190, #191 for native compilation)
 
 ## 📝 Notes
 
@@ -515,6 +514,12 @@ Recommended completion order for maximum impact:
   - Unix domain sockets, microkernel IPC, and capability-based security moved out
   - These are advanced IPC features not required for Doom
   - Doom milestone now focuses on core game requirements
+- **2025-10-17**: Created #304 (scanf family implementation - sscanf/scanf/fscanf) ✅
+  - Added to GCC milestone (now 5/8 complete, 62.5%)
+  - Formatted input parsing for config files (Doom requirement)
+  - Dependencies: #193 ✅ (libc foundation COMPLETE)
+  - Required for #300 (Doom port layer - config file parsing)
+  - Total issues across milestones: 83 (was 82)
 
 ---
 

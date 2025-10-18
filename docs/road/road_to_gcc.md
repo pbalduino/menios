@@ -61,9 +61,9 @@ Services needed for any compiler to function properly.
 
 **Timeline Estimate:** 3-4 months
 
-### **Phase 3: Userland Utilities** 🚧 **IN PROGRESS**
+### **Phase 3: Userland Utilities & Libraries** 🚧 **IN PROGRESS**
 
-Basic tools for testing the toolchain.
+Basic tools and library enhancements for testing the toolchain.
 
 | Component | Issue | Status | Purpose |
 | --- | --- | --- | --- |
@@ -71,6 +71,7 @@ Basic tools for testing the toolchain.
 | PATH search | #185 | ✅ DONE | Command resolution |
 | Process tools | #187 | ✅ Done | ps, kill |
 | env utility | #188 | ✅ Done | Environment debugging (prints inherited variables) |
+| **scanf family** | **#304** | **⛳ TODO** | **sscanf/scanf/fscanf - formatted input parsing** |
 
 **Timeline Estimate:** 1-2 months
 
@@ -260,9 +261,17 @@ This transforms meniOS from a kernel project into a true operating system with a
 ## 🎯 **GitHub Milestone Tracking**
 
 The GCC milestone on GitHub now tracks 8 issues:
-- **Status**: 2/8 complete (25%)
-- **Completed**: #192 (crt0) ✅, #193 (libc) ✅
-- **In Progress**: #190 (TCC), #191 (binutils), #196 (Fish research)
+- **Status**: 5/8 complete (62.5%)
+- **Completed**:
+  - #192 (crt0 runtime) ✅
+  - #193 (libc foundation) ✅
+  - #194 (syscall ABI docs) ✅
+  - #195 (build system) ✅
+  - #29 (cross-compiler integration) ✅
+- **In Progress**:
+  - #190 (TCC port) - READY TO START, all dependencies met!
+  - #191 (binutils port) - READY TO START, all dependencies met!
+  - #304 (scanf family) - READY TO START, libc foundation complete!
 
 See [MILESTONES.md](../MILESTONES.md) for detailed milestone tracking across all three major goals (Mosh, GCC, Doom).
 
