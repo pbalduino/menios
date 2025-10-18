@@ -20,6 +20,7 @@ typedef struct block_io_request_t {
   struct block_io_request_t* next;
 } block_io_request_t;
 
+#if 0
 static void block_queue_insert(block_device_t* device, block_io_request_t* request);
 static block_io_request_t* block_queue_peek_next(block_device_t* device);
 static block_io_request_t* block_queue_pop_next(block_device_t* device);
@@ -31,6 +32,7 @@ static bool block_device_submit(block_device_t* device,
                                 void* buffer,
                                 size_t block_count,
                                 bool write);
+#endif
 
 void block_device_system_init(void) {
   kmutex_init(&block_device_lock);
@@ -157,6 +159,7 @@ block_device_t* block_device_next(block_device_t* current) {
   return current->next;
 }
 
+#if 0
 static void block_queue_insert_sorted(block_io_request_t** head,
                                       block_io_request_t* request,
                                       bool ascending) {
@@ -238,11 +241,13 @@ static block_io_request_t* block_queue_pop_next(block_device_t* device) {
   }
   return request;
 }
+#endif
 
 static bool block_device_validate(block_device_t* device) {
   return device && device->ops && device->ops->read_blocks && device->block_size != 0;
 }
 
+#if 0
 static bool block_device_submit(block_device_t* device,
                                 uint64_t lba,
                                 void* buffer,
@@ -313,6 +318,7 @@ static bool block_device_submit(block_device_t* device,
   kfree(request);
   return success;
 }
+#endif
 
 bool block_device_read(block_device_t* device, uint64_t lba, void* buffer, size_t block_count) {
   if(!block_device_validate(device) || buffer == NULL || block_count == 0) {

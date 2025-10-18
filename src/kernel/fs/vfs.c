@@ -829,9 +829,6 @@ int vfs_open(const char* path, int flags, file_t** out_file) {
     }
   }
 
-  int accmode = flags & O_ACCMODE;
-  bool writable = (accmode == O_WRONLY || accmode == O_RDWR);
-
   if(flags & O_DIRECTORY) {
     return -ENOSYS;
   }

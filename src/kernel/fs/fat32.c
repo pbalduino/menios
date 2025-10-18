@@ -610,9 +610,6 @@ static bool fat32_directory_find_free_entries(fat32_fs_t* fs,
 append_clusters:
   {
     uint32_t start_cluster_for_allocation = start_cluster;
-    uint32_t starting_cluster = run_length > 0 ? run_start_cluster : 0;
-    uint32_t starting_index = run_length > 0 ? run_start_index : 0;
-    bool starting_used_end = run_used_end;
 
     size_t remaining_needed = (run_length >= required_entries) ? 0
                                : (required_entries - run_length);

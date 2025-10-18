@@ -717,16 +717,13 @@ static uint64_t syscall_write_handler(syscall_frame_t* frame) {
   int fd = (int)frame->rdi;
   const void* buffer = (const void*)frame->rsi;
   size_t length = (size_t)frame->rdx;
+#if SYSCALL_TRACE_ENABLED
   size_t sample_len = length < 16 ? length : 16;
   char sample[17];
   if(buffer != NULL && sample_len > 0 && proc_user_buffer_accessible(current, buffer, sample_len)) {
     for(size_t i = 0; i < sample_len; i++) {
       char ch = ((const char*)buffer)[i];
-      if(ch < ' ' || ch > '~') {
-        sample[i] = '.';
-      } else {
-        sample[i] = ch;
-      }
+      sample[i] = (ch < ' ' || ch > '~') ? '.' : ch;
     }
     sample[sample_len] = '\0';
   } else {
@@ -737,6 +734,7 @@ static uint64_t syscall_write_handler(syscall_frame_t* frame) {
                 fd,
                 (unsigned long)length,
                 sample);
+#endif
   file_t* file = proc_file_get(current, fd, NULL);
   if(file == NULL) {
     int err = current->err_no ? current->err_no : EBADF;
@@ -1534,21 +1532,22 @@ static uint64_t syscall_sigreturn_handler(syscall_frame_t* frame) {
 
   proc_signal_set_blocked(current, (uint32_t)user_frame.signal_mask);
 
-#if 1
+#if SYSCALL_TRACE_ENABLED
+  syscall_frame_t context_copy = user_frame.context;
   serial_printf("sigreturn: frame_ptr=%lx rip=%lx rax=%lx rflags=%lx rsp=%lx cs=%x ss=%x signo=%d\n",
                 user_frame_addr,
-                user_frame.context.rip,
-                user_frame.context.rax,
-                user_frame.context.rflags,
-                user_frame.context.rsp,
-                (unsigned int)user_frame.context.cs,
-                (unsigned int)user_frame.context.ss,
+                context_copy.rip,
+                context_copy.rax,
+                context_copy.rflags,
+                context_copy.rsp,
+                (unsigned int)context_copy.cs,
+                (unsigned int)context_copy.ss,
                 user_frame.signo);
-#endif
-#if 1
-  uint64_t* words = (uint64_t*)&user_frame.context;
+
+  uint64_t ctx_words[sizeof(context_copy) / sizeof(uint64_t)];
+  memcpy(ctx_words, &context_copy, sizeof(context_copy));
   serial_printf("frame words: %lx %lx %lx %lx %lx %lx\n",
-                words[14], words[15], words[16], words[17], words[18], words[19]);
+                ctx_words[14], ctx_words[15], ctx_words[16], ctx_words[17], ctx_words[18], ctx_words[19]);
 #endif
 
   memcpy(frame, &user_frame.context, sizeof(user_frame.context));
