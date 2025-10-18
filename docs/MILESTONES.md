@@ -526,6 +526,7 @@ Recommended completion order for maximum impact:
 **Last Updated**: 2025-10-17
 **See Also**:
 - [Road to Shell](road/road_to_shell.md)
-- [Road to Buddy Allocator](road/road_to_buddy_allocator.md) 🆕
+- [Road to Buddy Allocator](road/road_to_buddy_allocator.md)
 - [Road to GCC](road/road_to_gcc.md)
 - [Road to Doom](road/road_to_doom.md)
+- [Road to Real Hardware](road/road_to_real_hardware.md) 🆕
