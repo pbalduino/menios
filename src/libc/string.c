@@ -3,6 +3,14 @@
 #include <string.h>
 #include <types.h>
 
+#ifdef MENIOS_KERNEL
+#include <kernel/serial.h>
+
+static inline int memcpy_is_canonical(uintptr_t addr) {
+  return ((addr >> 47) == 0ull) || ((addr >> 47) == 0x1ffffull);
+}
+#endif
+
 /**
  * Calculates the length of a null-terminated string.
  *
@@ -299,6 +307,29 @@ void* memset(void* dest, int value, size_t count) {
 void* memcpy(void* dest, const void* src, size_t count) {
   unsigned char* d = (unsigned char*)dest;
   const unsigned char* s = (const unsigned char*)src;
+
+#ifdef MENIOS_KERNEL
+  const uintptr_t dest_addr = (uintptr_t)d;
+  const uintptr_t src_addr = (uintptr_t)s;
+  const uintptr_t kernel_floor = 0xffff800000000000ull;
+  if(count != 0 &&
+     (!memcpy_is_canonical(dest_addr) || !memcpy_is_canonical(src_addr))) {
+    serial_printf("memcpy guard canonical: dest=%p src=%p len=%zu ra=%p\n",
+                  dest,
+                  src,
+                  count,
+                  __builtin_return_address(0));
+    return dest;
+  }
+
+  if(count != 0 && (dest_addr < kernel_floor || src_addr < kernel_floor)) {
+    serial_printf("memcpy low addr: dest=%p src=%p len=%zu ra=%p\n",
+                  dest,
+                  src,
+                  count,
+                  __builtin_return_address(0));
+  }
+#endif
 
 #ifdef __GNUC__
   if(count >= WS) {

@@ -2,6 +2,7 @@
 #include <kernel/console.h>
 #include <kernel/file.h>
 #include <kernel/heap.h>
+#include <kernel/kernel.h>
 #include <kernel/mman.h>
 #include <kernel/proc.h>
 #include <kernel/pmm.h>
@@ -13,6 +14,7 @@
 #include <kernel/tsc.h>
 #include <kernel/vfs.h>
 #include <kernel/vm.h>
+#include <menios/signal_frame.h>
 #include <sys/fcntl.h>
 #include <sys/shm.h>
 #include <sys/time.h>
@@ -89,6 +91,7 @@ static uint64_t syscall_clock_getres_handler(syscall_frame_t* frame);
 static uint64_t syscall_setitimer_handler(syscall_frame_t* frame);
 static uint64_t syscall_getitimer_handler(syscall_frame_t* frame);
 static uint64_t syscall_alarm_handler(syscall_frame_t* frame);
+static uint64_t syscall_sigreturn_handler(syscall_frame_t* frame);
 static uint64_t syscall_exit_handler(syscall_frame_t* frame);
 static uint64_t syscall_fcntl_handler(syscall_frame_t* frame);
 static uint64_t syscall_waitpid_handler(syscall_frame_t* frame);
@@ -626,6 +629,7 @@ void syscall_init(void) {
   syscall_register(SYS_SETITIMER, syscall_setitimer_handler);
   syscall_register(SYS_GETITIMER, syscall_getitimer_handler);
   syscall_register(SYS_ALARM, syscall_alarm_handler);
+  syscall_register(SYS_SIGRETURN, syscall_sigreturn_handler);
   syscall_register(SYS_EXIT, syscall_exit_handler);
   syscall_register(SYS_FCNTL, syscall_fcntl_handler);
   syscall_register(SYS_IOCTL, syscall_ioctl_handler);
@@ -1510,6 +1514,48 @@ static uint64_t syscall_sigprocmask_handler(syscall_frame_t* frame) {
   return 0;
 }
 
+static uint64_t syscall_sigreturn_handler(syscall_frame_t* frame) {
+  if(current == NULL) {
+    frame->rax = (uint64_t)(-EINVAL);
+    return frame->rax;
+  }
+
+  virt_addr_t user_frame_addr = (virt_addr_t)frame->rdi;
+  if(user_frame_addr == 0) {
+    frame->rax = (uint64_t)(-EFAULT);
+    return frame->rax;
+  }
+
+  menios_signal_frame_t user_frame;
+  if(!proc_user_copy_in(current, &user_frame, user_frame_addr, sizeof(user_frame))) {
+    frame->rax = (uint64_t)(-EFAULT);
+    return frame->rax;
+  }
+
+  proc_signal_set_blocked(current, (uint32_t)user_frame.signal_mask);
+
+#if 1
+  serial_printf("sigreturn: frame_ptr=%lx rip=%lx rax=%lx rflags=%lx rsp=%lx cs=%x ss=%x signo=%d\n",
+                user_frame_addr,
+                user_frame.context.rip,
+                user_frame.context.rax,
+                user_frame.context.rflags,
+                user_frame.context.rsp,
+                (unsigned int)user_frame.context.cs,
+                (unsigned int)user_frame.context.ss,
+                user_frame.signo);
+#endif
+#if 1
+  uint64_t* words = (uint64_t*)&user_frame.context;
+  serial_printf("frame words: %lx %lx %lx %lx %lx %lx\n",
+                words[14], words[15], words[16], words[17], words[18], words[19]);
+#endif
+
+  memcpy(frame, &user_frame.context, sizeof(user_frame.context));
+
+  return frame->rax;
+}
+
 static uint64_t syscall_proc_kill_handler(syscall_frame_t* frame) {
   uint32_t pid = (uint32_t)frame->rdi;
   int code = (int)frame->rsi;
@@ -1909,11 +1955,20 @@ static uint64_t syscall_alarm_handler(syscall_frame_t* frame) {
 
 static uint64_t syscall_exit_handler(syscall_frame_t* frame) {
   int status = (int)frame->rdi;
+
   proc_exit(status);
-  syscall_frame_t* resumed = (syscall_frame_t*)proc_switch((cpu_state_p)frame);
-  if(resumed != NULL && resumed != frame) {
+
+  syscall_frame_t* resumed =
+      (syscall_frame_t*)proc_switch((cpu_state_p)frame);
+
+  if(resumed == NULL) {
+    halt();
+  }
+
+  if(resumed != frame) {
     memcpy(frame, resumed, sizeof(syscall_frame_t));
   }
+
   return frame->rax;
 }
 

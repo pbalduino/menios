@@ -5,6 +5,7 @@
 
 #include <kernel/signal.h>
 #include <kernel/proc.h>
+#include <menios/signal_frame.h>
 #include <sys/wait.h>
 
 static proc_info_t proc;
@@ -113,22 +114,45 @@ void test_signal_send_validates_signo(void) {
 }
 
 void test_signal_handle_pending_invokes_handler(void) {
+#ifdef MENIOS_HOST_TEST
+  TEST_IGNORE_MESSAGE("signal frame verification requires kernel runtime");
+  return;
+#else
   cpu_state_t frame;
   memset(&frame, 0, sizeof(frame));
-  uint64_t stack_buf[16] = {0};
-  frame.rsp = (uint64_t)(stack_buf + 8);
+  const size_t storage_size = sizeof(menios_signal_frame_t) + 512;
+  uint8_t stack_storage[storage_size];
+  memset(stack_storage, 0, sizeof(stack_storage));
+  uintptr_t base = (uintptr_t)stack_storage;
+  uintptr_t top = base + storage_size;
+  uintptr_t aligned_top = top & ~((uintptr_t)0xF);
+  frame.rsp = (uint64_t)aligned_top;
   frame.rip = 0xCAFEBABE;
 
   proc_signal_enqueue(&proc, SIGTERM);
   proc.signal_actions[SIGTERM].sa_handler = (sighandler_t)0xDEADBEEF;
+  proc.signal_actions[SIGTERM].sa_restorer = (sigrestorer_t)0xFEEDFACE;
 
   proc_signal_delivery_t result = proc_signal_handle_pending(&proc, &frame);
+
+  uintptr_t restorer_slot = (uintptr_t)frame.rsp;
+  uintptr_t frame_base = restorer_slot + sizeof(uint64_t);
 
   TEST_ASSERT_EQUAL_INT(PROC_SIGNAL_DELIVERY_HANDLED, result);
   TEST_ASSERT_EQUAL_UINT64((uint64_t)proc.signal_actions[SIGTERM].sa_handler, frame.rip);
   TEST_ASSERT_EQUAL_UINT64(SIGTERM, frame.rdi);
-  TEST_ASSERT_EQUAL_UINT64(0xCAFEBABE, stack_buf[7]);
-  TEST_ASSERT_EQUAL_PTR(stack_buf + 7, (uint64_t*)frame.rsp);
+  TEST_ASSERT_TRUE(restorer_slot >= base);
+  TEST_ASSERT_TRUE((restorer_slot + sizeof(uint64_t)) <= base + storage_size);
+  TEST_ASSERT_EQUAL_UINT64((uint64_t)proc.signal_actions[SIGTERM].sa_restorer,
+                           *((uint64_t*)restorer_slot));
+
+  menios_signal_frame_t* saved_frame = (menios_signal_frame_t*)frame_base;
+  TEST_ASSERT_TRUE(frame_base >= base);
+  TEST_ASSERT_TRUE((frame_base + sizeof(menios_signal_frame_t)) <= base + storage_size);
+  TEST_ASSERT_EQUAL_UINT64(0xCAFEBABE, saved_frame->context.rip);
+  TEST_ASSERT_EQUAL_UINT64((uint64_t)(-EINTR), saved_frame->context.rax);
+  TEST_ASSERT_EQUAL_INT(SIGTERM, saved_frame->signo);
+#endif
 }
 
 void test_signal_handle_pending_honors_block_mask(void) {

@@ -178,6 +178,22 @@ typedef struct proc_info_t {
 
 typedef proc_info_t* proc_info_p;
 
+static inline uint64_t proc_kernel_stack_top(proc_info_p proc) {
+  if(proc == NULL) {
+    return 0;
+  }
+
+  if(proc->stack_base == NULL) {
+    uint64_t rsp = 0;
+#ifdef MENIOS_KERNEL
+    __asm__ volatile("mov %%rsp, %0" : "=r"(rsp));
+#endif
+    return rsp;
+  }
+
+  return (uint64_t)((uintptr_t)proc->stack_base + PROC_STACK_SIZE);
+}
+
 extern proc_info_t kernel_process_info;
 extern proc_info_p procs[PROC_MAX];
 extern proc_info_p current;
@@ -217,6 +233,10 @@ int proc_exec_image(proc_info_p proc,
                     const proc_exec_args_t* args);
 int proc_kill_pid(uint32_t pid, int code);
 bool proc_user_buffer_accessible(proc_info_p proc, const void* ptr, size_t length);
+bool proc_user_touch_range(proc_info_p proc, virt_addr_t addr, size_t length, bool write);
+bool proc_user_write64(proc_info_p proc, virt_addr_t addr, uint64_t value);
+bool proc_user_copy_in(proc_info_p proc, void* dest, virt_addr_t src, size_t length);
+bool proc_user_copy_out(proc_info_p proc, virt_addr_t dest, const void* src, size_t length);
 bool proc_shm_track_attachment(proc_info_p proc,
                                shm_region_t* region,
                                virt_addr_t base,

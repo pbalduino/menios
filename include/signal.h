@@ -13,10 +13,13 @@ typedef unsigned int sigset_t;
 
 typedef void (*sighandler_t)(int);
 
+typedef void (*sigrestorer_t)(void);
+
 typedef struct sigaction {
-  sighandler_t sa_handler;
-  sigset_t     sa_mask;
-  unsigned int sa_flags;
+  sighandler_t  sa_handler;
+  sigset_t      sa_mask;
+  unsigned int  sa_flags;
+  sigrestorer_t sa_restorer;
 } sigaction_t;
 
 #define SIGINT   2

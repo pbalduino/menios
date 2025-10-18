@@ -22,7 +22,7 @@
 #include <types.h>
 
 #ifndef CONFIG_DEBUG_SCHEDULER
-#define CONFIG_DEBUG_SCHEDULER 0
+#define CONFIG_DEBUG_SCHEDULER 1
 #endif
 
 #if CONFIG_DEBUG_SCHEDULER
@@ -248,20 +248,6 @@ static uint64_t scheduler_quantum_table[PROC_PRIORITY_COUNT] = {
   1000, 4000, 6000, 8000, 12000
 };
 
-static inline uint64_t proc_kernel_stack_top(proc_info_p proc) {
-  if(proc == NULL) {
-    return 0;
-  }
-
-  if(proc->stack_base == NULL) {
-    uint64_t rsp;
-    asm volatile("mov %%rsp, %0" : "=r" (rsp));
-    return rsp;
-  }
-
-  return (uint64_t)((uintptr_t)proc->stack_base + PROC_STACK_SIZE);
-}
-
 static void scheduler_sleep_enqueue(proc_info_p proc);
 static void scheduler_cleanup_process(proc_info_p proc);
 
@@ -413,6 +399,8 @@ static void scheduler_sleep_enqueue(proc_info_p proc) {
   node->next = proc;
 }
 
+bool proc_user_touch_range(proc_info_p proc, virt_addr_t addr, size_t length, bool write);
+
 static void scheduler_wake_sleepers(uint64_t now) {
   while(sleep_queue_head && sleep_queue_head->sleep_until <= now) {
     proc_info_p proc = sleep_queue_head;
@@ -535,19 +523,29 @@ cpu_state_p proc_switch(cpu_state_p frame) {
   }
 
   if(current && current->cpu_state) {
-    SCHED_TRACE("proc_switch: memcpy save pid=%u frame=%p dest=%p size=%zu\n",
-                current->pid,
-                (void*)frame,
-                (void*)current->cpu_state,
-                sizeof(cpu_state_t));
-    SCHED_TRACE("proc_switch: frame values rip=%lx rsp=%lx rdi=%lx rsi=%lx rdx=%lx rcx=%lx\n",
-                ((cpu_state_t*)frame)->rip,
-                ((cpu_state_t*)frame)->rsp,
-                ((cpu_state_t*)frame)->rdi,
-                ((cpu_state_t*)frame)->rsi,
-                ((cpu_state_t*)frame)->rdx,
-                ((cpu_state_t*)frame)->rcx);
-    memcpy(current->cpu_state, frame, sizeof(cpu_state_t));
+    if(frame != NULL && frame != current->cpu_state) {
+      uintptr_t frame_addr = (uintptr_t)frame;
+      const uintptr_t kernel_floor = 0xffff800000000000ull;
+      if(frame_addr < kernel_floor) {
+        SCHED_TRACE("proc_switch: low frame addr pid=%u frame=%p current_state=%p\n",
+                    current->pid,
+                    (void*)frame,
+                    (void*)current->cpu_state);
+      }
+      SCHED_TRACE("proc_switch: memcpy save pid=%u frame=%p dest=%p size=%zu\n",
+                  current->pid,
+                  (void*)frame,
+                  (void*)current->cpu_state,
+                  sizeof(cpu_state_t));
+      SCHED_TRACE("proc_switch: frame values rip=%lx rsp=%lx rdi=%lx rsi=%lx rdx=%lx rcx=%lx\n",
+                  ((cpu_state_t*)frame)->rip,
+                  ((cpu_state_t*)frame)->rsp,
+                  ((cpu_state_t*)frame)->rdi,
+                  ((cpu_state_t*)frame)->rsi,
+                  ((cpu_state_t*)frame)->rdx,
+                  ((cpu_state_t*)frame)->rcx);
+      memcpy(current->cpu_state, frame, sizeof(cpu_state_t));
+    }
   }
 
   scheduler_wake_sleepers(now);
@@ -588,6 +586,10 @@ cpu_state_p proc_switch(cpu_state_p frame) {
   }
 
   if(previous != NULL) {
+    SCHED_TRACE("proc_switch: before context switch prev_pid=%u prev_kernel_rsp=%lx frame=%p\n",
+                previous->pid,
+                (unsigned long)previous->kernel_rsp,
+                (void*)frame);
     if(to_sleep) {
       previous->state = PROC_STATE_SLEEPING;
       scheduler_sleep_enqueue(previous);
@@ -691,6 +693,23 @@ cpu_state_p proc_switch(cpu_state_p frame) {
     next_rsp = (uint64_t)next_frame;
   }
   uint64_t* prev_slot = previous ? &previous->kernel_rsp : &next_rsp;
+  SCHED_TRACE("proc_switch: context_switch prev_slot=%p *prev_slot=%lx next_rsp=%lx\n",
+              (void*)prev_slot,
+              previous ? (unsigned long)*prev_slot : (unsigned long)next_rsp,
+              (unsigned long)next_rsp);
+  if(next_rsp != 0) {
+    uint64_t* slot = (uint64_t*)next_rsp;
+    uint64_t ret = *slot;
+    uint64_t hi = ret & 0xFFFF000000000000ull;
+    if(ret != 0 && hi != 0xFFFF000000000000ull) {
+      uint64_t corrected = 0xFFFFFFFF00000000ull | (ret & 0x00000000FFFFFFFFull);
+      SCHED_TRACE("proc_switch: repaired kernel ret pid=%u old=%lx corrected=%lx\n",
+                  current->pid,
+                  ret,
+                  corrected);
+      *slot = corrected;
+    }
+  }
   context_switch(prev_slot, next_rsp);
   return next_frame;
 }
@@ -1785,6 +1804,145 @@ bool proc_user_buffer_accessible(proc_info_p proc, const void* ptr, size_t lengt
   }
 
   return false;
+}
+
+bool proc_user_touch_range(proc_info_p proc, virt_addr_t addr, size_t length, bool write) {
+  if(proc == NULL || length == 0) {
+    return true;
+  }
+
+  phys_addr_t root = proc->address_space_root;
+  if(root == 0) {
+    root = pmm_get_kernel_cr3();
+  }
+
+  size_t offset = 0;
+  while(offset < length) {
+    virt_addr_t current = addr + offset;
+
+    pml4_walk_result_t walk = pmm_walk_address(root, current);
+    if(walk.pt_entry == NULL || !walk.pt_entry->present) {
+      serial_printf("touch_range: fault pid=%u addr=%lx present=%s\n",
+                    proc->pid,
+                    (unsigned long)current,
+                    walk.pt_entry ? (walk.pt_entry->present ? "y" : "n") : "missing");
+      if(!vm_region_handle_page_fault(proc, current, false, write, true)) {
+        serial_printf("touch_range: fault handler failed pid=%u addr=%lx\n",
+                      proc->pid,
+                      (unsigned long)current);
+        return false;
+      }
+      walk = pmm_walk_address(root, current);
+      if(walk.pt_entry == NULL || !walk.pt_entry->present) {
+        serial_printf("touch_range: still unmapped pid=%u addr=%lx\n",
+                      proc->pid,
+                      (unsigned long)current);
+        return false;
+      }
+    }
+
+    size_t page_remaining = PAGE_SIZE - (current & (PAGE_SIZE - 1));
+    if(page_remaining > length - offset) {
+      page_remaining = length - offset;
+    }
+    offset += page_remaining;
+  }
+
+  return true;
+}
+
+bool proc_user_write64(proc_info_p proc, virt_addr_t addr, uint64_t value) {
+  if(!proc_user_touch_range(proc, addr, sizeof(uint64_t), true)) {
+    return false;
+  }
+
+  phys_addr_t root = proc->address_space_root;
+  if(root == 0) {
+    root = pmm_get_kernel_cr3();
+  }
+
+  bool needs_switch = read_cr3() != root;
+  phys_addr_t original = 0;
+  if(needs_switch) {
+    original = read_cr3();
+    write_cr3(root);
+  }
+
+  pml4_walk_result_t walk = pmm_walk_address(root, addr);
+  if(walk.pt_entry == NULL || !walk.pt_entry->present) {
+    if(needs_switch) {
+      write_cr3(original);
+    }
+    return false;
+  }
+
+  uint64_t* dest = (uint64_t*)addr;
+  *dest = value;
+
+  if(needs_switch) {
+    write_cr3(original);
+  }
+  return true;
+}
+
+bool proc_user_copy_in(proc_info_p proc, void* dest, virt_addr_t src, size_t length) {
+  if(length == 0) {
+    return true;
+  }
+
+  if(!proc_user_touch_range(proc, src, length, false)) {
+    return false;
+  }
+
+  phys_addr_t root = proc->address_space_root;
+  if(root == 0) {
+    root = pmm_get_kernel_cr3();
+  }
+
+  bool needs_switch = read_cr3() != root;
+  phys_addr_t original = 0;
+  if(needs_switch) {
+    original = read_cr3();
+    write_cr3(root);
+  }
+
+  memcpy(dest, (const void*)src, length);
+
+  if(needs_switch) {
+    write_cr3(original);
+  }
+
+  return true;
+}
+
+bool proc_user_copy_out(proc_info_p proc, virt_addr_t dest, const void* src, size_t length) {
+  if(length == 0) {
+    return true;
+  }
+
+  if(!proc_user_touch_range(proc, dest, length, true)) {
+    return false;
+  }
+
+  phys_addr_t root = proc->address_space_root;
+  if(root == 0) {
+    root = pmm_get_kernel_cr3();
+  }
+
+  bool needs_switch = read_cr3() != root;
+  phys_addr_t original = 0;
+  if(needs_switch) {
+    original = read_cr3();
+    write_cr3(root);
+  }
+
+  memcpy((void*)dest, src, length);
+
+  if(needs_switch) {
+    write_cr3(original);
+  }
+
+  return true;
 }
 
 void proc_create_user(proc_info_p proc, const char* name, const void* code_blob, size_t code_size, void* arg) {

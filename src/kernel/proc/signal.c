@@ -1,9 +1,25 @@
 #include <kernel/signal.h>
 #include <kernel/proc.h>
+#include <kernel/serial.h>
+
+#include <menios/signal_frame.h>
 
 #include <errno.h>
 #include <stdint.h>
 #include <string.h>
+
+#include <stddef.h>
+
+_Static_assert(sizeof(menios_signal_context_t) == sizeof(cpu_state_t),
+               "signal context size mismatch");
+_Static_assert(offsetof(menios_signal_context_t, rip) == offsetof(cpu_state_t, rip),
+               "rip offset mismatch");
+_Static_assert(offsetof(menios_signal_context_t, rsp) == offsetof(cpu_state_t, rsp),
+               "rsp offset mismatch");
+_Static_assert(offsetof(menios_signal_context_t, cs) == offsetof(cpu_state_t, cs),
+               "cs offset mismatch");
+_Static_assert(offsetof(menios_signal_context_t, ss) == offsetof(cpu_state_t, ss),
+               "ss offset mismatch");
 
 #define SIGNAL_ALLOWED_MASK ((SIG_MAX >= 32) ? 0x7FFFFFFFu : ((1u << (SIG_MAX - 1)) - 1u))
 
@@ -27,6 +43,7 @@ void proc_signal_state_init(proc_info_p proc) {
     proc->signal_actions[signo].sa_handler = SIG_DFL;
     proc->signal_actions[signo].sa_mask = 0;
     proc->signal_actions[signo].sa_flags = 0;
+    proc->signal_actions[signo].sa_restorer = NULL;
   }
 }
 
@@ -119,6 +136,7 @@ int proc_signal_configure_action(proc_info_p proc,
     slot->sa_handler = prepared.sa_handler;
     slot->sa_mask = prepared.sa_mask;
     slot->sa_flags = prepared.sa_flags;
+    slot->sa_restorer = prepared.sa_restorer;
   }
 
   return 0;
@@ -220,25 +238,56 @@ proc_signal_delivery_t proc_signal_handle_pending(proc_info_p proc,
       return PROC_SIGNAL_DELIVERY_TERMINATED;
     }
 
-    uint64_t handler = (uint64_t)action.sa_handler;
-    uint64_t new_rsp = frame->rsp - sizeof(uint64_t);
-
-    if(!proc_user_buffer_accessible(proc, (void*)new_rsp, sizeof(uint64_t))) {
+    if(action.sa_restorer == NULL) {
       proc_exit_signal(signo);
       return PROC_SIGNAL_DELIVERY_TERMINATED;
     }
 
-    *((uint64_t*)new_rsp) = frame->rip;
+    menios_signal_frame_t sigframe;
+    memcpy(&sigframe.context, frame, sizeof(sigframe.context));
+    sigframe.context.rax = (uint64_t)(-EINTR);
+    sigframe.signal_mask = proc->signal_blocked;
+    sigframe.signo = signo;
+    sigframe.reserved = 0;
 
-    frame->rsp = new_rsp;
-    frame->rip = handler;
+    size_t frame_size = sizeof(sigframe);
+    virt_addr_t frame_base = frame->rsp - frame_size;
+    frame_base &= ~((virt_addr_t)0xF);
+
+    if(!proc_user_copy_out(proc, frame_base, &sigframe, sizeof(sigframe))) {
+      proc_exit_signal(signo);
+      return PROC_SIGNAL_DELIVERY_TERMINATED;
+    }
+
+    virt_addr_t restorer_slot = frame_base - sizeof(uint64_t);
+
+    if(!proc_user_write64(proc, restorer_slot, (uint64_t)action.sa_restorer)) {
+      proc_exit_signal(signo);
+      return PROC_SIGNAL_DELIVERY_TERMINATED;
+    }
+
+    serial_printf("deliver signal %d: rip=%lx rsp=%lx cs=%x ss=%x rax=%lx size=%lu frame_base=%lx restorer_slot=%lx frame_size=%lu\n",
+                  signo,
+                  sigframe.context.rip,
+                  sigframe.context.rsp,
+                  (unsigned int)sigframe.context.cs,
+                  (unsigned int)sigframe.context.ss,
+                  sigframe.context.rax,
+                  (unsigned long)sizeof(menios_signal_context_t),
+                  (unsigned long)frame_base,
+                  (unsigned long)restorer_slot,
+                  (unsigned long)frame_size);
+
+    frame->rsp = restorer_slot;
+    frame->rip = (uint64_t)action.sa_handler;
     frame->rdi = (uint64_t)signo;
-    frame->rax = 0;
     frame->rsi = 0;
     frame->rdx = 0;
     frame->rcx = 0;
     frame->r8 = 0;
     frame->r9 = 0;
+    frame->rax = (uint64_t)(-EINTR);
+    current->err_no = EINTR;
 
     return PROC_SIGNAL_DELIVERY_HANDLED;
   }

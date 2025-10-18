@@ -164,6 +164,31 @@ void serial_line(const char* str) {
   (void)str;
 }
 
+bool proc_user_copy_in(proc_info_p proc, void* dest, virt_addr_t src, size_t length) {
+  (void)proc;
+  if(length == 0) {
+    return true;
+  }
+  memcpy(dest, (const void*)(uintptr_t)src, length);
+  return true;
+}
+
+bool proc_user_copy_out(proc_info_p proc, virt_addr_t dest, const void* src, size_t length) {
+  (void)proc;
+  if(length == 0) {
+    return true;
+  }
+  memcpy((void*)(uintptr_t)dest, src, length);
+  return true;
+}
+
+bool proc_user_write64(proc_info_p proc, virt_addr_t addr, uint64_t value) {
+  (void)proc;
+  uint64_t* slot = (uint64_t*)(uintptr_t)addr;
+  *slot = value;
+  return true;
+}
+
 __attribute__((weak)) bool fs_file_create(const fs_mount_t* mount, const char* path, bool exclusive) {
   (void)mount;
   (void)path;
