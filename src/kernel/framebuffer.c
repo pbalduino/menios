@@ -8,6 +8,7 @@
 #include <kernel/framebuffer.h>
 #include <kernel/kernel.h>
 #include <kernel/serial.h>
+#include <kernel/proc.h>
 #include <kernel/pmm.h>
 
 #include <stdbool.h>
@@ -73,6 +74,7 @@ static uint64_t framebuffer_boot_height = 0;
 static size_t framebuffer_boot_pitch = 0;
 static uint16_t framebuffer_boot_bpp = 0;
 static bool framebuffer_console_enabled = true;
+static uint32_t framebuffer_owner_pid = (uint32_t)-1;
 
 static size_t fb_align_up(size_t value) {
   if(value == 0) {
@@ -107,6 +109,63 @@ static void fb_release_backbuffer(void) {
 
 static void fb_console_set_enabled(bool enable) {
   framebuffer_console_enabled = enable;
+}
+
+bool fb_has_owner(void) {
+  return framebuffer_owner_pid != (uint32_t)-1;
+}
+
+bool fb_is_owner(uint32_t pid) {
+  return fb_has_owner() && framebuffer_owner_pid == pid;
+}
+
+bool fb_acquire_owner(uint32_t pid) {
+  if(pid == (uint32_t)-1) {
+    return false;
+  }
+  if(fb_has_owner() && framebuffer_owner_pid != pid) {
+    return false;
+  }
+  if(!fb_has_owner()) {
+    framebuffer_owner_pid = pid;
+    fb_console_set_enabled(false);
+  }
+  return true;
+}
+
+static void fb_restore_boot_mode(void) {
+  fb_set_mode(framebuffer_boot_width, framebuffer_boot_height, framebuffer_boot_bpp);
+  framebuffer_owner_pid = (uint32_t)-1;
+  fb_console_set_enabled(true);
+  render_viewport();
+}
+
+bool fb_release_owner(uint32_t pid) {
+  if(!fb_has_owner() || framebuffer_owner_pid != pid) {
+    return false;
+  }
+  fb_restore_boot_mode();
+  return true;
+}
+
+bool fb_is_boot_mode(uint64_t width, uint64_t height, uint16_t bpp) {
+  if(bpp == 0) {
+    bpp = framebuffer_boot_bpp;
+  }
+  return width == framebuffer_boot_width &&
+         height == framebuffer_boot_height &&
+         bpp == framebuffer_boot_bpp;
+}
+
+void fb_get_boot_mode(framebuffer_mode_info_t* out) {
+  if(out == NULL) {
+    return;
+  }
+  out->width = framebuffer_boot_width;
+  out->height = framebuffer_boot_height;
+  out->pitch = framebuffer_boot_pitch;
+  out->bpp = framebuffer_boot_bpp;
+  out->reserved = 0;
 }
 
 inline uint64_t fb_count() {
@@ -367,9 +426,9 @@ void fb_init() {
 
   render_viewport();
 
-  fb_d = freopen("/dev/fb/0", "w", stdout);
+  fb_d = freopen("/dev/console", "w", stdout);
   if(fb_d == NULL) {
-    serial_error("freopen(/dev/fb/0) -> NULL");
+    serial_error("freopen(/dev/console) -> NULL");
     halt();
   }
 }

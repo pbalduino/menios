@@ -58,6 +58,12 @@ void fb_flush_backbuffer(void);
 bool fb_set_mode(uint64_t width, uint64_t height, uint16_t bpp);
 uint64_t fb_mode_count_total(void);
 bool fb_mode_info(uint64_t index, framebuffer_mode_info_t* out);
+bool fb_has_owner(void);
+bool fb_is_owner(uint32_t pid);
+bool fb_acquire_owner(uint32_t pid);
+bool fb_release_owner(uint32_t pid);
+bool fb_is_boot_mode(uint64_t width, uint64_t height, uint16_t bpp);
+void fb_get_boot_mode(framebuffer_mode_info_t* out);
 
 void fb_draw();
 void fb_init();

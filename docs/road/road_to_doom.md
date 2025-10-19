@@ -138,7 +138,7 @@ We can mount and read from disk images today; write support is still limited.
 Visual output and user interaction:
 
 #### **Userspace Graphics Interface** (Issue #31) ✅ **COMPLETE**
-- ✅ **Status**: `/dev/fb/0` exposes the framebuffer to userland; console writes multiplex to serial+video.
+- ✅ **Status**: `/dev/fb0` exposes the framebuffer to userland; console writes multiplex to serial+video.
 - **Impact**: Games can blit directly to the screen today.
 
 #### **Input Subsystem** (Issue #32) ✅ **COMPLETE**

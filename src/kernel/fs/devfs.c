@@ -69,6 +69,10 @@ static file_t* devfs_create_console(void) {
   return file_create_framebuffer_console_file();
 }
 
+static file_t* devfs_create_fb0(void) {
+  return file_create_framebuffer_device_file();
+}
+
 static file_t* devfs_create_ttys0(void) {
   return file_create_serial_console_file();
 }
@@ -77,6 +81,7 @@ static const devfs_node_t devfs_nodes[] = {
   { "null",     FILE_MODE_WRITE,              devfs_create_null     },
   { "zero",     FILE_MODE_READ,               devfs_create_zero     },
   { "tty0",     FILE_MODE_READ | FILE_MODE_WRITE, devfs_create_tty0     },
+  { "fb0",      FILE_MODE_READ | FILE_MODE_WRITE, devfs_create_fb0     },
   { "console",  FILE_MODE_WRITE,              devfs_create_console  },
   { "ttyS0",    FILE_MODE_WRITE,              devfs_create_ttys0    },
 };

@@ -97,6 +97,7 @@ static size_t fb_map_size = 0;
 static int fb_fd = -1;
 static menios_fb_mode_request_t fb_original_mode = {0, 0, 0, 0};
 static int fb_mode_changed = 0;
+static int fb_acquired = 0;
 
 static void DG_Shutdown(void);
 
@@ -104,9 +105,9 @@ void DG_Init(void) {
   menios_fb_info_t fb_info;
   memset(&fb_info, 0, sizeof(fb_info));
 
-  fb_fd = open("/dev/fb/0", O_RDWR);
+  fb_fd = open("/dev/fb0", O_RDWR);
   if(fb_fd < 0) {
-    perror("open(/dev/fb/0)");
+    perror("open(/dev/fb0)");
     fb_fd = -1;
     return;
   }
@@ -123,6 +124,15 @@ void DG_Init(void) {
   fb_original_mode.bpp = (uint16_t)fb_info.bpp;
   fb_original_mode.reserved = 0;
   fb_mode_changed = 0;
+  fb_acquired = 0;
+
+  if(ioctl(fb_fd, MENIOS_FB_IOCTL_ACQUIRE, NULL) != 0) {
+    perror("ioctl(MENIOS_FB_IOCTL_ACQUIRE)");
+    close(fb_fd);
+    fb_fd = -1;
+    return;
+  }
+  fb_acquired = 1;
 
   if(fb_info.width >= DOOMGENERIC_RESX &&
      fb_info.height >= DOOMGENERIC_RESY &&
@@ -166,7 +176,7 @@ void DG_Init(void) {
 
   void* map = mmap(NULL, fb_map_size, PROT_READ | PROT_WRITE, MAP_SHARED, fb_fd, 0);
   if(map == MAP_FAILED) {
-    perror("mmap(/dev/fb/0)");
+    perror("mmap(/dev/fb0)");
     close(fb_fd);
     fb_fd = -1;
     return;
@@ -214,11 +224,15 @@ void DG_Shutdown(void) {
   if(fb_fd >= 0 && fb_mode_changed) {
     ioctl(fb_fd, MENIOS_FB_IOCTL_SET_MODE, &fb_original_mode);
   }
+  if(fb_fd >= 0 && fb_acquired) {
+    ioctl(fb_fd, MENIOS_FB_IOCTL_RELEASE, NULL);
+  }
   if(fb_fd >= 0) {
     close(fb_fd);
     fb_fd = -1;
   }
   fb_mode_changed = 0;
+  fb_acquired = 0;
 }
 
 void DG_SleepMs(uint32_t ms) {

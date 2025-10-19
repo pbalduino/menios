@@ -6,6 +6,8 @@ DOCKER_IMAGE = $(IMAGE_NAME):$(GIT_BRANCH)
 DOCKER_RUN_FLAGS := $(shell if [ -t 1 ]; then printf -- "-it"; fi)
 DOCKER_ENV := $(if $(EXTRA_CFLAGS),--env EXTRA_CFLAGS="$(EXTRA_CFLAGS)",)
 
+OS_NAME = $(shell uname -s | tr A-Z a-z)
+
 EXTRA_CFLAGS ?=
 ARCH ?= x86-64
 GCC_DIR = /usr/bin
@@ -57,12 +59,13 @@ KERNEL_OBJ     = $(OBJDIR)/kernel
 KERNEL_SRC = $(shell find -L src -path 'src/usermode' -prune -o -type f -name '*.c' -print)
 KERNEL_ASM = $(shell find -L src/kernel -type f \( -name '*.s' -o -name '*.S' \))
 KERNEL_OBJS = $(patsubst %.c, %.o, $(KERNEL_SRC))
-KERNEL_ASM_OBJS = $(patsubst %.S, %.o, $(filter %.S,$(KERNEL_ASM)))
+KERNEL_ASM_GAS_OBJS = $(patsubst %.S, %.o, $(filter %.S,$(KERNEL_ASM)))
+ARCH_NASM_OBJECTS := lgdt.o pit.o lidt.o
 
 UACPI_SRC = $(shell find -L vendor/uacpi -type f -name '*.c')
 UACPI_OBJS := $(patsubst %.c, %.o, $(UACPI_SRC))
 
-OBJS = $(KERNEL_OBJS) $(KERNEL_ASM_OBJS) $(UACPI_OBJS)
+OBJS = $(KERNEL_OBJS) $(KERNEL_ASM_GAS_OBJS) $(UACPI_OBJS)
 USER_ELF = $(OBJDIR)/usermode/user_demo.elf
 USER_ELF_OBJ = $(OBJDIR)/usermode/user_demo_elf.o
 USER_ELF_SYMBOL := $(subst .,_,$(subst /,_,$(USER_ELF)))
@@ -72,6 +75,8 @@ INIT_ELF = $(OBJDIR)/usermode/init.elf
 INIT_ELF_OBJ = $(OBJDIR)/usermode/init_elf.o
 INIT_ELF_SYMBOL := $(subst .,_,$(subst /,_,$(INIT_ELF)))
 OBJS += $(INIT_ELF_OBJ)
+
+KERNEL_OBJ_FILES = $(addprefix $(KERNEL_OBJ)/,$(sort $(OBJS) $(ARCH_NASM_OBJECTS)))
 
 MOSH_ELF = $(OBJDIR)/usermode/mosh.elf
 ECHO_ELF = $(OBJDIR)/usermode/echo.elf
@@ -169,15 +174,17 @@ override CFLAGS += \
     -fno-lto \
     -fno-stack-check \
     -fno-stack-protector \
+    -fno-pie \
     -m64 \
     -mno-80387 \
     -mno-mmx \
     -mno-red-zone \
     -mno-sse \
     -mno-sse2 \
-		-DMENIOS_KERNEL \
-		-DACPI_DEBUG_OUTPUT \
-		-DUACPI_KERNEL_INITIALIZATION
+    -mcmodel=kernel \
+        -DMENIOS_KERNEL \
+        -DACPI_DEBUG_OUTPUT \
+        -DUACPI_KERNEL_INITIALIZATION
 override CFLAGS += $(EXTRA_CFLAGS)
 override CFLAGS += $(ARCH_FLAGS)
 
@@ -271,9 +278,6 @@ LIMINE_EFI := \
 	BOOTAA64.EFI \
 	BOOTRISCV64.EFI \
 	BOOTLOONGARCH64.EFI
-
-
-OS_NAME = $(shell uname -s | tr A-Z a-z)
 
 .PHONY: clean
 all: build
@@ -564,7 +568,7 @@ ifeq ($(OS_NAME),linux)
 		mkdir -p "$$dest_dir"; \
 		cp -f "$$obj" "$$dest_dir/"; \
 	done
-	$(LD) $(LDFLAGS) -o $(KERNEL) $$(find -L $(KERNEL_OBJ) -type f -name '*.o')
+	$(LD) $(LDFLAGS) -o $(KERNEL) $(KERNEL_OBJ_FILES)
 
 	@echo Syncing Limine assets
 	@set -eu; \

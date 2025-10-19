@@ -79,6 +79,7 @@ int  proc_file_dup(struct proc_info_t* proc, int oldfd, int newfd, bool cloexec)
 
 file_t* file_create_serial_console_file(void);
 file_t* file_create_framebuffer_console_file(void);
+file_t* file_create_framebuffer_device_file(void);
 file_t* file_create_tty_console_file(void);
 
 typedef file_t* file_descriptor_t;

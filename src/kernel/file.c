@@ -529,7 +529,7 @@ static int serial_close_noop(file_t* file) {
   return 0;
 }
 
-static int64_t framebuffer_write_impl(file_t* file, const void* buffer, size_t length) {
+static int64_t framebuffer_console_write_impl(file_t* file, const void* buffer, size_t length) {
   (void)file;
   const char* text = (const char*)buffer;
   for(size_t idx = 0; idx < length; idx++) {
@@ -572,7 +572,8 @@ static int framebuffer_ioctl_impl(file_t* file, unsigned long request, void* arg
       return 0;
     }
     case MENIOS_FB_IOCTL_FLUSH: {
-      if(fb_backbuffer_available()) {
+      uint32_t pid = current ? current->pid : (uint32_t)-1;
+      if(fb_backbuffer_available() && (!fb_has_owner() || fb_is_owner(pid))) {
         fb_flush_backbuffer();
       }
       return 0;
@@ -592,6 +593,11 @@ static int framebuffer_ioctl_impl(file_t* file, unsigned long request, void* arg
       framebuffer_geometry_t geo;
       fb_get_geometry(&geo);
       uint16_t req_bpp = req.bpp ? req.bpp : (uint16_t)geo.bpp;
+      bool restoring_boot = fb_is_boot_mode(req.width, req.height, req_bpp);
+      uint32_t pid = current ? current->pid : (uint32_t)-1;
+      if(!restoring_boot && !fb_is_owner(pid)) {
+        return -EPERM;
+      }
       if(!fb_set_mode(req.width, req.height, req_bpp)) {
         return -EINVAL;
       }
@@ -646,6 +652,27 @@ static int framebuffer_ioctl_impl(file_t* file, unsigned long request, void* arg
       memcpy(argp, &req, sizeof(req));
       return 0;
     }
+    case MENIOS_FB_IOCTL_ACQUIRE: {
+      if(current == NULL) {
+        return -EPERM;
+      }
+      if(fb_acquire_owner(current->pid)) {
+        return 0;
+      }
+      return -EBUSY;
+    }
+    case MENIOS_FB_IOCTL_RELEASE: {
+      if(current == NULL) {
+        return -EPERM;
+      }
+      if(!fb_has_owner()) {
+        return 0;
+      }
+      if(!fb_release_owner(current->pid)) {
+        return -EPERM;
+      }
+      return 0;
+    }
     default:
       return -ENOTTY;
   }
@@ -661,6 +688,11 @@ static int framebuffer_mmap_impl(file_t* file,
 
   if(request->offset != 0) {
     return -EINVAL;
+  }
+
+  uint32_t pid = current ? current->pid : (uint32_t)-1;
+  if(fb_has_owner() && !fb_is_owner(pid)) {
+    return -EPERM;
   }
 
   framebuffer_geometry_t geo;
@@ -708,9 +740,18 @@ static const file_ops_t serial_file_ops = {
   .mmap = NULL,
 };
 
-static const file_ops_t framebuffer_file_ops = {
+static const file_ops_t framebuffer_console_file_ops = {
   .read = NULL,
-  .write = framebuffer_write_impl,
+  .write = framebuffer_console_write_impl,
+  .close = serial_close_noop,
+  .seek = NULL,
+  .ioctl = framebuffer_ioctl_impl,
+  .mmap = framebuffer_mmap_impl,
+};
+
+static const file_ops_t framebuffer_device_file_ops = {
+  .read = NULL,
+  .write = NULL,
   .close = serial_close_noop,
   .seek = NULL,
   .ioctl = framebuffer_ioctl_impl,
@@ -732,7 +773,7 @@ static int64_t tty_write_impl(file_t* file, const void* buffer, size_t length) {
     return -EINVAL;
   }
   serial_write_impl(NULL, buffer, length);
-  framebuffer_write_impl(NULL, buffer, length);
+  framebuffer_console_write_impl(NULL, buffer, length);
   return (int64_t)length;
 }
 
@@ -847,8 +888,11 @@ FILE* fopen(const char* filename, const char* mode) {
     file = file_create(&serial_file_ops, NULL, FILE_MODE_WRITE);
     file_mode = FILE_MODE_WRITE;
   } else if(strcmp(filename, "/dev/fb/0") == 0 && write) {
-    file = file_create(&framebuffer_file_ops, NULL, FILE_MODE_WRITE);
+    file = file_create(&framebuffer_console_file_ops, NULL, FILE_MODE_WRITE);
     file_mode = FILE_MODE_WRITE;
+  } else if(strcmp(filename, "/dev/fb0") == 0 && (read || write)) {
+    file = file_create_framebuffer_device_file();
+    file_mode = FILE_MODE_READ | FILE_MODE_WRITE;
   } else if(read && !write) {
     int rc = vfs_open(filename, O_RDONLY, &file);
     if(rc < 0) {
@@ -928,7 +972,11 @@ file_t* file_create_serial_console_file(void) {
 }
 
 file_t* file_create_framebuffer_console_file(void) {
-  return file_create(&framebuffer_file_ops, NULL, FILE_MODE_WRITE);
+  return file_create(&framebuffer_console_file_ops, NULL, FILE_MODE_WRITE);
+}
+
+file_t* file_create_framebuffer_device_file(void) {
+  return file_create(&framebuffer_device_file_ops, NULL, FILE_MODE_READ | FILE_MODE_WRITE);
 }
 
 file_t* file_create_tty_console_file(void) {

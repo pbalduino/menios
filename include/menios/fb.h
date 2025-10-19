@@ -19,6 +19,8 @@ typedef struct menios_fb_info {
 #define MENIOS_FB_IOCTL_FLUSH    0x4d454e02u /* 'MEN\x02' */
 #define MENIOS_FB_IOCTL_SET_MODE 0x4d454e03u /* 'MEN\x03' */
 #define MENIOS_FB_IOCTL_ENUM_MODES 0x4d454e04u /* 'MEN\x04' */
+#define MENIOS_FB_IOCTL_ACQUIRE  0x4d454e05u /* 'MEN\x05' */
+#define MENIOS_FB_IOCTL_RELEASE  0x4d454e06u /* 'MEN\x06' */
 
 typedef struct menios_fb_mode_request {
   uint64_t width;
