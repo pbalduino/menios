@@ -71,9 +71,10 @@ Basic tools and library enhancements for testing the toolchain.
 | PATH search | #185 | ✅ DONE | Command resolution |
 | Process tools | #187 | ✅ Done | ps, kill |
 | env utility | #188 | ✅ Done | Environment debugging (prints inherited variables) |
-| **scanf family** | **#304** | **⛳ TODO** | **sscanf/scanf/fscanf - formatted input parsing** |
 
 **Timeline Estimate:** 1-2 months
+
+**Note**: scanf family (#304) was moved to Doom milestone as it's specifically needed for Doom config parsing.
 
 ### **Phase 4: Native Compilation (Long Term)** 🎯 **FUTURE**
 
@@ -260,8 +261,8 @@ This transforms meniOS from a kernel project into a true operating system with a
 
 ## 🎯 **GitHub Milestone Tracking**
 
-The GCC milestone on GitHub now tracks 8 issues:
-- **Status**: 5/8 complete (62.5%)
+The GCC milestone on GitHub now tracks 7 issues:
+- **Status**: 5/7 complete (71.4%)
 - **Completed**:
   - #192 (crt0 runtime) ✅
   - #193 (libc foundation) ✅
@@ -271,11 +272,10 @@ The GCC milestone on GitHub now tracks 8 issues:
 - **In Progress**:
   - #190 (TCC port) - READY TO START, all dependencies met!
   - #191 (binutils port) - READY TO START, all dependencies met!
-  - #304 (scanf family) - READY TO START, libc foundation complete!
 
 See [MILESTONES.md](../MILESTONES.md) for detailed milestone tracking across all three major goals (Mosh, GCC, Doom).
 
 ---
 
-**Last Updated**: 2025-10-17
+**Last Updated**: 2025-10-18
 **Next Review**: Ready to start TCC (#190) and binutils (#191) - all dependencies complete!
