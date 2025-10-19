@@ -176,7 +176,7 @@ This document tracks the three major milestones for meniOS development.
 **Goal**: Run Doom (1993) in userland on meniOS
 **GitHub Milestone**: [Doom](https://github.com/pbalduino/menios/milestone/3)
 
-**Status**: 25/36 complete (69.4%)
+**Status**: 26/36 complete (72.2%)
 
 **Note**: Depends on **Buddy Allocator milestone** for efficient memory management under game engine load.
 
@@ -190,13 +190,13 @@ This document tracks the three major milestones for meniOS development.
 - [x] #140 - /dev/kbd0 and /dev/fb0 hardware device interfaces ✅
 - [ ] #143 - Mouse driver
 
-#### libc Gaps for Doom (6 issues)
+#### libc Gaps for Doom (6 issues) ✅ **ALL COMPLETE!**
 - [x] #305 - File stdio support (fopen/fclose, buffered I/O) ✅
 - [x] #306 - Filesystem helpers (mkdir, remove, rename) ✅
 - [x] #307 - Environment variable access (getenv/putenv) ✅
 - [x] #308 - String utilities (strdup, strcasecmp, strncasecmp) ✅
 - [x] #309 - Expose snprintf/vsnprintf/vsprintf properly ✅
-- [ ] #310 - Math library (fabs and clean up math.h)
+- [x] #310 - Math library (fabs and clean up math.h) ✅
 
 #### Doom Integration (7 issues)
 - [x] #300 - Wire up meniOS port layer ✅
@@ -261,7 +261,7 @@ This document tracks the three major milestones for meniOS development.
 - #303 requires #312 (old build integration - superseded by #311/#312)
 - #304 requires #193 ✅ (libc foundation COMPLETE)
 
-**Progress**: IPC infrastructure complete - Pipes ✅, Signals (5/6), Shared Memory ✅! FAT32 write support ✅ complete! scanf family (#304) ✅ complete! Real key events (#302) ✅ complete! Doom port layer (#300) ✅ complete with fullscreen graphics, timing, and input! Pixel-addressable framebuffer (#301) ✅ complete! Doom build system (#311) ✅ now compiles doomgeneric against the meniOS SDK! All libc gaps complete except math library: File stdio (#305) ✅, Filesystem helpers (#306) ✅, Environment access (#307) ✅, String utilities (#308) ✅, Formatted I/O (#309) ✅! Remaining work: ONE libc gap (#310 - math library) and final build integration (#312).
+**Progress**: IPC infrastructure complete - Pipes ✅, Signals (5/6), Shared Memory ✅! FAT32 write support ✅ complete! scanf family (#304) ✅ complete! Real key events (#302) ✅ complete! Doom port layer (#300) ✅ complete with fullscreen graphics, timing, and input! Pixel-addressable framebuffer (#301) ✅ complete! Doom build system (#311) ✅ now compiles doomgeneric against the meniOS SDK! 🎉 **ALL 6 LIBC GAPS COMPLETE**: File stdio (#305) ✅, Filesystem helpers (#306) ✅, Environment access (#307) ✅, String utilities (#308) ✅, Formatted I/O (#309) ✅, Math library (#310) ✅! Remaining work: final build integration (#312) - NOW UNBLOCKED!
 
 ---
 
@@ -297,12 +297,12 @@ This document tracks the three major milestones for meniOS development.
 ## 📈 Overall Progress
 
 - **Total Issues Across Milestones**: 98 issues (includes foundational issues)
-- **Completed**: 83 issues (84.7%)
-- **In Progress**: 15 issues
-- **Ready to Start**: 6 issues (no dependencies: #109, #190, #191, #310)
-- **Recently Completed**: #286-#293 ✅ (time management & FAT32 writes), #304 ✅ (scanf family), #302 ✅ (real key events), #301 ✅ (framebuffer mmap), #300 ✅ (menIOS Doom port layer), #136 ✅ (devfs), #140 ✅ (/dev/kbd0 and /dev/fb0), #221 ✅ (fast syscalls), #311 ✅ (Doom build system), #305 ✅ (file stdio), #306 ✅ (filesystem helpers), #307 ✅ (environment access), #308 ✅ (string utilities), #309 ✅ (formatted I/O)
+- **Completed**: 84 issues (85.7%)
+- **In Progress**: 14 issues
+- **Ready to Start**: 5 issues (no dependencies: #109, #190, #191, #312)
+- **Recently Completed**: #286-#293 ✅ (time management & FAT32 writes), #304 ✅ (scanf family), #302 ✅ (real key events), #301 ✅ (framebuffer mmap), #300 ✅ (menIOS Doom port layer), #136 ✅ (devfs), #140 ✅ (/dev/kbd0 and /dev/fb0), #221 ✅ (fast syscalls), #305-#310 ✅ (ALL libc gaps COMPLETE!), #311 ✅ (Doom build system)
 - **Recently Created**: #305-#312 ✅ (libc gaps & Doom build system), #313 (filesystem organization), #314 (shell startup scripts), #315 (motd), #316 (touch command), #317 (utime syscall), #318 (uname command)
-- **Next Up**: Last libc gap (#310 - math library) ready to start! TCC/binutils (#190, #191) ready! Doom build integration (#312) nearly unblocked! New utilities (#314-#318) improve usability.
+- **Next Up**: 🎉 ALL libc gaps COMPLETE! Doom build integration (#312) now unblocked! TCC/binutils (#190, #191) ready! New utilities (#314-#318) improve usability.
 
 ## 🚀 Immediate Next Steps
 
@@ -321,23 +321,23 @@ All phases finished! Core buddy allocator implementation (Phase 1 ✅), critical
    - #190 - TCC port (Buddy Allocator ✅ COMPLETE, FAT32 writes ✅ COMPLETE)
    - #191 - binutils port (Buddy Allocator ✅ COMPLETE, FAT32 writes ✅ COMPLETE)
 
-2. **Doom Milestone - libc Gaps** (5/6 COMPLETE! ✅):
+2. **Doom Milestone - libc Gaps** (6/6 COMPLETE! 🎉):
    - #305 - File stdio support ✅ COMPLETE
    - #306 - Filesystem helpers ✅ COMPLETE
    - #307 - Environment variable access ✅ COMPLETE
    - #308 - String utilities ✅ COMPLETE
    - #309 - Expose snprintf/vsnprintf properly ✅ COMPLETE
-   - #310 - Math library (LAST ONE - all dependencies met!)
+   - #310 - Math library ✅ COMPLETE - ALL LIBC GAPS DONE!
 
 3. **Doom Milestone - Threading** (Ready to implement):
    - #109 - pthread API (no dependencies)
 
-4. **Doom Milestone - Integration** (Port layer & build system ✅; packaging pending):
+4. **Doom Milestone - Integration** (Port layer & build system ✅; packaging READY! 🚀):
    - #301 - Pixel-addressable framebuffer ✅ COMPLETE!
    - #302 - Real key events ✅ COMPLETE!
    - #300 - Doom port layer ✅ COMPLETE!
    - #311 - Doom build system ✅ COMPLETE!
-   - #312 - Build integration (blocked on #305-#310)
+   - #312 - Build integration (UNBLOCKED - all libc gaps done!)
 
 ## 📝 Notes
 
@@ -650,6 +650,16 @@ Recommended completion order for maximum impact:
   - Doom save game management now functional
   - Doom milestone: 25/36 complete (69.4%)
   - Overall progress: 83/98 issues complete (84.7%)
+- **2025-10-19**: Closed #310 (Math library - fabs and clean up math.h) ✅
+  - Implemented fabs() for double precision floating-point absolute value
+  - Implemented fabsf() for single precision (float) version
+  - Implemented fabsl() for long double version
+  - Cleaned up <math.h> header with proper declarations
+  - Uses compiler builtins for optimal performance
+  - Doom video scaling calculations (v_video.c) now functional
+  - 🎉 **ALL 6 LIBC GAPS NOW COMPLETE!**
+  - Doom milestone: 26/36 complete (72.2%)
+  - Overall progress: 84/98 issues complete (85.7%)
 
 ---
 
