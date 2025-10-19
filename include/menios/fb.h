@@ -18,6 +18,7 @@ typedef struct menios_fb_info {
 #define MENIOS_FB_IOCTL_GET_INFO 0x4d454e01u /* 'MEN\x01' */
 #define MENIOS_FB_IOCTL_FLUSH    0x4d454e02u /* 'MEN\x02' */
 #define MENIOS_FB_IOCTL_SET_MODE 0x4d454e03u /* 'MEN\x03' */
+#define MENIOS_FB_IOCTL_ENUM_MODES 0x4d454e04u /* 'MEN\x04' */
 
 typedef struct menios_fb_mode_request {
   uint64_t width;
@@ -25,6 +26,20 @@ typedef struct menios_fb_mode_request {
   uint16_t bpp;
   uint16_t reserved;
 } menios_fb_mode_request_t;
+
+typedef struct menios_fb_mode {
+  uint64_t width;
+  uint64_t height;
+  uint64_t pitch;
+  uint16_t bpp;
+  uint16_t reserved;
+} menios_fb_mode_t;
+
+typedef struct menios_fb_modes_request {
+  menios_fb_mode_t* modes;
+  uint64_t capacity;
+  uint64_t written;
+} menios_fb_modes_request_t;
 
 #ifdef __cplusplus
 }

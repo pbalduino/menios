@@ -600,6 +600,52 @@ static int framebuffer_ioctl_impl(file_t* file, unsigned long request, void* arg
       }
       return 0;
     }
+    case MENIOS_FB_IOCTL_ENUM_MODES: {
+      if(argp == NULL) {
+        return -EINVAL;
+      }
+      menios_fb_modes_request_t req;
+      if(current != NULL && !proc_user_buffer_accessible(current, argp, sizeof(req))) {
+        return -EFAULT;
+      }
+      memcpy(&req, argp, sizeof(req));
+
+      uint64_t total = fb_mode_count_total();
+
+      uint64_t to_copy = req.capacity < total ? req.capacity : total;
+      if(to_copy > 0) {
+        if(req.modes == NULL) {
+          return -EINVAL;
+        }
+        size_t bytes = to_copy * sizeof(menios_fb_mode_t);
+        if(current != NULL && !proc_user_buffer_accessible(current, req.modes, bytes)) {
+          return -EFAULT;
+        }
+
+        menios_fb_mode_t mode_info;
+        menios_fb_mode_t* user_modes = req.modes;
+
+        framebuffer_mode_info_t info;
+        for(uint64_t i = 0; i < to_copy; i++) {
+          if(!fb_mode_info(i, &info)) {
+            break;
+          }
+          mode_info.width = info.width;
+          mode_info.height = info.height;
+          mode_info.pitch = info.pitch;
+          mode_info.bpp = info.bpp;
+          mode_info.reserved = 0;
+          memcpy(user_modes + i, &mode_info, sizeof(mode_info));
+        }
+      }
+
+      req.written = total;
+      if(current != NULL && !proc_user_buffer_accessible(current, argp, sizeof(req))) {
+        return -EFAULT;
+      }
+      memcpy(argp, &req, sizeof(req));
+      return 0;
+    }
     default:
       return -ENOTTY;
   }

@@ -907,6 +907,50 @@ bool fb_set_mode(uint64_t width, uint64_t height, uint16_t bpp) {
   return true;
 }
 
+uint64_t fb_mode_count_total(void) {
+  uint64_t total = 1;
+  if(framebuffer != NULL && framebuffer->mode_count > 0 && framebuffer->modes != NULL) {
+    total += framebuffer->mode_count;
+  }
+  return total;
+}
+
+bool fb_mode_info(uint64_t index, framebuffer_mode_info_t* out) {
+  if(out == NULL) {
+    return false;
+  }
+
+  if(index == 0) {
+    out->width = framebuffer_view_width ? framebuffer_view_width : framebuffer->width;
+    out->height = framebuffer_view_height ? framebuffer_view_height : framebuffer->height;
+    out->pitch = framebuffer_view_pitch ? framebuffer_view_pitch : framebuffer->pitch;
+    out->bpp = framebuffer->bpp;
+    out->reserved = 0;
+    return true;
+  }
+
+  if(framebuffer == NULL || framebuffer->mode_count == 0 || framebuffer->modes == NULL) {
+    return false;
+  }
+
+  uint64_t actual = index - 1;
+  if(actual >= framebuffer->mode_count) {
+    return false;
+  }
+
+  struct limine_video_mode* mode = framebuffer->modes[actual];
+  if(mode == NULL) {
+    return false;
+  }
+
+  out->width = mode->width;
+  out->height = mode->height;
+  out->pitch = mode->pitch;
+  out->bpp = mode->bpp;
+  out->reserved = 0;
+  return true;
+}
+
 void fb_list_modes() {
   for(uint64_t m = 0; m < framebuffer->mode_count; m++) {
     printf("  %s%lu: %s%lu x %s%lu x %d %s",

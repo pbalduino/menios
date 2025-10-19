@@ -11,6 +11,14 @@ typedef struct framebuffer_geometry {
   uint16_t reserved;
 } framebuffer_geometry_t;
 
+typedef struct framebuffer_mode_info {
+  uint64_t width;
+  uint64_t height;
+  uint64_t pitch;
+  uint16_t bpp;
+  uint16_t reserved;
+} framebuffer_mode_info_t;
+
 #define FB_BLACK        0x000000
 #define FB_DARK_RED     0x7f0000
 #define FB_DARK_GREEN   0x007f00
@@ -48,6 +56,8 @@ bool fb_backbuffer_available(void);
 size_t fb_buffer_size(void);
 void fb_flush_backbuffer(void);
 bool fb_set_mode(uint64_t width, uint64_t height, uint16_t bpp);
+uint64_t fb_mode_count_total(void);
+bool fb_mode_info(uint64_t index, framebuffer_mode_info_t* out);
 
 void fb_draw();
 void fb_init();
