@@ -650,12 +650,7 @@ int vsscanf(const char* str, const char* format, va_list arg) {
   return result;
 }
 
-int vscanf(const char* format, va_list arg) {
-  if(format == NULL) {
-    errno = EINVAL;
-    return -1;
-  }
-
+static int read_fd_into_buffer(int fd, char** out_buffer, size_t* out_length) {
   size_t capacity = 256;
   char* buffer = (char*)malloc(capacity);
   if(buffer == NULL) {
@@ -679,7 +674,7 @@ int vscanf(const char* format, va_list arg) {
       capacity = new_capacity;
     }
 
-    ssize_t rc = read(STDIN_FILENO, buffer + length, capacity - length - 1);
+    ssize_t rc = read(fd, buffer + length, capacity - length - 1);
     if(rc < 0) {
       if(errno == EINTR) {
         continue;
@@ -703,7 +698,28 @@ int vscanf(const char* format, va_list arg) {
 
   if(length == 0) {
     free(buffer);
+    return 1;
+  }
+
+  *out_buffer = buffer;
+  *out_length = length;
+  return 0;
+}
+
+int vscanf(const char* format, va_list arg) {
+  if(format == NULL) {
+    errno = EINVAL;
+    return -1;
+  }
+
+  char* buffer = NULL;
+  size_t length = 0;
+  int rc = read_fd_into_buffer(STDIN_FILENO, &buffer, &length);
+  if(rc == 1) {
     return EOF;
+  }
+  if(rc < 0) {
+    return -1;
   }
 
   va_list args_copy;
@@ -718,6 +734,43 @@ int scanf(const char* format, ...) {
   va_list args;
   va_start(args, format);
   int result = vscanf(format, args);
+  va_end(args);
+  return result;
+}
+
+int vfscanf(FILE* stream, const char* format, va_list arg) {
+  if(stream == NULL || format == NULL) {
+    errno = EINVAL;
+    return -1;
+  }
+
+  int fd = menios_stream_fd(stream);
+  if(fd < 0) {
+    return -1;
+  }
+
+  char* buffer = NULL;
+  size_t length = 0;
+  int rc = read_fd_into_buffer(fd, &buffer, &length);
+  if(rc == 1) {
+    return EOF;
+  }
+  if(rc < 0) {
+    return -1;
+  }
+
+  va_list args_copy;
+  va_copy(args_copy, arg);
+  int result = vsscanf_impl(buffer, format, args_copy);
+  va_end(args_copy);
+  free(buffer);
+  return result;
+}
+
+int fscanf(FILE* stream, const char* format, ...) {
+  va_list args;
+  va_start(args, format);
+  int result = vfscanf(stream, format, args);
   va_end(args);
   return result;
 }
