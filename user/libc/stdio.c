@@ -9,14 +9,611 @@
 #include <string.h>
 #include <sys/errno.h>
 #include <unistd.h>
+#include <fcntl.h>
 
-static FILE stdin_stream = { .reserved = STDIN_FILENO };
-static FILE stdout_stream = { .reserved = STDOUT_FILENO };
-static FILE stderr_stream = { .reserved = STDERR_FILENO };
+enum {
+  FILE_FLAG_CAN_READ   = 1u << 0,
+  FILE_FLAG_CAN_WRITE  = 1u << 1,
+  FILE_FLAG_APPEND     = 1u << 2,
+  FILE_FLAG_EOF        = 1u << 3,
+  FILE_FLAG_ERROR      = 1u << 4,
+  FILE_FLAG_OWN_BUFFER = 1u << 5,
+};
+
+enum {
+  FILE_LAST_OP_NONE  = 0,
+  FILE_LAST_OP_READ  = 1,
+  FILE_LAST_OP_WRITE = 2,
+};
+
+#define FILE_DEFAULT_BUFFER_SIZE 4096
+
+static unsigned char stdin_buffer_storage[FILE_DEFAULT_BUFFER_SIZE];
+static unsigned char stdout_buffer_storage[FILE_DEFAULT_BUFFER_SIZE];
+static unsigned char stderr_buffer_storage[FILE_DEFAULT_BUFFER_SIZE];
+
+static FILE stdin_stream = {
+  .fd = STDIN_FILENO,
+  .flags = FILE_FLAG_CAN_READ,
+  .buffer = stdin_buffer_storage,
+  .buffer_size = sizeof(stdin_buffer_storage),
+  .buffer_pos = 0,
+  .buffer_end = 0,
+  .offset = 0,
+  .error_number = 0,
+  .last_op = FILE_LAST_OP_NONE,
+};
+
+static FILE stdout_stream = {
+  .fd = STDOUT_FILENO,
+  .flags = FILE_FLAG_CAN_WRITE,
+  .buffer = stdout_buffer_storage,
+  .buffer_size = sizeof(stdout_buffer_storage),
+  .buffer_pos = 0,
+  .buffer_end = 0,
+  .offset = 0,
+  .error_number = 0,
+  .last_op = FILE_LAST_OP_NONE,
+};
+
+static FILE stderr_stream = {
+  .fd = STDERR_FILENO,
+  .flags = FILE_FLAG_CAN_WRITE,
+  .buffer = stderr_buffer_storage,
+  .buffer_size = sizeof(stderr_buffer_storage),
+  .buffer_pos = 0,
+  .buffer_end = 0,
+  .offset = 0,
+  .error_number = 0,
+  .last_op = FILE_LAST_OP_NONE,
+};
 
 FILE* stdin = &stdin_stream;
 FILE* stdout = &stdout_stream;
 FILE* stderr = &stderr_stream;
+
+static void stream_mark_error(FILE* stream, int err) {
+  if(stream == NULL) {
+    return;
+  }
+  stream->flags |= FILE_FLAG_ERROR;
+  stream->error_number = err;
+  errno = err;
+}
+
+static void stream_reset_buffer(FILE* stream) {
+  if(stream == NULL) {
+    return;
+  }
+  stream->buffer_pos = 0;
+  stream->buffer_end = 0;
+}
+
+static bool stream_can_read(const FILE* stream) {
+  return stream != NULL && (stream->flags & FILE_FLAG_CAN_READ) != 0;
+}
+
+static bool stream_can_write(const FILE* stream) {
+  return stream != NULL && (stream->flags & FILE_FLAG_CAN_WRITE) != 0;
+}
+
+static int stream_flush_write(FILE* stream) {
+  if(stream == NULL) {
+    errno = EINVAL;
+    return -1;
+  }
+
+  if(stream->last_op != FILE_LAST_OP_WRITE) {
+    return 0;
+  }
+
+  size_t pending = stream->buffer_pos;
+  size_t offset  = 0;
+
+  while(offset < pending) {
+    size_t remaining = pending - offset;
+    ssize_t rc = write(stream->fd, stream->buffer + offset, remaining);
+    if(rc < 0) {
+      stream_mark_error(stream, errno);
+      if(offset < pending) {
+        memmove(stream->buffer, stream->buffer + offset, pending - offset);
+        stream->buffer_pos = pending - offset;
+      }
+      return -1;
+    }
+
+    if(rc == 0) {
+      stream_mark_error(stream, EIO);
+      return -1;
+    }
+
+    offset += (size_t)rc;
+    stream->offset += (off_t)rc;
+  }
+
+  stream->buffer_pos = 0;
+  stream->buffer_end = 0;
+  return 0;
+}
+
+static int stream_prepare_for_read(FILE* stream) {
+  if(stream == NULL) {
+    errno = EINVAL;
+    return -1;
+  }
+
+  if(!stream_can_read(stream)) {
+    stream_mark_error(stream, EBADF);
+    return -1;
+  }
+
+  if(stream->last_op == FILE_LAST_OP_WRITE) {
+    if(stream_flush_write(stream) < 0) {
+      return -1;
+    }
+    stream->last_op = FILE_LAST_OP_NONE;
+  }
+
+  if(stream->last_op != FILE_LAST_OP_READ) {
+    stream_reset_buffer(stream);
+  }
+
+  stream->last_op = FILE_LAST_OP_READ;
+  stream->flags &= ~FILE_FLAG_EOF;
+  return 0;
+}
+
+static int stream_prepare_for_write(FILE* stream) {
+  if(stream == NULL) {
+    errno = EINVAL;
+    return -1;
+  }
+
+  if(!stream_can_write(stream)) {
+    stream_mark_error(stream, EBADF);
+    return -1;
+  }
+
+  if(stream->last_op == FILE_LAST_OP_READ) {
+    size_t unread = 0;
+    if(stream->buffer_end > stream->buffer_pos) {
+      unread = stream->buffer_end - stream->buffer_pos;
+    }
+    if(unread > 0) {
+      off_t rc = lseek(stream->fd, -(off_t)unread, SEEK_CUR);
+      if(rc < 0) {
+        stream_mark_error(stream, errno);
+        return -1;
+      }
+      stream->offset = rc;
+    }
+    stream_reset_buffer(stream);
+  }
+
+  stream->last_op = FILE_LAST_OP_WRITE;
+  stream->flags &= ~FILE_FLAG_EOF;
+  return 0;
+}
+
+static bool parse_mode_string(const char* mode,
+                              int* open_flags,
+                              unsigned* file_flags) {
+  if(mode == NULL || mode[0] == '\0') {
+    return false;
+  }
+
+  char primary = mode[0];
+  bool plus = false;
+
+  for(const char* cursor = mode + 1; *cursor != '\0'; ++cursor) {
+    if(*cursor == '+') {
+      if(plus) {
+        return false;
+      }
+      plus = true;
+      continue;
+    }
+
+    if(*cursor == 'b' || *cursor == 't') {
+      continue;
+    }
+
+    return false;
+  }
+
+  unsigned flags = 0;
+  int oflags = 0;
+
+  switch(primary) {
+    case 'r':
+      oflags = plus ? O_RDWR : O_RDONLY;
+      flags = FILE_FLAG_CAN_READ | (plus ? FILE_FLAG_CAN_WRITE : 0u);
+      break;
+    case 'w':
+      oflags = plus ? (O_RDWR | O_CREAT | O_TRUNC)
+                    : (O_WRONLY | O_CREAT | O_TRUNC);
+      flags = FILE_FLAG_CAN_WRITE | (plus ? FILE_FLAG_CAN_READ : 0u);
+      break;
+    case 'a':
+      oflags = plus ? (O_RDWR | O_CREAT | O_APPEND)
+                    : (O_WRONLY | O_CREAT | O_APPEND);
+      flags = FILE_FLAG_CAN_WRITE | FILE_FLAG_APPEND
+              | (plus ? FILE_FLAG_CAN_READ : 0u);
+      break;
+    default:
+      return false;
+  }
+
+  *open_flags = oflags;
+  *file_flags = flags;
+  return true;
+}
+
+static bool multiply_will_overflow(size_t a, size_t b, size_t* out) {
+  if(a == 0 || b == 0) {
+    *out = 0;
+    return true;
+  }
+  if(b > SIZE_MAX / a) {
+    return false;
+  }
+  *out = a * b;
+  return true;
+}
+
+FILE* fopen(const char* filename, const char* mode) {
+  if(filename == NULL || mode == NULL) {
+    errno = EINVAL;
+    return NULL;
+  }
+
+  int open_flags = 0;
+  unsigned file_flags = 0;
+  if(!parse_mode_string(mode, &open_flags, &file_flags)) {
+    errno = EINVAL;
+    return NULL;
+  }
+
+  int fd = open(filename, open_flags, 0644);
+  if(fd < 0) {
+    return NULL;
+  }
+
+  FILE* stream = (FILE*)malloc(sizeof(FILE));
+  if(stream == NULL) {
+    int saved = errno;
+    close(fd);
+    errno = saved != 0 ? saved : ENOMEM;
+    return NULL;
+  }
+
+  unsigned char* buffer = (unsigned char*)malloc(FILE_DEFAULT_BUFFER_SIZE);
+  if(buffer == NULL) {
+    int saved = errno;
+    close(fd);
+    free(stream);
+    errno = saved != 0 ? saved : ENOMEM;
+    return NULL;
+  }
+
+  stream->fd = fd;
+  stream->flags = file_flags | FILE_FLAG_OWN_BUFFER;
+  stream->buffer = buffer;
+  stream->buffer_size = FILE_DEFAULT_BUFFER_SIZE;
+  stream->buffer_pos = 0;
+  stream->buffer_end = 0;
+  stream->offset = 0;
+  stream->error_number = 0;
+  stream->last_op = FILE_LAST_OP_NONE;
+  stream->flags &= ~(FILE_FLAG_EOF | FILE_FLAG_ERROR);
+
+  int seek_origin = (file_flags & FILE_FLAG_APPEND) ? SEEK_END : SEEK_CUR;
+  off_t position = lseek(fd, 0, seek_origin);
+  if(position >= 0) {
+    stream->offset = position;
+  }
+
+  return stream;
+}
+
+static int close_underlying_fd(FILE* stream) {
+  if(close(stream->fd) < 0) {
+    stream_mark_error(stream, errno);
+    return -1;
+  }
+  stream->fd = -1;
+  return 0;
+}
+
+int fclose(FILE* stream) {
+  if(stream == NULL) {
+    errno = EINVAL;
+    return EOF;
+  }
+
+  if(stream == stdin || stream == stdout || stream == stderr) {
+    errno = EBADF;
+    return EOF;
+  }
+
+  int result = 0;
+  if(stream->last_op == FILE_LAST_OP_WRITE && stream->buffer_pos > 0) {
+    if(stream_flush_write(stream) < 0) {
+      result = EOF;
+    }
+  }
+
+  if(close_underlying_fd(stream) < 0) {
+    result = EOF;
+  }
+
+  if((stream->flags & FILE_FLAG_OWN_BUFFER) && stream->buffer != NULL) {
+    free(stream->buffer);
+  }
+
+  free(stream);
+  return result;
+}
+
+int fflush(FILE* stream) {
+  if(stream == NULL) {
+    int rc_stdout = fflush(stdout);
+    int rc_stderr = fflush(stderr);
+    return (rc_stdout == 0 && rc_stderr == 0) ? 0 : EOF;
+  }
+
+  if(stream->last_op == FILE_LAST_OP_WRITE) {
+    if(stream_flush_write(stream) < 0) {
+      return EOF;
+    }
+    stream->last_op = FILE_LAST_OP_NONE;
+  } else if(stream->last_op == FILE_LAST_OP_READ) {
+    stream_reset_buffer(stream);
+    stream->last_op = FILE_LAST_OP_NONE;
+  }
+
+  return 0;
+}
+
+long ftell(FILE* stream) {
+  if(stream == NULL) {
+    errno = EINVAL;
+    return -1;
+  }
+
+  off_t position = stream->offset;
+
+  if(stream->last_op == FILE_LAST_OP_READ) {
+    if(stream->buffer_end >= stream->buffer_pos) {
+      position -= (off_t)(stream->buffer_end - stream->buffer_pos);
+    }
+  } else if(stream->last_op == FILE_LAST_OP_WRITE) {
+    position += (off_t)stream->buffer_pos;
+  }
+
+  return (long)position;
+}
+
+int fseek(FILE* stream, long offset, int whence) {
+  if(stream == NULL) {
+    errno = EINVAL;
+    return -1;
+  }
+
+  if(stream->last_op == FILE_LAST_OP_WRITE) {
+    if(stream_flush_write(stream) < 0) {
+      return -1;
+    }
+  }
+
+  if(stream->last_op == FILE_LAST_OP_READ && whence == SEEK_CUR) {
+    if(stream->buffer_end >= stream->buffer_pos) {
+      offset -= (long)(stream->buffer_end - stream->buffer_pos);
+    }
+  }
+
+  off_t rc = lseek(stream->fd, (off_t)offset, whence);
+  if(rc < 0) {
+    stream_mark_error(stream, errno);
+    return -1;
+  }
+
+  stream->offset = rc;
+  stream_reset_buffer(stream);
+  stream->last_op = FILE_LAST_OP_NONE;
+  stream->flags &= ~(FILE_FLAG_EOF);
+  return 0;
+}
+
+void rewind(FILE* stream) {
+  if(stream == NULL) {
+    return;
+  }
+  fseek(stream, 0, SEEK_SET);
+  clearerr(stream);
+}
+
+size_t fread(void* ptr, size_t size, size_t nmemb, FILE* stream) {
+  if(ptr == NULL || stream == NULL) {
+    errno = EINVAL;
+    return 0;
+  }
+
+  if(size == 0 || nmemb == 0) {
+    return 0;
+  }
+
+  size_t total = 0;
+  if(!multiply_will_overflow(size, nmemb, &total)) {
+    errno = EOVERFLOW;
+    stream_mark_error(stream, EOVERFLOW);
+    return 0;
+  }
+
+  if(stream_prepare_for_read(stream) < 0) {
+    return 0;
+  }
+
+  unsigned char* out = (unsigned char*)ptr;
+  size_t bytes_read = 0;
+
+  while(bytes_read < total) {
+    if(stream->buffer_pos < stream->buffer_end) {
+      size_t available = stream->buffer_end - stream->buffer_pos;
+      size_t need = total - bytes_read;
+      size_t to_copy = (available < need) ? available : need;
+      memcpy(out + bytes_read, stream->buffer + stream->buffer_pos, to_copy);
+      stream->buffer_pos += to_copy;
+      bytes_read += to_copy;
+      continue;
+    }
+
+    ssize_t rc = read(stream->fd, stream->buffer, stream->buffer_size);
+    if(rc < 0) {
+      stream_mark_error(stream, errno);
+      break;
+    }
+    if(rc == 0) {
+      stream->flags |= FILE_FLAG_EOF;
+      break;
+    }
+
+    stream->buffer_pos = 0;
+    stream->buffer_end = (size_t)rc;
+    stream->offset += (off_t)rc;
+  }
+
+  return bytes_read / size;
+}
+
+size_t fwrite(const void* ptr, size_t size, size_t nmemb, FILE* stream) {
+  if(ptr == NULL || stream == NULL) {
+    errno = EINVAL;
+    return 0;
+  }
+
+  if(size == 0 || nmemb == 0) {
+    return 0;
+  }
+
+  size_t total = 0;
+  if(!multiply_will_overflow(size, nmemb, &total)) {
+    errno = EOVERFLOW;
+    stream_mark_error(stream, EOVERFLOW);
+    return 0;
+  }
+
+  if(stream_prepare_for_write(stream) < 0) {
+    return 0;
+  }
+
+  const unsigned char* in = (const unsigned char*)ptr;
+  size_t bytes_written = 0;
+
+  while(bytes_written < total) {
+    size_t space = stream->buffer_size - stream->buffer_pos;
+    if(space == 0) {
+      if(stream_flush_write(stream) < 0) {
+        return bytes_written / size;
+      }
+      stream->last_op = FILE_LAST_OP_WRITE;
+      space = stream->buffer_size;
+    }
+
+    size_t remaining = total - bytes_written;
+
+    if(remaining >= stream->buffer_size && stream->buffer_pos == 0) {
+      size_t chunk = remaining;
+      ssize_t rc = write(stream->fd, in + bytes_written, chunk);
+      if(rc < 0) {
+        stream_mark_error(stream, errno);
+        break;
+      }
+      if(rc == 0) {
+        stream_mark_error(stream, EIO);
+        break;
+      }
+      bytes_written += (size_t)rc;
+      stream->offset += (off_t)rc;
+      continue;
+    }
+
+    size_t to_copy = (remaining < space) ? remaining : space;
+    memcpy(stream->buffer + stream->buffer_pos, in + bytes_written, to_copy);
+    stream->buffer_pos += to_copy;
+    bytes_written += to_copy;
+  }
+
+  return bytes_written / size;
+}
+
+int feof(FILE* stream) {
+  if(stream == NULL) {
+    return 0;
+  }
+  return (stream->flags & FILE_FLAG_EOF) ? 1 : 0;
+}
+
+int ferror(FILE* stream) {
+  if(stream == NULL) {
+    return 0;
+  }
+  return (stream->flags & FILE_FLAG_ERROR) ? 1 : 0;
+}
+
+void clearerr(FILE* stream) {
+  if(stream == NULL) {
+    return;
+  }
+  stream->flags &= ~(FILE_FLAG_ERROR | FILE_FLAG_EOF);
+  stream->error_number = 0;
+}
+
+FILE* freopen(const char* filename, const char* mode, FILE* stream) {
+  if(filename == NULL || mode == NULL || stream == NULL) {
+    errno = EINVAL;
+    return NULL;
+  }
+
+  if(stream_flush_write(stream) < 0) {
+    return NULL;
+  }
+
+  stream_reset_buffer(stream);
+
+  int open_flags = 0;
+  unsigned file_flags = 0;
+  if(!parse_mode_string(mode, &open_flags, &file_flags)) {
+    errno = EINVAL;
+    return NULL;
+  }
+
+  if(close_underlying_fd(stream) < 0) {
+    return NULL;
+  }
+
+  int fd = open(filename, open_flags, 0644);
+  if(fd < 0) {
+    return NULL;
+  }
+
+  stream->fd = fd;
+  unsigned preserved = stream->flags & FILE_FLAG_OWN_BUFFER;
+  stream->flags = file_flags | preserved;
+  stream_reset_buffer(stream);
+  stream->offset = 0;
+  stream->error_number = 0;
+  stream->flags &= ~(FILE_FLAG_ERROR | FILE_FLAG_EOF);
+  stream->last_op = FILE_LAST_OP_NONE;
+
+  int origin = (file_flags & FILE_FLAG_APPEND) ? SEEK_END : SEEK_CUR;
+  off_t pos = lseek(fd, 0, origin);
+  if(pos >= 0) {
+    stream->offset = pos;
+  }
+
+  return stream;
+}
 
 typedef struct {
   char*  start;
@@ -163,14 +760,6 @@ static int menios_vsnprintf(char* dest, size_t size, const char* format, va_list
   return (int)buffer.written;
 }
 
-static int menios_stream_fd(FILE* stream) {
-  if(stream == NULL) {
-    errno = EINVAL;
-    return -1;
-  }
-  return stream->reserved;
-}
-
 int svprintf(char* str, const char* format, va_list arg) {
   va_list measure;
   va_copy(measure, arg);
@@ -197,7 +786,12 @@ int sprintf(char* str, const char* format, ...) {
   return written;
 }
 
-static int menios_write_formatted(int fd, const char* format, va_list args) {
+static int menios_write_formatted(FILE* stream, const char* format, va_list args) {
+  if(stream == NULL) {
+    errno = EINVAL;
+    return -1;
+  }
+
   va_list measure;
   va_copy(measure, args);
   int required = menios_vsnprintf(NULL, 0, format, measure);
@@ -219,18 +813,14 @@ static int menios_write_formatted(int fd, const char* format, va_list args) {
   menios_vsnprintf(buffer, length + 1, format, render);
   va_end(render);
 
-  ssize_t rc = write(fd, buffer, length);
-  int result = (rc < 0) ? -1 : required;
+  size_t written = fwrite(buffer, 1, length, stream);
+  int result = (written == length) ? required : -1;
   free(buffer);
   return result;
 }
 
 int vfprintf(FILE* stream, const char* format, va_list args) {
-  int fd = menios_stream_fd(stream);
-  if(fd < 0) {
-    return -1;
-  }
-  return menios_write_formatted(fd, format, args);
+  return menios_write_formatted(stream, format, args);
 }
 
 int fprintf(FILE* stream, const char* format, ...) {
@@ -258,23 +848,18 @@ int fvprintf(FILE* stream, const char* format, va_list arg) {
 }
 
 int fputs(const char* text, FILE* stream) {
-  int fd = menios_stream_fd(stream);
-  if(fd < 0) {
-    return EOF;
-  }
   size_t len = strlen(text);
-  ssize_t rc = write(fd, text, len);
-  return (rc < 0) ? EOF : 0;
+  size_t written = fwrite(text, 1, len, stream);
+  return (written == len) ? 0 : EOF;
 }
 
 int fputc(int ch, FILE* stream) {
-  int fd = menios_stream_fd(stream);
-  if(fd < 0) {
+  unsigned char byte = (unsigned char)ch;
+  size_t written = fwrite(&byte, 1, 1, stream);
+  if(written != 1) {
     return EOF;
   }
-  unsigned char byte = (unsigned char)ch;
-  ssize_t rc = write(fd, &byte, 1);
-  return (rc < 0) ? EOF : ch;
+  return ch;
 }
 
 int putchar(int ch) {
@@ -290,8 +875,7 @@ int puts(const char* str) {
 
 int getchar(void) {
   unsigned char ch;
-  ssize_t rc = read(STDIN_FILENO, &ch, 1);
-  if(rc <= 0) {
+  if(fread(&ch, 1, 1, stdin) != 1) {
     return EOF;
   }
   return ch;
@@ -747,7 +1331,9 @@ int vsscanf(const char* str, const char* format, va_list arg) {
   return result;
 }
 
-static int read_fd_into_buffer(int fd, char** out_buffer, size_t* out_length) {
+static int read_stream_into_buffer(FILE* stream,
+                                   char** out_buffer,
+                                   size_t* out_length) {
   size_t capacity = 256;
   char* buffer = (char*)malloc(capacity);
   if(buffer == NULL) {
@@ -771,15 +1357,13 @@ static int read_fd_into_buffer(int fd, char** out_buffer, size_t* out_length) {
       capacity = new_capacity;
     }
 
-    ssize_t rc = read(fd, buffer + length, capacity - length - 1);
-    if(rc < 0) {
-      if(errno == EINTR) {
-        continue;
-      }
-      free(buffer);
-      return -1;
-    }
+    size_t chunk = capacity - length - 1;
+    size_t rc = fread(buffer + length, 1, chunk, stream);
     if(rc == 0) {
+      if(ferror(stream)) {
+        free(buffer);
+        return -1;
+      }
       break;
     }
 
@@ -811,7 +1395,7 @@ int vscanf(const char* format, va_list arg) {
 
   char* buffer = NULL;
   size_t length = 0;
-  int rc = read_fd_into_buffer(STDIN_FILENO, &buffer, &length);
+  int rc = read_stream_into_buffer(stdin, &buffer, &length);
   if(rc == 1) {
     return EOF;
   }
@@ -841,14 +1425,9 @@ int vfscanf(FILE* stream, const char* format, va_list arg) {
     return -1;
   }
 
-  int fd = menios_stream_fd(stream);
-  if(fd < 0) {
-    return -1;
-  }
-
   char* buffer = NULL;
   size_t length = 0;
-  int rc = read_fd_into_buffer(fd, &buffer, &length);
+  int rc = read_stream_into_buffer(stream, &buffer, &length);
   if(rc == 1) {
     return EOF;
   }

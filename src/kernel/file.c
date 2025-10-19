@@ -32,9 +32,9 @@ static const file_ops_t serial_file_ops;
 static const file_ops_t stdin_file_ops;
 
 #ifdef MENIOS_KERNEL
-static FILE kernel_stdin_stream = { .reserved = FD_STDIN };
-static FILE kernel_stdout_stream = { .reserved = FD_STDOUT };
-static FILE kernel_stderr_stream = { .reserved = FD_STDERR };
+static FILE kernel_stdin_stream = { .fd = FD_STDIN };
+static FILE kernel_stdout_stream = { .fd = FD_STDOUT };
+static FILE kernel_stderr_stream = { .fd = FD_STDERR };
 
 FILE* stdin = &kernel_stdin_stream;
 FILE* stdout = &kernel_stdout_stream;
@@ -926,7 +926,8 @@ FILE* fopen(const char* filename, const char* mode) {
     return NULL;
   }
   (void)file_mode;
-  stream->reserved = fd;
+  memset(stream, 0, sizeof(FILE));
+  stream->fd = fd;
   return stream;
 }
 
@@ -941,7 +942,7 @@ int fclose(FILE* stream) {
   }
 
   struct proc_info_t* proc = stream_owner();
-  int fd = stream->reserved;
+  int fd = stream->fd;
   int rc = proc_file_close(proc, fd);
   kfree(stream);
   return rc;
@@ -959,7 +960,7 @@ FILE* freopen(const char* filename, const char* mode, FILE* stream) {
   }
 
   struct proc_info_t* proc = stream_owner();
-  if(proc_file_dup(proc, new_stream->reserved, stream->reserved, false) < 0) {
+  if(proc_file_dup(proc, new_stream->fd, stream->fd, false) < 0) {
     fclose(new_stream);
     return NULL;
   }

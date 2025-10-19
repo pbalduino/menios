@@ -20,7 +20,7 @@ int fputchar(int ch, FILE* file) {
   }
 
   struct proc_info_t* proc = current ? current : &kernel_process_info;
-  file_t* handle = proc_file_get(proc, file->reserved, NULL);
+  file_t* handle = proc_file_get(proc, file->fd, NULL);
   if(handle == NULL) {
     return -EBADF;
   }
@@ -49,7 +49,7 @@ int fputs(const char* text, FILE* file) {
   }
 
   struct proc_info_t* proc = current ? current : &kernel_process_info;
-  file_t* handle = proc_file_get(proc, file->reserved, NULL);
+  file_t* handle = proc_file_get(proc, file->fd, NULL);
   if(handle == NULL) {
     return -EBADF;
   }

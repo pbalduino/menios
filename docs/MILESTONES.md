@@ -296,13 +296,13 @@ This document tracks the three major milestones for meniOS development.
 
 ## 📈 Overall Progress
 
-- **Total Issues Across Milestones**: 92 issues (includes foundational issues)
-- **Completed**: 79 issues (85.9%)
-- **In Progress**: 15 issues
+- **Total Issues Across Milestones**: 98 issues (includes foundational issues)
+- **Completed**: 79 issues (80.6%)
+- **In Progress**: 19 issues
 - **Ready to Start**: 10 issues (no dependencies: #109, #190, #191, #305-#307, #309-#310)
 - **Recently Completed**: #286-#293 ✅ (time management & FAT32 writes), #304 ✅ (scanf family), #302 ✅ (real key events), #301 ✅ (framebuffer mmap), #300 ✅ (menIOS Doom port layer), #136 ✅ (devfs), #140 ✅ (/dev/kbd0 and /dev/fb0), #221 ✅ (fast syscalls), #311 ✅ (Doom build system), #308 ✅ (string utilities)
-- **Recently Created**: #305-#312 ✅ (libc gaps & Doom build system), #313 (filesystem organization), #314 (shell startup scripts)
-- **Next Up**: Remaining libc gaps (#305-#307, #309-#310) ready to start! TCC/binutils (#190, #191) ready! Doom build integration (#312) follows once libc gaps land.
+- **Recently Created**: #305-#312 ✅ (libc gaps & Doom build system), #313 (filesystem organization), #314 (shell startup scripts), #315 (motd), #316 (touch command), #317 (utime syscall), #318 (uname command)
+- **Next Up**: Remaining libc gaps (#305-#307, #309-#310) ready to start! TCC/binutils (#190, #191) ready! Doom build integration (#312) follows once libc gaps land. New utilities (#314-#318) improve usability.
 
 ## 🚀 Immediate Next Steps
 
@@ -611,6 +611,21 @@ Recommended completion order for maximum impact:
 - **2025-10-19**: Created #314 (Shell startup script support - .moshrc)
   - Automated command execution on shell startup
   - High usability impact for debugging and testing
+- **2025-10-19**: Created #315 (Message of the day - motd)
+  - Display random welcome messages from /etc/motd
+  - Suppressible via ~/.hushlogin (OpenBSD-style)
+  - Enhances user experience and system personality
+- **2025-10-19**: Created #316 (touch command)
+  - File creation and timestamp updates
+  - Essential Unix utility for build systems and scripting
+- **2025-10-19**: Created #317 (utime() syscall)
+  - File timestamp modification syscall
+  - Required for touch command and backup/restore tools
+  - POSIX compliance for file metadata control
+- **2025-10-19**: Created #318 (uname command)
+  - System information display (kernel name, version, architecture)
+  - Platform detection for scripts and build configuration
+  - Total project issues: 98 (was 92)
 
 ---
 

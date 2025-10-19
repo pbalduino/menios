@@ -87,10 +87,17 @@ static void test_fscanf_from_fd(void) {
     exit(1);
   }
 
-  FILE stream = { .reserved = fd };
+  FILE* stream = fopen(path, "r");
+  if(stream == NULL) {
+    printf("Failed to open stream for reading\n");
+    close(fd);
+    exit(1);
+  }
+
   int value = 0;
   char buf[16];
-  int conversions = fscanf(&stream, "%d %s", &value, buf);
+  int conversions = fscanf(stream, "%d %s", &value, buf);
+  fclose(stream);
   close(fd);
 
   ASSERT_EQ_INT(2, conversions);

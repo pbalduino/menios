@@ -252,6 +252,12 @@ digraph IssueDependencies {
         issue237 [label="#237: Shell\nvalidation script", fillcolor="#E0FFFF"];
         issue242 [label="#242: PATH tab\ncompletion", fillcolor="#E0FFFF"];
         issue243 [label="#243: /bin/mem\nutility", fillcolor="#90EE90", style="filled,dashed"];
+        issue313 [label="#313: Filesystem hierarchy\norganization (FHS)", fillcolor="#E0FFFF"];
+        issue314 [label="#314: Shell startup scripts\n.moshrc support", fillcolor="#E0FFFF"];
+        issue315 [label="#315: Message of the day\nmotd command", fillcolor="#E0FFFF"];
+        issue316 [label="#316: touch command\nfile creation", fillcolor="#E0FFFF"];
+        issue317 [label="#317: utime() syscall\ntimestamp modification", fillcolor="#E0FFFF"];
+        issue318 [label="#318: uname command\nsystem information", fillcolor="#E0FFFF"];
     }
 
     subgraph cluster_hibernation {
@@ -529,6 +535,16 @@ digraph IssueDependencies {
     issue234 -> issue235 [label="grep", color=brown];  // grep -> xargs
     issue185 -> issue242 [label="PATH search", color=cyan];  // PATH search -> PATH tab completion
     issue244 -> issue243 [label="procfs", color=brown];  // procfs -> /bin/mem utility
+
+    // New utility dependencies
+    issue193 -> issue313 [label="libc", color=brown];  // libc -> filesystem organization
+    issue193 -> issue314 [label="libc", color=brown];  // libc -> .moshrc
+    issue162 -> issue314 [label="command exec", color=brown];  // command execution -> .moshrc
+    issue313 -> issue315 [label="/etc", color=brown];  // filesystem org -> motd
+    issue193 -> issue315 [label="libc", color=brown];  // libc -> motd
+    issue193 -> issue316 [label="libc", color=brown];  // libc -> touch
+    issue193 -> issue317 [label="libc", color=brown];  // libc -> utime
+    issue193 -> issue318 [label="libc", color=brown];  // libc -> uname
 
     // Hibernation dependencies
     issue93 -> issue254 [label="fork/exec"];  // process mgmt -> hibernation infra

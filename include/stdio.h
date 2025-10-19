@@ -3,6 +3,8 @@
 
 #include <stdarg.h>
 #include <stddef.h>
+#include <stdbool.h>
+#include <sys/types.h>
 #include <stdio_constants.h>
 
 #ifndef NULL
@@ -10,7 +12,15 @@
 #endif
 
 struct __sFile {
-  int reserved;
+  int           fd;
+  unsigned int  flags;
+  unsigned char*buffer;
+  size_t        buffer_size;
+  size_t        buffer_pos;
+  size_t        buffer_end;
+  off_t         offset;
+  int           error_number;
+  int           last_op;
 };
 
 typedef struct __sFile FILE;
@@ -52,9 +62,14 @@ FILE* fopen(const char *filename, const char *mode);
 int   fclose(FILE *stream);
 int   fprintf(FILE *stream, const char *format, ...);
 int   fputs(const char *text, FILE* file);
+int   fputc(int ch, FILE* file);
 int fvprintf(FILE *stream, const char *format, va_list arg);
 size_t fread(void* ptr, size_t size, size_t nmemb, FILE* stream);
 size_t fwrite(const void* ptr, size_t size, size_t nmemb, FILE* stream);
+int ferror(FILE* stream);
+void clearerr(FILE* stream);
+int feof(FILE* stream);
+void rewind(FILE* stream);
 
 FILE* freopen(const char *filename, const char *mode, FILE *file);
 

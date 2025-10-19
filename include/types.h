@@ -8,8 +8,7 @@ extern "C" {
 #include <stddef.h>
 #include <stdint.h>
 #include <stdbool.h>
-
-typedef long off_t;
+#include <sys/types.h>
 typedef unsigned int mode_t;
 
 #define ROUNDDOWN(a, n)						\
