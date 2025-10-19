@@ -192,7 +192,7 @@ Basic command-line tools for shell interaction:
 Missing C library functions that Doom requires for linking:
 
 #### **File stdio Support** (Issue #305)
-- **Status**: TODO - libc currently lacks buffered file I/O
+- **Status**: ✅ COMPLETE - buffered FILE implementation in libc
 - **Dependencies**: #96 ✅, #189 ✅, #294 ✅, #193 ✅
 - **Scope**:
   - Implement FILE structure with buffer, fd, position tracking
