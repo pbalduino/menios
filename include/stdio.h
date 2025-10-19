@@ -32,6 +32,7 @@ int puts(const char* str);
 __attribute__ ((format (printf, 1, 2)))
 int printf(const char* format, ...);
 int vprintf(const char *format, va_list arg);
+int vsscanf(const char* str, const char* format, va_list arg);
 
 int sprintf(char *str, const char *format, ...);
 int svprintf(char *str, const char *format, va_list arg);

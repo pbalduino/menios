@@ -1,4 +1,5 @@
 #include <limits.h>
+#include <ctype.h>
 #include <stdarg.h>
 #include <stdbool.h>
 #include <stddef.h>
@@ -341,4 +342,310 @@ void perror(const char* s) {
     sprintf(buffer, "%s\n", message);
     write(STDERR_FILENO, buffer, strlen(buffer));
   }
+}
+
+typedef struct {
+  unsigned long long value;
+  bool               negative;
+} parsed_integer_t;
+
+static void skip_input_whitespace(const char** cursor) {
+  while(**cursor != '\0' && isspace((unsigned char)**cursor)) {
+    (*cursor)++;
+  }
+}
+
+static int digit_value(char ch) {
+  if(ch >= '0' && ch <= '9') {
+    return ch - '0';
+  }
+  if(ch >= 'a' && ch <= 'z') {
+    return ch - 'a' + 10;
+  }
+  if(ch >= 'A' && ch <= 'Z') {
+    return ch - 'A' + 10;
+  }
+  return -1;
+}
+
+static int parse_integer(const char** cursor,
+                         int width,
+                         int base_hint,
+                         bool allow_sign,
+                         parsed_integer_t* out_value) {
+  const char* p = *cursor;
+  int         remaining = (width > 0) ? width : INT_MAX;
+
+  if(remaining <= 0) {
+    return 0;
+  }
+
+  bool negative = false;
+  if(allow_sign && *p != '\0' && remaining > 0) {
+    if(*p == '+' || *p == '-') {
+      negative = (*p == '-');
+      p++;
+      remaining--;
+    }
+  }
+
+  if(remaining <= 0) {
+    return 0;
+  }
+
+  int base = base_hint;
+  int prefix_len = 0;
+
+  if((base == 0 || base == 16) && remaining >= 2 && p[0] == '0'
+     && (p[1] == 'x' || p[1] == 'X')) {
+    prefix_len = 2;
+    if(base == 0) {
+      base = 16;
+    }
+  }
+
+  if(base == 0) {
+    if(*p == '0') {
+      base = 8;
+    } else {
+      base = 10;
+    }
+  }
+
+  if(prefix_len > 0) {
+    if(remaining < prefix_len) {
+      return 0;
+    }
+    p += prefix_len;
+    remaining -= prefix_len;
+  }
+
+  if(base == 16 && prefix_len == 0 && remaining >= 2 && p[0] == '0'
+     && (p[1] == 'x' || p[1] == 'X')) {
+    p += 2;
+    remaining -= 2;
+  }
+
+  if(remaining <= 0) {
+    return 0;
+  }
+
+  unsigned long long value = 0;
+  int                digits = 0;
+
+  while(remaining > 0 && *p != '\0') {
+    int digit = digit_value(*p);
+    if(digit < 0 || digit >= base) {
+      break;
+    }
+
+    value = value * (unsigned long long)base + (unsigned long long)digit;
+    p++;
+    remaining--;
+    digits++;
+  }
+
+  if(digits == 0) {
+    return 0;
+  }
+
+  out_value->value = value;
+  out_value->negative = negative;
+  *cursor = p;
+  return 1;
+}
+
+static int vsscanf_impl(const char* input, const char* format, va_list args) {
+  const char* src = input;
+  const char* fmt = format;
+  int         assigned = 0;
+
+  while(*fmt != '\0') {
+    if(isspace((unsigned char)*fmt)) {
+      while(isspace((unsigned char)*fmt)) {
+        fmt++;
+      }
+      skip_input_whitespace(&src);
+      continue;
+    }
+
+    if(*fmt != '%') {
+      if(*src == '\0' || *src != *fmt) {
+        return assigned;
+      }
+      src++;
+      fmt++;
+      continue;
+    }
+
+    fmt++;
+
+    if(*fmt == '%') {
+      if(*src == '%') {
+        src++;
+        fmt++;
+        continue;
+      }
+      return assigned;
+    }
+
+    bool suppress_assignment = false;
+    if(*fmt == '*') {
+      suppress_assignment = true;
+      fmt++;
+    }
+
+    int width = -1;
+    if(isdigit((unsigned char)*fmt)) {
+      width = 0;
+      while(isdigit((unsigned char)*fmt)) {
+        width = width * 10 + (*fmt - '0');
+        fmt++;
+      }
+    }
+
+    char length_mod = 0;
+    if(*fmt == 'h' || *fmt == 'l') {
+      length_mod = *fmt;
+      fmt++;
+      if(length_mod == 'l' && *fmt == 'l') {
+        length_mod = 'q';
+        fmt++;
+      } else if(length_mod == 'h' && *fmt == 'h') {
+        length_mod = 'H';
+        fmt++;
+      }
+    }
+
+    char conv = *fmt;
+    if(conv == '\0') {
+      return assigned;
+    }
+    fmt++;
+
+    switch(conv) {
+      case 'd':
+      case 'i':
+      case 'o':
+      case 'u':
+      case 'x':
+      case 'X': {
+        int base = 10;
+        bool allow_sign = (conv == 'd' || conv == 'i');
+        bool unsigned_conv = (conv == 'u' || conv == 'x' || conv == 'X' || conv == 'o');
+        if(conv == 'o') {
+          base = 8;
+        } else if(conv == 'x' || conv == 'X') {
+          base = 16;
+        } else if(conv == 'i') {
+          base = 0;
+        }
+
+        skip_input_whitespace(&src);
+
+        parsed_integer_t parsed;
+        const char*      before = src;
+        if(parse_integer(&src, width, base, allow_sign, &parsed) == 0) {
+          src = before;
+          return assigned;
+        }
+
+        if(!suppress_assignment) {
+          if(unsigned_conv) {
+            unsigned long long uvalue = parsed.value;
+            switch(length_mod) {
+              case 'l': {
+                unsigned long* out = va_arg(args, unsigned long*);
+                *out = (unsigned long)uvalue;
+                break;
+              }
+              case 'q': {
+                unsigned long long* out = va_arg(args, unsigned long long*);
+                *out = uvalue;
+                break;
+              }
+              case 'h': {
+                unsigned short* out = va_arg(args, unsigned short*);
+                *out = (unsigned short)uvalue;
+                break;
+              }
+              case 'H': {
+                unsigned char* out = va_arg(args, unsigned char*);
+                *out = (unsigned char)uvalue;
+                break;
+              }
+              default: {
+                unsigned int* out = va_arg(args, unsigned int*);
+                *out = (unsigned int)uvalue;
+                break;
+              }
+            }
+          } else {
+            long long sval = parsed.negative ? -(long long)parsed.value
+                                             : (long long)parsed.value;
+            switch(length_mod) {
+              case 'l': {
+                long* out = va_arg(args, long*);
+                *out = (long)sval;
+                break;
+              }
+              case 'q': {
+                long long* out = va_arg(args, long long*);
+                *out = sval;
+                break;
+              }
+              case 'h': {
+                short* out = va_arg(args, short*);
+                *out = (short)sval;
+                break;
+              }
+              case 'H': {
+                signed char* out = va_arg(args, signed char*);
+                *out = (signed char)sval;
+                break;
+              }
+              default: {
+                int* out = va_arg(args, int*);
+                *out = (int)sval;
+                break;
+              }
+            }
+          }
+          assigned++;
+        }
+        break;
+      }
+
+      default:
+        return assigned;
+    }
+  }
+
+  return assigned;
+}
+
+int sscanf(const char* str, const char* format, ...) {
+  if(str == NULL || format == NULL) {
+    errno = EINVAL;
+    return -1;
+  }
+
+  va_list args;
+  va_start(args, format);
+  int result = vsscanf(str, format, args);
+  va_end(args);
+  return result;
+}
+
+int vsscanf(const char* str, const char* format, va_list arg) {
+  if(str == NULL || format == NULL) {
+    errno = EINVAL;
+    return -1;
+  }
+
+  va_list args_copy;
+  va_copy(args_copy, arg);
+  int result = vsscanf_impl(str, format, args_copy);
+  va_end(args_copy);
+  return result;
 }
