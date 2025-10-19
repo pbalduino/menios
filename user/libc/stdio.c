@@ -649,3 +649,75 @@ int vsscanf(const char* str, const char* format, va_list arg) {
   va_end(args_copy);
   return result;
 }
+
+int vscanf(const char* format, va_list arg) {
+  if(format == NULL) {
+    errno = EINVAL;
+    return -1;
+  }
+
+  size_t capacity = 256;
+  char* buffer = (char*)malloc(capacity);
+  if(buffer == NULL) {
+    errno = ENOMEM;
+    return -1;
+  }
+
+  size_t length = 0;
+  bool   saw_newline = false;
+
+  while(!saw_newline) {
+    if(length + 1 >= capacity) {
+      size_t new_capacity = capacity * 2;
+      char* new_buffer = (char*)realloc(buffer, new_capacity);
+      if(new_buffer == NULL) {
+        free(buffer);
+        errno = ENOMEM;
+        return -1;
+      }
+      buffer = new_buffer;
+      capacity = new_capacity;
+    }
+
+    ssize_t rc = read(STDIN_FILENO, buffer + length, capacity - length - 1);
+    if(rc < 0) {
+      if(errno == EINTR) {
+        continue;
+      }
+      free(buffer);
+      return -1;
+    }
+    if(rc == 0) {
+      break;
+    }
+
+    length += (size_t)rc;
+    buffer[length] = '\0';
+
+    if(memchr(buffer + (length - (size_t)rc), '\n', (size_t)rc) != NULL) {
+      saw_newline = true;
+    }
+  }
+
+  buffer[length] = '\0';
+
+  if(length == 0) {
+    free(buffer);
+    return EOF;
+  }
+
+  va_list args_copy;
+  va_copy(args_copy, arg);
+  int result = vsscanf_impl(buffer, format, args_copy);
+  va_end(args_copy);
+  free(buffer);
+  return result;
+}
+
+int scanf(const char* format, ...) {
+  va_list args;
+  va_start(args, format);
+  int result = vscanf(format, args);
+  va_end(args);
+  return result;
+}
