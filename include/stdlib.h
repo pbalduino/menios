@@ -49,6 +49,8 @@ int atoi(const char* nptr);
 long atol(const char* nptr);
 double atof(const char* nptr);
 int abs(int value);
+long labs(long value);
+long long llabs(long long value);
 int system(const char* command);
 
 void exit(int) __dead2;

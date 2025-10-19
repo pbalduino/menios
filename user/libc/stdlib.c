@@ -27,6 +27,10 @@ _Static_assert(sizeof(void*) == 8, "menios libc expects 64-bit pointers");
 
 static atomic_uint rand_state = ATOMIC_VAR_INIT(1u);
 
+#define ATEXIT_MAX_HANDLERS 32
+static void (*atexit_handlers[ATEXIT_MAX_HANDLERS])(void) = {0};
+static size_t atexit_handler_count = 0;
+
 int rand(void) {
   unsigned int expected = atomic_load_explicit(&rand_state, memory_order_relaxed);
   unsigned int desired;
@@ -1271,6 +1275,128 @@ long strtol(const char* nptr, char** endptr, int base) {
   }
 
   return (long)acc;
+}
+
+int atoi(const char* nptr) {
+  return (int)strtol(nptr, NULL, 10);
+}
+
+long atol(const char* nptr) {
+  return strtol(nptr, NULL, 10);
+}
+
+#if defined(__GNUC__) && !defined(__SSE2__)
+__attribute__((target("sse2")))
+#endif
+double atof(const char* nptr) {
+  if(nptr == NULL) {
+    errno = EINVAL;
+    return 0.0;
+  }
+
+  const char* cursor = nptr;
+  while(isspace((unsigned char)*cursor)) {
+    cursor++;
+  }
+
+  int sign = 1;
+  if(*cursor == '+' || *cursor == '-') {
+    if(*cursor == '-') {
+      sign = -1;
+    }
+    cursor++;
+  }
+
+  double integer_part = 0.0;
+  while(isdigit((unsigned char)*cursor)) {
+    integer_part = integer_part * 10.0 + (double)(*cursor - '0');
+    cursor++;
+  }
+
+  double fraction_part = 0.0;
+  double scale = 0.1;
+  if(*cursor == '.') {
+    cursor++;
+    while(isdigit((unsigned char)*cursor)) {
+      fraction_part += (double)(*cursor - '0') * scale;
+      scale *= 0.1;
+      cursor++;
+    }
+  }
+
+  int exponent = 0;
+  if(*cursor == 'e' || *cursor == 'E') {
+    cursor++;
+    int exp_sign = 1;
+    if(*cursor == '+' || *cursor == '-') {
+      if(*cursor == '-') {
+        exp_sign = -1;
+      }
+      cursor++;
+    }
+    while(isdigit((unsigned char)*cursor)) {
+      exponent = exponent * 10 + (*cursor - '0');
+      cursor++;
+    }
+    exponent *= exp_sign;
+  }
+
+  double magnitude = integer_part + fraction_part;
+  if(exponent != 0) {
+    double factor = 1.0;
+    int exp = exponent < 0 ? -exponent : exponent;
+    while(exp-- > 0) {
+      factor *= 10.0;
+    }
+    if(exponent < 0) {
+      magnitude /= factor;
+    } else {
+      magnitude *= factor;
+    }
+  }
+
+  errno = 0;
+  return sign * magnitude;
+}
+
+int abs(int value) {
+  return (value < 0) ? -value : value;
+}
+
+long labs(long value) {
+  return (value < 0) ? -value : value;
+}
+
+long long llabs(long long value) {
+  return (value < 0) ? -value : value;
+}
+
+int system(const char* command) {
+  (void)command;
+  errno = ENOSYS;
+  return -1;
+}
+
+int atexit(void (*func)(void)) {
+  if(func == NULL) {
+    errno = EINVAL;
+    return -1;
+  }
+  if(atexit_handler_count >= ATEXIT_MAX_HANDLERS) {
+    errno = ENOMEM;
+    return -1;
+  }
+  atexit_handlers[atexit_handler_count++] = func;
+  return 0;
+}
+
+void __menios_atexit_run(void) {
+  while(atexit_handler_count > 0) {
+    void (*handler)(void) = atexit_handlers[--atexit_handler_count];
+    if(handler != NULL) {
+      handler();
+    }
+  }
 }
 
 #ifndef MENIOS_HOST_TEST

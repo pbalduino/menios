@@ -304,8 +304,8 @@ Port layer, graphics, input, and build integration for running Doom:
 #### **Doom meniOS-Specific Build System** (Issue #311) ✅ **COMPLETE**
 - ✅ **Status**: meniOS now ships a dedicated Doom build flow.
 - **Highlights**:
-  - ✅ Added `app/doom/Makefile.menios` that compiles every Doom object with `tools/menios-gcc`.
-  - ✅ Introduced a top-level `make doom` target (Docker-aware) to reuse the meniOS SDK.
+  - ✅ Added `app/doom/Makefile.menios` that compiles and links `build/bin/doom.elf` with the meniOS SDK.
+  - ✅ Top-level `make doom` target builds the full binary (Docker-aware) for rapid iteration.
   - ✅ Extended SDK headers (`stdio.h`, `stdlib.h`, `string.h`, etc.) so Doom sources compile cleanly.
 - **Impact**: Build infrastructure is done; final packaging and install steps move to #312 after libc work.
 

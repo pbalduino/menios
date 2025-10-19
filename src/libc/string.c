@@ -80,6 +80,37 @@ bool swap(char* a, char* b) {
   return true;
 }
 
+char* strstr(const char* haystack, const char* needle) {
+  if(haystack == NULL || needle == NULL) {
+    return NULL;
+  }
+
+  if(*needle == '\0') {
+    return (char*)haystack;
+  }
+
+  size_t needle_len = strlen(needle);
+  if(needle_len == 0) {
+    return (char*)haystack;
+  }
+
+  for(const char* it = haystack; *it != '\0'; ++it) {
+    if(*it != *needle) {
+      continue;
+    }
+
+    size_t i = 0;
+    while(i < needle_len && it[i] == needle[i]) {
+      i++;
+    }
+    if(i == needle_len) {
+      return (char*)it;
+    }
+  }
+
+  return NULL;
+}
+
 /**
  * Compares two strings lexicographically
  * @param s1 Pointer to the first string

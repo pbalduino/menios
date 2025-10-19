@@ -4,17 +4,21 @@
 # binary is available via the `doom.elf` target but currently depends on
 # libc work tracked in issues #305-#310.
 
-ROOT_DIR := $(abspath ../..)
-MENIOS_GCC ?= $(ROOT_DIR)/build/sdk/bin/menios-gcc
+ROOT_DIR        := $(abspath ../..)
+MENIOS_GCC     ?= $(ROOT_DIR)/build/sdk/bin/menios-gcc
 
-OBJDIR := $(ROOT_DIR)/build/obj/usermode/doom
-TARGET := $(OBJDIR)/doom.elf
+OBJDIR          := $(ROOT_DIR)/build/obj/usermode/doom
+OUTPUT_DIR      := $(ROOT_DIR)/build/bin
+TARGET          := $(OUTPUT_DIR)/doom.elf
 
-CFLAGS ?=
-CFLAGS += -DNORMALUNIX -DLINUX -DSNDSERV -D_DEFAULT_SOURCE
-CFLAGS += -Wall -Wextra -Wno-unused-parameter -Wno-sign-compare
-CFLAGS += -msse2 -mfpmath=sse
-CFLAGS += -I.
+CFLAGS         ?=
+CFLAGS         += -DNORMALUNIX -DLINUX -DSNDSERV -D_DEFAULT_SOURCE
+CFLAGS         += -Wall -Wextra -Wno-unused-parameter -Wno-sign-compare
+CFLAGS         += -msse2 -mfpmath=sse
+CFLAGS         += -I.
+
+LDFLAGS        ?=
+LDFLAGS        += -lm
 
 SRCS := \
 	am_map.c \
@@ -102,27 +106,33 @@ SRCS := \
 
 OBJS := $(addprefix $(OBJDIR)/,$(SRCS:.c=.o))
 
-.PHONY: all clean print doom doom-objs
+.PHONY: all clean print doom doom-objs install
 
-all: doom-objs
-
-doom-objs: $(OBJS)
+all: $(TARGET)
 
 doom: $(TARGET)
 
+doom-objs: $(OBJS)
+
+install: $(TARGET)
+
 $(OBJDIR):
 	@mkdir -p "$(OBJDIR)"
+
+$(OUTPUT_DIR):
+	@mkdir -p "$(OUTPUT_DIR)"
 
 $(OBJDIR)/%.o: %.c | $(OBJDIR)
 	@echo "[DOOM] CC $<"
 	$(MENIOS_GCC) -c $(CFLAGS) $< -o $@
 
-$(TARGET): $(OBJS)
+$(TARGET): $(OBJS) | $(OUTPUT_DIR)
 	@echo "[DOOM] LD $@"
-	$(MENIOS_GCC) $(OBJS) -lm -o $@
+	$(MENIOS_GCC) $(OBJS) $(LDFLAGS) -o $@
 
 clean:
 	rm -rf "$(OBJDIR)"
+	rm -f "$(TARGET)"
 
 print:
 	@echo SRCS=$(SRCS)

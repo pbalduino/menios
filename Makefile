@@ -898,9 +898,9 @@ shell:
 .PHONY: doom
 doom: sdk
 ifeq ($(OS_NAME),linux)
-	$(MAKE) -C app/doom -f Makefile.menios doom-objs
+	$(MAKE) -C app/doom -f Makefile.menios
 else
-	$(DOCKER) run --rm $(DOCKER_RUN_FLAGS) $(DOCKER_ENV) --mount type=bind,source=$$(pwd),target=/mnt $(DOCKER_IMAGE) /bin/sh -c "cd /mnt && make sdk && make -C app/doom -f Makefile.menios doom-objs"
+	$(DOCKER) run --rm $(DOCKER_RUN_FLAGS) $(DOCKER_ENV) --mount type=bind,source=$$(pwd),target=/mnt $(DOCKER_IMAGE) /bin/sh -c "cd /mnt && make sdk && make -C app/doom -f Makefile.menios"
 endif
 
 .PHONY: build-apps
