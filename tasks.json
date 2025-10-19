@@ -1,32 +1,176 @@
 [
   {
-    "title": "Implement string utilities (strdup/strcasecmp)",
+    "title": "Implement uname command for system information",
     "github_issue": {
-      "number": 308,
-      "url": "https://github.com/pbalduino/menios/issues/308",
-      "state": "CLOSED"
+      "number": 318,
+      "url": "https://github.com/pbalduino/menios/issues/318",
+      "state": "OPEN"
     },
     "labels": [
       "enhancement",
       "libc"
     ],
-    "assignees": [
-      "pbalduino"
-    ]
+    "assignees": []
   },
   {
-    "title": "Implement sscanf() and vsscanf() in libc",
+    "title": "Implement utime() syscall for file timestamp modification",
     "github_issue": {
-      "number": 304,
-      "url": "https://github.com/pbalduino/menios/issues/304",
-      "state": "CLOSED"
+      "number": 317,
+      "url": "https://github.com/pbalduino/menios/issues/317",
+      "state": "OPEN"
+    },
+    "labels": [
+      "enhancement",
+      "kernel",
+      "libc"
+    ],
+    "assignees": []
+  },
+  {
+    "title": "Implement touch command for file creation and timestamp updates",
+    "github_issue": {
+      "number": 316,
+      "url": "https://github.com/pbalduino/menios/issues/316",
+      "state": "OPEN"
+    },
+    "labels": [
+      "enhancement",
+      "libc"
+    ],
+    "assignees": []
+  },
+  {
+    "title": "Message of the Day (motd) support",
+    "github_issue": {
+      "number": 315,
+      "url": "https://github.com/pbalduino/menios/issues/315",
+      "state": "OPEN"
     },
     "labels": [
       "enhancement"
     ],
-    "assignees": [
-      "pbalduino"
-    ]
+    "assignees": []
+  },
+  {
+    "title": "Shell startup script support (.moshrc)",
+    "github_issue": {
+      "number": 314,
+      "url": "https://github.com/pbalduino/menios/issues/314",
+      "state": "OPEN"
+    },
+    "labels": [
+      "enhancement"
+    ],
+    "assignees": []
+  },
+  {
+    "title": "Organize filesystem hierarchy following Unix FHS conventions",
+    "github_issue": {
+      "number": 313,
+      "url": "https://github.com/pbalduino/menios/issues/313",
+      "state": "OPEN"
+    },
+    "labels": [
+      "enhancement",
+      "kernel"
+    ],
+    "assignees": []
+  },
+  {
+    "title": "Integrate Doom into meniOS build and packaging",
+    "github_issue": {
+      "number": 312,
+      "url": "https://github.com/pbalduino/menios/issues/312",
+      "state": "OPEN"
+    },
+    "labels": [
+      "enhancement",
+      "doom"
+    ],
+    "assignees": []
+  },
+  {
+    "title": "Doom meniOS-specific build system (Makefile.menios)",
+    "github_issue": {
+      "number": 311,
+      "url": "https://github.com/pbalduino/menios/issues/311",
+      "state": "OPEN"
+    },
+    "labels": [
+      "enhancement",
+      "doom"
+    ],
+    "assignees": []
+  },
+  {
+    "title": "Math library (fabs and clean up math.h)",
+    "github_issue": {
+      "number": 310,
+      "url": "https://github.com/pbalduino/menios/issues/310",
+      "state": "OPEN"
+    },
+    "labels": [
+      "enhancement",
+      "doom",
+      "libc"
+    ],
+    "assignees": []
+  },
+  {
+    "title": "Expose snprintf/vsnprintf/vsprintf properly",
+    "github_issue": {
+      "number": 309,
+      "url": "https://github.com/pbalduino/menios/issues/309",
+      "state": "CLOSED"
+    },
+    "labels": [
+      "enhancement",
+      "doom",
+      "libc"
+    ],
+    "assignees": []
+  },
+  {
+    "title": "Environment variable access (getenv/putenv)",
+    "github_issue": {
+      "number": 307,
+      "url": "https://github.com/pbalduino/menios/issues/307",
+      "state": "CLOSED"
+    },
+    "labels": [
+      "enhancement",
+      "doom",
+      "libc"
+    ],
+    "assignees": []
+  },
+  {
+    "title": "Filesystem helpers (mkdir, remove, rename)",
+    "github_issue": {
+      "number": 306,
+      "url": "https://github.com/pbalduino/menios/issues/306",
+      "state": "OPEN"
+    },
+    "labels": [
+      "enhancement",
+      "doom",
+      "libc"
+    ],
+    "assignees": []
+  },
+  {
+    "title": "File stdio support (fopen/fclose, buffered I/O)",
+    "github_issue": {
+      "number": 305,
+      "url": "https://github.com/pbalduino/menios/issues/305",
+      "state": "OPEN"
+    },
+    "labels": [
+      "enhancement",
+      "doom",
+      "libc"
+    ],
+    "assignees": []
   },
   {
     "title": "Build integration for Doom userland binary",
@@ -34,48 +178,6 @@
       "number": 303,
       "url": "https://github.com/pbalduino/menios/issues/303",
       "state": "OPEN"
-    },
-    "labels": [
-      "enhancement"
-    ],
-    "assignees": [
-      "pbalduino"
-    ]
-  },
-  {
-    "title": "Deliver real key events (scan codes, key up/down)",
-    "github_issue": {
-      "number": 302,
-      "url": "https://github.com/pbalduino/menios/issues/302",
-      "state": "CLOSED"
-    },
-    "labels": [
-      "enhancement"
-    ],
-    "assignees": [
-      "pbalduino"
-    ]
-  },
-  {
-    "title": "Expose pixel-addressable framebuffer (/dev/fb0)",
-    "github_issue": {
-      "number": 301,
-      "url": "https://github.com/pbalduino/menios/issues/301",
-      "state": "CLOSED"
-    },
-    "labels": [
-      "enhancement"
-    ],
-    "assignees": [
-      "pbalduino"
-    ]
-  },
-  {
-    "title": "Wire up meniOS port layer (doomgeneric_menios.c)",
-    "github_issue": {
-      "number": 300,
-      "url": "https://github.com/pbalduino/menios/issues/300",
-      "state": "CLOSED"
     },
     "labels": [
       "enhancement"
@@ -576,22 +678,6 @@
     ]
   },
   {
-    "title": "Migrate from int 0x80 to syscall instruction for fast system calls",
-    "github_issue": {
-      "number": 221,
-      "url": "https://github.com/pbalduino/menios/issues/221",
-      "state": "CLOSED"
-    },
-    "labels": [
-      "enhancement",
-      "performance",
-      "kernel"
-    ],
-    "assignees": [
-      "pbalduino"
-    ]
-  },
-  {
     "title": "Implement advanced signal features (SIGCHLD, SA_RESTART, vDSO, RT signals)",
     "github_issue": {
       "number": 214,
@@ -1035,20 +1121,6 @@
     ]
   },
   {
-    "title": "Implement /dev/kbd0 and /dev/fb0 hardware device interfaces",
-    "github_issue": {
-      "number": 140,
-      "url": "https://github.com/pbalduino/menios/issues/140",
-      "state": "CLOSED"
-    },
-    "labels": [
-      "enhancement"
-    ],
-    "assignees": [
-      "pbalduino"
-    ]
-  },
-  {
     "title": "Implement /dev/random and /dev/urandom entropy devices",
     "github_issue": {
       "number": 139,
@@ -1086,20 +1158,6 @@
     "labels": [
       "enhancement",
       "good first issue"
-    ],
-    "assignees": [
-      "pbalduino"
-    ]
-  },
-  {
-    "title": "Implement device filesystem infrastructure and /dev directory",
-    "github_issue": {
-      "number": 136,
-      "url": "https://github.com/pbalduino/menios/issues/136",
-      "state": "CLOSED"
-    },
-    "labels": [
-      "enhancement"
     ],
     "assignees": [
       "pbalduino"
@@ -1693,7 +1751,7 @@
     ]
   },
   {
-    "title": "Implement AP startup and BSP → AP bring-up",
+    "title": "Implement AP startup and BSP \u2192 AP bring-up",
     "github_issue": {
       "number": 82,
       "url": "https://github.com/pbalduino/menios/issues/82",
