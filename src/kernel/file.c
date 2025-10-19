@@ -29,7 +29,6 @@
 #define FD_STDERR  2
 
 static const file_ops_t serial_file_ops;
-static const file_ops_t framebuffer_file_ops;
 static const file_ops_t stdin_file_ops;
 
 #ifdef MENIOS_KERNEL
@@ -886,6 +885,9 @@ FILE* fopen(const char* filename, const char* mode) {
 
   if(strcmp(filename, "/dev/ttyS0") == 0 && write) {
     file = file_create(&serial_file_ops, NULL, FILE_MODE_WRITE);
+    file_mode = FILE_MODE_WRITE;
+  } else if(strcmp(filename, "/dev/console") == 0 && write) {
+    file = file_create_framebuffer_console_file();
     file_mode = FILE_MODE_WRITE;
   } else if(strcmp(filename, "/dev/fb/0") == 0 && write) {
     file = file_create(&framebuffer_console_file_ops, NULL, FILE_MODE_WRITE);

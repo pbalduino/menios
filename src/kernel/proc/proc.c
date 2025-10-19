@@ -1,4 +1,5 @@
 #include <kernel/console.h>
+#include <kernel/framebuffer.h>
 #include <kernel/gdt.h>
 #include <kernel/heap.h>
 #include <kernel/kernel.h>
@@ -285,6 +286,11 @@ static void proc_free_resources(proc_info_p proc) {
   proc_table_remove(proc);
 
   proc_shm_detach_all(proc);
+
+  if(fb_is_owner(proc->pid)) {
+    fb_release_owner(proc->pid);
+  }
+
   proc_release_user_memory(proc);
   proc_file_table_cleanup(proc);
 

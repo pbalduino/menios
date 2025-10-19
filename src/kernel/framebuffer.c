@@ -6,6 +6,7 @@
 #include <kernel/console.h>
 #include <kernel/fonts.h>
 #include <kernel/framebuffer.h>
+#include <kernel/file.h>
 #include <kernel/kernel.h>
 #include <kernel/serial.h>
 #include <kernel/proc.h>
@@ -58,6 +59,9 @@ static uint64_t saved_cursor_row;
 static uint32_t saved_cursor_col;
 static struct limine_framebuffer *framebuffer;
 static FILE* fb_d;
+
+#define FB_STDOUT_FD 1
+#define FB_STDERR_FD 2
 
 static phys_addr_t framebuffer_phys = PHYS_ADDR_INVALID;
 static size_t framebuffer_buffer_size = 0;
@@ -428,8 +432,33 @@ void fb_init() {
 
   fb_d = freopen("/dev/console", "w", stdout);
   if(fb_d == NULL) {
-    serial_error("freopen(/dev/console) -> NULL");
-    halt();
+    file_t* fb_stdout_file = file_create_framebuffer_console_file();
+    file_t* fb_stderr_file = file_create_framebuffer_console_file();
+    if(fb_stdout_file == NULL || fb_stderr_file == NULL) {
+      if(fb_stdout_file != NULL) {
+        file_unref(fb_stdout_file);
+      }
+      if(fb_stderr_file != NULL) {
+        file_unref(fb_stderr_file);
+      }
+      serial_error("framebuffer: failed to create console file");
+      halt();
+    }
+
+    proc_file_close(&kernel_process_info, FB_STDOUT_FD);
+    proc_file_close(&kernel_process_info, FB_STDERR_FD);
+
+    if(proc_file_install_at(&kernel_process_info, FB_STDOUT_FD, fb_stdout_file, 0) < 0 ||
+       proc_file_install_at(&kernel_process_info, FB_STDERR_FD, fb_stderr_file, 0) < 0) {
+      file_unref(fb_stdout_file);
+      file_unref(fb_stderr_file);
+      serial_error("framebuffer: failed to install console streams");
+      halt();
+    }
+
+    file_unref(fb_stdout_file);
+    file_unref(fb_stderr_file);
+    fb_d = stdout;
   }
 }
 
