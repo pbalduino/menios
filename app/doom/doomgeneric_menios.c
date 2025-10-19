@@ -116,6 +116,25 @@ void DG_Init(void) {
     return;
   }
 
+  if(fb_info.width >= DOOMGENERIC_RESX &&
+     fb_info.height >= DOOMGENERIC_RESY &&
+     fb_info.bpp >= 24) {
+    menios_fb_mode_request_t mode_req = {
+      .width = DOOMGENERIC_RESX,
+      .height = DOOMGENERIC_RESY,
+      .bpp = (uint16_t)fb_info.bpp,
+      .reserved = 0,
+    };
+    if(ioctl(fb_fd, MENIOS_FB_IOCTL_SET_MODE, &mode_req) == 0) {
+      if(ioctl(fb_fd, MENIOS_FB_IOCTL_GET_INFO, &fb_info) < 0) {
+        perror("ioctl(MENIOS_FB_IOCTL_GET_INFO)");
+        close(fb_fd);
+        fb_fd = -1;
+        return;
+      }
+    }
+  }
+
   if(fb_info.bpp < 24 || fb_info.pitch == 0 || fb_info.width == 0 || fb_info.height == 0) {
     fprintf(stderr, "meniOS framebuffer: unsupported geometry (%lux%lu %u bpp)\n",
             (unsigned long)fb_info.width,

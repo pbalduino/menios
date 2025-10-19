@@ -577,6 +577,29 @@ static int framebuffer_ioctl_impl(file_t* file, unsigned long request, void* arg
       }
       return 0;
     }
+    case MENIOS_FB_IOCTL_SET_MODE: {
+      if(argp == NULL) {
+        return -EINVAL;
+      }
+      menios_fb_mode_request_t req;
+      if(current != NULL && !proc_user_buffer_accessible(current, argp, sizeof(req))) {
+        return -EFAULT;
+      }
+      memcpy(&req, argp, sizeof(req));
+      if(req.width == 0 || req.height == 0) {
+        return -EINVAL;
+      }
+      framebuffer_geometry_t geo;
+      fb_get_geometry(&geo);
+      uint16_t req_bpp = req.bpp ? req.bpp : (uint16_t)geo.bpp;
+      if(!fb_set_mode(req.width, req.height, req_bpp)) {
+        return -EINVAL;
+      }
+      if(fb_backbuffer_available()) {
+        fb_flush_backbuffer();
+      }
+      return 0;
+    }
     default:
       return -ENOTTY;
   }

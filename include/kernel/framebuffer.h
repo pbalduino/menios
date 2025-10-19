@@ -47,6 +47,7 @@ void* fb_backbuffer_virtual(void);
 bool fb_backbuffer_available(void);
 size_t fb_buffer_size(void);
 void fb_flush_backbuffer(void);
+bool fb_set_mode(uint64_t width, uint64_t height, uint16_t bpp);
 
 void fb_draw();
 void fb_init();

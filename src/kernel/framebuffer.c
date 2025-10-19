@@ -63,6 +63,11 @@ static size_t framebuffer_buffer_size = 0;
 static size_t framebuffer_buffer_size_aligned = 0;
 static phys_addr_t framebuffer_backbuffer_phys = PHYS_ADDR_INVALID;
 static void* framebuffer_backbuffer_virt = NULL;
+static size_t framebuffer_backbuffer_pages = 0;
+static uint64_t framebuffer_view_width = 0;
+static uint64_t framebuffer_view_height = 0;
+static size_t framebuffer_view_pitch = 0;
+static size_t framebuffer_bytes_per_pixel = 0;
 
 static size_t fb_align_up(size_t value) {
   if(value == 0) {
@@ -86,6 +91,14 @@ static bool csi_private_sequence;
 
 static void clear_line_segment(uint64_t row, uint32_t start_col, uint32_t end_col, const ansi_style_t* style);
 static void render_viewport(void);
+static void fb_release_backbuffer(void) {
+  if(framebuffer_backbuffer_phys != PHYS_ADDR_INVALID && framebuffer_backbuffer_pages > 0) {
+    pmm_free_pages(framebuffer_backbuffer_phys, framebuffer_backbuffer_pages);
+  }
+  framebuffer_backbuffer_phys = PHYS_ADDR_INVALID;
+  framebuffer_backbuffer_virt = NULL;
+  framebuffer_backbuffer_pages = 0;
+}
 
 inline uint64_t fb_count() {
   return framebuffer_request.response->framebuffer_count;
@@ -272,20 +285,26 @@ void fb_init() {
   active = true;
 
   framebuffer_phys = virtual_to_physical((virt_addr_t)framebuffer->address);
-  framebuffer_buffer_size = (size_t)(framebuffer->pitch * framebuffer->height);
-  framebuffer_buffer_size_aligned = fb_align_up(framebuffer_buffer_size);
+  framebuffer_bytes_per_pixel = framebuffer->bpp / 8;
+  if(framebuffer_bytes_per_pixel == 0) {
+    framebuffer_bytes_per_pixel = 4;
+  }
+
+  framebuffer_view_width = 0;
+  framebuffer_view_height = 0;
+  framebuffer_view_pitch = 0;
+  framebuffer_buffer_size = 0;
+  framebuffer_buffer_size_aligned = 0;
   framebuffer_backbuffer_phys = PHYS_ADDR_INVALID;
   framebuffer_backbuffer_virt = NULL;
-  if(framebuffer_buffer_size_aligned != 0) {
-    size_t pages = framebuffer_buffer_size_aligned / PAGE_SIZE;
-    phys_addr_t back_phys = pmm_alloc_pages(pages);
-    if(back_phys != 0) {
-      framebuffer_backbuffer_phys = back_phys;
-      framebuffer_backbuffer_virt = (void*)physical_to_virtual(back_phys);
-      if(framebuffer_backbuffer_virt != NULL) {
-        memset(framebuffer_backbuffer_virt, 0, framebuffer_buffer_size_aligned);
-      }
-    }
+  framebuffer_backbuffer_pages = 0;
+
+  if(!fb_set_mode(framebuffer->width, framebuffer->height, framebuffer->bpp)) {
+    framebuffer_view_width = framebuffer->width;
+    framebuffer_view_height = framebuffer->height;
+    framebuffer_view_pitch = framebuffer->pitch;
+    framebuffer_buffer_size = framebuffer_view_pitch * framebuffer_view_height;
+    framebuffer_buffer_size_aligned = fb_align_up(framebuffer_buffer_size);
   }
 
   char_line_width = 8;
@@ -769,9 +788,9 @@ void fb_get_geometry(framebuffer_geometry_t* out) {
   if(out == NULL || framebuffer == NULL) {
     return;
   }
-  out->width = framebuffer->width;
-  out->height = framebuffer->height;
-  out->pitch = framebuffer->pitch;
+  out->width = framebuffer_view_width ? framebuffer_view_width : framebuffer->width;
+  out->height = framebuffer_view_height ? framebuffer_view_height : framebuffer->height;
+  out->pitch = framebuffer_view_pitch ? framebuffer_view_pitch : framebuffer->pitch;
   out->bpp = framebuffer->bpp;
   out->reserved = 0;
 }
@@ -792,7 +811,9 @@ void* fb_backbuffer_virtual(void) {
 }
 
 bool fb_backbuffer_available(void) {
-  return framebuffer_backbuffer_phys != PHYS_ADDR_INVALID && framebuffer_backbuffer_virt != NULL;
+  return framebuffer_backbuffer_phys != PHYS_ADDR_INVALID &&
+         framebuffer_backbuffer_virt != NULL &&
+         framebuffer_backbuffer_pages > 0;
 }
 
 size_t fb_buffer_size(void) {
@@ -806,10 +827,84 @@ void fb_flush_backbuffer(void) {
 
   uint8_t* dest = (uint8_t*)framebuffer->address;
   const uint8_t* src = (const uint8_t*)framebuffer_backbuffer_virt;
-  size_t pitch = framebuffer->pitch;
-  for(uint64_t y = 0; y < framebuffer->height; y++) {
-    memcpy(dest + y * pitch, src + y * pitch, pitch);
+  size_t hw_pitch = framebuffer->pitch;
+  size_t copy_pitch = framebuffer_view_pitch;
+  uint64_t view_height = framebuffer_view_height;
+  if(copy_pitch > hw_pitch) {
+    copy_pitch = hw_pitch;
   }
+  for(uint64_t y = 0; y < view_height; y++) {
+    memcpy(dest + y * hw_pitch, src + y * framebuffer_view_pitch, copy_pitch);
+    if(copy_pitch < hw_pitch) {
+      memset(dest + y * hw_pitch + copy_pitch, 0, hw_pitch - copy_pitch);
+    }
+  }
+  for(uint64_t y = view_height; y < framebuffer->height; y++) {
+    memset(dest + y * hw_pitch, 0, hw_pitch);
+  }
+}
+
+bool fb_set_mode(uint64_t width, uint64_t height, uint16_t bpp) {
+  if(framebuffer == NULL) {
+    return false;
+  }
+  if(width == 0 || height == 0) {
+    return false;
+  }
+  if(width > framebuffer->width || height > framebuffer->height) {
+    return false;
+  }
+  if(bpp == 0) {
+    bpp = framebuffer->bpp;
+  }
+  if(bpp != framebuffer->bpp) {
+    return false;
+  }
+
+  size_t new_pitch = width * framebuffer_bytes_per_pixel;
+  size_t new_size = new_pitch * height;
+  size_t new_size_aligned = fb_align_up(new_size);
+
+  phys_addr_t new_phys = PHYS_ADDR_INVALID;
+  void* new_virt = NULL;
+  size_t new_pages = 0;
+
+  if(new_size_aligned > 0) {
+    new_pages = new_size_aligned / PAGE_SIZE;
+    if((new_size_aligned % PAGE_SIZE) != 0) {
+      new_pages++;
+    }
+    if(new_pages > 0) {
+      phys_addr_t candidate = pmm_alloc_pages(new_pages);
+      if(candidate != 0) {
+        void* virt = (void*)physical_to_virtual(candidate);
+        if(virt != NULL) {
+          memset(virt, 0, new_size_aligned);
+          new_phys = candidate;
+          new_virt = virt;
+        } else {
+          pmm_free_pages(candidate, new_pages);
+        }
+      }
+    }
+  }
+
+  if(new_phys != PHYS_ADDR_INVALID) {
+    fb_release_backbuffer();
+    framebuffer_backbuffer_phys = new_phys;
+    framebuffer_backbuffer_pages = new_pages;
+    framebuffer_backbuffer_virt = new_virt;
+  } else {
+    fb_release_backbuffer();
+  }
+
+  framebuffer_view_width = width;
+  framebuffer_view_height = height;
+  framebuffer_view_pitch = new_pitch;
+  framebuffer_buffer_size = new_size;
+  framebuffer_buffer_size_aligned = new_size_aligned;
+
+  return true;
 }
 
 void fb_list_modes() {
