@@ -49,6 +49,7 @@ extern "C" {
 #define SYS_GETITIMER     88
 #define SYS_ALARM         89
 #define SYS_SIGRETURN     90
+#define SYS_INPUT_EVENT   91
 
 #ifdef __cplusplus
 }

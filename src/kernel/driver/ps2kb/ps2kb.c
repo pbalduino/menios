@@ -281,6 +281,13 @@ void ps2kb_handler() {
     extended_code = false;
     if(code == 0x1D) { // Right Control
       right_ctrl = !release;
+      emit_key_event(code, !release, true, 0);
+      irq_eoi();
+      return;
+    }
+    if(code == 0x38) { // Right Alt
+      right_alt = !release;
+      emit_key_event(code, !release, true, 0);
       irq_eoi();
       return;
     }
@@ -298,6 +305,7 @@ void ps2kb_handler() {
           break;
       }
     }
+    emit_key_event(code, !release, true, 0);
     irq_eoi();
     return;
   }
@@ -305,20 +313,29 @@ void ps2kb_handler() {
   switch(code) {
     case 0x2A: // Left Shift
       left_shift = !release;
+      emit_key_event(code, !release, false, 0);
       irq_eoi();
       return;
     case 0x36: // Right Shift
       right_shift = !release;
+      emit_key_event(code, !release, false, 0);
       irq_eoi();
       return;
     case 0x1D: // Left Control
       left_ctrl = !release;
+      emit_key_event(code, !release, false, 0);
+      irq_eoi();
+      return;
+    case 0x38: // Left Alt
+      left_alt = !release;
+      emit_key_event(code, !release, false, 0);
       irq_eoi();
       return;
     case 0x3A: // Caps Lock
       if(!release) {
         caps_lock = !caps_lock;
       }
+      emit_key_event(code, !release, false, 0);
       irq_eoi();
       return;
     default:
@@ -331,6 +348,9 @@ void ps2kb_handler() {
     if(ch != 0) {
       buffer_push((uint8_t)ch);
     }
+    emit_key_event(code, true, false, (uint8_t)ch);
+  } else {
+    emit_key_event(code, false, false, 0);
   }
 
   irq_eoi();
@@ -348,7 +368,7 @@ static bool ps2_read_byte(uint8_t *out) {
 
 void ps2kb_start(void) {
   buffer_head = buffer_tail = 0;
-  left_shift = right_shift = left_ctrl = right_ctrl = caps_lock = false;
+  left_shift = right_shift = left_ctrl = right_ctrl = left_alt = right_alt = caps_lock = false;
   extended_code = false;
 
   pic_remap();

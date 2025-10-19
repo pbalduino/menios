@@ -14,7 +14,9 @@
 #include <kernel/tsc.h>
 #include <kernel/vfs.h>
 #include <kernel/vm.h>
+#include <kernel/input.h>
 #include <menios/signal_frame.h>
+#include <menios/input.h>
 #include <sys/fcntl.h>
 #include <sys/shm.h>
 #include <sys/time.h>
@@ -97,6 +99,7 @@ static uint64_t syscall_fcntl_handler(syscall_frame_t* frame);
 static uint64_t syscall_waitpid_handler(syscall_frame_t* frame);
 static uint64_t syscall_listdir_handler(syscall_frame_t* frame);
 static uint64_t syscall_stdin_poll_handler(syscall_frame_t* frame);
+static uint64_t syscall_input_event_handler(syscall_frame_t* frame);
 static uint64_t syscall_chdir_handler(syscall_frame_t* frame);
 static uint64_t syscall_getcwd_handler(syscall_frame_t* frame);
 static uint64_t syscall_proc_kill_handler(syscall_frame_t* frame);
@@ -614,6 +617,7 @@ void syscall_init(void) {
   syscall_register(SYS_WAITPID, syscall_waitpid_handler);
   syscall_register(SYS_LISTDIR, syscall_listdir_handler);
   syscall_register(SYS_STDIN_POLL, syscall_stdin_poll_handler);
+  syscall_register(SYS_INPUT_EVENT, syscall_input_event_handler);
   syscall_register(SYS_PROC_KILL, syscall_proc_kill_handler);
   syscall_register(SYS_KILL, syscall_kill_handler);
   syscall_register(SYS_SIGACTION, syscall_sigaction_handler);
@@ -1392,6 +1396,30 @@ static uint64_t syscall_stdin_poll_handler(syscall_frame_t* frame) {
   } else {
     frame->rax = (uint64_t)(-EAGAIN);
   }
+  return frame->rax;
+}
+
+static uint64_t syscall_input_event_handler(syscall_frame_t* frame) {
+  menios_key_event_t* user_event = (menios_key_event_t*)frame->rdi;
+  if(user_event == NULL) {
+    frame->rax = (uint64_t)(-EINVAL);
+    return frame->rax;
+  }
+
+  menios_key_event_t event;
+  if(!keyboard_event_try_pop(&event)) {
+    frame->rax = (uint64_t)(-EAGAIN);
+    return frame->rax;
+  }
+
+  if(!proc_user_buffer_accessible(current, user_event, sizeof(event))) {
+    keyboard_event_push(&event);
+    frame->rax = (uint64_t)(-EFAULT);
+    return frame->rax;
+  }
+
+  memcpy(user_event, &event, sizeof(event));
+  frame->rax = 0;
   return frame->rax;
 }
 
