@@ -135,8 +135,8 @@ digraph IssueDependencies {
         fillcolor="#FFF8E1";
 
         issue304 [label="#304: scanf family\nsscanf/scanf/fscanf", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED
-        issue305 [label="#305: File stdio\nfopen/fclose/fread/fwrite", fillcolor="#FFE4B5"];
-        issue306 [label="#306: Filesystem helpers\nmkdir/remove/rename", fillcolor="#FFE4B5"];
+        issue305 [label="#305: File stdio\nfopen/fclose/fread/fwrite", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED
+        issue306 [label="#306: Filesystem helpers\nmkdir/remove/rename", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED
         issue307 [label="#307: Environment access\ngetenv/putenv", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED
         issue308 [label="#308: String utilities\nstrdup/strcasecmp", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED
         issue309 [label="#309: Formatted I/O\nsnprintf/vsnprintf", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED
@@ -475,13 +475,13 @@ digraph IssueDependencies {
     issue304 -> issue300 [color=red, penwidth=2, label="config\nparsing", style=dashed];  // scanf -> config parsing
 
     // libc gaps dependencies for Doom
-    issue96 -> issue305 [color=red, style=dashed, label="fd"];  // fd mgmt -> file stdio
-    issue189 -> issue305 [color=red, style=dashed, label="FAT32"];  // FAT32 write -> file stdio
-    issue294 -> issue305 [color=red, style=dashed, label="streaming"];  // VFS streaming -> file stdio
-    issue193 -> issue305 [color=red, style=dashed];  // libc -> file stdio
-    issue193 -> issue306 [color=red, style=dashed];  // libc -> filesystem helpers
-    issue60 -> issue306 [color=red, style=dashed];  // filesystem syscalls -> helpers
-    issue65 -> issue306 [color=red, style=dashed];  // VFS -> helpers
+    issue96 -> issue305 [color=gray, style=dashed, label="fd"];  // fd mgmt -> file stdio ✅ CLOSED
+    issue189 -> issue305 [color=gray, style=dashed, label="FAT32"];  // FAT32 write -> file stdio ✅ CLOSED
+    issue294 -> issue305 [color=gray, style=dashed, label="streaming"];  // VFS streaming -> file stdio ✅ CLOSED
+    issue193 -> issue305 [color=gray, style=dashed];  // libc -> file stdio ✅ CLOSED
+    issue193 -> issue306 [color=gray, style=dashed];  // libc -> filesystem helpers ✅ CLOSED
+    issue60 -> issue306 [color=gray, style=dashed];  // filesystem syscalls -> helpers ✅ CLOSED
+    issue65 -> issue306 [color=gray, style=dashed];  // VFS -> helpers ✅ CLOSED
     issue148 -> issue307 [color=gray, style=dashed];  // env vars -> getenv/putenv ✅ CLOSED
     issue193 -> issue307 [color=gray, style=dashed];  // libc -> getenv/putenv ✅ CLOSED
     issue95 -> issue308 [color=gray, style=dashed];  // malloc -> strdup ✅ CLOSED
@@ -491,8 +491,8 @@ digraph IssueDependencies {
     issue193 -> issue310 [color=red, style=dashed];  // libc -> math library
 
     // Doom build system dependencies
-    issue305 -> issue311 [color=red, penwidth=2];  // file stdio -> Doom build
-    issue306 -> issue311 [color=red, penwidth=2];  // filesystem helpers -> Doom build
+    issue305 -> issue311 [color=gray, penwidth=2, style=dashed];  // file stdio -> Doom build ✅ CLOSED
+    issue306 -> issue311 [color=gray, penwidth=2, style=dashed];  // filesystem helpers -> Doom build ✅ CLOSED
     issue307 -> issue311 [color=gray, penwidth=2, style=dashed];  // environment -> Doom build ✅ CLOSED
     issue308 -> issue311 [color=gray, penwidth=2, style=dashed];  // string utilities -> Doom build ✅ CLOSED
     issue309 -> issue311 [color=gray, penwidth=2, style=dashed];  // formatted I/O -> Doom build ✅ CLOSED

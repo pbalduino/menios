@@ -176,7 +176,7 @@ This document tracks the three major milestones for meniOS development.
 **Goal**: Run Doom (1993) in userland on meniOS
 **GitHub Milestone**: [Doom](https://github.com/pbalduino/menios/milestone/3)
 
-**Status**: 23/36 complete (63.9%)
+**Status**: 25/36 complete (69.4%)
 
 **Note**: Depends on **Buddy Allocator milestone** for efficient memory management under game engine load.
 
@@ -191,8 +191,8 @@ This document tracks the three major milestones for meniOS development.
 - [ ] #143 - Mouse driver
 
 #### libc Gaps for Doom (6 issues)
-- [ ] #305 - File stdio support (fopen/fclose, buffered I/O)
-- [ ] #306 - Filesystem helpers (mkdir, remove, rename)
+- [x] #305 - File stdio support (fopen/fclose, buffered I/O) ✅
+- [x] #306 - Filesystem helpers (mkdir, remove, rename) ✅
 - [x] #307 - Environment variable access (getenv/putenv) ✅
 - [x] #308 - String utilities (strdup, strcasecmp, strncasecmp) ✅
 - [x] #309 - Expose snprintf/vsnprintf/vsprintf properly ✅
@@ -261,7 +261,7 @@ This document tracks the three major milestones for meniOS development.
 - #303 requires #312 (old build integration - superseded by #311/#312)
 - #304 requires #193 ✅ (libc foundation COMPLETE)
 
-**Progress**: IPC infrastructure complete - Pipes ✅, Signals (5/6), Shared Memory ✅! FAT32 write support ✅ complete! scanf family (#304) ✅ complete! Real key events (#302) ✅ complete! Doom port layer (#300) ✅ complete with fullscreen graphics, timing, and input! Pixel-addressable framebuffer (#301) ✅ complete! Doom build system (#311) ✅ now compiles doomgeneric against the meniOS SDK! String utilities (#308) ✅ delivered! Environment access (#307) ✅ complete! Formatted I/O (#309) ✅ complete! Remaining work: three libc gaps (#305, #306, #310) and final build integration (#312).
+**Progress**: IPC infrastructure complete - Pipes ✅, Signals (5/6), Shared Memory ✅! FAT32 write support ✅ complete! scanf family (#304) ✅ complete! Real key events (#302) ✅ complete! Doom port layer (#300) ✅ complete with fullscreen graphics, timing, and input! Pixel-addressable framebuffer (#301) ✅ complete! Doom build system (#311) ✅ now compiles doomgeneric against the meniOS SDK! All libc gaps complete except math library: File stdio (#305) ✅, Filesystem helpers (#306) ✅, Environment access (#307) ✅, String utilities (#308) ✅, Formatted I/O (#309) ✅! Remaining work: ONE libc gap (#310 - math library) and final build integration (#312).
 
 ---
 
@@ -297,12 +297,12 @@ This document tracks the three major milestones for meniOS development.
 ## 📈 Overall Progress
 
 - **Total Issues Across Milestones**: 98 issues (includes foundational issues)
-- **Completed**: 81 issues (82.7%)
-- **In Progress**: 17 issues
-- **Ready to Start**: 8 issues (no dependencies: #109, #190, #191, #305, #306, #310)
-- **Recently Completed**: #286-#293 ✅ (time management & FAT32 writes), #304 ✅ (scanf family), #302 ✅ (real key events), #301 ✅ (framebuffer mmap), #300 ✅ (menIOS Doom port layer), #136 ✅ (devfs), #140 ✅ (/dev/kbd0 and /dev/fb0), #221 ✅ (fast syscalls), #311 ✅ (Doom build system), #307 ✅ (environment access), #308 ✅ (string utilities), #309 ✅ (formatted I/O)
+- **Completed**: 83 issues (84.7%)
+- **In Progress**: 15 issues
+- **Ready to Start**: 6 issues (no dependencies: #109, #190, #191, #310)
+- **Recently Completed**: #286-#293 ✅ (time management & FAT32 writes), #304 ✅ (scanf family), #302 ✅ (real key events), #301 ✅ (framebuffer mmap), #300 ✅ (menIOS Doom port layer), #136 ✅ (devfs), #140 ✅ (/dev/kbd0 and /dev/fb0), #221 ✅ (fast syscalls), #311 ✅ (Doom build system), #305 ✅ (file stdio), #306 ✅ (filesystem helpers), #307 ✅ (environment access), #308 ✅ (string utilities), #309 ✅ (formatted I/O)
 - **Recently Created**: #305-#312 ✅ (libc gaps & Doom build system), #313 (filesystem organization), #314 (shell startup scripts), #315 (motd), #316 (touch command), #317 (utime syscall), #318 (uname command)
-- **Next Up**: Remaining libc gaps (#305, #306, #310) ready to start! TCC/binutils (#190, #191) ready! Doom build integration (#312) follows once libc gaps land. New utilities (#314-#318) improve usability.
+- **Next Up**: Last libc gap (#310 - math library) ready to start! TCC/binutils (#190, #191) ready! Doom build integration (#312) nearly unblocked! New utilities (#314-#318) improve usability.
 
 ## 🚀 Immediate Next Steps
 
@@ -321,13 +321,13 @@ All phases finished! Core buddy allocator implementation (Phase 1 ✅), critical
    - #190 - TCC port (Buddy Allocator ✅ COMPLETE, FAT32 writes ✅ COMPLETE)
    - #191 - binutils port (Buddy Allocator ✅ COMPLETE, FAT32 writes ✅ COMPLETE)
 
-2. **Doom Milestone - libc Gaps** (READY NOW! ✅):
-   - #305 - File stdio support (all dependencies met)
-   - #306 - Filesystem helpers (all dependencies met)
+2. **Doom Milestone - libc Gaps** (5/6 COMPLETE! ✅):
+   - #305 - File stdio support ✅ COMPLETE
+   - #306 - Filesystem helpers ✅ COMPLETE
    - #307 - Environment variable access ✅ COMPLETE
    - #308 - String utilities ✅ COMPLETE
    - #309 - Expose snprintf/vsnprintf properly ✅ COMPLETE
-   - #310 - Math library (all dependencies met)
+   - #310 - Math library (LAST ONE - all dependencies met!)
 
 3. **Doom Milestone - Threading** (Ready to implement):
    - #109 - pthread API (no dependencies)
@@ -635,6 +635,21 @@ Recommended completion order for maximum impact:
   - Required for Doom string formatting
   - Doom milestone: 23/36 complete (63.9%)
   - Overall progress: 81/98 issues complete (82.7%)
+- **2025-10-19**: Closed #305 (File stdio support - fopen/fclose, buffered I/O) ✅
+  - Implemented FILE structure with buffering, position tracking, and file descriptor
+  - Added fopen/fclose for file opening with mode strings ("r", "w", "a", etc.)
+  - Implemented fread/fwrite for buffered I/O operations
+  - Added fseek/ftell/rewind for file positioning
+  - Implemented fflush for explicit buffer writes
+  - Doom milestone: 24/36 complete (66.7%)
+- **2025-10-19**: Closed #306 (Filesystem helpers - mkdir, remove, rename) ✅
+  - Implemented mkdir() for directory creation
+  - Added remove() for file deletion
+  - Implemented rename() for file moves
+  - Added unlink()/rmdir() wrappers
+  - Doom save game management now functional
+  - Doom milestone: 25/36 complete (69.4%)
+  - Overall progress: 83/98 issues complete (84.7%)
 
 ---
 

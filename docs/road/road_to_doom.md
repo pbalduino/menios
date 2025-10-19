@@ -204,17 +204,16 @@ Missing C library functions that Doom requires for linking:
 - **Impact**: Doom loads WAD files via fopen in w_file_stdc.c, config parsing in m_misc.c, g_game.c
 -  **Priority**: CRITICAL - linker will fail without these symbols
 
-#### **Filesystem Helpers** (Issue #306)
-- **Status**: ✅ COMPLETE - libc now exports mkdir/remove/rename/unlink
+#### **Filesystem Helpers** (Issue #306) ✅ **COMPLETE**
+- ✅ **Status**: Complete - mkdir/remove/rename/unlink now in libc
 - **Dependencies**: #193 ✅, #60 ✅, #65 ✅
-- **Scope**:
+- **Implemented**:
   - mkdir() for directory creation (M_MakeDirectory in Doom)
   - remove() for file deletion
   - rename() for file moves
   - unlink()/rmdir() for file deletion paths
-  - Return ENOSYS if kernel syscall not available
-- **Impact**: Doom save game management, config file handling
-- **Priority**: HIGH - needed for save games to work
+- **Impact**: Doom save game management and config file handling now working
+- **Priority**: HIGH - save games now functional
 
 #### **Environment Variable Access** (Issue #307) ✅ **COMPLETE**
 - ✅ **Status**: Complete - getenv/putenv now in libc
@@ -464,7 +463,7 @@ The solid foundation work (memory management, scheduling, synchronization) now e
 ## 🎯 **GitHub Milestone Tracking**
 
 The Doom milestone on GitHub now tracks 36 issues:
-- **Status**: 23/36 complete (63.9%)
+- **Status**: 25/36 complete (69.4%)
 - **Completed**:
   - Graphics & Input: #31 ✅, #32 ✅, #136 ✅ (devfs), #140 ✅ (/dev/kbd0 and /dev/fb0)
   - Memory: #95 ✅
@@ -473,14 +472,14 @@ The Doom milestone on GitHub now tracks 36 issues:
   - IPC - Signals: #103 ✅ (parent), #210 ✅, #211 ✅, #212 ✅, #213 ✅
   - IPC - Shared Memory: #215 ✅, #216 ✅, #217 ✅, #218 ✅, #219 ✅ (ALL COMPLETE!)
   - IPC - Other: #220 ✅ (ioctl), #221 ✅ (fast syscalls)
-  - libc Gaps: #307 ✅ (environment access), #308 ✅ (string utilities), #309 ✅ (formatted I/O)
+  - libc Gaps: #305 ✅ (file stdio), #306 ✅ (filesystem helpers), #307 ✅ (environment access), #308 ✅ (string utilities), #309 ✅ (formatted I/O)
   - Doom Integration: #300 ✅ (meniOS port layer), #301 ✅ (framebuffer mmap), #302 ✅ (real key events), #304 ✅ (scanf family), #311 ✅ (Doom build system)
 - **New Issues Created (2025-10-18/19)**:
   - libc Gaps: #305 (file stdio), #306 (filesystem helpers), #307 (environment access), #309 (formatted I/O), #310 (math library)
   - Build System: #312 (build integration)
   - Doom Integration: #303 (old build - superseded)
-- **In Progress**: Threading (#109-#113), Signals (#214), Audio (#33), Mouse (#143), libc gaps (#305, #306, #310), Doom Integration (#312)
-- **Ready to Start NOW**: #305, #306, #310 (remaining libc gaps - all dependencies met!)
+- **In Progress**: Threading (#109-#113), Signals (#214), Audio (#33), Mouse (#143), Math library (#310), Doom Integration (#312)
+- **Ready to Start NOW**: #310 (last libc gap - all dependencies met!)
 - **Blocked**: #312 (integration - depends on libc completeness)
 - **Removed**: #105 (Unix sockets), #106 (microkernel IPC), #107 (capabilities) - not required for Doom
 
@@ -496,9 +495,11 @@ The Doom milestone on GitHub now tracks 36 issues:
 - ✅ Doom port layer (#300) - COMPLETE: graphics, input, and timing all wired through meniOS!
 - ✅ Doom build system (#311) - COMPLETE: meniOS Makefile + tooling can rebuild the entire Doom codebase!
 - ✅ String utilities (#308) - strdup, strcasecmp, strncasecmp now in libc!
+- ✅ File stdio (#305) - fopen/fclose/fread/fwrite now in libc for WAD loading!
+- ✅ Filesystem helpers (#306) - mkdir/remove/rename now in libc for save games!
 - ✅ Environment access (#307) - getenv/putenv now in libc for Doom config!
 - ✅ Formatted I/O (#309) - snprintf/vsnprintf/vsprintf properly exposed!
-- 🔥 Remaining libc gaps (#305, #306, #310) - 3 issues ready to implement immediately!
+- 🔥 Last libc gap (#310 - math library) - ready to implement immediately!
 
 See [MILESTONES.md](../MILESTONES.md) for detailed milestone tracking across all three major goals (Mosh, GCC, Doom).
 
