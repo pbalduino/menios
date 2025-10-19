@@ -96,6 +96,8 @@ static size_t fb_height_pixels = 0;
 static size_t fb_map_size = 0;
 static int fb_fd = -1;
 
+static void DG_Shutdown(void);
+
 void DG_Init(void) {
   menios_fb_info_t fb_info;
   memset(&fb_info, 0, sizeof(fb_info));
@@ -139,6 +141,8 @@ void DG_Init(void) {
   }
 
   fb_pixels = (uint8_t*)map;
+
+  atexit(DG_Shutdown);
 }
 
 void DG_DrawFrame(void) {
@@ -162,6 +166,17 @@ void DG_DrawFrame(void) {
     uint8_t* dest = fb_pixels + y * fb_pitch_bytes;
     const uint8_t* src = src_base + y * DOOMGENERIC_RESX * sizeof(uint32_t);
     memcpy(dest, src, row_copy_bytes);
+  }
+}
+
+void DG_Shutdown(void) {
+  if(fb_pixels != NULL && fb_map_size > 0) {
+    munmap(fb_pixels, fb_map_size);
+    fb_pixels = NULL;
+  }
+  if(fb_fd >= 0) {
+    close(fb_fd);
+    fb_fd = -1;
   }
 }
 
