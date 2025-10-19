@@ -11,12 +11,28 @@ struct proc_info_t;
 
 typedef struct file file_t;
 
+typedef struct file_mmap_request_t {
+  size_t length;
+  off_t  offset;
+  int    prot;
+  int    flags;
+} file_mmap_request_t;
+
+typedef struct file_mmap_result_t {
+  phys_addr_t phys_addr;
+  size_t      length;
+  bool        writable;
+} file_mmap_result_t;
+
 typedef struct file_ops_t {
   int64_t (*read)(file_t* file, void* buffer, size_t length);
   int64_t (*write)(file_t* file, const void* buffer, size_t length);
   int (*close)(file_t* file);
   int64_t (*seek)(file_t* file, int64_t offset, int whence);
   int (*ioctl)(file_t* file, unsigned long request, void* argp);
+  int (*mmap)(file_t* file,
+              const file_mmap_request_t* request,
+              file_mmap_result_t* result);
 } file_ops_t;
 
 struct file {
@@ -46,6 +62,9 @@ int64_t file_read(file_t* file, void* buffer, size_t length);
 int64_t file_write(file_t* file, const void* buffer, size_t length);
 int64_t file_seek(file_t* file, int64_t offset, int whence);
 int file_ioctl(file_t* file, unsigned long request, void* argp);
+int file_mmap(file_t* file,
+              const file_mmap_request_t* request,
+              file_mmap_result_t* result);
 
 void proc_file_table_init(struct proc_info_t* proc);
 void proc_file_table_clone(struct proc_info_t* child, struct proc_info_t* parent);

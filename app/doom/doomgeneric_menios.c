@@ -1,9 +1,16 @@
 #include <ctype.h>
 #include <errno.h>
+#include <fcntl.h>
 #include <stdint.h>
+#include <stdio.h>
+#include <string.h>
+#include <sys/ioctl.h>
+#include <sys/mman.h>
 #include <time.h>
+#include <unistd.h>
 
 #include "doomgeneric.h"
+#include <menios/fb.h>
 #include <menios/input.h>
 
 static const unsigned char scancode_ascii_map[128] = {
@@ -81,12 +88,81 @@ static unsigned char menios_convert_key(const menios_key_event_t* event) {
   return 0;
 }
 
+static uint8_t* fb_pixels = NULL;
+static size_t fb_pitch_bytes = 0;
+static size_t fb_bytes_per_pixel = 0;
+static size_t fb_width_pixels = 0;
+static size_t fb_height_pixels = 0;
+static size_t fb_map_size = 0;
+static int fb_fd = -1;
+
 void DG_Init(void) {
-  // TODO: Wire DG_Init to the meniOS framebuffer subsystem when it is available.
+  menios_fb_info_t fb_info;
+  memset(&fb_info, 0, sizeof(fb_info));
+
+  fb_fd = open("/dev/fb/0", O_RDWR);
+  if(fb_fd < 0) {
+    perror("open(/dev/fb/0)");
+    fb_fd = -1;
+    return;
+  }
+
+  if(ioctl(fb_fd, MENIOS_FB_IOCTL_GET_INFO, &fb_info) < 0) {
+    perror("ioctl(MENIOS_FB_IOCTL_GET_INFO)");
+    close(fb_fd);
+    fb_fd = -1;
+    return;
+  }
+
+  if(fb_info.bpp < 24 || fb_info.pitch == 0 || fb_info.width == 0 || fb_info.height == 0) {
+    fprintf(stderr, "meniOS framebuffer: unsupported geometry (%lux%lu %u bpp)\n",
+            (unsigned long)fb_info.width,
+            (unsigned long)fb_info.height,
+            fb_info.bpp);
+    close(fb_fd);
+    fb_fd = -1;
+    return;
+  }
+
+  fb_pitch_bytes = (size_t)fb_info.pitch;
+  fb_bytes_per_pixel = fb_info.bpp / 8;
+  fb_width_pixels = (size_t)fb_info.width;
+  fb_height_pixels = (size_t)fb_info.height;
+  fb_map_size = fb_pitch_bytes * fb_height_pixels;
+
+  void* map = mmap(NULL, fb_map_size, PROT_READ | PROT_WRITE, MAP_SHARED, fb_fd, 0);
+  if(map == MAP_FAILED) {
+    perror("mmap(/dev/fb/0)");
+    close(fb_fd);
+    fb_fd = -1;
+    return;
+  }
+
+  fb_pixels = (uint8_t*)map;
 }
 
 void DG_DrawFrame(void) {
-  // TODO: Push DG_ScreenBuffer to the meniOS display driver once it exists.
+  if(fb_pixels == NULL || fb_bytes_per_pixel < 4 || DG_ScreenBuffer == NULL) {
+    return;
+  }
+
+  size_t copy_height = DOOMGENERIC_RESY;
+  if(copy_height > fb_height_pixels) {
+    copy_height = fb_height_pixels;
+  }
+
+  size_t copy_width = DOOMGENERIC_RESX;
+  if(copy_width > fb_width_pixels) {
+    copy_width = fb_width_pixels;
+  }
+
+  size_t row_copy_bytes = copy_width * sizeof(uint32_t);
+  const uint8_t* src_base = (const uint8_t*)DG_ScreenBuffer;
+  for(size_t y = 0; y < copy_height; y++) {
+    uint8_t* dest = fb_pixels + y * fb_pitch_bytes;
+    const uint8_t* src = src_base + y * DOOMGENERIC_RESX * sizeof(uint32_t);
+    memcpy(dest, src, row_copy_bytes);
+  }
 }
 
 void DG_SleepMs(uint32_t ms) {

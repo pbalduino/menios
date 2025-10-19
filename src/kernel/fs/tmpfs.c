@@ -413,6 +413,7 @@ static const file_ops_t tmpfs_file_ops = {
   .close = tmpfs_close,
   .seek = tmpfs_seek_impl,
   .ioctl = NULL,
+  .mmap = NULL,
 };
 
 static uint32_t tmpfs_requested_mode(int flags) {

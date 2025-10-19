@@ -6,6 +6,7 @@
 #include <string.h>
 #include <sys/fcntl.h>
 #include <sys/ioctl.h>
+#include <sys/mman.h>
 
 #include <kernel/condvar.h>
 #include <kernel/file.h>
@@ -13,12 +14,15 @@
 #include <kernel/procfs.h>
 #include <kernel/tmpfs.h>
 #include <kernel/framebuffer.h>
+#include <kernel/mman.h>
+#include <kernel/pmm.h>
 #include <kernel/heap.h>
 #include <kernel/mutex.h>
 #include <kernel/proc.h>
 #include <kernel/serial.h>
 #include <kernel/spinlock.h>
 #include <kernel/vfs.h>
+#include <menios/fb.h>
 
 #define FD_STDIN   0
 #define FD_STDOUT  1
@@ -274,6 +278,27 @@ int file_ioctl(file_t* file, unsigned long request, void* argp) {
   return rc;
 }
 
+int file_mmap(file_t* file,
+              const file_mmap_request_t* request,
+              file_mmap_result_t* result) {
+  if(file == NULL || request == NULL || result == NULL) {
+    set_errno(EINVAL);
+    return -EINVAL;
+  }
+  if(file->ops == NULL || file->ops->mmap == NULL) {
+    set_errno(ENOSYS);
+    return -ENOSYS;
+  }
+
+  int rc = file->ops->mmap(file, request, result);
+  if(rc < 0) {
+    set_errno(-rc);
+  } else if(current) {
+    current->err_no = 0;
+  }
+  return rc;
+}
+
 void proc_file_table_init(struct proc_info_t* proc) {
   if(proc == NULL) {
     return;
@@ -513,12 +538,92 @@ static int64_t framebuffer_write_impl(file_t* file, const void* buffer, size_t l
   return (int64_t)length;
 }
 
+static size_t align_up_size(size_t value) {
+  if(value == 0) {
+    return PAGE_SIZE;
+  }
+  size_t remainder = value % PAGE_SIZE;
+  if(remainder == 0) {
+    return value;
+  }
+  return value + (PAGE_SIZE - remainder);
+}
+
+static int framebuffer_ioctl_impl(file_t* file, unsigned long request, void* argp) {
+  (void)file;
+  if(request == MENIOS_FB_IOCTL_GET_INFO) {
+    if(argp == NULL) {
+      return -EINVAL;
+    }
+    framebuffer_geometry_t geo;
+    fb_get_geometry(&geo);
+    menios_fb_info_t info = {
+      .width = geo.width,
+      .height = geo.height,
+      .pitch = geo.pitch,
+      .bpp = geo.bpp,
+      .reserved = 0,
+    };
+    if(current != NULL && !proc_user_buffer_accessible(current, argp, sizeof(info))) {
+      return -EFAULT;
+    }
+    memcpy(argp, &info, sizeof(info));
+    return 0;
+  }
+  return -ENOTTY;
+}
+
+static int framebuffer_mmap_impl(file_t* file,
+                                 const file_mmap_request_t* request,
+                                 file_mmap_result_t* result) {
+  (void)file;
+  if(request == NULL || result == NULL) {
+    return -EINVAL;
+  }
+
+  if(request->offset != 0) {
+    return -EINVAL;
+  }
+
+  framebuffer_geometry_t geo;
+  fb_get_geometry(&geo);
+  if(geo.width == 0 || geo.height == 0 || geo.pitch == 0) {
+    return -ENODEV;
+  }
+
+  size_t fb_size = geo.pitch * geo.height;
+  size_t fb_size_aligned = align_up_size(fb_size);
+
+  if(request->length == 0) {
+    return -EINVAL;
+  }
+  size_t map_length = request->length;
+  if(map_length > fb_size) {
+    map_length = fb_size;
+  }
+  size_t aligned_length = align_up_size(map_length);
+  if(aligned_length > fb_size_aligned) {
+    aligned_length = fb_size_aligned;
+  }
+
+  phys_addr_t phys = fb_physical_address();
+  if(phys == PHYS_ADDR_INVALID || phys == 0) {
+    return -ENODEV;
+  }
+
+  result->phys_addr = phys;
+  result->length = aligned_length;
+  result->writable = true;
+  return 0;
+}
+
 static const file_ops_t serial_file_ops = {
   .read = NULL,
   .write = serial_write_impl,
   .close = serial_close_noop,
   .seek = NULL,
   .ioctl = NULL,
+  .mmap = NULL,
 };
 
 static const file_ops_t framebuffer_file_ops = {
@@ -526,7 +631,8 @@ static const file_ops_t framebuffer_file_ops = {
   .write = framebuffer_write_impl,
   .close = serial_close_noop,
   .seek = NULL,
-  .ioctl = NULL,
+  .ioctl = framebuffer_ioctl_impl,
+  .mmap = framebuffer_mmap_impl,
 };
 
 static const file_ops_t stdin_file_ops = {
@@ -535,6 +641,7 @@ static const file_ops_t stdin_file_ops = {
   .close = serial_close_noop,
   .seek = NULL,
   .ioctl = NULL,
+  .mmap = NULL,
 };
 
 static int64_t tty_write_impl(file_t* file, const void* buffer, size_t length) {
@@ -577,6 +684,7 @@ static const file_ops_t tty_console_file_ops = {
   .close = serial_close_noop,
   .seek = NULL,
   .ioctl = tty_ioctl_impl,
+  .mmap = NULL,
 };
 
 #ifdef MENIOS_KERNEL

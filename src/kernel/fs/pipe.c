@@ -189,6 +189,7 @@ static const file_ops_t pipe_file_ops = {
   .close = pipe_close_impl,
   .seek = NULL,
   .ioctl = NULL,
+  .mmap = NULL,
 };
 
 int pipe_create(file_t** read_end, file_t** write_end) {

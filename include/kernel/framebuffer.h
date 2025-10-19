@@ -3,6 +3,14 @@
 
 #include <types.h>
 
+typedef struct framebuffer_geometry {
+  uint64_t width;
+  uint64_t height;
+  uint64_t pitch;
+  uint16_t bpp;
+  uint16_t reserved;
+} framebuffer_geometry_t;
+
 #define FB_BLACK        0x000000
 #define FB_DARK_RED     0x7f0000
 #define FB_DARK_GREEN   0x007f00
@@ -30,7 +38,10 @@ uint16_t fb_bpp();
 uint64_t fb_count();
 uint64_t fb_height();
 uint64_t fb_mode_count();
+uint64_t fb_pitch();
 uint64_t fb_width();
+void fb_get_geometry(framebuffer_geometry_t* out);
+phys_addr_t fb_physical_address(void);
 
 void fb_draw();
 void fb_init();

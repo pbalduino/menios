@@ -621,6 +621,7 @@ static const file_ops_t vfs_file_ops = {
   .close = vfs_file_close_impl,
   .seek = vfs_file_seek_impl,
   .ioctl = NULL,
+  .mmap = NULL,
 };
 
 static int vfs_open_buffered(const vfs_fs_driver_t* driver,

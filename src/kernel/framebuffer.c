@@ -8,6 +8,7 @@
 #include <kernel/framebuffer.h>
 #include <kernel/kernel.h>
 #include <kernel/serial.h>
+#include <kernel/pmm.h>
 
 #include <stdbool.h>
 #include <stdint.h>
@@ -724,6 +725,28 @@ inline uint64_t fb_width() {
 
 inline uint64_t fb_height() {
   return framebuffer->height;
+}
+
+uint64_t fb_pitch() {
+  return framebuffer->pitch;
+}
+
+void fb_get_geometry(framebuffer_geometry_t* out) {
+  if(out == NULL || framebuffer == NULL) {
+    return;
+  }
+  out->width = framebuffer->width;
+  out->height = framebuffer->height;
+  out->pitch = framebuffer->pitch;
+  out->bpp = framebuffer->bpp;
+  out->reserved = 0;
+}
+
+phys_addr_t fb_physical_address(void) {
+  if(framebuffer == NULL) {
+    return PHYS_ADDR_INVALID;
+  }
+  return virtual_to_physical((virt_addr_t)framebuffer->address);
 }
 
 void fb_list_modes() {

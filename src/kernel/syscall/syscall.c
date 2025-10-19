@@ -126,6 +126,93 @@ static syscall_handler_t syscall_table[SYSCALL_MAX];
 
 static int64_t realtime_offset_us = 0;
 
+static size_t page_align_up_size(size_t value) {
+  if(value == 0) {
+    return PAGE_SIZE;
+  }
+  size_t remainder = value % PAGE_SIZE;
+  if(remainder == 0) {
+    return value;
+  }
+  return value + (PAGE_SIZE - remainder);
+}
+
+static virt_addr_t page_align_down_addr(virt_addr_t value) {
+  return value & ~((virt_addr_t)PAGE_SIZE - 1);
+}
+
+static virt_addr_t page_align_up_addr(virt_addr_t value) {
+  if((value & (PAGE_SIZE - 1)) == 0) {
+    return value;
+  }
+  return (value + PAGE_SIZE) & ~((virt_addr_t)PAGE_SIZE - 1);
+}
+
+static bool check_overflow(virt_addr_t base, size_t length) {
+  return length > (size_t)(UINT64_MAX - base);
+}
+
+static uint32_t prot_to_region_flags(int prot) {
+  uint32_t flags = VM_REGION_FLAG_USER;
+  if(prot & PROT_READ) {
+    flags |= VM_REGION_FLAG_READ;
+  }
+  if(prot & PROT_WRITE) {
+    flags |= VM_REGION_FLAG_WRITE;
+  }
+  if(prot & PROT_EXEC) {
+    flags |= VM_REGION_FLAG_EXEC;
+  }
+  return flags;
+}
+
+static bool mmap_select_base(void* addr_hint,
+                             size_t aligned_len,
+                             virt_addr_t* base_out,
+                             bool* used_hint) {
+  if(current == NULL) {
+    return false;
+  }
+
+  virt_addr_t base_hint = current->mmap_next ? current->mmap_next : current->mmap_base;
+  virt_addr_t base = addr_hint ? page_align_down_addr((virt_addr_t)addr_hint)
+                               : page_align_up_addr(base_hint);
+  bool hint = (addr_hint != NULL);
+
+  if(check_overflow(base, aligned_len)) {
+    return false;
+  }
+
+  virt_addr_t end = base + aligned_len;
+  if(base < current->mmap_base || end > current->mmap_limit || base >= end) {
+    return false;
+  }
+
+  if(!hint) {
+    while(end <= current->mmap_limit && vm_range_overlaps(current, base, aligned_len)) {
+      base = page_align_up_addr(end);
+      if(check_overflow(base, aligned_len)) {
+        return false;
+      }
+      end = base + aligned_len;
+    }
+
+    if(end > current->mmap_limit || base >= end) {
+      return false;
+    }
+  } else if(vm_range_overlaps(current, base, aligned_len)) {
+    return false;
+  }
+
+  if(base_out != NULL) {
+    *base_out = base;
+  }
+  if(used_hint != NULL) {
+    *used_hint = hint;
+  }
+  return true;
+}
+
 static uint64_t realtime_now_us(void) {
   uint64_t base = unix_time_us();
   int64_t adjusted = (int64_t)base + realtime_offset_us;
@@ -850,17 +937,142 @@ static uint64_t syscall_mmap_handler(syscall_frame_t* frame) {
   int fd = (int)frame->r8;
   off_t offset = (off_t)frame->r9;
 
-  void* result = kmmap(addr, length, prot, flags, fd, offset);
-  if(result == MAP_FAILED) {
-    int err = current ? current->err_no : ENOMEM;
-    if(err == 0) {
-      err = ENOMEM;
+  if((flags & MAP_ANON) != 0 || fd < 0) {
+    void* result = kmmap(addr, length, prot, flags, fd, offset);
+    if(result == MAP_FAILED) {
+      int err = current ? current->err_no : ENOMEM;
+      if(err == 0) {
+        err = ENOMEM;
+      }
+      frame->rax = (uint64_t)(-err);
+      return frame->rax;
+    }
+
+    frame->rax = (uint64_t)result;
+    return frame->rax;
+  }
+
+  if(current == NULL || !current->user_mode) {
+    if(current) {
+      current->err_no = ENOSYS;
+    }
+    frame->rax = (uint64_t)(-ENOSYS);
+    return frame->rax;
+  }
+
+  file_t* file = proc_file_get(current, fd, NULL);
+  if(file == NULL) {
+    int err = current->err_no ? current->err_no : EBADF;
+    if(current) {
+      current->err_no = err;
     }
     frame->rax = (uint64_t)(-err);
     return frame->rax;
   }
 
-  frame->rax = (uint64_t)result;
+  if(file->ops == NULL || file->ops->mmap == NULL) {
+    file_unref(file);
+    if(current) {
+      current->err_no = ENOSYS;
+    }
+    frame->rax = (uint64_t)(-ENOSYS);
+    return frame->rax;
+  }
+
+  if((flags & MAP_SHARED) == 0) {
+    file_unref(file);
+    if(current) {
+      current->err_no = EINVAL;
+    }
+    frame->rax = (uint64_t)(-EINVAL);
+    return frame->rax;
+  }
+
+  if(offset % PAGE_SIZE != 0) {
+    file_unref(file);
+    if(current) {
+      current->err_no = EINVAL;
+    }
+    frame->rax = (uint64_t)(-EINVAL);
+    return frame->rax;
+  }
+
+  file_mmap_request_t request = {
+    .length = length,
+    .offset = offset,
+    .prot = prot,
+    .flags = flags,
+  };
+
+  file_mmap_result_t result;
+  int rc = file_mmap(file, &request, &result);
+  file_unref(file);
+  if(rc < 0) {
+    if(current) {
+      current->err_no = -rc;
+    }
+    frame->rax = (uint64_t)rc;
+    return frame->rax;
+  }
+
+  if(result.length == 0) {
+    if(current) {
+      current->err_no = EINVAL;
+    }
+    frame->rax = (uint64_t)(-EINVAL);
+    return frame->rax;
+  }
+
+  if((result.phys_addr & (PAGE_SIZE - 1)) != 0) {
+    if(current) {
+      current->err_no = EINVAL;
+    }
+    frame->rax = (uint64_t)(-EINVAL);
+    return frame->rax;
+  }
+
+  if((prot & PROT_WRITE) && !result.writable) {
+    if(current) {
+      current->err_no = EACCES;
+    }
+    frame->rax = (uint64_t)(-EACCES);
+    return frame->rax;
+  }
+
+  size_t map_length = result.length;
+  if(length != 0 && map_length > length) {
+    map_length = length;
+  }
+  size_t aligned_len = page_align_up_size(map_length);
+
+  virt_addr_t base;
+  bool used_hint;
+  if(!mmap_select_base(addr, aligned_len, &base, &used_hint)) {
+    if(current) {
+      current->err_no = ENOMEM;
+    }
+    frame->rax = (uint64_t)(-ENOMEM);
+    return frame->rax;
+  }
+
+  uint32_t region_flags = prot_to_region_flags(prot);
+  if(!vm_map_physical(current, base, result.phys_addr, aligned_len, region_flags)) {
+    if(current) {
+      current->err_no = ENOMEM;
+    }
+    frame->rax = (uint64_t)(-ENOMEM);
+    return frame->rax;
+  }
+
+  if(!used_hint) {
+    virt_addr_t next = page_align_up_addr(base + aligned_len);
+    if(next > current->mmap_next) {
+      current->mmap_next = next;
+    }
+  }
+
+  current->err_no = 0;
+  frame->rax = (uint64_t)base;
   return frame->rax;
 }
 

@@ -41,6 +41,7 @@ static const file_ops_t devfs_null_ops = {
   .close = NULL,
   .seek = NULL,
   .ioctl = NULL,
+  .mmap = NULL,
 };
 
 static const file_ops_t devfs_zero_ops = {
@@ -49,6 +50,7 @@ static const file_ops_t devfs_zero_ops = {
   .close = NULL,
   .seek = NULL,
   .ioctl = NULL,
+  .mmap = NULL,
 };
 
 static file_t* devfs_create_null(void) {

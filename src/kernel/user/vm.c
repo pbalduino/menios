@@ -111,6 +111,77 @@ bool vm_map(proc_info_p proc, const vm_map_params_t* params) {
   return true;
 }
 
+bool vm_map_physical(proc_info_p proc,
+                     virt_addr_t base,
+                     phys_addr_t phys,
+                     size_t length,
+                     uint32_t flags) {
+  if(proc == NULL || length == 0) {
+    return false;
+  }
+
+  virt_addr_t aligned_base = align_down(base);
+  size_t offset = (size_t)(base - aligned_base);
+  phys_addr_t aligned_phys = phys - offset;
+  size_t total_length = length + offset;
+  size_t aligned_len = page_align_up(total_length);
+
+  if(vm_range_overlaps(proc, aligned_base, aligned_len)) {
+    return false;
+  }
+
+  if(!vm_region_add(proc, aligned_base, aligned_len, VM_REGION_MMAP, flags)) {
+    return false;
+  }
+
+  vm_region_t* region = vm_region_find(proc, aligned_base);
+  if(region == NULL) {
+    if(proc->vm_region_count > 0) {
+      proc->vm_region_count--;
+    }
+    return false;
+  }
+
+  bool writable = (flags & VM_REGION_FLAG_WRITE) != 0;
+  bool user = (flags & VM_REGION_FLAG_USER) != 0;
+  size_t pages = aligned_len / PAGE_SIZE;
+
+  for(size_t page = 0; page < pages; page++) {
+    virt_addr_t vaddr = aligned_base + (page * PAGE_SIZE);
+    phys_addr_t paddr = aligned_phys + (page * PAGE_SIZE);
+    if(!pmm_map_page_in_root(proc->address_space_root, vaddr, paddr, writable, user)) {
+      for(size_t rollback = 0; rollback < page; rollback++) {
+        virt_addr_t r_vaddr = aligned_base + (rollback * PAGE_SIZE);
+        phys_addr_t r_paddr = aligned_phys + (rollback * PAGE_SIZE);
+        pmm_unmap_page_in_root(proc->address_space_root, r_vaddr);
+        proc_unregister_user_segment(proc, r_paddr, 1);
+      }
+      if(proc->vm_region_count > 0) {
+        proc->vm_region_count--;
+      }
+      return false;
+    }
+
+    if(!proc_register_user_segment(proc, paddr, 1)) {
+      pmm_unmap_page_in_root(proc->address_space_root, vaddr);
+      for(size_t rollback = 0; rollback < page; rollback++) {
+        virt_addr_t r_vaddr = aligned_base + (rollback * PAGE_SIZE);
+        phys_addr_t r_paddr = aligned_phys + (rollback * PAGE_SIZE);
+        pmm_unmap_page_in_root(proc->address_space_root, r_vaddr);
+        proc_unregister_user_segment(proc, r_paddr, 1);
+      }
+      if(proc->vm_region_count > 0) {
+        proc->vm_region_count--;
+      }
+      return false;
+    }
+
+    vm_region_note_mapping(region, vaddr, PAGE_SIZE);
+  }
+
+  return true;
+}
+
 static bool unmap_page(proc_info_p proc, virt_addr_t vaddr) {
   phys_addr_t frame;
   if(!pmm_get_mapping(proc->address_space_root, vaddr, &frame, NULL, NULL)) {
