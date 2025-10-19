@@ -931,7 +931,7 @@ void* malloc(size_t size) {
     return NULL;
   }
 
-#ifndef MENIOS_HOST_TEST
+#if defined(MENIOS_ENABLE_MALLOC_LOGS) && !defined(MENIOS_HOST_TEST)
   {
     char logbuf[128];
     size_t pos = 0u;

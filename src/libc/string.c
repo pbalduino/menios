@@ -445,20 +445,23 @@ void* memcpy(void* dest, const void* src, size_t count) {
   const uintptr_t kernel_floor = 0xffff800000000000ull;
   if(count != 0 &&
      (!memcpy_is_canonical(dest_addr) || !memcpy_is_canonical(src_addr))) {
-    serial_printf("memcpy guard canonical: dest=%p src=%p len=%zu ra=%p\n",
+    serial_printf("memcpy guard canonical: dest=%p src=%p len=%zu ra0=%p ra1=%p\n",
                   dest,
                   src,
                   count,
-                  __builtin_return_address(0));
+                  __builtin_return_address(0),
+                  __builtin_return_address(1));
     return dest;
   }
 
   if(count != 0 && (dest_addr < kernel_floor || src_addr < kernel_floor)) {
-    serial_printf("memcpy low addr: dest=%p src=%p len=%zu ra=%p\n",
+    serial_printf("memcpy low addr: dest=%p src=%p len=%zu ra0=%p ra1=%p ra2=%p\n",
                   dest,
                   src,
                   count,
-                  __builtin_return_address(0));
+                  __builtin_return_address(0),
+                  __builtin_return_address(1),
+                  __builtin_return_address(2));
   }
 #endif
 

@@ -28,6 +28,7 @@
 
 #include "config.h"
 #include "d_iwad.h"
+#include "doomgeneric.h"
 #include "i_swap.h"
 #include "i_system.h"
 #include "i_video.h"
@@ -35,6 +36,24 @@
 #include "z_zone.h"
 
 #include "w_wad.h"
+
+#define LUMP_NAME_LEN 8
+
+static void W_FormatLumpName(const char* lumpname, char* buffer, size_t buffer_size) {
+    size_t copy = LUMP_NAME_LEN;
+    if(buffer_size == 0) {
+        return;
+    }
+    if(copy > buffer_size - 1) {
+        copy = buffer_size - 1;
+    }
+    memcpy(buffer, lumpname, copy);
+    buffer[copy] = '\0';
+    while(copy > 0 && buffer[copy - 1] == ' ') {
+        buffer[copy - 1] = '\0';
+        copy--;
+    }
+}
 
 typedef struct
 {
@@ -150,11 +169,13 @@ wad_file_t *W_AddFile (char *filename)
 
     // open the file and add to directory
 
+    DG_Log("W_AddFile: attempting \"%s\"", filename ? filename : "<null>");
+
     wad_file = W_OpenFile(filename);
 
     if (wad_file == NULL)
     {
-		printf (" couldn't open %s\n", filename);
+		DG_Log("W_AddFile: failed to open \"%s\"", filename ? filename : "<null>");
 		return NULL;
     }
 
@@ -233,6 +254,12 @@ wad_file_t *W_AddFile (char *filename)
         lumphash = NULL;
     }
 
+    if (numlumps >= (unsigned int)startlump)
+    {
+        unsigned int added = numlumps - (unsigned int)startlump;
+        DG_Log("W_AddFile: registered %u lumps from \"%s\"", added, filename ? filename : "<null>");
+    }
+
     return wad_file;
 }
 
@@ -297,8 +324,6 @@ int W_CheckNumForName (char* name)
 }
 
 
-
-
 //
 // W_GetNumForName
 // Calls W_CheckNumForName, but bombs out if not found.
@@ -307,10 +332,53 @@ int W_GetNumForName (char* name)
 {
     int	i;
 
+    DG_Log("W_GetNumForName: requested \"%s\"", name ? name : "<null>");
+
     i = W_CheckNumForName (name);
 
     if (i < 0)
     {
+        if(name != NULL && strncasecmp(name, "STCFN", 5) == 0) {
+            size_t len = strlen(name);
+            size_t digit_count = 0;
+            for(size_t idx = len; idx > 0; ) {
+                unsigned char ch = (unsigned char)name[--idx];
+                if(isdigit(ch)) {
+                    digit_count++;
+                } else {
+                    break;
+                }
+            }
+            if(digit_count > 0 && digit_count < 3 && len + (3 - digit_count) <= LUMP_NAME_LEN) {
+                char alt[LUMP_NAME_LEN + 1];
+                size_t prefix_len = len - digit_count;
+                memcpy(alt, name, prefix_len);
+                size_t pos = prefix_len;
+                size_t zeros_to_add = 3 - digit_count;
+                while(zeros_to_add-- > 0 && pos < LUMP_NAME_LEN) {
+                    alt[pos++] = '0';
+                }
+                memcpy(alt + pos, name + prefix_len, digit_count);
+                pos += digit_count;
+                alt[pos] = '\0';
+                DG_Log("W_GetNumForName: retrying with padded lump name \"%s\"", alt);
+                int alt_index = W_CheckNumForName(alt);
+                if(alt_index >= 0) {
+                    DG_Log("W_GetNumForName: padded name \"%s\" resolved to lump %d", alt, alt_index);
+                    return alt_index;
+                }
+            }
+        }
+        DG_Log("W_GetNumForName: \"%s\" missing, total lumps=%u", name ? name : "<null>", numlumps);
+        DG_Log("W_GetNumForName: listing lumps with prefix \"STCFN\" for diagnostics");
+        const char* prefix = "STCFN";
+        for (unsigned int idx = 0; idx < numlumps; ++idx) {
+            char formatted[9];
+            W_FormatLumpName(lumpinfo[idx].name, formatted, sizeof(formatted));
+            if (strncasecmp(formatted, prefix, strlen(prefix)) == 0) {
+                DG_Log("  lump[%u]=\"%s\" size=%d", idx, formatted, lumpinfo[idx].size);
+            }
+        }
         I_Error ("W_GetNumForName: %s not found!", name);
     }
  
@@ -609,4 +677,3 @@ void W_CheckCorrectIWAD(GameMission_t mission)
         }
     }
 }
-

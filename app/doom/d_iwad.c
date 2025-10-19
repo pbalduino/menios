@@ -25,6 +25,7 @@
 #include "deh_str.h"
 #include "doomkeys.h"
 #include "d_iwad.h"
+#include "doomgeneric.h"
 #include "i_system.h"
 #include "m_argv.h"
 #include "m_config.h"
@@ -634,6 +635,7 @@ char *D_FindWADByName(char *name)
 
     if (M_FileExists(name))
     {
+        DG_Log("D_FindWADByName: using direct path \"%s\"", name);
         return name;
     }
 
@@ -649,6 +651,7 @@ char *D_FindWADByName(char *name)
 
         if (DirIsFile(iwad_dirs[i], name) && M_FileExists(iwad_dirs[i]))
         {
+            DG_Log("D_FindWADByName: found \"%s\" via direct entry \"%s\"", name, iwad_dirs[i]);
             return strdup(iwad_dirs[i]);
         }
 
@@ -658,6 +661,7 @@ char *D_FindWADByName(char *name)
 
         if (M_FileExists(path))
         {
+            DG_Log("D_FindWADByName: found \"%s\" at \"%s\"", name, path);
             return path;
         }
 
@@ -666,6 +670,7 @@ char *D_FindWADByName(char *name)
 
     // File not found
 
+    DG_Log("D_FindWADByName: \"%s\" not found in search paths", name);
     return NULL;
 }
 
@@ -845,4 +850,3 @@ char *D_SuggestGameName(GameMission_t mission, GameMode_t mode)
 
     return "Unknown game?";
 }
-

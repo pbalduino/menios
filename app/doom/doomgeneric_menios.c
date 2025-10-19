@@ -3,6 +3,7 @@
 #include <fcntl.h>
 #include <stdint.h>
 #include <stdio.h>
+#include <stdarg.h>
 #include <string.h>
 #include <sys/ioctl.h>
 #include <sys/mman.h>
@@ -14,6 +15,27 @@
 #include "doomkeys.h"
 #include <menios/fb.h>
 #include <menios/input.h>
+
+void DG_Log(const char* fmt, ...) {
+  char buffer[256];
+  va_list args;
+  va_start(args, fmt);
+  int len = vsnprintf(buffer, sizeof(buffer), fmt, args);
+  va_end(args);
+
+  if(len < 0) {
+    return;
+  }
+  if(len >= (int)sizeof(buffer)) {
+    len = (int)sizeof(buffer) - 1;
+  }
+
+  const char prefix[] = "[doom] ";
+  const char newline = '\n';
+  write(STDERR_FILENO, prefix, sizeof(prefix) - 1);
+  write(STDERR_FILENO, buffer, (size_t)len);
+  write(STDERR_FILENO, &newline, 1);
+}
 
 static const unsigned char scancode_ascii_map[128] = {
     [0x02] = '1', [0x03] = '2', [0x04] = '3', [0x05] = '4', [0x06] = '5',
@@ -104,22 +126,31 @@ static int fb_acquired = 0;
 static void DG_Shutdown(void);
 
 void DG_Init(void) {
+  DG_Log("DG_Init: starting");
   menios_fb_info_t fb_info;
   memset(&fb_info, 0, sizeof(fb_info));
 
   fb_fd = open("/dev/fb0", O_RDWR);
   if(fb_fd < 0) {
     perror("open(/dev/fb0)");
+    DG_Log("DG_Init: open(/dev/fb0) failed (errno=%d)", errno);
     fb_fd = -1;
     return;
   }
+  DG_Log("DG_Init: framebuffer device opened (fd=%d)", fb_fd);
 
   if(ioctl(fb_fd, MENIOS_FB_IOCTL_GET_INFO, &fb_info) < 0) {
     perror("ioctl(MENIOS_FB_IOCTL_GET_INFO)");
+    DG_Log("DG_Init: initial GET_INFO ioctl failed (errno=%d)", errno);
     close(fb_fd);
     fb_fd = -1;
     return;
   }
+  DG_Log("DG_Init: framebuffer info width=%lu height=%lu bpp=%u pitch=%lu",
+         (unsigned long)fb_info.width,
+         (unsigned long)fb_info.height,
+         fb_info.bpp,
+         (unsigned long)fb_info.pitch);
 
   fb_original_mode.width = fb_info.width;
   fb_original_mode.height = fb_info.height;
@@ -130,11 +161,13 @@ void DG_Init(void) {
 
   if(ioctl(fb_fd, MENIOS_FB_IOCTL_ACQUIRE, NULL) != 0) {
     perror("ioctl(MENIOS_FB_IOCTL_ACQUIRE)");
+    DG_Log("DG_Init: framebuffer acquire failed (errno=%d)", errno);
     close(fb_fd);
     fb_fd = -1;
     return;
   }
   fb_acquired = 1;
+  DG_Log("DG_Init: framebuffer acquired");
 
   if(fb_info.width >= DOOMGENERIC_RESX &&
      fb_info.height >= DOOMGENERIC_RESY &&
@@ -149,14 +182,26 @@ void DG_Init(void) {
       if(mode_req.width != fb_original_mode.width ||
          mode_req.height != fb_original_mode.height ||
          mode_req.bpp != fb_original_mode.bpp) {
+        DG_Log("DG_Init: framebuffer mode changed to %ux%u %u bpp",
+               mode_req.width,
+               mode_req.height,
+               mode_req.bpp);
         fb_mode_changed = 1;
       }
       if(ioctl(fb_fd, MENIOS_FB_IOCTL_GET_INFO, &fb_info) < 0) {
         perror("ioctl(MENIOS_FB_IOCTL_GET_INFO)");
+        DG_Log("DG_Init: GET_INFO after mode change failed (errno=%d)", errno);
         close(fb_fd);
         fb_fd = -1;
         return;
       }
+      DG_Log("DG_Init: framebuffer info refreshed width=%lu height=%lu bpp=%u pitch=%lu",
+             (unsigned long)fb_info.width,
+             (unsigned long)fb_info.height,
+             fb_info.bpp,
+             (unsigned long)fb_info.pitch);
+    } else {
+      DG_Log("DG_Init: framebuffer mode change request rejected (errno=%d)", errno);
     }
   }
 
@@ -167,6 +212,7 @@ void DG_Init(void) {
             fb_info.bpp);
     close(fb_fd);
     fb_fd = -1;
+    DG_Log("DG_Init: unsupported framebuffer geometry");
     return;
   }
 
@@ -175,22 +221,39 @@ void DG_Init(void) {
   fb_width_pixels = (size_t)fb_info.width;
   fb_height_pixels = (size_t)fb_info.height;
   fb_map_size = fb_pitch_bytes * fb_height_pixels;
+  DG_Log("DG_Init: framebuffer pitch=%zu bytes_per_pixel=%zu width=%zu height=%zu map_size=%zu",
+         fb_pitch_bytes,
+         fb_bytes_per_pixel,
+         fb_width_pixels,
+         fb_height_pixels,
+         fb_map_size);
 
   void* map = mmap(NULL, fb_map_size, PROT_READ | PROT_WRITE, MAP_SHARED, fb_fd, 0);
   if(map == MAP_FAILED) {
     perror("mmap(/dev/fb0)");
+    DG_Log("DG_Init: mmap(/dev/fb0) failed (errno=%d)", errno);
     close(fb_fd);
     fb_fd = -1;
     return;
   }
 
   fb_pixels = (uint8_t*)map;
+  DG_Log("DG_Init: framebuffer mapped at %p", (void*)fb_pixels);
 
   atexit(DG_Shutdown);
+  DG_Log("DG_Init: completed");
 }
 
 void DG_DrawFrame(void) {
   if(fb_pixels == NULL || fb_bytes_per_pixel < 4 || DG_ScreenBuffer == NULL) {
+    static int warned = 0;
+    if(!warned) {
+      DG_Log("DG_DrawFrame: skipping frame (fb_pixels=%p bytes_per_pixel=%zu screen_buffer=%p)",
+             (void*)fb_pixels,
+             fb_bytes_per_pixel,
+             (void*)DG_ScreenBuffer);
+      warned = 1;
+    }
     return;
   }
 
@@ -206,6 +269,15 @@ void DG_DrawFrame(void) {
 
   size_t row_copy_bytes = copy_width * sizeof(uint32_t);
   const uint8_t* src_base = (const uint8_t*)DG_ScreenBuffer;
+  static int logged_first_frame = 0;
+  if(!logged_first_frame) {
+    DG_Log("DG_DrawFrame: starting blit copy_width=%zu copy_height=%zu row_bytes=%zu pitch=%zu",
+           copy_width,
+           copy_height,
+           row_copy_bytes,
+           fb_pitch_bytes);
+    logged_first_frame = 1;
+  }
   for(size_t y = 0; y < copy_height; y++) {
     uint8_t* dest = fb_pixels + y * fb_pitch_bytes;
     const uint8_t* src = src_base + y * DOOMGENERIC_RESX * sizeof(uint32_t);
@@ -214,27 +286,35 @@ void DG_DrawFrame(void) {
 
   if(fb_fd >= 0) {
     int rc = ioctl(fb_fd, MENIOS_FB_IOCTL_FLUSH, NULL);
-    (void)rc;
+    if(rc != 0) {
+      DG_Log("DG_DrawFrame: framebuffer flush failed (errno=%d)", errno);
+    }
   }
 }
 
 void DG_Shutdown(void) {
+  DG_Log("DG_Shutdown: invoked");
   if(fb_pixels != NULL && fb_map_size > 0) {
     munmap(fb_pixels, fb_map_size);
+    DG_Log("DG_Shutdown: unmapped framebuffer at %p", (void*)fb_pixels);
     fb_pixels = NULL;
   }
   if(fb_fd >= 0 && fb_mode_changed) {
     ioctl(fb_fd, MENIOS_FB_IOCTL_SET_MODE, &fb_original_mode);
+    DG_Log("DG_Shutdown: restored original framebuffer mode");
   }
   if(fb_fd >= 0 && fb_acquired) {
     ioctl(fb_fd, MENIOS_FB_IOCTL_RELEASE, NULL);
+    DG_Log("DG_Shutdown: released framebuffer");
   }
   if(fb_fd >= 0) {
     close(fb_fd);
+    DG_Log("DG_Shutdown: closed framebuffer fd=%d", fb_fd);
     fb_fd = -1;
   }
   fb_mode_changed = 0;
   fb_acquired = 0;
+  DG_Log("DG_Shutdown: completed");
 }
 
 void DG_SleepMs(uint32_t ms) {
@@ -258,6 +338,7 @@ uint32_t DG_GetTicksMs(void) {
 
 int DG_GetKey(int* pressed, unsigned char* key) {
   if(pressed == NULL || key == NULL) {
+    DG_Log("DG_GetKey: invalid arguments pressed=%p key=%p", (void*)pressed, (void*)key);
     return 0;
   }
 
@@ -267,6 +348,7 @@ int DG_GetKey(int* pressed, unsigned char* key) {
       if(errno == EAGAIN) {
         return 0;
       }
+      DG_Log("DG_GetKey: menios_input_poll failed (errno=%d)", errno);
       return 0;
     }
 
@@ -287,7 +369,17 @@ void DG_SetWindowTitle(const char* title) {
 }
 
 int main(int argc, char** argv) {
+  DG_Log("main: meniOS Doom starting (argc=%d)", argc);
+  for(int i = 0; i < argc; i++) {
+    if(argv != NULL && argv[i] != NULL) {
+      DG_Log("main: argv[%d]=\"%s\"", i, argv[i]);
+    } else {
+      DG_Log("main: argv[%d]=<null>", i);
+    }
+  }
+
   doomgeneric_Create(argc, argv);
+  DG_Log("main: doomgeneric_Create returned, entering tick loop");
 
   for(;;) {
     doomgeneric_Tick();

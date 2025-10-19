@@ -1774,6 +1774,12 @@ static uint64_t syscall_input_event_handler(syscall_frame_t* frame) {
     return frame->rax;
   }
 
+  if(!proc_user_touch_range(current, (virt_addr_t)user_event, sizeof(event), true)) {
+    keyboard_event_push(&event);
+    frame->rax = (uint64_t)(-EFAULT);
+    return frame->rax;
+  }
+
   memcpy(user_event, &event, sizeof(event));
   frame->rax = 0;
   return frame->rax;
@@ -2344,11 +2350,19 @@ static uint64_t syscall_exit_handler(syscall_frame_t* frame) {
   syscall_frame_t* resumed =
       (syscall_frame_t*)proc_switch((cpu_state_p)frame);
 
+  serial_printf("sys_exit: proc_switch returned frame=%p current_pid=%u\n",
+                (void*)resumed,
+                current ? current->pid : 0u);
+
   if(resumed == NULL) {
     halt();
   }
 
   if(resumed != frame) {
+    serial_printf("sys_exit: copying resumed frame from %p to %p size=%zu\n",
+                  (void*)resumed,
+                  (void*)frame,
+                  sizeof(syscall_frame_t));
     memcpy(frame, resumed, sizeof(syscall_frame_t));
   }
 
