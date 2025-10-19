@@ -95,6 +95,8 @@ static size_t fb_width_pixels = 0;
 static size_t fb_height_pixels = 0;
 static size_t fb_map_size = 0;
 static int fb_fd = -1;
+static menios_fb_mode_request_t fb_original_mode = {0, 0, 0, 0};
+static int fb_mode_changed = 0;
 
 static void DG_Shutdown(void);
 
@@ -116,6 +118,12 @@ void DG_Init(void) {
     return;
   }
 
+  fb_original_mode.width = fb_info.width;
+  fb_original_mode.height = fb_info.height;
+  fb_original_mode.bpp = (uint16_t)fb_info.bpp;
+  fb_original_mode.reserved = 0;
+  fb_mode_changed = 0;
+
   if(fb_info.width >= DOOMGENERIC_RESX &&
      fb_info.height >= DOOMGENERIC_RESY &&
      fb_info.bpp >= 24) {
@@ -126,6 +134,11 @@ void DG_Init(void) {
       .reserved = 0,
     };
     if(ioctl(fb_fd, MENIOS_FB_IOCTL_SET_MODE, &mode_req) == 0) {
+      if(mode_req.width != fb_original_mode.width ||
+         mode_req.height != fb_original_mode.height ||
+         mode_req.bpp != fb_original_mode.bpp) {
+        fb_mode_changed = 1;
+      }
       if(ioctl(fb_fd, MENIOS_FB_IOCTL_GET_INFO, &fb_info) < 0) {
         perror("ioctl(MENIOS_FB_IOCTL_GET_INFO)");
         close(fb_fd);
@@ -198,10 +211,14 @@ void DG_Shutdown(void) {
     munmap(fb_pixels, fb_map_size);
     fb_pixels = NULL;
   }
+  if(fb_fd >= 0 && fb_mode_changed) {
+    ioctl(fb_fd, MENIOS_FB_IOCTL_SET_MODE, &fb_original_mode);
+  }
   if(fb_fd >= 0) {
     close(fb_fd);
     fb_fd = -1;
   }
+  fb_mode_changed = 0;
 }
 
 void DG_SleepMs(uint32_t ms) {

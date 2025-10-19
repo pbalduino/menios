@@ -68,6 +68,11 @@ static uint64_t framebuffer_view_width = 0;
 static uint64_t framebuffer_view_height = 0;
 static size_t framebuffer_view_pitch = 0;
 static size_t framebuffer_bytes_per_pixel = 0;
+static uint64_t framebuffer_boot_width = 0;
+static uint64_t framebuffer_boot_height = 0;
+static size_t framebuffer_boot_pitch = 0;
+static uint16_t framebuffer_boot_bpp = 0;
+static bool framebuffer_console_enabled = true;
 
 static size_t fb_align_up(size_t value) {
   if(value == 0) {
@@ -98,6 +103,10 @@ static void fb_release_backbuffer(void) {
   framebuffer_backbuffer_phys = PHYS_ADDR_INVALID;
   framebuffer_backbuffer_virt = NULL;
   framebuffer_backbuffer_pages = 0;
+}
+
+static void fb_console_set_enabled(bool enable) {
+  framebuffer_console_enabled = enable;
 }
 
 inline uint64_t fb_count() {
@@ -268,6 +277,9 @@ static void draw_row(uint64_t row) {
 }
 
 static void render_viewport(void) {
+  if(!framebuffer_console_enabled) {
+    return;
+  }
   for(uint32_t visible = 0; visible < visible_rows; visible++) {
     uint64_t row = viewport_row + visible;
     ensure_row(row, &default_style);
@@ -289,6 +301,12 @@ void fb_init() {
   if(framebuffer_bytes_per_pixel == 0) {
     framebuffer_bytes_per_pixel = 4;
   }
+
+  framebuffer_boot_width = framebuffer->width;
+  framebuffer_boot_height = framebuffer->height;
+  framebuffer_boot_pitch = framebuffer->pitch;
+  framebuffer_boot_bpp = framebuffer->bpp;
+  framebuffer_console_enabled = true;
 
   framebuffer_view_width = 0;
   framebuffer_view_height = 0;
@@ -692,7 +710,7 @@ static void csi_finish_param(void) {
 }
 
 int fb_putchar(int c) {
-  if(!active) {
+  if(!active || !framebuffer_console_enabled) {
     return 0;
   }
 
@@ -862,6 +880,12 @@ bool fb_set_mode(uint64_t width, uint64_t height, uint16_t bpp) {
   }
 
   size_t new_pitch = width * framebuffer_bytes_per_pixel;
+  bool same_as_boot = (width == framebuffer_boot_width) &&
+                      (height == framebuffer_boot_height) &&
+                      (bpp == framebuffer_boot_bpp);
+  if(same_as_boot) {
+    new_pitch = framebuffer_boot_pitch;
+  }
   size_t new_size = new_pitch * height;
   size_t new_size_aligned = fb_align_up(new_size);
 
@@ -903,6 +927,7 @@ bool fb_set_mode(uint64_t width, uint64_t height, uint16_t bpp) {
   framebuffer_view_pitch = new_pitch;
   framebuffer_buffer_size = new_size;
   framebuffer_buffer_size_aligned = new_size_aligned;
+  fb_console_set_enabled(same_as_boot);
 
   return true;
 }
