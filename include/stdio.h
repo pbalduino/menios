@@ -18,9 +18,6 @@ extern FILE *stdin;
 extern FILE *stdout;
 extern FILE *stderr;
 
-int printf(const char *format, ...);
-int scanf(const char *format, ...);
-
 int getchar();
 
 char* gets(char* str);
@@ -32,9 +29,12 @@ int puts(const char* str);
 __attribute__ ((format (printf, 1, 2)))
 int printf(const char* format, ...);
 int vprintf(const char *format, va_list arg);
-int vfscanf(FILE* stream, const char* format, va_list arg);
+int scanf(const char *format, ...);
 int vscanf(const char* format, va_list arg);
+int sscanf(const char* str, const char* format, ...);
 int vsscanf(const char* str, const char* format, va_list arg);
+int fscanf(FILE* stream, const char* format, ...);
+int vfscanf(FILE* stream, const char* format, va_list arg);
 
 int sprintf(char *str, const char *format, ...);
 int svprintf(char *str, const char *format, va_list arg);
@@ -42,7 +42,6 @@ int svprintf(char *str, const char *format, va_list arg);
 FILE* fopen(const char *filename, const char *mode);
 int   fclose(FILE *stream);
 int   fprintf(FILE *stream, const char *format, ...);
-int   fscanf(FILE *stream, const char *format, ...);
 int   fputs(const char *text, FILE* file);
 int fvprintf(FILE *stream, const char *format, va_list arg);
 

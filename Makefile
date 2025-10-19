@@ -845,6 +845,21 @@ src/libc/errno.c \
 	rc=$$?; \
 	rm test/test_malloc_stress.c.bin ; \
 	if [ $$rc -ne 0 ]; then exit $$rc; fi;
+
+	# scanf family tests exercise formatted input helpers.
+	gcc -std=gnu11 -DMENIOS_NO_DEBUG -DMENIOS_HOST_TEST -DUNITY_EXCLUDE_SETJMP_H -I./include \
+		test/test_scanf.c \
+		user/libc/stdio.c \
+		user/libc/stdlib.c \
+		src/libc/string.c \
+		src/libc/errno.c \
+		src/libc/time.c \
+	-o test/test_scanf.c.bin ; \
+	echo "Testing test/test_scanf.c" ; \
+	test/test_scanf.c.bin ; \
+	rc=$$?; \
+	rm test/test_scanf.c.bin ; \
+	if [ $$rc -ne 0 ]; then exit $$rc; fi;
 else
 	@echo "Testing inside Docker"
 	$(DOCKER) run --rm $(DOCKER_RUN_FLAGS) $(DOCKER_ENV) --mount type=bind,source=$$(pwd),target=/mnt $(DOCKER_IMAGE) /bin/sh -c "cd /mnt && make test"
