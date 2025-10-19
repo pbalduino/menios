@@ -10,6 +10,7 @@ extern "C" {
 #include <stdbool.h>
 
 typedef long off_t;
+typedef unsigned int mode_t;
 
 #define ROUNDDOWN(a, n)						\
 ({								\

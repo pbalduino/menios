@@ -5,8 +5,6 @@
 #define NULL ((void*)0)
 #endif
 
-#include <stdbool.h>
-
 typedef unsigned long size_t;
 typedef long ptrdiff_t;
 

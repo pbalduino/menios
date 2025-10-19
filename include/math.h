@@ -5,8 +5,9 @@
 extern "C" {
 #endif
 
-  #define PI = 3.14159265358979323846;
-  #define E = 2.71828182845904523536;
+double fabs(double x);
+float fabsf(float x);
+long double fabsl(long double x);
 
 #ifdef __cplusplus
 }

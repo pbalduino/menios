@@ -44,6 +44,7 @@
 #include "dstrings.h"
 
 #include "am_map.h"
+#include <stdio.h>
 
 
 // For use if I do walls with outsides/insides

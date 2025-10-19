@@ -874,6 +874,14 @@ endif
 shell:
 	$(DOCKER) run --rm $(DOCKER_RUN_FLAGS) $(DOCKER_ENV) --mount type=bind,source=$$(pwd),target=/mnt $(DOCKER_IMAGE) /bin/sh -c "cd /mnt && /bin/bash"
 
+.PHONY: doom
+doom: sdk
+ifeq ($(OS_NAME),linux)
+	$(MAKE) -C app/doom -f Makefile.menios doom-objs
+else
+	$(DOCKER) run --rm $(DOCKER_RUN_FLAGS) $(DOCKER_ENV) --mount type=bind,source=$$(pwd),target=/mnt $(DOCKER_IMAGE) /bin/sh -c "cd /mnt && make sdk && make -C app/doom -f Makefile.menios doom-objs"
+endif
+
 .PHONY: build-apps
 build-apps:
 

@@ -2,6 +2,7 @@
 #define _INCLUDE_STDIO_H_
 
 #include <stdarg.h>
+#include <stddef.h>
 #include <stdio_constants.h>
 
 #ifndef NULL
@@ -35,15 +36,25 @@ int sscanf(const char* str, const char* format, ...);
 int vsscanf(const char* str, const char* format, va_list arg);
 int fscanf(FILE* stream, const char* format, ...);
 int vfscanf(FILE* stream, const char* format, va_list arg);
+int vfprintf(FILE* stream, const char* format, va_list arg);
 
 int sprintf(char *str, const char *format, ...);
 int svprintf(char *str, const char *format, va_list arg);
+int snprintf(char *str, size_t size, const char *format, ...);
+int vsnprintf(char *str, size_t size, const char *format, va_list arg);
+long ftell(FILE* stream);
+int fseek(FILE* stream, long offset, int whence);
+int remove(const char* path);
+int rename(const char* oldpath, const char* newpath);
+int fflush(FILE* stream);
 
 FILE* fopen(const char *filename, const char *mode);
 int   fclose(FILE *stream);
 int   fprintf(FILE *stream, const char *format, ...);
 int   fputs(const char *text, FILE* file);
 int fvprintf(FILE *stream, const char *format, va_list arg);
+size_t fread(void* ptr, size_t size, size_t nmemb, FILE* stream);
+size_t fwrite(const void* ptr, size_t size, size_t nmemb, FILE* stream);
 
 FILE* freopen(const char *filename, const char *mode, FILE *file);
 

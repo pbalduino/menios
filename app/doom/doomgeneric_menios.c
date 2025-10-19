@@ -7,9 +7,11 @@
 #include <sys/ioctl.h>
 #include <sys/mman.h>
 #include <time.h>
+#include <stdlib.h>
 #include <unistd.h>
 
 #include "doomgeneric.h"
+#include "doomkeys.h"
 #include <menios/fb.h>
 #include <menios/input.h>
 

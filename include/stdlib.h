@@ -45,9 +45,15 @@ int rand(void);
 void srand(unsigned int seed);
 
 long strtol(const char* nptr, char** endptr, int base);
+int atoi(const char* nptr);
+long atol(const char* nptr);
+double atof(const char* nptr);
+int abs(int value);
+int system(const char* command);
 
 void exit(int) __dead2;
 void abort(void) __dead2;
+int atexit(void (*func)(void));
 
 #ifdef __cplusplus
 }
