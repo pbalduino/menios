@@ -616,6 +616,103 @@ static int vsscanf_impl(const char* input, const char* format, va_list args) {
         break;
       }
 
+      case 's': {
+        if(length_mod != 0) {
+          return assigned;
+        }
+
+        skip_input_whitespace(&src);
+
+        const char* start = src;
+        int         max_chars = (width > 0) ? width : INT_MAX;
+        int         taken = 0;
+
+        while(*src != '\0' && !isspace((unsigned char)*src) && taken < max_chars) {
+          src++;
+          taken++;
+        }
+
+        if(taken == 0) {
+          src = start;
+          return assigned;
+        }
+
+        if(!suppress_assignment) {
+          char* out = va_arg(args, char*);
+          memcpy(out, start, (size_t)taken);
+          out[taken] = '\0';
+          assigned++;
+        }
+        break;
+      }
+
+      case 'c': {
+        if(length_mod != 0) {
+          return assigned;
+        }
+
+        int required = (width > 0) ? width : 1;
+        const char* start = src;
+        int copied = 0;
+
+        if(!suppress_assignment) {
+          char* out = va_arg(args, char*);
+          while(copied < required && *src != '\0') {
+            out[copied++] = *src++;
+          }
+          if(copied < required) {
+            src = start;
+            return assigned;
+          }
+          assigned++;
+        } else {
+          while(copied < required && *src != '\0') {
+            src++;
+            copied++;
+          }
+          if(copied < required) {
+            src = start;
+            return assigned;
+          }
+        }
+        break;
+      }
+
+      case 'n': {
+        ptrdiff_t consumed = src - input;
+
+        if(!suppress_assignment) {
+          switch(length_mod) {
+            case 'l': {
+              long* out = va_arg(args, long*);
+              *out = (long)consumed;
+              break;
+            }
+            case 'q': {
+              long long* out = va_arg(args, long long*);
+              *out = (long long)consumed;
+              break;
+            }
+            case 'h': {
+              short* out = va_arg(args, short*);
+              *out = (short)consumed;
+              break;
+            }
+            case 'H': {
+              signed char* out = va_arg(args, signed char*);
+              *out = (signed char)consumed;
+              break;
+            }
+            default: {
+              int* out = va_arg(args, int*);
+              *out = (int)consumed;
+              break;
+            }
+          }
+        }
+        break;
+      }
+
       default:
         return assigned;
     }
