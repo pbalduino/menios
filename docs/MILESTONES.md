@@ -176,7 +176,7 @@ This document tracks the three major milestones for meniOS development.
 **Goal**: Run Doom (1993) in userland on meniOS
 **GitHub Milestone**: [Doom](https://github.com/pbalduino/menios/milestone/3)
 
-**Status**: 20/36 complete (55.6%)
+**Status**: 21/36 complete (58.3%)
 
 **Note**: Depends on **Buddy Allocator milestone** for efficient memory management under game engine load.
 
@@ -194,7 +194,7 @@ This document tracks the three major milestones for meniOS development.
 - [ ] #305 - File stdio support (fopen/fclose, buffered I/O)
 - [ ] #306 - Filesystem helpers (mkdir, remove, rename)
 - [ ] #307 - Environment variable access (getenv/putenv)
-- [ ] #308 - String utilities (strdup, strcasecmp, strncasecmp)
+- [x] #308 - String utilities (strdup, strcasecmp, strncasecmp) ✅
 - [ ] #309 - Expose snprintf/vsnprintf/vsprintf properly
 - [ ] #310 - Math library (fabs and clean up math.h)
 
@@ -297,12 +297,12 @@ This document tracks the three major milestones for meniOS development.
 ## 📈 Overall Progress
 
 - **Total Issues Across Milestones**: 92 issues (includes foundational issues)
-- **Completed**: 78 issues (84.8%)
-- **In Progress**: 16 issues
-- **Ready to Start**: 11 issues (no dependencies: #109, #190, #191, #305-#310)
-- **Recently Completed**: #286-#293 ✅ (time management & FAT32 writes), #304 ✅ (scanf family), #302 ✅ (real key events), #301 ✅ (framebuffer mmap), #300 ✅ (menIOS Doom port layer), #136 ✅ (devfs), #140 ✅ (/dev/kbd0 and /dev/fb0), #221 ✅ (fast syscalls), #311 ✅ (Doom build system)
-- **Recently Created**: #305-#312 ✅ (libc gaps & Doom build system)
-- **Next Up**: libc gaps (#305-#310) ready to start! TCC/binutils (#190, #191) ready! Doom build integration (#312) follows once libc gaps land.
+- **Completed**: 79 issues (85.9%)
+- **In Progress**: 15 issues
+- **Ready to Start**: 10 issues (no dependencies: #109, #190, #191, #305-#307, #309-#310)
+- **Recently Completed**: #286-#293 ✅ (time management & FAT32 writes), #304 ✅ (scanf family), #302 ✅ (real key events), #301 ✅ (framebuffer mmap), #300 ✅ (menIOS Doom port layer), #136 ✅ (devfs), #140 ✅ (/dev/kbd0 and /dev/fb0), #221 ✅ (fast syscalls), #311 ✅ (Doom build system), #308 ✅ (string utilities)
+- **Recently Created**: #305-#312 ✅ (libc gaps & Doom build system), #313 (filesystem organization), #314 (shell startup scripts)
+- **Next Up**: Remaining libc gaps (#305-#307, #309-#310) ready to start! TCC/binutils (#190, #191) ready! Doom build integration (#312) follows once libc gaps land.
 
 ## 🚀 Immediate Next Steps
 
@@ -325,7 +325,7 @@ All phases finished! Core buddy allocator implementation (Phase 1 ✅), critical
    - #305 - File stdio support (all dependencies met)
    - #306 - Filesystem helpers (all dependencies met)
    - #307 - Environment variable access (all dependencies met)
-   - #308 - String utilities (all dependencies met)
+   - #308 - String utilities ✅ COMPLETE
    - #309 - Expose snprintf/vsnprintf properly (all dependencies met)
    - #310 - Math library (all dependencies met)
 
@@ -600,6 +600,17 @@ Recommended completion order for maximum impact:
   - /dev/kbd0 keyboard device with real key events via menios_input_poll
   - Doom milestone: 20/36 complete (55.6%)
   - Overall progress: 78/92 issues complete (84.8%)
+- **2025-10-19**: Closed #308 (String utilities) ✅
+  - Implemented strdup, strcasecmp, strncasecmp, and other string helpers
+  - All string utilities needed for Doom compilation now available
+  - Doom milestone: 21/36 complete (58.3%)
+  - Overall progress: 79/92 issues complete (85.9%)
+- **2025-10-19**: Created #313 (Filesystem hierarchy organization)
+  - Proposal to organize /bin, /sbin, /usr/bin following Unix FHS conventions
+  - Foundation for better scalability and package management
+- **2025-10-19**: Created #314 (Shell startup script support - .moshrc)
+  - Automated command execution on shell startup
+  - High usability impact for debugging and testing
 
 ---
 
