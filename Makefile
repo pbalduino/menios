@@ -134,6 +134,7 @@ USERLIBC_SOURCES = \
 	src/libc/fcntl.c \
 	src/libc/itoa.c \
 	src/libc/mman.c \
+	src/libc/math.c \
 	src/libc/sysv_ipc.c \
 	src/libc/string.c \
 	src/libc/time.c \
@@ -146,6 +147,7 @@ CRT_SOURCES = user/crt/crt0.S
 USERLIBC_CFLAGS = $(USER_CCFLAGS) -Iuser/libc
 
 USERLIBC_OBJS = $(patsubst %.c,$(SDK_OBJ_DIR)/%.o,$(USERLIBC_SOURCES))
+$(SDK_OBJ_DIR)/src/libc/math.o: USER_CCFLAGS := $(filter-out -mno-80387 -mno-sse -mno-sse2,$(USER_CCFLAGS)) -msse2 -m80387
 CRT_OBJS = $(patsubst %.S,$(SDK_OBJ_DIR)/%.o,$(CRT_SOURCES))
 
 SDK_LIB = $(SDK_LIB_DIR)/libmeniosc.a
