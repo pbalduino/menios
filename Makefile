@@ -528,7 +528,7 @@ $(OBJDIR)/kernel:
 
 
 .PHONY: userland
-userland: $(USERLAND_DEPS)
+userland: $(USERLAND_DEPS) doom
 ifeq ($(OS_NAME),linux)
 	@$(MAKE) sdk $(USER_ELF) $(USER_PROGRAM_ELFS)
 	@rm -rf $(OUTPUT_DIR)/bin
@@ -537,6 +537,12 @@ ifeq ($(OS_NAME),linux)
 	@for prog in $(USERLAND_BINS); do \
 		cp $(OBJDIR)/usermode/$$prog.elf $(OUTPUT_DIR)/bin/$$prog; \
 	done
+	@if [ -f "$(OBJDIR)/doom/doom.elf" ]; then \
+		echo "[DOOM] Installing doom.elf into $(OUTPUT_DIR)/bin"; \
+		cp $(OBJDIR)/doom/doom.elf $(OUTPUT_DIR)/bin/doom; \
+	else \
+		echo "[DOOM] doom.elf not linked (libc gaps), skipping binary install"; \
+	fi
 else
 	$(DOCKER) run --rm $(DOCKER_RUN_FLAGS) $(DOCKER_ENV) --mount type=bind,source=$$(pwd),target=/mnt $(DOCKER_IMAGE) /bin/sh -c "cd /mnt && make EXTRA_CFLAGS='$(EXTRA_CFLAGS)' userland"
 endif
@@ -608,6 +614,7 @@ ifeq ($(OS_NAME),linux)
 	mformat -F -i $(IMAGE_NAME).hdd@@2M
 	mmd -i $(IMAGE_NAME).hdd@@2M ::/EFI ::/EFI/BOOT ::/limine ::/boot ::/boot/limine > /dev/null 2>&1 || true
 	mmd -i $(IMAGE_NAME).hdd@@2M ::/bin > /dev/null 2>&1 || true
+	mmd -i $(IMAGE_NAME).hdd@@2M ::/doom > /dev/null 2>&1 || true
 	mcopy -i $(IMAGE_NAME).hdd@@2M $(KERNEL) limine.conf $(OUTPUT_DIR)/limine-bios.sys ::/
 	mcopy -i $(IMAGE_NAME).hdd@@2M $(OUTPUT_DIR)/limine-bios.sys ::/limine/
 	mcopy -i $(IMAGE_NAME).hdd@@2M $(OUTPUT_DIR)/limine-bios.sys ::/boot/
@@ -626,6 +633,16 @@ ifeq ($(OS_NAME),linux)
 	mcopy -i $(IMAGE_NAME).hdd@@2M $(OUTPUT_DIR)/bin/malloc_stress ::/bin/malloc_stress
 	mcopy -i $(IMAGE_NAME).hdd@@2M $(OUTPUT_DIR)/bin/mem ::/bin/mem
 	mcopy -i $(IMAGE_NAME).hdd@@2M $(OUTPUT_DIR)/bin/alarm_demo ::/bin/alarm_demo
+	if [ -f "$(OUTPUT_DIR)/bin/doom" ]; then \
+		mcopy -i $(IMAGE_NAME).hdd@@2M $(OUTPUT_DIR)/bin/doom ::/bin/doom; \
+	else \
+		echo "[DOOM] Skipping doom binary copy (binary not linked)"; \
+	fi
+	if [ -f "$(OUTPUT_DIR)/bin/doom.wad" ]; then \
+		mcopy -i $(IMAGE_NAME).hdd@@2M $(OUTPUT_DIR)/bin/doom.wad ::/doom/doom.wad; \
+	else \
+		echo "[DOOM] No doom.wad found in $(OUTPUT_DIR)/bin (optional)"; \
+	fi
 	$(OUTPUT_DIR)/limine bios-install $(IMAGE_NAME).hdd 1
 
 	@echo Building ISO

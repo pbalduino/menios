@@ -449,24 +449,58 @@ digraph IssueDependencies {
     // Graphics/Audio dependencies (for Doom)
     issue96 -> issue31 [color=purple, style=dashed];  // fd mgmt -> graphics
     issue32 -> issue31 [color=purple];  // input -> graphics
+    issue65 -> issue136 [color=purple, style=dashed, label="VFS"];  // VFS -> devfs
+    issue136 -> issue140 [color=purple, style=dashed];  // devfs -> /dev/kbd0 and /dev/fb0
+    issue31 -> issue140 [color=purple, style=dashed];  // graphics infra -> /dev/fb0
+    issue32 -> issue140 [color=purple, style=dashed];  // input infra -> /dev/kbd0
 
     // Doom Integration dependencies
     issue31 -> issue301 [color=red, penwidth=2, style=dashed];  // graphics infra -> framebuffer mmap
     issue89 -> issue301 [color=red, style=dashed];  // mmap syscall -> framebuffer mmap
     issue220 -> issue301 [color=red, style=dashed];  // ioctl -> framebuffer geometry
+    issue136 -> issue301 [color=red, style=dashed];  // devfs -> /dev/fb0
     issue32 -> issue302 [color=red, penwidth=2, style=dashed];  // input infra -> key events
     issue220 -> issue302 [color=red, style=dashed];  // ioctl -> keyboard control
-    issue301 -> issue300 [color=red, penwidth=3, label="DOOM"];  // framebuffer -> port layer
-    issue302 -> issue300 [color=red, penwidth=3, label="DOOM"];  // key events -> port layer
+    issue301 -> issue300 [color=red, penwidth=3, label="DOOM", style=dashed];  // framebuffer -> port layer
+    issue302 -> issue300 [color=red, penwidth=3, label="DOOM", style=dashed];  // key events -> port layer
     issue287 -> issue300 [color=red, style=dashed];  // nanosleep -> DG_SleepMs
     issue240 -> issue300 [color=red, style=dashed];  // gettimeofday -> DG_GetTicksMs
     issue288 -> issue300 [color=red, style=dashed];  // setitimer -> game timing
-    issue304 -> issue300 [color=red, penwidth=2, label="config\nparsing"];  // scanf -> config parsing
-    issue192 -> issue303 [color=red, style=dashed];  // crt0 -> doom build
-    issue193 -> issue303 [color=red, style=dashed];  // libc -> doom build
-    issue195 -> issue303 [color=red, style=dashed];  // userland build -> doom build
-    issue29 -> issue303 [color=red, style=dashed];  // cross-compiler -> doom build
-    issue300 -> issue303 [color=red, penwidth=3, label="DOOM"];  // port layer -> build integration
+    issue304 -> issue300 [color=red, penwidth=2, label="config\nparsing", style=dashed];  // scanf -> config parsing
+
+    // libc gaps dependencies for Doom
+    issue96 -> issue305 [color=red, style=dashed, label="fd"];  // fd mgmt -> file stdio
+    issue189 -> issue305 [color=red, style=dashed, label="FAT32"];  // FAT32 write -> file stdio
+    issue294 -> issue305 [color=red, style=dashed, label="streaming"];  // VFS streaming -> file stdio
+    issue193 -> issue305 [color=red, style=dashed];  // libc -> file stdio
+    issue193 -> issue306 [color=red, style=dashed];  // libc -> filesystem helpers
+    issue60 -> issue306 [color=red, style=dashed];  // filesystem syscalls -> helpers
+    issue65 -> issue306 [color=red, style=dashed];  // VFS -> helpers
+    issue148 -> issue307 [color=red, style=dashed];  // env vars -> getenv/putenv
+    issue193 -> issue307 [color=red, style=dashed];  // libc -> getenv/putenv
+    issue95 -> issue308 [color=red, style=dashed];  // malloc -> strdup
+    issue193 -> issue308 [color=red, style=dashed];  // libc -> string utilities
+    issue193 -> issue309 [color=red, style=dashed];  // libc -> formatted I/O
+    issue304 -> issue309 [color=red, style=dashed];  // scanf -> snprintf family
+    issue193 -> issue310 [color=red, style=dashed];  // libc -> math library
+
+    // Doom build system dependencies
+    issue305 -> issue311 [color=red, penwidth=2];  // file stdio -> Doom build
+    issue306 -> issue311 [color=red, penwidth=2];  // filesystem helpers -> Doom build
+    issue307 -> issue311 [color=red, penwidth=2];  // environment -> Doom build
+    issue308 -> issue311 [color=red, penwidth=2];  // string utilities -> Doom build
+    issue309 -> issue311 [color=red, penwidth=2];  // formatted I/O -> Doom build
+    issue310 -> issue311 [color=red, penwidth=2];  // math library -> Doom build
+    issue300 -> issue311 [color=red, penwidth=3, label="DOOM", style=dashed];  // port layer -> build system
+
+    issue311 -> issue312 [color=red, penwidth=3, label="DOOM", style=dashed];  // Doom build -> integration
+    issue192 -> issue312 [color=red, style=dashed];  // crt0 -> integration
+    issue193 -> issue312 [color=red, style=dashed];  // libc -> integration
+    issue195 -> issue312 [color=red, style=dashed];  // userland build -> integration
+    issue29 -> issue312 [color=red, style=dashed];  // cross-compiler -> integration
+
+    // Old build integration (superseded)
+    issue312 -> issue303 [color=gray, style=dotted, label="superseded by\n#311/#312"];
 
     // Time/Random dependencies - ALL COMPLETE ✅
     issue238 -> issue239 [color=brown, style=dashed, label="breakdown"];  // parent -> kernel time
