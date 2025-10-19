@@ -176,16 +176,18 @@ This document tracks the three major milestones for meniOS development.
 **Goal**: Run Doom (1993) in userland on meniOS
 **GitHub Milestone**: [Doom](https://github.com/pbalduino/menios/milestone/3)
 
-**Status**: 19/36 complete (52.8%)
+**Status**: 20/36 complete (55.6%)
 
 **Note**: Depends on **Buddy Allocator milestone** for efficient memory management under game engine load.
 
 **Assigned Issues**:
 
-#### Graphics & Audio (4 issues)
+#### Graphics & Audio (5 issues)
 - [x] #31 - Userspace graphics interface ✅
 - [x] #32 - Input subsystem ✅
 - [ ] #33 - Audio subsystem
+- [x] #136 - Device filesystem infrastructure ✅
+- [x] #140 - /dev/kbd0 and /dev/fb0 hardware device interfaces ✅
 - [ ] #143 - Mouse driver
 
 #### libc Gaps for Doom (6 issues)
@@ -295,10 +297,10 @@ This document tracks the three major milestones for meniOS development.
 ## 📈 Overall Progress
 
 - **Total Issues Across Milestones**: 92 issues (includes foundational issues)
-- **Completed**: 77 issues (83.7%)
-- **In Progress**: 17 issues
+- **Completed**: 78 issues (84.8%)
+- **In Progress**: 16 issues
 - **Ready to Start**: 11 issues (no dependencies: #109, #190, #191, #305-#310)
-- **Recently Completed**: #286-#293 ✅ (time management & FAT32 writes), #304 ✅ (scanf family), #302 ✅ (real key events), #301 ✅ (framebuffer mmap), #300 ✅ (menIOS Doom port layer), #136 ✅ (devfs), #221 ✅ (fast syscalls)
+- **Recently Completed**: #286-#293 ✅ (time management & FAT32 writes), #304 ✅ (scanf family), #302 ✅ (real key events), #301 ✅ (framebuffer mmap), #300 ✅ (menIOS Doom port layer), #136 ✅ (devfs), #140 ✅ (/dev/kbd0 and /dev/fb0), #221 ✅ (fast syscalls), #311 ✅ (Doom build system)
 - **Recently Created**: #305-#312 ✅ (libc gaps & Doom build system)
 - **Next Up**: libc gaps (#305-#310) ready to start! TCC/binutils (#190, #191) ready! Doom build integration (#312) follows once libc gaps land.
 
@@ -585,12 +587,19 @@ Recommended completion order for maximum impact:
   - VFS integration complete
   - Foundational infrastructure - has been in production use
   - Overall progress: 74/92 issues complete (80.4%)
-- **2025-10-19**: Closed #300 (Doom port layer) ✅, #301 (Framebuffer mmap) ✅
+- **2025-10-19**: Closed #300 (Doom port layer) ✅, #301 (Framebuffer mmap) ✅, #311 (Doom build system) ✅
   - Full doomgeneric port layer implementation complete
   - /dev/fb0 framebuffer access with ownership model and ioctl suite
   - Double buffering, mode management, graceful shutdown all working
+  - Doom build system now compiles doomgeneric against meniOS SDK
   - Doom milestone: 19/36 complete (52.8%)
   - Overall progress: 77/92 issues complete (83.7%)
+- **2025-10-19**: Closed #140 (/dev/kbd0 and /dev/fb0 device interfaces) ✅
+  - Device file interfaces production-ready and used by Doom port
+  - /dev/fb0 framebuffer device with complete ioctl suite and mmap support
+  - /dev/kbd0 keyboard device with real key events via menios_input_poll
+  - Doom milestone: 20/36 complete (55.6%)
+  - Overall progress: 78/92 issues complete (84.8%)
 
 ---
 

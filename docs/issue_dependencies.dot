@@ -206,7 +206,7 @@ digraph IssueDependencies {
         issue32 [label="#32: Input\nsubsystem", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED
         issue33 [label="#33: Audio\nsubsystem", fillcolor="#FFB6E8"];
         issue136 [label="#136: Device filesystem\n/dev infrastructure", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED
-        issue140 [label="#140: /dev/kbd0 and\n/dev/fb0 devices", fillcolor="#FFCC99"];  // ~85% complete
+        issue140 [label="#140: /dev/kbd0 and\n/dev/fb0 devices", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED
         issue143 [label="#143: Mouse\ndriver", fillcolor="#FFB6E8"];
     }
 
