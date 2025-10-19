@@ -197,7 +197,7 @@ This document tracks the three major milestones for meniOS development.
 - [ ] #310 - Math library (fabs and clean up math.h)
 
 #### Doom Integration (7 issues)
-- [ ] #300 - Wire up meniOS port layer (doomgeneric_menios.c)
+- [ ] #300 - Wire up meniOS port layer (~60% complete: input ✅, timing ✅, main loop ✅; graphics blocked on #301)
 - [ ] #301 - Expose pixel-addressable framebuffer (/dev/fb0 mmap)
 - [x] #302 - Deliver real key events (scan codes, key up/down) ✅
 - [ ] #303 - Build integration for Doom userland binary
@@ -259,7 +259,7 @@ This document tracks the three major milestones for meniOS development.
 - #303 requires #312 (old build integration - superseded by #311/#312)
 - #304 requires #193 ✅ (libc foundation COMPLETE)
 
-**Progress**: IPC infrastructure complete - Pipes ✅, Signals (5/6), Shared Memory ✅! FAT32 write support ✅ complete! scanf family (#304) ✅ complete! Real key events (#302) ✅ complete! New libc gaps identified for Doom (#305-#310). Doom build system planned (#311-#312). Ready to implement libc gaps!
+**Progress**: IPC infrastructure complete - Pipes ✅, Signals (5/6), Shared Memory ✅! FAT32 write support ✅ complete! scanf family (#304) ✅ complete! Real key events (#302) ✅ complete! Doom port layer (#300) ~60% complete (input ✅, timing ✅, headless loop ✅; graphics blocked on #301). New libc gaps identified for Doom (#305-#310). Doom build system planned (#311-#312). Ready to implement libc gaps!
 
 ---
 
@@ -573,6 +573,14 @@ Recommended completion order for maximum impact:
   - Doom input handling unblocked
   - Doom milestone: 16/36 complete (44.4%)
   - Overall progress: 73/91 issues complete (80.2%)
+- **2025-10-19**: Progress update on #300 (Doom port layer) - ~60% complete
+  - ✅ DG_GetKey() implemented using menios_input_poll() with #302
+  - ✅ DG_SleepMs() implemented using nanosleep() from #287
+  - ✅ DG_GetTicksMs() implemented using clock_gettime(CLOCK_MONOTONIC) from #240
+  - ✅ Headless main loop runs doomgeneric_Tick() for testing
+  - ⏳ DG_Init() and DG_DrawFrame() blocked on #301 (framebuffer mmap)
+  - ⏳ Full linkage blocked on #305-#310 (libc gaps)
+  - Port layer functional for input/timing, waiting on graphics and libc
 
 ---
 

@@ -294,18 +294,24 @@ Port layer, graphics, input, and build integration for running Doom:
   - Length modifiers (hh, h, l, ll, L, z, t)
 - **Impact**: Doom config parsing (app/doom/m_config.c, m_misc.c) now functional
 
-#### **Wire Up meniOS Port Layer** (Issue #300)
-- **Status**: TODO - `app/doom/doomgeneric_menios.c:1` is empty
-- **Dependencies**: #301, #302 ✅, #287 ✅, #240 ✅, #304 ✅, #305-#310 (libc gaps)
-- **Scope**:
-  - Implement DG_Init() to initialize graphics + input
-  - Implement DG_DrawFrame() to blit frames using mmap'd framebuffer
-  - Implement DG_GetKey() to poll keyboard events (#302 ✅ provides events)
-  - Implement DG_SleepMs() using nanosleep() (#287 ✅)
-  - Implement DG_GetTicksMs() using gettimeofday() (#240 ✅)
-  - Implement main() to drive doomgeneric_Tick() game loop
-- **Current Gap**: Port layer callbacks not implemented, #301 and libc gaps block completion
-- **Impact**: Doom engine needs platform-specific glue code + complete libc
+#### **Wire Up meniOS Port Layer** (Issue #300) - ~60% Complete
+- **Status**: IN PROGRESS - Partial implementation, functional for input/timing
+- **Dependencies**: #301 (blocking graphics), #302 ✅, #287 ✅, #240 ✅, #304 ✅, #305-#310 (blocking full linkage)
+- **Completed**:
+  - ✅ **DG_GetKey()** - Implemented using `menios_input_poll()`
+    - Translates press/release pairs and modifiers into Doom key codes
+    - Leverages #302 ✅ (real key events with scan codes)
+  - ✅ **DG_SleepMs()** - Implemented using `nanosleep()` (#287 ✅)
+  - ✅ **DG_GetTicksMs()** - Implemented using `clock_gettime(CLOCK_MONOTONIC)` (#240 ✅)
+  - ✅ **Headless main loop** - Runs `doomgeneric_Tick()` for testing without graphics
+- **Outstanding**:
+  - ⏳ **DG_Init()** - Blocked on #301 (framebuffer mmap not available)
+  - ⏳ **DG_DrawFrame()** - Blocked on #301 (cannot blit frames to `/dev/fb0` without mmap)
+  - ⏳ **Full linkage** - Blocked on #305-#310 (libc gaps for remaining Doom symbols)
+  - ⏳ **Audio** - Deferred to #33 (audio subsystem)
+  - ⏳ **Mouse** - Deferred to #143 (mouse driver)
+- **Current Gap**: Graphics infrastructure (#301) and libc gaps (#305-#310) block completion
+- **Impact**: Port layer is functional for input/timing; waiting on framebuffer and libc to complete
 
 #### **Doom meniOS-Specific Build System** (Issue #311)
 - **Status**: TODO - Need custom build configuration
@@ -483,13 +489,15 @@ The Doom milestone on GitHub now tracks 36 issues:
   - IPC - Shared Memory: #215 ✅, #216 ✅, #217 ✅, #218 ✅, #219 ✅ (ALL COMPLETE!)
   - IPC - Other: #220 ✅ (ioctl), #221 ✅ (fast syscalls)
   - Doom Integration: #302 ✅ (real key events), #304 ✅ (scanf family - moved from GCC milestone)
+- **Partially Complete**:
+  - #300 (port layer) - ~60% complete (input ✅, timing ✅, headless loop ✅; graphics blocked on #301)
 - **New Issues Created (2025-10-18)**:
   - libc Gaps: #305 (file stdio), #306 (filesystem helpers), #307 (environment access), #308 (string utilities), #309 (formatted I/O), #310 (math library)
   - Build System: #311 (Doom Makefile.menios), #312 (build integration)
-  - Doom Integration: #300 (port layer), #301 (framebuffer mmap), #303 (old build - superseded)
-- **In Progress**: Threading (#109-#113), Signals (#214), Audio (#33), Mouse (#143), Doom Integration (#300-#301, #311-#312)
+  - Doom Integration: #301 (framebuffer mmap), #303 (old build - superseded)
+- **In Progress**: Threading (#109-#113), Signals (#214), Audio (#33), Mouse (#143), Doom Integration (#300, #301, #311-#312)
 - **Ready to Start NOW**: #305-#310 (libc gaps - all dependencies met!), #301 (framebuffer mmap)
-- **Blocked**: #300 (port layer - blocked on #301, #305-#310), #311 (build - blocked on #305-#310, #300), #312 (integration - blocked on #311)
+- **Blocked**: #300 (port layer - partially blocked on #301, #305-#310), #311 (build - blocked on #305-#310, #300), #312 (integration - blocked on #311)
 - **Removed**: #105 (Unix sockets), #106 (microkernel IPC), #107 (capabilities) - not required for Doom
 
 **Recent Major Achievements**:
@@ -499,6 +507,7 @@ The Doom milestone on GitHub now tracks 36 issues:
 - ✅ Fast syscalls (#221) - High-performance system calls with 64-bit returns!
 - ✅ scanf family (#304) - Config file parsing fully implemented!
 - ✅ Real key events (#302) - Keyboard input with scan codes and up/down events!
+- 🎯 Doom port layer (#300) - 60% complete! Input ✅, timing ✅, headless loop ✅
 - 🆕 libc gaps identified (#305-#310) - Ready to implement immediately!
 
 See [MILESTONES.md](../MILESTONES.md) for detailed milestone tracking across all three major goals (Mosh, GCC, Doom).
