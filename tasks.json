@@ -1,134 +1,9 @@
 [
   {
-    "title": "Regression tests for FAT32 create/overwrite",
+    "title": "Implement sscanf() and vsscanf() in libc",
     "github_issue": {
-      "number": 293,
-      "url": "https://github.com/pbalduino/menios/issues/293",
-      "state": "CLOSED"
-    },
-    "labels": [
-      "enhancement",
-      "testing"
-    ],
-    "assignees": [
-      "pbalduino"
-    ]
-  },
-  {
-    "title": "Teach vfs_open to honour O_CREAT/O_TRUNC/O_EXCL",
-    "github_issue": {
-      "number": 292,
-      "url": "https://github.com/pbalduino/menios/issues/292",
-      "state": "CLOSED"
-    },
-    "labels": [
-      "enhancement",
-      "kernel"
-    ],
-    "assignees": [
-      "pbalduino"
-    ]
-  },
-  {
-    "title": "Expose FAT32 create/truncate primitives",
-    "github_issue": {
-      "number": 291,
-      "url": "https://github.com/pbalduino/menios/issues/291",
-      "state": "CLOSED"
-    },
-    "labels": [
-      "enhancement",
-      "kernel"
-    ],
-    "assignees": [
-      "pbalduino"
-    ]
-  },
-  {
-    "title": "VFS: Streaming I/O and buffer cache",
-    "github_issue": {
-      "number": 294,
-      "url": "https://github.com/pbalduino/menios/issues/294",
-      "state": "CLOSED"
-    },
-    "labels": [
-      "enhancement",
-      "performance",
-      "kernel"
-    ],
-    "assignees": [
-      "pbalduino"
-    ]
-  },
-  {
-    "title": "Block cache infrastructure (bread/bwrite/LRU)",
-    "github_issue": {
-      "number": 295,
-      "url": "https://github.com/pbalduino/menios/issues/295",
-      "state": "CLOSED"
-    },
-    "labels": [
-      "enhancement",
-      "performance",
-      "kernel"
-    ],
-    "assignees": [
-      "pbalduino"
-    ]
-  },
-  {
-    "title": "Refactor FAT32 to use block cache (bread/bwrite)",
-    "github_issue": {
-      "number": 296,
-      "url": "https://github.com/pbalduino/menios/issues/296",
-      "state": "CLOSED"
-    },
-    "labels": [
-      "enhancement",
-      "performance",
-      "kernel"
-    ],
-    "assignees": [
-      "pbalduino"
-    ]
-  },
-  {
-    "title": "VFS streaming read/write operations (replace slurp-and-flush)",
-    "github_issue": {
-      "number": 297,
-      "url": "https://github.com/pbalduino/menios/issues/297",
-      "state": "OPEN"
-    },
-    "labels": [
-      "enhancement",
-      "performance",
-      "kernel"
-    ],
-    "assignees": [
-      "pbalduino"
-    ]
-  },
-  {
-    "title": "Read-ahead and write-behind optimization",
-    "github_issue": {
-      "number": 298,
-      "url": "https://github.com/pbalduino/menios/issues/298",
-      "state": "OPEN"
-    },
-    "labels": [
-      "enhancement",
-      "performance",
-      "kernel"
-    ],
-    "assignees": [
-      "pbalduino"
-    ]
-  },
-  {
-    "title": "Add time conversion utilities (mktime, gmtime, localtime)",
-    "github_issue": {
-      "number": 290,
-      "url": "https://github.com/pbalduino/menios/issues/290",
+      "number": 304,
+      "url": "https://github.com/pbalduino/menios/issues/304",
       "state": "CLOSED"
     },
     "labels": [
@@ -139,59 +14,71 @@
     ]
   },
   {
-    "title": "Implement alarm() syscall",
+    "title": "Build integration for Doom userland binary",
     "github_issue": {
-      "number": 289,
-      "url": "https://github.com/pbalduino/menios/issues/289",
-      "state": "CLOSED"
+      "number": 303,
+      "url": "https://github.com/pbalduino/menios/issues/303",
+      "state": "OPEN"
     },
     "labels": [
-      "enhancement",
-      "kernel"
+      "enhancement"
     ],
     "assignees": [
       "pbalduino"
     ]
   },
   {
-    "title": "Implement interval timers (setitimer/getitimer syscalls)",
+    "title": "Deliver real key events (scan codes, key up/down)",
     "github_issue": {
-      "number": 288,
-      "url": "https://github.com/pbalduino/menios/issues/288",
-      "state": "CLOSED"
+      "number": 302,
+      "url": "https://github.com/pbalduino/menios/issues/302",
+      "state": "OPEN"
     },
     "labels": [
-      "enhancement",
-      "kernel"
+      "enhancement"
     ],
     "assignees": [
       "pbalduino"
     ]
   },
   {
-    "title": "Implement nanosleep() syscall and sleep queue management",
+    "title": "Expose pixel-addressable framebuffer (/dev/fb0)",
     "github_issue": {
-      "number": 287,
-      "url": "https://github.com/pbalduino/menios/issues/287",
-      "state": "CLOSED"
+      "number": 301,
+      "url": "https://github.com/pbalduino/menios/issues/301",
+      "state": "OPEN"
     },
     "labels": [
-      "enhancement",
-      "kernel"
+      "enhancement"
     ],
     "assignees": [
       "pbalduino"
     ]
   },
   {
-    "title": "Implement clock_gettime(), clock_settime(), and clock_getres() syscalls",
+    "title": "Wire up meniOS port layer (doomgeneric_menios.c)",
     "github_issue": {
-      "number": 286,
-      "url": "https://github.com/pbalduino/menios/issues/286",
-      "state": "CLOSED"
+      "number": 300,
+      "url": "https://github.com/pbalduino/menios/issues/300",
+      "state": "OPEN"
+    },
+    "labels": [
+      "enhancement"
+    ],
+    "assignees": [
+      "pbalduino"
+    ]
+  },
+  {
+    "title": "Timezone support using IANA tz database",
+    "github_issue": {
+      "number": 299,
+      "url": "https://github.com/pbalduino/menios/issues/299",
+      "state": "OPEN"
     },
     "labels": [
       "enhancement",
+      "nice to have",
       "kernel"
     ],
     "assignees": [
@@ -336,23 +223,6 @@
       "kernel",
       "review",
       "blocked"
-    ],
-    "assignees": [
-      "pbalduino"
-    ]
-  },
-  {
-    "title": "[Blocker] Boot failure: init process crashes with page fault at 0x40bac8, preventing mosh from starting",
-    "github_issue": {
-      "number": 274,
-      "url": "https://github.com/pbalduino/menios/issues/274",
-      "state": "OPEN"
-    },
-    "labels": [
-      "bug",
-      "init",
-      "mosh",
-      "kernel"
     ],
     "assignees": [
       "pbalduino"
@@ -793,21 +663,6 @@
     "labels": [
       "enhancement",
       "nice to have"
-    ],
-    "assignees": [
-      "pbalduino"
-    ]
-  },
-  {
-    "title": "Add FAT32 write support",
-    "github_issue": {
-      "number": 189,
-      "url": "https://github.com/pbalduino/menios/issues/189",
-      "state": "OPEN"
-    },
-    "labels": [
-      "enhancement",
-      "kernel"
     ],
     "assignees": [
       "pbalduino"
@@ -1823,7 +1678,7 @@
     ]
   },
   {
-    "title": "Implement AP startup and BSP \u2192 AP bring-up",
+    "title": "Implement AP startup and BSP → AP bring-up",
     "github_issue": {
       "number": 82,
       "url": "https://github.com/pbalduino/menios/issues/82",
