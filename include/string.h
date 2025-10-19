@@ -35,8 +35,12 @@ char* strchr(const char *s, int c);
 char*	strfind(const char *s, char c);
 char *strstr (const char *str_1, const char *str_2);
 char* strrchr(const char* s, int c);
+#ifndef MENIOS_KERNEL
 char* strdup(const char* s);
 char* strndup(const char* s, size_t n);
+int   strcasecmp(const char* s1, const char* s2);
+int   strncasecmp(const char* s1, const char* s2, size_t n);
+#endif
 
 #ifdef __cplusplus
 }

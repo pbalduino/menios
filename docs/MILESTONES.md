@@ -252,7 +252,7 @@ This document tracks the three major milestones for meniOS development.
 - #305 requires #96 ✅, #189 ✅, #294 ✅, #193 ✅ (file stdio)
 - #306 requires #193 ✅, #60 ✅, #65 ✅ (filesystem helpers)
 - #307 requires #148 ✅, #193 ✅ (environment access)
-- #308 requires #95 ✅, #193 ✅ (string utilities)
+- #308 requires #95 ✅, #193 ✅ (string utilities) ✅ COMPLETE
 - #309 requires #193 ✅, #304 ✅ (formatted I/O)
 - #310 requires #193 ✅ (math library)
 - #311 requires #305, #306, #307, #308, #309, #310, #300 ✅ (Doom build system) ✅ COMPLETE
@@ -261,7 +261,7 @@ This document tracks the three major milestones for meniOS development.
 - #303 requires #312 (old build integration - superseded by #311/#312)
 - #304 requires #193 ✅ (libc foundation COMPLETE)
 
-**Progress**: IPC infrastructure complete - Pipes ✅, Signals (5/6), Shared Memory ✅! FAT32 write support ✅ complete! scanf family (#304) ✅ complete! Real key events (#302) ✅ complete! Doom port layer (#300) ✅ complete with fullscreen graphics, timing, and input! Pixel-addressable framebuffer (#301) ✅ complete! Doom build system (#311) ✅ now compiles doomgeneric against the meniOS SDK! Remaining work: libc gaps (#305-#310) and final build integration (#312).
+**Progress**: IPC infrastructure complete - Pipes ✅, Signals (5/6), Shared Memory ✅! FAT32 write support ✅ complete! scanf family (#304) ✅ complete! Real key events (#302) ✅ complete! Doom port layer (#300) ✅ complete with fullscreen graphics, timing, and input! Pixel-addressable framebuffer (#301) ✅ complete! Doom build system (#311) ✅ now compiles doomgeneric against the meniOS SDK! String utilities (#308) ✅ delivered (`strdup`, `strncasecmp`, etc.). Remaining work: the remaining libc gaps (#305, #306, #307, #309, #310) and final build integration (#312).
 
 ---
 

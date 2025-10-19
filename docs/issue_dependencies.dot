@@ -138,7 +138,7 @@ digraph IssueDependencies {
         issue305 [label="#305: File stdio\nfopen/fclose/fread/fwrite", fillcolor="#FFE4B5"];
         issue306 [label="#306: Filesystem helpers\nmkdir/remove/rename", fillcolor="#FFE4B5"];
         issue307 [label="#307: Environment access\ngetenv/putenv", fillcolor="#FFE4B5"];
-        issue308 [label="#308: String utilities\nstrdup/strcasecmp", fillcolor="#FFE4B5"];
+        issue308 [label="#308: String utilities\nstrdup/strcasecmp", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED
         issue309 [label="#309: Formatted I/O\nsnprintf/vsnprintf", fillcolor="#FFE4B5"];
         issue310 [label="#310: Math library\nfabs and math.h", fillcolor="#FFE4B5"];
     }

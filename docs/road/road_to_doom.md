@@ -227,16 +227,15 @@ Missing C library functions that Doom requires for linking:
 - **Impact**: Doom uses DOOMWADDIR (d_iwad.c), SDL_VIDEODRIVER (i_sdlmusic.c)
 - **Priority**: HIGH - IWAD detection won't work without this
 
-#### **String Utilities** (Issue #308)
-- **Status**: TODO - missing strdup, strcasecmp, strncasecmp
+#### **String Utilities** (Issue #308) ✅ **COMPLETE**
+- ✅ **Status**: `strdup`, `strndup`, `strcasecmp`, and `strncasecmp` now ship in libc.
 - **Dependencies**: #95 ✅, #193 ✅
-- **Scope**:
-  - strdup() for string duplication (malloc + strcpy)
-  - strcasecmp() for case-insensitive comparison
-  - strncasecmp() for case-insensitive n-char comparison
-  - Add <strings.h> header with POSIX prototypes
-- **Impact**: Doom IWAD detection, config parsing, command-line arguments
-- **Priority**: CRITICAL - linker will fail without these symbols
+- **Highlights**:
+  - ✅ Implemented POSIX-compatible `strdup`/`strndup` with proper `errno` handling.
+  - ✅ Added case-insensitive compare helpers (`strcasecmp`, `strncasecmp`) using `ctype.h`.
+  - ✅ Updated `<string.h>` prototypes so Doom—and future ports—build cleanly.
+- **Impact**: Doom’s IWAD/config parsing now links without stubbed utilities.
+- **Next**: Proceed with the remaining libc gaps (#305-#307/#309/#310).
 
 #### **Formatted I/O Exposure** (Issue #309)
 - **Status**: TODO - snprintf/vsnprintf are internal helpers

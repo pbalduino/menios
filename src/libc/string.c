@@ -1,4 +1,9 @@
 #include <assert.h>
+#ifndef MENIOS_KERNEL
+#include <ctype.h>
+#include <errno.h>
+#include <stdlib.h>
+#endif
 #include <stdint.h>
 #include <string.h>
 #include <types.h>
@@ -240,6 +245,101 @@ char* strrchr(const char* s, int c) {
 
   return (char*)last;
 }
+
+#ifndef MENIOS_KERNEL
+
+char* strdup(const char* s) {
+  if(s == NULL) {
+    return NULL;
+  }
+
+  size_t len = strlen(s);
+  char* copy = (char*)malloc(len + 1);
+  if(copy == NULL) {
+    errno = ENOMEM;
+    return NULL;
+  }
+
+  memcpy(copy, s, len + 1);
+  return copy;
+}
+
+char* strndup(const char* s, size_t n) {
+  if(s == NULL) {
+    return NULL;
+  }
+
+  size_t len = strnlen(s, n);
+  char* copy = (char*)malloc(len + 1);
+  if(copy == NULL) {
+    errno = ENOMEM;
+    return NULL;
+  }
+
+  memcpy(copy, s, len);
+  copy[len] = '\0';
+  return copy;
+}
+
+int strcasecmp(const char* s1, const char* s2) {
+  if(s1 == NULL && s2 == NULL) {
+    return 0;
+  }
+  if(s1 == NULL) {
+    return -1;
+  }
+  if(s2 == NULL) {
+    return 1;
+  }
+
+  while(*s1 != '\0' && *s2 != '\0') {
+    unsigned char c1 = (unsigned char)tolower((unsigned char)*s1);
+    unsigned char c2 = (unsigned char)tolower((unsigned char)*s2);
+
+    if(c1 != c2) {
+      return (int)c1 - (int)c2;
+    }
+
+    s1++;
+    s2++;
+  }
+
+  return (int)(unsigned char)tolower((unsigned char)*s1) -
+         (int)(unsigned char)tolower((unsigned char)*s2);
+}
+
+int strncasecmp(const char* s1, const char* s2, size_t n) {
+  if(n == 0) {
+    return 0;
+  }
+
+  if(s1 == NULL && s2 == NULL) {
+    return 0;
+  }
+  if(s1 == NULL) {
+    return -1;
+  }
+  if(s2 == NULL) {
+    return 1;
+  }
+
+  while(n-- > 0) {
+    unsigned char c1 = (unsigned char)tolower((unsigned char)*s1++);
+    unsigned char c2 = (unsigned char)tolower((unsigned char)*s2++);
+
+    if(c1 != c2) {
+      return (int)c1 - (int)c2;
+    }
+
+    if(c1 == '\0') {
+      return 0;
+    }
+  }
+
+  return 0;
+}
+
+#endif /* !MENIOS_KERNEL */
 
 /**
  * Copies up to size characters from source string to destination buffer
