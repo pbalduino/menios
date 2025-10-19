@@ -129,6 +129,8 @@ $(OBJDIR)/%.o: %.c | $(OBJDIR)
 $(TARGET): $(OBJS) | $(OUTPUT_DIR)
 	@echo "[DOOM] LD $@"
 	$(MENIOS_GCC) $(OBJS) $(LDFLAGS) -o $@
+	@mkdir -p "$(OUTPUT_DIR)/bin"
+	@cp "$@" "$(OUTPUT_DIR)/bin/doom"
 
 clean:
 	rm -rf "$(OBJDIR)"
