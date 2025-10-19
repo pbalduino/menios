@@ -188,7 +188,79 @@ Basic command-line tools for shell interaction:
 - **Dependencies**: Issue #103 (signals), Issue #153 (procfs helpful but not required)
 - **Impact**: Process monitoring and control from shell
 
-### **Phase 8: Doom Integration** (NEW - 4 issues)
+### **Phase 8: libc Gaps for Doom** (NEW - 6 issues)
+Missing C library functions that Doom requires for linking:
+
+#### **File stdio Support** (Issue #305)
+- **Status**: TODO - libc currently lacks buffered file I/O
+- **Dependencies**: #96 ✅, #189 ✅, #294 ✅, #193 ✅
+- **Scope**:
+  - Implement FILE structure with buffer, fd, position tracking
+  - fopen/fclose for opening files with mode strings
+  - fread/fwrite for buffered I/O operations
+  - fseek/ftell/rewind for file positioning
+  - fflush for explicit buffer writes
+  - ferror/clearerr stubs for error handling
+- **Impact**: Doom loads WAD files via fopen in w_file_stdc.c, config parsing in m_misc.c, g_game.c
+-  **Priority**: CRITICAL - linker will fail without these symbols
+
+#### **Filesystem Helpers** (Issue #306)
+- **Status**: TODO - libc doesn't export mkdir/remove/rename
+- **Dependencies**: #193 ✅, #60 ✅, #65 ✅
+- **Scope**:
+  - mkdir() for directory creation (M_MakeDirectory in Doom)
+  - remove() for file deletion
+  - rename() for file moves
+  - unlink() for file deletion (if not already present)
+  - Return ENOSYS if kernel syscall not available
+- **Impact**: Doom save game management, config file handling
+- **Priority**: HIGH - needed for save games to work
+
+#### **Environment Variable Access** (Issue #307)
+- **Status**: TODO - libc lacks getenv/putenv
+- **Dependencies**: #148 ✅, #193 ✅
+- **Scope**:
+  - getenv() for reading environment variables
+  - putenv() for adding/modifying variables
+  - setenv/unsetenv (optional)
+  - Maintain environ pointer
+- **Impact**: Doom uses DOOMWADDIR (d_iwad.c), SDL_VIDEODRIVER (i_sdlmusic.c)
+- **Priority**: HIGH - IWAD detection won't work without this
+
+#### **String Utilities** (Issue #308)
+- **Status**: TODO - missing strdup, strcasecmp, strncasecmp
+- **Dependencies**: #95 ✅, #193 ✅
+- **Scope**:
+  - strdup() for string duplication (malloc + strcpy)
+  - strcasecmp() for case-insensitive comparison
+  - strncasecmp() for case-insensitive n-char comparison
+  - Add <strings.h> header with POSIX prototypes
+- **Impact**: Doom IWAD detection, config parsing, command-line arguments
+- **Priority**: CRITICAL - linker will fail without these symbols
+
+#### **Formatted I/O Exposure** (Issue #309)
+- **Status**: TODO - snprintf/vsnprintf are internal helpers
+- **Dependencies**: #193 ✅, #304 ✅
+- **Scope**:
+  - snprintf() for safe formatted strings
+  - vsnprintf() for variadic version
+  - vsprintf() for unsafe version (compatibility)
+  - Expose in <stdio.h> and export symbols
+- **Impact**: Doom DeHackEd patches (DEH_snprintf), config generation (M_vsnprintf)
+- **Priority**: CRITICAL - linker will fail without these symbols
+
+#### **Math Library** (Issue #310)
+- **Status**: TODO - math.h is placeholder
+- **Dependencies**: #193 ✅
+- **Scope**:
+  - fabs() for floating-point absolute value
+  - fabsf() for float version (optional)
+  - Clean up <math.h> header
+  - Use compiler builtin if available
+- **Impact**: Doom video scaling calculations in v_video.c
+- **Priority**: HIGH - only function Doom needs from libm
+
+### **Phase 9: Doom Integration** (4 existing + 2 new = 6 issues)
 Port layer, graphics, input, and build integration for running Doom:
 
 #### **Pixel-Addressable Framebuffer** (Issue #301)
@@ -224,7 +296,7 @@ Port layer, graphics, input, and build integration for running Doom:
 
 #### **Wire Up meniOS Port Layer** (Issue #300)
 - **Status**: TODO - `app/doom/doomgeneric_menios.c:1` is empty
-- **Dependencies**: #301, #302, #287 ✅, #240 ✅, #304 ✅
+- **Dependencies**: #301, #302, #287 ✅, #240 ✅, #304 ✅, #305-#310 (libc gaps)
 - **Scope**:
   - Implement DG_Init() to initialize graphics + input
   - Implement DG_DrawFrame() to blit frames using mmap'd framebuffer
@@ -232,20 +304,36 @@ Port layer, graphics, input, and build integration for running Doom:
   - Implement DG_SleepMs() using nanosleep() (#287 ✅)
   - Implement DG_GetTicksMs() using gettimeofday() (#240 ✅)
   - Implement main() to drive doomgeneric_Tick() game loop
-- **Current Gap**: Port layer callbacks not implemented
-- **Impact**: Doom engine needs platform-specific glue code
+- **Current Gap**: Port layer callbacks not implemented, libc gaps block linking
+- **Impact**: Doom engine needs platform-specific glue code + complete libc
 
-#### **Doom Build Integration** (Issue #303)
-- **Status**: TODO - Makefile targets desktop Xlib/SDL
-- **Dependencies**: #192 ✅, #193 ✅, #195 ✅, #29 ✅, #300
+#### **Doom meniOS-Specific Build System** (Issue #311)
+- **Status**: TODO - Need custom build configuration
+- **Dependencies**: #305-#310 (libc gaps), #300 (port layer)
 - **Scope**:
-  - Add MENIOS_BUILD=1 target to app/doom/Makefile
-  - Compile against meniOS SDK (libc, headers)
-  - Use doomgeneric_menios.c instead of doomgeneric_xlib.c
-  - Link with x86_64-elf toolchain
-  - Copy binary to /bin/doom in disk image
-- **Current Gap**: `app/doom/Makefile` hardcoded for desktop
-- **Impact**: Need native meniOS binary for ELF loader
+  - Create `app/doom/Makefile.menios` for meniOS builds
+  - Feed sources through `tools/menios-gcc`
+  - Include only needed files (doomgeneric_menios.c, core engine)
+  - Avoid SDL/Xlib backends
+  - Link against meniOS libc
+- **Current Gap**: No meniOS-specific build configuration
+- **Impact**: Need custom build to avoid desktop dependencies
+
+#### **Doom Build Integration** (Issue #312)
+- **Status**: TODO - Doom not integrated into main build
+- **Dependencies**: #311 (Doom Makefile), #192 ✅, #193 ✅, #195 ✅, #29 ✅
+- **Scope**:
+  - Add Doom to `make userland` target
+  - Place binary at `$(OUTPUT_DIR)/bin/doom`
+  - Copy doom.wad into disk image if present
+  - Guard WAD copy so builds succeed without it
+  - Update top-level Makefile
+- **Current Gap**: Doom not part of automated build
+- **Impact**: Manual build steps required, not integrated with image creation
+
+#### **Old Build Integration** (Issue #303) - Superseded
+- **Status**: Superseded by #311 and #312
+- **Note**: Original build integration issue, now split into build system (#311) and integration (#312)
 
 ## 🎮 **Doom-Specific Requirements**
 
@@ -384,8 +472,8 @@ The solid foundation work (memory management, scheduling, synchronization) now e
 
 ## 🎯 **GitHub Milestone Tracking**
 
-The Doom milestone on GitHub now tracks 28 issues:
-- **Status**: 15/28 complete (53.6%)
+The Doom milestone on GitHub now tracks 36 issues:
+- **Status**: 15/36 complete (41.7%)
 - **Completed**:
   - Graphics & Input: #31 ✅, #32 ✅
   - Memory: #95 ✅
@@ -395,9 +483,13 @@ The Doom milestone on GitHub now tracks 28 issues:
   - IPC - Shared Memory: #215 ✅, #216 ✅, #217 ✅, #218 ✅, #219 ✅ (ALL COMPLETE!)
   - IPC - Other: #220 ✅ (ioctl), #221 ✅ (fast syscalls)
   - Doom Integration: #304 ✅ (scanf family - moved from GCC milestone)
-- **New Issues (Doom Integration)**: #300 (port layer), #301 (framebuffer mmap), #302 (key events), #303 (build integration)
-- **In Progress**: Threading (#109-#113), Signals (#214), Audio (#33), Mouse (#143), Doom Integration (#300-#303)
-- **Ready to Start**: #301, #302 (Doom integration - infrastructure complete!)
+- **New Issues Created (2025-10-18)**:
+  - libc Gaps: #305 (file stdio), #306 (filesystem helpers), #307 (environment access), #308 (string utilities), #309 (formatted I/O), #310 (math library)
+  - Build System: #311 (Doom Makefile.menios), #312 (build integration)
+  - Doom Integration: #300 (port layer), #301 (framebuffer mmap), #302 (key events), #303 (old build - superseded)
+- **In Progress**: Threading (#109-#113), Signals (#214), Audio (#33), Mouse (#143), Doom Integration (#300-#303, #311-#312)
+- **Ready to Start NOW**: #305-#310 (libc gaps - all dependencies met!), #301, #302 (Doom integration)
+- **Blocked**: #300 (port layer - blocked on #305-#310), #311 (build - blocked on #305-#310, #300), #312 (integration - blocked on #311)
 - **Removed**: #105 (Unix sockets), #106 (microkernel IPC), #107 (capabilities) - not required for Doom
 
 **Recent Major Achievements**:
@@ -406,6 +498,7 @@ The Doom milestone on GitHub now tracks 28 issues:
 - ✅ Time management (#286, #287, #288, #290) - Complete timing system for game loop!
 - ✅ Fast syscalls (#221) - High-performance system calls with 64-bit returns!
 - ✅ scanf family (#304) - Config file parsing fully implemented!
+- 🆕 libc gaps identified (#305-#310) - Ready to implement immediately!
 
 See [MILESTONES.md](../MILESTONES.md) for detailed milestone tracking across all three major goals (Mosh, GCC, Doom).
 

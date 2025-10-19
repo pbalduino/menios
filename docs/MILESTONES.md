@@ -176,7 +176,7 @@ This document tracks the three major milestones for meniOS development.
 **Goal**: Run Doom (1993) in userland on meniOS
 **GitHub Milestone**: [Doom](https://github.com/pbalduino/menios/milestone/3)
 
-**Status**: 15/28 complete (53.6%)
+**Status**: 15/36 complete (41.7%)
 
 **Note**: Depends on **Buddy Allocator milestone** for efficient memory management under game engine load.
 
@@ -188,12 +188,22 @@ This document tracks the three major milestones for meniOS development.
 - [ ] #33 - Audio subsystem
 - [ ] #143 - Mouse driver
 
-#### Doom Integration (5 issues)
+#### libc Gaps for Doom (6 issues)
+- [ ] #305 - File stdio support (fopen/fclose, buffered I/O)
+- [ ] #306 - Filesystem helpers (mkdir, remove, rename)
+- [ ] #307 - Environment variable access (getenv/putenv)
+- [ ] #308 - String utilities (strdup, strcasecmp, strncasecmp)
+- [ ] #309 - Expose snprintf/vsnprintf/vsprintf properly
+- [ ] #310 - Math library (fabs and clean up math.h)
+
+#### Doom Integration (7 issues)
 - [ ] #300 - Wire up meniOS port layer (doomgeneric_menios.c)
 - [ ] #301 - Expose pixel-addressable framebuffer (/dev/fb0 mmap)
 - [ ] #302 - Deliver real key events (scan codes, key up/down)
 - [ ] #303 - Build integration for Doom userland binary
 - [x] #304 - scanf family (sscanf/scanf/fscanf) implementation ✅
+- [ ] #311 - Doom meniOS-specific build system (Makefile.menios)
+- [ ] #312 - Integrate Doom into meniOS build and packaging
 
 #### Threading Support (5 issues)
 - [ ] #109 - pthread API implementation (ready now!)
@@ -237,11 +247,19 @@ This document tracks the three major milestones for meniOS development.
 - #214 requires #213, #109
 - #301 requires #31 ✅, #89 ✅, #220 ✅ (framebuffer infrastructure)
 - #302 requires #32 ✅, #220 ✅ (input infrastructure)
-- #300 requires #301, #302, #287 ✅, #240 ✅, #288 ✅, #304 ✅ (Doom port layer needs graphics + input + timing + scanf for config parsing)
-- #303 requires #192 ✅, #193 ✅, #195 ✅, #29 ✅, #300 (build integration)
+- #305 requires #96 ✅, #189 ✅, #294 ✅, #193 ✅ (file stdio)
+- #306 requires #193 ✅, #60 ✅, #65 ✅ (filesystem helpers)
+- #307 requires #148 ✅, #193 ✅ (environment access)
+- #308 requires #95 ✅, #193 ✅ (string utilities)
+- #309 requires #193 ✅, #304 ✅ (formatted I/O)
+- #310 requires #193 ✅ (math library)
+- #311 requires #305, #306, #307, #308, #309, #310, #300 (Doom build system)
+- #312 requires #311, #192 ✅, #193 ✅, #195 ✅, #29 ✅ (build integration)
+- #300 requires #301, #302, #287 ✅, #240 ✅, #288 ✅, #304 ✅, #305-#310 (Doom port layer needs graphics + input + timing + libc)
+- #303 requires #312 (old build integration - superseded by #311/#312)
 - #304 requires #193 ✅ (libc foundation COMPLETE)
 
-**Progress**: IPC infrastructure complete - Pipes ✅, Signals (5/6), Shared Memory ✅! FAT32 write support ✅ complete! scanf family (#304) ✅ complete! Doom integration issues (#300-#303) ready for implementation.
+**Progress**: IPC infrastructure complete - Pipes ✅, Signals (5/6), Shared Memory ✅! FAT32 write support ✅ complete! scanf family (#304) ✅ complete! New libc gaps identified for Doom (#305-#310). Doom build system planned (#311-#312). Ready to implement libc gaps!
 
 ---
 
@@ -276,12 +294,13 @@ This document tracks the three major milestones for meniOS development.
 
 ## 📈 Overall Progress
 
-- **Total Issues Across Milestones**: 83 issues
-- **Completed**: 72 issues (86.7%)
-- **In Progress**: 11 issues
-- **Ready to Start**: 3 issues (no dependencies: #109, #190, #191)
+- **Total Issues Across Milestones**: 91 issues
+- **Completed**: 72 issues (79.1%)
+- **In Progress**: 19 issues
+- **Ready to Start**: 11 issues (no dependencies: #109, #190, #191, #305-#310)
 - **Recently Completed**: #286-#293 ✅ (time management & FAT32 writes), #304 ✅ (scanf family)
-- **Next Up**: TCC/binutils (#190, #191) ready! Doom integration (#300-#303) ready to start!
+- **Recently Created**: #305-#312 ✅ (libc gaps & Doom build system)
+- **Next Up**: libc gaps (#305-#310) ready to start! TCC/binutils (#190, #191) ready! Doom integration (#300-#303) blocked on libc!
 
 ## 🚀 Immediate Next Steps
 
@@ -300,10 +319,23 @@ All phases finished! Core buddy allocator implementation (Phase 1 ✅), critical
    - #190 - TCC port (Buddy Allocator ✅ COMPLETE, FAT32 writes ✅ COMPLETE)
    - #191 - binutils port (Buddy Allocator ✅ COMPLETE, FAT32 writes ✅ COMPLETE)
 
-2. **Doom Milestone** (Ready to implement):
+2. **Doom Milestone - libc Gaps** (READY NOW! ✅):
+   - #305 - File stdio support (all dependencies met)
+   - #306 - Filesystem helpers (all dependencies met)
+   - #307 - Environment variable access (all dependencies met)
+   - #308 - String utilities (all dependencies met)
+   - #309 - Expose snprintf/vsnprintf properly (all dependencies met)
+   - #310 - Math library (all dependencies met)
+
+3. **Doom Milestone - Threading** (Ready to implement):
    - #109 - pthread API (no dependencies)
+
+4. **Doom Milestone - Integration** (Blocked on libc gaps):
    - #301 - Pixel-addressable framebuffer (infrastructure complete)
    - #302 - Real key events (infrastructure complete)
+   - #300 - Doom port layer (blocked on #305-#310)
+   - #311 - Doom build system (blocked on #305-#310, #300)
+   - #312 - Build integration (blocked on #311)
 
 ## 📝 Notes
 
@@ -527,6 +559,13 @@ Recommended completion order for maximum impact:
   - GCC milestone: 5/7 complete (71.4%)
   - Doom milestone: 15/28 complete (53.6%)
   - Overall progress: 72/83 issues complete (86.7%)
+- **2025-10-18**: Created 8 new Doom issues (#305-#312) for remaining libc gaps and build integration
+  - libc gaps: #305 (file stdio), #306 (filesystem helpers), #307 (environment access), #308 (string utilities), #309 (formatted I/O), #310 (math library)
+  - Build system: #311 (Doom Makefile.menios), #312 (build integration)
+  - All libc gap issues (#305-#310) ready to start immediately - all dependencies met!
+  - Doom milestone: 15/36 complete (41.7%)
+  - Total project issues: 91 (was 83)
+  - Overall progress: 72/91 issues complete (79.1%)
 
 ---
 

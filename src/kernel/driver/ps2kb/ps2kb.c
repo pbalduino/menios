@@ -5,8 +5,10 @@
 #include <kernel/driver/ps2.h>
 #include <kernel/file.h>
 #include <kernel/kernel.h>
+#include <kernel/input.h>
 #include <kernel/serial.h>
 #include <kernel/idt.h>
+#include <menios/input.h>
 
 #include <uacpi/acpi.h>
 #include <uacpi/tables.h>
@@ -34,6 +36,8 @@ static bool left_shift;
 static bool right_shift;
 static bool left_ctrl;
 static bool right_ctrl;
+static bool left_alt;
+static bool right_alt;
 static bool caps_lock;
 static bool extended_code;
 static bool pic_remapped;
@@ -175,6 +179,34 @@ static char translate_scancode(uint8_t code) {
 
 static inline void io_wait(void) {
   outb(0x80, 0);
+}
+
+static uint8_t current_modifiers(void) {
+  uint8_t mods = 0;
+  if(left_shift || right_shift) {
+    mods |= MENIOS_KEY_MOD_SHIFT;
+  }
+  if(left_ctrl || right_ctrl) {
+    mods |= MENIOS_KEY_MOD_CTRL;
+  }
+  if(left_alt || right_alt) {
+    mods |= MENIOS_KEY_MOD_ALT;
+  }
+  if(caps_lock) {
+    mods |= MENIOS_KEY_MOD_CAPS;
+  }
+  return mods;
+}
+
+static void emit_key_event(uint8_t scancode, bool pressed, bool extended, uint8_t ascii) {
+  menios_key_event_t event;
+  memset(&event, 0, sizeof(event));
+  event.scancode = scancode;
+  event.ascii = ascii;
+  event.pressed = pressed ? 1u : 0u;
+  event.extended = extended ? 1u : 0u;
+  event.modifiers = current_modifiers();
+  keyboard_event_push(&event);
 }
 
 static void pic_remap(void) {

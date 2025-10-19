@@ -125,7 +125,7 @@ digraph IssueDependencies {
         issue193 [label="#193: Minimal\nlibc", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED
         issue194 [label="#194: Syscall\nABI docs", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED
         issue195 [label="#195: Userland\nbuild system", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED
-        issue304 [label="#304: scanf family\nsscanf/scanf/fscanf", fillcolor="#DDA0DD"];  // GCC milestone
+        issue304 [label="#304: scanf family\nsscanf/scanf/fscanf", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED - moved to Doom milestone
         issue190 [label="#190: TCC\nport", fillcolor="#DDA0DD"];
         issue191 [label="#191: binutils\nport", fillcolor="#DDA0DD"];
     }
