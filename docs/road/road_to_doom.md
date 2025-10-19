@@ -53,11 +53,6 @@ Complete multithreading infrastructure for modern applications:
 - **Scope**: Thread-safe malloc, stdio, errno, locale functions
 - **Impact**: Enables safe multithreaded programming
 
-#### **Advanced pthread Synchronization** (Issue #111)
-- **Dependencies**: Issue #109 (pthread API)
-- **Scope**: Barriers, spinlocks, reader-writer locks, robust mutexes
-- **Impact**: High-performance synchronization for complex applications
-
 ### **Phase 3: Advanced IPC** (READY TO IMPLEMENT!)
 Inter-process communication for complex applications:
 
@@ -70,15 +65,15 @@ Inter-process communication for complex applications:
   4. ✅ **#209** - Named FIFOs (mkfifo) (CLOSED)
 - **Impact**: Shell operations, process communication, command pipelines, named FIFOs - **ALL IMPLEMENTED!** 🎉
 
-#### **UNIX Signals** (Issues #210-#214, broken down from #103) (3/5 Complete!)
-- ✅ **Status**: Bookkeeping, syscall surface, and baseline delivery path now implemented (#210-#212 ✅); shell integration next.
+#### **UNIX Signals** (Issues #210-#213, broken down from #103) ✅ **ALL COMPLETE!**
+- ✅ **Status**: All signal infrastructure complete! Full POSIX signal subsystem operational.
 - **Implementation Path**:
   1. ✅ **#210** - Signal bookkeeping scaffold (CLOSED)
   2. ✅ **#211** - Signal syscalls (`kill`, `sigaction`, `sigprocmask`) + libc wrappers and regression tests (CLOSED)
   3. ✅ **#212** - Basic signal delivery path with user handlers (CLOSED)
-  4. ~~**#213** - Shell Ctrl+C integration~~ ✅
-  5. **#214** - Advanced signal features (SIGCHLD, SA_RESTART) - optional (3-4 weeks)
-- **Impact**: Process control, Ctrl+C handling, error handling, graceful shutdown
+  4. ✅ **#213** - Shell Ctrl+C integration (CLOSED)
+  5. ✅ **#103** - UNIX signals parent issue (CLOSED)
+- **Impact**: Process control, Ctrl+C handling, error handling, graceful shutdown - **ALL IMPLEMENTED!** 🎉
 
 #### **Shared Memory** (Issues #215-#219, broken down from #104) ✅ **COMPLETE!**
 - ✅ **Status**: All shared memory infrastructure implemented and tested!
@@ -355,8 +350,8 @@ Port layer, graphics, input, and build integration for running Doom:
 ## 📈 **Updated Timeline Estimates**
 
 ### **Short Term (3-6 months)**
-- Land pthread API and libc hardening (#109-#111, #110).
-- ✅ Add core IPC plumbing: pipes ✅ (#102), signals (#103 - 3/5 done), shared memory ✅ (#104).
+- Land pthread API and libc hardening (#109, #110, #113).
+- ✅ Add core IPC plumbing: pipes ✅ (#102), signals ✅ (#103 - ALL COMPLETE!), shared memory ✅ (#104).
 - Keep roadmap docs in sync with kernel progress.
 
 ### **Medium Term (6-12 months)**
@@ -382,7 +377,6 @@ Port layer, graphics, input, and build integration for running Doom:
 6. ✅ **#108** – Kernel threading infrastructure ✅ *Completed*
 7. **#109** – Implement the pthread API so user programs can spin up threads (ready now!)
 8. **#110** – Make libc thread-safe once pthread primitives exist
-9. **#111** – Land advanced pthread synchronization (barriers, robust locks)
 
 **IPC - Pipes** (sequential): ✅ **COMPLETE!**
 10. ✅ **#206** – Pipe data structure and kernel control path ✅ *Completed*
@@ -390,12 +384,12 @@ Port layer, graphics, input, and build integration for running Doom:
 12. ✅ **#208** – Shell pipeline integration ✅ *Completed*
 13. ✅ **#209** – Named FIFOs (mkfifo) ✅ *Completed*
 
-**IPC - Signals** (sequential):
+**IPC - Signals** (sequential): ✅ **COMPLETE!**
 14. ✅ **#210** – Signal bookkeeping scaffold ✅ *Completed*
 15. ✅ **#211** – Signal syscalls (kill, sigaction, sigprocmask, sigsuspend) ✅ *Completed*
 16. ✅ **#212** – Basic signal delivery path with user handlers ✅ *Completed*
-17. **#213** – Shell Ctrl+C integration ✅
-18. **#214** – Advanced signal features (optional)
+17. ✅ **#213** – Shell Ctrl+C integration ✅ *Completed*
+18. ✅ **#103** – UNIX signals parent issue ✅ *Completed*
 
 **IPC - Shared Memory** (sequential): ✅ **COMPLETE!**
 19. ✅ **#215** – Kernel shared memory region manager ✅ *Completed*
@@ -462,14 +456,14 @@ The solid foundation work (memory management, scheduling, synchronization) now e
 
 ## 🎯 **GitHub Milestone Tracking**
 
-The Doom milestone on GitHub now tracks 36 issues:
-- **Status**: 26/36 complete (72.2%)
+The Doom milestone on GitHub now tracks 32 issues:
+- **Status**: 27/32 complete (84.4%)
 - **Completed**:
   - Graphics & Input: #31 ✅, #32 ✅, #136 ✅ (devfs), #140 ✅ (/dev/kbd0 and /dev/fb0)
   - Memory: #95 ✅
   - File System: #189 ✅ (FAT32 writes complete!)
   - IPC - Pipes: #102 ✅ (parent)
-  - IPC - Signals: #103 ✅ (parent), #210 ✅, #211 ✅, #212 ✅, #213 ✅
+  - IPC - Signals: #103 ✅ (parent), #210 ✅, #211 ✅, #212 ✅, #213 ✅ - **ALL 5 COMPLETE!** 🎉
   - IPC - Shared Memory: #215 ✅, #216 ✅, #217 ✅, #218 ✅, #219 ✅ (ALL COMPLETE!)
   - IPC - Other: #220 ✅ (ioctl), #221 ✅ (fast syscalls)
   - libc Gaps: #305 ✅ (file stdio), #306 ✅ (filesystem helpers), #307 ✅ (environment access), #308 ✅ (string utilities), #309 ✅ (formatted I/O), #310 ✅ (math library) - **ALL 6 COMPLETE!** 🎉
@@ -478,9 +472,9 @@ The Doom milestone on GitHub now tracks 36 issues:
   - libc Gaps: #305 (file stdio), #306 (filesystem helpers), #307 (environment access), #309 (formatted I/O), #310 (math library)
   - Build System: #312 (build integration)
   - Doom Integration: #303 (old build - superseded)
-- **In Progress**: Threading (#109-#113), Signals (#214), Audio (#33), Mouse (#143), Doom Integration (#312)
+- **In Progress**: Threading (#109, #110, #113), Audio (#33), Mouse (#143), Doom Integration (#312)
 - **Ready to Start NOW**: #312 (Doom build integration - ALL dependencies met! 🚀)
-- **Removed**: #105 (Unix sockets), #106 (microkernel IPC), #107 (capabilities) - not required for Doom
+- **Removed**: #105 (Unix sockets), #106 (microkernel IPC), #107 (capabilities), #111 (Advanced pthread synchronization), #112 (Thread debugging), #214 (Advanced signal features) - not required for Doom
 
 **Recent Major Achievements**:
 - ✅ FAT32 write support (#189, #291-#293) - Save games now possible!

@@ -176,7 +176,7 @@ This document tracks the three major milestones for meniOS development.
 **Goal**: Run Doom (1993) in userland on meniOS
 **GitHub Milestone**: [Doom](https://github.com/pbalduino/menios/milestone/3)
 
-**Status**: 26/36 complete (72.2%)
+**Status**: 27/32 complete (84.4%)
 
 **Note**: Depends on **Buddy Allocator milestone** for efficient memory management under game engine load.
 
@@ -207,11 +207,9 @@ This document tracks the three major milestones for meniOS development.
 - [x] #311 - Doom meniOS-specific build system (Makefile.menios) ✅
 - [ ] #312 - Integrate Doom into meniOS build and packaging
 
-#### Threading Support (5 issues)
+#### Threading Support (3 issues)
 - [ ] #109 - pthread API implementation (ready now!)
 - [ ] #110 - Thread-safe C library
-- [ ] #111 - Advanced pthread synchronization
-- [ ] #112 - Thread debugging and profiling
 - [ ] #113 - Thread-aware system calls
 
 #### Memory & Process (1 issue)
@@ -223,13 +221,12 @@ This document tracks the three major milestones for meniOS development.
 #### IPC - Pipes (1 issue - parent)
 - [x] #102 - Pipes/FIFOs implementation ✅ COMPLETE
 
-#### IPC - Signals (6 issues)
+#### IPC - Signals (5 issues) ✅ **ALL COMPLETE!**
 - [x] #103 - UNIX signals (parent issue) ✅
 - [x] #210 - Signal bookkeeping scaffold ✅
 - [x] #211 - Signal syscalls ✅
 - [x] #212 - Signal delivery path ✅
 - [x] #213 - Shell Ctrl+C integration ✅
-- [ ] #214 - Advanced signal features
 
 #### IPC - Shared Memory (5 issues) ✅ COMPLETE!
 - [x] #215 - Shared memory manager ✅
@@ -244,9 +241,7 @@ This document tracks the three major milestones for meniOS development.
 
 **Dependencies**:
 - #110 requires #109
-- #111 requires #109
 - #213 requires #212 ✅ COMPLETE
-- #214 requires #213, #109
 - #301 requires #31 ✅, #89 ✅, #220 ✅ (framebuffer infrastructure)
 - #302 requires #32 ✅, #220 ✅ (input infrastructure) ✅ COMPLETE
 - #305 requires #96 ✅, #189 ✅, #294 ✅, #193 ✅ (file stdio)
@@ -261,7 +256,7 @@ This document tracks the three major milestones for meniOS development.
 - #303 requires #312 (old build integration - superseded by #311/#312)
 - #304 requires #193 ✅ (libc foundation COMPLETE)
 
-**Progress**: IPC infrastructure complete - Pipes ✅, Signals (5/6), Shared Memory ✅! FAT32 write support ✅ complete! scanf family (#304) ✅ complete! Real key events (#302) ✅ complete! Doom port layer (#300) ✅ complete with fullscreen graphics, timing, and input! Pixel-addressable framebuffer (#301) ✅ complete! Doom build system (#311) ✅ now compiles doomgeneric against the meniOS SDK! 🎉 **ALL 6 LIBC GAPS COMPLETE**: File stdio (#305) ✅, Filesystem helpers (#306) ✅, Environment access (#307) ✅, String utilities (#308) ✅, Formatted I/O (#309) ✅, Math library (#310) ✅! Remaining work: final build integration (#312) - NOW UNBLOCKED!
+**Progress**: IPC infrastructure complete - Pipes ✅, Signals ✅ (ALL 5 COMPLETE!), Shared Memory ✅! FAT32 write support ✅ complete! scanf family (#304) ✅ complete! Real key events (#302) ✅ complete! Doom port layer (#300) ✅ complete with fullscreen graphics, timing, and input! Pixel-addressable framebuffer (#301) ✅ complete! Doom build system (#311) ✅ now compiles doomgeneric against the meniOS SDK! 🎉 **ALL 6 LIBC GAPS COMPLETE**: File stdio (#305) ✅, Filesystem helpers (#306) ✅, Environment access (#307) ✅, String utilities (#308) ✅, Formatted I/O (#309) ✅, Math library (#310) ✅! Threading support reduced to 3 core issues (#111, #112 removed - not required for Doom). Advanced signal features (#214) removed - not required for Doom. Remaining work: final build integration (#312) - NOW UNBLOCKED!
 
 ---
 
@@ -296,9 +291,9 @@ This document tracks the three major milestones for meniOS development.
 
 ## 📈 Overall Progress
 
-- **Total Issues Across Milestones**: 98 issues (includes foundational issues)
-- **Completed**: 84 issues (85.7%)
-- **In Progress**: 14 issues
+- **Total Issues Across Milestones**: 94 issues (includes foundational issues)
+- **Completed**: 84 issues (89.4%)
+- **In Progress**: 10 issues
 - **Ready to Start**: 5 issues (no dependencies: #109, #190, #191, #312)
 - **Recently Completed**: #286-#293 ✅ (time management & FAT32 writes), #304 ✅ (scanf family), #302 ✅ (real key events), #301 ✅ (framebuffer mmap), #300 ✅ (menIOS Doom port layer), #136 ✅ (devfs), #140 ✅ (/dev/kbd0 and /dev/fb0), #221 ✅ (fast syscalls), #305-#310 ✅ (ALL libc gaps COMPLETE!), #311 ✅ (Doom build system)
 - **Recently Created**: #305-#312 ✅ (libc gaps & Doom build system), #313 (filesystem organization), #314 (shell startup scripts), #315 (motd), #316 (touch command), #317 (utime syscall), #318 (uname command)
@@ -660,6 +655,18 @@ Recommended completion order for maximum impact:
   - 🎉 **ALL 6 LIBC GAPS NOW COMPLETE!**
   - Doom milestone: 26/36 complete (72.2%)
   - Overall progress: 84/98 issues complete (85.7%)
+- **2025-10-19**: Closed #103 (UNIX signals parent issue) ✅
+  - All signal subsystem work complete (5/5 issues)
+  - IPC - Signals section now 100% complete
+  - Removed #111 (Advanced pthread synchronization) from Doom milestone - not required for Doom
+  - Removed #112 (Thread debugging and profiling) from Doom milestone - not required for Doom
+  - Removed #214 (Advanced signal features) from Doom milestone - not required for Doom
+  - Threading Support section reduced from 5 to 3 issues
+  - IPC - Signals section reduced from 6 to 5 issues (all complete)
+  - Doom milestone reduced from 36 to 32 issues
+  - Doom milestone: 27/32 complete (84.4%)
+  - Total project issues reduced from 98 to 94
+  - Overall progress: 84/94 issues complete (89.4%)
 
 ---
 

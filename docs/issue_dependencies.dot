@@ -38,15 +38,13 @@ digraph IssueDependencies {
     }
 
     subgraph cluster_threading {
-        label="Threading Support";
+        label="Threading Support (3 issues)";
         style=filled;
         fillcolor="#E6F7FF";
 
         issue108 [label="#108: kernel threading\ninfrastructure", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED
         issue109 [label="#109: pthread API\nand POSIX threading", fillcolor="#B3E5FC"];
         issue110 [label="#110: thread-safe\nC library (libc)", fillcolor="#B3E5FC"];
-        issue111 [label="#111: advanced pthread\nsynchronization", fillcolor="#B3E5FC"];
-        issue112 [label="#112: thread debugging\nand profiling", fillcolor="#B3E5FC"];
         issue113 [label="#113: thread-aware\nsystem calls", fillcolor="#B3E5FC"];
     }
 
@@ -177,13 +175,12 @@ digraph IssueDependencies {
         issue208 [label="#208: Shell\npipelines", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED
         issue209 [label="#209: Named\nFIFOs", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED
 
-        // Signals (parent and breakdown)
+        // Signals (parent and breakdown) - ALL COMPLETE! 🎉
         issue103 [label="#103: UNIX signals\n(parent)", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED
         issue210 [label="#210: Signal\nbookkeeping", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED
         issue211 [label="#211: Signal\nsyscalls", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED
         issue212 [label="#212: Signal\ndelivery", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED
-        issue213 [label="#213: Shell\nCtrl+C", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED
-        issue214 [label="#214: Advanced\nsignals", fillcolor="#DDA0DD"];
+        issue213 [label="#213: Shell\nCtrl+C", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED - ALL 5 SIGNAL ISSUES COMPLETE!
 
         // Shared Memory (broken down)
         issue215 [label="#215: Shared mem\nmanager", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED
@@ -314,7 +311,6 @@ digraph IssueDependencies {
     issue57 -> issue108 [color=blue, penwidth=2, style=dashed];
     issue108 -> issue109 [color=blue, penwidth=2, style=dashed];
     issue109 -> issue110 [color=blue, penwidth=2];
-    issue109 -> issue111 [color=blue, penwidth=2];
     issue108 -> issue113 [color=blue, penwidth=2, style=dashed];
 
     // Shell milestone dependencies (some complete)
@@ -406,14 +402,13 @@ digraph IssueDependencies {
     issue208 -> issue209 [color=purple, style=dashed];
     issue65 -> issue209 [label="#65: VFS", style=dashed, color=gray];
 
-    // Signals dependencies (sequential)
+    // Signals dependencies (sequential) - ALL COMPLETE! ✅
     issue93 -> issue210 [label="#93: fork/exec", style=dashed, color=gray];
     issue34 -> issue210 [label="#34: scheduler", style=dashed, color=gray];
-    issue210 -> issue211 [color=purple, penwidth=2, style=dashed];
-    issue211 -> issue212 [color=purple, penwidth=2, style=dashed];
-    issue212 -> issue213 [color=purple, penwidth=2, style=dashed];
-    issue213 -> issue214 [color=purple, style=dashed];
-    issue109 -> issue214 [label="#109: pthread"];
+    issue210 -> issue211 [color=gray, penwidth=2, style=dashed];
+    issue211 -> issue212 [color=gray, penwidth=2, style=dashed];
+    issue212 -> issue213 [color=gray, penwidth=2, style=dashed];
+    issue213 -> issue103 [color=gray, penwidth=2, style=dashed, label="complete"];
 
     // Shared Memory dependencies (sequential)
     issue57 -> issue215 [label="#57: VM", style=dashed, color=gray];

@@ -647,6 +647,11 @@ ifeq ($(OS_NAME),linux)
 	else \
 		echo "[DOOM] No doom.wad found in $(OUTPUT_DIR) (optional)"; \
 	fi
+	if [ -f "$(OUTPUT_DIR)/doom2.wad" ]; then \
+		mcopy -i $(IMAGE_NAME).hdd@@2M $(OUTPUT_DIR)/doom2.wad ::/doom/doom2.wad; \
+	else \
+		echo "[DOOM] No doom2.wad found in $(OUTPUT_DIR) (optional)"; \
+	fi
 	$(OUTPUT_DIR)/limine bios-install $(IMAGE_NAME).hdd 1
 
 	@echo Building ISO
@@ -913,10 +918,35 @@ build-temp-disable:
 
 .PHONY: get-doom-wad
 get-doom-wad:
-	@echo "Downloading doom.wad..."
-	@if [ ! -f $(OUTPUT_DIR)/doom.wad ]; then \
+	@echo "Preparing IWADs..."
+	@if [ ! -f $(OUTPUT_DIR)/doom1.wad ]; then \
 		mkdir -p $(OUTPUT_DIR); \
-		curl -L https://distro.ibiblio.org/slitaz/sources/packages/d/doom1.wad -o $(OUTPUT_DIR)/doom.wad; \
-	else \
-		echo "doom.wad already exists at $(OUTPUT_DIR)/doom.wad"; \
+		curl -L https://distro.ibiblio.org/slitaz/sources/packages/d/doom1.wad -o $(OUTPUT_DIR)/doom1.wad; \
 	fi
+	@if [ ! -f $(OUTPUT_DIR)/doom2.wad ]; then \
+		mkdir -p $(OUTPUT_DIR); \
+		curl -L https://www.pc-freak.net/files/doom-wad-files/Doom2.wad -o $(OUTPUT_DIR)/doom2.wad; \
+	fi
+ifneq ($(strip $(DOOM1_WAD)),)
+	@if [ -f "$(DOOM1_WAD)" ]; then \
+		echo "Copying DOOM II IWAD from $(DOOM1_WAD)"; \
+		mkdir -p $(OUTPUT_DIR); \
+		cp "$(DOOM1_WAD)" $(OUTPUT_DIR)/doom2.wad; \
+	else \
+		echo "warn: DOOM1_WAD='$(DOOM1_WAD)' not found, skipping"; \
+	fi
+else
+	@echo "(optional) Set DOOM1_WAD=/path/to/DOOM1.WAD before make get-doom-wad to bundle DOOM I"
+endif
+
+ifneq ($(strip $(DOOM2_WAD)),)
+	@if [ -f "$(DOOM2_WAD)" ]; then \
+		echo "Copying DOOM II IWAD from $(DOOM2_WAD)"; \
+		mkdir -p $(OUTPUT_DIR); \
+		cp "$(DOOM2_WAD)" $(OUTPUT_DIR)/doom2.wad; \
+	else \
+		echo "warn: DOOM2_WAD='$(DOOM2_WAD)' not found, skipping"; \
+	fi
+else
+	@echo "(optional) Set DOOM2_WAD=/path/to/DOOM2.WAD before make get-doom-wad to bundle DOOM II"
+endif
