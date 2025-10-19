@@ -205,13 +205,13 @@ Missing C library functions that Doom requires for linking:
 -  **Priority**: CRITICAL - linker will fail without these symbols
 
 #### **Filesystem Helpers** (Issue #306)
-- **Status**: TODO - libc doesn't export mkdir/remove/rename
+- **Status**: ✅ COMPLETE - libc now exports mkdir/remove/rename/unlink
 - **Dependencies**: #193 ✅, #60 ✅, #65 ✅
 - **Scope**:
   - mkdir() for directory creation (M_MakeDirectory in Doom)
   - remove() for file deletion
   - rename() for file moves
-  - unlink() for file deletion (if not already present)
+  - unlink()/rmdir() for file deletion paths
   - Return ENOSYS if kernel syscall not available
 - **Impact**: Doom save game management, config file handling
 - **Priority**: HIGH - needed for save games to work

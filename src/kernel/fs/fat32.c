@@ -2149,6 +2149,96 @@ static int fat32_remove_directory_path(fat32_fs_t* fs, const char* path) {
   return fat32_remove_path(fs, path, true, true);
 }
 
+static int fat32_rename_path(fat32_fs_t* fs, const char* old_path, const char* new_path) {
+  if(fs == NULL || old_path == NULL || new_path == NULL) {
+    return -EINVAL;
+  }
+
+  if(strcmp(old_path, new_path) == 0) {
+    return 0;
+  }
+
+  char src_parent[256];
+  char src_name[256];
+  if(!fat32_split_path(old_path, src_parent, sizeof(src_parent), src_name, sizeof(src_name))) {
+    return -EINVAL;
+  }
+
+  if(src_name[0] == '\0') {
+    return -EINVAL;
+  }
+
+  fat32_dir_entry_info_t src_parent_info;
+  if(!fat32_traverse_path(fs, src_parent, &src_parent_info, true)) {
+    return -ENOENT;
+  }
+
+  uint32_t src_parent_cluster = src_parent_info.first_cluster ? src_parent_info.first_cluster : fs->root_cluster;
+
+  fat32_dir_entry_info_t src_info;
+  if(!fat32_find_entry(fs, src_parent_cluster, src_name, &src_info, false)) {
+    return -ENOENT;
+  }
+
+  if(src_info.is_directory) {
+    return -EISDIR;
+  }
+
+  char dst_parent[256];
+  char dst_name[256];
+  if(!fat32_split_path(new_path, dst_parent, sizeof(dst_parent), dst_name, sizeof(dst_name))) {
+    return -EINVAL;
+  }
+
+  if(dst_name[0] == '\0') {
+    return -EINVAL;
+  }
+
+  fat32_dir_entry_info_t dst_parent_info;
+  if(!fat32_traverse_path(fs, dst_parent, &dst_parent_info, true)) {
+    return -ENOENT;
+  }
+
+  uint32_t dst_parent_cluster = dst_parent_info.first_cluster ? dst_parent_info.first_cluster : fs->root_cluster;
+
+  if(src_parent_cluster == dst_parent_cluster && strcmp(src_name, dst_name) == 0) {
+    return 0;
+  }
+
+  fat32_dir_entry_info_t dst_existing;
+  if(fat32_find_entry(fs, dst_parent_cluster, dst_name, &dst_existing, false)) {
+    if(dst_existing.is_directory) {
+      return -EISDIR;
+    }
+
+    int remove_rc = fat32_remove_file_path(fs, new_path);
+    if(remove_rc != 0) {
+      return remove_rc;
+    }
+  }
+
+  fat32_dir_entry_info_t dst_info;
+  if(!fat32_create_entry(fs, new_path, true, false, &dst_info)) {
+    return -EIO;
+  }
+
+  if(!fat32_remove_entry_internal(fs, src_parent_cluster, &src_info)) {
+    fat32_remove_entry_internal(fs, dst_parent_cluster, &dst_info);
+    return -EIO;
+  }
+
+  if(!fat32_update_dir_entry(fs, &dst_info, src_info.first_cluster, src_info.size)) {
+    fat32_dir_entry_info_t restore_info;
+    if(fat32_create_entry(fs, old_path, true, false, &restore_info)) {
+      fat32_update_dir_entry(fs, &restore_info, src_info.first_cluster, src_info.size);
+    }
+    fat32_remove_entry_internal(fs, dst_parent_cluster, &dst_info);
+    return -EIO;
+  }
+
+  return 0;
+}
+
 int fat32_open_adapter(void* fs_ctx, const char* path, int flags, file_t** out_file) {
   (void)out_file;
   if(fs_ctx == NULL || path == NULL) {
@@ -2166,10 +2256,104 @@ int fat32_unlink_adapter(void* fs_ctx, const char* path) {
   fs_mount_t* mount = (fs_mount_t*)fs_ctx;
   fat32_fs_t* fs = &mount->fat32;
 
-  int rc = fat32_remove_file_path(fs, path);
-  if(rc == -EISDIR) {
+  const char* effective = path;
+  if(effective[0] == '/' && effective[1] != '\0') {
+    effective++;
+  }
+
+  int rc = fat32_remove_file_path(fs, effective);
+  if(rc == -ENOENT && effective != path) {
+    rc = fat32_remove_file_path(fs, path);
+  }
+  return rc;
+}
+
+int fat32_rmdir_adapter(void* fs_ctx, const char* path) {
+  if(fs_ctx == NULL || path == NULL) {
+    return -EINVAL;
+  }
+
+  fs_mount_t* mount = (fs_mount_t*)fs_ctx;
+  fat32_fs_t* fs = &mount->fat32;
+
+  const char* effective = path;
+  if(effective[0] == '/' && effective[1] != '\0') {
+    effective++;
+  }
+
+  int rc = fat32_remove_directory_path(fs, effective);
+  if(rc == -ENOENT && effective != path) {
     rc = fat32_remove_directory_path(fs, path);
   }
+  return rc;
+}
+
+int fat32_mkdir_adapter(void* fs_ctx, const char* path, bool exclusive) {
+  if(fs_ctx == NULL || path == NULL) {
+    return -EINVAL;
+  }
+
+  fs_mount_t* mount = (fs_mount_t*)fs_ctx;
+  fat32_fs_t* fs = &mount->fat32;
+
+  const char* effective = path;
+  if(effective[0] == '/' && effective[1] != '\0') {
+    effective++;
+  }
+
+  char parent[256];
+  char name[256];
+  if(!fat32_split_path(effective, parent, sizeof(parent), name, sizeof(name))) {
+    return -EINVAL;
+  }
+
+  if(name[0] == '\0') {
+    return -EINVAL;
+  }
+
+  fat32_dir_entry_info_t dir_info;
+  if(!fat32_traverse_path(fs, parent, &dir_info, true)) {
+    return -ENOENT;
+  }
+
+  fat32_dir_entry_info_t existing;
+  if(fat32_find_entry(fs, dir_info.first_cluster, name, &existing, false)) {
+    return -EEXIST;
+  }
+
+  if(fat32_create_entry(fs, effective, exclusive, true, NULL)) {
+    return 0;
+  }
+
+  if(effective != path) {
+    if(fat32_create_entry(fs, path, exclusive, true, NULL)) {
+      return 0;
+    }
+  }
+
+  return -EIO;
+}
+
+int fat32_rename_adapter(void* fs_ctx, const char* old_path, const char* new_path) {
+  if(fs_ctx == NULL || old_path == NULL || new_path == NULL) {
+    return -EINVAL;
+  }
+
+  fs_mount_t* mount = (fs_mount_t*)fs_ctx;
+  fat32_fs_t* fs = &mount->fat32;
+
+  int rc = fat32_rename_path(fs, old_path, new_path);
+  if(rc == -ENOENT && old_path[0] == '/' && old_path[1] != '\0') {
+    rc = fat32_rename_path(fs, old_path + 1, new_path);
+  }
+  if(rc == -ENOENT && new_path[0] == '/' && new_path[1] != '\0') {
+    rc = fat32_rename_path(fs, old_path, new_path + 1);
+  }
+  if(rc == -ENOENT && old_path[0] == '/' && old_path[1] != '\0'
+     && new_path[0] == '/' && new_path[1] != '\0') {
+    rc = fat32_rename_path(fs, old_path + 1, new_path + 1);
+  }
+
   return rc;
 }
 

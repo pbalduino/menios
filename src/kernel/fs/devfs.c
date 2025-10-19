@@ -199,6 +199,9 @@ static const vfs_fs_driver_t devfs_driver = {
   .stat = NULL,
   .open = devfs_open,
   .unlink = devfs_unlink,
+  .mkdir = NULL,
+  .rmdir = NULL,
+  .rename = NULL,
   .destroy = devfs_destroy,
 };
 

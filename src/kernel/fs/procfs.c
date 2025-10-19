@@ -241,6 +241,9 @@ static const vfs_fs_driver_t procfs_driver = {
   .stat = NULL,
   .open = procfs_open,
   .unlink = procfs_unlink,
+  .mkdir = NULL,
+  .rmdir = NULL,
+  .rename = NULL,
   .destroy = procfs_destroy,
 };
 

@@ -72,8 +72,16 @@ static const vfs_fs_driver_t fake_driver = {
   .list = fake_list,
   .read = NULL,
   .read_all = fake_read_all,
+  .write = NULL,
+  .write_all = NULL,
+  .create_file = NULL,
+  .truncate_file = NULL,
+  .stat = NULL,
   .open = NULL,
   .unlink = NULL,
+  .mkdir = NULL,
+  .rmdir = NULL,
+  .rename = NULL,
   .destroy = NULL,
 };
 

@@ -29,6 +29,9 @@ typedef struct vfs_fs_driver_t {
   bool (*stat)(void* fs_ctx, const char* path, size_t* out_size);
   int (*open)(void* fs_ctx, const char* path, int flags, file_t** out_file);
   int (*unlink)(void* fs_ctx, const char* path);
+  int (*mkdir)(void* fs_ctx, const char* path, bool exclusive);
+  int (*rmdir)(void* fs_ctx, const char* path);
+  int (*rename)(void* fs_ctx, const char* old_path, const char* new_path);
   void (*destroy)(void* fs_ctx);
 } vfs_fs_driver_t;
 
@@ -42,6 +45,10 @@ bool vfs_read_all(const char* path, void** out_buffer, size_t* out_size);
 int vfs_open(const char* path, int flags, file_t** out_file);
 bool vfs_build_absolute_path(const char* base, const char* path, char* out, size_t out_size);
 bool vfs_path_is_directory(const char* path);
+int vfs_unlink(const char* path);
+int vfs_rmdir(const char* path);
+int vfs_mkdir(const char* path);
+int vfs_rename(const char* old_path, const char* new_path);
 
 bool vfs_mount_fat32_root(block_device_t* device);
 

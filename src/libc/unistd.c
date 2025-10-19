@@ -160,6 +160,30 @@ char* getcwd(char* buffer, size_t size) {
   return (char*)rc;
 }
 
+int unlink(const char* path) {
+  long rc = __menios_syscall1(SYS_UNLINK, (long)path);
+
+  if(rc < 0) {
+    errno = (int)(-rc);
+    return -1;
+  }
+
+  errno = 0;
+  return 0;
+}
+
+int rmdir(const char* path) {
+  long rc = __menios_syscall1(SYS_RMDIR, (long)path);
+
+  if(rc < 0) {
+    errno = (int)(-rc);
+    return -1;
+  }
+
+  errno = 0;
+  return 0;
+}
+
 int brk(void* addr) {
   (void)addr;
   errno = ENOSYS;

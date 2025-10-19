@@ -102,6 +102,10 @@ static uint64_t syscall_stdin_poll_handler(syscall_frame_t* frame);
 static uint64_t syscall_input_event_handler(syscall_frame_t* frame);
 static uint64_t syscall_chdir_handler(syscall_frame_t* frame);
 static uint64_t syscall_getcwd_handler(syscall_frame_t* frame);
+static uint64_t syscall_unlink_handler(syscall_frame_t* frame);
+static uint64_t syscall_mkdir_handler(syscall_frame_t* frame);
+static uint64_t syscall_rmdir_handler(syscall_frame_t* frame);
+static uint64_t syscall_rename_handler(syscall_frame_t* frame);
 static uint64_t syscall_proc_kill_handler(syscall_frame_t* frame);
 static uint64_t syscall_kill_handler(syscall_frame_t* frame);
 static uint64_t syscall_sigaction_handler(syscall_frame_t* frame);
@@ -730,6 +734,10 @@ void syscall_init(void) {
   syscall_register(SYS_SHMCTL, syscall_shmctl_handler);
   syscall_register(SYS_CHDIR, syscall_chdir_handler);
   syscall_register(SYS_GETCWD, syscall_getcwd_handler);
+  syscall_register(SYS_UNLINK, syscall_unlink_handler);
+  syscall_register(SYS_MKDIR, syscall_mkdir_handler);
+  syscall_register(SYS_RMDIR, syscall_rmdir_handler);
+  syscall_register(SYS_RENAME, syscall_rename_handler);
   syscall_register(SYS_GETPAGESIZE, syscall_getpagesize_handler);
   syscall_register(SYS_TIME, syscall_time_handler);
   syscall_register(SYS_GETTIMEOFDAY, syscall_gettimeofday_handler);
@@ -1482,6 +1490,142 @@ static uint64_t syscall_getcwd_handler(syscall_frame_t* frame) {
 
   memcpy(user_buffer, current->cwd, needed);
   frame->rax = (uint64_t)user_buffer;
+  return frame->rax;
+}
+
+static uint64_t syscall_unlink_handler(syscall_frame_t* frame) {
+  if(current == NULL) {
+    frame->rax = (uint64_t)(-EINVAL);
+    return frame->rax;
+  }
+
+  const char* user_path = (const char*)frame->rdi;
+  if(user_path == NULL) {
+    frame->rax = (uint64_t)(-EFAULT);
+    return frame->rax;
+  }
+
+  char path[SYSCALL_PATH_MAX];
+  if(!copy_user_string(user_path, path, sizeof(path))) {
+    frame->rax = (uint64_t)(-EFAULT);
+    return frame->rax;
+  }
+
+  char absolute[VFS_PATH_MAX];
+  if(!vfs_build_absolute_path(current->cwd, path, absolute, sizeof(absolute))) {
+    frame->rax = (uint64_t)(-ENAMETOOLONG);
+    return frame->rax;
+  }
+
+  int rc = vfs_unlink(absolute);
+  frame->rax = (uint64_t)rc;
+  return frame->rax;
+}
+
+static uint64_t syscall_mkdir_handler(syscall_frame_t* frame) {
+  if(current == NULL) {
+    frame->rax = (uint64_t)(-EINVAL);
+    return frame->rax;
+  }
+
+  const char* user_path = (const char*)frame->rdi;
+  (void)frame->rsi; // mode currently unused
+
+  if(user_path == NULL) {
+    frame->rax = (uint64_t)(-EFAULT);
+    return frame->rax;
+  }
+
+  char path[SYSCALL_PATH_MAX];
+  if(!copy_user_string(user_path, path, sizeof(path))) {
+    frame->rax = (uint64_t)(-EFAULT);
+    return frame->rax;
+  }
+
+  if(path[0] == '\0') {
+    frame->rax = (uint64_t)(-EINVAL);
+    return frame->rax;
+  }
+
+  char absolute[VFS_PATH_MAX];
+  if(!vfs_build_absolute_path(current->cwd, path, absolute, sizeof(absolute))) {
+    frame->rax = (uint64_t)(-ENAMETOOLONG);
+    return frame->rax;
+  }
+
+  int rc = vfs_mkdir(absolute);
+  frame->rax = (uint64_t)rc;
+  return frame->rax;
+}
+
+static uint64_t syscall_rmdir_handler(syscall_frame_t* frame) {
+  if(current == NULL) {
+    frame->rax = (uint64_t)(-EINVAL);
+    return frame->rax;
+  }
+
+  const char* user_path = (const char*)frame->rdi;
+  if(user_path == NULL) {
+    frame->rax = (uint64_t)(-EFAULT);
+    return frame->rax;
+  }
+
+  char path[SYSCALL_PATH_MAX];
+  if(!copy_user_string(user_path, path, sizeof(path))) {
+    frame->rax = (uint64_t)(-EFAULT);
+    return frame->rax;
+  }
+
+  char absolute[VFS_PATH_MAX];
+  if(!vfs_build_absolute_path(current->cwd, path, absolute, sizeof(absolute))) {
+    frame->rax = (uint64_t)(-ENAMETOOLONG);
+    return frame->rax;
+  }
+
+  int rc = vfs_rmdir(absolute);
+  frame->rax = (uint64_t)rc;
+  return frame->rax;
+}
+
+static uint64_t syscall_rename_handler(syscall_frame_t* frame) {
+  if(current == NULL) {
+    frame->rax = (uint64_t)(-EINVAL);
+    return frame->rax;
+  }
+
+  const char* old_user = (const char*)frame->rdi;
+  const char* new_user = (const char*)frame->rsi;
+  if(old_user == NULL || new_user == NULL) {
+    frame->rax = (uint64_t)(-EFAULT);
+    return frame->rax;
+  }
+
+  char old_path[SYSCALL_PATH_MAX];
+  if(!copy_user_string(old_user, old_path, sizeof(old_path))) {
+    frame->rax = (uint64_t)(-EFAULT);
+    return frame->rax;
+  }
+
+  char new_path[SYSCALL_PATH_MAX];
+  if(!copy_user_string(new_user, new_path, sizeof(new_path))) {
+    frame->rax = (uint64_t)(-EFAULT);
+    return frame->rax;
+  }
+
+  char old_absolute[VFS_PATH_MAX];
+  if(!vfs_build_absolute_path(current->cwd, old_path, old_absolute, sizeof(old_absolute))) {
+    frame->rax = (uint64_t)(-ENAMETOOLONG);
+    return frame->rax;
+  }
+
+  char new_absolute[VFS_PATH_MAX];
+  if(!vfs_build_absolute_path(current->cwd, new_path, new_absolute, sizeof(new_absolute))) {
+    frame->rax = (uint64_t)(-ENAMETOOLONG);
+    return frame->rax;
+  }
+
+  int rc = vfs_rename(old_absolute, new_absolute);
+  frame->rax = (uint64_t)rc;
   return frame->rax;
 }
 

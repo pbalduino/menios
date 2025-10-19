@@ -135,9 +135,10 @@ USERLIBC_SOURCES = \
 	src/libc/mman.c \
 	src/libc/sysv_ipc.c \
 	src/libc/string.c \
-		src/libc/time.c \
+	src/libc/time.c \
 	src/libc/signal.c \
-	src/libc/unistd.c
+	src/libc/unistd.c \
+	src/libc/stat.c
 
 CRT_SOURCES = user/crt/crt0.S
 

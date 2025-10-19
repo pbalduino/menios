@@ -50,6 +50,10 @@ extern "C" {
 #define SYS_ALARM         89
 #define SYS_SIGRETURN     90
 #define SYS_INPUT_EVENT   91
+#define SYS_UNLINK        92
+#define SYS_MKDIR         93
+#define SYS_RMDIR         94
+#define SYS_RENAME        95
 
 #ifdef __cplusplus
 }

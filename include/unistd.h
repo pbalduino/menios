@@ -34,6 +34,8 @@ int brk(void *addr);
 void *sbrk(intptr_t increment);
 
 int open(const char* path, int flags, ...);
+int unlink(const char* path);
+int rmdir(const char* path);
 
 #ifdef __cplusplus
 }

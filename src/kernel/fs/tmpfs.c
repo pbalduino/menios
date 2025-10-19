@@ -571,11 +571,14 @@ static const vfs_fs_driver_t tmpfs_driver = {
   .read_all = tmpfs_read_all,
   .write = tmpfs_driver_write,
   .write_all = tmpfs_driver_write_all,
-  .open = tmpfs_open,
-  .unlink = tmpfs_unlink,
   .create_file = NULL,
   .truncate_file = NULL,
   .stat = NULL,
+  .open = tmpfs_open,
+  .unlink = tmpfs_unlink,
+  .mkdir = NULL,
+  .rmdir = NULL,
+  .rename = NULL,
   .destroy = tmpfs_destroy,
 };
 

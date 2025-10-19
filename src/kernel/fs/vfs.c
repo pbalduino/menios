@@ -16,6 +16,9 @@
 
 extern int fat32_open_adapter(void* fs_ctx, const char* path, int flags, file_t** out_file);
 extern int fat32_unlink_adapter(void* fs_ctx, const char* path);
+extern int fat32_mkdir_adapter(void* fs_ctx, const char* path, bool exclusive);
+extern int fat32_rmdir_adapter(void* fs_ctx, const char* path);
+extern int fat32_rename_adapter(void* fs_ctx, const char* old_path, const char* new_path);
 
 typedef struct vfs_mount_entry_t {
   char                        path[128];
@@ -837,6 +840,140 @@ int vfs_open(const char* path, int flags, file_t** out_file) {
   return vfs_open_buffered(driver, fs_ctx, relative, flags, read_only, out_file);
 }
 
+int vfs_unlink(const char* path) {
+  if(path == NULL) {
+    return -EINVAL;
+  }
+
+  const vfs_fs_driver_t* driver = NULL;
+  void* fs_ctx = NULL;
+  char relative[VFS_PATH_MAX];
+  bool read_only = true;
+
+  if(!vfs_resolve(path, &driver, &fs_ctx, relative, sizeof(relative), &read_only)) {
+    return -ENOENT;
+  }
+
+  if(read_only) {
+    return -EROFS;
+  }
+
+  if(driver->unlink == NULL) {
+    return -ENOSYS;
+  }
+
+  return driver->unlink(fs_ctx, relative);
+}
+
+int vfs_rmdir(const char* path) {
+  if(path == NULL) {
+    return -EINVAL;
+  }
+
+  const vfs_fs_driver_t* driver = NULL;
+  void* fs_ctx = NULL;
+  char relative[VFS_PATH_MAX];
+  bool read_only = true;
+
+  if(!vfs_resolve(path, &driver, &fs_ctx, relative, sizeof(relative), &read_only)) {
+    return -ENOENT;
+  }
+
+  if(read_only) {
+    return -EROFS;
+  }
+
+  if(driver->rmdir == NULL) {
+    return -ENOSYS;
+  }
+
+  return driver->rmdir(fs_ctx, relative);
+}
+
+int vfs_mkdir(const char* path) {
+  if(path == NULL) {
+    return -EINVAL;
+  }
+
+  const vfs_fs_driver_t* driver = NULL;
+  void* fs_ctx = NULL;
+  char relative[VFS_PATH_MAX];
+  bool read_only = true;
+
+  if(!vfs_resolve(path, &driver, &fs_ctx, relative, sizeof(relative), &read_only)) {
+    return -ENOENT;
+  }
+
+  if(read_only) {
+    return -EROFS;
+  }
+
+  if(driver->mkdir == NULL) {
+    return -ENOSYS;
+  }
+
+  if(vfs_path_is_directory(path)) {
+    return -EEXIST;
+  }
+
+  file_t* existing = NULL;
+  int open_rc = vfs_open(path, O_RDONLY, &existing);
+  if(open_rc >= 0) {
+    if(existing != NULL) {
+      file_unref(existing);
+    }
+    return -EEXIST;
+  }
+
+  if(existing != NULL) {
+    file_unref(existing);
+  }
+
+  return driver->mkdir(fs_ctx, relative, true);
+}
+
+int vfs_rename(const char* old_path, const char* new_path) {
+  if(old_path == NULL || new_path == NULL) {
+    return -EINVAL;
+  }
+
+  if(strcmp(old_path, new_path) == 0) {
+    return 0;
+  }
+
+  const vfs_fs_driver_t* old_driver = NULL;
+  void* old_ctx = NULL;
+  char old_relative[VFS_PATH_MAX];
+  bool old_read_only = true;
+
+  if(!vfs_resolve(old_path, &old_driver, &old_ctx, old_relative, sizeof(old_relative), &old_read_only)) {
+    return -ENOENT;
+  }
+
+  const vfs_fs_driver_t* new_driver = NULL;
+  void* new_ctx = NULL;
+  char new_relative[VFS_PATH_MAX];
+  bool new_read_only = true;
+
+  if(!vfs_resolve(new_path, &new_driver, &new_ctx, new_relative, sizeof(new_relative), &new_read_only)) {
+    return -ENOENT;
+  }
+
+  if(old_driver != new_driver || old_ctx != new_ctx) {
+    return -EXDEV;
+  }
+
+  if(old_read_only || new_read_only) {
+    return -EROFS;
+  }
+
+  if(old_driver->rename == NULL) {
+    return -ENOSYS;
+  }
+
+  return old_driver->rename(old_ctx, old_relative, new_relative);
+}
+
 static bool vfs_directory_probe_iter(const fs_dir_entry_t* entry, void* context) {
   (void)entry;
   (void)context;
@@ -962,6 +1099,9 @@ static const vfs_fs_driver_t fat32_driver = {
   .stat = fat32_stat_adapter,
   .open = fat32_open_adapter,
   .unlink = fat32_unlink_adapter,
+  .mkdir = fat32_mkdir_adapter,
+  .rmdir = fat32_rmdir_adapter,
+  .rename = fat32_rename_adapter,
   .destroy = fat32_destroy_adapter,
 };
 

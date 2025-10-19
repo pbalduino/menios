@@ -10,6 +10,8 @@
 #include <sys/errno.h>
 #include <unistd.h>
 #include <fcntl.h>
+#include <menios/syscall.h>
+#include <menios/syscall_user.h>
 
 enum {
   FILE_FLAG_CAN_READ   = 1u << 0,
@@ -613,6 +615,41 @@ FILE* freopen(const char* filename, const char* mode, FILE* stream) {
   }
 
   return stream;
+}
+
+int remove(const char* path) {
+  if(path == NULL) {
+    errno = EINVAL;
+    return -1;
+  }
+
+  if(unlink(path) == 0) {
+    return 0;
+  }
+
+  if(errno == EISDIR) {
+    if(rmdir(path) == 0) {
+      return 0;
+    }
+  }
+
+  return -1;
+}
+
+int rename(const char* oldpath, const char* newpath) {
+  if(oldpath == NULL || newpath == NULL) {
+    errno = EINVAL;
+    return -1;
+  }
+
+  long rc = __menios_syscall2(SYS_RENAME, (long)oldpath, (long)newpath);
+  if(rc < 0) {
+    errno = (int)(-rc);
+    return -1;
+  }
+
+  errno = 0;
+  return 0;
 }
 
 typedef struct {
