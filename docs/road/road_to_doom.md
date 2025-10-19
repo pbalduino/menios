@@ -273,16 +273,16 @@ Port layer, graphics, input, and build integration for running Doom:
 - **Current Gap**: `src/kernel/file.c:507` routes through `fb_putchar` only
 - **Impact**: DG_DrawFrame() needs raw scanline blitting to video memory
 
-#### **Real Key Events Delivery** (Issue #302)
-- **Status**: TODO - PS/2 driver only reports ASCII key-down
+#### **Real Key Events Delivery** (Issue #302) ✅ **COMPLETE**
+- ✅ **Status**: Complete - PS/2 driver now reports both press and release events
 - **Dependencies**: #32 ✅, #220 ✅
-- **Scope**:
-  - Report both key press AND release events with scan codes
-  - Expose /dev/input/kbd0 or similar device for raw events
-  - Track modifier key state (Shift, Ctrl, Alt)
-  - Handle extended scan codes (0xE0 prefix for arrows, etc.)
-- **Current Gap**: `src/kernel/driver/ps2kb/ps2kb.c:245-300` only pushes ASCII on key-down
-- **Impact**: Doom input loop (app/doom/i_input.c:286-319) requires press/release pairs
+- **Implemented**:
+  - Both key press AND release events with scan codes
+  - Scan codes preserved and accessible to userland
+  - Modifier key state tracking (Shift, Ctrl, Alt)
+  - Extended scan codes (0xE0 prefix) handled correctly
+  - Event-based interface for keyboard input
+- **Impact**: Doom input loop can now properly handle key up/down events for movement and controls
 
 #### **scanf Family Implementation** (Issue #304) ✅ **COMPLETE**
 - ✅ **Status**: Complete scanf family implementation with C99 format support
@@ -296,15 +296,15 @@ Port layer, graphics, input, and build integration for running Doom:
 
 #### **Wire Up meniOS Port Layer** (Issue #300)
 - **Status**: TODO - `app/doom/doomgeneric_menios.c:1` is empty
-- **Dependencies**: #301, #302, #287 ✅, #240 ✅, #304 ✅, #305-#310 (libc gaps)
+- **Dependencies**: #301, #302 ✅, #287 ✅, #240 ✅, #304 ✅, #305-#310 (libc gaps)
 - **Scope**:
   - Implement DG_Init() to initialize graphics + input
   - Implement DG_DrawFrame() to blit frames using mmap'd framebuffer
-  - Implement DG_GetKey() to poll keyboard events
+  - Implement DG_GetKey() to poll keyboard events (#302 ✅ provides events)
   - Implement DG_SleepMs() using nanosleep() (#287 ✅)
   - Implement DG_GetTicksMs() using gettimeofday() (#240 ✅)
   - Implement main() to drive doomgeneric_Tick() game loop
-- **Current Gap**: Port layer callbacks not implemented, libc gaps block linking
+- **Current Gap**: Port layer callbacks not implemented, #301 and libc gaps block completion
 - **Impact**: Doom engine needs platform-specific glue code + complete libc
 
 #### **Doom meniOS-Specific Build System** (Issue #311)
@@ -473,7 +473,7 @@ The solid foundation work (memory management, scheduling, synchronization) now e
 ## 🎯 **GitHub Milestone Tracking**
 
 The Doom milestone on GitHub now tracks 36 issues:
-- **Status**: 15/36 complete (41.7%)
+- **Status**: 16/36 complete (44.4%)
 - **Completed**:
   - Graphics & Input: #31 ✅, #32 ✅
   - Memory: #95 ✅
@@ -482,14 +482,14 @@ The Doom milestone on GitHub now tracks 36 issues:
   - IPC - Signals: #103 ✅ (parent), #210 ✅, #211 ✅, #212 ✅, #213 ✅
   - IPC - Shared Memory: #215 ✅, #216 ✅, #217 ✅, #218 ✅, #219 ✅ (ALL COMPLETE!)
   - IPC - Other: #220 ✅ (ioctl), #221 ✅ (fast syscalls)
-  - Doom Integration: #304 ✅ (scanf family - moved from GCC milestone)
+  - Doom Integration: #302 ✅ (real key events), #304 ✅ (scanf family - moved from GCC milestone)
 - **New Issues Created (2025-10-18)**:
   - libc Gaps: #305 (file stdio), #306 (filesystem helpers), #307 (environment access), #308 (string utilities), #309 (formatted I/O), #310 (math library)
   - Build System: #311 (Doom Makefile.menios), #312 (build integration)
-  - Doom Integration: #300 (port layer), #301 (framebuffer mmap), #302 (key events), #303 (old build - superseded)
-- **In Progress**: Threading (#109-#113), Signals (#214), Audio (#33), Mouse (#143), Doom Integration (#300-#303, #311-#312)
-- **Ready to Start NOW**: #305-#310 (libc gaps - all dependencies met!), #301, #302 (Doom integration)
-- **Blocked**: #300 (port layer - blocked on #305-#310), #311 (build - blocked on #305-#310, #300), #312 (integration - blocked on #311)
+  - Doom Integration: #300 (port layer), #301 (framebuffer mmap), #303 (old build - superseded)
+- **In Progress**: Threading (#109-#113), Signals (#214), Audio (#33), Mouse (#143), Doom Integration (#300-#301, #311-#312)
+- **Ready to Start NOW**: #305-#310 (libc gaps - all dependencies met!), #301 (framebuffer mmap)
+- **Blocked**: #300 (port layer - blocked on #301, #305-#310), #311 (build - blocked on #305-#310, #300), #312 (integration - blocked on #311)
 - **Removed**: #105 (Unix sockets), #106 (microkernel IPC), #107 (capabilities) - not required for Doom
 
 **Recent Major Achievements**:
@@ -498,6 +498,7 @@ The Doom milestone on GitHub now tracks 36 issues:
 - ✅ Time management (#286, #287, #288, #290) - Complete timing system for game loop!
 - ✅ Fast syscalls (#221) - High-performance system calls with 64-bit returns!
 - ✅ scanf family (#304) - Config file parsing fully implemented!
+- ✅ Real key events (#302) - Keyboard input with scan codes and up/down events!
 - 🆕 libc gaps identified (#305-#310) - Ready to implement immediately!
 
 See [MILESTONES.md](../MILESTONES.md) for detailed milestone tracking across all three major goals (Mosh, GCC, Doom).

@@ -202,7 +202,7 @@ digraph IssueDependencies {
 
         issue300 [label="#300: meniOS port layer\ndoomgeneric_menios.c", fillcolor="#FFB6E8"];
         issue301 [label="#301: Framebuffer mmap\n/dev/fb0 pixel access", fillcolor="#FFB6E8"];
-        issue302 [label="#302: Real key events\nscan codes, up/down", fillcolor="#FFB6E8"];
+        issue302 [label="#302: Real key events\nscan codes, up/down", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED
         issue303 [label="#303: Doom build\nintegration", fillcolor="#FFB6E8"];
     }
 

@@ -176,7 +176,7 @@ This document tracks the three major milestones for meniOS development.
 **Goal**: Run Doom (1993) in userland on meniOS
 **GitHub Milestone**: [Doom](https://github.com/pbalduino/menios/milestone/3)
 
-**Status**: 15/36 complete (41.7%)
+**Status**: 16/36 complete (44.4%)
 
 **Note**: Depends on **Buddy Allocator milestone** for efficient memory management under game engine load.
 
@@ -199,7 +199,7 @@ This document tracks the three major milestones for meniOS development.
 #### Doom Integration (7 issues)
 - [ ] #300 - Wire up meniOS port layer (doomgeneric_menios.c)
 - [ ] #301 - Expose pixel-addressable framebuffer (/dev/fb0 mmap)
-- [ ] #302 - Deliver real key events (scan codes, key up/down)
+- [x] #302 - Deliver real key events (scan codes, key up/down) ✅
 - [ ] #303 - Build integration for Doom userland binary
 - [x] #304 - scanf family (sscanf/scanf/fscanf) implementation ✅
 - [ ] #311 - Doom meniOS-specific build system (Makefile.menios)
@@ -246,7 +246,7 @@ This document tracks the three major milestones for meniOS development.
 - #213 requires #212 ✅ COMPLETE
 - #214 requires #213, #109
 - #301 requires #31 ✅, #89 ✅, #220 ✅ (framebuffer infrastructure)
-- #302 requires #32 ✅, #220 ✅ (input infrastructure)
+- #302 requires #32 ✅, #220 ✅ (input infrastructure) ✅ COMPLETE
 - #305 requires #96 ✅, #189 ✅, #294 ✅, #193 ✅ (file stdio)
 - #306 requires #193 ✅, #60 ✅, #65 ✅ (filesystem helpers)
 - #307 requires #148 ✅, #193 ✅ (environment access)
@@ -255,11 +255,11 @@ This document tracks the three major milestones for meniOS development.
 - #310 requires #193 ✅ (math library)
 - #311 requires #305, #306, #307, #308, #309, #310, #300 (Doom build system)
 - #312 requires #311, #192 ✅, #193 ✅, #195 ✅, #29 ✅ (build integration)
-- #300 requires #301, #302, #287 ✅, #240 ✅, #288 ✅, #304 ✅, #305-#310 (Doom port layer needs graphics + input + timing + libc)
+- #300 requires #301, #302 ✅, #287 ✅, #240 ✅, #288 ✅, #304 ✅, #305-#310 (Doom port layer needs graphics + input + timing + libc)
 - #303 requires #312 (old build integration - superseded by #311/#312)
 - #304 requires #193 ✅ (libc foundation COMPLETE)
 
-**Progress**: IPC infrastructure complete - Pipes ✅, Signals (5/6), Shared Memory ✅! FAT32 write support ✅ complete! scanf family (#304) ✅ complete! New libc gaps identified for Doom (#305-#310). Doom build system planned (#311-#312). Ready to implement libc gaps!
+**Progress**: IPC infrastructure complete - Pipes ✅, Signals (5/6), Shared Memory ✅! FAT32 write support ✅ complete! scanf family (#304) ✅ complete! Real key events (#302) ✅ complete! New libc gaps identified for Doom (#305-#310). Doom build system planned (#311-#312). Ready to implement libc gaps!
 
 ---
 
@@ -295,12 +295,12 @@ This document tracks the three major milestones for meniOS development.
 ## 📈 Overall Progress
 
 - **Total Issues Across Milestones**: 91 issues
-- **Completed**: 72 issues (79.1%)
-- **In Progress**: 19 issues
+- **Completed**: 73 issues (80.2%)
+- **In Progress**: 18 issues
 - **Ready to Start**: 11 issues (no dependencies: #109, #190, #191, #305-#310)
-- **Recently Completed**: #286-#293 ✅ (time management & FAT32 writes), #304 ✅ (scanf family)
+- **Recently Completed**: #286-#293 ✅ (time management & FAT32 writes), #304 ✅ (scanf family), #302 ✅ (real key events)
 - **Recently Created**: #305-#312 ✅ (libc gaps & Doom build system)
-- **Next Up**: libc gaps (#305-#310) ready to start! TCC/binutils (#190, #191) ready! Doom integration (#300-#303) blocked on libc!
+- **Next Up**: libc gaps (#305-#310) ready to start! TCC/binutils (#190, #191) ready! Doom port layer (#300) partially unblocked!
 
 ## 🚀 Immediate Next Steps
 
@@ -330,10 +330,10 @@ All phases finished! Core buddy allocator implementation (Phase 1 ✅), critical
 3. **Doom Milestone - Threading** (Ready to implement):
    - #109 - pthread API (no dependencies)
 
-4. **Doom Milestone - Integration** (Blocked on libc gaps):
-   - #301 - Pixel-addressable framebuffer (infrastructure complete)
-   - #302 - Real key events (infrastructure complete)
-   - #300 - Doom port layer (blocked on #305-#310)
+4. **Doom Milestone - Integration** (Partially blocked on libc gaps):
+   - #301 - Pixel-addressable framebuffer (infrastructure complete, ready to start)
+   - #302 - Real key events ✅ COMPLETE!
+   - #300 - Doom port layer (blocked on #301, #305-#310)
    - #311 - Doom build system (blocked on #305-#310, #300)
    - #312 - Build integration (blocked on #311)
 
@@ -566,10 +566,17 @@ Recommended completion order for maximum impact:
   - Doom milestone: 15/36 complete (41.7%)
   - Total project issues: 91 (was 83)
   - Overall progress: 72/91 issues complete (79.1%)
+- **2025-10-19**: Closed #302 (Real key events - scan codes, key up/down) ✅
+  - PS/2 driver now reports both key press and release events
+  - Scan codes preserved and accessible
+  - Extended scan codes (0xE0 prefix) handled correctly
+  - Doom input handling unblocked
+  - Doom milestone: 16/36 complete (44.4%)
+  - Overall progress: 73/91 issues complete (80.2%)
 
 ---
 
-**Last Updated**: 2025-10-18
+**Last Updated**: 2025-10-19
 **See Also**:
 - [Road to Shell](road/road_to_shell.md)
 - [Road to Buddy Allocator](road/road_to_buddy_allocator.md)
