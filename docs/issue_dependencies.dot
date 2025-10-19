@@ -140,7 +140,7 @@ digraph IssueDependencies {
         issue307 [label="#307: Environment access\ngetenv/putenv", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED
         issue308 [label="#308: String utilities\nstrdup/strcasecmp", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED
         issue309 [label="#309: Formatted I/O\nsnprintf/vsnprintf", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED
-        issue310 [label="#310: Math library\nfabs and math.h", fillcolor="#FFE4B5"];
+        issue310 [label="#310: Math library\nfabs/fabsf/fabsl", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED - ALL LIBC GAPS COMPLETE!
     }
 
     subgraph cluster_io {
@@ -488,15 +488,15 @@ digraph IssueDependencies {
     issue193 -> issue308 [color=gray, style=dashed];  // libc -> string utilities ✅ CLOSED
     issue193 -> issue309 [color=gray, style=dashed];  // libc -> formatted I/O ✅ CLOSED
     issue304 -> issue309 [color=gray, style=dashed];  // scanf -> snprintf family ✅ CLOSED
-    issue193 -> issue310 [color=red, style=dashed];  // libc -> math library
+    issue193 -> issue310 [color=gray, style=dashed];  // libc -> math library ✅ CLOSED
 
-    // Doom build system dependencies
+    // Doom build system dependencies - ALL COMPLETE! 🎉
     issue305 -> issue311 [color=gray, penwidth=2, style=dashed];  // file stdio -> Doom build ✅ CLOSED
     issue306 -> issue311 [color=gray, penwidth=2, style=dashed];  // filesystem helpers -> Doom build ✅ CLOSED
     issue307 -> issue311 [color=gray, penwidth=2, style=dashed];  // environment -> Doom build ✅ CLOSED
     issue308 -> issue311 [color=gray, penwidth=2, style=dashed];  // string utilities -> Doom build ✅ CLOSED
     issue309 -> issue311 [color=gray, penwidth=2, style=dashed];  // formatted I/O -> Doom build ✅ CLOSED
-    issue310 -> issue311 [color=red, penwidth=2];  // math library -> Doom build
+    issue310 -> issue311 [color=gray, penwidth=2, style=dashed];  // math library -> Doom build ✅ CLOSED
     issue300 -> issue311 [color=red, penwidth=3, label="DOOM", style=dashed];  // port layer -> build system
 
     issue311 -> issue312 [color=red, penwidth=3, label="DOOM", style=dashed];  // Doom build -> integration

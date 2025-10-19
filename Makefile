@@ -541,9 +541,9 @@ ifeq ($(OS_NAME),linux)
 	@for prog in $(USERLAND_BINS); do \
 		cp $(OBJDIR)/usermode/$$prog.elf $(OUTPUT_DIR)/bin/$$prog; \
 	done
-	@if [ -f "$(OBJDIR)/doom/doom.elf" ]; then \
+	@if [ -f "$(OUTPUT_DIR)/doom.elf" ]; then \
 		echo "[DOOM] Installing doom.elf into $(OUTPUT_DIR)/bin"; \
-		cp $(OBJDIR)/doom/doom.elf $(OUTPUT_DIR)/bin/doom; \
+		cp $(OUTPUT_DIR)/doom.elf $(OUTPUT_DIR)/bin/doom; \
 	else \
 		echo "[DOOM] doom.elf not linked (libc gaps), skipping binary install"; \
 	fi
