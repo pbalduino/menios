@@ -2,6 +2,7 @@
 #include <stddef.h>
 #include <stdio.h>
 #include <string.h>
+#include <unistd.h>
 
 #include <menios/syscall.h>
 #include <menios/syscall_user.h>
@@ -60,8 +61,12 @@ static int list_directory(const char* path) {
     fprintf(stderr, "ls: unable to list directory %s\n", path);
     return 1;
   }
-  buffer[rc] = '\0';
-  fputs(buffer, stdout);
+  if(rc > 0) {
+    if(write(STDOUT_FILENO, buffer, (size_t)rc) < 0) {
+      perror("ls");
+      return 1;
+    }
+  }
   return 0;
 }
 
