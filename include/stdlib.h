@@ -55,6 +55,13 @@ void exit(int) __dead2;
 void abort(void) __dead2;
 int atexit(void (*func)(void));
 
+extern char** environ;
+char* getenv(const char* name);
+int setenv(const char* name, const char* value, int overwrite);
+int putenv(char* string);
+int unsetenv(const char* name);
+int clearenv(void);
+
 #ifdef __cplusplus
 }
 #endif

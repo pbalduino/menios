@@ -217,12 +217,12 @@ Missing C library functions that Doom requires for linking:
 - **Priority**: HIGH - needed for save games to work
 
 #### **Environment Variable Access** (Issue #307)
-- **Status**: TODO - libc lacks getenv/putenv
+- **Status**: ✅ COMPLETE - libc now exposes getenv/putenv/setenv/unsetenv
 - **Dependencies**: #148 ✅, #193 ✅
 - **Scope**:
   - getenv() for reading environment variables
   - putenv() for adding/modifying variables
-  - setenv/unsetenv (optional)
+  - setenv/unsetenv
   - Maintain environ pointer
 - **Impact**: Doom uses DOOMWADDIR (d_iwad.c), SDL_VIDEODRIVER (i_sdlmusic.c)
 - **Priority**: HIGH - IWAD detection won't work without this

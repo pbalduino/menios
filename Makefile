@@ -128,6 +128,7 @@ USERLIBC_SOURCES = \
 	user/libc/stdlib.c \
 	user/libc/stdio.c \
 	user/libc/input.c \
+	user/libc/environ.c \
 	src/libc/ctype.c \
 	src/libc/errno.c \
 	src/libc/fcntl.c \

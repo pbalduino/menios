@@ -1,10 +1,15 @@
 #include <stddef.h>
 
-void __menios_init_libc(void) {
-  // Placeholder for future constructor support.
+#include <stdlib.h>
+
+void __menios_env_init(int argc, char** argv, char** envp);
+void __menios_env_fini(void);
+
+void __menios_init_libc(int argc, char** argv, char** envp) {
+  __menios_env_init(argc, argv, envp);
 }
 
 void __menios_fini_libc(int status) {
   (void)status;
-  // Placeholder for destructor/atexit handling.
+  __menios_env_fini();
 }
