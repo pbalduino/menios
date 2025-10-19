@@ -50,6 +50,7 @@ int vfprintf(FILE* stream, const char* format, va_list arg);
 
 int sprintf(char *str, const char *format, ...);
 int svprintf(char *str, const char *format, va_list arg);
+int vsprintf(char *str, const char *format, va_list arg);
 int snprintf(char *str, size_t size, const char *format, ...);
 int vsnprintf(char *str, size_t size, const char *format, va_list arg);
 long ftell(FILE* stream);

@@ -823,6 +823,30 @@ int sprintf(char* str, const char* format, ...) {
   return written;
 }
 
+int vsprintf(char* str, const char* format, va_list args) {
+  if(str == NULL) {
+    errno = EINVAL;
+    return -1;
+  }
+  return menios_vsnprintf(str, (size_t)-1, format, args);
+}
+
+int vsnprintf(char* str, size_t size, const char* format, va_list args) {
+  va_list copy;
+  va_copy(copy, args);
+  int written = menios_vsnprintf(str, size, format, copy);
+  va_end(copy);
+  return written;
+}
+
+int snprintf(char* str, size_t size, const char* format, ...) {
+  va_list args;
+  va_start(args, format);
+  int written = vsnprintf(str, size, format, args);
+  va_end(args);
+  return written;
+}
+
 static int menios_write_formatted(FILE* stream, const char* format, va_list args) {
   if(stream == NULL) {
     errno = EINVAL;

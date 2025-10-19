@@ -238,7 +238,7 @@ Missing C library functions that Doom requires for linking:
 - **Next**: Proceed with the remaining libc gaps (#305-#307/#309/#310).
 
 #### **Formatted I/O Exposure** (Issue #309)
-- **Status**: TODO - snprintf/vsnprintf are internal helpers
+- **Status**: ✅ COMPLETE - snprintf/vsnprintf/vsprintf now exported
 - **Dependencies**: #193 ✅, #304 ✅
 - **Scope**:
   - snprintf() for safe formatted strings
