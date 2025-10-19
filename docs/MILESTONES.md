@@ -176,7 +176,7 @@ This document tracks the three major milestones for meniOS development.
 **Goal**: Run Doom (1993) in userland on meniOS
 **GitHub Milestone**: [Doom](https://github.com/pbalduino/menios/milestone/3)
 
-**Status**: 16/36 complete (44.4%)
+**Status**: 19/36 complete (52.8%)
 
 **Note**: Depends on **Buddy Allocator milestone** for efficient memory management under game engine load.
 
@@ -295,10 +295,10 @@ This document tracks the three major milestones for meniOS development.
 ## 📈 Overall Progress
 
 - **Total Issues Across Milestones**: 92 issues (includes foundational issues)
-- **Completed**: 76 issues (82.6%)
-- **In Progress**: 18 issues
+- **Completed**: 77 issues (83.7%)
+- **In Progress**: 17 issues
 - **Ready to Start**: 11 issues (no dependencies: #109, #190, #191, #305-#310)
-- **Recently Completed**: #286-#293 ✅ (time management & FAT32 writes), #304 ✅ (scanf family), #302 ✅ (real key events), #301 ✅ (framebuffer mmap), #300 ✅ (menIOS Doom port layer), #136 ✅ (devfs)
+- **Recently Completed**: #286-#293 ✅ (time management & FAT32 writes), #304 ✅ (scanf family), #302 ✅ (real key events), #301 ✅ (framebuffer mmap), #300 ✅ (menIOS Doom port layer), #136 ✅ (devfs), #221 ✅ (fast syscalls)
 - **Recently Created**: #305-#312 ✅ (libc gaps & Doom build system)
 - **Next Up**: libc gaps (#305-#310) ready to start! TCC/binutils (#190, #191) ready! Doom build system (#311-#312) waits on libc gaps.
 
@@ -585,6 +585,12 @@ Recommended completion order for maximum impact:
   - VFS integration complete
   - Foundational infrastructure - has been in production use
   - Overall progress: 74/92 issues complete (80.4%)
+- **2025-10-19**: Closed #300 (Doom port layer) ✅, #301 (Framebuffer mmap) ✅
+  - Full doomgeneric port layer implementation complete
+  - /dev/fb0 framebuffer access with ownership model and ioctl suite
+  - Double buffering, mode management, graceful shutdown all working
+  - Doom milestone: 19/36 complete (52.8%)
+  - Overall progress: 77/92 issues complete (83.7%)
 
 ---
 

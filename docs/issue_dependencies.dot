@@ -125,9 +125,22 @@ digraph IssueDependencies {
         issue193 [label="#193: Minimal\nlibc", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED
         issue194 [label="#194: Syscall\nABI docs", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED
         issue195 [label="#195: Userland\nbuild system", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED
-        issue304 [label="#304: scanf family\nsscanf/scanf/fscanf", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED - moved to Doom milestone
         issue190 [label="#190: TCC\nport", fillcolor="#DDA0DD"];
         issue191 [label="#191: binutils\nport", fillcolor="#DDA0DD"];
+    }
+
+    subgraph cluster_libc_gaps {
+        label="libc Gaps for Doom";
+        style=filled;
+        fillcolor="#FFF8E1";
+
+        issue304 [label="#304: scanf family\nsscanf/scanf/fscanf", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED
+        issue305 [label="#305: File stdio\nfopen/fclose/fread/fwrite", fillcolor="#FFE4B5"];
+        issue306 [label="#306: Filesystem helpers\nmkdir/remove/rename", fillcolor="#FFE4B5"];
+        issue307 [label="#307: Environment access\ngetenv/putenv", fillcolor="#FFE4B5"];
+        issue308 [label="#308: String utilities\nstrdup/strcasecmp", fillcolor="#FFE4B5"];
+        issue309 [label="#309: Formatted I/O\nsnprintf/vsnprintf", fillcolor="#FFE4B5"];
+        issue310 [label="#310: Math library\nfabs and math.h", fillcolor="#FFE4B5"];
     }
 
     subgraph cluster_io {
@@ -192,6 +205,8 @@ digraph IssueDependencies {
         issue31 [label="#31: Userspace\ngraphics interface", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED
         issue32 [label="#32: Input\nsubsystem", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED
         issue33 [label="#33: Audio\nsubsystem", fillcolor="#FFB6E8"];
+        issue136 [label="#136: Device filesystem\n/dev infrastructure", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED
+        issue140 [label="#140: /dev/kbd0 and\n/dev/fb0 devices", fillcolor="#FFCC99"];  // ~85% complete
         issue143 [label="#143: Mouse\ndriver", fillcolor="#FFB6E8"];
     }
 
@@ -201,9 +216,11 @@ digraph IssueDependencies {
         fillcolor="#FFE4F0";
 
         issue300 [label="#300: meniOS port layer\ndoomgeneric_menios.c", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED
-        issue301 [label="#301: Framebuffer mmap\n/dev/fb0 pixel access", fillcolor="#FFB6E8"];
+        issue301 [label="#301: Framebuffer mmap\n/dev/fb0 pixel access", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED
         issue302 [label="#302: Real key events\nscan codes, up/down", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED
         issue303 [label="#303: Doom build\nintegration", fillcolor="#FFB6E8"];
+        issue311 [label="#311: Doom Makefile.menios\nbuild system", fillcolor="#FFB6E8"];
+        issue312 [label="#312: Integrate Doom\ninto meniOS build", fillcolor="#FFB6E8"];
     }
 
     subgraph cluster_system_services {
