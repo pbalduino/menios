@@ -216,16 +216,16 @@ Missing C library functions that Doom requires for linking:
 - **Impact**: Doom save game management, config file handling
 - **Priority**: HIGH - needed for save games to work
 
-#### **Environment Variable Access** (Issue #307)
-- **Status**: ✅ COMPLETE - libc now exposes getenv/putenv/setenv/unsetenv
+#### **Environment Variable Access** (Issue #307) ✅ **COMPLETE**
+- ✅ **Status**: Complete - getenv/putenv now in libc
 - **Dependencies**: #148 ✅, #193 ✅
-- **Scope**:
+- **Implemented**:
   - getenv() for reading environment variables
   - putenv() for adding/modifying variables
-  - setenv/unsetenv
-  - Maintain environ pointer
-- **Impact**: Doom uses DOOMWADDIR (d_iwad.c), SDL_VIDEODRIVER (i_sdlmusic.c)
-- **Priority**: HIGH - IWAD detection won't work without this
+  - setenv/unsetenv for environment manipulation
+  - environ pointer properly maintained
+- **Impact**: Doom DOOMWADDIR and SDL_VIDEODRIVER environment variable support now working
+- **Priority**: HIGH - IWAD detection now functional
 
 #### **String Utilities** (Issue #308) ✅ **COMPLETE**
 - ✅ **Status**: `strdup`, `strndup`, `strcasecmp`, and `strncasecmp` now ship in libc.
@@ -237,16 +237,16 @@ Missing C library functions that Doom requires for linking:
 - **Impact**: Doom’s IWAD/config parsing now links without stubbed utilities.
 - **Next**: Proceed with the remaining libc gaps (#305-#307/#309/#310).
 
-#### **Formatted I/O Exposure** (Issue #309)
-- **Status**: ✅ COMPLETE - snprintf/vsnprintf/vsprintf now exported
+#### **Formatted I/O Exposure** (Issue #309) ✅ **COMPLETE**
+- ✅ **Status**: Complete - snprintf/vsnprintf/vsprintf now exported
 - **Dependencies**: #193 ✅, #304 ✅
-- **Scope**:
+- **Implemented**:
   - snprintf() for safe formatted strings
   - vsnprintf() for variadic version
   - vsprintf() for unsafe version (compatibility)
-  - Expose in <stdio.h> and export symbols
-- **Impact**: Doom DeHackEd patches (DEH_snprintf), config generation (M_vsnprintf)
-- **Priority**: CRITICAL - linker will fail without these symbols
+  - Exposed in <stdio.h> with proper exports
+- **Impact**: Doom DeHackEd patches (DEH_snprintf) and config generation (M_vsnprintf) now working
+- **Priority**: CRITICAL - required symbols now available
 
 #### **Math Library** (Issue #310)
 - **Status**: TODO - math.h is placeholder
@@ -464,7 +464,7 @@ The solid foundation work (memory management, scheduling, synchronization) now e
 ## 🎯 **GitHub Milestone Tracking**
 
 The Doom milestone on GitHub now tracks 36 issues:
-- **Status**: 21/36 complete (58.3%)
+- **Status**: 23/36 complete (63.9%)
 - **Completed**:
   - Graphics & Input: #31 ✅, #32 ✅, #136 ✅ (devfs), #140 ✅ (/dev/kbd0 and /dev/fb0)
   - Memory: #95 ✅
@@ -473,14 +473,14 @@ The Doom milestone on GitHub now tracks 36 issues:
   - IPC - Signals: #103 ✅ (parent), #210 ✅, #211 ✅, #212 ✅, #213 ✅
   - IPC - Shared Memory: #215 ✅, #216 ✅, #217 ✅, #218 ✅, #219 ✅ (ALL COMPLETE!)
   - IPC - Other: #220 ✅ (ioctl), #221 ✅ (fast syscalls)
-  - libc Gaps: #308 ✅ (string utilities)
+  - libc Gaps: #307 ✅ (environment access), #308 ✅ (string utilities), #309 ✅ (formatted I/O)
   - Doom Integration: #300 ✅ (meniOS port layer), #301 ✅ (framebuffer mmap), #302 ✅ (real key events), #304 ✅ (scanf family), #311 ✅ (Doom build system)
 - **New Issues Created (2025-10-18/19)**:
   - libc Gaps: #305 (file stdio), #306 (filesystem helpers), #307 (environment access), #309 (formatted I/O), #310 (math library)
   - Build System: #312 (build integration)
   - Doom Integration: #303 (old build - superseded)
-- **In Progress**: Threading (#109-#113), Signals (#214), Audio (#33), Mouse (#143), libc gaps (#305-#307, #309-#310), Doom Integration (#312)
-- **Ready to Start NOW**: #305-#307, #309-#310 (remaining libc gaps - all dependencies met!)
+- **In Progress**: Threading (#109-#113), Signals (#214), Audio (#33), Mouse (#143), libc gaps (#305, #306, #310), Doom Integration (#312)
+- **Ready to Start NOW**: #305, #306, #310 (remaining libc gaps - all dependencies met!)
 - **Blocked**: #312 (integration - depends on libc completeness)
 - **Removed**: #105 (Unix sockets), #106 (microkernel IPC), #107 (capabilities) - not required for Doom
 
@@ -496,7 +496,9 @@ The Doom milestone on GitHub now tracks 36 issues:
 - ✅ Doom port layer (#300) - COMPLETE: graphics, input, and timing all wired through meniOS!
 - ✅ Doom build system (#311) - COMPLETE: meniOS Makefile + tooling can rebuild the entire Doom codebase!
 - ✅ String utilities (#308) - strdup, strcasecmp, strncasecmp now in libc!
-- 🔥 Remaining libc gaps (#305-#307, #309-#310) - 5 issues ready to implement immediately!
+- ✅ Environment access (#307) - getenv/putenv now in libc for Doom config!
+- ✅ Formatted I/O (#309) - snprintf/vsnprintf/vsprintf properly exposed!
+- 🔥 Remaining libc gaps (#305, #306, #310) - 3 issues ready to implement immediately!
 
 See [MILESTONES.md](../MILESTONES.md) for detailed milestone tracking across all three major goals (Mosh, GCC, Doom).
 

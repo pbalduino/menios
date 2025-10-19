@@ -176,7 +176,7 @@ This document tracks the three major milestones for meniOS development.
 **Goal**: Run Doom (1993) in userland on meniOS
 **GitHub Milestone**: [Doom](https://github.com/pbalduino/menios/milestone/3)
 
-**Status**: 21/36 complete (58.3%)
+**Status**: 23/36 complete (63.9%)
 
 **Note**: Depends on **Buddy Allocator milestone** for efficient memory management under game engine load.
 
@@ -193,9 +193,9 @@ This document tracks the three major milestones for meniOS development.
 #### libc Gaps for Doom (6 issues)
 - [ ] #305 - File stdio support (fopen/fclose, buffered I/O)
 - [ ] #306 - Filesystem helpers (mkdir, remove, rename)
-- [ ] #307 - Environment variable access (getenv/putenv)
+- [x] #307 - Environment variable access (getenv/putenv) ✅
 - [x] #308 - String utilities (strdup, strcasecmp, strncasecmp) ✅
-- [ ] #309 - Expose snprintf/vsnprintf/vsprintf properly
+- [x] #309 - Expose snprintf/vsnprintf/vsprintf properly ✅
 - [ ] #310 - Math library (fabs and clean up math.h)
 
 #### Doom Integration (7 issues)
@@ -261,7 +261,7 @@ This document tracks the three major milestones for meniOS development.
 - #303 requires #312 (old build integration - superseded by #311/#312)
 - #304 requires #193 ✅ (libc foundation COMPLETE)
 
-**Progress**: IPC infrastructure complete - Pipes ✅, Signals (5/6), Shared Memory ✅! FAT32 write support ✅ complete! scanf family (#304) ✅ complete! Real key events (#302) ✅ complete! Doom port layer (#300) ✅ complete with fullscreen graphics, timing, and input! Pixel-addressable framebuffer (#301) ✅ complete! Doom build system (#311) ✅ now compiles doomgeneric against the meniOS SDK! String utilities (#308) ✅ delivered (`strdup`, `strncasecmp`, etc.). Remaining work: the remaining libc gaps (#305, #306, #307, #309, #310) and final build integration (#312).
+**Progress**: IPC infrastructure complete - Pipes ✅, Signals (5/6), Shared Memory ✅! FAT32 write support ✅ complete! scanf family (#304) ✅ complete! Real key events (#302) ✅ complete! Doom port layer (#300) ✅ complete with fullscreen graphics, timing, and input! Pixel-addressable framebuffer (#301) ✅ complete! Doom build system (#311) ✅ now compiles doomgeneric against the meniOS SDK! String utilities (#308) ✅ delivered! Environment access (#307) ✅ complete! Formatted I/O (#309) ✅ complete! Remaining work: three libc gaps (#305, #306, #310) and final build integration (#312).
 
 ---
 
@@ -297,12 +297,12 @@ This document tracks the three major milestones for meniOS development.
 ## 📈 Overall Progress
 
 - **Total Issues Across Milestones**: 98 issues (includes foundational issues)
-- **Completed**: 79 issues (80.6%)
-- **In Progress**: 19 issues
-- **Ready to Start**: 10 issues (no dependencies: #109, #190, #191, #305-#307, #309-#310)
-- **Recently Completed**: #286-#293 ✅ (time management & FAT32 writes), #304 ✅ (scanf family), #302 ✅ (real key events), #301 ✅ (framebuffer mmap), #300 ✅ (menIOS Doom port layer), #136 ✅ (devfs), #140 ✅ (/dev/kbd0 and /dev/fb0), #221 ✅ (fast syscalls), #311 ✅ (Doom build system), #308 ✅ (string utilities)
+- **Completed**: 81 issues (82.7%)
+- **In Progress**: 17 issues
+- **Ready to Start**: 8 issues (no dependencies: #109, #190, #191, #305, #306, #310)
+- **Recently Completed**: #286-#293 ✅ (time management & FAT32 writes), #304 ✅ (scanf family), #302 ✅ (real key events), #301 ✅ (framebuffer mmap), #300 ✅ (menIOS Doom port layer), #136 ✅ (devfs), #140 ✅ (/dev/kbd0 and /dev/fb0), #221 ✅ (fast syscalls), #311 ✅ (Doom build system), #307 ✅ (environment access), #308 ✅ (string utilities), #309 ✅ (formatted I/O)
 - **Recently Created**: #305-#312 ✅ (libc gaps & Doom build system), #313 (filesystem organization), #314 (shell startup scripts), #315 (motd), #316 (touch command), #317 (utime syscall), #318 (uname command)
-- **Next Up**: Remaining libc gaps (#305-#307, #309-#310) ready to start! TCC/binutils (#190, #191) ready! Doom build integration (#312) follows once libc gaps land. New utilities (#314-#318) improve usability.
+- **Next Up**: Remaining libc gaps (#305, #306, #310) ready to start! TCC/binutils (#190, #191) ready! Doom build integration (#312) follows once libc gaps land. New utilities (#314-#318) improve usability.
 
 ## 🚀 Immediate Next Steps
 
@@ -324,9 +324,9 @@ All phases finished! Core buddy allocator implementation (Phase 1 ✅), critical
 2. **Doom Milestone - libc Gaps** (READY NOW! ✅):
    - #305 - File stdio support (all dependencies met)
    - #306 - Filesystem helpers (all dependencies met)
-   - #307 - Environment variable access (all dependencies met)
+   - #307 - Environment variable access ✅ COMPLETE
    - #308 - String utilities ✅ COMPLETE
-   - #309 - Expose snprintf/vsnprintf properly (all dependencies met)
+   - #309 - Expose snprintf/vsnprintf properly ✅ COMPLETE
    - #310 - Math library (all dependencies met)
 
 3. **Doom Milestone - Threading** (Ready to implement):
@@ -626,6 +626,15 @@ Recommended completion order for maximum impact:
   - System information display (kernel name, version, architecture)
   - Platform detection for scripts and build configuration
   - Total project issues: 98 (was 92)
+- **2025-10-19**: Closed #307 (Environment variable access) ✅
+  - Implemented getenv() and putenv() for environment variable manipulation
+  - Required for Doom configuration and Unix-style environment handling
+  - Doom milestone: 22/36 complete (61.1%)
+- **2025-10-19**: Closed #309 (Expose snprintf/vsnprintf/vsprintf properly) ✅
+  - Proper exposure and testing of formatted output functions
+  - Required for Doom string formatting
+  - Doom milestone: 23/36 complete (63.9%)
+  - Overall progress: 81/98 issues complete (82.7%)
 
 ---
 
