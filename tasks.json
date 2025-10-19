@@ -1,5 +1,20 @@
 [
   {
+    "title": "Implement string utilities (strdup/strcasecmp)",
+    "github_issue": {
+      "number": 308,
+      "url": "https://github.com/pbalduino/menios/issues/308",
+      "state": "CLOSED"
+    },
+    "labels": [
+      "enhancement",
+      "libc"
+    ],
+    "assignees": [
+      "pbalduino"
+    ]
+  },
+  {
     "title": "Implement sscanf() and vsscanf() in libc",
     "github_issue": {
       "number": 304,
