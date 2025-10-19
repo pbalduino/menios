@@ -167,6 +167,11 @@ void DG_DrawFrame(void) {
     const uint8_t* src = src_base + y * DOOMGENERIC_RESX * sizeof(uint32_t);
     memcpy(dest, src, row_copy_bytes);
   }
+
+  if(fb_fd >= 0) {
+    int rc = ioctl(fb_fd, MENIOS_FB_IOCTL_FLUSH, NULL);
+    (void)rc;
+  }
 }
 
 void DG_Shutdown(void) {

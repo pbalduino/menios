@@ -58,6 +58,23 @@ static uint32_t saved_cursor_col;
 static struct limine_framebuffer *framebuffer;
 static FILE* fb_d;
 
+static phys_addr_t framebuffer_phys = PHYS_ADDR_INVALID;
+static size_t framebuffer_buffer_size = 0;
+static size_t framebuffer_buffer_size_aligned = 0;
+static phys_addr_t framebuffer_backbuffer_phys = PHYS_ADDR_INVALID;
+static void* framebuffer_backbuffer_virt = NULL;
+
+static size_t fb_align_up(size_t value) {
+  if(value == 0) {
+    return PAGE_SIZE;
+  }
+  size_t remainder = value % PAGE_SIZE;
+  if(remainder == 0) {
+    return value;
+  }
+  return value + (PAGE_SIZE - remainder);
+}
+
 static console_cell_t console_buffer[SCROLLBACK_LINES][MAX_COLS];
 static uint64_t row_versions[SCROLLBACK_LINES];
 
@@ -253,6 +270,23 @@ void fb_init() {
 
   framebuffer = framebuffer_request.response->framebuffers[0];
   active = true;
+
+  framebuffer_phys = virtual_to_physical((virt_addr_t)framebuffer->address);
+  framebuffer_buffer_size = (size_t)(framebuffer->pitch * framebuffer->height);
+  framebuffer_buffer_size_aligned = fb_align_up(framebuffer_buffer_size);
+  framebuffer_backbuffer_phys = PHYS_ADDR_INVALID;
+  framebuffer_backbuffer_virt = NULL;
+  if(framebuffer_buffer_size_aligned != 0) {
+    size_t pages = framebuffer_buffer_size_aligned / PAGE_SIZE;
+    phys_addr_t back_phys = pmm_alloc_pages(pages);
+    if(back_phys != 0) {
+      framebuffer_backbuffer_phys = back_phys;
+      framebuffer_backbuffer_virt = (void*)physical_to_virtual(back_phys);
+      if(framebuffer_backbuffer_virt != NULL) {
+        memset(framebuffer_backbuffer_virt, 0, framebuffer_buffer_size_aligned);
+      }
+    }
+  }
 
   char_line_width = 8;
   char_line_height = 16;
@@ -743,10 +777,39 @@ void fb_get_geometry(framebuffer_geometry_t* out) {
 }
 
 phys_addr_t fb_physical_address(void) {
-  if(framebuffer == NULL) {
+  return framebuffer_phys;
+}
+
+phys_addr_t fb_backbuffer_physical(void) {
+  if(!fb_backbuffer_available()) {
     return PHYS_ADDR_INVALID;
   }
-  return virtual_to_physical((virt_addr_t)framebuffer->address);
+  return framebuffer_backbuffer_phys;
+}
+
+void* fb_backbuffer_virtual(void) {
+  return framebuffer_backbuffer_virt;
+}
+
+bool fb_backbuffer_available(void) {
+  return framebuffer_backbuffer_phys != PHYS_ADDR_INVALID && framebuffer_backbuffer_virt != NULL;
+}
+
+size_t fb_buffer_size(void) {
+  return framebuffer_buffer_size;
+}
+
+void fb_flush_backbuffer(void) {
+  if(!fb_backbuffer_available() || framebuffer == NULL) {
+    return;
+  }
+
+  uint8_t* dest = (uint8_t*)framebuffer->address;
+  const uint8_t* src = (const uint8_t*)framebuffer_backbuffer_virt;
+  size_t pitch = framebuffer->pitch;
+  for(uint64_t y = 0; y < framebuffer->height; y++) {
+    memcpy(dest + y * pitch, src + y * pitch, pitch);
+  }
 }
 
 void fb_list_modes() {

@@ -16,6 +16,7 @@ typedef struct menios_fb_info {
 } menios_fb_info_t;
 
 #define MENIOS_FB_IOCTL_GET_INFO 0x4d454e01u /* 'MEN\x01' */
+#define MENIOS_FB_IOCTL_FLUSH    0x4d454e02u /* 'MEN\x02' */
 
 #ifdef __cplusplus
 }

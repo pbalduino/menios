@@ -42,6 +42,11 @@ uint64_t fb_pitch();
 uint64_t fb_width();
 void fb_get_geometry(framebuffer_geometry_t* out);
 phys_addr_t fb_physical_address(void);
+phys_addr_t fb_backbuffer_physical(void);
+void* fb_backbuffer_virtual(void);
+bool fb_backbuffer_available(void);
+size_t fb_buffer_size(void);
+void fb_flush_backbuffer(void);
 
 void fb_draw();
 void fb_init();

@@ -551,26 +551,35 @@ static size_t align_up_size(size_t value) {
 
 static int framebuffer_ioctl_impl(file_t* file, unsigned long request, void* argp) {
   (void)file;
-  if(request == MENIOS_FB_IOCTL_GET_INFO) {
-    if(argp == NULL) {
-      return -EINVAL;
+  switch(request) {
+    case MENIOS_FB_IOCTL_GET_INFO: {
+      if(argp == NULL) {
+        return -EINVAL;
+      }
+      framebuffer_geometry_t geo;
+      fb_get_geometry(&geo);
+      menios_fb_info_t info = {
+        .width = geo.width,
+        .height = geo.height,
+        .pitch = geo.pitch,
+        .bpp = geo.bpp,
+        .reserved = 0,
+      };
+      if(current != NULL && !proc_user_buffer_accessible(current, argp, sizeof(info))) {
+        return -EFAULT;
+      }
+      memcpy(argp, &info, sizeof(info));
+      return 0;
     }
-    framebuffer_geometry_t geo;
-    fb_get_geometry(&geo);
-    menios_fb_info_t info = {
-      .width = geo.width,
-      .height = geo.height,
-      .pitch = geo.pitch,
-      .bpp = geo.bpp,
-      .reserved = 0,
-    };
-    if(current != NULL && !proc_user_buffer_accessible(current, argp, sizeof(info))) {
-      return -EFAULT;
+    case MENIOS_FB_IOCTL_FLUSH: {
+      if(fb_backbuffer_available()) {
+        fb_flush_backbuffer();
+      }
+      return 0;
     }
-    memcpy(argp, &info, sizeof(info));
-    return 0;
+    default:
+      return -ENOTTY;
   }
-  return -ENOTTY;
 }
 
 static int framebuffer_mmap_impl(file_t* file,
@@ -591,7 +600,10 @@ static int framebuffer_mmap_impl(file_t* file,
     return -ENODEV;
   }
 
-  size_t fb_size = geo.pitch * geo.height;
+  size_t fb_size = fb_buffer_size();
+  if(fb_size == 0) {
+    fb_size = geo.pitch * geo.height;
+  }
   size_t fb_size_aligned = align_up_size(fb_size);
 
   if(request->length == 0) {
@@ -606,7 +618,8 @@ static int framebuffer_mmap_impl(file_t* file,
     aligned_length = fb_size_aligned;
   }
 
-  phys_addr_t phys = fb_physical_address();
+  phys_addr_t phys = fb_backbuffer_available() ? fb_backbuffer_physical()
+                                               : fb_physical_address();
   if(phys == PHYS_ADDR_INVALID || phys == 0) {
     return -ENODEV;
   }
