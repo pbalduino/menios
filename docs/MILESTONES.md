@@ -294,11 +294,11 @@ This document tracks the three major milestones for meniOS development.
 
 ## 📈 Overall Progress
 
-- **Total Issues Across Milestones**: 91 issues
-- **Completed**: 73 issues (80.2%)
+- **Total Issues Across Milestones**: 92 issues (includes foundational issues)
+- **Completed**: 74 issues (80.4%)
 - **In Progress**: 18 issues
 - **Ready to Start**: 11 issues (no dependencies: #109, #190, #191, #305-#310)
-- **Recently Completed**: #286-#293 ✅ (time management & FAT32 writes), #304 ✅ (scanf family), #302 ✅ (real key events)
+- **Recently Completed**: #286-#293 ✅ (time management & FAT32 writes), #304 ✅ (scanf family), #302 ✅ (real key events), #136 ✅ (devfs)
 - **Recently Created**: #305-#312 ✅ (libc gaps & Doom build system)
 - **Next Up**: libc gaps (#305-#310) ready to start! TCC/binutils (#190, #191) ready! Doom port layer (#300) partially unblocked!
 
@@ -581,6 +581,14 @@ Recommended completion order for maximum impact:
   - ⏳ DG_Init() and DG_DrawFrame() blocked on #301 (framebuffer mmap)
   - ⏳ Full linkage blocked on #305-#310 (libc gaps)
   - Port layer functional for input/timing, waiting on graphics and libc
+- **2025-10-19**: Closed #136 (Device filesystem infrastructure) ✅
+  - devfs driver fully implemented in src/kernel/fs/devfs.c
+  - /dev directory mounted at boot via devfs_mount()
+  - Standard device nodes available: /dev/null, /dev/zero, /dev/tty0, /dev/console, /dev/ttyS0
+  - Device file operations (open/close/read/write) route correctly to handlers
+  - VFS integration complete
+  - Foundational infrastructure - has been in production use
+  - Overall progress: 74/92 issues complete (80.4%)
 
 ---
 
