@@ -202,7 +202,7 @@ This document tracks the three major milestones for meniOS development.
 - [x] #302 - Deliver real key events (scan codes, key up/down) ✅
 - [ ] #303 - Build integration for Doom userland binary
 - [x] #304 - scanf family (sscanf/scanf/fscanf) implementation ✅
-- [ ] #311 - Doom meniOS-specific build system (Makefile.menios)
+- [x] #311 - Doom meniOS-specific build system (Makefile.menios) ✅
 - [ ] #312 - Integrate Doom into meniOS build and packaging
 
 #### Threading Support (5 issues)
@@ -253,13 +253,13 @@ This document tracks the three major milestones for meniOS development.
 - #308 requires #95 ✅, #193 ✅ (string utilities)
 - #309 requires #193 ✅, #304 ✅ (formatted I/O)
 - #310 requires #193 ✅ (math library)
-- #311 requires #305, #306, #307, #308, #309, #310, #300 ✅ (Doom build system)
+- #311 requires #305, #306, #307, #308, #309, #310, #300 ✅ (Doom build system) ✅ COMPLETE
 - #312 requires #311, #192 ✅, #193 ✅, #195 ✅, #29 ✅ (build integration)
 - #300 requires #301 ✅, #302 ✅, #287 ✅, #240 ✅, #288 ✅, #304 ✅, #305-#310 (libc gaps) ✅ COMPLETE
 - #303 requires #312 (old build integration - superseded by #311/#312)
 - #304 requires #193 ✅ (libc foundation COMPLETE)
 
-**Progress**: IPC infrastructure complete - Pipes ✅, Signals (5/6), Shared Memory ✅! FAT32 write support ✅ complete! scanf family (#304) ✅ complete! Real key events (#302) ✅ complete! Doom port layer (#300) ✅ complete with fullscreen graphics, timing, and input! Pixel-addressable framebuffer (#301) ✅ complete! New libc gaps identified for Doom (#305-#310). Doom build system planned (#311-#312). Ready to implement libc gaps!
+**Progress**: IPC infrastructure complete - Pipes ✅, Signals (5/6), Shared Memory ✅! FAT32 write support ✅ complete! scanf family (#304) ✅ complete! Real key events (#302) ✅ complete! Doom port layer (#300) ✅ complete with fullscreen graphics, timing, and input! Pixel-addressable framebuffer (#301) ✅ complete! Doom build system (#311) ✅ now compiles doomgeneric against the meniOS SDK! Remaining work: libc gaps (#305-#310) and final build integration (#312).
 
 ---
 
@@ -300,7 +300,7 @@ This document tracks the three major milestones for meniOS development.
 - **Ready to Start**: 11 issues (no dependencies: #109, #190, #191, #305-#310)
 - **Recently Completed**: #286-#293 ✅ (time management & FAT32 writes), #304 ✅ (scanf family), #302 ✅ (real key events), #301 ✅ (framebuffer mmap), #300 ✅ (menIOS Doom port layer), #136 ✅ (devfs), #221 ✅ (fast syscalls)
 - **Recently Created**: #305-#312 ✅ (libc gaps & Doom build system)
-- **Next Up**: libc gaps (#305-#310) ready to start! TCC/binutils (#190, #191) ready! Doom build system (#311-#312) waits on libc gaps.
+- **Next Up**: libc gaps (#305-#310) ready to start! TCC/binutils (#190, #191) ready! Doom build integration (#312) follows once libc gaps land.
 
 ## 🚀 Immediate Next Steps
 
@@ -330,12 +330,12 @@ All phases finished! Core buddy allocator implementation (Phase 1 ✅), critical
 3. **Doom Milestone - Threading** (Ready to implement):
    - #109 - pthread API (no dependencies)
 
-4. **Doom Milestone - Integration** (Port layer & framebuffer ✅; build pending):
+4. **Doom Milestone - Integration** (Port layer & build system ✅; packaging pending):
    - #301 - Pixel-addressable framebuffer ✅ COMPLETE!
    - #302 - Real key events ✅ COMPLETE!
    - #300 - Doom port layer ✅ COMPLETE!
-   - #311 - Doom build system (blocked on #305-#310)
-   - #312 - Build integration (blocked on #311)
+   - #311 - Doom build system ✅ COMPLETE!
+   - #312 - Build integration (blocked on #305-#310)
 
 ## 📝 Notes
 

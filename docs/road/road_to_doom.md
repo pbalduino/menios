@@ -303,21 +303,17 @@ Port layer, graphics, input, and build integration for running Doom:
   - ✅ **DG_GetKey()/DG_SleepMs()/DG_GetTicksMs()** hook into `menios_input_poll()`, `nanosleep()`, and `clock_gettime()` for responsive gameplay timing.
 - **Impact**: Port layer is production-ready; remaining Doom work focuses on libc gaps (#305-#310) and build integration steps (#311-#312).
 
-#### **Doom meniOS-Specific Build System** (Issue #311)
-- **Status**: TODO - Need custom build configuration
-- **Dependencies**: #305-#310 (libc gaps), #300 ✅ (port layer)
-- **Scope**:
-  - Create `app/doom/Makefile.menios` for meniOS builds
-  - Feed sources through `tools/menios-gcc`
-  - Include only needed files (doomgeneric_menios.c, core engine)
-  - Avoid SDL/Xlib backends
-  - Link against meniOS libc
-- **Current Gap**: No meniOS-specific build configuration
-- **Impact**: Need custom build to avoid desktop dependencies
+#### **Doom meniOS-Specific Build System** (Issue #311) ✅ **COMPLETE**
+- ✅ **Status**: meniOS now ships a dedicated Doom build flow.
+- **Highlights**:
+  - ✅ Added `app/doom/Makefile.menios` that compiles every Doom object with `tools/menios-gcc`.
+  - ✅ Introduced a top-level `make doom` target (Docker-aware) to reuse the meniOS SDK.
+  - ✅ Extended SDK headers (`stdio.h`, `stdlib.h`, `string.h`, etc.) so Doom sources compile cleanly.
+- **Impact**: Build infrastructure is done; final packaging and install steps move to #312 after libc work.
 
 #### **Doom Build Integration** (Issue #312)
 - **Status**: TODO - Doom not integrated into main build
-- **Dependencies**: #311 (Doom Makefile), #192 ✅, #193 ✅, #195 ✅, #29 ✅
+- **Dependencies**: #311 ✅ (Doom Makefile), #192 ✅, #193 ✅, #195 ✅, #29 ✅
 - **Scope**:
   - Add Doom to `make userland` target
   - Place binary at `$(OUTPUT_DIR)/bin/doom`
@@ -328,7 +324,7 @@ Port layer, graphics, input, and build integration for running Doom:
 - **Impact**: Manual build steps required, not integrated with image creation
 
 #### **Old Build Integration** (Issue #303) - Superseded
-- **Status**: Superseded by #311 and #312
+- **Status**: Superseded by #311 ✅ and #312
 - **Note**: Original build integration issue, now split into build system (#311) and integration (#312)
 
 ## 🎮 **Doom-Specific Requirements**
@@ -481,11 +477,11 @@ The Doom milestone on GitHub now tracks 36 issues:
   - Doom Integration: #300 ✅ (meniOS port layer), #301 ✅ (framebuffer mmap), #302 ✅ (real key events), #304 ✅ (scanf family - moved from GCC milestone)
 - **New Issues Created (2025-10-18)**:
   - libc Gaps: #305 (file stdio), #306 (filesystem helpers), #307 (environment access), #308 (string utilities), #309 (formatted I/O), #310 (math library)
-  - Build System: #311 (Doom Makefile.menios), #312 (build integration)
-  - Doom Integration: #301 (framebuffer mmap), #303 (old build - superseded)
-- **In Progress**: Threading (#109-#113), Signals (#214), Audio (#33), Mouse (#143), Doom Integration (#311-#312)
+  - Build System: #311 ✅ (Doom Makefile.menios), #312 (build integration)
+  - Doom Integration: #303 (old build - superseded)
+- **In Progress**: Threading (#109-#113), Signals (#214), Audio (#33), Mouse (#143), Doom Integration (#312)
 - **Ready to Start NOW**: #305-#310 (libc gaps - all dependencies met!)
-- **Blocked**: #311 (build - blocked on #305-#310), #312 (integration - blocked on #311)
+- **Blocked**: #312 (integration - depends on libc completeness)
 - **Removed**: #105 (Unix sockets), #106 (microkernel IPC), #107 (capabilities) - not required for Doom
 
 **Recent Major Achievements**:
@@ -497,6 +493,7 @@ The Doom milestone on GitHub now tracks 36 issues:
 - ✅ Real key events (#302) - Keyboard input with scan codes and up/down events!
 - 🎉 Pixel-addressable framebuffer (#301) - `/dev/fb0` mmap and flush path ready for userland!
 - 🎉 Doom port layer (#300) - COMPLETE: graphics, input, and timing all wired through meniOS!
+- 🎉 Doom build system (#311) - COMPLETE: meniOS Makefile + tooling can rebuild the entire Doom codebase!
 - 🆕 libc gaps identified (#305-#310) - Ready to implement immediately!
 
 See [MILESTONES.md](../MILESTONES.md) for detailed milestone tracking across all three major goals (Mosh, GCC, Doom).

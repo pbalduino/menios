@@ -219,7 +219,7 @@ digraph IssueDependencies {
         issue301 [label="#301: Framebuffer mmap\n/dev/fb0 pixel access", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED
         issue302 [label="#302: Real key events\nscan codes, up/down", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED
         issue303 [label="#303: Doom build\nintegration", fillcolor="#FFB6E8"];
-        issue311 [label="#311: Doom Makefile.menios\nbuild system", fillcolor="#FFB6E8"];
+        issue311 [label="#311: Doom Makefile.menios\nbuild system", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED
         issue312 [label="#312: Integrate Doom\ninto meniOS build", fillcolor="#FFB6E8"];
     }
 
