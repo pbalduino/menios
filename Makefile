@@ -155,7 +155,7 @@ SDK_STARTUP = $(SDK_LIB_DIR)/crt0.o
 SDK_LINKER_SCRIPT = $(SDK_LIB_DIR)/user_elf.ld
 
 ifeq ($(OS_NAME),linux)
-USERLAND_DEPS := sdk $(USER_ELF) $(USER_PROGRAM_ELFS)
+USERLAND_DEPS := sdk doom $(USER_ELF) $(USER_PROGRAM_ELFS)
 BUILD_DEPS := userland $(OBJS)
 else
 USERLAND_DEPS :=
@@ -642,10 +642,10 @@ ifeq ($(OS_NAME),linux)
 	else \
 		echo "[DOOM] Skipping doom binary copy (binary not linked)"; \
 	fi
-	if [ -f "$(OUTPUT_DIR)/bin/doom.wad" ]; then \
-		mcopy -i $(IMAGE_NAME).hdd@@2M $(OUTPUT_DIR)/bin/doom.wad ::/doom/doom.wad; \
+	if [ -f "$(OUTPUT_DIR)/doom.wad" ]; then \
+		mcopy -i $(IMAGE_NAME).hdd@@2M $(OUTPUT_DIR)/doom.wad ::/doom/doom.wad; \
 	else \
-		echo "[DOOM] No doom.wad found in $(OUTPUT_DIR)/bin (optional)"; \
+		echo "[DOOM] No doom.wad found in $(OUTPUT_DIR) (optional)"; \
 	fi
 	$(OUTPUT_DIR)/limine bios-install $(IMAGE_NAME).hdd 1
 
@@ -914,9 +914,9 @@ build-temp-disable:
 .PHONY: get-doom-wad
 get-doom-wad:
 	@echo "Downloading doom.wad..."
-	@if [ ! -f $(OUTPUT_DIR)/bin/doom.wad ]; then \
-		mkdir -p $(OUTPUT_DIR)/bin; \
-		curl -L https://distro.ibiblio.org/slitaz/sources/packages/d/doom1.wad -o $(OUTPUT_DIR)/bin/doom.wad; \
+	@if [ ! -f $(OUTPUT_DIR)/doom.wad ]; then \
+		mkdir -p $(OUTPUT_DIR); \
+		curl -L https://distro.ibiblio.org/slitaz/sources/packages/d/doom1.wad -o $(OUTPUT_DIR)/doom.wad; \
 	else \
-		echo "doom.wad already exists at $(OUTPUT_DIR)/bin/doom.wad"; \
+		echo "doom.wad already exists at $(OUTPUT_DIR)/doom.wad"; \
 	fi
