@@ -501,7 +501,7 @@ Month 8: Documentation & Release
 Significant progress on UACPI kernel interface implementation:
 - **50% complete**: 8 out of 16 functions implemented
 - **Production-ready**: Thread IDs, events (semaphore-backed), sleep, tick counter (TSC-based)
-- **Remaining work**: Now tracked as infrastructure issues (#278, #279, #280, #281)
+- **Remaining work**: Now tracked as infrastructure issues (#278, #279, #281). Issue #280 (PCI configuration access) is COMPLETE.
 - **Current status**: Sufficient for basic x86_64 ACPI operations
 
 The remaining UACPI functions require substantial kernel infrastructure:
@@ -516,10 +516,9 @@ The remaining UACPI functions require substantial kernel infrastructure:
    - Required for: `uacpi_kernel_install_interrupt_handler()`, `uacpi_kernel_uninstall_interrupt_handler()`
    - Benefits beyond ACPI: Shared interrupts, ACPI SCI, device drivers
 
-3. **#280 - PCI Configuration Space Access** (Low priority, 8-10 weeks)
-   - PCI device configuration API
-   - Required for: `uacpi_kernel_pci_read()`, `uacpi_kernel_pci_write()`
-   - Benefits beyond ACPI: PCI enumeration, device power management
+3. **#280 - PCI Configuration Space Access** ✅ COMPLETE
+   - PCI MMCONFIG handling & config-space API now live in the root bridge driver
+   - Enables `uacpi_kernel_pci_read()` / `uacpi_kernel_pci_write()` and centralized PCI enumeration
 
 4. **#281 - I/O Port Resource Management** (Low priority, 7 weeks)
    - I/O port allocation and tracking
@@ -547,7 +546,7 @@ While these are medium-to-low priority for multi-platform support, they represen
 - **#276**: UACPI kernel interface implementation (50% complete)
 - **#278**: Kernel work queue system (Medium priority)
 - **#279**: Dynamic IRQ handler registration (Medium priority)
-- **#280**: PCI configuration space access (Low priority)
+~ **#280**: PCI configuration space access (Low priority) ✅ COMPLETE
 - **#281**: I/O port resource management (Low priority)
 
 ## References
