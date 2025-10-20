@@ -15,6 +15,8 @@
 #include "doomkeys.h"
 #include <menios/fb.h>
 #include <menios/input.h>
+#include <menios/syscall.h>
+#include <menios/syscall_user.h>
 
 void DG_Log(const char* fmt, ...) {
   char buffer[256];
@@ -294,6 +296,28 @@ void DG_DrawFrame(void) {
 
 void DG_Shutdown(void) {
   DG_Log("DG_Shutdown: invoked");
+
+  menios_key_event_t discard_event;
+  int drained = 0;
+  while(menios_input_poll(&discard_event) == 0) {
+    drained = 1;
+  }
+  if(drained) {
+    DG_Log("DG_Shutdown: drained pending input events");
+  }
+
+  ssize_t stdin_drained = 0;
+  while(true) {
+    long polled = __menios_syscall0(SYS_STDIN_POLL);
+    if(polled < 0) {
+      break;
+    }
+    stdin_drained++;
+  }
+  if(stdin_drained > 0) {
+    DG_Log("DG_Shutdown: flushed %zd bytes from stdin", stdin_drained);
+  }
+
   if(fb_pixels != NULL && fb_map_size > 0) {
     munmap(fb_pixels, fb_map_size);
     DG_Log("DG_Shutdown: unmapped framebuffer at %p", (void*)fb_pixels);
