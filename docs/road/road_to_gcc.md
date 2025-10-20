@@ -261,8 +261,8 @@ This transforms meniOS from a kernel project into a true operating system with a
 
 ## 🎯 **GitHub Milestone Tracking**
 
-The GCC milestone on GitHub now tracks 7 issues:
-- **Status**: 5/7 complete (71.4%)
+The GCC milestone on GitHub now tracks 9 issues:
+- **Status**: 7/9 complete (77.8%)
 - **Completed**:
   - #192 (crt0 runtime) ✅
   - #193 (libc foundation) ✅

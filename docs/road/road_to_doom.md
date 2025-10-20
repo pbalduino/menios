@@ -456,8 +456,8 @@ The solid foundation work (memory management, scheduling, synchronization) now e
 
 ## 🎯 **GitHub Milestone Tracking**
 
-The Doom milestone on GitHub now tracks 32 issues:
-- **Status**: 27/32 complete (84.4%)
+The Doom milestone on GitHub now tracks 38 issues:
+- **Status**: 29/38 complete (76.3%)
 - **Completed**:
   - Graphics & Input: #31 ✅, #32 ✅, #136 ✅ (devfs), #140 ✅ (/dev/kbd0 and /dev/fb0)
   - Memory: #95 ✅
@@ -468,11 +468,12 @@ The Doom milestone on GitHub now tracks 32 issues:
   - IPC - Other: #220 ✅ (ioctl), #221 ✅ (fast syscalls)
   - libc Gaps: #305 ✅ (file stdio), #306 ✅ (filesystem helpers), #307 ✅ (environment access), #308 ✅ (string utilities), #309 ✅ (formatted I/O), #310 ✅ (math library) - **ALL 6 COMPLETE!** 🎉
   - Doom Integration: #300 ✅ (meniOS port layer), #301 ✅ (framebuffer mmap), #302 ✅ (real key events), #304 ✅ (scanf family), #311 ✅ (Doom build system)
+  - Stability: #262 ✅ (user-mode page fault handling), #274 ✅ (init crash fix), #319 ✅ (Doom null pointer crash), #323 ✅ (shell crash after Doom exit)
 - **New Issues Created (2025-10-18/19)**:
   - libc Gaps: #305 (file stdio), #306 (filesystem helpers), #307 (environment access), #309 (formatted I/O), #310 (math library)
   - Build System: #312 (build integration)
   - Doom Integration: #303 (old build - superseded)
-- **In Progress**: Threading (#109, #110, #113), Audio (#33), Mouse (#143), Doom Integration (#312)
+- **In Progress**: Threading (#109, #110, #113), Audio (#33), Mouse (#143), Shell stability (#320, #322), Build Integration (#303, #312)
 - **Ready to Start NOW**: #312 (Doom build integration - ALL dependencies met! 🚀)
 - **Removed**: #105 (Unix sockets), #106 (microkernel IPC), #107 (capabilities), #111 (Advanced pthread synchronization), #112 (Thread debugging), #214 (Advanced signal features) - not required for Doom
 
@@ -494,6 +495,7 @@ The Doom milestone on GitHub now tracks 32 issues:
 - ✅ Formatted I/O (#309) - snprintf/vsnprintf/vsprintf properly exposed!
 - ✅ Math library (#310) - fabs/fabsf/fabsl now in libc for video scaling!
 - 🎉 **ALL 6 LIBC GAPS COMPLETE!** Doom build integration (#312) now fully unblocked!
+- ✅ Shell crash after Doom exit (#323) - Fixed syscall frame restoration on process resume!
 
 See [MILESTONES.md](../MILESTONES.md) for detailed milestone tracking across all three major goals (Mosh, GCC, Doom).
 

@@ -24,7 +24,7 @@ If you are tracking the steps toward a usable shell, see [Road to Shell Readines
 
 ## Current Status
 
-**📊 Progress**: 69/91 issues complete (75.8%)
+**📊 Progress**: 83/94 issues complete (88.3%)
 
 MeniOS has made significant progress with core kernel functionality now solidly implemented. The system boots with Limine bootloader and provides a complete interactive shell environment.
 
@@ -34,8 +34,8 @@ MeniOS has made significant progress with core kernel functionality now solidly 
 |-----------|--------|--------|----------|
 | **🐚 Mosh (Shell)** | ✅ COMPLETE | 27/27 | 100% |
 | **🧮 Buddy Allocator** | ✅ COMPLETE | 20/20 | 100% |
-| **🔧 GCC (Toolchain)** | 🚀 Phase 4 Ready | 5/8 | 62.5% |
-| **🎮 Doom (Full OS)** | 🟢 Active | 11/26 | 42.3% |
+| **🔧 GCC (Toolchain)** | 🚀 Phase 4 Ready | 7/9 | 77.8% |
+| **🎮 Doom (Full OS)** | 🟢 Active | 29/38 | 76.3% |
 
 ### 🎉 **Recent Major Achievements** (2025-10-17)
 
