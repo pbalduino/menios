@@ -177,10 +177,9 @@ digraph IssueDependencies {
 
         // Signals (parent and breakdown) - ALL COMPLETE! 🎉
         issue103 [label="#103: UNIX signals\n(parent)", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED
-        issue210 [label="#210: Signal\nbookkeeping", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED
         issue211 [label="#211: Signal\nsyscalls", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED
         issue212 [label="#212: Signal\ndelivery", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED
-        issue213 [label="#213: Shell\nCtrl+C", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED - ALL 5 SIGNAL ISSUES COMPLETE!
+        issue213 [label="#213: Shell\nCtrl+C", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED - ALL 4 SIGNAL ISSUES IN DOOM COMPLETE!
 
         // Shared Memory (broken down)
         issue215 [label="#215: Shared mem\nmanager", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED
@@ -215,9 +214,9 @@ digraph IssueDependencies {
         issue300 [label="#300: meniOS port layer\ndoomgeneric_menios.c", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED
         issue301 [label="#301: Framebuffer mmap\n/dev/fb0 pixel access", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED
         issue302 [label="#302: Real key events\nscan codes, up/down", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED
-        issue303 [label="#303: Doom build\nintegration", fillcolor="#FFB6E8"];
+        issue303 [label="#303: Doom build\nintegration", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED (superseded)
         issue311 [label="#311: Doom Makefile.menios\nbuild system", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED
-        issue312 [label="#312: Integrate Doom\ninto meniOS build", fillcolor="#FFB6E8"];
+        issue312 [label="#312: Integrate Doom\ninto meniOS build", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED
     }
 
     subgraph cluster_system_services {
@@ -279,13 +278,19 @@ digraph IssueDependencies {
     }
 
     subgraph cluster_bugs {
-        label="Bug Fixes";
+        label="Bug Fixes & Stability";
         style=filled;
         fillcolor="#FFE4E4";
 
         issue202 [label="#202: /dev/zero\nEOF bug", fillcolor="#FFB6C1"];
         issue203 [label="#203: Pipeline\nhang bug", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED
         issue236 [label="#236: Delete key\nnot working", fillcolor="#FFB6C1"];
+        issue262 [label="#262: User-mode\npage fault handling", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED
+        issue274 [label="#274: Init process\ncrash fix", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED
+        issue319 [label="#319: Doom null\npointer crash", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED
+        issue320 [label="#320: Shell hang\nafter Doom crash", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED
+        issue322 [label="#322: Shell alarm\ncrash (stack)", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED
+        issue323 [label="#323: Shell crash\nafter Doom exit", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED
     }
 
     // Foundation dependencies
@@ -403,20 +408,19 @@ digraph IssueDependencies {
     issue65 -> issue209 [label="#65: VFS", style=dashed, color=gray];
 
     // Signals dependencies (sequential) - ALL COMPLETE! ✅
-    issue93 -> issue210 [label="#93: fork/exec", style=dashed, color=gray];
-    issue34 -> issue210 [label="#34: scheduler", style=dashed, color=gray];
-    issue210 -> issue211 [color=gray, penwidth=2, style=dashed];
+    issue93 -> issue211 [label="#93: fork/exec", style=dashed, color=gray];
+    issue34 -> issue211 [label="#34: scheduler", style=dashed, color=gray];
     issue211 -> issue212 [color=gray, penwidth=2, style=dashed];
     issue212 -> issue213 [color=gray, penwidth=2, style=dashed];
     issue213 -> issue103 [color=gray, penwidth=2, style=dashed, label="complete"];
 
-    // Shared Memory dependencies (sequential)
+    // Shared Memory dependencies (sequential) - ALL COMPLETE! ✅
     issue57 -> issue215 [label="#57: VM", style=dashed, color=gray];
     issue89 -> issue215 [label="#89: mmap", style=dashed, color=gray];
-    issue215 -> issue216 [color=purple, penwidth=2];
-    issue216 -> issue217 [color=purple, penwidth=2];
-    issue217 -> issue218 [color=purple, penwidth=2];
-    issue218 -> issue219 [color=purple];
+    issue215 -> issue216 [color=gray, penwidth=2, style=dashed];
+    issue216 -> issue217 [color=gray, penwidth=2, style=dashed];
+    issue217 -> issue218 [color=gray, penwidth=2, style=dashed];
+    issue218 -> issue219 [color=gray, style=dashed];
 
     // IPC integration (removed #105-#107 from Doom milestone)
 
@@ -426,7 +430,7 @@ digraph IssueDependencies {
 
     // Parent issue relationships (pipes and signals)
     issue102 -> issue206 [color=purple, style=dashed, label="breakdown"];
-    issue103 -> issue210 [color=purple, style=dashed, label="breakdown"];
+    issue103 -> issue211 [color=purple, style=dashed, label="breakdown"];
 
     // Shell core dependencies
     issue148 -> issue163 [color=green, style=dashed];  // env vars -> built-ins
@@ -492,13 +496,13 @@ digraph IssueDependencies {
     issue308 -> issue311 [color=gray, penwidth=2, style=dashed];  // string utilities -> Doom build ✅ CLOSED
     issue309 -> issue311 [color=gray, penwidth=2, style=dashed];  // formatted I/O -> Doom build ✅ CLOSED
     issue310 -> issue311 [color=gray, penwidth=2, style=dashed];  // math library -> Doom build ✅ CLOSED
-    issue300 -> issue311 [color=red, penwidth=3, label="DOOM", style=dashed];  // port layer -> build system
+    issue300 -> issue311 [color=gray, penwidth=3, label="DOOM", style=dashed];  // port layer -> build system ✅ CLOSED
 
-    issue311 -> issue312 [color=red, penwidth=3, label="DOOM", style=dashed];  // Doom build -> integration
-    issue192 -> issue312 [color=red, style=dashed];  // crt0 -> integration
-    issue193 -> issue312 [color=red, style=dashed];  // libc -> integration
-    issue195 -> issue312 [color=red, style=dashed];  // userland build -> integration
-    issue29 -> issue312 [color=red, style=dashed];  // cross-compiler -> integration
+    issue311 -> issue312 [color=gray, penwidth=3, label="DOOM\nCOMPLETE ✅", style=dashed];  // Doom build -> integration ✅ CLOSED
+    issue192 -> issue312 [color=gray, style=dashed];  // crt0 -> integration ✅ CLOSED
+    issue193 -> issue312 [color=gray, style=dashed];  // libc -> integration ✅ CLOSED
+    issue195 -> issue312 [color=gray, style=dashed];  // userland build -> integration ✅ CLOSED
+    issue29 -> issue312 [color=gray, style=dashed];  // cross-compiler -> integration ✅ CLOSED
 
     // Old build integration (superseded)
     issue312 -> issue303 [color=gray, style=dotted, label="superseded by\n#311/#312"];

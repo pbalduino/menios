@@ -113,7 +113,7 @@ void boot_graphics_init() {
 
   print_logo();
 
-  printf("Welcome to meniOS 0.1.0\n\n");
+  printf("Welcome to meniOS 0.1.666\n\n");
   logk("Testing console..OK\n");
   logk("Screen mode: %lu x %lu x %d\n", fb_width(), fb_height(), fb_bpp());
   logk("Available modes: %lu\n", fb_mode_count());

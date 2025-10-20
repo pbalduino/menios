@@ -151,7 +151,7 @@
     "github_issue": {
       "number": 312,
       "url": "https://github.com/pbalduino/menios/issues/312",
-      "state": "OPEN"
+      "state": "CLOSED"
     },
     "labels": [
       "enhancement",
@@ -166,7 +166,7 @@
     "github_issue": {
       "number": 303,
       "url": "https://github.com/pbalduino/menios/issues/303",
-      "state": "OPEN"
+      "state": "CLOSED"
     },
     "labels": [
       "enhancement"

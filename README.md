@@ -1,6 +1,6 @@
 # MeniOS
 
-> Current release: **0.1.0**
+> Current release: **0.1.666**
 
 <img alt="image" src="https://github.com/user-attachments/assets/90634816-da18-4e3c-8132-bba2ea291940">
 
@@ -8,23 +8,102 @@
 
 A hobby operating system kernel written in C and Assembly, targeting x86-64 architecture. The ultimate goal is to run Doom in userland! 🎯
 
-## 🎉 Release v0.1.0
+**Built with:**
+- **[doomgeneric](https://github.com/ozkl/doomgeneric)** by ozkl - Platform-agnostic Doom port
+- **[Limine](https://codeberg.org/Limine/Limine)** - Modern x86-64 bootloader
+- **[uACPI](https://github.com/uACPI/uACPI)** - ACPI implementation
 
-Version 0.1.0 is the first public milestone where meniOS boots straight into a fully interactive shell experience. Highlights of this release:
+## 🎉 Release v0.1.666 - "DOOM READY"
 
-- **Mosh shell milestone complete**: init now supervises `/bin/mosh`, which delivers a polished prompt, command history, tab completion, reverse search, Ctrl shortcuts, and directory-aware `cd` UX
-- **Robust command execution pipeline**: fork/exec/wait, pipes, redirection (stdin/stdout/stderr, append, fd duplication), logical operators, and background job control (`jobs`, `bg`, `fg`, Ctrl+Z) all work end-to-end
-- **Utility toolbox**: core `/bin` programs (`echo`, `cat`, `env`, `true`, `false`, `ls`, `kill`, `ps`, `mem`) ship in-tree
-- **Signal integration**: Ctrl+C cleanly terminates foreground jobs while preserving the supervising init loop
-- **Regression coverage**: expanded Unity test suites exercise the line editor, waitpid edge cases, and shell execution paths
+**The Doom milestone is complete!** Version 0.1.666 delivers all infrastructure needed to run the classic 1993 Doom game in userland. This release transforms meniOS from a shell-focused OS into a gaming-capable platform with robust graphics, input, file I/O, and process management.
 
-This release marks meniOS's transition from kernel experiments to an OS you can boot, explore, and script.
+### 🎮 **What's New Since v0.1.0**
 
-If you are tracking the steps toward a usable shell, see [Road to Shell Readiness](docs/road/road_to_shell.md) for the current checklist.
+#### **Doom Integration (33/33 issues complete)**
+- **Port Layer**: Complete [doomgeneric](https://github.com/ozkl/doomgeneric) integration via `doomgeneric_menios.c` with DG_Init/DrawFrame/GetKey/SleepMs/GetTicksMs
+- **Graphics Pipeline**: `/dev/fb0` with pixel-addressable framebuffer, mmap support, and direct video RAM blitting
+- **Input System**: Real keyboard events with scan codes, key press/release tracking, and modifier state
+- **Build Integration**: Doom compiles automatically with `make userland` and ships in every disk image
+- **Config Parsing**: scanf family (sscanf/fscanf/vfscanf) for reading game configuration files
+
+#### **File System Enhancements**
+- **FAT32 Write Support**: File creation, modification, truncation with O_CREAT/O_TRUNC/O_EXCL flags (#189, #291-#293)
+- **VFS Streaming I/O**: Block cache with LRU eviction, read-ahead, write-behind for efficient asset loading (#294-#298)
+- **I/O Scheduler**: Elevator-based disk I/O scheduler reduces seek latency for concurrent operations (#205)
+- **File Operations**: fopen/fclose/fread/fwrite/fseek/ftell buffered I/O (#305)
+- **Filesystem Helpers**: mkdir/remove/rename/unlink for save game management (#306)
+
+#### **libc Completion**
+- **String Utilities**: strdup/strndup/strcasecmp/strncasecmp for case-insensitive comparisons (#308)
+- **Environment Access**: getenv/putenv/setenv/unsetenv for DOOMWADDIR detection (#307)
+- **Formatted I/O**: snprintf/vsnprintf/vsprintf properly exposed, printf family now supports field widths, zero-padding, precision (#309, #324)
+- **Math Library**: fabs/fabsf/fabsl for video scaling calculations (#310)
+- **Input Parsing**: Complete scanf family implementation with C99 format specifiers (#304)
+
+#### **Process & Signal Stability**
+- **Shell Robustness**: Fixed all shell crash scenarios - clean Doom exit (#323), Doom crashes (#320), alarm signals (#322)
+- **Process Lifecycle**: Proper waitpid() handling for abnormal child termination
+- **Signal Frame Management**: Correct signal frame setup and stack management prevents overflow
+- **Fast Syscalls**: Migrated from int 0x80 to syscall/sysret with proper 64-bit return values (#221)
+
+#### **System Services**
+- **Time Management**: RTC driver, nanosleep(), setitimer(), gettimeofday() for game timing (#286-#288, #290)
+- **Time Conversions**: gmtime_r/mktime/strftime for timestamps and build system integration (#290)
+- **Device Control**: ioctl syscall for device-specific operations (TIOCGWINSZ, FBIOGET_VSCREENINFO) (#220)
+- **Shared Memory**: Complete IPC implementation with shmget/shmat/shmdt for fast data sharing (#215-#219)
+
+#### **Shell & UX Improvements**
+- **Startup Scripts**: `.moshrc` support for shell customization (#314)
+- **Memory Utility**: `/bin/mem` for system memory diagnostics (#243)
+- **Enhanced Utilities**: Improved error handling and robustness across all `/bin` tools
+
+#### **Memory Management**
+- **Buddy Allocator**: Production-ready buddy allocator with proper coalescing and fragmentation resistance (20/20 issues complete)
+- **Userspace malloc**: Efficient heap management for large applications like Doom (#95)
+
+### 🏆 **Milestone Achievement**
+
+meniOS has reached **97.8% completion** across all major milestones:
+- ✅ **Mosh Shell**: 27/27 (100%) - Interactive shell with job control
+- ✅ **Buddy Allocator**: 20/20 (100%) - Production-ready memory management
+- ✅ **Doom (Full OS)**: 33/33 (100%) - All infrastructure for gaming complete
+- 🚀 **GCC Toolchain**: 7/9 (77.8%) - Native compilation ready to start
+
+### 📦 **What's Included**
+
+This release includes everything from v0.1.0 plus:
+- Complete Doom port with build system integration
+- Save game support via FAT32 writes
+- Efficient asset streaming with block cache
+- Robust shell that survives all game scenarios
+- Production-ready graphics and input subsystems
+- Comprehensive libc for userland application development
+
+### 🎯 **Next Steps**
+
+With the Doom milestone complete, future work focuses on:
+- **Native Compilation**: TCC and binutils ports (ready to start - all dependencies met!)
+- **Threading Support**: pthread API for multithreaded applications
+- **Audio Subsystem**: Sound effects and music for Doom
+- **Extended Features**: Mouse support, timezone database, advanced utilities
+
+**Ready to play?** Boot meniOS and run `doom -iwad doom1.wad` to experience classic Doom on a hobby OS!
+
+---
+
+### 📚 **Release v0.1.0 - "SHELL READY"** (Previous Release)
+
+The first public milestone where meniOS boots into a fully interactive shell:
+- Mosh shell with command history, tab completion, reverse search
+- Process management with fork/exec/wait, pipes, redirection
+- Job control (bg/fg/Ctrl+Z) and signal integration (Ctrl+C)
+- Core utilities: echo, cat, env, ls, kill, ps, mem
+
+See [Road to Shell Readiness](docs/road/road_to_shell.md) for the complete shell milestone checklist.
 
 ## Current Status
 
-**📊 Progress**: 83/94 issues complete (88.3%)
+**📊 Progress**: 87/89 issues complete (97.8%)
 
 MeniOS has made significant progress with core kernel functionality now solidly implemented. The system boots with Limine bootloader and provides a complete interactive shell environment.
 
@@ -35,11 +114,16 @@ MeniOS has made significant progress with core kernel functionality now solidly 
 | **🐚 Mosh (Shell)** | ✅ COMPLETE | 27/27 | 100% |
 | **🧮 Buddy Allocator** | ✅ COMPLETE | 20/20 | 100% |
 | **🔧 GCC (Toolchain)** | 🚀 Phase 4 Ready | 7/9 | 77.8% |
-| **🎮 Doom (Full OS)** | 🟢 Active | 29/38 | 76.3% |
+| **🎮 Doom (Full OS)** | ✅ COMPLETE | 33/33 | 100% |
 
-### 🎉 **Recent Major Achievements** (2025-10-17)
+### 🎉 **Recent Major Achievements** (2025-10-20)
 
-1. **FAT32 Write Support** (#189) ✅ **100% COMPLETE**
+1. **🎮 DOOM MILESTONE COMPLETE!** ✅ **33/33 (100%)**
+   - All core infrastructure for running Doom in userland complete
+   - Build integration, stability fixes, and libc gaps all resolved
+   - Shell robustly handles all Doom exit scenarios
+
+2. **FAT32 Write Support** (#189) ✅ **100% COMPLETE**
    - File creation, truncation, persistence (#291, #292, #293)
    - O_CREAT, O_TRUNC, O_EXCL flags working
    - Comprehensive regression tests
@@ -163,12 +247,15 @@ If the cross toolchain is not found the build falls back to the host compiler.
 
 ## Architecture Overview
 
+**Boot**: [Limine](https://codeberg.org/Limine/Limine) bootloader → meniOS kernel → userland init
+
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│                    USERLAND (In Development)                │
+│                    USERLAND ✅                               │
 │  ┌─────────┐  ┌─────────┐  ┌─────────┐  ┌─────────────────┐ │
-│  │  Doom   │  │ Shell   │  │ Games   │  │  Applications   │ │
+│  │  Doom*  │  │ Shell   │  │ Games   │  │  Applications   │ │
 │  └─────────┘  └─────────┘  └─────────┘  └─────────────────┘ │
+│  *doomgeneric│              │                             │
 │                              │                             │
 │                        ┌─────────┐                        │
 │                        │  libc   │  (Threading Support)   │
@@ -191,13 +278,17 @@ If the cross toolchain is not found the build falls back to the host compiler.
 │  │ • Shared Mem ✅ │  │ • Streaming ✅  │  │ • cross-gcc ✅│ │
 │  └─────────────────┘  └─────────────────┘  └──────────────┘ │
 └─────────────────────────────┬───────────────────────────────┘
-                              │ Hardware Abstraction
+                              │ Hardware Abstraction (uACPI*)
 ┌─────────────────────────────┴───────────────────────────────┐
-│                         HARDWARE                           │
+│                    HARDWARE (x86-64)                       │
 │    CPU    │    RAM    │   Storage   │  Graphics  │  Input   │
 │   x86-64  │   4GB+    │    Disk     │    VGA     │   PS/2   │
 └─────────────────────────────────────────────────────────────┘
+                              │
+                      Boot: Limine* bootloader
 ```
+
+**Third-party components**: *[Limine](https://codeberg.org/Limine/Limine) bootloader, *[uACPI](https://github.com/uACPI/uACPI) ACPI implementation, *[doomgeneric](https://github.com/ozkl/doomgeneric) Doom port
 
 ## Known Issues and Limitations
 
@@ -277,12 +368,26 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 **Copyright (c) 2020-2025 Plínio Balduino**
 
-## References
+## Acknowledgments
+
+meniOS wouldn't be possible without these excellent open-source projects:
+
+### Third-Party Code Used
+
+- **[doomgeneric](https://github.com/ozkl/doomgeneric)** by [@ozkl](https://github.com/ozkl) - Platform-agnostic Doom port that makes running the classic 1993 game on custom platforms possible. meniOS implements the doomgeneric interface in `app/doom/doomgeneric_menios.c`.
+
+- **[Limine](https://codeberg.org/Limine/Limine)** by [mintsuki](https://codeberg.org/mintsuki) and contributors - Modern, feature-rich x86-64 bootloader with excellent multiboot2 protocol support. meniOS uses Limine for reliable boot and hardware initialization.
+
+- **[uACPI](https://github.com/uACPI/uACPI)** by [@UltraOS](https://github.com/UltraOS) - Portable ACPI implementation that provides robust hardware discovery and power management. Integrated into meniOS for platform compatibility.
+
+### Documentation & References
 
 - **Intel® 64 and IA-32 Architectures Software Developer's Manual**: https://www.intel.com/content/www/us/en/developer/articles/technical/intel-sdm.html
 - **PIC**: https://pdos.csail.mit.edu/6.828/2014/readings/hardware/8259A.pdf
 - **APIC**: http://web.archive.org/web/20070112195752/http://developer.intel.com/design/pentium/datashts/24201606.pdf
 - **ATA**: http://learnitonweb.com/2020/05/22/12-developing-an-operating-system-tutorial-episode-6-ata-pio-driver-osdev/
 - **Limine Protocol**: https://codeberg.org/Limine/limine-protocol/src/branch/trunk/PROTOCOL.md
+
+**Thank you** to all the developers and maintainers who make their work freely available. Standing on the shoulders of giants! 🙏
 
 ![image](https://user-images.githubusercontent.com/32979/212723683-73387eaf-4a48-4193-83b6-5ec155360a50.png)

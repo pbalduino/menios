@@ -1,8 +1,10 @@
 # meniOS Milestones
 
-This document tracks the three major milestones for meniOS development.
+This document tracks the major milestones for meniOS development.
 
-> **Release v0.1.0 (2025-10-13):** celebrates the completion of the Mosh shell milestone and is the first meniOS build to ship a polished interactive shell to users.
+> **Release v0.1.666 "DOOM READY" (2025-10-20):** Completes the Doom milestone with all infrastructure for running the classic 1993 Doom game in userland. This release achieves 97.8% overall completion (87/89 issues) with three milestones at 100%.
+
+> **Release v0.1.0 "SHELL READY" (2025-10-13):** First public release celebrating the completion of the Mosh shell milestone with a polished interactive shell experience.
 
 ## 📊 Milestone Overview
 
@@ -172,23 +174,19 @@ This document tracks the three major milestones for meniOS development.
 
 ---
 
-### 4. **Doom** (Game Porting Milestone)
+### 4. **Doom** (Game Porting Milestone) ✅ **COMPLETE**
 **Goal**: Run Doom (1993) in userland on meniOS
 **GitHub Milestone**: [Doom](https://github.com/pbalduino/menios/milestone/3)
 
-**Status**: 27/32 complete (84.4%)
+**Status**: ✅ 33/33 complete (100%) - **Released in v0.1.666 "DOOM READY"**
 
-**Note**: Depends on **Buddy Allocator milestone** for efficient memory management under game engine load.
+**Achievement**: All required infrastructure for running Doom in userland is complete. The milestone includes 33 essential issues covering graphics, input, libc gaps, build integration, stability fixes, IPC mechanisms, and core infrastructure.
 
 **Assigned Issues**:
 
-#### Graphics & Audio (5 issues)
+#### Graphics & Input (2 issues) ✅ **ALL COMPLETE**
 - [x] #31 - Userspace graphics interface ✅
 - [x] #32 - Input subsystem ✅
-- [ ] #33 - Audio subsystem
-- [x] #136 - Device filesystem infrastructure ✅
-- [x] #140 - /dev/kbd0 and /dev/fb0 hardware device interfaces ✅
-- [ ] #143 - Mouse driver
 
 #### libc Gaps for Doom (6 issues) ✅ **ALL COMPLETE!**
 - [x] #305 - File stdio support (fopen/fclose, buffered I/O) ✅
@@ -198,32 +196,28 @@ This document tracks the three major milestones for meniOS development.
 - [x] #309 - Expose snprintf/vsnprintf/vsprintf properly ✅
 - [x] #310 - Math library (fabs and clean up math.h) ✅
 
-#### Doom Integration (7 issues)
+#### Doom Integration (7 issues) ✅ **ALL COMPLETE**
 - [x] #300 - Wire up meniOS port layer ✅
 - [x] #301 - Expose pixel-addressable framebuffer (/dev/fb0 mmap) ✅
 - [x] #302 - Deliver real key events (scan codes, key up/down) ✅
-- [ ] #303 - Build integration for Doom userland binary
+- [x] #303 - Build integration for Doom userland binary ✅ (superseded by #311/#312)
 - [x] #304 - scanf family (sscanf/scanf/fscanf) implementation ✅
 - [x] #311 - Doom meniOS-specific build system (Makefile.menios) ✅
-- [ ] #312 - Integrate Doom into meniOS build and packaging
+- [x] #312 - Integrate Doom into meniOS build and packaging ✅
 
-#### Threading Support (3 issues)
-- [ ] #109 - pthread API implementation (ready now!)
-- [ ] #110 - Thread-safe C library
-- [ ] #113 - Thread-aware system calls
+#### Stability (6 issues) ✅ **ALL COMPLETE**
+- [x] #262 - User-mode page fault handling ✅
+- [x] #274 - Init process crash fix ✅
+- [x] #319 - Doom null pointer dereference crash ✅
+- [x] #320 - Shell hang after Doom crash ✅
+- [x] #322 - Shell alarm crash (stack overflow) ✅
+- [x] #323 - Shell crash after Doom exit ✅
 
-#### Memory & Process (1 issue)
+#### Memory & Process (1 issue) ✅
 - [x] #95 - Userspace memory allocator (malloc/free) ✅
 
-#### File System (1 issue)
-- [x] #189 - FAT32 write support ✅
-
-#### IPC - Pipes (1 issue - parent)
-- [x] #102 - Pipes/FIFOs implementation ✅ COMPLETE
-
-#### IPC - Signals (5 issues) ✅ **ALL COMPLETE!**
+#### IPC - Signals (4 issues) ✅ **ALL COMPLETE!**
 - [x] #103 - UNIX signals (parent issue) ✅
-- [x] #210 - Signal bookkeeping scaffold ✅
 - [x] #211 - Signal syscalls ✅
 - [x] #212 - Signal delivery path ✅
 - [x] #213 - Shell Ctrl+C integration ✅
@@ -256,7 +250,17 @@ This document tracks the three major milestones for meniOS development.
 - #303 requires #312 (old build integration - superseded by #311/#312)
 - #304 requires #193 ✅ (libc foundation COMPLETE)
 
-**Progress**: IPC infrastructure complete - Pipes ✅, Signals ✅ (ALL 5 COMPLETE!), Shared Memory ✅! FAT32 write support ✅ complete! scanf family (#304) ✅ complete! Real key events (#302) ✅ complete! Doom port layer (#300) ✅ complete with fullscreen graphics, timing, and input! Pixel-addressable framebuffer (#301) ✅ complete! Doom build system (#311) ✅ now compiles doomgeneric against the meniOS SDK! 🎉 **ALL 6 LIBC GAPS COMPLETE**: File stdio (#305) ✅, Filesystem helpers (#306) ✅, Environment access (#307) ✅, String utilities (#308) ✅, Formatted I/O (#309) ✅, Math library (#310) ✅! Threading support reduced to 3 core issues (#111, #112 removed - not required for Doom). Advanced signal features (#214) removed - not required for Doom. Remaining work: final build integration (#312) - NOW UNBLOCKED!
+**Progress**: 🎉 **MILESTONE COMPLETE!** All 33 required issues closed and shipped in v0.1.666 "DOOM READY":
+- ✅ Graphics & Input (2/2): Complete framebuffer pipeline with mmap support and real keyboard events
+- ✅ libc Gaps (6/6): File stdio, filesystem helpers, environment access, string utilities, formatted I/O, math library
+- ✅ Doom Integration (7/7): Complete [doomgeneric](https://github.com/ozkl/doomgeneric) port layer, build system, and packaging integration - Doom ships automatically
+- ✅ Stability (6/6): All crash scenarios fixed - null pointer dereference, shell hang/crash after Doom exit, alarm stack overflow
+- ✅ Memory & Process (1/1): Userspace malloc backed by production-ready buddy allocator
+- ✅ IPC - Signals (4/4): UNIX signals, syscalls, delivery path, shell Ctrl+C integration
+- ✅ IPC - Shared Memory (5/5): Manager, syscalls, reference counting, tests, documentation
+- ✅ IPC - Other (2/2): ioctl syscall, fast syscall instruction
+
+**Streamlined**: Removed non-essential features (audio, threading, mouse, advanced signals) to future work - initial Doom port doesn't require them.
 
 ---
 
@@ -291,13 +295,13 @@ This document tracks the three major milestones for meniOS development.
 
 ## 📈 Overall Progress
 
-- **Total Issues Across Milestones**: 94 issues (includes foundational issues)
-- **Completed**: 84 issues (89.4%)
-- **In Progress**: 10 issues
-- **Ready to Start**: 5 issues (no dependencies: #109, #190, #191, #312)
+- **Total Issues Across Milestones**: 89 issues (includes foundational issues)
+- **Completed**: 87 issues (97.8%)
+- **In Progress**: 2 issues
+- **Ready to Start**: 2 issues (no dependencies: #190, #191)
 - **Recently Completed**: #286-#293 ✅ (time management & FAT32 writes), #304 ✅ (scanf family), #302 ✅ (real key events), #301 ✅ (framebuffer mmap), #300 ✅ (menIOS Doom port layer), #136 ✅ (devfs), #140 ✅ (/dev/kbd0 and /dev/fb0), #221 ✅ (fast syscalls), #305-#310 ✅ (ALL libc gaps COMPLETE!), #311 ✅ (Doom build system), #314 ✅ (shell startup scripts)
-- **Recently Created**: #305-#312 ✅ (libc gaps & Doom build system), #313 (filesystem organization), #314 ✅ (shell startup scripts - COMPLETE), #315 (motd), #316 (touch command), #317 (utime syscall), #318 (uname command), **#319-#323 (CRITICAL BUGS)** - Doom crash ✅ FIXED, shell hang, page fault diagnostics, mosh alarm crash, shell crash after Doom exit, #324 (printf field width/padding - enhancement)
-- **Next Up**: 🎉 ALL libc gaps COMPLETE! Doom build integration (#312) now unblocked! TCC/binutils (#190, #191) ready! New utilities (#315-#318) improve usability.
+- **Recently Created**: #305-#312 ✅ (libc gaps & Doom build system), #313 (filesystem organization), #314 ✅ (shell startup scripts - COMPLETE), #315 (motd), #316 (touch command), #317 (utime syscall), #318 (uname command), #319-#323 ✅ (stability fixes - ALL COMPLETE!)
+- **Next Up**: 🎉 Doom milestone COMPLETE (33/33)! TCC/binutils (#190, #191) ready for native compilation!
 
 ## 🚀 Immediate Next Steps
 
@@ -316,46 +320,39 @@ All phases finished! Core buddy allocator implementation (Phase 1 ✅), critical
    - #190 - TCC port (Buddy Allocator ✅ COMPLETE, FAT32 writes ✅ COMPLETE)
    - #191 - binutils port (Buddy Allocator ✅ COMPLETE, FAT32 writes ✅ COMPLETE)
 
-2. **Doom Milestone - libc Gaps** (6/6 COMPLETE! 🎉):
-   - #305 - File stdio support ✅ COMPLETE
-   - #306 - Filesystem helpers ✅ COMPLETE
-   - #307 - Environment variable access ✅ COMPLETE
-   - #308 - String utilities ✅ COMPLETE
-   - #309 - Expose snprintf/vsnprintf properly ✅ COMPLETE
-   - #310 - Math library ✅ COMPLETE - ALL LIBC GAPS DONE!
-
-3. **Doom Milestone - Threading** (Ready to implement):
-   - #109 - pthread API (no dependencies)
-
-4. **Doom Milestone - Integration** (Port layer & build system ✅; packaging READY! 🚀):
-   - #301 - Pixel-addressable framebuffer ✅ COMPLETE!
-   - #302 - Real key events ✅ COMPLETE!
-   - #300 - Doom port layer ✅ COMPLETE!
-   - #311 - Doom build system ✅ COMPLETE!
-   - #312 - Build integration (UNBLOCKED - all libc gaps done!)
+2. **Doom Milestone** (33/33 COMPLETE! 🎉):
+   - ✅ Graphics & Input (2/2 complete)
+   - ✅ libc Gaps (6/6 complete)
+   - ✅ Doom Integration (7/7 complete)
+   - ✅ Stability (6/6 complete)
+   - ✅ Memory & Process (1/1 complete)
+   - ✅ IPC - Signals (4/4 complete)
+   - ✅ IPC - Shared Memory (5/5 complete)
+   - ✅ IPC - Other (2/2 complete)
+   - **ALL ISSUES COMPLETE - Doom runs in userland!** 🎮
 
 ## 📝 Notes
 
 ### Parallel Development
-Many issues can be worked on in parallel:
-- **Buddy Allocator**: ✅ COMPLETE (100%) - All phases done!
-- **GCC**: FULLY UNBLOCKED - #190/#191 can start (only needs #189 FAT32 writes)
-- **Doom Threading**: #109, #112, #113 are independent (can start now!)
-- **Doom IPC**: Different IPC mechanisms can progress in parallel
-- **Mosh UX**: All features complete! ✅
+Completed milestones:
+- **Mosh**: ✅ COMPLETE (27/27 - 100%)
+- **Buddy Allocator**: ✅ COMPLETE (20/20 - 100%)
+- **Doom**: ✅ COMPLETE (33/33 - 100%)
+
+Active work:
+- **GCC**: 5/7 complete (71.4%) - #190/#191 ready to start
 
 ### Critical Dependencies
-- **Buddy Allocator milestone** ✅ COMPLETE (100%) - Production-ready! All 4 phases complete: Core, Security, Reliability, Performance
-- **GCC milestone** - FULLY UNBLOCKED! Only needs #189 (FAT32 writes) for native compilation
-- **Doom milestone** - FULLY UNBLOCKED! Buddy allocator complete, ready for pthread (#109) and advanced features
-- **Mosh milestone** ✅ COMPLETE - Development environment ready!
+- **Mosh milestone** ✅ COMPLETE (27/27 - 100%)
+- **Buddy Allocator milestone** ✅ COMPLETE (20/20 - 100%)
+- **Doom milestone** ✅ COMPLETE (33/33 - 100%)
+- **GCC milestone** - 5/7 complete (71.4%) - Only #190 (TCC) and #191 (binutils) remaining
 
 ### Completion Order
-Recommended completion order for maximum impact:
-1. **Mosh** ✅ COMPLETE (100%) - Development environment ready! 🎉
-2. **Buddy Allocator** ✅ COMPLETE (100%) - Memory management production-ready! 🎉
-3. **GCC** - Enables native development (62.5% complete, FULLY UNBLOCKED, only needs #189)
-4. **Doom** - Demonstrates full OS capabilities (38.5% complete, FULLY UNBLOCKED, ready to start!)
+1. **Mosh** ✅ COMPLETE (27/27 - 100%) 🎉
+2. **Buddy Allocator** ✅ COMPLETE (20/20 - 100%) 🎉
+3. **Doom** ✅ COMPLETE (33/33 - 100%) 🎉
+4. **GCC** - In Progress (5/7 - 71.4%) - Enables native development
 
 ### Recent Changes
 - **2025-10-08**: Expanded Mosh milestone from 10 to 30 issues to better track all shell work
@@ -583,10 +580,10 @@ Recommended completion order for maximum impact:
   - Foundational infrastructure - has been in production use
   - Overall progress: 74/92 issues complete (80.4%)
 - **2025-10-19**: Closed #300 (Doom port layer) ✅, #301 (Framebuffer mmap) ✅, #311 (Doom build system) ✅
-  - Full doomgeneric port layer implementation complete
+  - Full [doomgeneric](https://github.com/ozkl/doomgeneric) port layer implementation complete
   - /dev/fb0 framebuffer access with ownership model and ioctl suite
   - Double buffering, mode management, graceful shutdown all working
-  - Doom build system now compiles doomgeneric against meniOS SDK
+  - Doom build system now compiles [doomgeneric](https://github.com/ozkl/doomgeneric) against meniOS SDK
   - Doom milestone: 19/36 complete (52.8%)
   - Overall progress: 77/92 issues complete (83.7%)
 - **2025-10-19**: Closed #140 (/dev/kbd0 and /dev/fb0 device interfaces) ✅

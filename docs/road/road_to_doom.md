@@ -2,6 +2,12 @@
 
 🎯 **Goal**: Run the classic 1993 Doom game in userland on meniOS!
 
+## 🎉 **MILESTONE COMPLETE - v0.1.666 "DOOM READY"**
+
+**✅ ALL 33 REQUIRED ISSUES COMPLETE (100%)!** The Doom milestone has been fully achieved in release v0.1.666. All infrastructure needed to run the classic 1993 Doom game in userland is now implemented, tested, and integrated into the build system.
+
+**Using [doomgeneric](https://github.com/ozkl/doomgeneric)**: meniOS integrates the excellent doomgeneric port by [@ozkl](https://github.com/ozkl), which provides a clean platform abstraction layer. The meniOS-specific implementation is in `app/doom/doomgeneric_menios.c`, providing graphics, input, timing, and file I/O integration.
+
 ## 📊 **Progress Assessment**
 
 **✅ Foundation Complete!** The core kernel infrastructure needed for userspace applications is now solidly implemented:
@@ -456,8 +462,8 @@ The solid foundation work (memory management, scheduling, synchronization) now e
 
 ## 🎯 **GitHub Milestone Tracking**
 
-The Doom milestone on GitHub now tracks 38 issues:
-- **Status**: 29/38 complete (76.3%)
+The Doom milestone on GitHub now tracks 33 issues:
+- **Status**: 33/33 complete (100%) 🎉
 - **Completed**:
   - Graphics & Input: #31 ✅, #32 ✅, #136 ✅ (devfs), #140 ✅ (/dev/kbd0 and /dev/fb0)
   - Memory: #95 ✅
@@ -467,15 +473,14 @@ The Doom milestone on GitHub now tracks 38 issues:
   - IPC - Shared Memory: #215 ✅, #216 ✅, #217 ✅, #218 ✅, #219 ✅ (ALL COMPLETE!)
   - IPC - Other: #220 ✅ (ioctl), #221 ✅ (fast syscalls)
   - libc Gaps: #305 ✅ (file stdio), #306 ✅ (filesystem helpers), #307 ✅ (environment access), #308 ✅ (string utilities), #309 ✅ (formatted I/O), #310 ✅ (math library) - **ALL 6 COMPLETE!** 🎉
-  - Doom Integration: #300 ✅ (meniOS port layer), #301 ✅ (framebuffer mmap), #302 ✅ (real key events), #304 ✅ (scanf family), #311 ✅ (Doom build system)
-  - Stability: #262 ✅ (user-mode page fault handling), #274 ✅ (init crash fix), #319 ✅ (Doom null pointer crash), #323 ✅ (shell crash after Doom exit)
+  - Doom Integration: #300 ✅ (meniOS port layer), #301 ✅ (framebuffer mmap), #302 ✅ (real key events), #303 ✅ (build integration - superseded), #304 ✅ (scanf family), #311 ✅ (Doom build system), #312 ✅ (full build integration)
+  - Stability: #262 ✅ (user-mode page fault handling), #274 ✅ (init crash fix), #319 ✅ (Doom null pointer crash), #320 ✅ (shell hang after Doom crash), #322 ✅ (shell alarm crash), #323 ✅ (shell crash after Doom exit)
 - **New Issues Created (2025-10-18/19)**:
   - libc Gaps: #305 (file stdio), #306 (filesystem helpers), #307 (environment access), #309 (formatted I/O), #310 (math library)
   - Build System: #312 (build integration)
   - Doom Integration: #303 (old build - superseded)
-- **In Progress**: Threading (#109, #110, #113), Audio (#33), Mouse (#143), Shell stability (#320, #322), Build Integration (#303, #312)
-- **Ready to Start NOW**: #312 (Doom build integration - ALL dependencies met! 🚀)
-- **Removed**: #105 (Unix sockets), #106 (microkernel IPC), #107 (capabilities), #111 (Advanced pthread synchronization), #112 (Thread debugging), #214 (Advanced signal features) - not required for Doom
+- **🎉 MILESTONE COMPLETE!** All required issues closed!
+- **Removed from milestone**: #33 (Audio), #109 (pthread API), #110 (thread-safe libc), #111 (advanced pthread), #112 (thread debugging), #113 (threading utilities), #143 (mouse driver), #105 (Unix sockets), #106 (microkernel IPC), #107 (capabilities), #214 (Advanced signal features) - moved to future work / not required for initial Doom port
 
 **Recent Major Achievements**:
 - ✅ FAT32 write support (#189, #291-#293) - Save games now possible!
@@ -496,7 +501,15 @@ The Doom milestone on GitHub now tracks 38 issues:
 - ✅ Math library (#310) - fabs/fabsf/fabsl now in libc for video scaling!
 - 🎉 **ALL 6 LIBC GAPS COMPLETE!** Doom build integration (#312) now fully unblocked!
 - ✅ Shell crash after Doom exit (#323) - Fixed syscall frame restoration on process resume!
+- ✅ Shell hang after Doom crash (#320) - Fixed waitpid() handling for abnormal child termination!
+- ✅ Shell alarm crash (#322) - Fixed signal frame setup and stack management!
+- ✅ Doom build integration (#303, #312) - Doom now ships automatically with every meniOS build!
 
 See [MILESTONES.md](../MILESTONES.md) for detailed milestone tracking across all three major goals (Mosh, GCC, Doom).
 
 ---
+
+**Last Updated**: 2025-10-20
+**Status**: 🎉 **MILESTONE COMPLETE - Released in v0.1.666 "DOOM READY"**
+**Achievement**: All 33 required issues complete. Doom can now run in userland with full graphics, input, file I/O, and process management support.
+**Next Steps**: Native compilation (TCC #190, binutils #191), threading support (#109, #110), audio subsystem (#33)

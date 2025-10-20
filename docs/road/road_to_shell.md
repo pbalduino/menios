@@ -2,7 +2,7 @@
 
 This roadmap captures every dependency for shipping a **minimally functional interactive shell** on meniOS.  The goal is for users to boot the OS, reach a prompt, type commands, execute programs, and see their output without relying on developer shortcuts.
 
-> **Milestone Update (v0.1.0, 2025-10-13):** All criteria below are now met and ship in the meniOS v0.1.0 release—the first build where users can spend meaningful time inside the mosh shell.
+> **✅ MILESTONE COMPLETE:** Achieved in v0.1.0 (2025-10-13) and refined through v0.1.666 (2025-10-20). All 27 shell issues complete (100%). The mosh shell now includes enhanced stability, .moshrc support, and robust process management.
 
 ## Definition of "Minimal Shell"
 
@@ -113,3 +113,10 @@ A release that meets this milestone must satisfy all of the following:
 - Login/getty integration for multiple TTYs (#175-#178).
 
 Keep this document updated whenever shell-related PRs merge or new blockers appear.  With v0.1.0 the milestone is complete; future updates should capture enhancements that extend the shell beyond the minimal target.
+
+---
+
+**Last Updated**: 2025-10-20
+**Status**: ✅ **MILESTONE COMPLETE - 27/27 issues (100%)**
+**Current Release**: v0.1.666 "DOOM READY" includes all shell features plus enhanced stability and .moshrc support
+**Achievement**: Delivered in v0.1.0, refined through v0.1.666 with robust process lifecycle management
