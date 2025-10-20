@@ -250,7 +250,7 @@ digraph IssueDependencies {
         issue242 [label="#242: PATH tab\ncompletion", fillcolor="#E0FFFF"];
         issue243 [label="#243: /bin/mem\nutility", fillcolor="#90EE90", style="filled,dashed"];
         issue313 [label="#313: Filesystem hierarchy\norganization (FHS)", fillcolor="#E0FFFF"];
-        issue314 [label="#314: Shell startup scripts\n.moshrc support", fillcolor="#E0FFFF"];
+        issue314 [label="#314: Shell startup scripts\n.moshrc support", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED
         issue315 [label="#315: Message of the day\nmotd command", fillcolor="#E0FFFF"];
         issue316 [label="#316: touch command\nfile creation", fillcolor="#E0FFFF"];
         issue317 [label="#317: utime() syscall\ntimestamp modification", fillcolor="#E0FFFF"];
@@ -533,8 +533,8 @@ digraph IssueDependencies {
 
     // New utility dependencies
     issue193 -> issue313 [label="libc", color=brown];  // libc -> filesystem organization
-    issue193 -> issue314 [label="libc", color=brown];  // libc -> .moshrc
-    issue162 -> issue314 [label="command exec", color=brown];  // command execution -> .moshrc
+    issue193 -> issue314 [label="libc", color=gray, style=dashed];  // libc -> .moshrc ✅ CLOSED
+    issue162 -> issue314 [label="command exec", color=gray, style=dashed];  // command execution -> .moshrc ✅ CLOSED
     issue313 -> issue315 [label="/etc", color=brown];  // filesystem org -> motd
     issue193 -> issue315 [label="libc", color=brown];  // libc -> motd
     issue193 -> issue316 [label="libc", color=brown];  // libc -> touch

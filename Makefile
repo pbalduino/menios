@@ -619,6 +619,9 @@ ifeq ($(OS_NAME),linux)
 	mmd -i $(IMAGE_NAME).hdd@@2M ::/EFI ::/EFI/BOOT ::/limine ::/boot ::/boot/limine > /dev/null 2>&1 || true
 	mmd -i $(IMAGE_NAME).hdd@@2M ::/bin > /dev/null 2>&1 || true
 	mmd -i $(IMAGE_NAME).hdd@@2M ::/doom > /dev/null 2>&1 || true
+	mmd -i $(IMAGE_NAME).hdd@@2M ::/home > /dev/null 2>&1 || true
+	mkdir -p $(OUTPUT_DIR)/home
+	printf '/bin/doom -iwad /doom/doom2.wad\n' > $(OUTPUT_DIR)/home/.moshrc
 	mcopy -i $(IMAGE_NAME).hdd@@2M $(KERNEL) limine.conf $(OUTPUT_DIR)/limine-bios.sys ::/
 	mcopy -i $(IMAGE_NAME).hdd@@2M $(OUTPUT_DIR)/limine-bios.sys ::/limine/
 	mcopy -i $(IMAGE_NAME).hdd@@2M $(OUTPUT_DIR)/limine-bios.sys ::/boot/
@@ -637,6 +640,7 @@ ifeq ($(OS_NAME),linux)
 	mcopy -i $(IMAGE_NAME).hdd@@2M $(OUTPUT_DIR)/bin/malloc_stress ::/bin/malloc_stress
 	mcopy -i $(IMAGE_NAME).hdd@@2M $(OUTPUT_DIR)/bin/mem ::/bin/mem
 	mcopy -i $(IMAGE_NAME).hdd@@2M $(OUTPUT_DIR)/bin/alarm_demo ::/bin/alarm_demo
+	mcopy -i $(IMAGE_NAME).hdd@@2M $(OUTPUT_DIR)/home/.moshrc ::/home/.moshrc
 	if [ -f "$(OUTPUT_DIR)/bin/doom" ]; then \
 		mcopy -i $(IMAGE_NAME).hdd@@2M $(OUTPUT_DIR)/bin/doom ::/bin/doom; \
 	else \

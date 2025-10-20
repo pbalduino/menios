@@ -295,9 +295,9 @@ This document tracks the three major milestones for meniOS development.
 - **Completed**: 84 issues (89.4%)
 - **In Progress**: 10 issues
 - **Ready to Start**: 5 issues (no dependencies: #109, #190, #191, #312)
-- **Recently Completed**: #286-#293 ✅ (time management & FAT32 writes), #304 ✅ (scanf family), #302 ✅ (real key events), #301 ✅ (framebuffer mmap), #300 ✅ (menIOS Doom port layer), #136 ✅ (devfs), #140 ✅ (/dev/kbd0 and /dev/fb0), #221 ✅ (fast syscalls), #305-#310 ✅ (ALL libc gaps COMPLETE!), #311 ✅ (Doom build system)
-- **Recently Created**: #305-#312 ✅ (libc gaps & Doom build system), #313 (filesystem organization), #314 (shell startup scripts), #315 (motd), #316 (touch command), #317 (utime syscall), #318 (uname command)
-- **Next Up**: 🎉 ALL libc gaps COMPLETE! Doom build integration (#312) now unblocked! TCC/binutils (#190, #191) ready! New utilities (#314-#318) improve usability.
+- **Recently Completed**: #286-#293 ✅ (time management & FAT32 writes), #304 ✅ (scanf family), #302 ✅ (real key events), #301 ✅ (framebuffer mmap), #300 ✅ (menIOS Doom port layer), #136 ✅ (devfs), #140 ✅ (/dev/kbd0 and /dev/fb0), #221 ✅ (fast syscalls), #305-#310 ✅ (ALL libc gaps COMPLETE!), #311 ✅ (Doom build system), #314 ✅ (shell startup scripts)
+- **Recently Created**: #305-#312 ✅ (libc gaps & Doom build system), #313 (filesystem organization), #314 ✅ (shell startup scripts - COMPLETE), #315 (motd), #316 (touch command), #317 (utime syscall), #318 (uname command)
+- **Next Up**: 🎉 ALL libc gaps COMPLETE! Doom build integration (#312) now unblocked! TCC/binutils (#190, #191) ready! New utilities (#315-#318) improve usability.
 
 ## 🚀 Immediate Next Steps
 
@@ -667,6 +667,11 @@ Recommended completion order for maximum impact:
   - Doom milestone: 27/32 complete (84.4%)
   - Total project issues reduced from 98 to 94
   - Overall progress: 84/94 issues complete (89.4%)
+- **2025-10-19**: Closed #314 (Shell startup script support - .moshrc) ✅
+  - Implemented .moshrc shell startup script support
+  - Shell now executes commands from ~/.moshrc on startup
+  - Enables automated environment setup and debugging workflows
+  - Enhances developer experience with customizable shell initialization
 
 ---
 
