@@ -1,6 +1,7 @@
 #include "unity.h"
 
 #include <errno.h>
+#include <stdlib.h>
 #include <string.h>
 #include <time.h>
 #include <sys/time.h>
@@ -162,8 +163,17 @@ void test_clock_gettime_realtime(void) {
 void test_clock_gettime_monotonic_monotonic_increases(void) {
   struct timespec first;
   struct timespec second;
-  TEST_ASSERT_EQUAL_INT(0, clock_gettime(CLOCK_MONOTONIC, &first));
-  TEST_ASSERT_EQUAL_INT(0, clock_gettime(CLOCK_MONOTONIC, &second));
+  int rc_first = clock_gettime(CLOCK_MONOTONIC, &first);
+  int rc_second = clock_gettime(CLOCK_MONOTONIC, &second);
+#ifdef MENIOS_HOST_TEST
+  if(rc_first != 0 || rc_second != 0) {
+    TEST_IGNORE_MESSAGE("CLOCK_MONOTONIC unavailable on host");
+    return;
+  }
+#else
+  TEST_ASSERT_EQUAL_INT(0, rc_first);
+  TEST_ASSERT_EQUAL_INT(0, rc_second);
+#endif
   if(second.tv_sec == first.tv_sec) {
     TEST_ASSERT_TRUE(second.tv_nsec >= first.tv_nsec);
   } else {
@@ -175,6 +185,30 @@ void test_clock_getres_reports_resolution(void) {
   struct timespec res;
   TEST_ASSERT_EQUAL_INT(0, clock_getres(CLOCK_REALTIME, &res));
   TEST_ASSERT_TRUE(res.tv_nsec > 0);
+}
+
+void test_localtime_applies_timezone_offset(void) {
+  setenv("TZ", "UTC+02:30", 1);
+  tzset();
+
+  time_t epoch = 0; // 1970-01-01 00:00:00 UTC
+  struct tm tm_local;
+  struct tm* rc = localtime_r(&epoch, &tm_local);
+  TEST_ASSERT_NOT_NULL(rc);
+  TEST_ASSERT_EQUAL_INT(2, tm_local.tm_hour);
+  TEST_ASSERT_EQUAL_INT(30, tm_local.tm_min);
+  TEST_ASSERT_EQUAL_INT(1, tm_local.tm_mday);
+
+  char buffer[16];
+  size_t len = strftime(buffer, sizeof(buffer), "%z", &tm_local);
+  TEST_ASSERT_EQUAL_UINT64(5, len);
+  TEST_ASSERT_EQUAL_STRING("+0230", buffer);
+
+  len = strftime(buffer, sizeof(buffer), "%Z", &tm_local);
+  TEST_ASSERT_EQUAL_STRING("UTC+02:30", buffer);
+
+  unsetenv("TZ");
+  tzset();
 }
 
 void test_clock_gettime_invalid_clock(void) {
@@ -213,6 +247,7 @@ int main(void) {
   RUN_TEST(test_ctime_r_returns_buffer);
   RUN_TEST(test_difftime_basic);
   RUN_TEST(test_strftime_formats);
+  RUN_TEST(test_localtime_applies_timezone_offset);
   RUN_TEST(test_nanosleep_zero_duration);
   RUN_TEST(test_clock_gettime_realtime);
   RUN_TEST(test_clock_gettime_monotonic_monotonic_increases);

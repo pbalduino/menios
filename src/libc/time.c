@@ -8,6 +8,9 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include <limits.h>
+#include <stdlib.h>
+#include <stdio.h>
+#include <ctype.h>
 #ifdef MENIOS_HOST_TEST
 #include <dlfcn.h>
 #include <errno.h>
@@ -49,6 +52,132 @@ static const char* const MONTH_FULL_NAMES[] = {
   "December"
 };
 static const char* const AM_PM_STRINGS[] = {"AM", "PM"};
+
+typedef struct {
+  int  offset_seconds;
+  char name[16];
+} tzinfo_t;
+
+static tzinfo_t tz_cache = {0, "UTC"};
+
+static void tz_parse_env(tzinfo_t* info) {
+  info->offset_seconds = 0;
+  strcpy(info->name, "UTC");
+
+  const char* env = getenv("TZ");
+  if(env == NULL) {
+    return;
+  }
+
+  char buffer[64];
+  size_t len = 0;
+  while(env[len] != '\0' && len < sizeof(buffer) - 1) {
+    buffer[len] = env[len];
+    len++;
+  }
+  buffer[len] = '\0';
+
+  const char* trimmed = buffer;
+  while(*trimmed == ' ' || *trimmed == '\t' || *trimmed == '\n' || *trimmed == '\r') {
+    trimmed++;
+  }
+
+  if(*trimmed == '\0') {
+    return;
+  }
+
+  strncpy(info->name, trimmed, sizeof(info->name) - 1);
+  info->name[sizeof(info->name) - 1] = '\0';
+
+  const char* parse = trimmed;
+  if(strncmp(parse, "UTC", 3) == 0 || strncmp(parse, "GMT", 3) == 0) {
+    parse += 3;
+  }
+
+  if(*parse == '\0') {
+    strcpy(info->name, "UTC");
+    return;
+  }
+
+  int sign = 0;
+  if(*parse == '+') {
+    sign = 1;
+    parse++;
+  } else if(*parse == '-') {
+    sign = -1;
+    parse++;
+  } else {
+    return;
+  }
+
+  const char* digits_begin = parse;
+  int value = 0;
+  int digits = 0;
+  while(*parse >= '0' && *parse <= '9' && digits < 4) {
+    value = value * 10 + (*parse - '0');
+    parse++;
+    digits++;
+  }
+
+  if(digits == 0) {
+    return;
+  }
+
+  bool colon = false;
+  if(*parse == ':') {
+    if(digits > 2) {
+      return;
+    }
+    colon = true;
+    parse++;
+  }
+
+  int hours = 0;
+  int minutes = 0;
+
+  if(colon) {
+    hours = value;
+    int mdigits = 0;
+    while(*parse >= '0' && *parse <= '9' && mdigits < 2) {
+      minutes = minutes * 10 + (*parse - '0');
+      parse++;
+      mdigits++;
+    }
+    if(mdigits == 0) {
+      return;
+    }
+  } else if(digits > 2) {
+    minutes = value % 100;
+    hours = value / 100;
+  } else {
+    hours = value;
+  }
+
+  if(hours > 23 || minutes > 59) {
+    return;
+  }
+
+  while(*parse == ' ' || *parse == '\t' || *parse == '\n' || *parse == '\r') {
+    parse++;
+  }
+
+  if(*parse != '\0') {
+    return;
+  }
+
+  int total = hours * 3600 + minutes * 60;
+  info->offset_seconds = sign * total;
+  snprintf(info->name, sizeof(info->name), "UTC%c%02d:%02d", (sign >= 0) ? '+' : '-', hours, minutes);
+}
+
+static const tzinfo_t* tz_get_info(void) {
+  tz_parse_env(&tz_cache);
+  return &tz_cache;
+}
+
+void tzset(void) {
+  tz_parse_env(&tz_cache);
+}
 
 #define SECONDS_PER_MINUTE 60
 #define MINUTES_PER_HOUR 60
@@ -432,7 +561,28 @@ struct tm* gmtime(const time_t* timer) {
 }
 
 struct tm* localtime_r(const time_t* timer, struct tm* result) {
-  return gmtime_r(timer, result);
+  if(timer == NULL || result == NULL) {
+    return NULL;
+  }
+
+  const tzinfo_t* info = tz_get_info();
+  int offset = info->offset_seconds;
+
+  int64_t base = (int64_t)(*timer);
+  int64_t adjusted = base + (int64_t)offset;
+
+  if((offset > 0 && adjusted < base) || (offset < 0 && adjusted > base)) {
+    return NULL;
+  }
+
+  time_t local = (time_t)adjusted;
+  if((int64_t)local != adjusted) {
+    return NULL;
+  }
+
+  seconds_to_tm(local, result);
+  result->tm_isdst = 0;
+  return result;
 }
 
 struct tm* localtime(const time_t* timer) {
@@ -711,17 +861,34 @@ size_t strftime(char* restrict dest,
         pos = strlen(dest);
         break;
       case 'z':
-        if(!append_buffer(dest, max, &pos, "+0000", 5)) {
+      {
+        const tzinfo_t* info = tz_get_info();
+        int offset = info->offset_seconds;
+        int sign = (offset >= 0) ? '+' : '-';
+        int abs_offset = (offset >= 0) ? offset : -offset;
+        int hours = abs_offset / 3600;
+        int minutes = (abs_offset % 3600) / 60;
+        char buf[5];
+        buf[0] = (char)sign;
+        buf[1] = (char)('0' + (hours / 10));
+        buf[2] = (char)('0' + (hours % 10));
+        buf[3] = (char)('0' + (minutes / 10));
+        buf[4] = (char)('0' + (minutes % 10));
+        if(!append_buffer(dest, max, &pos, buf, sizeof(buf))) {
           dest[0] = '\0';
           return 0;
         }
         break;
+      }
       case 'Z':
-        if(!append_buffer(dest, max, &pos, "UTC", 3)) {
+      {
+        const tzinfo_t* info = tz_get_info();
+        if(!append_buffer(dest, max, &pos, info->name, (size_t)-1)) {
           dest[0] = '\0';
           return 0;
         }
         break;
+      }
       default:
         dest[0] = '\0';
         return 0;

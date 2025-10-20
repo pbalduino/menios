@@ -1,8 +1,8 @@
+#include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/fcntl.h>
-#include <unistd.h>
 
 void setUp(void) {}
 void tearDown(void) {}
@@ -10,8 +10,9 @@ void tearDown(void) {}
 #define ASSERT_EQ_INT(expected, actual)                                                        \
   do {                                                                                         \
     if((expected) != (actual)) {                                                               \
-      printf("Assertion failed: %s == %s (expected %d, got %d)\n", #expected, #actual,        \
-             (expected), (actual));                                                            \
+      fprintf(stderr, "Assertion failed: %s == %s (expected %d, got %d)\n", #expected,         \
+              #actual, (expected), (actual));                                                  \
+      fflush(stderr);                                                                          \
       exit(1);                                                                                 \
     }                                                                                          \
   } while(0)
@@ -19,8 +20,9 @@ void tearDown(void) {}
 #define ASSERT_STR_EQ(expected, actual)                                                        \
   do {                                                                                         \
     if(strcmp((expected), (actual)) != 0) {                                                    \
-      printf("Assertion failed: %s == %s (expected '%s', got '%s')\n", #expected, #actual,    \
-             (expected), (actual));                                                            \
+      fprintf(stderr, "Assertion failed: %s == %s (expected '%s', got '%s')\n", #expected,     \
+              #actual, (expected), (actual));                                                  \
+      fflush(stderr);                                                                          \
       exit(1);                                                                                 \
     }                                                                                          \
   } while(0)
@@ -74,20 +76,23 @@ static void test_fscanf_from_fd(void) {
   const char* path = "menios_scanf_test.txt";
   FILE* stream = fopen(path, "w+");
   if(stream == NULL) {
-    printf("Failed to create temporary stream\n");
+    fprintf(stderr, "Failed to create temporary stream: errno=%d\n", errno);
+    fflush(stderr);
     exit(1);
   }
 
   const char* payload = "42 test\n";
   if(fputs(payload, stream) == EOF) {
-    printf("Failed to write payload\n");
+    fprintf(stderr, "Failed to write payload\n");
+    fflush(stderr);
     fclose(stream);
     remove(path);
     exit(1);
   }
 
   if(fseek(stream, 0, SEEK_SET) != 0) {
-    printf("Failed to rewind stream\n");
+    fprintf(stderr, "Failed to rewind stream\n");
+    fflush(stderr);
     fclose(stream);
     remove(path);
     exit(1);
@@ -111,5 +116,6 @@ int main(void) {
   test_return_on_failure();
   test_fscanf_from_fd();
   printf("All scanf tests passed.\n");
+  fflush(stdout);
   return 0;
 }

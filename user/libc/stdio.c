@@ -100,6 +100,70 @@ static bool stream_can_write(const FILE* stream) {
   return stream != NULL && (stream->flags & FILE_FLAG_CAN_WRITE) != 0;
 }
 
+#ifdef MENIOS_HOST_TEST
+#if defined(__linux__)
+#define HOST_O_CREAT     0100
+#define HOST_O_EXCL      0200
+#define HOST_O_TRUNC     01000
+#define HOST_O_APPEND    02000
+#define HOST_O_DIRECTORY 0200000
+#define HOST_O_CLOEXEC   02000000
+#elif defined(__APPLE__)
+#define HOST_O_CREAT     0200
+#define HOST_O_EXCL      0400
+#define HOST_O_TRUNC     01000
+#define HOST_O_APPEND    00010
+#define HOST_O_DIRECTORY 01000000
+#define HOST_O_CLOEXEC   02000000
+#else
+#define HOST_O_CREAT     0100
+#define HOST_O_EXCL      0200
+#define HOST_O_TRUNC     01000
+#define HOST_O_APPEND    02000
+#define HOST_O_DIRECTORY 0200000
+#define HOST_O_CLOEXEC   02000000
+#endif
+
+static int host_translate_open_flags(int menios_flags) {
+  int host = 0;
+
+  switch(menios_flags & O_ACCMODE) {
+    case O_RDONLY:
+      host |= O_RDONLY;
+      break;
+    case O_WRONLY:
+      host |= O_WRONLY;
+      break;
+    case O_RDWR:
+      host |= O_RDWR;
+      break;
+    default:
+      break;
+  }
+
+  if(menios_flags & O_CREAT) {
+    host |= HOST_O_CREAT;
+  }
+  if(menios_flags & O_EXCL) {
+    host |= HOST_O_EXCL;
+  }
+  if(menios_flags & O_TRUNC) {
+    host |= HOST_O_TRUNC;
+  }
+  if(menios_flags & O_APPEND) {
+    host |= HOST_O_APPEND;
+  }
+  if(menios_flags & O_DIRECTORY) {
+    host |= HOST_O_DIRECTORY;
+  }
+  if(menios_flags & O_CLOEXEC) {
+    host |= HOST_O_CLOEXEC;
+  }
+
+  return host;
+}
+#endif /* MENIOS_HOST_TEST */
+
 static int stream_flush_write(FILE* stream) {
   if(stream == NULL) {
     errno = EINVAL;
@@ -277,7 +341,11 @@ FILE* fopen(const char* filename, const char* mode) {
     return NULL;
   }
 
+#ifdef MENIOS_HOST_TEST
+  int fd = open(filename, host_translate_open_flags(open_flags), 0644);
+#else
   int fd = open(filename, open_flags, 0644);
+#endif
   if(fd < 0) {
     return NULL;
   }

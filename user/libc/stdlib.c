@@ -157,8 +157,37 @@ static inline long __menios_syscall3(long number, long arg1, long arg2, long arg
 
 #ifdef MENIOS_HOST_TEST
 #define DIRECT_ALLOCATION_THRESHOLD_BYTES (16u * 1024u * 1024u)
+#if defined(__linux__)
+#define HOST_MAP_SHARED     0x0001
+#define HOST_MAP_PRIVATE    0x0002
+#define HOST_MAP_ANONYMOUS  0x0020
+#elif defined(__APPLE__)
+#define HOST_MAP_SHARED     0x0001
+#define HOST_MAP_PRIVATE    0x0002
+#define HOST_MAP_ANONYMOUS  0x1000
+#else
+#define HOST_MAP_SHARED     0x0001
+#define HOST_MAP_PRIVATE    0x0002
+#define HOST_MAP_ANONYMOUS  0x1000
+#endif
 #else
 #define DIRECT_ALLOCATION_THRESHOLD_BYTES ((size_t)1u << BUDDY_MAX_ORDER)
+#endif
+
+#ifdef MENIOS_HOST_TEST
+static int host_translate_mmap_flags(int flags) {
+  int host = 0;
+  if(flags & MAP_SHARED) {
+    host |= HOST_MAP_SHARED;
+  }
+  if(flags & MAP_PRIVATE) {
+    host |= HOST_MAP_PRIVATE;
+  }
+  if(flags & MAP_ANONYMOUS) {
+    host |= HOST_MAP_ANONYMOUS;
+  }
+  return host;
+}
 #endif
 
 #define BUDDY_FLAG_FREE     (1u << 0)
@@ -404,12 +433,10 @@ static block_header_t* buddy_coalesce_block(block_header_t* block) {
 
     buddy_freelist_remove(arena, buddy);
 
-#ifdef MENIOS_HOST_TEST
     if(buddy_debug_poison_after_remove) {
       buddy->buddy_offset = UINTPTR_MAX;
       buddy->buddy_order = BUDDY_MIN_ORDER;
     }
-#endif
 
     uintptr_t combined_offset = block->buddy_offset < buddy_offset ? block->buddy_offset : buddy_offset;
     uint32_t merged_order = current_order + 1u;
@@ -432,6 +459,7 @@ static block_header_t* buddy_coalesce_block(block_header_t* block) {
 
 void __menios_allocator_reset(void) {
   allocator_lock_guard();
+#if !defined(__linux__)
   arena_header_t* arena = arena_list_head;
   while(arena != NULL) {
     arena_header_t* next = arena->next;
@@ -440,6 +468,7 @@ void __menios_allocator_reset(void) {
     }
     arena = next;
   }
+#endif
 
   arena_list_head = NULL;
   for(size_t i = 0; i < BUDDY_ORDER_COUNT; ++i) {
@@ -729,10 +758,15 @@ static int grow_heap(size_t size) {
   size_t buddy_bytes = ARENA_INITIAL_SIZE;
   size_t mapping_size = align_up(buddy_offset + buddy_bytes, page);
 
+  int mmap_flags = MAP_PRIVATE | MAP_ANONYMOUS;
+#ifdef MENIOS_HOST_TEST
+  mmap_flags = host_translate_mmap_flags(mmap_flags);
+#endif
+
   void* mapping = mmap(NULL,
                        mapping_size,
                        PROT_READ | PROT_WRITE,
-                       MAP_PRIVATE | MAP_ANONYMOUS,
+                       mmap_flags,
                        -1,
                        0);
   if(mapping == MAP_FAILED) {
@@ -827,10 +861,15 @@ static void* allocate_direct(size_t size, size_t alignment) {
     return NULL;
   }
 
+  int mmap_flags = MAP_PRIVATE | MAP_ANONYMOUS;
+#ifdef MENIOS_HOST_TEST
+  mmap_flags = host_translate_mmap_flags(mmap_flags);
+#endif
+
   void* mapping = mmap(NULL,
                        total,
                        PROT_READ | PROT_WRITE,
-                       MAP_PRIVATE | MAP_ANONYMOUS,
+                       mmap_flags,
                        -1,
                        0);
   if(mapping == MAP_FAILED) {
