@@ -10,6 +10,7 @@
 #include <kernel/pmm.h>
 #include <kernel/proc.h>
 #include <kernel/serial.h>
+#include <kernel/pci.h>
 
 #include <boot/limine.h>
 
@@ -347,26 +348,103 @@ uacpi_thread_id uacpi_kernel_get_thread_id(void) {
   return (uacpi_thread_id)current;
 }
 
-uacpi_status uacpi_kernel_pci_read(
-    uacpi_pci_address *address, 
-    uacpi_size offset,
-    uacpi_u8 byte_width, 
-    uacpi_u64 *value
-) {
-  if(address == NULL) {
-    serial_printf("uacpi_kernel_pci_read: Invalid address\n");
+static uacpi_status uacpi_validate_pci_access(uacpi_pci_address* address,
+                                             uacpi_size offset,
+                                             uacpi_u8 byte_width,
+                                             uacpi_u64* value) {
+  if(address == NULL || value == NULL) {
     return UACPI_STATUS_INVALID_ARGUMENT;
   }
 
-  serial_printf("uacpi_kernel_pci_read not implemented - bus: %lx device: %lx function: %lx segment: %lx - off %lx - width: %lx - value: %lx\n", address->bus, address->device, address->function, address->segment, offset, byte_width, value);
+  if(byte_width == 0 || byte_width > 4) {
+    return UACPI_STATUS_INVALID_ARGUMENT;
+  }
+
+  if(offset + byte_width > 4096) {
+    return UACPI_STATUS_INVALID_ARGUMENT;
+  }
+
+  return UACPI_STATUS_OK;
+}
+
+uacpi_status uacpi_kernel_pci_read(
+    uacpi_pci_address *address,
+    uacpi_size offset,
+    uacpi_u8 byte_width,
+    uacpi_u64 *value
+) {
+  uacpi_status status = uacpi_validate_pci_access(address, offset, byte_width, value);
+  if(status != UACPI_STATUS_OK) {
+    return status;
+  }
+
+  uint16_t segment = (uint16_t)address->segment;
+  uint8_t bus = (uint8_t)address->bus;
+  uint8_t device = (uint8_t)address->device;
+  uint8_t function = (uint8_t)address->function;
+
+  uacpi_u64 result = 0;
+
+  for(uacpi_size i = 0; i < byte_width; ++i) {
+    uacpi_size byte_offset = offset + i;
+    uint8_t aligned = (uint8_t)(byte_offset & ~0x3u);
+    uint32_t raw = pci_config_read_segment(segment, bus, device, function, aligned);
+    uint32_t shift = (uint32_t)(byte_offset & 0x3u) * 8u;
+    uacpi_u64 byte_value = (raw >> shift) & 0xFFu;
+    result |= byte_value << (i * 8u);
+  }
+
+  *value = result;
   return UACPI_STATUS_OK;
 }
 
 uacpi_status uacpi_kernel_pci_write(
-    uacpi_pci_address *address, uacpi_size offset,
-    uacpi_u8 byte_width, uacpi_u64 value
+    uacpi_pci_address *address,
+    uacpi_size offset,
+    uacpi_u8 byte_width,
+    uacpi_u64 value
 ) {
-  serial_printf("uacpi_kernel_pci_write not implemented\n");
+  uacpi_u64 dummy;
+  uacpi_status status = uacpi_validate_pci_access(address, offset, byte_width, &dummy);
+  if(status != UACPI_STATUS_OK) {
+    return status;
+  }
+
+  uint16_t segment = (uint16_t)address->segment;
+  uint8_t bus = (uint8_t)address->bus;
+  uint8_t device = (uint8_t)address->device;
+  uint8_t function = (uint8_t)address->function;
+
+  uacpi_size start = offset;
+  uacpi_size end = offset + byte_width;
+
+  for(uacpi_size aligned = start & ~0x3u; aligned < end; aligned += 4) {
+    uint32_t raw = pci_config_read_segment(segment,
+                                           bus,
+                                           device,
+                                           function,
+                                           (uint8_t)aligned);
+
+    for(uacpi_size i = 0; i < 4; ++i) {
+      uacpi_size byte_index = aligned + i;
+      if(byte_index < start || byte_index >= end) {
+        continue;
+      }
+
+      uacpi_size value_index = byte_index - start;
+      uint32_t byte_value = (uint32_t)((value >> (value_index * 8u)) & 0xFFu);
+      raw &= ~(0xFFu << (i * 8u));
+      raw |= byte_value << (i * 8u);
+    }
+
+    pci_config_write_segment(segment,
+                             bus,
+                             device,
+                             function,
+                             (uint8_t)aligned,
+                             raw);
+  }
+
   return UACPI_STATUS_OK;
 }
 
