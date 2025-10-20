@@ -32,6 +32,7 @@
 
 #include "i_system.h"
 #include "w_wad.h"
+#include "doomgeneric.h"
 
 #include "doomdef.h"
 #include "p_local.h"
@@ -39,6 +40,16 @@
 #include "s_sound.h"
 
 #include "doomstat.h"
+
+sector_t* GetSectorAtNullAddress(void);
+
+static sector_t* P_SafeSector(const char* context, sector_t* sector) {
+    if(sector == NULL || (uintptr_t)sector < 0x1000) {
+        DG_Log("%s: substituting null/low sector pointer %p", context, (void*)sector);
+        return GetSectorAtNullAddress();
+    }
+    return sector;
+}
 
 
 void	P_SpawnMapThing (mapthing_t*	mthing);
@@ -189,17 +200,18 @@ void P_LoadSegs (int lump)
     li = segs;
     for (i=0 ; i<numsegs ; i++, li++, ml++)
     {
-	li->v1 = &vertexes[SHORT(ml->v1)];
-	li->v2 = &vertexes[SHORT(ml->v2)];
+    li->v1 = &vertexes[SHORT(ml->v1)];
+    li->v2 = &vertexes[SHORT(ml->v2)];
 
-	li->angle = (SHORT(ml->angle))<<16;
-	li->offset = (SHORT(ml->offset))<<16;
-	linedef = SHORT(ml->linedef);
-	ldef = &lines[linedef];
-	li->linedef = ldef;
-	side = SHORT(ml->side);
-	li->sidedef = &sides[ldef->sidenum[side]];
-	li->frontsector = sides[ldef->sidenum[side]].sector;
+    li->angle = (SHORT(ml->angle))<<16;
+    li->offset = (SHORT(ml->offset))<<16;
+    linedef = SHORT(ml->linedef);
+    ldef = &lines[linedef];
+    li->linedef = ldef;
+    side = SHORT(ml->side);
+    li->sidedef = &sides[ldef->sidenum[side]];
+    li->frontsector = P_SafeSector("P_LoadSegs", sides[ldef->sidenum[side]].sector);
+    li->sidedef->sector = P_SafeSector("P_LoadSegs::sidedef", li->sidedef->sector);
 
         if (ldef-> flags & ML_TWOSIDED)
         {
@@ -217,12 +229,12 @@ void P_LoadSegs (int lump)
             }
             else
             {
-                li->backsector = sides[sidenum].sector;
+                li->backsector = P_SafeSector("P_LoadSegs::backsector", sides[sidenum].sector);
             }
         }
         else
         {
-	    li->backsector = 0;
+    li->backsector = 0;
         }
     }
 	
@@ -558,8 +570,9 @@ void P_GroupLines (void)
     ss = subsectors;
     for (i=0 ; i<numsubsectors ; i++, ss++)
     {
-	seg = &segs[ss->firstline];
-	ss->sector = seg->sidedef->sector;
+    seg = &segs[ss->firstline];
+    seg->sidedef->sector = P_SafeSector("P_GroupLines::seg", seg->sidedef->sector);
+    ss->sector = P_SafeSector("P_GroupLines::ss", seg->sidedef->sector);
     }
 
     // count number of lines in each sector
@@ -850,6 +863,3 @@ void P_Init (void)
     P_InitPicAnims ();
     R_InitSprites (sprnames);
 }
-
-
-
