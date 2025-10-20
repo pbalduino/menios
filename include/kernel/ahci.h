@@ -9,11 +9,13 @@ extern "C" {
 #include <stdint.h>
 #include <stddef.h>
 #include <kernel/pmm.h>
+#include <kernel/pci.h>
 
 struct ahci_port_t;
 typedef struct ahci_port_t ahci_port_t;
 
 typedef struct ahci_controller_t {
+  uint16_t    segment;
   uint8_t      bus;
   uint8_t      device;
   uint8_t      function;
@@ -31,6 +33,9 @@ typedef struct ahci_controller_t {
 typedef ahci_controller_t* ahci_controller_p;
 
 void ahci_init(void);
+void ahci_pci_probe(const pci_device_location_t* location,
+                    uint32_t vendor_device,
+                    uint32_t class_reg);
 ahci_controller_t* ahci_controllers(void);
 size_t ahci_controller_count(void);
 void ahci_irq_handler(void);

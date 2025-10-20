@@ -18,21 +18,9 @@
 #define AHCI_VERBOSE_LOG 1
 #endif
 
-#define PCI_HEADER_TYPE_MULTIFUNC 0x80
-
 #define PCI_CLASS_MASS_STORAGE 0x01
 #define PCI_SUBCLASS_SATA      0x06
 #define PCI_PROGIF_AHCI        0x01
-
-#define PCI_CONFIG_VENDOR_DEVICE  0x00
-#define PCI_CONFIG_STATUS_COMMAND 0x04
-#define PCI_CONFIG_CLASSREV       0x08
-#define PCI_CONFIG_BAR5           0x24
-#define PCI_CONFIG_HEADER_TYPE    0x0C
-#define PCI_CONFIG_INTERRUPT_LINE 0x3C
-
-#define PCI_COMMAND_MEMORY_SPACE (1u << 1)
-#define PCI_COMMAND_BUS_MASTER   (1u << 2)
 
 #define AHCI_INVALID_GSI 0xFFFFFFFFu
 #define AHCI_GHC_IE      (1u << 1)
@@ -192,8 +180,15 @@ static bool ahci_initialized = false;
 
 static const block_device_ops_t ahci_block_ops;
 
-static bool ahci_is_candidate(uint8_t bus, uint8_t device, uint8_t function);
-static void ahci_enable_memory_and_busmaster(uint8_t bus, uint8_t device, uint8_t function);
+static bool ahci_is_candidate(uint32_t class_reg);
+static void ahci_enable_memory_and_busmaster(uint16_t segment, uint8_t bus, uint8_t device, uint8_t function);
+static void ahci_register_controller(uint16_t segment,
+                                     uint8_t bus,
+                                     uint8_t device,
+                                     uint8_t function,
+                                     phys_addr_t abar_phys,
+                                     uint8_t irq_line,
+                                     uint8_t irq_pin);
 static void ahci_controller_configure(ahci_controller_t* controller);
 static bool ahci_controller_enable_interrupts(ahci_controller_t* controller);
 static void ahci_controller_discover_ports(ahci_controller_t* controller);
@@ -222,8 +217,7 @@ static const block_device_ops_t ahci_block_ops = {
   .flush = ahci_port_flush,
 };
 
-static bool ahci_is_candidate(uint8_t bus, uint8_t device, uint8_t function) {
-  uint32_t class_reg = pci_config_read(bus, device, function, PCI_CONFIG_CLASSREV);
+static bool ahci_is_candidate(uint32_t class_reg) {
   uint8_t class_code = (class_reg >> 24) & 0xFF;
   uint8_t subclass = (class_reg >> 16) & 0xFF;
   uint8_t prog_if = (class_reg >> 8) & 0xFF;
@@ -233,13 +227,17 @@ static bool ahci_is_candidate(uint8_t bus, uint8_t device, uint8_t function) {
          (prog_if & 0x80 ? (prog_if & 0x7F) == PCI_PROGIF_AHCI : prog_if == PCI_PROGIF_AHCI);
 }
 
-static void ahci_enable_memory_and_busmaster(uint8_t bus, uint8_t device, uint8_t function) {
-  uint32_t command = pci_config_read(bus, device, function, PCI_CONFIG_STATUS_COMMAND);
+static void ahci_enable_memory_and_busmaster(uint16_t segment,
+                                             uint8_t bus,
+                                             uint8_t device,
+                                             uint8_t function) {
+  uint32_t command = pci_config_read_segment(segment, bus, device, function, PCI_CONFIG_STATUS_COMMAND);
   command |= PCI_COMMAND_MEMORY_SPACE | PCI_COMMAND_BUS_MASTER;
-  pci_config_write(bus, device, function, PCI_CONFIG_STATUS_COMMAND, command);
+  pci_config_write_segment(segment, bus, device, function, PCI_CONFIG_STATUS_COMMAND, command);
 }
 
-static void ahci_register_controller(uint8_t bus,
+static void ahci_register_controller(uint16_t segment,
+                                     uint8_t bus,
                                      uint8_t device,
                                      uint8_t function,
                                      phys_addr_t abar_phys,
@@ -255,6 +253,7 @@ static void ahci_register_controller(uint8_t bus,
   }
 
   memset(node, 0, sizeof(*node));
+  node->segment = segment;
   node->bus = bus;
   node->device = device;
   node->function = function;
@@ -271,7 +270,8 @@ static void ahci_register_controller(uint8_t bus,
   controllers_count++;
 
 #if AHCI_VERBOSE_LOG
-  serial_printf("ahci: controller %02x:%02x.%u mapped at phys=%llx virt=%p irq_line=%u irq_pin=%u\n",
+  serial_printf("ahci: controller %04x:%02x:%02x.%u mapped at phys=%llx virt=%p irq_line=%u irq_pin=%u\n",
+                segment,
                 bus,
                 device,
                 function,
@@ -287,7 +287,8 @@ static void ahci_register_controller(uint8_t bus,
 static bool ahci_controller_enable_interrupts(ahci_controller_t* controller) {
   if(controller->gsi == AHCI_INVALID_GSI) {
 #if AHCI_VERBOSE_LOG
-    serial_printf("ahci: controller %02x:%02x.%u has no valid IRQ line (pin=%u)\n",
+    serial_printf("ahci: controller %04x:%02x:%02x.%u has no valid IRQ line (pin=%u)\n",
+                  controller->segment,
                   controller->bus,
                   controller->device,
                   controller->function,
@@ -298,7 +299,8 @@ static bool ahci_controller_enable_interrupts(ahci_controller_t* controller) {
 
   if(!controller->irq_configured) {
     if(!apic_configure_irq(controller->gsi, ISR_AHCI, true, true)) {
-      serial_printf("ahci: controller %02x:%02x.%u failed to route IRQ (GSI %u)\n",
+      serial_printf("ahci: controller %04x:%02x:%02x.%u failed to route IRQ (GSI %u)\n",
+                    controller->segment,
                     controller->bus,
                     controller->device,
                     controller->function,
@@ -338,7 +340,8 @@ static void ahci_controller_discover_ports(ahci_controller_t* controller) {
   uint32_t implemented = hba->pi;
 
 #if AHCI_VERBOSE_LOG
-  serial_printf("ahci: controller %02x:%02x.%u port bitmap=0x%08x ghc=0x%08x cap=0x%08x\n",
+  serial_printf("ahci: controller %04x:%02x:%02x.%u port bitmap=0x%08x ghc=0x%08x cap=0x%08x\n",
+                controller->segment,
                 controller->bus,
                 controller->device,
                 controller->function,
@@ -956,71 +959,6 @@ static bool ahci_port_flush(block_device_t* device) {
   return true;
 }
 
-static void ahci_scan_bus(void) {
-  for(uint16_t bus = 0; bus < 256; bus++) {
-    for(uint16_t device = 0; device < 32; device++) {
-      uint8_t pci_bus = (uint8_t)bus;
-      uint8_t pci_device = (uint8_t)device;
-      uint32_t vendor_device = pci_config_read(pci_bus, pci_device, 0, PCI_CONFIG_VENDOR_DEVICE);
-      if((vendor_device & 0xFFFF) == 0xFFFF) {
-        continue;
-      }
-
-      uint8_t header_type = (pci_config_read(pci_bus, pci_device, 0, PCI_CONFIG_HEADER_TYPE) >> 16) & 0xFF;
-      uint8_t function_limit = (header_type & PCI_HEADER_TYPE_MULTIFUNC) ? 8 : 1;
-
-      for(uint16_t function = 0; function < function_limit; function++) {
-        uint8_t pci_function = (uint8_t)function;
-        vendor_device = pci_config_read(pci_bus, pci_device, pci_function, PCI_CONFIG_VENDOR_DEVICE);
-        if((vendor_device & 0xFFFF) == 0xFFFF) {
-          continue;
-        }
-
-#if AHCI_VERBOSE_LOG
-        uint32_t class_reg = pci_config_read(pci_bus, pci_device, pci_function, PCI_CONFIG_CLASSREV);
-        serial_printf("ahci: inspect %02x:%02x.%u vendor=0x%04x device=0x%04x class=0x%02x subclass=0x%02x prog_if=0x%02x\n",
-                      pci_bus,
-                      pci_device,
-                      pci_function,
-                      vendor_device & 0xFFFF,
-                      (vendor_device >> 16) & 0xFFFF,
-                      (class_reg >> 24) & 0xFF,
-                      (class_reg >> 16) & 0xFF,
-                      (class_reg >> 8) & 0xFF);
-#endif
-
-        if(!ahci_is_candidate(pci_bus, pci_device, pci_function)) {
-          continue;
-        }
-
-        uint32_t bar5 = pci_config_read(pci_bus, pci_device, pci_function, PCI_CONFIG_BAR5);
-        if((bar5 & 0xFFFFFFF0u) == 0) {
-#if AHCI_VERBOSE_LOG
-          serial_printf("ahci: controller %02x:%02x.%u missing BAR5\n", pci_bus, pci_device, pci_function);
-#endif
-          continue;
-        }
-
-        uint32_t intr_line = pci_config_read(pci_bus, pci_device, pci_function, PCI_CONFIG_INTERRUPT_LINE);
-#if AHCI_VERBOSE_LOG
-        serial_printf("ahci: candidate controller %02x:%02x.%u BAR5=0x%08x intr=0x%08x\n",
-                      pci_bus,
-                      pci_device,
-                      pci_function,
-                      bar5,
-                      intr_line);
-#endif
-        uint8_t irq_line = (uint8_t)(intr_line & 0xFF);
-        uint8_t irq_pin = (uint8_t)((intr_line >> 8) & 0xFF);
-
-        phys_addr_t abar_phys = (phys_addr_t)(bar5 & ~0xFu);
-        ahci_enable_memory_and_busmaster(pci_bus, pci_device, pci_function);
-        ahci_register_controller(pci_bus, pci_device, pci_function, abar_phys, irq_line, irq_pin);
-      }
-    }
-  }
-}
-
 void ahci_irq_handler(void) {
   bool serviced = false;
 
@@ -1085,10 +1023,6 @@ void ahci_init(void) {
 
   controllers_head = NULL;
   controllers_count = 0;
-
-  ahci_scan_bus();
-
-  serial_printf("ahci: discovered %lu controller(s)\n", (unsigned long)controllers_count);
   ahci_initialized = true;
 }
 
@@ -1098,4 +1032,72 @@ ahci_controller_t* ahci_controllers(void) {
 
 size_t ahci_controller_count(void) {
   return controllers_count;
+}
+
+void ahci_pci_probe(const pci_device_location_t* location,
+                    uint32_t vendor_device,
+                    uint32_t class_reg) {
+  if(location == NULL) {
+    return;
+  }
+
+  if(!ahci_initialized) {
+    ahci_init();
+  }
+
+  if(!ahci_is_candidate(class_reg)) {
+    return;
+  }
+
+  for(ahci_controller_t* controller = controllers_head; controller != NULL; controller = controller->next) {
+    if(controller->segment == location->segment &&
+       controller->bus == location->bus &&
+       controller->device == location->device &&
+       controller->function == location->function) {
+      return;
+    }
+  }
+
+  uint32_t bar5 = pci_config_read_segment(location->segment,
+                                          location->bus,
+                                          location->device,
+                                          location->function,
+                                          PCI_CONFIG_BAR5);
+  if((bar5 & 0xFFFFFFF0u) == 0) {
+    return;
+  }
+
+  uint32_t intr_line = pci_config_read_segment(location->segment,
+                                               location->bus,
+                                               location->device,
+                                               location->function,
+                                               PCI_CONFIG_INTERRUPT_LINE);
+
+  uint8_t irq_line = (uint8_t)(intr_line & 0xFF);
+  uint8_t irq_pin = (uint8_t)((intr_line >> 8) & 0xFF);
+
+  phys_addr_t abar_phys = (phys_addr_t)(bar5 & ~0xFu);
+  ahci_enable_memory_and_busmaster(location->segment,
+                                   location->bus,
+                                   location->device,
+                                   location->function);
+  ahci_register_controller(location->segment,
+                           location->bus,
+                           location->device,
+                           location->function,
+                           abar_phys,
+                           irq_line,
+                           irq_pin);
+
+#if AHCI_VERBOSE_LOG
+  serial_printf("ahci: registered controller %04x:%02x:%02x.%u vendor=0x%04x device=0x%04x\n",
+                location->segment,
+                location->bus,
+                location->device,
+                location->function,
+                vendor_device & 0xFFFF,
+                (vendor_device >> 16) & 0xFFFF);
+#endif
+
+  serial_printf("ahci: discovered %lu controller(s)\n", (unsigned long)controllers_count);
 }

@@ -10,6 +10,15 @@
 #include <uacpi/acpi.h>
 #include <uacpi/tables.h>
 
+static void pciroot_visit_device(const pci_device_location_t* location,
+                                 uint32_t vendor_device,
+                                 uint32_t class_reg,
+                                 void* context) {
+  (void)context;
+
+  ahci_pci_probe(location, vendor_device, class_reg);
+}
+
 void pciroot_start(void) {
   pci_mmconfig_reset();
 
@@ -51,6 +60,7 @@ void pciroot_start(void) {
   }
 
   ahci_init();
+  pci_enumerate_devices(pciroot_visit_device, NULL);
 }
 
 uint8_t pciroot_read(void) {

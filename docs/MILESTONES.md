@@ -299,7 +299,7 @@ This document tracks the major milestones for meniOS development.
 - **Completed**: 91 issues (91.9%)
 - **In Progress**: 8 issues
 - **Ready to Start**: 2 issues (no dependencies: #190, #191)
-- **Recently Completed**: #286-#293 ✅ (time management & FAT32 writes), #304 ✅ (scanf family), #302 ✅ (real key events), #301 ✅ (framebuffer mmap), #300 ✅ (menIOS Doom port layer), #136 ✅ (devfs), #140 ✅ (/dev/kbd0 and /dev/fb0), #221 ✅ (fast syscalls), #305-#310 ✅ (ALL libc gaps COMPLETE!), #311 ✅ (Doom build system), #314 ✅ (shell startup scripts), #331-#334 ✅ (test infrastructure fixes)
+- **Recently Completed**: #286-#293 ✅ (time management & FAT32 writes), #304 ✅ (scanf family), #302 ✅ (real key events), #301 ✅ (framebuffer mmap), #300 ✅ (menIOS Doom port layer), #136 ✅ (devfs), #140 ✅ (/dev/kbd0 and /dev/fb0), #221 ✅ (fast syscalls), #305-#310 ✅ (ALL libc gaps COMPLETE!), #311 ✅ (Doom build system), #314 ✅ (shell startup scripts), #331-#334 ✅ (test infrastructure fixes), #335 ✅ (PNP0A08 PCI host bridge driver)
 - **Recently Created**: #305-#312 ✅ (libc gaps & Doom build system), #313 (filesystem organization), #314 ✅ (shell startup scripts - COMPLETE), #315 (motd), #316 (touch command), #317 (utime syscall), #318 (uname command), #319-#323 ✅ (stability fixes - ALL COMPLETE!), #325-#330 (RTC and time management breakdown), #331-#334 ✅ (test infrastructure - ALL FIXED!)
 - **Next Up**: 🎉 Doom milestone COMPLETE (33/33)! TCC/binutils (#190, #191) ready for native compilation! RTC/time management refinements (#325-#330) continue. PCI infrastructure work now ready for device drivers.
 

@@ -17,6 +17,12 @@ typedef struct {
 static pci_mmconfig_window_t pci_mmconfig_windows[PCI_MMCONFIG_MAX_WINDOWS];
 static size_t pci_mmconfig_window_count = 0;
 
+static void pci_scan_range(uint16_t segment,
+                           uint8_t bus_start,
+                           uint8_t bus_end,
+                           pci_enumerate_callback_t callback,
+                           void* context);
+
 void pci_mmconfig_reset(void) {
   pci_mmconfig_window_count = 0;
 }
@@ -114,4 +120,81 @@ void pci_config_write_segment(uint16_t segment,
                      ((uint32_t)function << 8) | (offset & 0xfc);
   outl(0xcf8, address); // Write address to CONFIG_ADDRESS
   outl(0xcfc, value);   // Write data to CONFIG_DATA
+}
+
+static void pci_scan_range(uint16_t segment,
+                           uint8_t bus_start,
+                           uint8_t bus_end,
+                           pci_enumerate_callback_t callback,
+                           void* context) {
+  if(callback == NULL) {
+    return;
+  }
+
+  for(uint16_t bus = bus_start; bus <= bus_end; ++bus) {
+    for(uint16_t device = 0; device < 32; ++device) {
+      uint32_t vendor_device = pci_config_read_segment(segment,
+                                                       (uint8_t)bus,
+                                                       (uint8_t)device,
+                                                       0,
+                                                       PCI_CONFIG_VENDOR_DEVICE);
+      if((vendor_device & 0xFFFFu) == 0xFFFFu) {
+        continue;
+      }
+
+      uint32_t header = pci_config_read_segment(segment,
+                                                (uint8_t)bus,
+                                                (uint8_t)device,
+                                                0,
+                                                PCI_CONFIG_HEADER_TYPE);
+      uint8_t header_type = (uint8_t)((header >> 16) & 0xFFu);
+      uint8_t function_limit = (header_type & PCI_HEADER_TYPE_MULTIFUNC) ? 8u : 1u;
+
+      for(uint16_t function = 0; function < function_limit; ++function) {
+        vendor_device = pci_config_read_segment(segment,
+                                                (uint8_t)bus,
+                                                (uint8_t)device,
+                                                (uint8_t)function,
+                                                PCI_CONFIG_VENDOR_DEVICE);
+        if((vendor_device & 0xFFFFu) == 0xFFFFu) {
+          continue;
+        }
+
+        uint32_t class_reg = pci_config_read_segment(segment,
+                                                     (uint8_t)bus,
+                                                     (uint8_t)device,
+                                                     (uint8_t)function,
+                                                     PCI_CONFIG_CLASSREV);
+
+        pci_device_location_t location = {
+          .segment = segment,
+          .bus = (uint8_t)bus,
+          .device = (uint8_t)device,
+          .function = (uint8_t)function,
+        };
+
+        callback(&location, vendor_device, class_reg, context);
+      }
+    }
+  }
+}
+
+void pci_enumerate_devices(pci_enumerate_callback_t callback, void* context) {
+  if(callback == NULL) {
+    return;
+  }
+
+  if(pci_mmconfig_window_count == 0) {
+    pci_scan_range(0, 0, 255, callback, context);
+    return;
+  }
+
+  for(size_t i = 0; i < pci_mmconfig_window_count; ++i) {
+    pci_mmconfig_window_t* window = &pci_mmconfig_windows[i];
+    pci_scan_range(window->segment,
+                   window->bus_start,
+                   window->bus_end,
+                   callback,
+                   context);
+  }
 }
