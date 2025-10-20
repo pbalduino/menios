@@ -19,7 +19,7 @@
     "github_issue": {
       "number": 333,
       "url": "https://github.com/pbalduino/menios/issues/333",
-      "state": "OPEN"
+      "state": "CLOSED"
     },
     "labels": [
       "bug",

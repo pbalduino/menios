@@ -1,6 +1,7 @@
 #include <kernel/condvar.h>
 #include <kernel/file.h>
 #include <kernel/fs.h>
+#include <kernel/input.h>
 #include <kernel/mman.h>
 #include <kernel/pmm.h>
 #include <kernel/mutex.h>
@@ -270,6 +271,39 @@ bool proc_shm_remove_attachment(proc_info_p proc,
     }
   }
   return false;
+}
+
+bool vm_map_physical(proc_info_p proc,
+                     virt_addr_t base,
+                     phys_addr_t phys,
+                     size_t length,
+                     uint32_t flags) {
+  (void)proc;
+  (void)base;
+  (void)phys;
+  (void)length;
+  (void)flags;
+  return true;
+}
+
+bool proc_user_touch_range(proc_info_p proc,
+                           virt_addr_t addr,
+                           size_t length,
+                           bool write) {
+  (void)proc;
+  (void)addr;
+  (void)length;
+  (void)write;
+  return true;
+}
+
+bool keyboard_event_try_pop(menios_key_event_t* event) {
+  (void)event;
+  return false;
+}
+
+void keyboard_event_push(const menios_key_event_t* event) {
+  (void)event;
 }
 
 void proc_shm_detach_all(proc_info_p proc) {

@@ -180,6 +180,7 @@ void test_echo_builtin_emits_arguments(void);
 void test_env_set_expands_allocation(void);
 void test_ctrl_a_moves_cursor_to_start(void);
 void test_ctrl_e_moves_cursor_to_end(void);
+void test_delete_key_removes_character_at_cursor(void);
 void test_ctrl_l_clears_screen(void);
 void test_history_arrow_recalls_last_entry(void);
 void test_history_cursor_resets_between_reads(void);

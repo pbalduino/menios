@@ -4,6 +4,9 @@
 #include <sys/fcntl.h>
 #include <unistd.h>
 
+void setUp(void) {}
+void tearDown(void) {}
+
 #define ASSERT_EQ_INT(expected, actual)                                                        \
   do {                                                                                         \
     if((expected) != (actual)) {                                                               \
@@ -67,30 +70,26 @@ static void test_return_on_failure(void) {
 }
 
 static void test_fscanf_from_fd(void) {
-  const char* path = "/tmp/menios_scanf_test.txt";
-  int fd = open(path, O_CREAT | O_TRUNC | O_RDWR, 0600);
-  if(fd < 0) {
-    printf("Failed to open temp file descriptor\n");
+
+  const char* path = "menios_scanf_test.txt";
+  FILE* stream = fopen(path, "w+");
+  if(stream == NULL) {
+    printf("Failed to create temporary stream\n");
     exit(1);
   }
 
   const char* payload = "42 test\n";
-  if(write(fd, payload, strlen(payload)) < 0) {
+  if(fputs(payload, stream) == EOF) {
     printf("Failed to write payload\n");
-    close(fd);
+    fclose(stream);
+    remove(path);
     exit(1);
   }
 
-  if(lseek(fd, 0, SEEK_SET) < 0) {
-    printf("Failed to rewind descriptor\n");
-    close(fd);
-    exit(1);
-  }
-
-  FILE* stream = fopen(path, "r");
-  if(stream == NULL) {
-    printf("Failed to open stream for reading\n");
-    close(fd);
+  if(fseek(stream, 0, SEEK_SET) != 0) {
+    printf("Failed to rewind stream\n");
+    fclose(stream);
+    remove(path);
     exit(1);
   }
 
@@ -98,7 +97,7 @@ static void test_fscanf_from_fd(void) {
   char buf[16];
   int conversions = fscanf(stream, "%d %s", &value, buf);
   fclose(stream);
-  close(fd);
+  remove(path);
 
   ASSERT_EQ_INT(2, conversions);
   ASSERT_EQ_INT(42, value);

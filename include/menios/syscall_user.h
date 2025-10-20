@@ -10,6 +10,8 @@ extern "C" {
 #include <unistd.h>
 #include <sys/syscall.h>
 
+long syscall(long number, ...);
+
 static inline long __menios_syscall0(long number) {
   return syscall(number);
 }

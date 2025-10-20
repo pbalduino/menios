@@ -7,6 +7,7 @@
 #error "stubs_fat32.c should only be compiled for host tests"
 #endif
 
+__attribute__((weak))
 int fat32_mkdir_adapter(void* fs_ctx, const char* path, bool exclusive) {
   (void)fs_ctx;
   (void)path;
@@ -14,12 +15,14 @@ int fat32_mkdir_adapter(void* fs_ctx, const char* path, bool exclusive) {
   return -ENOSYS;
 }
 
+__attribute__((weak))
 int fat32_rmdir_adapter(void* fs_ctx, const char* path) {
   (void)fs_ctx;
   (void)path;
   return -ENOSYS;
 }
 
+__attribute__((weak))
 int fat32_rename_adapter(void* fs_ctx, const char* old_path, const char* new_path) {
   (void)fs_ctx;
   (void)old_path;

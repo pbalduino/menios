@@ -739,10 +739,12 @@ ifeq ($(OS_NAME),linux)
 		src/kernel/user/vm_region.c \
 		src/kernel/timer/tsc.c \
 		src/kernel/block/block_cache.c \
+		test/stubs_framebuffer.c \
+		test/stubs_fat32.c \
 		src/libc/itoa.c \
 		src/libc/string.c \
 		src/libc/time.c \
-	src/libc/errno.c \
+		src/libc/errno.c \
 		user/libc/stdlib.c \
 	-o test/test_buddy_allocator.c.bin ; \
 	echo "Testing test/test_buddy_allocator.c" ; \
@@ -764,16 +766,18 @@ ifeq ($(OS_NAME),linux)
 			src/kernel/syscall/entry.c \
 		src/kernel/mem/pmm.c \
 		src/kernel/console/vprintk.c \
-		src/kernel/console/ansi.c \
-		src/kernel/proc/kcondvar.c \
-		src/kernel/proc/kmutex.c \
-src/kernel/proc/signal.c \
-src/kernel/ipc/shm.c \
-		src/kernel/user/vm_region.c \
+	src/kernel/console/ansi.c \
+	src/kernel/proc/kcondvar.c \
+	src/kernel/proc/kmutex.c \
+	src/kernel/proc/signal.c \
+	src/kernel/ipc/shm.c \
+	src/kernel/user/vm_region.c \
 	src/kernel/timer/tsc.c \
 	src/kernel/block/block_cache.c \
+	test/stubs_framebuffer.c \
+	test/stubs_fat32.c \
 	src/libc/itoa.c \
-src/libc/string.c \
+	src/libc/string.c \
 	src/libc/time.c \
 src/libc/errno.c \
 		user/libc/stdlib.c \
@@ -807,7 +811,9 @@ src/libc/errno.c \
 		src/libc/itoa.c \
 		src/libc/string.c \
 		src/libc/time.c \
-	src/libc/errno.c \
+		src/libc/errno.c \
+		test/stubs_framebuffer.c \
+		test/stubs_fat32.c \
 		user/libc/stdlib.c \
 	-o test/test_malloc_stats.c.bin ; \
 	echo "Testing test/test_malloc_stats.c" ; \
@@ -841,7 +847,9 @@ src/libc/errno.c \
 		src/libc/itoa.c \
 		src/libc/string.c \
 		src/libc/time.c \
-	src/libc/errno.c \
+		src/libc/errno.c \
+		test/stubs_framebuffer.c \
+		test/stubs_fat32.c \
 		user/libc/stdlib.c \
 	-o test/test_heap_virtual.c.bin ; \
 	echo "Testing test/test_heap_virtual.c" ; \
@@ -863,20 +871,22 @@ src/libc/errno.c \
 			src/kernel/syscall/entry.c \
 		src/kernel/mem/pmm.c \
 		src/kernel/console/vprintk.c \
-		src/kernel/console/ansi.c \
-		src/kernel/proc/kcondvar.c \
-		src/kernel/proc/kmutex.c \
-		src/kernel/proc/signal.c \
-		src/kernel/ipc/shm.c \
-		src/kernel/user/vm_region.c \
-		src/kernel/timer/tsc.c \
-		src/kernel/block/block_cache.c \
-		src/libc/itoa.c \
-		src/libc/string.c \
-		src/libc/time.c \
+	src/kernel/console/ansi.c \
+	src/kernel/proc/kcondvar.c \
+	src/kernel/proc/kmutex.c \
+	src/kernel/proc/signal.c \
+	src/kernel/ipc/shm.c \
+	src/kernel/user/vm_region.c \
+	src/kernel/timer/tsc.c \
+	src/kernel/block/block_cache.c \
+	src/libc/itoa.c \
+	src/libc/string.c \
+	src/libc/time.c \
 	src/libc/errno.c \
-		user/libc/stdlib.c \
-	-o test/test_malloc_stress.c.bin ; \
+	test/stubs_framebuffer.c \
+	test/stubs_fat32.c \
+	user/libc/stdlib.c \
+-o test/test_malloc_stress.c.bin ; \
 	echo "Testing test/test_malloc_stress.c" ; \
 	test/test_malloc_stress.c.bin ; \
 	rc=$$?; \
@@ -891,6 +901,8 @@ src/libc/errno.c \
 		src/libc/string.c \
 		src/libc/errno.c \
 		src/libc/time.c \
+		test/stubs_framebuffer.c \
+		test/stubs_fat32.c \
 	-o test/test_scanf.c.bin ; \
 	echo "Testing test/test_scanf.c" ; \
 	test/test_scanf.c.bin ; \
