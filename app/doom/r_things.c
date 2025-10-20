@@ -32,6 +32,7 @@
 #include "w_wad.h"
 
 #include "r_local.h"
+#include "doomgeneric.h"
 
 #include "doomstat.h"
 
@@ -607,6 +608,11 @@ void R_AddSprites (sector_t* sec)
     mobj_t*		thing;
     int			lightnum;
 
+    if(sec == NULL || (uintptr_t)sec < 0x1000) {
+        DG_Log("R_AddSprites: skipping invalid sector pointer=%p", (void*)sec);
+        return;
+    }
+
     // BSP is traversed by subsector.
     // A sector might have been split into several
     //  subsectors during BSP building.
@@ -977,6 +983,4 @@ void R_DrawMasked (void)
     if (!viewangleoffset)		
 	R_DrawPlayerSprites ();
 }
-
-
 

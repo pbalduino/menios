@@ -24,6 +24,7 @@
 #include "m_bbox.h"
 
 #include "i_system.h"
+#include "doomgeneric.h"
 
 #include "r_main.h"
 #include "r_plane.h"
@@ -503,6 +504,13 @@ void R_Subsector (int num)
     sscount++;
     sub = &subsectors[num];
     frontsector = sub->sector;
+    if(frontsector == NULL || (uintptr_t)frontsector < 0x1000) {
+        DG_Log("R_Subsector: subsector %d has invalid frontsector=%p firstline=%d numlines=%d",
+               num,
+               (void*)frontsector,
+               sub->firstline,
+               sub->numlines);
+    }
     count = sub->numlines;
     line = &segs[sub->firstline];
 
@@ -569,5 +577,3 @@ void R_RenderBSPNode (int bspnum)
     if (R_CheckBBox (bsp->bbox[side^1]))	
 	R_RenderBSPNode (bsp->children[side^1]);
 }
-
-
