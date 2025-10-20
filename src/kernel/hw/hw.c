@@ -36,8 +36,11 @@ hardware_device_p hardware_devices(void) {
 void hardware_log_devices(void) {
   hardware_device_p node = devices_head;
   while(node) {
-    const char* driver_name = node->driver ? node->driver->name : "(no driver)";
-    logk("  Device %-40s HID=%-8s Driver=%s\n", node->path, node->hid, driver_name);
+    if(node->driver) {
+      logk("  Device %-40s HID=%-8s Driver=%s\n", node->path, node->hid, node->driver->name);
+    } else {
+      errk("  Device %-40s HID=%-8s Driver=%s\n", node->path, node->hid, "(no driver)");
+    }
     node = node->next;
   }
 }
