@@ -705,6 +705,7 @@ ifeq ($(OS_NAME),linux)
 		src/kernel/timer/tsc.c \
 		src/kernel/block/block_cache.c \
 		test/stubs_framebuffer.c \
+		test/stubs_fat32.c \
 	src/libc/itoa.c \
 	src/libc/string.c \
 		src/libc/time.c \
