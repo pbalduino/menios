@@ -4909,6 +4909,84 @@ static void rtrim(char* text) {
   }
 }
 
+static void shell_run_startup_script(void) {
+  char home_resolved[MOSH_MAX_PATH];
+  const char* home = env_get("HOME");
+  bool have_home = false;
+  if(home != NULL && home[0] != '\0') {
+    have_home = normalize_path("/", home, home_resolved, sizeof(home_resolved));
+  }
+  if(!have_home || str_eq(home_resolved, "/")) {
+    str_copy(home_resolved, sizeof(home_resolved), "/home");
+  }
+
+  char script_path[MOSH_MAX_PATH];
+  if(!normalize_path(home_resolved, ".moshrc", script_path, sizeof(script_path))) {
+    return;
+  }
+
+  int fd = open(script_path, O_RDONLY);
+  if(fd < 0) {
+    return;
+  }
+
+  char read_buf[128];
+  char line[MOSH_MAX_FUNCTION_BODY];
+  size_t line_len = 0;
+  bool discard = false;
+
+  while(true) {
+    ssize_t rc = read(fd, read_buf, sizeof(read_buf));
+    if(rc <= 0) {
+      break;
+    }
+    for(ssize_t i = 0; i < rc; i++) {
+      char ch = read_buf[i];
+      if(ch == '\r') {
+        continue;
+      }
+      if(ch == '\n') {
+        if(!discard && line_len < sizeof(line)) {
+          line[line_len] = '\0';
+          rtrim(line);
+          char* trimmed = ltrim(line);
+          if(trimmed[0] != '\0' && trimmed[0] != '#') {
+            char command_buf[MOSH_MAX_FUNCTION_BODY];
+            str_copy(command_buf, sizeof(command_buf), trimmed);
+            launch_command(command_buf);
+          }
+        }
+        line_len = 0;
+        discard = false;
+        continue;
+      }
+
+      if(discard) {
+        continue;
+      }
+
+      if(line_len + 1 < sizeof(line)) {
+        line[line_len++] = ch;
+      } else {
+        discard = true;
+      }
+    }
+  }
+
+  if(!discard && line_len > 0) {
+    line[line_len] = '\0';
+    rtrim(line);
+    char* trimmed = ltrim(line);
+    if(trimmed[0] != '\0' && trimmed[0] != '#') {
+      char command_buf[MOSH_MAX_FUNCTION_BODY];
+      str_copy(command_buf, sizeof(command_buf), trimmed);
+      launch_command(command_buf);
+    }
+  }
+
+  close(fd);
+}
+
 static size_t split_sequence(char* line, char* parts[], sequence_op_t ops[], size_t max_parts) {
   size_t count = 0;
   char* cursor = line;
@@ -5299,6 +5377,7 @@ int main(int argc, char** argv, char** envp) {
   env_set("PWD", current_directory);
   shell_install_signal_handlers();
   history_reset();
+  shell_run_startup_script();
   shell_loop();
   return 0;
 }

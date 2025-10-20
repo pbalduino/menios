@@ -90,89 +90,6 @@
     "assignees": []
   },
   {
-    "title": "Doom meniOS-specific build system (Makefile.menios)",
-    "github_issue": {
-      "number": 311,
-      "url": "https://github.com/pbalduino/menios/issues/311",
-      "state": "CLOSED"
-    },
-    "labels": [
-      "enhancement",
-      "doom"
-    ],
-    "assignees": []
-  },
-  {
-    "title": "Math library (fabs and clean up math.h)",
-    "github_issue": {
-      "number": 310,
-      "url": "https://github.com/pbalduino/menios/issues/310",
-      "state": "CLOSED"
-    },
-    "labels": [
-      "enhancement",
-      "doom",
-      "libc"
-    ],
-    "assignees": []
-  },
-  {
-    "title": "Expose snprintf/vsnprintf/vsprintf properly",
-    "github_issue": {
-      "number": 309,
-      "url": "https://github.com/pbalduino/menios/issues/309",
-      "state": "CLOSED"
-    },
-    "labels": [
-      "enhancement",
-      "doom",
-      "libc"
-    ],
-    "assignees": []
-  },
-  {
-    "title": "Environment variable access (getenv/putenv)",
-    "github_issue": {
-      "number": 307,
-      "url": "https://github.com/pbalduino/menios/issues/307",
-      "state": "CLOSED"
-    },
-    "labels": [
-      "enhancement",
-      "doom",
-      "libc"
-    ],
-    "assignees": []
-  },
-  {
-    "title": "Filesystem helpers (mkdir, remove, rename)",
-    "github_issue": {
-      "number": 306,
-      "url": "https://github.com/pbalduino/menios/issues/306",
-      "state": "CLOSED"
-    },
-    "labels": [
-      "enhancement",
-      "doom",
-      "libc"
-    ],
-    "assignees": []
-  },
-  {
-    "title": "File stdio support (fopen/fclose, buffered I/O)",
-    "github_issue": {
-      "number": 305,
-      "url": "https://github.com/pbalduino/menios/issues/305",
-      "state": "CLOSED"
-    },
-    "labels": [
-      "enhancement",
-      "doom",
-      "libc"
-    ],
-    "assignees": []
-  },
-  {
     "title": "Build integration for Doom userland binary",
     "github_issue": {
       "number": 303,
@@ -1523,20 +1440,6 @@
     "github_issue": {
       "number": 105,
       "url": "https://github.com/pbalduino/menios/issues/105",
-      "state": "OPEN"
-    },
-    "labels": [
-      "enhancement"
-    ],
-    "assignees": [
-      "pbalduino"
-    ]
-  },
-  {
-    "title": "Implement UNIX signals for process control and communication",
-    "github_issue": {
-      "number": 103,
-      "url": "https://github.com/pbalduino/menios/issues/103",
       "state": "OPEN"
     },
     "labels": [
