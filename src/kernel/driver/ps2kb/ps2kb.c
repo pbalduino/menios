@@ -301,6 +301,8 @@ void ps2kb_handler() {
           buffer_push('\x1b'); buffer_push('['); buffer_push('D'); break;
         case 0x4D: // Right
           buffer_push('\x1b'); buffer_push('['); buffer_push('C'); break;
+        case 0x53: // Delete
+          buffer_push('\x1b'); buffer_push('['); buffer_push('3'); buffer_push('~'); break;
         default:
           break;
       }

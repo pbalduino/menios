@@ -303,6 +303,7 @@ int main(void) {
   RUN_TEST(test_env_set_expands_allocation);
   RUN_TEST(test_ctrl_a_moves_cursor_to_start);
   RUN_TEST(test_ctrl_e_moves_cursor_to_end);
+  RUN_TEST(test_delete_key_removes_character_at_cursor);
   RUN_TEST(test_ctrl_l_clears_screen);
   RUN_TEST(test_history_arrow_recalls_last_entry);
   RUN_TEST(test_history_cursor_resets_between_reads);
@@ -381,6 +382,22 @@ void test_ctrl_e_moves_cursor_to_end(void) {
   size_t len = read_line(MOSH_PROMPT, buffer, sizeof(buffer));
   TEST_ASSERT_EQUAL_UINT64(3, len);
   TEST_ASSERT_EQUAL_STRING("abx", buffer);
+}
+
+void test_delete_key_removes_character_at_cursor(void) {
+  reset_capture();
+  history_reset();
+  const char sequence[] = {
+    'a', 'b', 'c',
+    '\x1b', '[', 'D',
+    '\x1b', '[', '3', '~',
+    '\n'
+  };
+  feed_input(sequence, sizeof(sequence));
+  char buffer[32];
+  size_t len = read_line(MOSH_PROMPT, buffer, sizeof(buffer));
+  TEST_ASSERT_EQUAL_UINT64(strlen("ab"), len);
+  TEST_ASSERT_EQUAL_STRING("ab", buffer);
 }
 
 void test_ctrl_l_clears_screen(void) {

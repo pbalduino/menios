@@ -225,7 +225,7 @@ digraph IssueDependencies {
         fillcolor="#FFF9E6";
 
         issue225 [label="#225: Cron job\nscheduling", fillcolor="#FFE4B5"];
-        issue226 [label="#226: RTC and time\nmanagement", fillcolor="#FFE4B5"];
+        issue226 [label="#226: RTC and time\nmanagement (parent)", fillcolor="#FFE4B5"];
         issue238 [label="#238: rand() and time()\nsupport (parent)", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED
         issue239 [label="#239: Kernel time\nsyscalls", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED
         issue240 [label="#240: time() in\nlibc", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED
@@ -236,6 +236,14 @@ digraph IssueDependencies {
         issue288 [label="#288: Interval timers\nsetitimer()", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED
         issue290 [label="#290: Time conversions\ngmtime/mktime/strftime", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED
         issue299 [label="#299: Timezone support\nIANA tz database", fillcolor="#E6E6FA"];  // Long term (needs network)
+
+        // New time management child issues
+        issue325 [label="#325: RTC boot-time\nsynchronization", fillcolor="#FFE4B5"];
+        issue326 [label="#326: Centralized\ntimekeeper abstraction", fillcolor="#FFE4B5"];
+        issue327 [label="#327: clock_nanosleep()\nand timerfd", fillcolor="#FFE4B5"];
+        issue328 [label="#328: ITIMER_VIRTUAL\nand ITIMER_PROF", fillcolor="#FFE4B5"];
+        issue329 [label="#329: Extended clock IDs\nMONOTONIC_RAW/BOOTTIME", fillcolor="#FFE4B5"];
+        issue330 [label="#330: Basic timezone\nTZ environment variable", fillcolor="#FFE4B5"];
     }
 
     subgraph cluster_utilities {
@@ -507,7 +515,7 @@ digraph IssueDependencies {
     // Old build integration (superseded)
     issue312 -> issue303 [color=gray, style=dotted, label="superseded by\n#311/#312"];
 
-    // Time/Random dependencies - ALL COMPLETE ✅
+    // Time/Random dependencies - Partial complete
     issue238 -> issue239 [color=brown, style=dashed, label="breakdown"];  // parent -> kernel time
     issue238 -> issue240 [color=brown, style=dashed, label="breakdown"];  // parent -> libc time
     issue238 -> issue241 [color=brown, style=dashed, label="breakdown"];  // parent -> rand
@@ -516,13 +524,38 @@ digraph IssueDependencies {
     issue239 -> issue226 [color=brown];  // kernel time syscalls -> RTC management
     issue239 -> issue287 [color=brown, style=dashed];  // kernel time syscalls -> nanosleep ✅
     issue239 -> issue288 [color=brown, style=dashed];  // kernel time syscalls -> setitimer ✅
-    issue286 -> issue226 [color=brown, style=dashed];  // RTC driver -> RTC management (part of #226 breakdown)
-    issue287 -> issue226 [color=brown, style=dashed];  // nanosleep -> RTC management (part of #226 breakdown)
-    issue288 -> issue226 [color=brown, style=dashed];  // setitimer -> RTC management (part of #226 breakdown)
+    issue286 -> issue226 [color=brown];  // RTC driver -> RTC management (part of #226 breakdown)
+    issue287 -> issue226 [color=brown];  // nanosleep -> RTC management (part of #226 breakdown)
+    issue288 -> issue226 [color=brown];  // setitimer -> RTC management (part of #226 breakdown)
     issue193 -> issue241 [label="libc", color=brown, style=dashed];  // libc -> rand() ✅
     issue239 -> issue290 [color=brown, style=dashed];  // kernel time syscalls -> time conversions ✅
     issue290 -> issue299 [color=brown];  // time conversions -> timezone support (foundation)
     issue189 -> issue299 [color=brown, style=dashed];  // FAT32 writes -> timezone (needs /usr/share/zoneinfo)
+
+    // New time management child issue dependencies
+    issue226 -> issue325 [color=brown, penwidth=2, label="breakdown"];  // parent -> RTC boot sync
+    issue226 -> issue326 [color=brown, penwidth=2, label="breakdown"];  // parent -> timekeeper
+    issue226 -> issue327 [color=brown, penwidth=2, label="breakdown"];  // parent -> clock_nanosleep
+    issue226 -> issue328 [color=brown, penwidth=2, label="breakdown"];  // parent -> ITIMER_VIRTUAL/PROF
+    issue226 -> issue329 [color=brown, penwidth=2, label="breakdown"];  // parent -> extended clocks
+    issue226 -> issue330 [color=brown, penwidth=2, label="breakdown"];  // parent -> TZ support
+
+    issue286 -> issue325 [color=brown];  // RTC driver -> RTC boot sync
+    issue239 -> issue325 [color=brown];  // kernel time syscalls -> RTC boot sync
+    issue286 -> issue326 [color=brown];  // RTC driver -> timekeeper
+    issue325 -> issue326 [color=brown, penwidth=2];  // RTC boot sync -> timekeeper
+    issue287 -> issue327 [color=brown];  // nanosleep -> clock_nanosleep
+    issue326 -> issue327 [color=brown, penwidth=2];  // timekeeper -> clock_nanosleep
+    issue96 -> issue327 [color=brown];  // fd mgmt -> timerfd
+    issue288 -> issue328 [color=brown];  // setitimer -> ITIMER_VIRTUAL/PROF
+    issue213 -> issue328 [color=brown];  // signal delivery -> timer signals
+    issue34 -> issue328 [color=brown];  // scheduler -> CPU time tracking
+    issue328 -> issue329 [color=brown, penwidth=2];  // CPU time -> extended clocks
+    issue326 -> issue329 [color=brown];  // timekeeper -> extended clocks
+    issue109 -> issue329 [color=brown];  // threading -> THREAD_CPUTIME_ID
+    issue290 -> issue330 [color=brown];  // time conversions -> TZ support
+    issue307 -> issue330 [color=brown];  // getenv/putenv -> TZ support
+    issue330 -> issue299 [color=brown, penwidth=2];  // basic TZ -> full IANA database
 
     // Procfs dependencies
     issue65 -> issue244 [label="VFS", style=dashed, color=gray];  // VFS -> procfs

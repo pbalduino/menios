@@ -723,10 +723,39 @@ Active work:
   - **Impact**: LOW currently (workaround exists), MEDIUM-HIGH for future POSIX code
   - **Fix needed**: Enhance vsnprintf.c to parse and apply width/precision/flags
   - Not blocking Doom, but needed for proper libc compliance
+- **2025-10-20**: Created #325-#330 - **RTC and Time Management Breakdown** 🕐
+  - **#325** - RTC boot-time synchronization
+    - Boot-time sync path with RTC fallback
+    - Write path for clock_settime() persistence
+    - Dependencies: #286 ✅, #239 ✅
+  - **#326** - Centralized timekeeper abstraction
+    - Dedicated timekeeper structure
+    - Unified time management logic
+    - Dependencies: #286 ✅, #325
+  - **#327** - clock_nanosleep() and timerfd support
+    - clock_nanosleep() syscall with TIMER_ABSTIME
+    - timerfd for event-driven time waits
+    - Dependencies: #287 ✅, #326, #96 ✅
+  - **#328** - ITIMER_VIRTUAL and ITIMER_PROF support
+    - CPU time tracking (user vs kernel)
+    - ITIMER_VIRTUAL (SIGVTALRM)
+    - ITIMER_PROF (SIGPROF)
+    - Dependencies: #288 ✅, #213 ✅, #34 ✅
+  - **#329** - Extended clock IDs (MONOTONIC_RAW, BOOTTIME, CPU clocks)
+    - CLOCK_MONOTONIC_RAW, CLOCK_BOOTTIME
+    - CLOCK_PROCESS_CPUTIME_ID, CLOCK_THREAD_CPUTIME_ID
+    - Dependencies: #328, #326, #109
+  - **#330** - Basic timezone support (TZ environment variable)
+    - TZ parsing, localtime() awareness
+    - mktime() and strftime() timezone support
+    - Dependencies: #290 ✅, #307 ✅
+  - Issue #226 (RTC and time management) partially complete: 7/13 issues done
+  - Total project issues: 95 (was 89)
+  - Overall progress: 87/95 issues complete (91.6%)
 
 ---
 
-**Last Updated**: 2025-10-19
+**Last Updated**: 2025-10-20
 **See Also**:
 - [Road to Shell](road/road_to_shell.md)
 - [Road to Buddy Allocator](road/road_to_buddy_allocator.md)
