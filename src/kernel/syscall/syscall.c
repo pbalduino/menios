@@ -2358,12 +2358,17 @@ static uint64_t syscall_exit_handler(syscall_frame_t* frame) {
     halt();
   }
 
-  if(resumed != frame) {
+  syscall_frame_t* source = resumed;
+  if(current != NULL && current->cpu_state != NULL) {
+    source = (syscall_frame_t*)current->cpu_state;
+  }
+
+  if(source != frame) {
     serial_printf("sys_exit: copying resumed frame from %p to %p size=%zu\n",
-                  (void*)resumed,
+                  (void*)source,
                   (void*)frame,
                   sizeof(syscall_frame_t));
-    memcpy(frame, resumed, sizeof(syscall_frame_t));
+    memcpy(frame, source, sizeof(syscall_frame_t));
   }
 
   return frame->rax;
