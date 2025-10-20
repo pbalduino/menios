@@ -1,47 +1,154 @@
 [
   {
-    "title": "stdio: printf family doesn't handle field widths or leading-zero flags",
+    "title": "Fix host test build linker errors (make test)",
     "github_issue": {
-      "number": 324,
-      "url": "https://github.com/pbalduino/menios/issues/324",
-      "state": "CLOSED"
-    },
-    "labels": [
-      "enhancement",
-      "nice to have",
-      "libc"
-    ],
-    "assignees": []
-  },
-  {
-    "title": "Shell crashes with GPF/PF after Doom exits normally",
-    "github_issue": {
-      "number": 323,
-      "url": "https://github.com/pbalduino/menios/issues/323",
-      "state": "CLOSED"
-    },
-    "labels": [
-      "bug",
-      "mosh",
-      "kernel",
-      "doom"
-    ],
-    "assignees": []
-  },
-  {
-    "title": "mosh crashes with page fault when alarm triggers (stack overflow suspected)",
-    "github_issue": {
-      "number": 322,
-      "url": "https://github.com/pbalduino/menios/issues/322",
+      "number": 334,
+      "url": "https://github.com/pbalduino/menios/issues/334",
       "state": "OPEN"
     },
     "labels": [
       "bug",
-      "mosh",
-      "kernel",
-      "blocked"
+      "testing"
     ],
-    "assignees": []
+    "assignees": [
+      "pbalduino"
+    ]
+  },
+  {
+    "title": "Add VM and keyboard stubs for host test build",
+    "github_issue": {
+      "number": 333,
+      "url": "https://github.com/pbalduino/menios/issues/333",
+      "state": "OPEN"
+    },
+    "labels": [
+      "bug",
+      "testing"
+    ],
+    "assignees": [
+      "pbalduino"
+    ]
+  },
+  {
+    "title": "Add FAT32 adapter stubs for host test build",
+    "github_issue": {
+      "number": 332,
+      "url": "https://github.com/pbalduino/menios/issues/332",
+      "state": "OPEN"
+    },
+    "labels": [
+      "bug",
+      "testing"
+    ],
+    "assignees": [
+      "pbalduino"
+    ]
+  },
+  {
+    "title": "Add framebuffer stubs for host test build",
+    "github_issue": {
+      "number": 331,
+      "url": "https://github.com/pbalduino/menios/issues/331",
+      "state": "CLOSED"
+    },
+    "labels": [
+      "bug",
+      "testing"
+    ],
+    "assignees": [
+      "pbalduino"
+    ]
+  },
+  {
+    "title": "Basic timezone support (TZ environment variable)",
+    "github_issue": {
+      "number": 330,
+      "url": "https://github.com/pbalduino/menios/issues/330",
+      "state": "OPEN"
+    },
+    "labels": [
+      "enhancement",
+      "libc"
+    ],
+    "assignees": [
+      "pbalduino"
+    ]
+  },
+  {
+    "title": "Extended clock IDs (MONOTONIC_RAW, BOOTTIME, CPU clocks)",
+    "github_issue": {
+      "number": 329,
+      "url": "https://github.com/pbalduino/menios/issues/329",
+      "state": "OPEN"
+    },
+    "labels": [
+      "enhancement",
+      "kernel"
+    ],
+    "assignees": [
+      "pbalduino"
+    ]
+  },
+  {
+    "title": "ITIMER_VIRTUAL and ITIMER_PROF support",
+    "github_issue": {
+      "number": 328,
+      "url": "https://github.com/pbalduino/menios/issues/328",
+      "state": "OPEN"
+    },
+    "labels": [
+      "enhancement",
+      "kernel"
+    ],
+    "assignees": [
+      "pbalduino"
+    ]
+  },
+  {
+    "title": "clock_nanosleep() and timerfd support",
+    "github_issue": {
+      "number": 327,
+      "url": "https://github.com/pbalduino/menios/issues/327",
+      "state": "OPEN"
+    },
+    "labels": [
+      "enhancement",
+      "kernel",
+      "libc"
+    ],
+    "assignees": [
+      "pbalduino"
+    ]
+  },
+  {
+    "title": "Centralized timekeeper abstraction",
+    "github_issue": {
+      "number": 326,
+      "url": "https://github.com/pbalduino/menios/issues/326",
+      "state": "OPEN"
+    },
+    "labels": [
+      "enhancement",
+      "kernel"
+    ],
+    "assignees": [
+      "pbalduino"
+    ]
+  },
+  {
+    "title": "RTC boot-time synchronization",
+    "github_issue": {
+      "number": 325,
+      "url": "https://github.com/pbalduino/menios/issues/325",
+      "state": "OPEN"
+    },
+    "labels": [
+      "enhancement",
+      "kernel"
+    ],
+    "assignees": [
+      "pbalduino"
+    ]
   },
   {
     "title": "Page fault handler prints duplicate error messages",
@@ -54,22 +161,9 @@
       "bug",
       "kernel"
     ],
-    "assignees": []
-  },
-  {
-    "title": "Shell becomes unresponsive after Doom crashes",
-    "github_issue": {
-      "number": 320,
-      "url": "https://github.com/pbalduino/menios/issues/320",
-      "state": "OPEN"
-    },
-    "labels": [
-      "bug",
-      "mosh",
-      "blocked",
-      "doom"
-    ],
-    "assignees": []
+    "assignees": [
+      "pbalduino"
+    ]
   },
   {
     "title": "Implement uname command for system information",
@@ -147,35 +241,6 @@
     ]
   },
   {
-    "title": "Integrate Doom into meniOS build and packaging",
-    "github_issue": {
-      "number": 312,
-      "url": "https://github.com/pbalduino/menios/issues/312",
-      "state": "CLOSED"
-    },
-    "labels": [
-      "enhancement",
-      "doom"
-    ],
-    "assignees": [
-      "pbalduino"
-    ]
-  },
-  {
-    "title": "Build integration for Doom userland binary",
-    "github_issue": {
-      "number": 303,
-      "url": "https://github.com/pbalduino/menios/issues/303",
-      "state": "CLOSED"
-    },
-    "labels": [
-      "enhancement"
-    ],
-    "assignees": [
-      "pbalduino"
-    ]
-  },
-  {
     "title": "Timezone support using IANA tz database",
     "github_issue": {
       "number": 299,
@@ -185,21 +250,6 @@
     "labels": [
       "enhancement",
       "nice to have",
-      "kernel"
-    ],
-    "assignees": [
-      "pbalduino"
-    ]
-  },
-  {
-    "title": "Implement alarm() syscall",
-    "github_issue": {
-      "number": 289,
-      "url": "https://github.com/pbalduino/menios/issues/289",
-      "state": "CLOSED"
-    },
-    "labels": [
-      "enhancement",
       "kernel"
     ],
     "assignees": [
