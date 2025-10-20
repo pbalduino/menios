@@ -704,7 +704,8 @@ ifeq ($(OS_NAME),linux)
 			src/kernel/user/vm_region.c \
 		src/kernel/timer/tsc.c \
 		src/kernel/block/block_cache.c \
-		src/libc/itoa.c \
+		test/stubs_framebuffer.c \
+	src/libc/itoa.c \
 	src/libc/string.c \
 		src/libc/time.c \
 	src/libc/errno.c \
