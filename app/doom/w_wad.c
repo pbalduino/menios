@@ -39,6 +39,48 @@
 
 #define LUMP_NAME_LEN 8
 
+static bool pad_numeric_suffix(const char* name, size_t target_digits, char out[LUMP_NAME_LEN + 1]) {
+    if(name == NULL) {
+        return false;
+    }
+
+    size_t len = strlen(name);
+    if(len == 0 || len > LUMP_NAME_LEN) {
+        return false;
+    }
+
+    size_t digit_count = 0;
+    size_t pos = len;
+    while(pos > 0) {
+        unsigned char ch = (unsigned char)name[pos - 1];
+        if(!isdigit(ch)) {
+            break;
+        }
+        digit_count++;
+        pos--;
+    }
+
+    if(digit_count == 0 || digit_count >= target_digits) {
+        return false;
+    }
+
+    size_t prefix_len = len - digit_count;
+    if(prefix_len + target_digits > LUMP_NAME_LEN) {
+        return false;
+    }
+
+    memcpy(out, name, prefix_len);
+    size_t write_pos = prefix_len;
+    size_t zeros_to_add = target_digits - digit_count;
+    while(zeros_to_add-- > 0 && write_pos < LUMP_NAME_LEN) {
+        out[write_pos++] = '0';
+    }
+    memcpy(out + write_pos, name + prefix_len, digit_count);
+    write_pos += digit_count;
+    out[write_pos] = '\0';
+    return true;
+}
+
 static void W_FormatLumpName(const char* lumpname, char* buffer, size_t buffer_size) {
     size_t copy = LUMP_NAME_LEN;
     if(buffer_size == 0) {
@@ -338,29 +380,16 @@ int W_GetNumForName (char* name)
 
     if (i < 0)
     {
-        if(name != NULL && strncasecmp(name, "STCFN", 5) == 0) {
-            size_t len = strlen(name);
-            size_t digit_count = 0;
-            for(size_t idx = len; idx > 0; ) {
-                unsigned char ch = (unsigned char)name[--idx];
-                if(isdigit(ch)) {
-                    digit_count++;
-                } else {
-                    break;
+        char alt[LUMP_NAME_LEN + 1];
+        if(name != NULL) {
+            if(strncasecmp(name, "STCFN", 5) == 0 && pad_numeric_suffix(name, 3, alt)) {
+                DG_Log("W_GetNumForName: retrying with padded lump name \"%s\"", alt);
+                int alt_index = W_CheckNumForName(alt);
+                if(alt_index >= 0) {
+                    DG_Log("W_GetNumForName: padded name \"%s\" resolved to lump %d", alt, alt_index);
+                    return alt_index;
                 }
-            }
-            if(digit_count > 0 && digit_count < 3 && len + (3 - digit_count) <= LUMP_NAME_LEN) {
-                char alt[LUMP_NAME_LEN + 1];
-                size_t prefix_len = len - digit_count;
-                memcpy(alt, name, prefix_len);
-                size_t pos = prefix_len;
-                size_t zeros_to_add = 3 - digit_count;
-                while(zeros_to_add-- > 0 && pos < LUMP_NAME_LEN) {
-                    alt[pos++] = '0';
-                }
-                memcpy(alt + pos, name + prefix_len, digit_count);
-                pos += digit_count;
-                alt[pos] = '\0';
+            } else if(strncasecmp(name, "CWILV", 5) == 0 && pad_numeric_suffix(name, 2, alt)) {
                 DG_Log("W_GetNumForName: retrying with padded lump name \"%s\"", alt);
                 int alt_index = W_CheckNumForName(alt);
                 if(alt_index >= 0) {
@@ -370,13 +399,15 @@ int W_GetNumForName (char* name)
             }
         }
         DG_Log("W_GetNumForName: \"%s\" missing, total lumps=%u", name ? name : "<null>", numlumps);
-        DG_Log("W_GetNumForName: listing lumps with prefix \"STCFN\" for diagnostics");
-        const char* prefix = "STCFN";
-        for (unsigned int idx = 0; idx < numlumps; ++idx) {
-            char formatted[9];
-            W_FormatLumpName(lumpinfo[idx].name, formatted, sizeof(formatted));
-            if (strncasecmp(formatted, prefix, strlen(prefix)) == 0) {
-                DG_Log("  lump[%u]=\"%s\" size=%d", idx, formatted, lumpinfo[idx].size);
+        if(name != NULL && strncasecmp(name, "STCFN", 5) == 0) {
+            DG_Log("W_GetNumForName: listing lumps with prefix \"STCFN\" for diagnostics");
+            const char* prefix = "STCFN";
+            for (unsigned int idx = 0; idx < numlumps; ++idx) {
+                char formatted[9];
+                W_FormatLumpName(lumpinfo[idx].name, formatted, sizeof(formatted));
+                if (strncasecmp(formatted, prefix, strlen(prefix)) == 0) {
+                    DG_Log("  lump[%u]=\"%s\" size=%d", idx, formatted, lumpinfo[idx].size);
+                }
             }
         }
         I_Error ("W_GetNumForName: %s not found!", name);

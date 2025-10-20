@@ -689,13 +689,18 @@ Recommended completion order for maximum impact:
     - **Related to #323** - Likely same root cause (shell fails after Doom exits)
   - **#321** - Page fault handler prints duplicate error messages
     - Labels: bug, kernel
-    - Priority: MEDIUM - Cosmetic but hampers debugging
+    - Priority: **HIGH** (upgraded from MEDIUM)
+    - **UPDATE**: Evidence reveals kernel page fault loop, not just cosmetic issue
+    - Kernel fault at 0xffffffff80032301 during sys_exit memcpy from invalid address 0xff300
+    - **Directly related to #322** - confirms syscall_frame_override corruption
   - **#322** - mosh crashes with page fault when alarm triggers (stack overflow suspected)
     - Labels: bug, mosh, kernel, blocked
     - Milestone: Doom
     - Priority: CRITICAL - Shell never starts, system loops
-    - Stack overflow at 0xdfff30 (write below stack pointer)
-    - Related to signal/alarm delivery and user stack management
+    - **Root cause identified**: sys_exit copying from invalid frame pointer 0xff300
+    - **Evidence from #321**: Kernel page fault during memcpy, system halt
+    - **Reverted fix**: syscall_frame_override path removed (commit 3e77e9f)
+    - **Remaining work**: Fix frame pointer corruption in signal/alarm delivery path
   - **#320 + #323** - Shell failure after Doom exits (likely same root cause)
     - #320: Shell **hangs** when Doom crashes
     - #323: Shell **crashes** when Doom exits normally
