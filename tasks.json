@@ -1,59 +1,15 @@
 [
   {
-    "title": "Fix host test build linker errors (make test)",
+    "title": "Create PNP0A08 PCI host bridge driver",
     "github_issue": {
-      "number": 334,
-      "url": "https://github.com/pbalduino/menios/issues/334",
-      "state": "OPEN"
-    },
-    "labels": [
-      "bug",
-      "testing"
-    ],
-    "assignees": [
-      "pbalduino"
-    ]
-  },
-  {
-    "title": "Add VM and keyboard stubs for host test build",
-    "github_issue": {
-      "number": 333,
-      "url": "https://github.com/pbalduino/menios/issues/333",
+      "number": 335,
+      "url": "https://github.com/pbalduino/menios/issues/335",
       "state": "CLOSED"
     },
     "labels": [
-      "bug",
-      "testing"
-    ],
-    "assignees": [
-      "pbalduino"
-    ]
-  },
-  {
-    "title": "Add FAT32 adapter stubs for host test build",
-    "github_issue": {
-      "number": 332,
-      "url": "https://github.com/pbalduino/menios/issues/332",
-      "state": "CLOSED"
-    },
-    "labels": [
-      "bug",
-      "testing"
-    ],
-    "assignees": [
-      "pbalduino"
-    ]
-  },
-  {
-    "title": "Add framebuffer stubs for host test build",
-    "github_issue": {
-      "number": 331,
-      "url": "https://github.com/pbalduino/menios/issues/331",
-      "state": "CLOSED"
-    },
-    "labels": [
-      "bug",
-      "testing"
+      "enhancement",
+      "drivers",
+      "kernel"
     ],
     "assignees": [
       "pbalduino"

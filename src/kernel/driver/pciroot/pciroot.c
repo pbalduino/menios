@@ -3,6 +3,7 @@
 #include <kernel/console.h>
 #include <kernel/driver.h>
 #include <kernel/acpi.h>
+#include <kernel/pci.h>
 #include <kernel/serial.h>
 
 #include <uacpi/uacpi.h>
@@ -10,21 +11,44 @@
 #include <uacpi/tables.h>
 
 void pciroot_start(void) {
+  pci_mmconfig_reset();
 
-  serial_printf("pciroot_start: Finding ACPI table (MCFG");
   uacpi_table tbl;
-
   uacpi_status ret = uacpi_table_find_by_signature("MCFG", &tbl);
   if(uacpi_unlikely_error(ret)) {
-    serial_printf("unable to find ACPI table: %s\n", uacpi_status_to_string(ret));
-    return;
+    serial_printf("pciroot: no MCFG table found (%s)\n", uacpi_status_to_string(ret));
+  } else {
+    const struct acpi_mcfg* mcfg = (const struct acpi_mcfg*)tbl.ptr;
+    const size_t header_size = sizeof(*mcfg);
+    size_t entry_count = 0;
+
+    if(mcfg->header.length > header_size) {
+      entry_count = (mcfg->header.length - header_size) / sizeof(struct acpi_mcfg_allocation);
+    }
+
+    serial_printf("pciroot: found MCFG with %zu window(s)\n", entry_count);
+
+    for(size_t i = 0; i < entry_count; ++i) {
+      const struct acpi_mcfg_allocation* entry = &mcfg->entries[i];
+
+      serial_printf("  MCFG[%zu]: segment=%u bus=%u-%u base=0x%llx\n",
+                    i,
+                    entry->pci_segment_group,
+                    entry->start_bus_number,
+                    entry->end_bus_number,
+                    (unsigned long long)entry->base_address);
+
+      if(entry->start_bus_number > entry->end_bus_number) {
+        serial_printf("  MCFG[%zu]: invalid bus range, skipping\n", i);
+        continue;
+      }
+
+      pci_mmconfig_add_window(entry->base_address,
+                              entry->pci_segment_group,
+                              entry->start_bus_number,
+                              entry->end_bus_number);
+    }
   }
-
-  serial_printf("found ACPI table: %s\n", uacpi_status_to_string(ret));
-
-  acpi_mcfg_t* mcfg = (acpi_mcfg_t*)tbl.ptr;
-
-  serial_printf("pciroot_start: sign: %.4s - len: %d\n", mcfg->header.signature, mcfg->header.length);
 
   ahci_init();
 }

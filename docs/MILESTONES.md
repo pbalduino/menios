@@ -295,13 +295,13 @@ This document tracks the major milestones for meniOS development.
 
 ## 📈 Overall Progress
 
-- **Total Issues Across Milestones**: 89 issues (includes foundational issues)
-- **Completed**: 87 issues (97.8%)
-- **In Progress**: 2 issues
+- **Total Issues Across Milestones**: 99 issues (includes foundational issues)
+- **Completed**: 91 issues (91.9%)
+- **In Progress**: 8 issues
 - **Ready to Start**: 2 issues (no dependencies: #190, #191)
-- **Recently Completed**: #286-#293 ✅ (time management & FAT32 writes), #304 ✅ (scanf family), #302 ✅ (real key events), #301 ✅ (framebuffer mmap), #300 ✅ (menIOS Doom port layer), #136 ✅ (devfs), #140 ✅ (/dev/kbd0 and /dev/fb0), #221 ✅ (fast syscalls), #305-#310 ✅ (ALL libc gaps COMPLETE!), #311 ✅ (Doom build system), #314 ✅ (shell startup scripts)
-- **Recently Created**: #305-#312 ✅ (libc gaps & Doom build system), #313 (filesystem organization), #314 ✅ (shell startup scripts - COMPLETE), #315 (motd), #316 (touch command), #317 (utime syscall), #318 (uname command), #319-#323 ✅ (stability fixes - ALL COMPLETE!)
-- **Next Up**: 🎉 Doom milestone COMPLETE (33/33)! TCC/binutils (#190, #191) ready for native compilation!
+- **Recently Completed**: #286-#293 ✅ (time management & FAT32 writes), #304 ✅ (scanf family), #302 ✅ (real key events), #301 ✅ (framebuffer mmap), #300 ✅ (menIOS Doom port layer), #136 ✅ (devfs), #140 ✅ (/dev/kbd0 and /dev/fb0), #221 ✅ (fast syscalls), #305-#310 ✅ (ALL libc gaps COMPLETE!), #311 ✅ (Doom build system), #314 ✅ (shell startup scripts), #331-#334 ✅ (test infrastructure fixes)
+- **Recently Created**: #305-#312 ✅ (libc gaps & Doom build system), #313 (filesystem organization), #314 ✅ (shell startup scripts - COMPLETE), #315 (motd), #316 (touch command), #317 (utime syscall), #318 (uname command), #319-#323 ✅ (stability fixes - ALL COMPLETE!), #325-#330 (RTC and time management breakdown), #331-#334 ✅ (test infrastructure - ALL FIXED!)
+- **Next Up**: 🎉 Doom milestone COMPLETE (33/33)! TCC/binutils (#190, #191) ready for native compilation! RTC/time management refinements (#325-#330) continue. PCI infrastructure work now ready for device drivers.
 
 ## 🚀 Immediate Next Steps
 
@@ -752,6 +752,26 @@ Active work:
   - Issue #226 (RTC and time management) partially complete: 7/13 issues done
   - Total project issues: 95 (was 89)
   - Overall progress: 87/95 issues complete (91.6%)
+- **2025-10-20**: Created #331-#334 - **Test Infrastructure Fixes** 🧪
+  - **#331** - Add framebuffer stubs for host test build ✅ CLOSED
+    - 14 framebuffer function stubs
+    - test/stubs.c now provides fb_* functions
+  - **#332** - Add FAT32 adapter stubs for host test build ✅ CLOSED
+    - 3 FAT32 directory operation stubs
+    - fat32_mkdir/rmdir/rename_adapter stubs
+  - **#333** - Add VM and keyboard stubs for host test build ✅ CLOSED
+    - vm_map_physical, keyboard_event_*, proc_user_touch_range stubs
+    - Syscall dependencies resolved
+  - **#334** - Fix host test build linker errors (parent) ✅ CLOSED
+    - make test now passes successfully
+    - All host test linker errors resolved
+  - Total project issues: 99 (was 95)
+  - Overall progress: 91/99 issues complete (91.9%)
+- **2025-10-20**: Created #335 - **PNP0A08 PCI Host Bridge Driver** 🚌
+  - Centralized PCI enumeration and resource management
+  - PCI driver registration API (Linux-style)
+  - Eliminates duplication across PCI drivers (AHCI, e1000, USB, NVMe)
+  - Foundational infrastructure for hardware support
 
 ---
 
