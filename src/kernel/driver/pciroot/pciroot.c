@@ -31,8 +31,8 @@ void pciroot_start(void) {
     const size_t header_size = sizeof(*mcfg);
     size_t entry_count = 0;
 
-    if(mcfg->header.length > header_size) {
-      entry_count = (mcfg->header.length - header_size) / sizeof(struct acpi_mcfg_allocation);
+    if(mcfg->hdr.length > header_size) {
+      entry_count = (mcfg->hdr.length - header_size) / sizeof(struct acpi_mcfg_allocation);
     }
 
     serial_printf("pciroot: found MCFG with %zu window(s)\n", entry_count);
@@ -42,20 +42,20 @@ void pciroot_start(void) {
 
       serial_printf("  MCFG[%zu]: segment=%u bus=%u-%u base=0x%llx\n",
                     i,
-                    entry->pci_segment_group,
-                    entry->start_bus_number,
-                    entry->end_bus_number,
-                    (unsigned long long)entry->base_address);
+                    entry->segment,
+                    entry->start_bus,
+                    entry->end_bus,
+                    (unsigned long long)entry->address);
 
-      if(entry->start_bus_number > entry->end_bus_number) {
+      if(entry->start_bus > entry->end_bus) {
         serial_printf("  MCFG[%zu]: invalid bus range, skipping\n", i);
         continue;
       }
 
-      pci_mmconfig_add_window(entry->base_address,
-                              entry->pci_segment_group,
-                              entry->start_bus_number,
-                              entry->end_bus_number);
+      pci_mmconfig_add_window(entry->address,
+                              entry->segment,
+                              entry->start_bus,
+                              entry->end_bus);
     }
   }
 

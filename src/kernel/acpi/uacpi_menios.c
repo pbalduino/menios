@@ -16,6 +16,7 @@
 
 #include <uacpi/kernel_api.h>
 
+#include <stdbool.h>
 #include <stdio.h>
 #include <string.h>
 
@@ -35,6 +36,31 @@ uint64_t __popcountdi2(uint64_t x) {
     x >>= 1;
   }
   return count;
+}
+
+typedef struct {
+  bool initialized;
+  uacpi_init_level current_level;
+} uacpi_kernel_init_state_t;
+
+static uacpi_kernel_init_state_t uacpi_kernel_init_state = {
+  .initialized = false,
+  .current_level = UACPI_INIT_LEVEL_EARLY
+};
+
+static const char* uacpi_kernel_init_level_name(uacpi_init_level level) {
+  switch(level) {
+    case UACPI_INIT_LEVEL_EARLY: return "early";
+    case UACPI_INIT_LEVEL_SUBSYSTEM_INITIALIZED: return "subsystem initialized";
+    case UACPI_INIT_LEVEL_NAMESPACE_LOADED: return "namespace loaded";
+    case UACPI_INIT_LEVEL_NAMESPACE_INITIALIZED: return "namespace initialized";
+    default: return "unknown";
+  }
+}
+
+static uacpi_status uacpi_kernel_run_init_stage(uacpi_init_level level) {
+  (void)level;
+  return UACPI_STATUS_OK;
 }
 
 void uacpi_kernel_stall(uacpi_u8 usec) {
@@ -477,11 +503,54 @@ uacpi_status uacpi_kernel_io_write(
 
 
 uacpi_status uacpi_kernel_initialize(uacpi_init_level current_init_lvl) {
-  serial_printf("uacpi_kernel_initialize: not implemented. Init level: %d\n", current_init_lvl);
+  if(current_init_lvl > UACPI_INIT_LEVEL_NAMESPACE_INITIALIZED) {
+    serial_printf("uacpi_kernel_initialize: invalid init level %d\n", current_init_lvl);
+    return UACPI_STATUS_INVALID_ARGUMENT;
+  }
 
-  return UACPI_STATUS_OK;
+  if(!uacpi_kernel_init_state.initialized) {
+    if(current_init_lvl != UACPI_INIT_LEVEL_EARLY) {
+      serial_printf("uacpi_kernel_initialize: first call must be EARLY, got %s\n",
+                    uacpi_kernel_init_level_name(current_init_lvl));
+      return UACPI_STATUS_INIT_LEVEL_MISMATCH;
+    }
+
+    uacpi_kernel_init_state.initialized = true;
+    uacpi_kernel_init_state.current_level = current_init_lvl;
+
+    serial_printf("uacpi_kernel_initialize: level -> %s\n",
+                  uacpi_kernel_init_level_name(current_init_lvl));
+    return uacpi_kernel_run_init_stage(current_init_lvl);
+  }
+
+  if(current_init_lvl == uacpi_kernel_init_state.current_level) {
+    return UACPI_STATUS_OK;
+  }
+
+  if(current_init_lvl < uacpi_kernel_init_state.current_level) {
+    serial_printf("uacpi_kernel_initialize: level regression from %s to %s\n",
+                  uacpi_kernel_init_level_name(uacpi_kernel_init_state.current_level),
+                  uacpi_kernel_init_level_name(current_init_lvl));
+    return UACPI_STATUS_INIT_LEVEL_MISMATCH;
+  }
+
+  if(current_init_lvl != (uacpi_kernel_init_state.current_level + 1)) {
+    serial_printf("uacpi_kernel_initialize: unexpected transition %s -> %s\n",
+                  uacpi_kernel_init_level_name(uacpi_kernel_init_state.current_level),
+                  uacpi_kernel_init_level_name(current_init_lvl));
+    return UACPI_STATUS_INIT_LEVEL_MISMATCH;
+  }
+
+  uacpi_kernel_init_state.current_level = current_init_lvl;
+
+  serial_printf("uacpi_kernel_initialize: level -> %s\n",
+                uacpi_kernel_init_level_name(current_init_lvl));
+  return uacpi_kernel_run_init_stage(current_init_lvl);
 }
 
 void uacpi_kernel_deinitialize(void) {
-  serial_printf("uacpi_kernel_deinitialize: not implemented\n");
+  uacpi_kernel_init_state.initialized = false;
+  uacpi_kernel_init_state.current_level = UACPI_INIT_LEVEL_EARLY;
+
+  serial_printf("uacpi_kernel_deinitialize: state reset\n");
 }

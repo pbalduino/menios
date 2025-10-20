@@ -1,6 +1,6 @@
 #include <kernel/kernel.h>
 #include <kernel/pci.h>
-#include <kernel/mem/pmm.h>
+#include <kernel/pmm.h>
 #include <kernel/serial.h>
 #include <types.h>
 

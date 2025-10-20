@@ -396,10 +396,10 @@ static block_header_t* buddy_split_to_order(block_header_t* block, uint32_t targ
   return block;
 }
 
-#ifdef MENIOS_HOST_TEST
 static bool buddy_debug_poison_after_remove = false;
 static bool buddy_debug_abort_on_double_free = true;
 
+#ifdef MENIOS_HOST_TEST
 void __menios_buddy_debug_poison_after_remove(bool enable) {
   buddy_debug_poison_after_remove = enable;
 }

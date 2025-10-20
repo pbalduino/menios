@@ -63,6 +63,9 @@ static tzinfo_t tz_cache = {0, "UTC"};
 static void tz_parse_env(tzinfo_t* info) {
   info->offset_seconds = 0;
   strcpy(info->name, "UTC");
+#ifdef MENIOS_KERNEL
+  return;
+#else
 
   const char* env = getenv("TZ");
   if(env == NULL) {
@@ -168,6 +171,7 @@ static void tz_parse_env(tzinfo_t* info) {
   int total = hours * 3600 + minutes * 60;
   info->offset_seconds = sign * total;
   snprintf(info->name, sizeof(info->name), "UTC%c%02d:%02d", (sign >= 0) ? '+' : '-', hours, minutes);
+#endif
 }
 
 static const tzinfo_t* tz_get_info(void) {
