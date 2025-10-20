@@ -296,7 +296,7 @@ This document tracks the three major milestones for meniOS development.
 - **In Progress**: 10 issues
 - **Ready to Start**: 5 issues (no dependencies: #109, #190, #191, #312)
 - **Recently Completed**: #286-#293 ✅ (time management & FAT32 writes), #304 ✅ (scanf family), #302 ✅ (real key events), #301 ✅ (framebuffer mmap), #300 ✅ (menIOS Doom port layer), #136 ✅ (devfs), #140 ✅ (/dev/kbd0 and /dev/fb0), #221 ✅ (fast syscalls), #305-#310 ✅ (ALL libc gaps COMPLETE!), #311 ✅ (Doom build system), #314 ✅ (shell startup scripts)
-- **Recently Created**: #305-#312 ✅ (libc gaps & Doom build system), #313 (filesystem organization), #314 ✅ (shell startup scripts - COMPLETE), #315 (motd), #316 (touch command), #317 (utime syscall), #318 (uname command)
+- **Recently Created**: #305-#312 ✅ (libc gaps & Doom build system), #313 (filesystem organization), #314 ✅ (shell startup scripts - COMPLETE), #315 (motd), #316 (touch command), #317 (utime syscall), #318 (uname command), **#319-#323 (CRITICAL BUGS)** - Doom crash ✅ FIXED, shell hang, page fault diagnostics, mosh alarm crash, shell crash after Doom exit
 - **Next Up**: 🎉 ALL libc gaps COMPLETE! Doom build integration (#312) now unblocked! TCC/binutils (#190, #191) ready! New utilities (#315-#318) improve usability.
 
 ## 🚀 Immediate Next Steps
@@ -672,6 +672,47 @@ Recommended completion order for maximum impact:
   - Shell now executes commands from ~/.moshrc on startup
   - Enables automated environment setup and debugging workflows
   - Enhances developer experience with customizable shell initialization
+- **2025-10-19**: Created #319-#322 - **CRITICAL BUGS IDENTIFIED** ⚠️
+  - **#319** - Doom crashes with null pointer dereference at 0xf0 during gameplay ✅ **FIXED**
+    - Labels: bug, doom, kernel
+    - Milestone: Doom
+    - Priority: HIGH - Game stability blocker
+    - **Root cause**: Race condition - early Up arrow keypress before player->mo initialized
+    - **Fix**: Keyboard input gating in app/doom/i_input.c:280 - defers input until player ready
+    - **Testing**: No crashes with early keypresses, logs confirm gating behavior
+    - **Status**: CLOSED ✅
+  - **#320** - Shell becomes unresponsive after Doom crashes
+    - Labels: bug, doom, mosh, blocked
+    - Milestone: Doom
+    - Priority: CRITICAL - System completely unusable after crash
+    - Depends on: #319 (root cause)
+    - **Related to #323** - Likely same root cause (shell fails after Doom exits)
+  - **#321** - Page fault handler prints duplicate error messages
+    - Labels: bug, kernel
+    - Priority: MEDIUM - Cosmetic but hampers debugging
+  - **#322** - mosh crashes with page fault when alarm triggers (stack overflow suspected)
+    - Labels: bug, mosh, kernel, blocked
+    - Milestone: Doom
+    - Priority: CRITICAL - Shell never starts, system loops
+    - Stack overflow at 0xdfff30 (write below stack pointer)
+    - Related to signal/alarm delivery and user stack management
+  - **#320 + #323** - Shell failure after Doom exits (likely same root cause)
+    - #320: Shell **hangs** when Doom crashes
+    - #323: Shell **crashes** when Doom exits normally
+    - Theory: Same bug in process cleanup, resource release, or signal handling
+    - Different symptoms due to timing/exit path differences
+    - Should investigate together - fixing one likely fixes both
+- **2025-10-19**: Closed #319 (Doom null pointer crash) ✅ **FIXED**
+  - **Root cause**: Race condition between keyboard input and player initialization
+  - **Fix implemented**: Keyboard input gating in app/doom/i_input.c:280
+    - Input deferred until players[consoleplayer].mo exists
+    - Logs show "delaying keyboard input" → "resuming keyboard input"
+  - **Enhanced diagnostics**:
+    - Diagnostic breadcrumb retained in app/doom/p_user.c:232
+    - Kernel page-fault dump expanded (src/kernel/idt.c:190) with full user registers
+  - **Testing**: No crashes with early keypresses, gating behavior confirmed
+  - **Impact**: Doom no longer crashes from early keyboard input
+  - First critical Doom bug resolved! 🎉
 
 ---
 

@@ -21,7 +21,10 @@
 
 
 
+#include <stdint.h>
+
 #include "doomdef.h"
+#include "doomgeneric.h"
 #include "d_event.h"
 
 #include "p_local.h"
@@ -228,6 +231,21 @@ void P_DeathThink (player_t* player)
 //
 void P_PlayerThink (player_t* player)
 {
+    static int logged_invalid_player = 0;
+    static int logged_first_player = 0;
+
+    if(!logged_first_player) {
+        DG_Log("P_PlayerThink: first invocation player=%p", player);
+        logged_first_player = 1;
+    }
+
+    if(player == NULL || (uintptr_t)player < 0x1000) {
+        if(!logged_invalid_player) {
+            DG_Log("P_PlayerThink: invalid player pointer %p", player);
+            logged_invalid_player = 1;
+        }
+    }
+
     ticcmd_t*		cmd;
     weapontype_t	newweapon;
 	
@@ -375,5 +393,3 @@ void P_PlayerThink (player_t* player)
     else
 	player->fixedcolormap = 0;
 }
-
-

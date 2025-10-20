@@ -197,6 +197,10 @@ void idt_pf_isr_handler(idt_exception_p cpu_state) {
                   fault_rflags,
                   fault_rsp,
                   privilege_transition ? (uint64_t)fault_ss : (uint64_t)ss);
+    exception_log("    rax=%016lx rbx=%016lx rcx=%016lx rdx=%016lx\n",
+                  cpu_state->rax, cpu_state->rbx, cpu_state->rcx, cpu_state->rdx);
+    exception_log("    rsi=%016lx rdi=%016lx rbp=%016lx rsp=%016lx\n",
+                  cpu_state->rsi, cpu_state->rdi, cpu_state->rbp, fault_rsp);
     proc_exit_signal(SIGSEGV);
     return;
   }

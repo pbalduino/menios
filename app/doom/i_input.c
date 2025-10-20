@@ -31,6 +31,7 @@
 #include "i_timer.h"
 #include "i_video.h"
 #include "i_scale.h"
+#include "doomstat.h"
 #include "m_argv.h"
 #include "m_config.h"
 #include "m_misc.h"
@@ -278,6 +279,22 @@ static void UpdateShiftStatus(int pressed, unsigned char key)
 
 void I_GetEvent(void)
 {
+    static int logged_blocking_input = 0;
+    if (gamestate == GS_LEVEL
+        && consoleplayer >= 0
+        && consoleplayer < MAXPLAYERS
+        && players[consoleplayer].mo == NULL) {
+        if (!logged_blocking_input) {
+            DG_Log("I_GetEvent: delaying keyboard input (console player mo not ready)");
+            logged_blocking_input = 1;
+        }
+        return;
+    }
+    if (logged_blocking_input) {
+        DG_Log("I_GetEvent: console player ready, resuming keyboard input");
+        logged_blocking_input = 0;
+    }
+
     event_t event;
     int pressed;
     unsigned char key;
@@ -338,4 +355,3 @@ void I_GetEvent(void)
 void I_InitInput(void)
 {
 }
-

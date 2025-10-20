@@ -1,5 +1,77 @@
 [
   {
+    "title": "Shell crashes with GPF/PF after Doom exits normally",
+    "github_issue": {
+      "number": 323,
+      "url": "https://github.com/pbalduino/menios/issues/323",
+      "state": "OPEN"
+    },
+    "labels": [
+      "bug",
+      "mosh",
+      "kernel",
+      "doom"
+    ],
+    "assignees": []
+  },
+  {
+    "title": "mosh crashes with page fault when alarm triggers (stack overflow suspected)",
+    "github_issue": {
+      "number": 322,
+      "url": "https://github.com/pbalduino/menios/issues/322",
+      "state": "OPEN"
+    },
+    "labels": [
+      "bug",
+      "mosh",
+      "kernel",
+      "blocked"
+    ],
+    "assignees": []
+  },
+  {
+    "title": "Page fault handler prints duplicate error messages",
+    "github_issue": {
+      "number": 321,
+      "url": "https://github.com/pbalduino/menios/issues/321",
+      "state": "OPEN"
+    },
+    "labels": [
+      "bug",
+      "kernel"
+    ],
+    "assignees": []
+  },
+  {
+    "title": "Shell becomes unresponsive after Doom crashes",
+    "github_issue": {
+      "number": 320,
+      "url": "https://github.com/pbalduino/menios/issues/320",
+      "state": "OPEN"
+    },
+    "labels": [
+      "bug",
+      "mosh",
+      "blocked",
+      "doom"
+    ],
+    "assignees": []
+  },
+  {
+    "title": "Doom crashes with null pointer dereference at 0xf0",
+    "github_issue": {
+      "number": 319,
+      "url": "https://github.com/pbalduino/menios/issues/319",
+      "state": "CLOSED"
+    },
+    "labels": [
+      "bug",
+      "kernel",
+      "doom"
+    ],
+    "assignees": []
+  },
+  {
     "title": "Implement uname command for system information",
     "github_issue": {
       "number": 318,
@@ -10,7 +82,9 @@
       "enhancement",
       "libc"
     ],
-    "assignees": []
+    "assignees": [
+      "pbalduino"
+    ]
   },
   {
     "title": "Implement utime() syscall for file timestamp modification",
@@ -24,7 +98,9 @@
       "kernel",
       "libc"
     ],
-    "assignees": []
+    "assignees": [
+      "pbalduino"
+    ]
   },
   {
     "title": "Implement touch command for file creation and timestamp updates",
@@ -37,7 +113,9 @@
       "enhancement",
       "libc"
     ],
-    "assignees": []
+    "assignees": [
+      "pbalduino"
+    ]
   },
   {
     "title": "Message of the Day (motd) support",
@@ -49,19 +127,9 @@
     "labels": [
       "enhancement"
     ],
-    "assignees": []
-  },
-  {
-    "title": "Shell startup script support (.moshrc)",
-    "github_issue": {
-      "number": 314,
-      "url": "https://github.com/pbalduino/menios/issues/314",
-      "state": "OPEN"
-    },
-    "labels": [
-      "enhancement"
-    ],
-    "assignees": []
+    "assignees": [
+      "pbalduino"
+    ]
   },
   {
     "title": "Organize filesystem hierarchy following Unix FHS conventions",
@@ -74,7 +142,9 @@
       "enhancement",
       "kernel"
     ],
-    "assignees": []
+    "assignees": [
+      "pbalduino"
+    ]
   },
   {
     "title": "Integrate Doom into meniOS build and packaging",
@@ -87,7 +157,9 @@
       "enhancement",
       "doom"
     ],
-    "assignees": []
+    "assignees": [
+      "pbalduino"
+    ]
   },
   {
     "title": "Build integration for Doom userland binary",
@@ -418,7 +490,9 @@
       "bug",
       "mosh"
     ],
-    "assignees": []
+    "assignees": [
+      "pbalduino"
+    ]
   },
   {
     "title": "Port xargs utility to meniOS",
@@ -430,7 +504,9 @@
     "labels": [
       "enhancement"
     ],
-    "assignees": []
+    "assignees": [
+      "pbalduino"
+    ]
   },
   {
     "title": "Port grep utility to meniOS",
@@ -442,7 +518,9 @@
     "labels": [
       "enhancement"
     ],
-    "assignees": []
+    "assignees": [
+      "pbalduino"
+    ]
   },
   {
     "title": "bug: test_while_loops_until_counter_limit causes infinite loop",
