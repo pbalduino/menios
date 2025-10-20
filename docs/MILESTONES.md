@@ -296,7 +296,7 @@ This document tracks the three major milestones for meniOS development.
 - **In Progress**: 10 issues
 - **Ready to Start**: 5 issues (no dependencies: #109, #190, #191, #312)
 - **Recently Completed**: #286-#293 ✅ (time management & FAT32 writes), #304 ✅ (scanf family), #302 ✅ (real key events), #301 ✅ (framebuffer mmap), #300 ✅ (menIOS Doom port layer), #136 ✅ (devfs), #140 ✅ (/dev/kbd0 and /dev/fb0), #221 ✅ (fast syscalls), #305-#310 ✅ (ALL libc gaps COMPLETE!), #311 ✅ (Doom build system), #314 ✅ (shell startup scripts)
-- **Recently Created**: #305-#312 ✅ (libc gaps & Doom build system), #313 (filesystem organization), #314 ✅ (shell startup scripts - COMPLETE), #315 (motd), #316 (touch command), #317 (utime syscall), #318 (uname command), **#319-#323 (CRITICAL BUGS)** - Doom crash ✅ FIXED, shell hang, page fault diagnostics, mosh alarm crash, shell crash after Doom exit
+- **Recently Created**: #305-#312 ✅ (libc gaps & Doom build system), #313 (filesystem organization), #314 ✅ (shell startup scripts - COMPLETE), #315 (motd), #316 (touch command), #317 (utime syscall), #318 (uname command), **#319-#323 (CRITICAL BUGS)** - Doom crash ✅ FIXED, shell hang, page fault diagnostics, mosh alarm crash, shell crash after Doom exit, #324 (printf field width/padding - enhancement)
 - **Next Up**: 🎉 ALL libc gaps COMPLETE! Doom build integration (#312) now unblocked! TCC/binutils (#190, #191) ready! New utilities (#315-#318) improve usability.
 
 ## 🚀 Immediate Next Steps
@@ -718,6 +718,14 @@ Recommended completion order for maximum impact:
   - **Testing**: No crashes with early keypresses, gating behavior confirmed
   - **Impact**: Doom no longer crashes from early keyboard input
   - First critical Doom bug resolved! 🎉
+- **2025-10-19**: Created #324 (printf field width/padding not implemented)
+  - Labels: libc, enhancement, nice to have
+  - **Issue**: printf family doesn't honor field widths (%5d) or leading-zero flags (%05d)
+  - **Example**: sprintf(buf, "CWILV%2.2d", 0) produces "CWILV0" instead of "CWILV00"
+  - **Workaround**: Doom's W_GetNumForName has padded fallback for lump lookup
+  - **Impact**: LOW currently (workaround exists), MEDIUM-HIGH for future POSIX code
+  - **Fix needed**: Enhance vsnprintf.c to parse and apply width/precision/flags
+  - Not blocking Doom, but needed for proper libc compliance
 
 ---
 

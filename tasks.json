@@ -1,5 +1,19 @@
 [
   {
+    "title": "stdio: printf family doesn't handle field widths or leading-zero flags",
+    "github_issue": {
+      "number": 324,
+      "url": "https://github.com/pbalduino/menios/issues/324",
+      "state": "CLOSED"
+    },
+    "labels": [
+      "enhancement",
+      "nice to have",
+      "libc"
+    ],
+    "assignees": []
+  },
+  {
     "title": "Shell crashes with GPF/PF after Doom exits normally",
     "github_issue": {
       "number": 323,
@@ -53,20 +67,6 @@
       "bug",
       "mosh",
       "blocked",
-      "doom"
-    ],
-    "assignees": []
-  },
-  {
-    "title": "Doom crashes with null pointer dereference at 0xf0",
-    "github_issue": {
-      "number": 319,
-      "url": "https://github.com/pbalduino/menios/issues/319",
-      "state": "CLOSED"
-    },
-    "labels": [
-      "bug",
-      "kernel",
       "doom"
     ],
     "assignees": []

@@ -673,30 +673,98 @@ static void buffer_puts(fmt_buffer_t* buffer, const char* text, size_t length) {
   }
 }
 
-static void format_unsigned(fmt_buffer_t* buffer, unsigned long value, unsigned base, bool uppercase) {
+static void format_number(fmt_buffer_t* buffer,
+                          unsigned long magnitude,
+                          bool is_negative,
+                          unsigned base,
+                          bool uppercase,
+                          bool left_align,
+                          bool zero_pad,
+                          int field_width,
+                          int precision,
+                          bool precision_specified,
+                          bool force_sign,
+                          bool space_sign,
+                          const char* prefix) {
+  char digits_buf[64];
+  size_t digit_index = 0;
   const char* digits = uppercase ? "0123456789ABCDEF" : "0123456789abcdef";
-  char tmp[32];
-  size_t index = 0;
 
-  do {
-    tmp[index++] = digits[value % base];
-    value /= base;
-  } while(value != 0 && index < sizeof(tmp));
-
-  while(index-- > 0) {
-    buffer_putc(buffer, tmp[index]);
-  }
-}
-
-static void format_signed(fmt_buffer_t* buffer, long value) {
-  unsigned long magnitude;
-  if(value < 0) {
-    buffer_putc(buffer, '-');
-    magnitude = (unsigned long)(-(value + 1)) + 1;
+  if(magnitude == 0) {
+    digits_buf[digit_index++] = '0';
   } else {
-    magnitude = (unsigned long)value;
+    while(magnitude != 0 && digit_index < sizeof(digits_buf)) {
+      digits_buf[digit_index++] = digits[magnitude % base];
+      magnitude /= base;
+    }
   }
-  format_unsigned(buffer, magnitude, 10, false);
+
+  if(precision_specified && precision == 0 && digit_index == 1 && digits_buf[0] == '0') {
+    digit_index = 0;
+  }
+
+  if(left_align) {
+    zero_pad = false;
+  }
+
+  char sign = '\0';
+  if(is_negative) {
+    sign = '-';
+  } else if(force_sign) {
+    sign = '+';
+  } else if(space_sign) {
+    sign = ' ';
+  }
+
+  size_t prefix_len = prefix ? strlen(prefix) : 0;
+  size_t sign_len = (sign != '\0') ? 1 : 0;
+
+  size_t zero_count = 0;
+  if(precision_specified) {
+    if(precision > (int)digit_index) {
+      zero_count = (size_t)(precision - (int)digit_index);
+    }
+    zero_pad = false;
+  } else if(zero_pad && !left_align && field_width > 0) {
+    int needed = field_width - (int)(sign_len + prefix_len + digit_index);
+    if(needed > 0) {
+      zero_count = (size_t)needed;
+    }
+  }
+
+  size_t content_len = sign_len + prefix_len + zero_count + digit_index;
+  size_t pad_len = 0;
+  if(field_width > 0 && (size_t)field_width > content_len) {
+    pad_len = (size_t)field_width - content_len;
+  }
+
+  if(!left_align) {
+    for(size_t i = 0; i < pad_len; i++) {
+      buffer_putc(buffer, ' ');
+    }
+  }
+
+  if(sign != '\0') {
+    buffer_putc(buffer, sign);
+  }
+
+  if(prefix_len > 0) {
+    buffer_puts(buffer, prefix, prefix_len);
+  }
+
+  for(size_t i = 0; i < zero_count; i++) {
+    buffer_putc(buffer, '0');
+  }
+
+  for(size_t i = 0; i < digit_index; i++) {
+    buffer_putc(buffer, digits_buf[digit_index - 1 - i]);
+  }
+
+  if(left_align) {
+    for(size_t i = 0; i < pad_len; i++) {
+      buffer_putc(buffer, ' ');
+    }
+  }
 }
 
 static int menios_vsnprintf(char* dest, size_t size, const char* format, va_list args) {
@@ -716,18 +784,37 @@ static int menios_vsnprintf(char* dest, size_t size, const char* format, va_list
 
     cursor++;
 
-    while(*cursor == '0' || *cursor == '-' || *cursor == '+' ||
-          *cursor == ' ' || *cursor == '#') {
-      cursor++;
+    bool left_align = false;
+    bool zero_pad_flag = false;
+    bool force_sign = false;
+    bool space_sign = false;
+    bool alternate_form = false;
+
+    bool parsing_flags = true;
+    while(parsing_flags) {
+      switch(*cursor) {
+        case '-': left_align = true; cursor++; break;
+        case '0': zero_pad_flag = true; cursor++; break;
+        case '+': force_sign = true; cursor++; break;
+        case ' ': space_sign = true; cursor++; break;
+        case '#': alternate_form = true; cursor++; break;
+        default: parsing_flags = false; break;
+      }
     }
 
+    int field_width = 0;
     while(*cursor >= '0' && *cursor <= '9') {
+      field_width = field_width * 10 + (*cursor - '0');
       cursor++;
     }
 
+    bool precision_specified = false;
+    int precision = 0;
     if(*cursor == '.') {
       cursor++;
+      precision_specified = true;
       while(*cursor >= '0' && *cursor <= '9') {
+        precision = precision * 10 + (*cursor - '0');
         cursor++;
       }
     }
@@ -741,29 +828,87 @@ static int menios_vsnprintf(char* dest, size_t size, const char* format, va_list
       }
     }
 
+    if(left_align) {
+      zero_pad_flag = false;
+    }
+
     char spec = *cursor++;
     switch(spec) {
       case 'd':
       case 'i': {
         long value = long_flag ? va_arg(args, long) : va_arg(args, int);
-        format_signed(&buffer, value);
+        bool negative = value < 0;
+        unsigned long magnitude = negative ? (unsigned long)(-(value + 1)) + 1 : (unsigned long)value;
+        format_number(&buffer,
+                      magnitude,
+                      negative,
+                      10,
+                      false,
+                      left_align,
+                      zero_pad_flag,
+                      field_width,
+                      precision,
+                      precision_specified,
+                      force_sign,
+                      space_sign,
+                      NULL);
         break;
       }
       case 'u': {
         unsigned long value = long_flag ? va_arg(args, unsigned long) : va_arg(args, unsigned int);
-        format_unsigned(&buffer, value, 10, false);
+        format_number(&buffer,
+                      value,
+                      false,
+                      10,
+                      false,
+                      left_align,
+                      zero_pad_flag,
+                      field_width,
+                      precision,
+                      precision_specified,
+                      false,
+                      false,
+                      NULL);
         break;
       }
       case 'x':
       case 'X': {
         unsigned long value = long_flag ? va_arg(args, unsigned long) : va_arg(args, unsigned int);
-        format_unsigned(&buffer, value, 16, spec == 'X');
+        const char* prefix = NULL;
+        if(alternate_form && value != 0) {
+          prefix = (spec == 'X') ? "0X" : "0x";
+        }
+        format_number(&buffer,
+                      value,
+                      false,
+                      16,
+                      spec == 'X',
+                      left_align,
+                      zero_pad_flag,
+                      field_width,
+                      precision,
+                      precision_specified,
+                      false,
+                      false,
+                      prefix);
         break;
       }
       case 'p': {
         void* ptr = va_arg(args, void*);
-        buffer_puts(&buffer, "0x", 2);
-        format_unsigned(&buffer, (uintptr_t)ptr, 16, false);
+        const char* prefix = "0x";
+        format_number(&buffer,
+                      (uintptr_t)ptr,
+                      false,
+                      16,
+                      false,
+                      left_align,
+                      zero_pad_flag,
+                      field_width,
+                      precision,
+                      precision_specified,
+                      false,
+                      false,
+                      prefix);
         break;
       }
       case 's': {
@@ -771,12 +916,44 @@ static int menios_vsnprintf(char* dest, size_t size, const char* format, va_list
         if(str == NULL) {
           str = "(null)";
         }
-        buffer_puts(&buffer, str, strlen(str));
+        size_t len = strlen(str);
+        if(precision_specified && precision < (int)len) {
+          len = (size_t)precision;
+        }
+        size_t pad_len = 0;
+        if(field_width > 0 && (size_t)field_width > len) {
+          pad_len = (size_t)field_width - len;
+        }
+        if(!left_align) {
+          for(size_t i = 0; i < pad_len; i++) {
+            buffer_putc(&buffer, ' ');
+          }
+        }
+        buffer_puts(&buffer, str, len);
+        if(left_align) {
+          for(size_t i = 0; i < pad_len; i++) {
+            buffer_putc(&buffer, ' ');
+          }
+        }
         break;
       }
       case 'c': {
         int ch = va_arg(args, int);
+        size_t pad_len = 0;
+        if(field_width > 1) {
+          pad_len = (size_t)field_width - 1;
+        }
+        if(!left_align) {
+          for(size_t i = 0; i < pad_len; i++) {
+            buffer_putc(&buffer, ' ');
+          }
+        }
         buffer_putc(&buffer, (char)ch);
+        if(left_align) {
+          for(size_t i = 0; i < pad_len; i++) {
+            buffer_putc(&buffer, ' ');
+          }
+        }
         break;
       }
       case '%':
