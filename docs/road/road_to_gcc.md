@@ -18,7 +18,7 @@ The foundation for all userland development. Without this, we can't build proper
 | Userland Build System | #195 | ✅ DONE | Critical |
 | Cross-Compiler Integration | #29 | ✅ DONE | Critical |
 
-Minimal libc now provides shared memory/string primitives, a simple `mmap`-backed heap (`malloc`/`free`/`aligned_alloc`), and base stdio (`printf`/`fprintf`/`sprintf`, `puts`, `perror`).
+Minimal libc now provides shared memory/string primitives, a simple `mmap`-backed heap (`malloc`/`free`/`aligned_alloc`), and base stdio (`printf`/`fprintf`/`sprintf`, `puts`, `perror`). The printf family now fully supports field width specifiers, zero-padding, precision, and alignment flags (#324).
 crt0 runtime provides assembly startup stub that sets up argc/argv/envp and calls main().
 
 `make userland` now builds this user-space stack (libc, crt0, and `/bin` utilities) independently of the kernel image, while `make build` consumes the resulting artifacts when assembling the disk.  The build prefers an `x86_64-elf` cross compiler (configurable via `MENIOS_CROSS_PREFIX` / `MENIOS_HOST_CC`) and gracefully falls back to the host compiler when the cross toolchain is unavailable.
