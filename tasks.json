@@ -192,6 +192,21 @@
     ]
   },
   {
+    "title": "Implement alarm() syscall",
+    "github_issue": {
+      "number": 289,
+      "url": "https://github.com/pbalduino/menios/issues/289",
+      "state": "CLOSED"
+    },
+    "labels": [
+      "enhancement",
+      "kernel"
+    ],
+    "assignees": [
+      "pbalduino"
+    ]
+  },
+  {
     "title": "Implement kernel timekeeper and system time management",
     "github_issue": {
       "number": 285,
