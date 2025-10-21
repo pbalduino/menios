@@ -150,7 +150,7 @@
     "github_issue": {
       "number": 338,
       "url": "https://github.com/pbalduino/menios/issues/338",
-      "state": "OPEN"
+      "state": "CLOSED"
     },
     "labels": [
       "libc"
