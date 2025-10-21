@@ -2,7 +2,7 @@
 
 <img alt="MeniOS screenshot" src="https://github.com/user-attachments/assets/90634816-da18-4e3c-8132-bba2ea291940" width="640">
 
-> A hobby x86-64 operating system written in C and Assembly. Long-term goal: run classic Doom in userland.
+> A hobby x86-64 operating system written in C and Assembly. Doom runs in userland today; the long-term target is reliable boots on real hardware.
 
 ## Overview
 
@@ -11,6 +11,11 @@
 - Virtual file system with FAT32 read/write, block cache, and `/dev` nodes (`null`, `zero`, `tty0`, `fb0`).
 - Mosh interactive shell (history, completion, job control) plus a small `/bin`.
 - doomgeneric port bundled as a userland game target.
+
+## Goals
+
+- ✅ Run classic Doom in userland
+- 🚀 Bring-up on real hardware (current long-term objective)
 
 ## Quick Start
 

@@ -210,6 +210,14 @@ digraph IssueDependencies {
         issue67 [label="#67: e1000 network\ndriver", fillcolor="#E0FFFF"];
     }
 
+    subgraph cluster_tty {
+        label="TTY & Terminal Control";
+        style=filled;
+        fillcolor="#FFF9F0";
+
+        issue336 [label="#336: termios support\nline discipline", fillcolor="#FFE4B5"];
+    }
+
     subgraph cluster_graphics {
         label="Graphics & Audio (Doom)";
         style=filled;
@@ -623,6 +631,15 @@ digraph IssueDependencies {
     issue335 -> issue67 [color=teal, style=dashed, label="PCI enum"];  // PCI enumeration -> e1000 ✅
     issue280 -> issue67 [color=teal, style=dashed];  // PCI config -> e1000 ✅
     issue279 -> issue67 [color=teal, penwidth=2, label="IRQ"];  // IRQ handlers -> e1000 (for interrupt-driven I/O)
+
+    // TTY termios dependencies
+    issue220 -> issue336 [color=brown, style=dashed, label="ioctl"];  // ioctl syscall -> termios ✅
+    issue96 -> issue336 [color=brown, style=dashed, label="fd"];  // fd mgmt -> termios ✅
+    issue136 -> issue336 [color=brown, style=dashed, label="devfs"];  // devfs -> termios ✅
+    issue140 -> issue336 [color=brown, style=dashed, label="/dev/tty0"];  // /dev/tty0 -> termios ✅
+    issue193 -> issue336 [color=brown, style=dashed, label="libc"];  // libc -> termios ✅
+    issue213 -> issue336 [color=brown, style=dotted, label="signals"];  // signal delivery -> ISIG (nice to have) ✅
+    issue158 -> issue336 [color=brown, style=dotted, label="job control"];  // job control -> TIOCGPGRP (nice to have) ✅
 
     // Critical path highlighting
     edge [color=red, penwidth=3];
