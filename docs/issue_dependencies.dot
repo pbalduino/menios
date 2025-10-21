@@ -193,6 +193,23 @@ digraph IssueDependencies {
         issue221 [label="#221: Fast syscall\ninstruction", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED
     }
 
+    subgraph cluster_hardware {
+        label="Hardware Infrastructure";
+        style=filled;
+        fillcolor="#E8F8FF";
+
+        // ACPI & PCI
+        issue276 [label="#276: UACPI kernel\ninterface (16/22)", fillcolor="#B3E5FC"];
+        issue278 [label="#278: Kernel work\nqueue system", fillcolor="#E0F2F1"];
+        issue279 [label="#279: Dynamic IRQ\nhandler registration", fillcolor="#E0F2F1"];
+        issue280 [label="#280: PCI config\nspace API", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED
+        issue281 [label="#281: I/O port\nresource mgmt", fillcolor="#E0F2F1"];
+        issue335 [label="#335: PNP0A08 PCI\nhost bridge", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED
+
+        // Network
+        issue67 [label="#67: e1000 network\ndriver", fillcolor="#E0FFFF"];
+    }
+
     subgraph cluster_graphics {
         label="Graphics & Audio (Doom)";
         style=filled;
@@ -594,6 +611,18 @@ digraph IssueDependencies {
     issue257 -> issue259 [color=purple, penwidth=2];  // SQLite integration -> package mgmt
     issue189 -> issue259 [label="FAT32 write"];  // FAT32 write -> package mgmt
     issue257 -> issue260 [color=purple, penwidth=2];  // SQLite integration -> structured logging
+
+    // ACPI and PCI infrastructure dependencies
+    issue335 -> issue280 [color=teal, penwidth=2, style=dashed, label="PCI root"];  // PCI host bridge -> config API ✅
+    issue280 -> issue276 [color=teal, penwidth=2, style=dashed];  // PCI config -> UACPI (for pci_read/write) ✅
+    issue278 -> issue276 [color=teal, penwidth=2];  // work queue -> UACPI (for schedule_work)
+    issue279 -> issue276 [color=teal, penwidth=2];  // IRQ handlers -> UACPI (for install/uninstall interrupt)
+    issue281 -> issue276 [color=teal, penwidth=2];  // I/O port mgmt -> UACPI (for io_map/unmap/read/write)
+
+    // Network driver dependencies
+    issue335 -> issue67 [color=teal, style=dashed, label="PCI enum"];  // PCI enumeration -> e1000 ✅
+    issue280 -> issue67 [color=teal, style=dashed];  // PCI config -> e1000 ✅
+    issue279 -> issue67 [color=teal, penwidth=2, label="IRQ"];  // IRQ handlers -> e1000 (for interrupt-driven I/O)
 
     // Critical path highlighting
     edge [color=red, penwidth=3];
