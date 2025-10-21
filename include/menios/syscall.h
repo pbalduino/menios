@@ -54,6 +54,9 @@ extern "C" {
 #define SYS_MKDIR         93
 #define SYS_RMDIR         94
 #define SYS_RENAME        95
+#define SYS_SIGPENDING    96
+#define SYS_SIGWAITINFO   97
+#define SYS_SIGSUSPEND    98
 
 #ifdef __cplusplus
 }

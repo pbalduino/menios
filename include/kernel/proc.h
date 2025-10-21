@@ -174,6 +174,15 @@ typedef struct proc_info_t {
   bool         syscall_gs_active;
   bool         syscall_gs_needs_restore;
   proc_itimer_t timers[PROC_ITIMER_MAX];
+  bool         signal_wait_active;
+  bool         signal_wait_consume;
+  bool         signal_wait_capture_info;
+  bool         signal_wait_result_ready;
+  uint32_t     signal_wait_mask;
+  siginfo_t    signal_wait_info;
+  int          signal_wait_result;
+  bool         signal_sigsuspend_active;
+  uint32_t     signal_sigsuspend_oldmask;
 } proc_info_t;
 
 typedef proc_info_t* proc_info_p;

@@ -176,38 +176,80 @@ int sigpending(sigset_t* set) {
   if(sigset_validate_ptr(set) < 0) {
     return -1;
   }
-  errno = ENOSYS;
-  return -1;
+  long rc = __menios_syscall1(SYS_SIGPENDING, (long)set);
+  if(rc < 0) {
+    errno = (int)(-rc);
+    return -1;
+  }
+  errno = 0;
+  return 0;
 }
 
 int sigsuspend(const sigset_t* mask) {
   if(sigset_validate_const_ptr(mask) < 0) {
     return -1;
   }
-  errno = ENOSYS;
+  long rc = __menios_syscall1(SYS_SIGSUSPEND, (long)mask);
+  if(rc < 0) {
+    errno = (int)(-rc);
+    return -1;
+  }
+  errno = EINTR;
   return -1;
 }
 
 int sigwait(const sigset_t* set, int* sig) {
-  (void)set;
-  (void)sig;
-  errno = ENOSYS;
-  return -1;
+  if(sigset_validate_const_ptr(set) < 0) {
+    return -1;
+  }
+
+  siginfo_t info;
+  long rc = __menios_syscall3(SYS_SIGWAITINFO, (long)set, (long)&info, 0);
+  if(rc < 0) {
+    errno = (int)(-rc);
+    return -1;
+  }
+
+  if(sig != NULL) {
+    *sig = (int)rc;
+  }
+  errno = 0;
+  return 0;
 }
 
 int sigwaitinfo(const sigset_t* set, siginfo_t* info) {
-  (void)set;
-  (void)info;
-  errno = ENOSYS;
-  return -1;
+  if(sigset_validate_const_ptr(set) < 0) {
+    return -1;
+  }
+
+  long rc = __menios_syscall3(SYS_SIGWAITINFO, (long)set, (long)info, 0);
+  if(rc < 0) {
+    errno = (int)(-rc);
+    return -1;
+  }
+
+  errno = 0;
+  return (int)rc;
 }
 
 int sigtimedwait(const sigset_t* set, siginfo_t* info, const struct timespec* timeout) {
-  (void)set;
-  (void)info;
-  (void)timeout;
-  errno = ENOSYS;
-  return -1;
+  if(sigset_validate_const_ptr(set) < 0) {
+    return -1;
+  }
+
+  if(timeout != NULL && (timeout->tv_sec < 0 || timeout->tv_nsec < 0 || timeout->tv_nsec >= 1000000000L)) {
+    errno = EINVAL;
+    return -1;
+  }
+
+  long rc = __menios_syscall3(SYS_SIGWAITINFO, (long)set, (long)info, (long)timeout);
+  if(rc < 0) {
+    errno = (int)(-rc);
+    return -1;
+  }
+
+  errno = 0;
+  return (int)rc;
 }
 
 #endif

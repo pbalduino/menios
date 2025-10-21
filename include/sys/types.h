@@ -10,6 +10,7 @@ typedef long long int time_t;
 typedef int pid_t;
 typedef int key_t;
 typedef long long off_t;
+typedef unsigned int uid_t;
 
 #ifdef __cplusplus
 }

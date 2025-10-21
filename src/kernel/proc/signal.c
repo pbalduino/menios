@@ -21,10 +21,54 @@ _Static_assert(offsetof(menios_signal_context_t, cs) == offsetof(cpu_state_t, cs
 _Static_assert(offsetof(menios_signal_context_t, ss) == offsetof(cpu_state_t, ss),
                "ss offset mismatch");
 
-#define SIGNAL_ALLOWED_MASK ((SIG_MAX >= 32) ? 0x7FFFFFFFu : ((1u << (SIG_MAX - 1)) - 1u))
-
 static inline uint32_t unblockable_mask(void) {
   return sigbit(SIGKILL) | sigbit(SIGSTOP);
+}
+
+static inline void proc_signal_fill_siginfo(siginfo_t* info,
+                                            int signo,
+                                            proc_info_p proc) {
+  if(info == NULL) {
+    return;
+  }
+  memset(info, 0, sizeof(*info));
+  info->si_signo = signo;
+  info->si_errno = 0;
+  info->si_code = 0;
+  info->si_value.sival_ptr = NULL;
+  info->si_addr = NULL;
+  info->si_pid = proc ? (pid_t)proc->pid : 0;
+  info->si_uid = 0;
+}
+
+int proc_signal_take_pending(proc_info_p proc,
+                             uint32_t mask,
+                             siginfo_t* info) {
+  if(proc == NULL) {
+    return -EINVAL;
+  }
+
+  mask &= SIGNAL_ALLOWED_MASK;
+  mask &= ~unblockable_mask();
+
+  if(mask == 0) {
+    return 0;
+  }
+
+  for(int signo = 1; signo < SIG_MAX; signo++) {
+    uint32_t bit = sigbit(signo);
+    if((mask & bit) == 0) {
+      continue;
+    }
+    if((proc->signal_pending & bit) == 0) {
+      continue;
+    }
+    proc->signal_pending &= ~bit;
+    proc_signal_fill_siginfo(info, signo, proc);
+    return signo;
+  }
+
+  return 0;
 }
 
 void proc_signal_state_init(proc_info_p proc) {
@@ -39,6 +83,15 @@ void proc_signal_state_init(proc_info_p proc) {
   proc->stop_status = 0;
   proc->continue_status = 0;
   proc->continued_pending = false;
+  proc->signal_wait_active = false;
+  proc->signal_wait_consume = false;
+  proc->signal_wait_capture_info = false;
+  proc->signal_wait_result_ready = false;
+  proc->signal_wait_mask = 0;
+  memset(&proc->signal_wait_info, 0, sizeof(proc->signal_wait_info));
+  proc->signal_wait_result = 0;
+  proc->signal_sigsuspend_active = false;
+  proc->signal_sigsuspend_oldmask = 0;
   for(int signo = 0; signo < SIG_MAX; signo++) {
     proc->signal_actions[signo].sa_handler = SIG_DFL;
     proc->signal_actions[signo].sa_mask = 0;
@@ -60,6 +113,15 @@ void proc_signal_state_copy(proc_info_p dst, proc_info_p src) {
   dst->stop_status = 0;
   dst->continue_status = 0;
   dst->continued_pending = false;
+  dst->signal_wait_active = false;
+  dst->signal_wait_consume = false;
+  dst->signal_wait_capture_info = false;
+  dst->signal_wait_result_ready = false;
+  dst->signal_wait_mask = 0;
+  memset(&dst->signal_wait_info, 0, sizeof(dst->signal_wait_info));
+  dst->signal_wait_result = 0;
+  dst->signal_sigsuspend_active = false;
+  dst->signal_sigsuspend_oldmask = 0;
 }
 
 void proc_signal_set_blocked(proc_info_p proc, uint32_t mask) {
@@ -105,6 +167,25 @@ int proc_signal_dequeue(proc_info_p proc) {
   }
 
   return -1;
+}
+
+bool proc_signal_has_unblocked(proc_info_p proc) {
+  if(proc == NULL) {
+    return false;
+  }
+
+  for(int signo = 1; signo < SIG_MAX; signo++) {
+    uint32_t bit = sigbit(signo);
+    if((proc->signal_pending & bit) == 0) {
+      continue;
+    }
+    if((proc->signal_blocked & bit) != 0) {
+      continue;
+    }
+    return true;
+  }
+
+  return false;
 }
 
 int proc_signal_configure_action(proc_info_p proc,
@@ -183,6 +264,33 @@ int proc_signal_send(proc_info_p proc, int signo) {
   uint32_t bit = sigbit(signo);
   if(bit == 0) {
     return -EINVAL;
+  }
+
+  if((bit & unblockable_mask()) != 0) {
+    proc_signal_enqueue(proc, signo);
+    if((proc->signal_blocked & bit) == 0) {
+      if(proc->state == PROC_STATE_SLEEPING || proc->state == PROC_STATE_WAITING) {
+        proc_mark_ready(proc);
+      }
+    }
+    return 0;
+  }
+
+  if(proc->signal_wait_active &&
+     (proc->signal_wait_mask & bit) != 0) {
+    proc->signal_wait_active = false;
+    proc->signal_wait_result_ready = true;
+    proc->signal_wait_result = signo;
+    if(proc->signal_wait_capture_info) {
+      proc_signal_fill_siginfo(&proc->signal_wait_info, signo, proc);
+    }
+    if(!proc->signal_wait_consume) {
+      proc_signal_enqueue(proc, signo);
+    }
+    if(proc->state == PROC_STATE_SLEEPING || proc->state == PROC_STATE_WAITING) {
+      proc_mark_ready(proc);
+    }
+    return 0;
   }
 
   proc_signal_enqueue(proc, signo);

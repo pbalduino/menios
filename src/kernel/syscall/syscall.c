@@ -17,6 +17,7 @@
 #include <kernel/input.h>
 #include <menios/signal_frame.h>
 #include <menios/input.h>
+#include <kernel/signal.h>
 #include <sys/fcntl.h>
 #include <sys/shm.h>
 #include <sys/time.h>
@@ -110,6 +111,9 @@ static uint64_t syscall_proc_kill_handler(syscall_frame_t* frame);
 static uint64_t syscall_kill_handler(syscall_frame_t* frame);
 static uint64_t syscall_sigaction_handler(syscall_frame_t* frame);
 static uint64_t syscall_sigprocmask_handler(syscall_frame_t* frame);
+static uint64_t syscall_sigpending_handler(syscall_frame_t* frame);
+static uint64_t syscall_sigwaitinfo_handler(syscall_frame_t* frame);
+static uint64_t syscall_sigsuspend_handler(syscall_frame_t* frame);
 static uint64_t syscall_getsockopt_handler(syscall_frame_t* frame);
 static uint64_t syscall_proc_list_handler(syscall_frame_t* frame);
 static uint64_t syscall_ioctl_handler(syscall_frame_t* frame);
@@ -713,6 +717,9 @@ void syscall_init(void) {
   syscall_register(SYS_KILL, syscall_kill_handler);
   syscall_register(SYS_SIGACTION, syscall_sigaction_handler);
   syscall_register(SYS_SIGPROCMASK, syscall_sigprocmask_handler);
+  syscall_register(SYS_SIGPENDING, syscall_sigpending_handler);
+  syscall_register(SYS_SIGWAITINFO, syscall_sigwaitinfo_handler);
+  syscall_register(SYS_SIGSUSPEND, syscall_sigsuspend_handler);
   syscall_register(SYS_GETSOCKOPT, syscall_getsockopt_handler);
   syscall_register(SYS_PROC_LIST, syscall_proc_list_handler);
   syscall_register(SYS_YIELD, syscall_yield_handler);
@@ -1900,6 +1907,280 @@ static uint64_t syscall_sigprocmask_handler(syscall_frame_t* frame) {
 
   frame->rax = 0;
   return 0;
+}
+
+static uint64_t syscall_sigpending_handler(syscall_frame_t* frame) {
+  sigset_t* user_set = (sigset_t*)frame->rdi;
+
+  if(current == NULL) {
+    frame->rax = (uint64_t)(-EINVAL);
+    return frame->rax;
+  }
+
+  if(user_set == NULL ||
+     !proc_user_buffer_accessible(current, user_set, sizeof(sigset_t))) {
+    frame->rax = (uint64_t)(-EFAULT);
+    return frame->rax;
+  }
+
+  sigset_t pending = (sigset_t)(current->signal_pending);
+  if(!proc_user_copy_out(current, (virt_addr_t)user_set, &pending, sizeof(pending))) {
+    frame->rax = (uint64_t)(-EFAULT);
+    return frame->rax;
+  }
+
+  frame->rax = 0;
+  return 0;
+}
+
+static uint64_t syscall_sigwaitinfo_handler(syscall_frame_t* frame) {
+  proc_info_p caller = current;
+  if(caller == NULL) {
+    frame->rax = (uint64_t)(-EINVAL);
+    return frame->rax;
+  }
+
+  const sigset_t* user_set = (const sigset_t*)frame->rdi;
+  siginfo_t* user_info = (siginfo_t*)frame->rsi;
+  const struct timespec* user_timeout = (const struct timespec*)frame->rdx;
+
+  if(user_set == NULL ||
+     !proc_user_buffer_accessible(caller, user_set, sizeof(sigset_t))) {
+    frame->rax = (uint64_t)(-EFAULT);
+    return frame->rax;
+  }
+
+  sigset_t set_value;
+  memcpy(&set_value, user_set, sizeof(set_value));
+
+  uint32_t mask = ((uint32_t)set_value) & SIGNAL_ALLOWED_MASK;
+  mask &= ~(sigbit(SIGKILL) | sigbit(SIGSTOP));
+  if(mask == 0) {
+    frame->rax = (uint64_t)(-EINVAL);
+    return frame->rax;
+  }
+
+  bool capture_info = (user_info != NULL);
+  if(capture_info &&
+     !proc_user_buffer_accessible(caller, user_info, sizeof(siginfo_t))) {
+    frame->rax = (uint64_t)(-EFAULT);
+    return frame->rax;
+  }
+
+  bool has_timeout = false;
+  uint64_t timeout_ns = 0;
+  struct timespec timeout;
+  if(user_timeout != NULL) {
+    if(!proc_user_buffer_accessible(caller, user_timeout, sizeof(struct timespec))) {
+      frame->rax = (uint64_t)(-EFAULT);
+      return frame->rax;
+    }
+    memcpy(&timeout, user_timeout, sizeof(timeout));
+    if(timeout.tv_sec < 0 ||
+       timeout.tv_nsec < 0 ||
+       timeout.tv_nsec >= 1000000000L) {
+      frame->rax = (uint64_t)(-EINVAL);
+      return frame->rax;
+    }
+    has_timeout = true;
+    timeout_ns = (uint64_t)timeout.tv_sec * 1000000000ull +
+                 (uint64_t)timeout.tv_nsec;
+  }
+
+  uint64_t deadline_ns = has_timeout ? ((uint64_t)ns_from_boot() + timeout_ns) : 0;
+
+  siginfo_t info_local;
+
+  for(;;) {
+    int signo = proc_signal_take_pending(caller, mask, capture_info ? &info_local : NULL);
+    if(signo < 0) {
+      frame->rax = (uint64_t)signo;
+      return frame->rax;
+    }
+
+    if(signo > 0) {
+      caller->signal_wait_active = false;
+      caller->signal_wait_consume = false;
+      caller->signal_wait_capture_info = false;
+      caller->signal_wait_result_ready = false;
+      if(capture_info) {
+        if(!proc_user_copy_out(caller, (virt_addr_t)user_info, &info_local, sizeof(info_local))) {
+          frame->rax = (uint64_t)(-EFAULT);
+          return frame->rax;
+        }
+      }
+      frame->rax = (uint64_t)signo;
+      caller->err_no = 0;
+      return frame->rax;
+    }
+
+    if(has_timeout) {
+      uint64_t now_ns = (uint64_t)ns_from_boot();
+      if(now_ns >= deadline_ns) {
+        caller->signal_wait_active = false;
+        caller->signal_wait_consume = false;
+        caller->signal_wait_capture_info = false;
+        caller->signal_wait_result_ready = false;
+        frame->rax = (uint64_t)(-EAGAIN);
+        caller->err_no = EAGAIN;
+        return frame->rax;
+      }
+    }
+
+    uint64_t flags;
+    __asm__ volatile("pushfq; pop %0" : "=r"(flags));
+    disable_interrupts();
+
+    signo = proc_signal_take_pending(caller, mask, capture_info ? &info_local : NULL);
+    if(signo > 0) {
+      if(flags & (1ull << 9)) {
+        enable_interrupts();
+      }
+      if(capture_info) {
+        if(!proc_user_copy_out(caller, (virt_addr_t)user_info, &info_local, sizeof(info_local))) {
+          frame->rax = (uint64_t)(-EFAULT);
+          return frame->rax;
+        }
+      }
+      frame->rax = (uint64_t)signo;
+      caller->err_no = 0;
+      return frame->rax;
+    }
+
+    caller->signal_wait_active = true;
+    caller->signal_wait_consume = true;
+    caller->signal_wait_capture_info = capture_info;
+    caller->signal_wait_mask = mask;
+    caller->signal_wait_result_ready = false;
+    caller->signal_wait_result = 0;
+    memset(&caller->signal_wait_info, 0, sizeof(caller->signal_wait_info));
+
+    if(flags & (1ull << 9)) {
+      enable_interrupts();
+    }
+
+    if(has_timeout) {
+      uint64_t now_ns = (uint64_t)ns_from_boot();
+      if(now_ns >= deadline_ns) {
+        caller->signal_wait_active = false;
+        caller->signal_wait_consume = false;
+        caller->signal_wait_capture_info = false;
+        caller->signal_wait_result_ready = false;
+        frame->rax = (uint64_t)(-EAGAIN);
+        caller->err_no = EAGAIN;
+        return frame->rax;
+      }
+      uint64_t remaining_ns = deadline_ns - now_ns;
+      uint64_t remaining_us = remaining_ns / 1000ull;
+      if(remaining_us == 0) {
+        remaining_us = 1;
+      }
+      caller->state = PROC_STATE_SLEEPING;
+      proc_request_sleep(remaining_us);
+    } else {
+      caller->state = PROC_STATE_WAITING;
+      proc_request_block();
+    }
+
+    do {
+      frame = (syscall_frame_t*)proc_switch((cpu_state_p)frame);
+    } while(current != caller);
+
+    caller->state = PROC_STATE_RUNNING;
+
+    if(caller->signal_wait_result_ready) {
+      caller->signal_wait_active = false;
+      caller->signal_wait_consume = false;
+      caller->signal_wait_capture_info = false;
+      caller->signal_wait_result_ready = false;
+      int result = caller->signal_wait_result;
+      siginfo_t stored = caller->signal_wait_info;
+      if(capture_info) {
+        if(!proc_user_copy_out(caller, (virt_addr_t)user_info, &stored, sizeof(stored))) {
+          frame->rax = (uint64_t)(-EFAULT);
+          return frame->rax;
+        }
+      }
+      frame->rax = (uint64_t)result;
+      caller->err_no = 0;
+      return frame->rax;
+    }
+
+    caller->signal_wait_active = false;
+    caller->signal_wait_consume = false;
+    caller->signal_wait_capture_info = false;
+    caller->signal_wait_result_ready = false;
+
+    if(has_timeout) {
+      uint64_t now_ns = (uint64_t)ns_from_boot();
+      if(now_ns >= deadline_ns) {
+        frame->rax = (uint64_t)(-EAGAIN);
+        caller->err_no = EAGAIN;
+        return frame->rax;
+      }
+    }
+  }
+}
+
+static uint64_t syscall_sigsuspend_handler(syscall_frame_t* frame) {
+  proc_info_p caller = current;
+  if(caller == NULL) {
+    frame->rax = (uint64_t)(-EINVAL);
+    return frame->rax;
+  }
+
+  const sigset_t* user_mask = (const sigset_t*)frame->rdi;
+  if(user_mask == NULL ||
+     !proc_user_buffer_accessible(caller, user_mask, sizeof(sigset_t))) {
+    frame->rax = (uint64_t)(-EFAULT);
+    return frame->rax;
+  }
+
+  sigset_t mask_value;
+  memcpy(&mask_value, user_mask, sizeof(mask_value));
+
+  uint32_t new_mask = ((uint32_t)mask_value) & SIGNAL_ALLOWED_MASK;
+  new_mask &= ~(sigbit(SIGKILL) | sigbit(SIGSTOP));
+
+  uint32_t old_mask = caller->signal_blocked;
+  proc_signal_set_blocked(caller, new_mask);
+
+  caller->signal_sigsuspend_active = true;
+  caller->signal_sigsuspend_oldmask = old_mask;
+
+  uint64_t flags;
+  __asm__ volatile("pushfq; pop %0" : "=r"(flags));
+  bool interrupts_were_enabled = (flags & (1ull << 9)) != 0;
+  disable_interrupts();
+
+  if(proc_signal_has_unblocked(caller)) {
+    if(interrupts_were_enabled) {
+      enable_interrupts();
+    }
+    goto sigsuspend_restore;
+  }
+
+  caller->state = PROC_STATE_WAITING;
+  proc_request_block();
+
+  if(interrupts_were_enabled) {
+    enable_interrupts();
+  }
+
+  do {
+    frame = (syscall_frame_t*)proc_switch((cpu_state_p)frame);
+  } while(current != caller);
+
+  caller->state = PROC_STATE_RUNNING;
+
+sigsuspend_restore:
+  proc_signal_set_blocked(caller, caller->signal_sigsuspend_oldmask);
+  caller->signal_sigsuspend_active = false;
+  caller->signal_sigsuspend_oldmask = 0;
+
+  caller->err_no = EINTR;
+  frame->rax = (uint64_t)(-EINTR);
+  return frame->rax;
 }
 
 static uint64_t syscall_sigreturn_handler(syscall_frame_t* frame) {
