@@ -4,6 +4,7 @@
 #include <menios/signal_frame.h>
 #include <signal.h>
 #include <sys/errno.h>
+#include <stdbool.h>
 #include <time.h>
 #ifdef MENIOS_HOST_TEST
 #include <stdlib.h>
@@ -94,6 +95,119 @@ int pause(void) {
       return -1;
     }
   }
+}
+
+static inline int sigset_validate_ptr(sigset_t* set) {
+  if(set == NULL) {
+    errno = EINVAL;
+    return -1;
+  }
+  return 0;
+}
+
+static inline int sigset_validate_const_ptr(const sigset_t* set) {
+  if(set == NULL) {
+    errno = EINVAL;
+    return -1;
+  }
+  return 0;
+}
+
+static inline bool sigset_valid_signo(int signo) {
+  return signo > 0 && signo < (int)__MENIOS_SIGSET_WIDTH;
+}
+
+static inline sigset_t sigset_mask(int signo) {
+  return (sigset_t)(1u << (unsigned)(signo - 1));
+}
+
+int sigemptyset(sigset_t* set) {
+  if(sigset_validate_ptr(set) < 0) {
+    return -1;
+  }
+  *set = 0;
+  return 0;
+}
+
+int sigfillset(sigset_t* set) {
+  if(sigset_validate_ptr(set) < 0) {
+    return -1;
+  }
+  *set = (sigset_t)__MENIOS_SIGSET_ALL_MASK;
+  return 0;
+}
+
+int sigaddset(sigset_t* set, int signo) {
+  if(sigset_validate_ptr(set) < 0) {
+    return -1;
+  }
+  if(!sigset_valid_signo(signo)) {
+    errno = EINVAL;
+    return -1;
+  }
+  *set |= sigset_mask(signo);
+  return 0;
+}
+
+int sigdelset(sigset_t* set, int signo) {
+  if(sigset_validate_ptr(set) < 0) {
+    return -1;
+  }
+  if(!sigset_valid_signo(signo)) {
+    errno = EINVAL;
+    return -1;
+  }
+  *set &= (sigset_t)~sigset_mask(signo);
+  return 0;
+}
+
+int sigismember(const sigset_t* set, int signo) {
+  if(sigset_validate_const_ptr(set) < 0) {
+    return -1;
+  }
+  if(!sigset_valid_signo(signo)) {
+    errno = EINVAL;
+    return -1;
+  }
+  return ((*set & sigset_mask(signo)) != 0) ? 1 : 0;
+}
+
+int sigpending(sigset_t* set) {
+  if(sigset_validate_ptr(set) < 0) {
+    return -1;
+  }
+  errno = ENOSYS;
+  return -1;
+}
+
+int sigsuspend(const sigset_t* mask) {
+  if(sigset_validate_const_ptr(mask) < 0) {
+    return -1;
+  }
+  errno = ENOSYS;
+  return -1;
+}
+
+int sigwait(const sigset_t* set, int* sig) {
+  (void)set;
+  (void)sig;
+  errno = ENOSYS;
+  return -1;
+}
+
+int sigwaitinfo(const sigset_t* set, siginfo_t* info) {
+  (void)set;
+  (void)info;
+  errno = ENOSYS;
+  return -1;
+}
+
+int sigtimedwait(const sigset_t* set, siginfo_t* info, const struct timespec* timeout) {
+  (void)set;
+  (void)info;
+  (void)timeout;
+  errno = ENOSYS;
+  return -1;
 }
 
 #endif

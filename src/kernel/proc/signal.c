@@ -243,6 +243,8 @@ proc_signal_delivery_t proc_signal_handle_pending(proc_info_p proc,
       return PROC_SIGNAL_DELIVERY_TERMINATED;
     }
 
+    bool use_siginfo = (action.sa_flags & SA_SIGINFO) != 0;
+
     menios_signal_frame_t sigframe;
     memcpy(&sigframe.context, frame, sizeof(sigframe.context));
     sigframe.context.rax = (uint64_t)(-EINTR);
@@ -251,12 +253,34 @@ proc_signal_delivery_t proc_signal_handle_pending(proc_info_p proc,
     sigframe.reserved = 0;
 
     size_t frame_size = sizeof(sigframe);
-    virt_addr_t frame_base = frame->rsp - frame_size;
-    frame_base &= ~((virt_addr_t)0xF);
+    size_t siginfo_size = use_siginfo ? sizeof(siginfo_t) : 0;
+    size_t payload_size = frame_size + siginfo_size;
+    virt_addr_t payload_base = frame->rsp - payload_size;
+    payload_base &= ~((virt_addr_t)0xF);
+
+    virt_addr_t siginfo_addr = use_siginfo ? payload_base : 0;
+    virt_addr_t frame_base = payload_base + siginfo_size;
 
     if(!proc_user_copy_out(proc, frame_base, &sigframe, sizeof(sigframe))) {
       proc_exit_signal(signo);
       return PROC_SIGNAL_DELIVERY_TERMINATED;
+    }
+
+    if(use_siginfo) {
+      siginfo_t info;
+      memset(&info, 0, sizeof(info));
+      info.si_signo = signo;
+      info.si_errno = 0;
+      info.si_code = 0;
+      info.si_value.sival_ptr = NULL;
+      info.si_addr = NULL;
+      info.si_pid = proc->pid;
+      info.si_uid = 0;
+
+      if(!proc_user_copy_out(proc, siginfo_addr, &info, sizeof(info))) {
+        proc_exit_signal(signo);
+        return PROC_SIGNAL_DELIVERY_TERMINATED;
+      }
     }
 
     virt_addr_t restorer_slot = frame_base - sizeof(uint64_t);
@@ -279,10 +303,12 @@ proc_signal_delivery_t proc_signal_handle_pending(proc_info_p proc,
                   (unsigned long)frame_size);
 
     frame->rsp = restorer_slot;
-    frame->rip = (uint64_t)action.sa_handler;
+    frame->rip = use_siginfo
+                   ? (uint64_t)action.sa_sigaction
+                   : (uint64_t)action.sa_handler;
     frame->rdi = (uint64_t)signo;
-    frame->rsi = 0;
-    frame->rdx = 0;
+    frame->rsi = use_siginfo ? (uint64_t)siginfo_addr : 0;
+    frame->rdx = use_siginfo ? (uint64_t)frame_base : 0;
     frame->rcx = 0;
     frame->r8 = 0;
     frame->r9 = 0;
