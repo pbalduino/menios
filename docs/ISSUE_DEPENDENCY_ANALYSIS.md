@@ -493,7 +493,11 @@ For contributors, issues are organized by difficulty:
 - [Road to Shell](docs/road/road_to_shell.md) - Shell milestone details
 - [Road to Doom](docs/road/road_to_doom.md) - Game porting roadmap
 - [Road to GCC](docs/road/road_to_gcc.md) - Compilation roadmap
-- [Issue Dependency Graph](issue_dependencies.png) - Visual diagram
+- [Dependency Diagrams](DEPENDENCY_DIAGRAMS.md) - **NEW:** Visual dependency diagrams
+  - [Critical Path](issue_dependencies_critical.png) - TCC/toolchain focus (recommended)
+  - [libc Ecosystem](issue_dependencies_libc.png) - All library work
+  - [Hardware Infrastructure](issue_dependencies_hardware.png) - ACPI, PCI, drivers
+  - [Full Diagram](issue_dependencies_full.png) - Complete reference
 
 ## 🎯 **Success Metrics**
 

@@ -1,21 +1,5 @@
 [
   {
-    "title": "Create PNP0A08 PCI host bridge driver",
-    "github_issue": {
-      "number": 335,
-      "url": "https://github.com/pbalduino/menios/issues/335",
-      "state": "CLOSED"
-    },
-    "labels": [
-      "enhancement",
-      "drivers",
-      "kernel"
-    ],
-    "assignees": [
-      "pbalduino"
-    ]
-  },
-  {
     "title": "Basic timezone support (TZ environment variable)",
     "github_issue": {
       "number": 330,
@@ -268,23 +252,6 @@
     "labels": [
       "enhancement",
       "nice to have",
-      "kernel"
-    ],
-    "assignees": [
-      "pbalduino"
-    ]
-  },
-  {
-    "title": "Implement PCI configuration space access API",
-    "github_issue": {
-      "number": 280,
-      "url": "https://github.com/pbalduino/menios/issues/280",
-      "state": "CLOSED"
-    },
-    "labels": [
-      "enhancement",
-      "nice to have",
-      "drivers",
       "kernel"
     ],
     "assignees": [

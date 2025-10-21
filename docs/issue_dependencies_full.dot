@@ -141,6 +141,32 @@ digraph IssueDependencies {
         issue310 [label="#310: Math library\nfabs/fabsf/fabsl", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED - ALL LIBC GAPS COMPLETE!
     }
 
+    subgraph cluster_libc_extended {
+        label="Extended libc (TCC & Beyond)";
+        style=filled;
+        fillcolor="#FFF4E6";
+
+        // TCC blockers (CRITICAL)
+        issue337 [label="#337: Signal API\nsigaction/sigemptyset", fillcolor="#FFB6C1"];  // BLOCKS TCC
+        issue338 [label="#338: Float parsing\nstrtod/ldexp", fillcolor="#FFB6C1"];  // BLOCKS TCC
+
+        // Thread safety
+        issue339 [label="#339: Thread-safe\nlibc", fillcolor="#FFE4B5"];
+
+        // Extended features
+        issue340 [label="#340: Extended stdio\npopen/tmpfile/setvbuf", fillcolor="#FFE4B5"];
+        issue344 [label="#344: Extended math\nsin/cos/exp/log", fillcolor="#FFE4B5"];
+        issue345 [label="#345: Regex\nregcomp/fnmatch", fillcolor="#FFE4B5"];
+        issue347 [label="#347: TTY helpers\nisatty/ttyname", fillcolor="#FFE4B5"];
+        issue348 [label="#348: Multiplexing\nselect/poll/epoll", fillcolor="#FFE4B5"];
+
+        // Future/nice to have
+        issue341 [label="#341: Sockets\nsocket/bind/connect", fillcolor="#E6E6FA"];
+        issue342 [label="#342: Locale/i18n\nsetlocale", fillcolor="#E6E6FA"];
+        issue343 [label="#343: Wide-char\nwchar_t/mbstate_t", fillcolor="#E6E6FA"];
+        issue346 [label="#346: Dynamic loader\ndlopen/dlsym", fillcolor="#E6E6FA"];
+    }
+
     subgraph cluster_io {
         label="I/O & File System";
         style=filled;
@@ -640,6 +666,50 @@ digraph IssueDependencies {
     issue193 -> issue336 [color=brown, style=dashed, label="libc"];  // libc -> termios ✅
     issue213 -> issue336 [color=brown, style=dotted, label="signals"];  // signal delivery -> ISIG (nice to have) ✅
     issue158 -> issue336 [color=brown, style=dotted, label="job control"];  // job control -> TIOCGPGRP (nice to have) ✅
+
+    // Extended libc dependencies - TCC BLOCKERS
+    issue213 -> issue337 [color=red, penwidth=2, style=dashed, label="signal delivery"];  // signal delivery -> sigaction API ✅
+    issue193 -> issue337 [color=red, penwidth=2, style=dashed];  // libc -> signal API ✅
+    issue337 -> issue190 [color=red, penwidth=3, label="BLOCKS\nTCC"];  // signal API -> TCC ⚠️ CRITICAL
+
+    issue310 -> issue338 [color=red, penwidth=2, style=dashed, label="fabs"];  // basic math -> float parsing ✅
+    issue193 -> issue338 [color=red, penwidth=2, style=dashed];  // libc -> float parsing ✅
+    issue338 -> issue190 [color=red, penwidth=3, label="BLOCKS\nTCC"];  // float parsing -> TCC ⚠️ CRITICAL
+
+    // Thread-safe libc
+    issue109 -> issue339 [color=blue, penwidth=2];  // pthread -> thread-safe libc
+
+    // Extended stdio
+    issue193 -> issue340 [color=orange, style=dashed];  // libc -> extended stdio ✅
+    issue208 -> issue340 [color=orange, style=dashed];  // pipes -> popen ✅
+
+    // Extended math
+    issue193 -> issue344 [color=orange, style=dashed];  // libc -> extended math ✅
+    issue338 -> issue344 [color=orange];  // float parsing -> extended math
+
+    // Regex
+    issue193 -> issue345 [color=orange, style=dashed];  // libc -> regex ✅
+
+    // TTY helpers
+    issue193 -> issue347 [color=brown, style=dashed];  // libc -> TTY helpers ✅
+    issue336 -> issue347 [color=brown];  // termios -> TTY helpers
+
+    // Multiplexing
+    issue193 -> issue348 [color=brown, style=dashed];  // libc -> multiplexing ✅
+    issue96 -> issue348 [color=brown, style=dashed];  // fd mgmt -> multiplexing ✅
+
+    // Sockets
+    issue67 -> issue341 [color=teal];  // e1000 driver -> sockets (needs TCP/IP stack)
+    issue193 -> issue341 [color=teal, style=dashed];  // libc -> sockets ✅
+
+    // Locale
+    issue193 -> issue342 [color=orange, style=dashed];  // libc -> locale ✅
+
+    // Wide-char
+    issue193 -> issue343 [color=orange, style=dashed];  // libc -> wide-char ✅
+
+    // Dynamic loader
+    issue193 -> issue346 [color=purple, style=dashed];  // libc -> dlopen ✅
 
     // Critical path highlighting
     edge [color=red, penwidth=3];

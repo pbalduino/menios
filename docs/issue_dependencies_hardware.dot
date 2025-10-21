@@ -1,0 +1,119 @@
+digraph HardwareInfrastructure {
+    // Graph styling
+    rankdir=TB;
+    ranksep=1.2;
+    nodesep=0.7;
+    bgcolor="white";
+    node [shape=box, style=filled, fontname="Arial", fontsize=10];
+    edge [fontname="Arial", fontsize=8];
+
+    // Title
+    labelloc="t";
+    label="Hardware Infrastructure - ACPI, PCI, Drivers & Networking";
+    fontsize=16;
+    fontname="Arial Bold";
+
+    // PCI Foundation (complete)
+    subgraph cluster_pci_complete {
+        label="PCI Infrastructure ✅ COMPLETE";
+        style=filled;
+        fillcolor="#E8F8E8";
+
+        issue335 [label="#335: PNP0A08\nPCI host bridge", fillcolor="#90EE90", style="filled,dashed"];
+        issue280 [label="#280: PCI config\nspace API", fillcolor="#90EE90", style="filled,dashed"];
+    }
+
+    // ACPI/UACPI
+    subgraph cluster_acpi {
+        label="ACPI & uACPI Integration";
+        style=filled;
+        fillcolor="#E6F3FF";
+
+        issue276 [label="#276: UACPI kernel interface\n16/22 complete (73%)\n\n✅ Events, sleep, ticks\n✅ PCI read/write\n⚠️ Needs #278, #279, #281", fillcolor="#B3E5FC"];
+    }
+
+    // Missing Infrastructure
+    subgraph cluster_missing {
+        label="Missing Kernel Infrastructure";
+        style=filled;
+        fillcolor="#FFE4E4";
+
+        issue278 [label="#278: Work queue system\nDeferred work\n\n8-11 weeks", fillcolor="#FFB6C1"];
+        issue279 [label="#279: Dynamic IRQ\nhandler registration\n\n⚠️ BLOCKS e1000\n8-10 weeks", fillcolor="#FFB6C1"];
+        issue281 [label="#281: I/O port\nresource mgmt\n\n7 weeks", fillcolor="#FFE4B5"];
+    }
+
+    // Drivers
+    subgraph cluster_drivers {
+        label="Device Drivers";
+        style=filled;
+        fillcolor="#FFF8E1";
+
+        issue67 [label="#67: e1000 network driver\nInterrupt-driven NIC\n\n⚠️ BLOCKED by #279\n10-12 weeks", fillcolor="#FFE4B5"];
+        issue336 [label="#336: termios\nTTY line discipline\n\n✅ Ready to implement\n9-13 weeks", fillcolor="#B3E5FC"];
+    }
+
+    // Future networking
+    subgraph cluster_network {
+        label="Networking Stack (Future)";
+        style=filled;
+        fillcolor="#F0F0FF";
+
+        tcpip [label="TCP/IP Stack\n(not yet tracked)", fillcolor="#E6E6FA"];
+        issue341 [label="#341: Socket API\nsocket/bind/connect", fillcolor="#E6E6FA"];
+    }
+
+    // PCI dependencies
+    issue335 -> issue280 [label="PCI root → config", color=green, penwidth=2, style=dashed];
+    issue280 -> issue276 [label="config → UACPI", color=green, penwidth=2, style=dashed];
+
+    // UACPI blockers
+    issue278 -> issue276 [label="work queue\nfor schedule_work", color=red, penwidth=2];
+    issue279 -> issue276 [label="IRQ handlers\nfor interrupts", color=red, penwidth=2];
+    issue281 -> issue276 [label="I/O port mgmt\nfor I/O ops", color=orange, penwidth=2];
+
+    // e1000 dependencies
+    issue335 -> issue67 [label="PCI enumeration ✅", color=green, penwidth=2, style=dashed];
+    issue280 -> issue67 [label="PCI config ✅", color=green, penwidth=2, style=dashed];
+    issue279 -> issue67 [label="IRQ handlers\n⚠️ BLOCKS", color=red, penwidth=3];
+
+    // Networking stack
+    issue67 -> tcpip [label="NIC driver → TCP/IP", color=purple, style=dotted];
+    tcpip -> issue341 [label="TCP/IP → sockets", color=purple, style=dotted];
+
+    // termios (ready now)
+    // No blockers shown - all dependencies satisfied
+
+    // Status summary
+    subgraph cluster_status {
+        label="Current Status";
+        style=filled;
+        fillcolor="#FFFACD";
+
+        status [label="✅ PCI Infrastructure: COMPLETE (#335, #280)\n✅ UACPI: 73% complete (16/22 functions)\n⚠️ Work Queue: Needed (#278)\n⚠️ Dynamic IRQ: CRITICAL blocker (#279)\n⚠️ I/O Port Mgmt: Needed (#281)\n✅ termios: Ready to implement (#336)\n⚠️ e1000: Blocked by #279",
+               shape=note, fillcolor="#FFFACD", style=filled];
+    }
+
+    // Priority
+    subgraph cluster_priority {
+        label="Implementation Priority";
+        style=filled;
+        fillcolor="#E8F8FF";
+
+        priority [label="Critical Path:\n\n1. #279 (Dynamic IRQ) - 8-10 weeks\n   → Unblocks e1000 driver\n   → Completes UACPI interrupts\n\n2. #278 (Work queue) - 8-11 weeks\n   → Completes UACPI deferred work\n\n3. #67 (e1000 driver) - 10-12 weeks\n   → Requires #279 first\n   → Enables networking\n\nParallel Track:\n\n• #336 (termios) - 9-13 weeks\n  → Ready now, no blockers\n\n• #281 (I/O port mgmt) - 7 weeks\n  → Completes UACPI I/O ops",
+                shape=note, fillcolor="#E8F8FF", style=filled];
+    }
+
+    // Legend
+    subgraph cluster_legend {
+        label="Legend";
+        style=filled;
+        fillcolor="#F9F9F9";
+
+        legend_complete [label="Complete ✅", fillcolor="#90EE90", style="filled,dashed"];
+        legend_ready [label="Ready to Start", fillcolor="#B3E5FC"];
+        legend_blocker [label="Blocking Issue ⚠️", fillcolor="#FFB6C1"];
+        legend_progress [label="In Progress", fillcolor="#FFE4B5"];
+        legend_future [label="Future", fillcolor="#E6E6FA"];
+    }
+}
