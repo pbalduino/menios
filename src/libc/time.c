@@ -430,7 +430,7 @@ static bool append_three_digits(char* dest, size_t max, size_t* pos, int value) 
   return append_buffer(dest, max, pos, buf, sizeof(buf));
 }
 
-static bool append_four_digits(char* dest, size_t max, size_t* pos, int value) {
+static inline bool append_four_digits(char* dest, size_t max, size_t* pos, int value) {
   if(value < 0) {
     return false;
   }
@@ -483,7 +483,7 @@ static bool timespec_valid(const struct timespec* ts) {
   return true;
 }
 
-static bool timespec_to_microseconds(const struct timespec* ts, uint64_t* out_us) {
+static inline bool timespec_to_microseconds(const struct timespec* ts, uint64_t* out_us) {
   if(!timespec_valid(ts) || out_us == NULL) {
     return false;
   }

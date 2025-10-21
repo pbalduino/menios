@@ -48,6 +48,9 @@ long strtol(const char* nptr, char** endptr, int base);
 int atoi(const char* nptr);
 long atol(const char* nptr);
 double atof(const char* nptr);
+double strtod(const char* nptr, char** endptr);
+float strtof(const char* nptr, char** endptr);
+#define strtold strtod
 int abs(int value);
 long labs(long value);
 long long llabs(long long value);

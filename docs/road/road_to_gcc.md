@@ -91,6 +91,7 @@ The project vendors [Tiny C Compiler (TCC) 0.9.24](https://bellard.org/tcc/) und
 **Dependencies for TCC (#190):**
 - ✅ #29 (cross-compiler complete) - COMPLETE
 - ✅ #193 (libc) - COMPLETE
+- ✅ #338 (floating-point parsing helpers: strtod/strtof; strtold currently aliases to strtod) - COMPLETE
 - ✅ Pipes & FIFOs - **FULLY COMPLETE!** (#206 ✅, #207 ✅, #208 ✅, #209 ✅)
 - ✅ #189 (file writes) - **COMPLETE!** (#291, #292, #293 all done)
 - ✅ #294 (VFS streaming I/O) - **COMPLETE!** (#295, #296, #297, #298 all done)

@@ -1,11 +1,13 @@
 #include <ctype.h>
 #include <limits.h>
+#include <float.h>
 #include <menios/syscall.h>
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
+#include <math.h>
 #ifdef MENIOS_HOST_TEST
 typedef int wchar_t;
 #endif
@@ -51,6 +53,45 @@ void srand(unsigned int seed) {
   }
   atomic_store_explicit(&rand_state, seed, memory_order_relaxed);
 }
+
+typedef struct {
+  const char* end;
+  double value;
+  bool any;
+  bool overflow;
+  bool underflow;
+} strto_parse_result_t;
+
+static inline int ascii_tolower(int ch) {
+  return tolower((unsigned char)ch);
+}
+
+static int hex_value(int ch) {
+  if(ch >= '0' && ch <= '9') {
+    return ch - '0';
+  }
+  if(ch >= 'a' && ch <= 'f') {
+    return ch - 'a' + 10;
+  }
+  if(ch >= 'A' && ch <= 'F') {
+    return ch - 'A' + 10;
+  }
+  return -1;
+}
+
+#if defined(__GNUC__) && !defined(__SSE2__)
+#define MENIOS_FLOAT_PARSER_ATTR __attribute__((target("sse2")))
+#else
+#define MENIOS_FLOAT_PARSER_ATTR
+#endif
+
+static MENIOS_FLOAT_PARSER_ATTR strto_parse_result_t parse_decimal_number(const char* original,
+                                                 const char* start,
+                                                 int sign);
+static MENIOS_FLOAT_PARSER_ATTR strto_parse_result_t parse_hex_number(const char* original,
+                                             const char* digit_start,
+                                             int sign);
+static MENIOS_FLOAT_PARSER_ATTR strto_parse_result_t parse_floating_number(const char* nptr);
 
 #ifndef MENIOS_HOST_TEST
 static size_t debug_append_str(char* buffer, size_t pos, size_t capacity, const char* text) {
@@ -1219,6 +1260,310 @@ static int digit_from_char(char ch) {
   return -1;
 }
 
+static MENIOS_FLOAT_PARSER_ATTR strto_parse_result_t parse_decimal_number(const char* original,
+                                                 const char* start,
+                                                 int sign) {
+  strto_parse_result_t result = { .end = original, .value = 0.0, .any = false, .overflow = false, .underflow = false };
+  const char* p = start;
+  double value = 0.0;
+  bool overflow = false;
+  bool underflow = false;
+  bool any_digit = false;
+  bool any_nonzero = false;
+
+  while(isdigit((unsigned char)*p)) {
+    int digit = *p - '0';
+    if(digit != 0) {
+      any_nonzero = true;
+    }
+    if(!overflow) {
+      value = value * 10.0 + digit;
+      if(!__builtin_isfinite(value) || fabs(value) > DBL_MAX) {
+        overflow = true;
+        value = DBL_MAX;
+      }
+    }
+    any_digit = true;
+    p++;
+  }
+
+  int frac_digits = 0;
+  if(*p == '.') {
+    p++;
+    while(isdigit((unsigned char)*p)) {
+      int digit = *p - '0';
+      if(digit != 0) {
+        any_nonzero = true;
+      }
+      if(!overflow) {
+        value = value * 10.0 + digit;
+        if(!__builtin_isfinite(value) || fabs(value) > DBL_MAX) {
+          overflow = true;
+          value = DBL_MAX;
+        }
+      }
+      any_digit = true;
+      frac_digits++;
+      p++;
+    }
+  }
+
+  if(!any_digit) {
+    return result;
+  }
+
+  int exponent = 0;
+  int exp_sign = 1;
+  const char* exp_pos = p;
+  if(*p == 'e' || *p == 'E') {
+    p++;
+    if(*p == '+' || *p == '-') {
+      if(*p == '-') {
+        exp_sign = -1;
+      }
+      p++;
+    }
+    const char* exp_digits = p;
+    if(!isdigit((unsigned char)*p)) {
+      p = exp_pos;
+    } else {
+      while(isdigit((unsigned char)*p)) {
+        if(exponent < 1000000) {
+          exponent = exponent * 10 + (*p - '0');
+        }
+        p++;
+      }
+      exponent *= exp_sign;
+    }
+  }
+
+  double scaled = value;
+  if(!overflow) {
+    int total_exp = exponent - frac_digits;
+    if(total_exp > 0) {
+      for(int i = 0; i < total_exp; ++i) {
+        scaled *= 10.0;
+        if(!__builtin_isfinite(scaled) || fabs(scaled) > DBL_MAX) {
+          overflow = true;
+          scaled = HUGE_VAL;
+          break;
+        }
+      }
+    } else if(total_exp < 0) {
+      for(int i = 0; i < -total_exp; ++i) {
+        double prev = scaled;
+        scaled /= 10.0;
+        if(prev != 0.0 && scaled == 0.0) {
+          underflow = true;
+          break;
+        }
+      }
+    }
+  }
+
+  if(overflow) {
+    scaled = sign > 0 ? HUGE_VAL : -HUGE_VAL;
+    underflow = false;
+  } else {
+    if(sign < 0) {
+      scaled = -scaled;
+    }
+    if(underflow) {
+      scaled = sign < 0 ? -0.0 : 0.0;
+    }
+  }
+
+  if(!overflow && !underflow && scaled == 0.0 && any_nonzero && exponent < frac_digits) {
+    underflow = true;
+    scaled = sign < 0 ? -0.0 : 0.0;
+  }
+
+  result.any = true;
+  result.value = scaled;
+  result.overflow = overflow;
+  result.underflow = underflow;
+  result.end = p;
+  return result;
+}
+
+static MENIOS_FLOAT_PARSER_ATTR strto_parse_result_t parse_hex_number(const char* original,
+                                             const char* digit_start,
+                                             int sign) {
+  strto_parse_result_t result = { .end = original, .value = 0.0, .any = false, .overflow = false, .underflow = false };
+  const char* p = digit_start;
+  double value = 0.0;
+  bool overflow = false;
+  bool underflow = false;
+  bool any_digit = false;
+  bool any_nonzero = false;
+  int frac_bits = 0;
+
+  while(true) {
+    int digit = hex_value(*p);
+    if(digit < 0) {
+      break;
+    }
+    any_digit = true;
+    if(digit != 0) {
+      any_nonzero = true;
+    }
+    if(!overflow) {
+      value = value * 16.0 + digit;
+      if(!__builtin_isfinite(value) || fabs(value) > DBL_MAX) {
+        overflow = true;
+        value = DBL_MAX;
+      }
+    }
+    p++;
+  }
+
+  if(*p == '.') {
+    p++;
+    while(true) {
+      int digit = hex_value(*p);
+      if(digit < 0) {
+        break;
+      }
+      any_digit = true;
+      if(digit != 0) {
+        any_nonzero = true;
+      }
+      if(!overflow) {
+        value = value * 16.0 + digit;
+        if(!__builtin_isfinite(value) || fabs(value) > DBL_MAX) {
+          overflow = true;
+          value = DBL_MAX;
+        }
+      }
+      frac_bits += 4;
+      p++;
+    }
+  }
+
+  if(!any_digit) {
+    return result;
+  }
+
+  int exp_val = 0;
+  int exp_sign = 1;
+  const char* exp_pos = p;
+  if(*p == 'p' || *p == 'P') {
+    p++;
+    if(*p == '+' || *p == '-') {
+      if(*p == '-') {
+        exp_sign = -1;
+      }
+      p++;
+    }
+    const char* exp_digits = p;
+    if(!isdigit((unsigned char)*p)) {
+      p = exp_pos;
+    } else {
+      while(isdigit((unsigned char)*p)) {
+        if(exp_val < 1000000) {
+          exp_val = exp_val * 10 + (*p - '0');
+        }
+        p++;
+      }
+      exp_val *= exp_sign;
+    }
+  }
+
+  double scaled = value;
+  if(!overflow) {
+    int total_exp = exp_val - frac_bits;
+    if(value != 0.0 && total_exp != 0) {
+      scaled = ldexp(value, total_exp);
+      if(!__builtin_isfinite(scaled) || fabs(scaled) > DBL_MAX) {
+        overflow = true;
+        scaled = HUGE_VAL;
+      } else if(scaled == 0.0 && any_nonzero) {
+        underflow = true;
+      }
+    } else if(value == 0.0) {
+      scaled = 0.0;
+    }
+  }
+
+  if(overflow) {
+    scaled = sign > 0 ? HUGE_VAL : -HUGE_VAL;
+    underflow = false;
+  } else {
+    if(sign < 0) {
+      scaled = -scaled;
+    }
+    if(underflow) {
+      scaled = sign < 0 ? -0.0 : 0.0;
+    }
+  }
+
+  result.any = true;
+  result.value = scaled;
+  result.overflow = overflow;
+  result.underflow = underflow;
+  result.end = p;
+  return result;
+}
+
+static MENIOS_FLOAT_PARSER_ATTR strto_parse_result_t parse_floating_number(const char* nptr) {
+  strto_parse_result_t result = { .end = nptr, .value = 0.0, .any = false, .overflow = false, .underflow = false };
+  const char* p = nptr;
+  while(isspace((unsigned char)*p)) {
+    p++;
+  }
+
+  int sign = 1;
+  if(*p == '+' || *p == '-') {
+    if(*p == '-') {
+      sign = -1;
+    }
+    p++;
+  }
+
+  if(strncasecmp(p, "inf", 3) == 0) {
+    p += 3;
+    if(strncasecmp(p, "inity", 5) == 0) {
+      p += 5;
+    }
+    double val = sign < 0 ? -INFINITY : INFINITY;
+    result.any = true;
+    result.value = val;
+    result.end = p;
+    return result;
+  }
+
+  if(strncasecmp(p, "nan", 3) == 0) {
+    p += 3;
+    const char* payload_start = p;
+    if(*p == '(') {
+      p++;
+      while(*p != '\0' && *p != ')') {
+        p++;
+      }
+      if(*p == ')') {
+        p++;
+      } else {
+        p = payload_start;
+      }
+    }
+    double val = __builtin_nan("");
+    if(sign < 0) {
+      val = -val;
+    }
+    result.any = true;
+    result.value = val;
+    result.end = p;
+    return result;
+  }
+
+  if(p[0] == '0' && (p[1] == 'x' || p[1] == 'X')) {
+    return parse_hex_number(nptr, p + 2, sign);
+  }
+
+  return parse_decimal_number(nptr, p, sign);
+}
+
+
 long strtol(const char* nptr, char** endptr, int base) {
   const char* cursor = nptr;
   bool negative = false;
@@ -1324,79 +1669,74 @@ long atol(const char* nptr) {
   return strtol(nptr, NULL, 10);
 }
 
-#if defined(__GNUC__) && !defined(__SSE2__)
-__attribute__((target("sse2")))
-#endif
-double atof(const char* nptr) {
-  if(nptr == NULL) {
-    errno = EINVAL;
+MENIOS_FLOAT_PARSER_ATTR double strtod(const char* nptr, char** endptr) {
+  strto_parse_result_t parsed = parse_floating_number(nptr);
+  if(endptr != NULL) {
+    *endptr = (char*)(parsed.any ? parsed.end : nptr);
+  }
+
+  if(!parsed.any) {
+    errno = 0;
     return 0.0;
   }
 
-  const char* cursor = nptr;
-  while(isspace((unsigned char)*cursor)) {
-    cursor++;
+  double base_value = parsed.value;
+  double result = (double)base_value;
+  int negative = signbit(base_value) ? 1 : 0;
+  bool result_infinite = !__builtin_isfinite(result);
+  bool base_finite = __builtin_isfinite(base_value);
+
+  if(parsed.overflow || (result_infinite && base_finite)) {
+    errno = ERANGE;
+    return __builtin_copysign(HUGE_VAL, negative ? -1.0 : 1.0);
   }
 
-  int sign = 1;
-  if(*cursor == '+' || *cursor == '-') {
-    if(*cursor == '-') {
-      sign = -1;
-    }
-    cursor++;
-  }
-
-  double integer_part = 0.0;
-  while(isdigit((unsigned char)*cursor)) {
-    integer_part = integer_part * 10.0 + (double)(*cursor - '0');
-    cursor++;
-  }
-
-  double fraction_part = 0.0;
-  double scale = 0.1;
-  if(*cursor == '.') {
-    cursor++;
-    while(isdigit((unsigned char)*cursor)) {
-      fraction_part += (double)(*cursor - '0') * scale;
-      scale *= 0.1;
-      cursor++;
-    }
-  }
-
-  int exponent = 0;
-  if(*cursor == 'e' || *cursor == 'E') {
-    cursor++;
-    int exp_sign = 1;
-    if(*cursor == '+' || *cursor == '-') {
-      if(*cursor == '-') {
-        exp_sign = -1;
-      }
-      cursor++;
-    }
-    while(isdigit((unsigned char)*cursor)) {
-      exponent = exponent * 10 + (*cursor - '0');
-      cursor++;
-    }
-    exponent *= exp_sign;
-  }
-
-  double magnitude = integer_part + fraction_part;
-  if(exponent != 0) {
-    double factor = 1.0;
-    int exp = exponent < 0 ? -exponent : exponent;
-    while(exp-- > 0) {
-      factor *= 10.0;
-    }
-    if(exponent < 0) {
-      magnitude /= factor;
-    } else {
-      magnitude *= factor;
-    }
+  if(parsed.underflow || (result == 0.0 && base_value != 0.0)) {
+    errno = ERANGE;
+    return __builtin_copysign(0.0, negative ? -1.0 : 1.0);
   }
 
   errno = 0;
-  return sign * magnitude;
+  return result;
 }
+
+MENIOS_FLOAT_PARSER_ATTR float strtof(const char* nptr, char** endptr) {
+  strto_parse_result_t parsed = parse_floating_number(nptr);
+  if(endptr != NULL) {
+    *endptr = (char*)(parsed.any ? parsed.end : nptr);
+  }
+
+  if(!parsed.any) {
+    errno = 0;
+    return 0.0f;
+  }
+
+  double base_value = parsed.value;
+  float result = (float)base_value;
+  int negative = signbit(base_value) ? 1 : 0;
+  bool result_infinite = !__builtin_isfinite(result);
+  bool base_finite = __builtin_isfinite(base_value);
+
+  if(parsed.overflow || (result_infinite && base_finite)) {
+    errno = ERANGE;
+    return __builtin_copysignf(HUGE_VALF, negative ? -1.0f : 1.0f);
+  }
+
+  if(parsed.underflow || (result == 0.0f && base_value != 0.0)) {
+    errno = ERANGE;
+    return __builtin_copysignf(0.0f, negative ? -1.0f : 1.0f);
+  }
+
+  errno = 0;
+  return result;
+}
+
+MENIOS_FLOAT_PARSER_ATTR double atof(const char* nptr) {
+  return strtod(nptr, NULL);
+}
+
+#undef MENIOS_FLOAT_PARSER_ATTR
+
 
 int abs(int value) {
   return (value < 0) ? -value : value;
