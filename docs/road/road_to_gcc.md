@@ -86,6 +86,8 @@ Running compilers natively on meniOS.
 | binutils Port | #191 | 🚀 READY | High | Nice to have |
 | GCC Port | - | ⛳ TODO | Very High | Future |
 
+The project vendors [Tiny C Compiler (TCC) 0.9.24](https://bellard.org/tcc/) under `vendor/tcc-0.9.24/`; those sources will be the starting point for issue #190.
+
 **Dependencies for TCC (#190):**
 - ✅ #29 (cross-compiler complete) - COMPLETE
 - ✅ #193 (libc) - COMPLETE
