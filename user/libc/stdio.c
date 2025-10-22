@@ -13,6 +13,7 @@
 #include <fcntl.h>
 #include <menios/syscall.h>
 #include <menios/syscall_user.h>
+#include "stdio_internal.h"
 
 enum {
   FILE_FLAG_CAN_READ   = 1u << 0,
@@ -387,6 +388,51 @@ FILE* fopen(const char* filename, const char* mode) {
   return stream;
 }
 
+FILE* fdopen(int fd, const char* mode) {
+  if(mode == NULL || fd < 0) {
+    errno = EINVAL;
+    return NULL;
+  }
+
+  int open_flags = 0;
+  unsigned file_flags = 0;
+  if(!parse_mode_string(mode, &open_flags, &file_flags)) {
+    errno = EINVAL;
+    return NULL;
+  }
+
+  FILE* stream = (FILE*)malloc(sizeof(FILE));
+  if(stream == NULL) {
+    errno = ENOMEM;
+    return NULL;
+  }
+
+  unsigned char* buffer = (unsigned char*)malloc(FILE_DEFAULT_BUFFER_SIZE);
+  if(buffer == NULL) {
+    free(stream);
+    errno = ENOMEM;
+    return NULL;
+  }
+
+  stream->fd = fd;
+  stream->flags = file_flags | FILE_FLAG_OWN_BUFFER;
+  stream->buffer = buffer;
+  stream->buffer_size = FILE_DEFAULT_BUFFER_SIZE;
+  stream->buffer_pos = 0;
+  stream->buffer_end = 0;
+  stream->offset = 0;
+  stream->error_number = 0;
+  stream->last_op = FILE_LAST_OP_NONE;
+  stream->flags &= ~(FILE_FLAG_EOF | FILE_FLAG_ERROR);
+
+  off_t position = lseek(fd, 0, SEEK_CUR);
+  if(position >= 0) {
+    stream->offset = position;
+  }
+
+  return stream;
+}
+
 static int close_underlying_fd(FILE* stream) {
   if(close(stream->fd) < 0) {
     stream_mark_error(stream, errno);
@@ -623,6 +669,14 @@ int feof(FILE* stream) {
     return 0;
   }
   return (stream->flags & FILE_FLAG_EOF) ? 1 : 0;
+}
+
+int fileno(FILE* stream) {
+  if(stream == NULL) {
+    errno = EBADF;
+    return -1;
+  }
+  return stream->fd;
 }
 
 int ferror(FILE* stream) {
@@ -1160,6 +1214,21 @@ int fputs(const char* text, FILE* stream) {
   return (written == len) ? 0 : EOF;
 }
 
+int fgetc(FILE* stream) {
+  if(stream == NULL) {
+    errno = EINVAL;
+    return EOF;
+  }
+
+  unsigned char byte = 0;
+  size_t read = fread(&byte, 1, 1, stream);
+  if(read != 1) {
+    return EOF;
+  }
+
+  return (int)byte;
+}
+
 int fputc(int ch, FILE* stream) {
   unsigned char byte = (unsigned char)ch;
   size_t written = fwrite(&byte, 1, 1, stream);
@@ -1167,6 +1236,10 @@ int fputc(int ch, FILE* stream) {
     return EOF;
   }
   return ch;
+}
+
+int putc(int ch, FILE* stream) {
+  return fputc(ch, stream);
 }
 
 int putchar(int ch) {
@@ -1180,18 +1253,64 @@ int puts(const char* str) {
   return fputc('\n', stdout);
 }
 
+int getc(FILE* stream) {
+  return fgetc(stream);
+}
+
 int getchar(void) {
-  unsigned char ch;
-  if(fread(&ch, 1, 1, stdin) != 1) {
-    return EOF;
-  }
-  return ch;
+  return fgetc(stdin);
 }
 
 char* gets(char* str) {
   (void)str;
   errno = ENOSYS;
   return NULL;
+}
+
+char* fgets(char* str, int size, FILE* stream) {
+  if(str == NULL || stream == NULL || size <= 0) {
+    errno = EINVAL;
+    return NULL;
+  }
+
+  int index = 0;
+  while(index < size - 1) {
+    int ch = fgetc(stream);
+    if(ch == EOF) {
+      if(index == 0) {
+        return NULL;
+      }
+      break;
+    }
+
+    str[index++] = (char)ch;
+    if(ch == '\n') {
+      break;
+    }
+  }
+
+  str[index] = '\0';
+  return str;
+}
+
+int ungetc(int ch, FILE* stream) {
+  if(stream == NULL || ch == EOF) {
+    errno = EINVAL;
+    return EOF;
+  }
+
+  if(stream->last_op != FILE_LAST_OP_READ) {
+    return EOF;
+  }
+
+  if(stream->buffer_pos == 0) {
+    return EOF;
+  }
+
+  stream->buffer_pos--;
+  stream->buffer[stream->buffer_pos] = (unsigned char)ch;
+  stream->flags &= ~FILE_FLAG_EOF;
+  return ch;
 }
 
 static const struct {
