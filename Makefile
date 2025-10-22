@@ -118,6 +118,11 @@ USER_CCFLAGS = \
 	$(ARCH_FLAGS)
 
 SDK_DIR        = $(BUILD_DIR)/sdk
+
+BINUTILS_SRC_DIR := vendor/binutils-2.45
+BINUTILS_BUILD_DIR := $(BUILD_DIR)/binutils-menios
+BINUTILS_PREFIX := $(abspath $(SDK_DIR))
+BINUTILS_CONFIGURE_FLAGS := --disable-nls --disable-gdb --disable-gprof --disable-libdecnumber --disable-gold
 SDK_INCLUDE_DIR = $(SDK_DIR)/include
 SDK_LIB_DIR     = $(SDK_DIR)/lib
 SDK_BIN_DIR     = $(SDK_DIR)/bin
@@ -968,3 +973,20 @@ ifneq ($(strip $(DOOM2_WAD)),)
 else
 	@echo "(optional) Set DOOM2_WAD=/path/to/DOOM2.WAD before make get-doom-wad to bundle DOOM II"
 endif
+
+.PHONY: binutils
+binutils: userland $(BINUTILS_BUILD_DIR)/Makefile
+	$(MAKE) -C $(BINUTILS_BUILD_DIR) MAKEINFO=true
+	$(MAKE) -C $(BINUTILS_BUILD_DIR) MAKEINFO=true install
+
+$(BINUTILS_BUILD_DIR)/Makefile: userland
+	rm -rf $(BINUTILS_BUILD_DIR)
+	mkdir -p $(BINUTILS_BUILD_DIR)
+	cd $(BINUTILS_BUILD_DIR) && \
+		MENIOS_SDK_ROOT=$(BINUTILS_PREFIX) \
+		CC=$(abspath tools/menios-gcc.sh) \
+		$(abspath $(BINUTILS_SRC_DIR))/configure \
+		  --host=x86_64-menios \
+		  --target=x86_64-menios \
+		  --prefix=$(BINUTILS_PREFIX) \
+		  $(BINUTILS_CONFIGURE_FLAGS)
