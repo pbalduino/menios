@@ -1727,6 +1727,10 @@ case $os in
 		obj=$os
 		os=
 		;;
+	menios*)
+		os=menios
+		obj=elf
+		;;
 	*)
 		# No normalization, but not necessarily accepted, that comes below.
 		;;
@@ -2045,6 +2049,7 @@ case $os in
 	| mks* \
 	| mlibc* \
 	| mmixware* \
+	| menios* \
 	| mon960* \
 	| morphos* \
 	| moss* \
@@ -2252,6 +2257,8 @@ case $kernel-$os-$obj in
 	none--*)
 		# None (no kernel, i.e. freestanding / bare metal),
 		# can be paired with an machine code file format
+		;;
+	-menios-elf)
 		;;
 	-*-)
 		# Blank kernel with real OS is always fine.
