@@ -314,6 +314,14 @@ else
 endif
 endif
 
+.PHONY: console
+console: docker
+ifeq ($(OS_NAME),linux)
+	@echo "Skipping Docker console on Linux host"
+else
+	$(DOCKER) run --rm $(DOCKER_RUN_FLAGS) $(DOCKER_ENV) --platform linux/amd64 --mount type=bind,source=$$(pwd),target=/mnt $(DOCKER_IMAGE) /bin/bash
+endif
+
 $(SDK_OBJ_DIR)/%.o: %.c
 ifeq ($(OS_NAME),linux)
 	@mkdir -p $(dir $@)
