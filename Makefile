@@ -982,8 +982,16 @@ else
 	@echo "(optional) Set DOOM2_WAD=/path/to/DOOM2.WAD before make get-doom-wad to bundle DOOM II"
 endif
 
-.PHONY: binutils
-binutils: userland $(BINUTILS_BUILD_DIR)/Makefile
+.PHONY: binutils binutils-host
+binutils: 
+ifeq ($(OS_NAME),linux)
+	$(MAKE) binutils-host
+else
+	$(MAKE) docker
+	$(DOCKER) run --rm $(DOCKER_RUN_FLAGS) $(DOCKER_ENV) --platform linux/amd64 --mount type=bind,source=$$(pwd),target=/mnt $(DOCKER_IMAGE) /bin/sh -c "cd /mnt && make binutils-host"
+endif
+
+binutils-host: userland $(BINUTILS_BUILD_DIR)/Makefile
 	$(MAKE) -C $(BINUTILS_BUILD_DIR) MAKEINFO=true
 	$(MAKE) -C $(BINUTILS_BUILD_DIR) MAKEINFO=true install
 
