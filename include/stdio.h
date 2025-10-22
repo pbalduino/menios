@@ -12,6 +12,9 @@
 #endif
 
 typedef struct __menios_FILE FILE;
+typedef struct __menios_FILE __FILE;
+typedef struct __menios_FILE __sFILE;
+typedef struct __menios_FILE _IO_FILE;
 
 extern FILE *stdin;
 extern FILE *stdout;

@@ -13,7 +13,7 @@
 #include <fcntl.h>
 #include <menios/syscall.h>
 #include <menios/syscall_user.h>
-#include "stdio_internal.h"
+#include <menios/stdio_internal.h>
 
 enum {
   FILE_FLAG_CAN_READ   = 1u << 0,
