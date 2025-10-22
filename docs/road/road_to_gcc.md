@@ -88,6 +88,8 @@ Running compilers natively on meniOS.
 
 The project vendors [Tiny C Compiler (TCC) 0.9.24](https://bellard.org/tcc/) under `vendor/tcc-0.9.24/`; those sources will be the starting point for issue #190.
 
+GNU [binutils 2.45](https://www.gnu.org/software/binutils/) has also been staged under `vendor/binutils-2.45/`. The upstream tree keeps each major component in its own directory (`binutils/` for user-facing tools, `bfd/` for the Binary File Descriptor library, `opcodes/` for disassembler tables, and `ld/` for the linker). Building it requires the usual GNU autotools flow (POSIX shell, `make`, `gcc`), and for meniOS we plan to configure with options such as `--disable-nls` to avoid missing libc locale APIs.
+
 **Dependencies for TCC (#190):**
 - ✅ #29 (cross-compiler complete) - COMPLETE
 - ✅ #193 (libc) - COMPLETE
