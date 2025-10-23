@@ -137,6 +137,7 @@ USERLIBC_SOURCES = \
 	user/libc/stdio.c \
 	user/libc/input.c \
 	user/libc/environ.c \
+	user/libc/dirent.c \
 	src/libc/ctype.c \
 	src/libc/assert.c \
 	src/libc/errno.c \
