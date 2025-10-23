@@ -4,6 +4,8 @@ IMAGE_NAME = menios
 DOCKER = $(shell which docker)
 DOCKER_IMAGE = $(IMAGE_NAME):$(GIT_BRANCH)
 DOCKER_RUN_FLAGS := $(shell if [ -t 1 ]; then printf -- "-it"; fi)
+DOCKER_RUN_FLAGS += --rm
+DOCKER_RUN_FLAGS += --platform=linux/amd64
 DOCKER_ENV := $(if $(EXTRA_CFLAGS),--env EXTRA_CFLAGS="$(EXTRA_CFLAGS)",)
 
 OS_NAME = $(shell uname -s | tr A-Z a-z)
@@ -135,6 +137,7 @@ USERLIBC_SOURCES = \
 	user/libc/input.c \
 	user/libc/environ.c \
 	src/libc/ctype.c \
+	src/libc/assert.c \
 	src/libc/errno.c \
 	src/libc/fcntl.c \
 	src/libc/itoa.c \
@@ -327,7 +330,7 @@ ifeq ($(OS_NAME),linux)
 	@mkdir -p $(dir $@)
 	$(USER_CC) $(USERLIBC_CFLAGS) $(EXTRA_CFLAGS) -c $< -o $@
 else
-	$(DOCKER) run --rm $(DOCKER_RUN_FLAGS) $(DOCKER_ENV) --mount type=bind,source=$$(pwd),target=/mnt $(DOCKER_IMAGE) /bin/sh -c "cd /mnt && make EXTRA_CFLAGS='$(EXTRA_CFLAGS)' $@"
+	$(DOCKER) run --rm $(DOCKER_RUN_FLAGS) $(DOCKER_ENV) --platform=linux/amd64 --mount type=bind,source=$$(pwd),target=/mnt $(DOCKER_IMAGE) /bin/sh -c "cd /mnt && make EXTRA_CFLAGS='$(EXTRA_CFLAGS)' $@"
 endif
 
 $(SDK_OBJ_DIR)/%.o: %.S
@@ -335,7 +338,7 @@ ifeq ($(OS_NAME),linux)
 	@mkdir -p $(dir $@)
 	$(USER_CC) $(USERLIBC_CFLAGS) $(EXTRA_CFLAGS) -c $< -o $@
 else
-	$(DOCKER) run --rm $(DOCKER_RUN_FLAGS) $(DOCKER_ENV) --mount type=bind,source=$$(pwd),target=/mnt $(DOCKER_IMAGE) /bin/sh -c "cd /mnt && make EXTRA_CFLAGS='$(EXTRA_CFLAGS)' $@"
+	$(DOCKER) run --rm $(DOCKER_RUN_FLAGS) $(DOCKER_ENV) --platform=linux/amd64 --mount type=bind,source=$$(pwd),target=/mnt $(DOCKER_IMAGE) /bin/sh -c "cd /mnt && make EXTRA_CFLAGS='$(EXTRA_CFLAGS)' $@"
 endif
 
 $(SDK_LIB): $(USERLIBC_OBJS)
@@ -343,7 +346,7 @@ ifeq ($(OS_NAME),linux)
 	@mkdir -p $(SDK_LIB_DIR)
 	$(USER_AR) rcs $@ $^
 else
-	$(DOCKER) run --rm $(DOCKER_RUN_FLAGS) $(DOCKER_ENV) --mount type=bind,source=$$(pwd),target=/mnt $(DOCKER_IMAGE) /bin/sh -c "cd /mnt && make EXTRA_CFLAGS='$(EXTRA_CFLAGS)' $@"
+	$(DOCKER) run --rm $(DOCKER_RUN_FLAGS) $(DOCKER_ENV) --platform=linux/amd64 --mount type=bind,source=$$(pwd),target=/mnt $(DOCKER_IMAGE) /bin/sh -c "cd /mnt && make EXTRA_CFLAGS='$(EXTRA_CFLAGS)' $@"
 endif
 
 $(SDK_LIB_DIR)/crt0.o: $(SDK_OBJ_DIR)/user/crt/crt0.o
@@ -351,7 +354,7 @@ ifeq ($(OS_NAME),linux)
 	@mkdir -p $(SDK_LIB_DIR)
 	cp $< $@
 else
-	$(DOCKER) run --rm $(DOCKER_RUN_FLAGS) $(DOCKER_ENV) --mount type=bind,source=$$(pwd),target=/mnt $(DOCKER_IMAGE) /bin/sh -c "cd /mnt && make EXTRA_CFLAGS='$(EXTRA_CFLAGS)' $@"
+	$(DOCKER) run --rm $(DOCKER_RUN_FLAGS) $(DOCKER_ENV) --platform=linux/amd64 --mount type=bind,source=$$(pwd),target=/mnt $(DOCKER_IMAGE) /bin/sh -c "cd /mnt && make EXTRA_CFLAGS='$(EXTRA_CFLAGS)' $@"
 endif
 
 $(SDK_LINKER_SCRIPT): linker/user_elf.ld
@@ -359,7 +362,7 @@ ifeq ($(OS_NAME),linux)
 	@mkdir -p $(SDK_LIB_DIR)
 	cp $< $@
 else
-	$(DOCKER) run --rm $(DOCKER_RUN_FLAGS) $(DOCKER_ENV) --mount type=bind,source=$$(pwd),target=/mnt $(DOCKER_IMAGE) /bin/sh -c "cd /mnt && make EXTRA_CFLAGS='$(EXTRA_CFLAGS)' $@"
+	$(DOCKER) run --rm $(DOCKER_RUN_FLAGS) $(DOCKER_ENV) --platform=linux/amd64 --mount type=bind,source=$$(pwd),target=/mnt $(DOCKER_IMAGE) /bin/sh -c "cd /mnt && make EXTRA_CFLAGS='$(EXTRA_CFLAGS)' $@"
 endif
 
 $(SDK_DIR)/.headers-stamp: $(shell find include -type f)
@@ -369,17 +372,23 @@ ifeq ($(OS_NAME),linux)
 	cp -R include/. $(SDK_INCLUDE_DIR)/
 	@touch $@
 else
-	$(DOCKER) run --rm $(DOCKER_RUN_FLAGS) $(DOCKER_ENV) --mount type=bind,source=$$(pwd),target=/mnt $(DOCKER_IMAGE) /bin/sh -c "cd /mnt && make EXTRA_CFLAGS='$(EXTRA_CFLAGS)' $@"
+	$(DOCKER) run --rm $(DOCKER_RUN_FLAGS) $(DOCKER_ENV) --platform=linux/amd64 --mount type=bind,source=$$(pwd),target=/mnt $(DOCKER_IMAGE) /bin/sh -c "cd /mnt && make EXTRA_CFLAGS='$(EXTRA_CFLAGS)' $@"
 endif
 
-$(SDK_DIR)/.tools-stamp: $(SDK_LIB) $(SDK_STARTUP) tools/menios-gcc.sh
+$(SDK_DIR)/.tools-stamp: $(SDK_LIB) $(SDK_STARTUP) tools/menios-gcc.sh tools/menios-ar.sh tools/menios-ranlib.sh
 ifeq ($(OS_NAME),linux)
 	@mkdir -p $(SDK_BIN_DIR)
 	cp tools/menios-gcc.sh $(SDK_BIN_DIR)/menios-gcc
 	chmod +x $(SDK_BIN_DIR)/menios-gcc
+	cp tools/menios-ar.sh $(SDK_BIN_DIR)/menios-ar
+	cp tools/menios-ar.sh $(SDK_BIN_DIR)/x86_64-menios-ar
+	chmod +x $(SDK_BIN_DIR)/menios-ar $(SDK_BIN_DIR)/x86_64-menios-ar
+	cp tools/menios-ranlib.sh $(SDK_BIN_DIR)/menios-ranlib
+	cp tools/menios-ranlib.sh $(SDK_BIN_DIR)/x86_64-menios-ranlib
+	chmod +x $(SDK_BIN_DIR)/menios-ranlib $(SDK_BIN_DIR)/x86_64-menios-ranlib
 	@touch $@
 else
-	$(DOCKER) run --rm $(DOCKER_RUN_FLAGS) $(DOCKER_ENV) --mount type=bind,source=$$(pwd),target=/mnt $(DOCKER_IMAGE) /bin/sh -c "cd /mnt && make EXTRA_CFLAGS='$(EXTRA_CFLAGS)' $@"
+	$(DOCKER) run --rm $(DOCKER_RUN_FLAGS) $(DOCKER_ENV) --platform=linux/amd64 --mount type=bind,source=$$(pwd),target=/mnt $(DOCKER_IMAGE) /bin/sh -c "cd /mnt && make EXTRA_CFLAGS='$(EXTRA_CFLAGS)' $@"
 endif
 
 .PHONY: sdk
@@ -389,7 +398,7 @@ sdk: docker $(SDK_LIB) $(SDK_STARTUP) $(SDK_LINKER_SCRIPT) $(SDK_DIR)/.headers-s
 ifeq ($(OS_NAME),linux)
 	$(GCC) $(GCC_KERNEL_OPTS) -c $< -o $@
 else
-	$(DOCKER) run --rm $(DOCKER_RUN_FLAGS) $(DOCKER_ENV) --mount type=bind,source=$$(pwd),target=/mnt $(DOCKER_IMAGE) /bin/sh -c "cd /mnt && make build"
+	$(DOCKER) run --rm $(DOCKER_RUN_FLAGS) $(DOCKER_ENV) --platform=linux/amd64 --mount type=bind,source=$$(pwd),target=/mnt $(DOCKER_IMAGE) /bin/sh -c "cd /mnt && make build"
 endif
 
 %.o: %.S
@@ -992,17 +1001,24 @@ else
 endif
 
 binutils-host: userland $(BINUTILS_BUILD_DIR)/Makefile
-	$(MAKE) -C $(BINUTILS_BUILD_DIR) MAKEINFO=true
-	$(MAKE) -C $(BINUTILS_BUILD_DIR) MAKEINFO=true install
+	MENIOS_HOST_BUILD=1 MENIOS_HOST_CC=gcc MENIOS_HOST_AR=ar MENIOS_HOST_RANLIB=ranlib MENIOS_ENABLE_SSE=1 AR=$(abspath tools/menios-ar.sh) RANLIB=$(abspath tools/menios-ranlib.sh) $(MAKE) -C $(BINUTILS_BUILD_DIR) MAKEINFO=true
+	MENIOS_HOST_BUILD=1 MENIOS_HOST_CC=gcc MENIOS_HOST_AR=ar MENIOS_HOST_RANLIB=ranlib MENIOS_ENABLE_SSE=1 AR=$(abspath tools/menios-ar.sh) RANLIB=$(abspath tools/menios-ranlib.sh) $(MAKE) -C $(BINUTILS_BUILD_DIR) MAKEINFO=true install
 
 $(BINUTILS_BUILD_DIR)/Makefile: userland
 	rm -rf $(BINUTILS_BUILD_DIR)
 	mkdir -p $(BINUTILS_BUILD_DIR)
 	cd $(BINUTILS_BUILD_DIR) && \
+		MENIOS_HOST_BUILD=1 \
+		MENIOS_HOST_CC=gcc \
+		MENIOS_HOST_AR=ar \
+		MENIOS_HOST_RANLIB=ranlib \
+		MENIOS_ENABLE_SSE=1 \
 		MENIOS_SDK_ROOT=$(BINUTILS_PREFIX) \
 		CC=$(abspath tools/menios-gcc.sh) \
+		AR=$(abspath tools/menios-ar.sh) \
+		RANLIB=$(abspath tools/menios-ranlib.sh) \
+		ac_cv_header_stdio_ext_h=no \
 		$(abspath $(BINUTILS_SRC_DIR))/configure \
-		  --host=x86_64-menios \
 		  --target=x86_64-menios \
 		  --prefix=$(BINUTILS_PREFIX) \
 		  $(BINUTILS_CONFIGURE_FLAGS)

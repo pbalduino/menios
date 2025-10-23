@@ -16,14 +16,36 @@ else
   CC="gcc"
 fi
 
-if "$CC" --version 2>/dev/null | head -1 | grep -qi clang; then
-  ARCH_FLAGS="-target x86_64-unknown-elf -fuse-ld=lld"
+HOST_BUILD_MODE=0
+case "${MENIOS_HOST_BUILD:-}" in
+  ""|0|false|FALSE)
+    HOST_BUILD_MODE=0
+    ;;
+  *)
+    HOST_BUILD_MODE=1
+    ;;
+esac
+
+if [ "$HOST_BUILD_MODE" -eq 1 ]; then
+  WRAPPER_CFLAGS="${MENIOS_HOST_CFLAGS:-}"
+  WRAPPER_LDFLAGS="${MENIOS_HOST_LDFLAGS:-}"
 else
-  ARCH_FLAGS=""
+  if "$CC" --version 2>/dev/null | head -1 | grep -qi clang; then
+    ARCH_FLAGS="-target x86_64-unknown-elf -fuse-ld=lld"
+  else
+    ARCH_FLAGS=""
+  fi
+
+  if [ -n "${MENIOS_ENABLE_SSE:-}" ]; then
+    FLOAT_FLAGS="-m64 -mno-red-zone"
+  else
+    FLOAT_FLAGS="-m64 -mno-red-zone -mno-80387 -mno-mmx -mno-sse -mno-sse2"
+  fi
+
+  WRAPPER_CFLAGS="-ffreestanding -fno-stack-protector $FLOAT_FLAGS -nostdlib -nostartfiles -isystem ${SDK_ROOT}/include"
+  WRAPPER_CFLAGS="$WRAPPER_CFLAGS $ARCH_FLAGS"
+  WRAPPER_LDFLAGS="-nostdlib -nostartfiles ${SDK_ROOT}/lib/crt0.o -L${SDK_ROOT}/lib -lmeniosc -lgcc -static -T ${SDK_ROOT}/lib/user_elf.ld"
 fi
-CFLAGS="-ffreestanding -fno-stack-protector -m64 -mno-red-zone -mno-80387 -mno-mmx -mno-sse -mno-sse2 -nostdlib -nostartfiles -isystem ${SDK_ROOT}/include"
-CFLAGS="$CFLAGS $ARCH_FLAGS"
-LDFLAGS="-nostdlib -nostartfiles ${SDK_ROOT}/lib/crt0.o -L${SDK_ROOT}/lib -lmeniosc -lgcc -static -T ${SDK_ROOT}/lib/user_elf.ld"
 if [ "$1" = "-qversion" ]; then
   exec "$CC" --version
 fi
@@ -36,7 +58,7 @@ for arg in "$@"; do
   esac
 done
 if [ "$COMPILE_ONLY" -eq 1 ]; then
-  exec "$CC" $CFLAGS "$@"
+  exec "$CC" $WRAPPER_CFLAGS "$@"
 else
-  exec "$CC" $CFLAGS "$@" $LDFLAGS
+  exec "$CC" $WRAPPER_CFLAGS "$@" $WRAPPER_LDFLAGS
 fi
