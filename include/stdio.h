@@ -52,6 +52,7 @@ int fflush(FILE* stream);
 
 FILE* fopen(const char *filename, const char *mode);
 FILE* fdopen(int fd, const char* mode);
+FILE* tmpfile(void);
 int   fclose(FILE *stream);
 int   fprintf(FILE *stream, const char *format, ...);
 int   fputs(const char *text, FILE* file);

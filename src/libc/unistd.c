@@ -4,6 +4,8 @@
 #include <stdarg.h>
 #include <stddef.h>
 #include <stdint.h>
+#include <stdlib.h>
+#include <string.h>
 #include <sys/errno.h>
 #include <sys/fcntl.h>
 #include <sys/ioctl.h>
@@ -165,6 +167,90 @@ int execve(const char* path, char* const argv[], char* const envp[]) {
   return (int)rc;
 }
 
+int execv(const char* path, char* const argv[]) {
+  extern char** environ;
+  return execve(path, argv, environ);
+}
+
+int execvp(const char* file, char* const argv[]) {
+  extern char** environ;
+  if(file == NULL || *file == '\0') {
+    errno = ENOENT;
+    return -1;
+  }
+
+  if(strchr(file, '/') != NULL) {
+    return execve(file, argv, environ);
+  }
+
+  const char* path = getenv("PATH");
+  if(path == NULL || *path == '\0') {
+    path = "/bin:/usr/bin";
+  }
+
+  size_t file_len = strlen(file);
+  int saved_errno = ENOENT;
+  int saw_eacces = 0;
+
+  const char* cursor = path;
+  while(*cursor != '\0') {
+    const char* colon = strchr(cursor, ':');
+    size_t dir_len = (colon != NULL) ? (size_t)(colon - cursor) : strlen(cursor);
+
+    const char* dir_ptr;
+    size_t dir_size;
+    if(dir_len == 0) {
+      dir_ptr = ".";
+      dir_size = 1;
+    } else {
+      dir_ptr = cursor;
+      dir_size = dir_len;
+    }
+
+    int needs_slash = (dir_size > 0 && dir_ptr[dir_size - 1] == '/') ? 0 : 1;
+    size_t total = dir_size + needs_slash + file_len + 1;
+
+    char* candidate = (char*)malloc(total);
+    if(candidate == NULL) {
+      errno = ENOMEM;
+      return -1;
+    }
+
+    memcpy(candidate, dir_ptr, dir_size);
+    size_t pos = dir_size;
+    if(needs_slash) {
+      candidate[pos++] = '/';
+    }
+    memcpy(candidate + pos, file, file_len);
+    candidate[pos + file_len] = '\0';
+
+    int rc = execve(candidate, argv, environ);
+    if(rc >= 0) {
+      free(candidate);
+      return rc;
+    }
+
+    int current_errno = errno;
+    if(current_errno == EACCES) {
+      saw_eacces = 1;
+    } else if(current_errno != ENOENT) {
+      saved_errno = current_errno;
+    } else if(saved_errno == ENOENT) {
+      saved_errno = ENOENT;
+    }
+
+    free(candidate);
+
+    if(colon == NULL) {
+      break;
+    }
+    cursor = colon + 1;
+  }
+
+  errno = saw_eacces ? EACCES : saved_errno;
+  return -1;
+}
+
 int chdir(const char* path) {
   long rc = __menios_syscall1(SYS_CHDIR, (long)path);
   if(rc < 0) {
@@ -216,6 +302,12 @@ int access(const char* path, int mode) {
   (void)mode;
   errno = ENOSYS;
   return -1;
+}
+
+int isatty(int fd) {
+  (void)fd;
+  errno = ENOTTY;
+  return 0;
 }
 
 int brk(void* addr) {

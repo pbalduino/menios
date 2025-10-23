@@ -24,6 +24,8 @@ off_t lseek(int fd, off_t offset, int whence);
 pid_t fork(void);
 pid_t getpid(void);
 int execve(const char* path, char* const argv[], char* const envp[]);
+int execv(const char* path, char* const argv[]);
+int execvp(const char* file, char* const argv[]);
 void _exit(int status) __attribute__((noreturn));
 int chdir(const char* path);
 char* getcwd(char* buffer, size_t size);
@@ -38,6 +40,7 @@ int open(const char* path, int flags, ...);
 int unlink(const char* path);
 int rmdir(const char* path);
 int access(const char* path, int mode);
+int isatty(int fd);
 
 #ifdef __cplusplus
 }

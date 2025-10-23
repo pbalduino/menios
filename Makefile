@@ -125,6 +125,7 @@ BINUTILS_SRC_DIR := vendor/binutils-2.45
 BINUTILS_BUILD_DIR := $(BUILD_DIR)/binutils-menios
 BINUTILS_PREFIX := $(abspath $(SDK_DIR))
 BINUTILS_CONFIGURE_FLAGS := --disable-nls --disable-gdb --disable-gprof --disable-libdecnumber --disable-gold
+BINUTILS_NATIVE_BUILD_DIR := $(BUILD_DIR)/binutils-menios-native
 SDK_INCLUDE_DIR = $(SDK_DIR)/include
 SDK_LIB_DIR     = $(SDK_DIR)/lib
 SDK_BIN_DIR     = $(SDK_DIR)/bin
@@ -141,6 +142,7 @@ USERLIBC_SOURCES = \
 	src/libc/errno.c \
 	src/libc/fcntl.c \
 	src/libc/itoa.c \
+	src/libc/locale.c \
 	src/libc/mman.c \
 	src/libc/math.c \
 	src/libc/sysv_ipc.c \
@@ -998,6 +1000,7 @@ ifeq ($(OS_NAME),linux)
 else
 	$(MAKE) docker
 	$(DOCKER) run --rm $(DOCKER_RUN_FLAGS) $(DOCKER_ENV) --platform linux/amd64 --mount type=bind,source=$$(pwd),target=/mnt $(DOCKER_IMAGE) /bin/sh -c "cd /mnt && make binutils-host"
+	$(MAKE) binutils-native
 endif
 
 binutils-host: userland $(BINUTILS_BUILD_DIR)/Makefile
@@ -1022,3 +1025,31 @@ $(BINUTILS_BUILD_DIR)/Makefile: userland
 		  --target=x86_64-menios \
 		  --prefix=$(BINUTILS_PREFIX) \
 		  $(BINUTILS_CONFIGURE_FLAGS)
+
+.PHONY: binutils-native
+binutils-native: sdk $(BINUTILS_NATIVE_BUILD_DIR)/Makefile
+	MENIOS_ENABLE_SSE=1 MENIOS_SDK_ROOT=$(BINUTILS_PREFIX) $(MAKE) -C $(BINUTILS_NATIVE_BUILD_DIR) MAKEINFO=true
+	MENIOS_ENABLE_SSE=1 MENIOS_SDK_ROOT=$(BINUTILS_PREFIX) $(MAKE) -C $(BINUTILS_NATIVE_BUILD_DIR) MAKEINFO=true install
+
+$(BINUTILS_NATIVE_BUILD_DIR)/Makefile: sdk
+	rm -rf $(BINUTILS_NATIVE_BUILD_DIR)
+	mkdir -p $(BINUTILS_NATIVE_BUILD_DIR)
+	cd $(BINUTILS_NATIVE_BUILD_DIR) && \
+		MENIOS_SDK_ROOT=$(BINUTILS_PREFIX) \
+		MENIOS_ENABLE_SSE=1 \
+		CC=$(abspath tools/menios-gcc.sh) \
+		AR=$(abspath tools/menios-ar.sh) \
+		RANLIB=$(abspath tools/menios-ranlib.sh) \
+		bu_cv_header_utime_h=yes \
+		ac_cv_header_utime_h=yes \
+		ac_cv_func_utime=yes \
+		ac_cv_func_fchmod=yes \
+		ac_cv_func_isatty=yes \
+		ac_cv_func_strcspn=yes \
+		ac_cv_func_strspn=yes \
+		$(abspath $(BINUTILS_SRC_DIR))/configure \
+		  --host=x86_64-menios \
+		  --target=x86_64-menios \
+		  --prefix=$(BINUTILS_PREFIX) \
+		  $(BINUTILS_CONFIGURE_FLAGS) \
+		  --with-zstd=no

@@ -292,6 +292,74 @@ char* strrchr(const char* s, int c) {
   return (char*)last;
 }
 
+char* strpbrk(const char* s, const char* accept) {
+  if(s == NULL || accept == NULL) {
+    return NULL;
+  }
+
+  while(*s != '\0') {
+    const char* a = accept;
+    while(*a != '\0') {
+      if(*a == *s) {
+        return (char*)s;
+      }
+      a++;
+    }
+    s++;
+  }
+
+  return NULL;
+}
+
+size_t strspn(const char* s, const char* accept) {
+  if(s == NULL || accept == NULL) {
+    return 0;
+  }
+
+  size_t count = 0;
+  while(*s != '\0') {
+    const char* a = accept;
+    int found = 0;
+    while(*a != '\0') {
+      if(*a == *s) {
+        found = 1;
+        break;
+      }
+      a++;
+    }
+    if(!found) {
+      break;
+    }
+    count++;
+    s++;
+  }
+  return count;
+}
+
+size_t strcspn(const char* s, const char* reject) {
+  if(s == NULL || reject == NULL) {
+    return 0;
+  }
+
+  size_t count = 0;
+  while(*s != '\0') {
+    const char* r = reject;
+    while(*r != '\0') {
+      if(*r == *s) {
+        return count;
+      }
+      r++;
+    }
+    count++;
+    s++;
+  }
+  return count;
+}
+
+int strcoll(const char* s1, const char* s2) {
+  return strcmp(s1, s2);
+}
+
 #ifndef MENIOS_KERNEL
 
 char* strdup(const char* s) {

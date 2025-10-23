@@ -3,6 +3,7 @@
 #include <menios/syscall_user.h>
 #include <sys/errno.h>
 #include <sys/stat.h>
+#include <utime.h>
 #include <stddef.h>
 #include <string.h>
 
@@ -57,5 +58,19 @@ mode_t umask(mode_t mask) {
   mode_t previous = current_mask;
   current_mask = mask & 0777;
   return previous;
+}
+
+int fchmod(int fd, mode_t mode) {
+  (void)fd;
+  (void)mode;
+  errno = ENOSYS;
+  return -1;
+}
+
+int utime(const char* filename, const struct utimbuf* times) {
+  (void)filename;
+  (void)times;
+  errno = ENOSYS;
+  return -1;
 }
 #endif

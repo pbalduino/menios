@@ -22,6 +22,12 @@
 #include "bfd.h"
 #include "bucomm.h"
 
+#include <utime.h>
+
+#ifndef HAVE_GOOD_UTIME_H
+#define HAVE_GOOD_UTIME_H 1
+#endif
+
 #if defined HAVE_UTIMES
 #include <sys/time.h>
 #elif defined HAVE_GOOD_UTIME_H

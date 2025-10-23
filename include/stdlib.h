@@ -2,6 +2,7 @@
 #define INCLUDE_STDLIB_H
 
 #include <types.h>
+#include <stddef.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -62,12 +63,16 @@ double atof(const char* nptr);
 double strtod(const char* nptr, char** endptr);
 float strtof(const char* nptr, char** endptr);
 #define strtold strtod
+size_t mbstowcs(wchar_t* dest, const char* src, size_t max);
+size_t wcstombs(char* dest, const wchar_t* src, size_t max);
 int abs(int value);
 long labs(long value);
 long long llabs(long long value);
 int system(const char* command);
 char* mktemp(char* templ);
+int mkstemp(char* templ);
 void qsort(void* base, size_t nmemb, size_t size, int (*compar)(const void*, const void*));
+void* bsearch(const void* key, const void* base, size_t nmemb, size_t size, int (*compar)(const void*, const void*));
 
 void exit(int) __dead2;
 void abort(void) __dead2;

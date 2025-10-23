@@ -14,6 +14,7 @@ typedef int wchar_t;
 #include <stdatomic.h>
 #include <sys/errno.h>
 #include <sys/mman.h>
+#include <sys/fcntl.h>
 #include <unistd.h>
 
 #ifndef MENIOS_HOST_TEST
@@ -1737,6 +1738,67 @@ MENIOS_FLOAT_PARSER_ATTR double atof(const char* nptr) {
 
 #undef MENIOS_FLOAT_PARSER_ATTR
 
+size_t mbstowcs(wchar_t* dest, const char* src, size_t max) {
+  if(src == NULL) {
+    errno = EINVAL;
+    return (size_t)-1;
+  }
+
+  size_t count = 0;
+  if(dest == NULL || max == 0) {
+    while(src[count] != '\0') {
+      count++;
+    }
+    return count;
+  }
+
+  while(count < max && src[count] != '\0') {
+    dest[count] = (unsigned char)src[count];
+    count++;
+  }
+
+  if(count < max) {
+    dest[count] = L'\0';
+  } else {
+    dest[max - 1] = L'\0';
+  }
+
+  return count;
+}
+
+size_t wcstombs(char* dest, const wchar_t* src, size_t max) {
+  if(src == NULL) {
+    errno = EINVAL;
+    return (size_t)-1;
+  }
+
+  size_t count = 0;
+  if(dest == NULL || max == 0) {
+    while(src[count] != L'\0') {
+      count++;
+    }
+    return count;
+  }
+
+  while(count < max && src[count] != L'\0') {
+    wchar_t wc = src[count];
+    if(wc > 0xff) {
+      errno = EILSEQ;
+      return (size_t)-1;
+    }
+    dest[count] = (char)wc;
+    count++;
+  }
+
+  if(count < max) {
+    dest[count] = '\0';
+  } else {
+    dest[max - 1] = '\0';
+  }
+
+  return count;
+}
+
 char* mktemp(char* templ) {
   if(templ == NULL) {
     errno = EINVAL;
@@ -1773,6 +1835,45 @@ char* mktemp(char* templ) {
   return templ;
 }
 
+int mkstemp(char* templ) {
+  if(templ == NULL) {
+    errno = EINVAL;
+    return -1;
+  }
+
+  if(mktemp(templ) == NULL || templ[0] == '\0') {
+    return -1;
+  }
+
+  int fd = open(templ, O_RDWR | O_CREAT | O_EXCL, 0600);
+  if(fd < 0) {
+    templ[0] = '\0';
+    return -1;
+  }
+
+  return fd;
+}
+
+FILE* tmpfile(void) {
+  char templ[] = "/tmp/meniosXXXXXX";
+  int fd = mkstemp(templ);
+  if(fd < 0) {
+    return NULL;
+  }
+
+  (void)unlink(templ);
+
+  FILE* stream = fdopen(fd, "w+b");
+  if(stream == NULL) {
+    int saved = errno;
+    close(fd);
+    errno = saved;
+    return NULL;
+  }
+
+  return stream;
+}
+
 static void swap_elements(unsigned char* a, unsigned char* b, size_t size) {
   for(size_t i = 0; i < size; ++i) {
     unsigned char tmp = a[i];
@@ -1802,6 +1903,34 @@ void qsort(void* base, size_t nmemb, size_t size, int (*compar)(const void*, con
   }
 }
 
+__attribute__((weak)) void* bsearch(const void* key,
+                                    const void* base,
+                                    size_t nmemb,
+                                    size_t size,
+                                    int (*compar)(const void*, const void*)) {
+  if(key == NULL || base == NULL || compar == NULL || size == 0) {
+    return NULL;
+  }
+
+  size_t low = 0;
+  size_t high = nmemb;
+  const unsigned char* data = (const unsigned char*)base;
+
+  while(low < high) {
+    size_t mid = low + (high - low) / 2;
+    const void* element = data + mid * size;
+    int cmp = compar(key, element);
+    if(cmp < 0) {
+      high = mid;
+    } else if(cmp > 0) {
+      low = mid + 1;
+    } else {
+      return (void*)element;
+    }
+  }
+
+  return NULL;
+}
 
 int abs(int value) {
   return (value < 0) ? -value : value;
