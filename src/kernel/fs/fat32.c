@@ -2768,6 +2768,75 @@ static int64_t fat32_stream_read(file_t* file, void* buffer, size_t length) {
   return (int64_t)bytes;
 }
 
+static int64_t fat32_stream_write(file_t* file, const void* buffer, size_t length) {
+  if(file == NULL || buffer == NULL) {
+    return -EINVAL;
+  }
+
+  fat32_stream_t* stream = (fat32_stream_t*)file->private_data;
+  if(stream == NULL) {
+    return -EINVAL;
+  }
+
+  int accmode = stream->flags & O_ACCMODE;
+  bool writable = (accmode == O_WRONLY || accmode == O_RDWR);
+  if(!writable) {
+    return -EBADF;
+  }
+
+  if(length == 0) {
+    return 0;
+  }
+
+  if(stream->flags & O_APPEND) {
+    stream->position = stream->info.size;
+  }
+
+  if(stream->position > SIZE_MAX - length) {
+    return -EFBIG;
+  }
+
+  size_t original_size = stream->info.size;
+  size_t target_end = stream->position + length;
+  bool fat_dirty = false;
+  if(target_end > stream->info.size) {
+    if(!fat32_adjust_file_size(stream->fs, &stream->info, target_end, &fat_dirty)) {
+      return -ENOSPC;
+    }
+  }
+
+  size_t written = 0;
+  if(!fat32_write_chain(stream->fs,
+                        &stream->info,
+                        original_size,
+                        stream->position,
+                        buffer,
+                        length,
+                        &written)) {
+    return -EIO;
+  }
+
+  stream->position += written;
+  if(stream->position > stream->info.size) {
+    stream->info.size = (uint32_t)stream->position;
+  }
+
+  if(!fat32_update_dir_entry(stream->fs,
+                             &stream->info,
+                             stream->info.first_cluster,
+                             stream->info.size)) {
+    return -EIO;
+  }
+
+  if(fat_dirty) {
+    if(!fat32_flush_fat(stream->fs)) {
+      return -EIO;
+    }
+  }
+
+  return (int64_t)written;
+}
+
 static int64_t fat32_stream_seek(file_t* file, int64_t offset, int whence) {
   if(file == NULL) {
     return -EINVAL;
@@ -2796,9 +2865,6 @@ static int64_t fat32_stream_seek(file_t* file, int64_t offset, int whence) {
   if(new_pos < 0) {
     return -EINVAL;
   }
-  if((size_t)new_pos > stream->info.size) {
-    new_pos = (int64_t)stream->info.size;
-  }
   stream->position = (size_t)new_pos;
   return new_pos;
 }
@@ -2817,7 +2883,7 @@ static int fat32_stream_close(file_t* file) {
 
 static const file_ops_t fat32_stream_file_ops = {
   .read = fat32_stream_read,
-  .write = NULL,
+  .write = fat32_stream_write,
   .close = fat32_stream_close,
   .seek = fat32_stream_seek,
   .ioctl = NULL,

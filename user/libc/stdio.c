@@ -1327,6 +1327,8 @@ static const struct {
   { EISDIR, "Is a directory" },
   { EBADF,  "Bad file descriptor" },
   { EROFS,  "Read-only file system" },
+  { EFBIG,  "File too large" },
+  { ENOSPC, "No space left on device" },
 };
 
 static const char* menios_strerror(int err) {
