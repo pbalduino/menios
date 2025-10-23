@@ -1737,6 +1737,71 @@ MENIOS_FLOAT_PARSER_ATTR double atof(const char* nptr) {
 
 #undef MENIOS_FLOAT_PARSER_ATTR
 
+char* mktemp(char* templ) {
+  if(templ == NULL) {
+    errno = EINVAL;
+    return NULL;
+  }
+
+  size_t len = strlen(templ);
+  if(len < 6) {
+    errno = EINVAL;
+    if(len > 0) {
+      templ[0] = '\0';
+    }
+    return templ;
+  }
+
+  char* pattern = templ + len - 6;
+  if(strncmp(pattern, "XXXXXX", 6) != 0) {
+    errno = EINVAL;
+    templ[0] = '\0';
+    return templ;
+  }
+
+  static unsigned long counter = 0;
+  static const char alphabet[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+  const size_t alpha_len = sizeof(alphabet) - 1;
+
+  unsigned long value = counter++;
+  for(int i = 0; i < 6; ++i) {
+    pattern[i] = alphabet[value % alpha_len];
+    value /= alpha_len;
+  }
+
+  errno = 0;
+  return templ;
+}
+
+static void swap_elements(unsigned char* a, unsigned char* b, size_t size) {
+  for(size_t i = 0; i < size; ++i) {
+    unsigned char tmp = a[i];
+    a[i] = b[i];
+    b[i] = tmp;
+  }
+}
+
+void qsort(void* base, size_t nmemb, size_t size, int (*compar)(const void*, const void*)) {
+  if(base == NULL || compar == NULL || size == 0) {
+    return;
+  }
+
+  unsigned char* data = (unsigned char*)base;
+  for(size_t i = 0; i < nmemb; ++i) {
+    size_t min_index = i;
+    for(size_t j = i + 1; j < nmemb; ++j) {
+      unsigned char* elem = data + j * size;
+      unsigned char* min_elem = data + min_index * size;
+      if(compar(elem, min_elem) < 0) {
+        min_index = j;
+      }
+    }
+    if(min_index != i) {
+      swap_elements(data + i * size, data + min_index * size, size);
+    }
+  }
+}
+
 
 int abs(int value) {
   return (value < 0) ? -value : value;

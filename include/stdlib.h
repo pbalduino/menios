@@ -9,6 +9,14 @@ extern "C" {
 
 #define __dead2 __attribute__((__noreturn__))
 
+#ifndef EXIT_SUCCESS
+#define EXIT_SUCCESS 0
+#endif
+
+#ifndef EXIT_FAILURE
+#define EXIT_FAILURE 1
+#endif
+
 #define RAND_MAX 0x7fffffff
 
 char* itoa(int32_t num, char* str, int32_t base);
@@ -45,6 +53,9 @@ int rand(void);
 void srand(unsigned int seed);
 
 long strtol(const char* nptr, char** endptr, int base);
+long long strtoll(const char* nptr, char** endptr, int base);
+unsigned long strtoul(const char* nptr, char** endptr, int base);
+unsigned long long strtoull(const char* nptr, char** endptr, int base);
 int atoi(const char* nptr);
 long atol(const char* nptr);
 double atof(const char* nptr);
@@ -55,6 +66,8 @@ int abs(int value);
 long labs(long value);
 long long llabs(long long value);
 int system(const char* command);
+char* mktemp(char* templ);
+void qsort(void* base, size_t nmemb, size_t size, int (*compar)(const void*, const void*));
 
 void exit(int) __dead2;
 void abort(void) __dead2;

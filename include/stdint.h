@@ -96,6 +96,19 @@ typedef unsigned long long int uintmax_t;
 #define INTMAX_MAX INT64_MAX
 #define UINTMAX_MAX UINT64_MAX
 
+#define INT8_C(c)   (c)
+#define INT16_C(c)  (c)
+#define INT32_C(c)  (c)
+#define INT64_C(c)  (c##LL)
+
+#define UINT8_C(c)  (c##U)
+#define UINT16_C(c) (c##U)
+#define UINT32_C(c) (c##U)
+#define UINT64_C(c) (c##ULL)
+
+#define INTMAX_C(c)  INT64_C(c)
+#define UINTMAX_C(c) UINT64_C(c)
+
 #ifndef SIZE_MAX
 #include <stddef.h>
 #define SIZE_MAX ((size_t)-1)
