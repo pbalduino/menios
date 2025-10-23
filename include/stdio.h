@@ -11,10 +11,10 @@
 #define NULL ((void*)0)
 #endif
 
-typedef struct __menios_FILE FILE;
-typedef struct __menios_FILE __FILE;
-typedef struct __menios_FILE __sFILE;
-typedef struct __menios_FILE _IO_FILE;
+struct _IO_FILE;
+typedef struct _IO_FILE FILE;
+typedef struct _IO_FILE __FILE;
+typedef struct _IO_FILE __sFILE;
 
 extern FILE *stdin;
 extern FILE *stdout;

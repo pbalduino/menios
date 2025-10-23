@@ -4,7 +4,7 @@
 #include <stddef.h>
 #include <sys/types.h>
 
-struct __menios_FILE {
+struct _IO_FILE {
   int           fd;
   unsigned int  flags;
   unsigned char*buffer;
