@@ -44,8 +44,10 @@ else
 
   WRAPPER_CFLAGS="-ffreestanding -fno-stack-protector $FLOAT_FLAGS -nostdlib -nostartfiles -isystem ${SDK_ROOT}/include"
   WRAPPER_CFLAGS="$WRAPPER_CFLAGS $ARCH_FLAGS"
-  WRAPPER_LDFLAGS="-nostdlib -nostartfiles ${SDK_ROOT}/lib/crt0.o -L${SDK_ROOT}/lib -lmeniosc -lgcc -static -T ${SDK_ROOT}/lib/user_elf.ld"
+  WRAPPER_LDFLAGS="-nostdlib -nostartfiles ${SDK_ROOT}/lib/crt0.o -L${SDK_ROOT}/lib -lmeniosc -lgcc -static -T ${SDK_ROOT}/lib/user_elf.ld -Wl,--no-warn-execstack"
 fi
+
+WRAPPER_CFLAGS="${WRAPPER_CFLAGS} -Wa,--noexecstack"
 if [ "$1" = "-qversion" ]; then
   exec "$CC" --version
 fi
