@@ -7639,6 +7639,7 @@ case "${host}" in
      *-*-mingw* | *-*-winnt*)	pexecute=pex-win32  ;;
      *-*-msdosdjgpp*)		pexecute=pex-djgpp  ;;
      *-*-msdos*)		pexecute=pex-msdos  ;;
+     *-*-menios*)		pexecute=pex-one    ;;
      *)				pexecute=pex-unix   ;;
 esac
 
