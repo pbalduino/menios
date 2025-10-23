@@ -1032,7 +1032,9 @@ clock_t clock(void) {
     long long micros = (long long)ts.tv_sec * CLOCKS_PER_SEC + ts.tv_nsec / 1000;
     return (clock_t)micros;
   }
+#ifndef MENIOS_KERNEL
   errno = ENOSYS;
+#endif
   return (clock_t)-1;
 }
 

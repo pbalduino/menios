@@ -40,6 +40,7 @@
 #include <kernel/file.h>
 #include <kernel/fonts.h>
 #include <kernel/framebuffer.h>
+#include <kernel/cpu.h>
 #include <kernel/gdt.h>
 #include <kernel/heap.h>
 #include <kernel/hw.h>
@@ -162,6 +163,8 @@ void _start() {
   gdt_init();
 
   idt_init();
+
+  cpu_enable_sse();
 
   syscall_init();
 

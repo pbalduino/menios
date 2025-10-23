@@ -1323,6 +1323,10 @@ static const struct {
   { EIO,    "Input/output error" },
   { EPERM,  "Operation not permitted" },
   { EACCES, "Permission denied" },
+  { ENOSYS, "Function not implemented" },
+  { EISDIR, "Is a directory" },
+  { EBADF,  "Bad file descriptor" },
+  { EROFS,  "Read-only file system" },
 };
 
 static const char* menios_strerror(int err) {

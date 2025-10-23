@@ -23,6 +23,9 @@
 #include <kernel/spinlock.h>
 #include <kernel/vfs.h>
 #include <menios/fb.h>
+#ifdef MENIOS_KERNEL
+#include <menios/stdio_internal.h>
+#endif
 
 #define FD_STDIN   0
 #define FD_STDOUT  1

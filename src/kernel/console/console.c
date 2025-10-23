@@ -3,6 +3,9 @@
 #include <stdlib.h>
 #include <string.h>
 #include <types.h>
+#ifdef MENIOS_KERNEL
+#include <menios/stdio_internal.h>
+#endif
 
 #include <kernel/console.h>
 #include <kernel/framebuffer.h>

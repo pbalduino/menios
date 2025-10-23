@@ -7,6 +7,7 @@
 #include <ctype.h>
 #include <errno.h>
 #include <sys/fcntl.h>
+#include <unistd.h>
 
 #include <kernel/block_device.h>
 #include <kernel/block_cache.h>
@@ -2239,15 +2240,6 @@ static int fat32_rename_path(fat32_fs_t* fs, const char* old_path, const char* n
   return 0;
 }
 
-int fat32_open_adapter(void* fs_ctx, const char* path, int flags, file_t** out_file) {
-  (void)out_file;
-  if(fs_ctx == NULL || path == NULL) {
-    return -1;
-  }
-
-  return -ENOSYS;
-}
-
 int fat32_unlink_adapter(void* fs_ctx, const char* path) {
   if(fs_ctx == NULL || path == NULL) {
     return -EINVAL;
@@ -2686,6 +2678,191 @@ bool fs_file_create(const fs_mount_t* mount, const char* path, bool exclusive) {
 
   fat32_fs_t* fs = (fat32_fs_t*)&mount->fat32;
   return fat32_create_entry(fs, path, exclusive, false, NULL);
+}
+
+typedef struct {
+  fat32_fs_t* fs;
+  fat32_dir_entry_info_t info;
+  size_t position;
+  int flags;
+} fat32_stream_t;
+
+static const file_ops_t fat32_stream_file_ops;
+static file_t* fat32_stream_create(fat32_fs_t* fs,
+                                   const fat32_dir_entry_info_t* info,
+                                   int flags);
+
+static file_t* fat32_stream_create(fat32_fs_t* fs,
+                                   const fat32_dir_entry_info_t* info,
+                                   int flags) {
+  if(fs == NULL || info == NULL) {
+    return NULL;
+  }
+
+  fat32_stream_t* stream = kmalloc(sizeof(fat32_stream_t));
+  if(stream == NULL) {
+    return NULL;
+  }
+  memset(stream, 0, sizeof(*stream));
+  stream->fs = fs;
+  stream->info = *info;
+  stream->position = 0;
+  stream->flags = flags;
+
+  int accmode = flags & O_ACCMODE;
+  bool readable = (accmode == O_RDONLY || accmode == O_RDWR);
+  bool writable = (accmode == O_WRONLY || accmode == O_RDWR);
+  uint32_t mode = 0;
+  if(readable) {
+    mode |= FILE_MODE_READ;
+  }
+  if(writable) {
+    mode |= FILE_MODE_WRITE;
+  }
+
+  file_t* file = file_create(&fat32_stream_file_ops, stream, mode);
+  if(file == NULL) {
+    kfree(stream);
+    return NULL;
+  }
+
+  return file;
+}
+
+static int64_t fat32_stream_read(file_t* file, void* buffer, size_t length) {
+  if(file == NULL || buffer == NULL) {
+    return -EINVAL;
+  }
+  fat32_stream_t* stream = (fat32_stream_t*)file->private_data;
+  if(stream == NULL) {
+    return -EINVAL;
+  }
+  if(length == 0) {
+    return 0;
+  }
+
+  if(stream->position >= stream->info.size) {
+    return 0;
+  }
+
+  size_t to_read = length;
+  size_t remaining = stream->info.size - stream->position;
+  if(to_read > remaining) {
+    to_read = remaining;
+  }
+
+  size_t bytes = 0;
+  if(to_read > 0) {
+    if(!fat32_read_chain(stream->fs,
+                         stream->info.first_cluster,
+                         stream->info.size,
+                         stream->position,
+                         buffer,
+                         to_read,
+                         &bytes)) {
+      return -EIO;
+    }
+  }
+
+  stream->position += bytes;
+  return (int64_t)bytes;
+}
+
+static int64_t fat32_stream_seek(file_t* file, int64_t offset, int whence) {
+  if(file == NULL) {
+    return -EINVAL;
+  }
+  fat32_stream_t* stream = (fat32_stream_t*)file->private_data;
+  if(stream == NULL) {
+    return -EINVAL;
+  }
+
+  int64_t base = 0;
+  switch(whence) {
+    case SEEK_SET:
+      base = 0;
+      break;
+    case SEEK_CUR:
+      base = (int64_t)stream->position;
+      break;
+    case SEEK_END:
+      base = (int64_t)stream->info.size;
+      break;
+    default:
+      return -EINVAL;
+  }
+
+  int64_t new_pos = base + offset;
+  if(new_pos < 0) {
+    return -EINVAL;
+  }
+  if((size_t)new_pos > stream->info.size) {
+    new_pos = (int64_t)stream->info.size;
+  }
+  stream->position = (size_t)new_pos;
+  return new_pos;
+}
+
+static int fat32_stream_close(file_t* file) {
+  if(file == NULL) {
+    return 0;
+  }
+  fat32_stream_t* stream = (fat32_stream_t*)file->private_data;
+  if(stream != NULL) {
+    kfree(stream);
+    file->private_data = NULL;
+  }
+  return 0;
+}
+
+static const file_ops_t fat32_stream_file_ops = {
+  .read = fat32_stream_read,
+  .write = NULL,
+  .close = fat32_stream_close,
+  .seek = fat32_stream_seek,
+  .ioctl = NULL,
+  .mmap = NULL,
+};
+
+int fat32_open_adapter(void* fs_ctx, const char* path, int flags, file_t** out_file) {
+  if(out_file == NULL) {
+    return -EINVAL;
+  }
+  *out_file = NULL;
+
+  if(fs_ctx == NULL || path == NULL) {
+    return -EINVAL;
+  }
+
+  fs_mount_t* mount = (fs_mount_t*)fs_ctx;
+  fat32_fs_t* fs = &mount->fat32;
+
+  fat32_dir_entry_info_t info;
+  bool ok = fat32_traverse_path(fs, path, &info, false);
+  if(!ok && path[0] == '/' && path[1] != '\0') {
+    ok = fat32_traverse_path(fs, path + 1, &info, false);
+  }
+  if(!ok) {
+    return -ENOENT;
+  }
+
+  if(info.is_directory) {
+    return -EISDIR;
+  }
+
+  int accmode = flags & O_ACCMODE;
+  bool writable = (accmode == O_WRONLY || accmode == O_RDWR);
+  if(writable || (flags & (O_CREAT | O_TRUNC))) {
+    return -ENOSYS;
+  }
+
+  file_t* file = fat32_stream_create(fs, &info, flags);
+  if(file == NULL) {
+    return -ENOMEM;
+  }
+
+  *out_file = file;
+  return 0;
 }
 
 bool fs_file_truncate(const fs_mount_t* mount, const char* path) {

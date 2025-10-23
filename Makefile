@@ -632,7 +632,18 @@ ifeq ($(OS_NAME),linux)
 			echo "Required Limine asset $$file is missing"; \
 			exit 1; \
 		fi; \
-	done
+		done
+
+	@# Stage toolchain binaries for installer image when available
+	@if [ -f "$(SDK_BIN_DIR)/as" ]; then \
+		cp $(SDK_BIN_DIR)/as $(OUTPUT_DIR)/bin/as; \
+	fi
+	@if [ -f "$(SDK_BIN_DIR)/ld" ]; then \
+		cp $(SDK_BIN_DIR)/ld $(OUTPUT_DIR)/bin/ld; \
+	fi
+	@if [ -f "$(SDK_BIN_DIR)/ld.bfd" ]; then \
+		cp $(SDK_BIN_DIR)/ld.bfd $(OUTPUT_DIR)/bin/ld.bfd; \
+	fi
 
 	@echo Building image
 	rm -f $(IMAGE_NAME).hdd
@@ -645,7 +656,8 @@ ifeq ($(OS_NAME),linux)
 	mmd -i $(IMAGE_NAME).hdd@@2M ::/doom > /dev/null 2>&1 || true
 	mmd -i $(IMAGE_NAME).hdd@@2M ::/home > /dev/null 2>&1 || true
 	mkdir -p $(OUTPUT_DIR)/home
-	printf '/bin/doom -iwad /doom/doom2.wad\n' > $(OUTPUT_DIR)/home/.moshrc
+	printf 'echo Welcome to meniOS 0.1.666\n' > $(OUTPUT_DIR)/home/.moshrc
+	cp samples/hello.s $(OUTPUT_DIR)/home/hello.s
 	mcopy -i $(IMAGE_NAME).hdd@@2M $(KERNEL) limine.conf $(OUTPUT_DIR)/limine-bios.sys ::/
 	mcopy -i $(IMAGE_NAME).hdd@@2M $(OUTPUT_DIR)/limine-bios.sys ::/limine/
 	mcopy -i $(IMAGE_NAME).hdd@@2M $(OUTPUT_DIR)/limine-bios.sys ::/boot/
@@ -664,7 +676,17 @@ ifeq ($(OS_NAME),linux)
 	mcopy -i $(IMAGE_NAME).hdd@@2M $(OUTPUT_DIR)/bin/malloc_stress ::/bin/malloc_stress
 	mcopy -i $(IMAGE_NAME).hdd@@2M $(OUTPUT_DIR)/bin/mem ::/bin/mem
 	mcopy -i $(IMAGE_NAME).hdd@@2M $(OUTPUT_DIR)/bin/alarm_demo ::/bin/alarm_demo
+	if [ -f "$(OUTPUT_DIR)/bin/as" ]; then \
+		mcopy -i $(IMAGE_NAME).hdd@@2M $(OUTPUT_DIR)/bin/as ::/bin/as; \
+	fi
+	if [ -f "$(OUTPUT_DIR)/bin/ld" ]; then \
+		mcopy -i $(IMAGE_NAME).hdd@@2M $(OUTPUT_DIR)/bin/ld ::/bin/ld; \
+	fi
+	if [ -f "$(OUTPUT_DIR)/bin/ld.bfd" ]; then \
+		mcopy -i $(IMAGE_NAME).hdd@@2M $(OUTPUT_DIR)/bin/ld.bfd ::/bin/ld.bfd; \
+	fi
 	mcopy -i $(IMAGE_NAME).hdd@@2M $(OUTPUT_DIR)/home/.moshrc ::/home/.moshrc
+	mcopy -i $(IMAGE_NAME).hdd@@2M $(OUTPUT_DIR)/home/hello.s ::/home/hello.s
 	if [ -f "$(OUTPUT_DIR)/bin/doom" ]; then \
 		mcopy -i $(IMAGE_NAME).hdd@@2M $(OUTPUT_DIR)/bin/doom ::/bin/doom; \
 	else \
@@ -1047,6 +1069,7 @@ $(BINUTILS_NATIVE_BUILD_DIR)/Makefile: sdk
 		ac_cv_func_isatty=yes \
 		ac_cv_func_strcspn=yes \
 		ac_cv_func_strspn=yes \
+		ac_cv_tls=none \
 		$(abspath $(BINUTILS_SRC_DIR))/configure \
 		  --host=x86_64-menios \
 		  --target=x86_64-menios \
