@@ -6,6 +6,7 @@
 #endif
 #include <stdint.h>
 #include <string.h>
+#include <strings.h>
 #include <types.h>
 
 #ifdef MENIOS_KERNEL
@@ -13,6 +14,20 @@
 
 static inline int memcpy_is_canonical(uintptr_t addr) {
   return ((addr >> 47) == 0ull) || ((addr >> 47) == 0x1ffffull);
+}
+#endif
+
+#ifndef MENIOS_KERNEL
+char* strerror(int errnum) {
+  switch(errnum) {
+    case EINVAL: return "Invalid argument";
+    case ENOMEM: return "Out of memory";
+    case ENOENT: return "No such file or directory";
+    case EIO:    return "Input/output error";
+    case EPERM:  return "Operation not permitted";
+    case EACCES: return "Permission denied";
+    default: return "Unknown error";
+  }
 }
 #endif
 
@@ -537,4 +552,19 @@ void* memchr(const void* ptr, int value, size_t count) {
   }
 
   return NULL;
+}
+
+int ffs(int value) {
+  unsigned int v = (unsigned int)value;
+  if(v == 0) {
+    return 0;
+  }
+
+  int index = 1;
+  while((v & 1u) == 0u) {
+    v >>= 1;
+    index++;
+  }
+
+  return index;
 }

@@ -31,13 +31,21 @@ int isdigit(int c) {
   return c >= '0' && c <= '9';
 }
 
+int islower(int c) {
+  return c >= 'a' && c <= 'z';
+}
+
+int isupper(int c) {
+  return c >= 'A' && c <= 'Z';
+}
+
 /**
  * Tests if a character is an alphabetic character
  * @param c The character to test (represented as an int)
  * @return Non-zero if the character is a letter (a-z or A-Z), zero otherwise
  */
 int isalpha(int c) {
-  return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z');
+  return islower(c) || isupper(c);
 }
 
 /**
@@ -58,6 +66,14 @@ int isalnum(int c) {
  */
 int isxdigit(int c) {
   return isdigit(c) || (c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F');
+}
+
+int iscntrl(int c) {
+  return (c >= 0 && c < 0x20) || c == 0x7f;
+}
+
+int ispunct(int c) {
+  return isprint(c) && !isalnum(c) && !isspace(c);
 }
 
 /**
