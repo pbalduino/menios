@@ -16,6 +16,7 @@ extern "C" {
 #define SYS_PIPE       22
 #define SYS_YIELD      24
 #define SYS_SLEEP      35
+#define SYS_GETPID     39
 #define SYS_DUP        32
 #define SYS_DUP2       33
 #define SYS_FORK       57

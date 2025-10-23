@@ -22,6 +22,7 @@ int dup2(int oldfd, int newfd);
 int pipe(int pipefd[2]);
 off_t lseek(int fd, off_t offset, int whence);
 pid_t fork(void);
+pid_t getpid(void);
 int execve(const char* path, char* const argv[], char* const envp[]);
 void _exit(int status) __attribute__((noreturn));
 int chdir(const char* path);
@@ -36,6 +37,7 @@ void *sbrk(intptr_t increment);
 int open(const char* path, int flags, ...);
 int unlink(const char* path);
 int rmdir(const char* path);
+int access(const char* path, int mode);
 
 #ifdef __cplusplus
 }

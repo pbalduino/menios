@@ -84,6 +84,7 @@ static uint64_t syscall_pipe_handler(syscall_frame_t* frame);
 static uint64_t syscall_dup_handler(syscall_frame_t* frame);
 static uint64_t syscall_dup2_handler(syscall_frame_t* frame);
 static uint64_t syscall_fork_handler(syscall_frame_t* frame);
+static uint64_t syscall_getpid_handler(syscall_frame_t* frame);
 static uint64_t syscall_execve_handler(syscall_frame_t* frame);
 static uint64_t syscall_yield_handler(syscall_frame_t* frame);
 static uint64_t syscall_sleep_handler(syscall_frame_t* frame);
@@ -708,6 +709,7 @@ void syscall_init(void) {
   syscall_register(SYS_DUP, syscall_dup_handler);
   syscall_register(SYS_DUP2, syscall_dup2_handler);
   syscall_register(SYS_FORK, syscall_fork_handler);
+  syscall_register(SYS_GETPID, syscall_getpid_handler);
   syscall_register(SYS_EXECVE, syscall_execve_handler);
   syscall_register(SYS_WAITPID, syscall_waitpid_handler);
   syscall_register(SYS_LISTDIR, syscall_listdir_handler);
@@ -1188,6 +1190,14 @@ static uint64_t syscall_fork_handler(syscall_frame_t* frame) {
   frame->rax = (uint64_t)child->pid;
   SYSCALL_TRACE("syscall_fork: returning child pid=%lu\n", frame->rax);
   return frame->rax;
+}
+
+static uint64_t syscall_getpid_handler(syscall_frame_t* frame) {
+  (void)frame;
+  if(current == NULL) {
+    return 0;
+  }
+  return (uint64_t)current->pid;
 }
 
 static uint64_t syscall_execve_handler(syscall_frame_t* frame) {

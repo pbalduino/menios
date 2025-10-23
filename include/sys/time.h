@@ -9,10 +9,13 @@ extern "C" {
 
 typedef long suseconds_t;
 
+#ifndef __timeval_defined
+#define __timeval_defined 1
 struct timeval {
   time_t      tv_sec;
   suseconds_t tv_usec;
 };
+#endif
 
 struct timezone {
   int tz_minuteswest;

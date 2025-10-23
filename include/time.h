@@ -12,6 +12,7 @@ extern "C" {
 #define CLOCKS_PER_SEC 1000000L
 
 typedef int clockid_t;
+typedef long long clock_t;
 
 #define CLOCK_REALTIME           0
 #define CLOCK_MONOTONIC          1
@@ -61,6 +62,7 @@ int usleep(useconds_t usec);
 int clock_gettime(clockid_t clk_id, struct timespec* tp);
 int clock_settime(clockid_t clk_id, const struct timespec* tp);
 int clock_getres(clockid_t clk_id, struct timespec* res);
+clock_t clock(void);
 int setitimer(int which, const struct itimerval* new_value, struct itimerval* old_value);
 int getitimer(int which, struct itimerval* value);
 void tzset(void);

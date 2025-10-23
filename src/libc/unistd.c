@@ -7,6 +7,7 @@
 #include <sys/errno.h>
 #include <sys/fcntl.h>
 #include <sys/ioctl.h>
+#include <sys/wait.h>
 #include <unistd.h>
 
 ssize_t read(int fd, void* buffer, size_t length) {
@@ -127,6 +128,32 @@ pid_t fork(void) {
   return (pid_t)rc;
 }
 
+pid_t getpid(void) {
+  long rc = __menios_syscall0(SYS_GETPID);
+  if(rc < 0) {
+    errno = (int)(-rc);
+    return (pid_t)-1;
+  }
+
+  errno = 0;
+  return (pid_t)rc;
+}
+
+pid_t waitpid(pid_t pid, int* status, int options) {
+  long rc = __menios_syscall3(SYS_WAITPID, (long)pid, (long)status, (long)options);
+  if(rc < 0) {
+    errno = (int)(-rc);
+    return (pid_t)-1;
+  }
+
+  errno = 0;
+  return (pid_t)rc;
+}
+
+pid_t wait(int* status) {
+  return waitpid((pid_t)-1, status, 0);
+}
+
 int execve(const char* path, char* const argv[], char* const envp[]) {
   long rc = __menios_syscall3(SYS_EXECVE, (long)path, (long)argv, (long)envp);
   if(rc < 0) {
@@ -182,6 +209,13 @@ int rmdir(const char* path) {
 
   errno = 0;
   return 0;
+}
+
+int access(const char* path, int mode) {
+  (void)path;
+  (void)mode;
+  errno = ENOSYS;
+  return -1;
 }
 
 int brk(void* addr) {

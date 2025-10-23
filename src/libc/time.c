@@ -1026,6 +1026,16 @@ int clock_gettime(clockid_t clk_id, struct timespec* tp) {
 #endif
 }
 
+clock_t clock(void) {
+  struct timespec ts;
+  if(clock_gettime(CLOCK_MONOTONIC, &ts) == 0) {
+    long long micros = (long long)ts.tv_sec * CLOCKS_PER_SEC + ts.tv_nsec / 1000;
+    return (clock_t)micros;
+  }
+  errno = ENOSYS;
+  return (clock_t)-1;
+}
+
 int clock_settime(clockid_t clk_id, const struct timespec* tp) {
   if(tp == NULL) {
 #ifndef MENIOS_KERNEL
