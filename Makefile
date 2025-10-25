@@ -92,10 +92,13 @@ PS_ELF = $(OBJDIR)/usermode/ps.elf
 MALLOC_STRESS_ELF = $(OBJDIR)/usermode/malloc_stress.elf
 MEM_ELF = $(OBJDIR)/usermode/mem.elf
 ALARM_DEMO_ELF = $(OBJDIR)/usermode/alarm_demo.elf
+TOUCH_ELF = $(OBJDIR)/usermode/touch.elf
 
-USER_PROGRAM_ELFS = $(MOSH_ELF) $(ECHO_ELF) $(CAT_ELF) $(ENV_ELF) $(TRUE_ELF) $(FALSE_ELF) $(LS_ELF) $(KILL_ELF) $(PS_ELF) $(MALLOC_STRESS_ELF) $(MEM_ELF) $(ALARM_DEMO_ELF)
-USERLAND_BINS = mosh echo cat env true false ls kill ps malloc_stress mem alarm_demo
+USER_PROGRAM_ELFS = $(MOSH_ELF) $(ECHO_ELF) $(CAT_ELF) $(ENV_ELF) $(TRUE_ELF) $(FALSE_ELF) $(LS_ELF) $(KILL_ELF) $(PS_ELF) $(MALLOC_STRESS_ELF) $(MEM_ELF) $(ALARM_DEMO_ELF) $(TOUCH_ELF)
+USERLAND_BINS = mosh echo cat env true false ls kill ps malloc_stress mem alarm_demo touch
 
+
+BINUTILS_TOOLS = as ld objdump nm ar ranlib
 
 ARCH_FLAGS := -march=x86-64
 
@@ -533,6 +536,14 @@ else
 	$(DOCKER) run --rm $(DOCKER_RUN_FLAGS) $(DOCKER_ENV) --mount type=bind,source=$$(pwd),target=/mnt $(DOCKER_IMAGE) /bin/sh -c "cd /mnt && make EXTRA_CFLAGS='$(EXTRA_CFLAGS)' $@"
 endif
 
+$(TOUCH_ELF): app/touch/touch.c | sdk
+ifeq ($(OS_NAME),linux)
+	@mkdir -p $(dir $@)
+	$(SDK_BIN_DIR)/menios-gcc $(EXTRA_CFLAGS) $< -o $@
+else
+	$(DOCKER) run --rm $(DOCKER_RUN_FLAGS) $(DOCKER_ENV) --mount type=bind,source=$$(pwd),target=/mnt $(DOCKER_IMAGE) /bin/sh -c "cd /mnt && make EXTRA_CFLAGS='$(EXTRA_CFLAGS)' $@"
+endif
+
 $(MALLOC_STRESS_ELF): app/malloc_stress/malloc_stress.c | sdk
 ifeq ($(OS_NAME),linux)
 	@mkdir -p $(dir $@)
@@ -636,15 +647,11 @@ ifeq ($(OS_NAME),linux)
 		done
 
 	@# Stage toolchain binaries for installer image when available
-	@if [ -f "$(SDK_BIN_DIR)/as" ]; then \
-		cp $(SDK_BIN_DIR)/as $(OUTPUT_DIR)/bin/as; \
-	fi
-	@if [ -f "$(SDK_BIN_DIR)/ld" ]; then \
-		cp $(SDK_BIN_DIR)/ld $(OUTPUT_DIR)/bin/ld; \
-	fi
-	@if [ -f "$(SDK_BIN_DIR)/ld.bfd" ]; then \
-		cp $(SDK_BIN_DIR)/ld.bfd $(OUTPUT_DIR)/bin/ld.bfd; \
-	fi
+	@for tool in $(BINUTILS_TOOLS); do \
+		if [ -f "$(SDK_BIN_DIR)/$$tool" ]; then \
+			cp $(SDK_BIN_DIR)/$$tool $(OUTPUT_DIR)/bin/$$tool; \
+		fi; \
+	done
 
 	@echo Building image
 	rm -f $(IMAGE_NAME).hdd
@@ -674,18 +681,15 @@ ifeq ($(OS_NAME),linux)
 	mcopy -i $(IMAGE_NAME).hdd@@2M $(OUTPUT_DIR)/bin/ls ::/bin/ls
 	mcopy -i $(IMAGE_NAME).hdd@@2M $(OUTPUT_DIR)/bin/kill ::/bin/kill
 	mcopy -i $(IMAGE_NAME).hdd@@2M $(OUTPUT_DIR)/bin/ps ::/bin/ps
-	mcopy -i $(IMAGE_NAME).hdd@@2M $(OUTPUT_DIR)/bin/malloc_stress ::/bin/malloc_stress
-	mcopy -i $(IMAGE_NAME).hdd@@2M $(OUTPUT_DIR)/bin/mem ::/bin/mem
-	mcopy -i $(IMAGE_NAME).hdd@@2M $(OUTPUT_DIR)/bin/alarm_demo ::/bin/alarm_demo
-	if [ -f "$(OUTPUT_DIR)/bin/as" ]; then \
-		mcopy -i $(IMAGE_NAME).hdd@@2M $(OUTPUT_DIR)/bin/as ::/bin/as; \
-	fi
-	if [ -f "$(OUTPUT_DIR)/bin/ld" ]; then \
-		mcopy -i $(IMAGE_NAME).hdd@@2M $(OUTPUT_DIR)/bin/ld ::/bin/ld; \
-	fi
-	if [ -f "$(OUTPUT_DIR)/bin/ld.bfd" ]; then \
-		mcopy -i $(IMAGE_NAME).hdd@@2M $(OUTPUT_DIR)/bin/ld.bfd ::/bin/ld.bfd; \
-	fi
+mcopy -i $(IMAGE_NAME).hdd@@2M $(OUTPUT_DIR)/bin/malloc_stress ::/bin/malloc_stress
+mcopy -i $(IMAGE_NAME).hdd@@2M $(OUTPUT_DIR)/bin/mem ::/bin/mem
+mcopy -i $(IMAGE_NAME).hdd@@2M $(OUTPUT_DIR)/bin/alarm_demo ::/bin/alarm_demo
+mcopy -i $(IMAGE_NAME).hdd@@2M $(OUTPUT_DIR)/bin/touch ::/bin/touch
+for tool in $(BINUTILS_TOOLS); do \
+	if [ -f "$(OUTPUT_DIR)/bin/$$tool" ]; then \
+		mcopy -i $(IMAGE_NAME).hdd@@2M $(OUTPUT_DIR)/bin/$$tool ::/bin/$$tool; \
+	fi; \
+done
 	mcopy -i $(IMAGE_NAME).hdd@@2M $(OUTPUT_DIR)/home/.moshrc ::/home/.moshrc
 	mcopy -i $(IMAGE_NAME).hdd@@2M $(OUTPUT_DIR)/home/hello.s ::/home/hello.s
 	if [ -f "$(OUTPUT_DIR)/bin/doom" ]; then \
