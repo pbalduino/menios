@@ -5,13 +5,6 @@
 #include <sys/stat.h>
 #include <utime.h>
 #include <stddef.h>
-#include <string.h>
-
-static void clear_stat_buffer(struct stat* buf) {
-  if(buf != NULL) {
-    memset(buf, 0, sizeof(*buf));
-  }
-}
 
 int mkdir(const char* path, mode_t mode) {
   long rc = __menios_syscall2(SYS_MKDIR, (long)path, (long)mode);
@@ -21,29 +14,40 @@ int mkdir(const char* path, mode_t mode) {
     return -1;
   }
 
-  errno = 0;
   return 0;
 }
 
 int fstat(int fd, struct stat* buf) {
-  (void)fd;
-  clear_stat_buffer(buf);
-  errno = ENOSYS;
-  return -1;
+  long rc = __menios_syscall2(SYS_FSTAT, (long)fd, (long)buf);
+
+  if(rc < 0) {
+    errno = (int)(-rc);
+    return -1;
+  }
+
+  return 0;
 }
 
 int stat(const char* path, struct stat* buf) {
-  (void)path;
-  clear_stat_buffer(buf);
-  errno = ENOSYS;
-  return -1;
+  long rc = __menios_syscall2(SYS_STAT, (long)path, (long)buf);
+
+  if(rc < 0) {
+    errno = (int)(-rc);
+    return -1;
+  }
+
+  return 0;
 }
 
 int lstat(const char* path, struct stat* buf) {
-  (void)path;
-  clear_stat_buffer(buf);
-  errno = ENOSYS;
-  return -1;
+  long rc = __menios_syscall2(SYS_LSTAT, (long)path, (long)buf);
+
+  if(rc < 0) {
+    errno = (int)(-rc);
+    return -1;
+  }
+
+  return 0;
 }
 
 int chmod(const char* path, mode_t mode) {

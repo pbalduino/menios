@@ -541,6 +541,10 @@ static bool fat32_directory_find_free_entries(fat32_fs_t* fs,
     return false;
   }
 
+  serial_printf("fat32_directory_find_free_entries: start_cluster=%u required=%u\n",
+                start_cluster,
+                required_entries);
+
   uint32_t cluster = start_cluster;
   uint32_t run_start_cluster = 0;
   uint32_t run_start_index = 0;
@@ -569,6 +573,11 @@ static bool fat32_directory_find_free_entries(fat32_fs_t* fs,
         run_length++;
 
         if(run_length >= required_entries) {
+          serial_printf("fat32_directory_find_free_entries: found cluster=%u index=%u length=%zu used_end=%s\n",
+                        run_start_cluster,
+                        run_start_index,
+                        run_length,
+                        run_used_end ? "yes" : "no");
           *out_cluster = run_start_cluster;
           *out_index = run_start_index;
           if(used_end_marker) {
@@ -783,7 +792,6 @@ static bool fat32_directory_sfn_exists(const fat32_fs_t* fs,
 
     const fat32_dir_entry_raw_t* entry = (const fat32_dir_entry_raw_t*)buffer;
     size_t entries_per_cluster = fs->cluster_size_bytes / sizeof(fat32_dir_entry_raw_t);
-
     for(size_t idx = 0; idx < entries_per_cluster; idx++, entry++) {
       if(entry->name[0] == 0x00u) {
         kfree(buffer);
@@ -1028,6 +1036,11 @@ static bool fat32_directory_write_entries(fat32_fs_t* fs,
   uint32_t index = start_index;
   size_t written = 0;
 
+  serial_printf("fat32_directory_write_entries: start_cluster=%u start_index=%u entries=%zu\n",
+                start_cluster,
+                start_index,
+                entry_count);
+
   while(written < entry_count && cluster >= 2u && cluster < fs->max_cluster_index) {
     if(!fat32_read_cluster(fs, cluster, buffer)) {
       kfree(buffer);
@@ -1040,6 +1053,11 @@ static bool fat32_directory_write_entries(fat32_fs_t* fs,
     while(written < entry_count && index < entries_per_cluster) {
       const uint8_t* src = raw_entries + written * sizeof(fat32_dir_entry_raw_t);
       memcpy(&entries[index], src, sizeof(fat32_dir_entry_raw_t));
+      serial_printf("fat32_directory_write_entries: writing entry idx=%u cluster=%u name=%.11s attr=0x%x\n",
+                    index,
+                    cluster,
+                    ((const fat32_dir_entry_raw_t*)src)->name,
+                    ((const fat32_dir_entry_raw_t*)src)->attr);
       written++;
       index++;
       dirty = true;
@@ -1085,6 +1103,9 @@ static bool fat32_directory_write_entries(fat32_fs_t* fs,
     }
     fat32_dir_entry_raw_t* entries = (fat32_dir_entry_raw_t*)buffer;
     memset(&entries[sentinel_index], 0, sizeof(fat32_dir_entry_raw_t));
+    serial_printf("fat32_directory_write_entries: restored end marker cluster=%u index=%u\n",
+                  sentinel_cluster,
+                  sentinel_index);
     if(!fat32_write_cluster(fs, sentinel_cluster, buffer)) {
       kfree(buffer);
       return false;
@@ -1322,6 +1343,11 @@ static bool fat32_iterate_directory(const fat32_fs_t* fs,
         public_entry.is_directory = info.is_directory;
         public_entry.size = info.size;
 
+        serial_printf("fat32_iterate_directory: entry=%s attr=0x%x size=%u\n",
+                      info.name,
+                      info.raw_entry.attr,
+                      info.size);
+
         if(!iter(&public_entry, context)) {
           result = true;
           goto cleanup;
@@ -1357,10 +1383,24 @@ static bool fat32_find_entry(const fat32_fs_t* fs,
     return false;
   }
   fat32_dir_entry_info_t tmp;
+  memset(&tmp, 0, sizeof(tmp));
+  serial_printf("fat32_find_entry: start_cluster=%u name=%s require_dir=%s\n",
+                start_cluster,
+                name ? name : "(null)",
+                require_directory ? "yes" : "no");
   if(!fat32_iterate_directory(fs, start_cluster, NULL, NULL, &tmp, name, require_directory)) {
+    serial_printf("fat32_find_entry: iterate failed\n");
     return false;
   }
+  serial_printf("fat32_find_entry: result name=%s is_dir=%d cluster=%u size=%u\n",
+                tmp.name, tmp.is_directory, tmp.first_cluster, tmp.size);
   if(tmp.name[0] == '\0') {
+    return false;
+  }
+  if(name != NULL && !fat32_equals_ignore_case(tmp.name, name)) {
+    serial_printf("fat32_find_entry: mismatch after lookup wanted=%s actual=%s\n",
+                  name ? name : "(null)",
+                  tmp.name);
     return false;
   }
   *out_info = tmp;
@@ -1759,26 +1799,41 @@ static bool fat32_create_entry(fat32_fs_t* fs,
   char parent[256];
   char name[256];
   if(!fat32_split_path(path, parent, sizeof(parent), name, sizeof(name))) {
+    serial_printf("fat32_create_entry: split failed path=%s\n", path);
     return false;
   }
 
   if(strcmp(name, ".") == 0 || strcmp(name, "..") == 0) {
+    serial_printf("fat32_create_entry: invalid name=%s\n", name);
     return false;
   }
 
   fat32_dir_entry_info_t dir_info;
   if(!fat32_traverse_path(fs, parent, &dir_info, true)) {
+    serial_printf("fat32_create_entry: parent missing path=%s parent=%s\n", path, parent);
     return false;
   }
+
+  serial_printf("fat32_create_entry: parent=%s dir_cluster=%u first_cluster=%u\n",
+                parent,
+                dir_info.dir_cluster,
+                dir_info.first_cluster);
 
   fat32_dir_entry_info_t existing;
   if(fat32_find_entry(fs, dir_info.first_cluster, name, &existing, false)) {
     if(exclusive) {
+      serial_printf("fat32_create_entry: entry exists path=%s\n", path);
       return false;
     }
     if(existing.is_directory != create_directory) {
+      serial_printf("fat32_create_entry: type mismatch path=%s\n", path);
       return false;
     }
+    serial_printf("fat32_create_entry: reusing existing entry path=%s\n", path);
+    if(out_info) {
+      *out_info = existing;
+    }
+    return true;
     if(out_info) {
       *out_info = existing;
     }
@@ -1788,6 +1843,7 @@ static bool fat32_create_entry(fat32_fs_t* fs,
   uint8_t sfn[11];
   bool requires_lfn = false;
   if(!fat32_generate_sfn(fs, dir_info.first_cluster, name, sfn, &requires_lfn)) {
+    serial_printf("fat32_create_entry: generate_sfn failed path=%s\n", path);
     return false;
   }
 
@@ -1804,6 +1860,7 @@ static bool fat32_create_entry(fat32_fs_t* fs,
                                         &entry_cluster,
                                         &entry_index,
                                         &used_end_marker)) {
+    serial_printf("fat32_create_entry: no free entries path=%s\n", path);
     return false;
   }
 
@@ -1816,11 +1873,13 @@ static bool fat32_create_entry(fat32_fs_t* fs,
   if(create_directory) {
     new_dir_cluster = fat32_allocate_cluster(fs);
     if(new_dir_cluster == 0) {
+      serial_printf("fat32_create_entry: allocate cluster failed path=%s\n", path);
       kfree(entry_bytes);
       return false;
     }
     if(!fat32_setup_directory_cluster(fs, new_dir_cluster, dir_info.first_cluster)) {
       fat32_set_fat_entry(fs, new_dir_cluster, 0);
+      serial_printf("fat32_create_entry: setup directory cluster failed path=%s\n", path);
       kfree(entry_bytes);
       return false;
     }
@@ -1865,16 +1924,21 @@ static bool fat32_create_entry(fat32_fs_t* fs,
     if(create_directory && new_dir_cluster != 0) {
       fat32_set_fat_entry(fs, new_dir_cluster, 0);
     }
+    serial_printf("fat32_create_entry: write entries failed path=%s\n", path);
     return false;
   }
 
   bool flush_ok = fat32_flush_fat(fs);
+  if(!flush_ok) {
+    serial_printf("fat32_create_entry: flush FAT failed path=%s\n", path);
+  }
 
   if(out_info) {
     fat32_dir_entry_info_t info;
     if(fat32_find_entry(fs, dir_info.first_cluster, name, &info, false)) {
       *out_info = info;
     } else {
+      serial_printf("fat32_create_entry: post lookup failed path=%s\n", path);
       memset(out_info, 0, sizeof(*out_info));
       strncpy(out_info->name, name, sizeof(out_info->name) - 1u);
       out_info->name[sizeof(out_info->name) - 1u] = '\0';
@@ -1886,6 +1950,9 @@ static bool fat32_create_entry(fat32_fs_t* fs,
     }
   }
 
+  serial_printf("fat32_create_entry: created path=%s attr=%s\n",
+                path,
+                create_directory ? "dir" : "file");
   return flush_ok;
 }
 
@@ -1910,7 +1977,6 @@ static bool fat32_directory_is_empty(fat32_fs_t* fs, uint32_t start_cluster) {
 
     const fat32_dir_entry_raw_t* entries = (const fat32_dir_entry_raw_t*)buffer;
     size_t entries_per_cluster = fs->cluster_size_bytes / sizeof(fat32_dir_entry_raw_t);
-
     for(size_t idx = 0; idx < entries_per_cluster; idx++) {
       const fat32_dir_entry_raw_t* entry = &entries[idx];
       uint8_t first = entry->name[0];
@@ -2671,13 +2737,56 @@ bool fs_file_stat(const fs_mount_t* mount, const char* path, size_t* out_size) {
   return true;
 }
 
+bool fs_path_info(const fs_mount_t* mount, const char* path, fs_path_info_t* out_info) {
+  if(mount == NULL || mount->type != FS_TYPE_FAT32 || out_info == NULL) {
+    return false;
+  }
+
+  const fat32_fs_t* fs = &mount->fat32;
+  const char* effective = path;
+  if(effective == NULL || effective[0] == '\0') {
+    effective = "/";
+  }
+
+  fat32_dir_entry_info_t info;
+  bool ok = fat32_traverse_path(fs, effective, &info, false);
+  if(!ok && effective[0] == '/' && effective[1] != '\0') {
+    ok = fat32_traverse_path(fs, effective + 1, &info, false);
+  }
+  if(!ok) {
+    return false;
+  }
+
+  memset(out_info, 0, sizeof(*out_info));
+  out_info->is_directory = info.is_directory;
+  out_info->size = info.size;
+  out_info->block_size = fs->cluster_size_bytes ? fs->cluster_size_bytes : fs->bytes_per_sector;
+  out_info->inode = info.first_cluster ? info.first_cluster
+                                       : (((uint64_t)info.dir_cluster << 32) | info.dir_entry_index);
+
+  if(info.raw_entry.attr != 0) {
+    out_info->is_read_only = (info.raw_entry.attr & 0x01u) != 0;
+  } else {
+    out_info->is_read_only = false;
+  }
+
+  return true;
+}
+
 bool fs_file_create(const fs_mount_t* mount, const char* path, bool exclusive) {
   if(mount == NULL || mount->type != FS_TYPE_FAT32 || path == NULL) {
     return false;
   }
 
   fat32_fs_t* fs = (fat32_fs_t*)&mount->fat32;
-  return fat32_create_entry(fs, path, exclusive, false, NULL);
+  serial_printf("fs_file_create: path=%s exclusive=%s\n",
+                path ? path : "(null)",
+                exclusive ? "yes" : "no");
+  bool ok = fat32_create_entry(fs, path, exclusive, false, NULL);
+  serial_printf("fs_file_create: result=%s path=%s\n",
+                ok ? "ok" : "fail",
+                path ? path : "(null)");
+  return ok;
 }
 
 typedef struct {
@@ -2708,6 +2817,10 @@ static file_t* fat32_stream_create(fat32_fs_t* fs,
   stream->info = *info;
   stream->position = 0;
   stream->flags = flags;
+
+  if((flags & O_APPEND) != 0) {
+    stream->position = stream->info.size;
+  }
 
   int accmode = flags & O_ACCMODE;
   bool readable = (accmode == O_RDONLY || accmode == O_RDWR);
@@ -2869,6 +2982,36 @@ static int64_t fat32_stream_seek(file_t* file, int64_t offset, int whence) {
   return new_pos;
 }
 
+static int fat32_stream_stat(file_t* file, struct stat* out_stat) {
+  if(file == NULL || out_stat == NULL) {
+    return -EINVAL;
+  }
+
+  fat32_stream_t* stream = (fat32_stream_t*)file->private_data;
+  if(stream == NULL || stream->fs == NULL) {
+    return -EINVAL;
+  }
+
+  fs_path_info_t info;
+  memset(&info, 0, sizeof(info));
+  info.is_directory = stream->info.is_directory;
+  info.is_read_only = (stream->info.raw_entry.attr & 0x01u) != 0;
+  info.block_size = stream->fs->cluster_size_bytes ? stream->fs->cluster_size_bytes
+                                                   : stream->fs->bytes_per_sector;
+  if(info.block_size == 0) {
+    info.block_size = 512;
+  }
+  info.size = stream->info.size;
+  if(stream->info.first_cluster != 0) {
+    info.inode = stream->info.first_cluster;
+  } else {
+    info.inode = ((uint64_t)stream->info.dir_cluster << 32) | stream->info.dir_entry_index;
+  }
+
+  fs_path_info_to_stat(&info, out_stat);
+  return 0;
+}
+
 static int fat32_stream_close(file_t* file) {
   if(file == NULL) {
     return 0;
@@ -2888,6 +3031,7 @@ static const file_ops_t fat32_stream_file_ops = {
   .seek = fat32_stream_seek,
   .ioctl = NULL,
   .mmap = NULL,
+  .stat = fat32_stream_stat,
 };
 
 int fat32_open_adapter(void* fs_ctx, const char* path, int flags, file_t** out_file) {
@@ -2903,6 +3047,14 @@ int fat32_open_adapter(void* fs_ctx, const char* path, int flags, file_t** out_f
   fs_mount_t* mount = (fs_mount_t*)fs_ctx;
   fat32_fs_t* fs = &mount->fat32;
 
+  int accmode = flags & O_ACCMODE;
+  bool wants_write = (accmode == O_WRONLY || accmode == O_RDWR);
+  bool wants_metadata = (flags & (O_CREAT | O_TRUNC)) != 0;
+
+  if(wants_write || wants_metadata) {
+    return -ENOSYS;
+  }
+
   fat32_dir_entry_info_t info;
   bool ok = fat32_traverse_path(fs, path, &info, false);
   if(!ok && path[0] == '/' && path[1] != '\0') {
@@ -2913,13 +3065,12 @@ int fat32_open_adapter(void* fs_ctx, const char* path, int flags, file_t** out_f
   }
 
   if(info.is_directory) {
+    serial_printf("fat32_open_adapter: path=%s name=%s attr=0x%x is_directory=%d\n",
+                  path,
+                  info.name,
+                  info.raw_entry.attr,
+                  info.is_directory);
     return -EISDIR;
-  }
-
-  int accmode = flags & O_ACCMODE;
-  bool writable = (accmode == O_WRONLY || accmode == O_RDWR);
-  if(writable || (flags & (O_CREAT | O_TRUNC))) {
-    return -ENOSYS;
   }
 
   file_t* file = fat32_stream_create(fs, &info, flags);

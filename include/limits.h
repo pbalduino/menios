@@ -30,6 +30,10 @@ extern "C" {
 #define LLONG_MAX   9223372036854775807LL
 #define ULLONG_MAX  18446744073709551615ULL
 
+#ifndef PATH_MAX
+#define PATH_MAX 256
+#endif
+
 #ifdef __cplusplus
 }
 #endif

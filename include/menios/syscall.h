@@ -58,6 +58,9 @@ extern "C" {
 #define SYS_SIGPENDING    96
 #define SYS_SIGWAITINFO   97
 #define SYS_SIGSUSPEND    98
+#define SYS_STAT           99
+#define SYS_FSTAT         100
+#define SYS_LSTAT         101
 
 #ifdef __cplusplus
 }

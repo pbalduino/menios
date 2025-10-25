@@ -21,6 +21,7 @@
 #include <sys/fcntl.h>
 #include <sys/shm.h>
 #include <sys/time.h>
+#include <sys/stat.h>
 #include <time.h>
 #include <limits.h>
 #include <sys/wait.h>
@@ -77,6 +78,9 @@ static uint64_t syscall_read_handler(syscall_frame_t* frame);
 static uint64_t syscall_write_handler(syscall_frame_t* frame);
 static uint64_t syscall_close_handler(syscall_frame_t* frame);
 static uint64_t syscall_open_handler(syscall_frame_t* frame);
+static uint64_t syscall_stat_handler(syscall_frame_t* frame);
+static uint64_t syscall_fstat_handler(syscall_frame_t* frame);
+static uint64_t syscall_lstat_handler(syscall_frame_t* frame);
 static uint64_t syscall_lseek_handler(syscall_frame_t* frame);
 static uint64_t syscall_mmap_handler(syscall_frame_t* frame);
 static uint64_t syscall_munmap_handler(syscall_frame_t* frame);
@@ -701,6 +705,9 @@ void syscall_init(void) {
   syscall_register(SYS_READ, syscall_read_handler);
   syscall_register(SYS_WRITE, syscall_write_handler);
   syscall_register(SYS_OPEN, syscall_open_handler);
+  syscall_register(SYS_STAT, syscall_stat_handler);
+  syscall_register(SYS_FSTAT, syscall_fstat_handler);
+  syscall_register(SYS_LSTAT, syscall_lstat_handler);
   syscall_register(SYS_CLOSE, syscall_close_handler);
   syscall_register(SYS_LSEEK, syscall_lseek_handler);
   syscall_register(SYS_MMAP, syscall_mmap_handler);
@@ -920,6 +927,94 @@ static uint64_t syscall_open_handler(syscall_frame_t* frame) {
   }
 
   frame->rax = (uint64_t)fd;
+  return frame->rax;
+}
+
+static int kernel_stat_copy_to_user(const char* user_path, struct stat* user_buf) {
+  if(user_path == NULL || user_buf == NULL) {
+    return -EFAULT;
+  }
+  if(current == NULL) {
+    return -EINVAL;
+  }
+
+  char path[SYSCALL_PATH_MAX];
+  if(!copy_user_string(user_path, path, sizeof(path))) {
+    return -EFAULT;
+  }
+
+  char absolute[VFS_PATH_MAX];
+  if(!vfs_build_absolute_path(current->cwd, path, absolute, sizeof(absolute))) {
+    return -ENAMETOOLONG;
+  }
+
+  fs_path_info_t info;
+  if(!vfs_path_info(absolute, &info)) {
+    return -ENOENT;
+  }
+
+  struct stat kstat;
+  fs_path_info_to_stat(&info, &kstat);
+
+  if(!proc_user_buffer_accessible(current, user_buf, sizeof(struct stat))) {
+    return -EFAULT;
+  }
+
+  memcpy(user_buf, &kstat, sizeof(struct stat));
+  return 0;
+}
+
+static uint64_t syscall_stat_handler(syscall_frame_t* frame) {
+  int rc = kernel_stat_copy_to_user((const char*)frame->rdi, (struct stat*)frame->rsi);
+  frame->rax = (uint64_t)rc;
+  return frame->rax;
+}
+
+static uint64_t syscall_lstat_handler(syscall_frame_t* frame) {
+  int rc = kernel_stat_copy_to_user((const char*)frame->rdi, (struct stat*)frame->rsi);
+  frame->rax = (uint64_t)rc;
+  return frame->rax;
+}
+
+static uint64_t syscall_fstat_handler(syscall_frame_t* frame) {
+  if(current == NULL) {
+    frame->rax = (uint64_t)(-EINVAL);
+    return frame->rax;
+  }
+
+  int fd = (int)frame->rdi;
+  struct stat* user_buf = (struct stat*)frame->rsi;
+  if(user_buf == NULL) {
+    frame->rax = (uint64_t)(-EFAULT);
+    return frame->rax;
+  }
+
+  file_t* file = proc_file_get(current, fd, NULL);
+  if(file == NULL) {
+    int err = current->err_no ? current->err_no : EBADF;
+    frame->rax = (uint64_t)(-err);
+    return frame->rax;
+  }
+
+  struct stat kstat;
+  int rc = -ENOSYS;
+  if(file->ops != NULL && file->ops->stat != NULL) {
+    rc = file->ops->stat(file, &kstat);
+  }
+  file_unref(file);
+
+  if(rc < 0) {
+    frame->rax = (uint64_t)rc;
+    return frame->rax;
+  }
+
+  if(!proc_user_buffer_accessible(current, user_buf, sizeof(struct stat))) {
+    frame->rax = (uint64_t)(-EFAULT);
+    return frame->rax;
+  }
+
+  memcpy(user_buf, &kstat, sizeof(struct stat));
+  frame->rax = 0;
   return frame->rax;
 }
 

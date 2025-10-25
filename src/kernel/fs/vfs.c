@@ -38,6 +38,8 @@ typedef struct vfs_file_buffer_t {
   bool                   writable;
   bool                   streaming;
   bool                   size_known;
+  bool                   info_valid;
+  fs_path_info_t         info;
   const vfs_fs_driver_t* driver;
   void*                  fs_ctx;
   char                   relative[VFS_PATH_MAX];
@@ -45,6 +47,12 @@ typedef struct vfs_file_buffer_t {
 
 static const file_ops_t vfs_file_ops;
 static bool vfs_stream_refresh_size(vfs_file_buffer_t* ctx);
+static bool vfs_resolve(const char* path,
+                        const vfs_fs_driver_t** driver_out,
+                        void** fs_ctx_out,
+                        char* relative,
+                        size_t relative_size,
+                        bool* read_only_out);
 
 static vfs_mount_entry_t* vfs_mounts = NULL;
 static kmutex_t           vfs_lock;
@@ -189,6 +197,41 @@ static bool vfs_normalize_path(const char* path, char* out, size_t out_size, siz
   if(out_len) {
     *out_len = strlen(out);
   }
+  return true;
+}
+
+bool vfs_path_info(const char* path, fs_path_info_t* out_info) {
+  const vfs_fs_driver_t* driver = NULL;
+  void* fs_ctx = NULL;
+  char relative[VFS_PATH_MAX];
+  bool read_only = true;
+
+  if(path == NULL || out_info == NULL) {
+    return false;
+  }
+
+  if(!vfs_resolve(path, &driver, &fs_ctx, relative, sizeof(relative), &read_only)) {
+    return false;
+  }
+
+  if(driver->stat == NULL) {
+    return false;
+  }
+
+  if(!driver->stat(fs_ctx, relative, out_info)) {
+    if(relative[0] == '/' && relative[1] != '\0') {
+      if(!driver->stat(fs_ctx, relative + 1, out_info)) {
+        return false;
+      }
+    } else {
+      return false;
+    }
+  }
+
+  if(read_only) {
+    out_info->is_read_only = true;
+  }
+
   return true;
 }
 
@@ -539,7 +582,46 @@ static int64_t vfs_file_write_impl(file_t* file, const void* buffer, size_t leng
     ctx->size = ctx->offset;
   }
   ctx->dirty = true;
+  ctx->info_valid = false;
   return (int64_t)length;
+}
+
+static int vfs_file_stat_impl(file_t* file, struct stat* out_stat) {
+  if(file == NULL || out_stat == NULL) {
+    return -EINVAL;
+  }
+
+  vfs_file_buffer_t* ctx = (vfs_file_buffer_t*)file->private_data;
+  if(ctx == NULL) {
+    return -EINVAL;
+  }
+
+  fs_path_info_t info;
+  if(ctx->info_valid) {
+    info = ctx->info;
+  } else if(ctx->driver && ctx->driver->stat &&
+            ctx->driver->stat(ctx->fs_ctx, ctx->relative, &info)) {
+    ctx->info = info;
+    ctx->info_valid = true;
+  } else {
+    memset(&info, 0, sizeof(info));
+    info.is_directory = false;
+    info.is_read_only = !ctx->writable;
+    info.block_size = ctx->info.block_size ? ctx->info.block_size : 512;
+    info.size = ctx->size_known ? ctx->size : 0;
+    info.inode = ctx->info.inode;
+  }
+
+  if(ctx->size_known && info.size < ctx->size) {
+    info.size = ctx->size;
+  }
+
+  if(info.block_size == 0) {
+    info.block_size = 512;
+  }
+
+  fs_path_info_to_stat(&info, out_stat);
+  return 0;
 }
 
 static int vfs_file_close_impl(file_t* file) {
@@ -625,6 +707,7 @@ static const file_ops_t vfs_file_ops = {
   .seek = vfs_file_seek_impl,
   .ioctl = NULL,
   .mmap = NULL,
+  .stat = vfs_file_stat_impl,
 };
 
 static int vfs_open_buffered(const vfs_fs_driver_t* driver,
@@ -668,8 +751,10 @@ static int vfs_open_buffered(const vfs_fs_driver_t* driver,
     }
     bool exclusive = (flags & O_EXCL) != 0;
     if(!driver->create_file(fs_ctx, relative_path, exclusive)) {
+      serial_printf("vfs_open: create failed path=%s flags=0x%x\n", relative_path, flags);
       return exclusive ? -EEXIST : -EIO;
     }
+    serial_printf("vfs_open: create succeeded path=%s\n", relative_path);
   } else if(flags & O_EXCL) {
     return -EINVAL;
   }
@@ -685,13 +770,24 @@ static int vfs_open_buffered(const vfs_fs_driver_t* driver,
 
   size_t file_size = 0;
   bool size_known = false;
+  bool info_valid = false;
+  fs_path_info_t path_info;
+  memset(&path_info, 0, sizeof(path_info));
 
   if(streaming) {
     if((flags & O_TRUNC) || (flags & O_CREAT)) {
       file_size = 0;
       size_known = true;
-    } else if(driver->stat && driver->stat(fs_ctx, relative_path, &file_size)) {
+      info_valid = true;
+      path_info.is_directory = false;
+      path_info.is_read_only = !writable;
+      path_info.block_size = 512;
+      path_info.size = 0;
+      path_info.inode = 0;
+    } else if(driver->stat && driver->stat(fs_ctx, relative_path, &path_info)) {
+      file_size = (size_t)path_info.size;
       size_known = true;
+      info_valid = true;
     } else if(driver->read_all != NULL && !metadata_mutation) {
       void* tmp = NULL;
       size_t tmp_size = 0;
@@ -717,8 +813,14 @@ static int vfs_open_buffered(const vfs_fs_driver_t* driver,
     ctx->offset = 0;
     ctx->dirty = false;
     ctx->writable = writable;
-    ctx->streaming = true;
+  	ctx->streaming = true;
     ctx->size_known = size_known;
+    ctx->info_valid = info_valid;
+    if(info_valid) {
+      ctx->info = path_info;
+    } else {
+      memset(&ctx->info, 0, sizeof(ctx->info));
+    }
     ctx->driver = driver;
     ctx->fs_ctx = fs_ctx;
     strncpy(ctx->relative, relative_path, sizeof(ctx->relative) - 1);
@@ -783,6 +885,13 @@ static int vfs_open_buffered(const vfs_fs_driver_t* driver,
   ctx->writable = writable;
   ctx->streaming = false;
   ctx->size_known = true;
+  if(driver->stat && driver->stat(fs_ctx, relative_path, &path_info)) {
+    ctx->info = path_info;
+    ctx->info_valid = true;
+  } else {
+    ctx->info_valid = false;
+    memset(&ctx->info, 0, sizeof(ctx->info));
+  }
   ctx->driver = driver;
   ctx->fs_ctx = fs_ctx;
   strncpy(ctx->relative, relative_path, sizeof(ctx->relative) - 1);
@@ -823,12 +932,21 @@ int vfs_open(const char* path, int flags, file_t** out_file) {
 
   bool read_only = true;
   if(!vfs_resolve(path, &driver, &fs_ctx, relative, sizeof(relative), &read_only)) {
+    serial_printf("vfs_open: resolve failed path=%s\n", path ? path : "(null)");
     return -ENOENT;
   }
 
   if(driver->open) {
     int rc = driver->open(fs_ctx, relative, flags, out_file);
     if(rc != -ENOSYS) {
+      if(rc < 0) {
+        serial_printf("vfs_open: driver open failed path=%s relative=%s flags=0x%x rc=%d read_only=%s\n",
+                      path,
+                      relative,
+                      flags,
+                      rc,
+                      read_only ? "yes" : "no");
+      }
       return rc;
     }
   }
@@ -837,7 +955,16 @@ int vfs_open(const char* path, int flags, file_t** out_file) {
     return -ENOSYS;
   }
 
-  return vfs_open_buffered(driver, fs_ctx, relative, flags, read_only, out_file);
+  int buffered = vfs_open_buffered(driver, fs_ctx, relative, flags, read_only, out_file);
+  if(buffered < 0) {
+    serial_printf("vfs_open: buffered failed path=%s relative=%s flags=0x%x rc=%d read_only=%s\n",
+                  path,
+                  relative,
+                  flags,
+                  buffered,
+                  read_only ? "yes" : "no");
+  }
+  return buffered;
 }
 
 int vfs_unlink(const char* path) {
@@ -984,6 +1111,10 @@ bool vfs_path_is_directory(const char* path) {
   if(path == NULL) {
     return false;
   }
+  fs_path_info_t info;
+  if(vfs_path_info(path, &info)) {
+    return info.is_directory;
+  }
   return vfs_list(path, vfs_directory_probe_iter, NULL);
 }
 
@@ -1045,13 +1176,16 @@ static bool fat32_write_all_adapter(void* fs_ctx, const char* path, const void* 
   return ok;
 }
 
-static bool fat32_stat_adapter(void* fs_ctx, const char* path, size_t* out_size) {
+static bool fat32_stat_adapter(void* fs_ctx, const char* path, fs_path_info_t* out_info) {
   const fs_mount_t* mount = (const fs_mount_t*)fs_ctx;
-  if(fs_file_stat(mount, path, out_size)) {
+  if(mount == NULL || out_info == NULL) {
+    return false;
+  }
+  if(fs_path_info(mount, path, out_info)) {
     return true;
   }
   if(path != NULL && path[0] == '/' && path[1] != '\0') {
-    return fs_file_stat(mount, path + 1, out_size);
+    return fs_path_info(mount, path + 1, out_info);
   }
   return false;
 }
@@ -1061,9 +1195,14 @@ static bool fat32_create_file_adapter(void* fs_ctx, const char* path, bool exclu
   if(mount == NULL) {
     return false;
   }
+  serial_printf("fat32_create_file_adapter: path=%s exclusive=%s\n",
+                path ? path : "(null)",
+                exclusive ? "yes" : "no");
   if(fs_file_create(mount, path, exclusive)) {
+    serial_printf("fat32_create_file_adapter: created %s\n", path ? path : "(null)");
     return true;
   }
+  serial_printf("fat32_create_file_adapter: failed path=%s\n", path ? path : "(null)");
   if(path != NULL && path[0] == '/' && path[1] != '\0') {
     return fs_file_create(mount, path + 1, exclusive);
   }
@@ -1109,10 +1248,13 @@ static bool vfs_stream_refresh_size(vfs_file_buffer_t* ctx) {
   if(ctx == NULL || !ctx->streaming || ctx->driver == NULL || ctx->driver->stat == NULL) {
     return false;
   }
-  size_t new_size = 0;
-  if(ctx->driver->stat(ctx->fs_ctx, ctx->relative, &new_size)) {
-    ctx->size = new_size;
+
+  fs_path_info_t info;
+  if(ctx->driver->stat(ctx->fs_ctx, ctx->relative, &info)) {
+    ctx->size = (size_t)info.size;
     ctx->size_known = true;
+    ctx->info = info;
+    ctx->info_valid = true;
     return true;
   }
   return false;

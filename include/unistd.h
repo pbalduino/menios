@@ -8,6 +8,23 @@ extern "C" {
 #include <types.h>
 #include <sys/types.h>
 
+#ifndef F_OK
+#define F_OK 0
+#endif
+#ifndef R_OK
+#define R_OK 4
+#endif
+#ifndef W_OK
+#define W_OK 2
+#endif
+#ifndef X_OK
+#define X_OK 1
+#endif
+
+#ifndef _PC_PATH_MAX
+#define _PC_PATH_MAX 1
+#endif
+
 typedef long ssize_t;
 
 #define SEEK_SET 0
@@ -41,6 +58,7 @@ int unlink(const char* path);
 int rmdir(const char* path);
 int access(const char* path, int mode);
 int isatty(int fd);
+long pathconf(const char* path, int name);
 
 #ifdef __cplusplus
 }

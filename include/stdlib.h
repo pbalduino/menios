@@ -77,6 +77,7 @@ void* bsearch(const void* key, const void* base, size_t nmemb, size_t size, int 
 void exit(int) __dead2;
 void abort(void) __dead2;
 int atexit(void (*func)(void));
+char* realpath(const char* path, char* resolved_path);
 
 extern char** environ;
 char* getenv(const char* name);
