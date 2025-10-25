@@ -157,6 +157,20 @@ promise.  Below is a summary of the calls that ship in meniOS v0.1.0.
 - **`SYS_GETCWD` (79)** — `char *getcwd(char *buf, size_t size);`
   Copies the current working directory into user memory.  The return value is
   the provided buffer pointer on success.
+- **`SYS_STAT` (89)** — `int stat(const char *path, struct stat *buf);`
+  Retrieves file metadata for the given path.  Follows symbolic links.  Returns
+  zero on success or `-ENOENT` if the path does not exist, `-EFAULT` if `buf`
+  is inaccessible, or `-ENOSYS` for pseudo-filesystems that don't yet expose
+  metadata (tmpfs, procfs, devfs, pipes).  Currently only FAT32 returns full
+  metadata; other filesystems are in progress.
+- **`SYS_LSTAT` (90)** — `int lstat(const char *path, struct stat *buf);`
+  Like `SYS_STAT` but does not follow symbolic links.  Since symbolic links are
+  not yet implemented, this currently behaves identically to `SYS_STAT`.
+- **`SYS_FSTAT` (91)** — `int fstat(int fd, struct stat *buf);`
+  Retrieves file metadata for an open file descriptor.  Returns zero on success
+  or `-EBADF` if the descriptor is invalid, `-EFAULT` if `buf` is inaccessible,
+  or `-ENOSYS` if the underlying filesystem driver does not implement the
+  `.stat` operation.  The VFS caches metadata at open time when available.
 
 ### Terminal helpers
 
@@ -233,6 +247,55 @@ void *anon_page(void) {
   return (void*)rax;
 }
 ```
+
+## Implementation details
+
+### File metadata (stat family)
+
+The `SYS_STAT`, `SYS_LSTAT`, and `SYS_FSTAT` syscalls were added to expose
+filesystem metadata to userland.  The implementation spans kernel, VFS, and
+individual filesystem drivers:
+
+**Kernel infrastructure** (`include/kernel/fs.h:24`, `src/kernel/fs/fat32.c:2721`):
+- `struct fs_path_info` — uniform descriptor for file metadata (size,
+  permissions, timestamps, file type)
+- `fs_path_info_to_stat()` — helper to convert `fs_path_info` to POSIX
+  `struct stat`
+
+**VFS integration** (`include/kernel/vfs.h:21`, `src/kernel/fs/vfs.c:203`):
+- `vfs_path_info()` — query function to retrieve metadata for a path
+- `.stat` callback in `file_ops` — allows drivers to report metadata for open
+  file descriptors
+- VFS caches `fs_path_info` when opening files for efficient `fstat()` queries
+
+**Syscall handlers** (`include/menios/syscall.h:40`,
+`src/kernel/syscall/syscall.c:933`):
+- `SYS_STAT` / `SYS_LSTAT` — resolve absolute path, call `vfs_path_info()`,
+  convert to `struct stat`, copy to userspace
+- `SYS_FSTAT` — validate file descriptor, retrieve cached metadata or invoke
+  driver's `.stat` callback, copy to userspace
+
+**Driver support**:
+- **FAT32** — full implementation; parses directory entries for size and
+  read-only flag. Timestamps, DOS attributes (beyond read-only), and long name
+  metadata are not yet parsed. Permissions are hard-coded (0644 for files,
+  0755 for directories).
+- **tmpfs, procfs, devfs, pipes, console devices** — `.stat = NULL`; all stat
+  queries return `-ENOSYS`. These drivers need to be extended to report
+  metadata.
+
+**Libc wrappers** (`src/libc/stat.c:20`, `src/libc/unistd.c:325`,
+`user/libc/realpath.c:1`):
+- `stat()`, `lstat()`, `fstat()` — delegate to corresponding syscalls
+- `access()` — uses `stat()` to check real mode bits for accessibility
+- `realpath()` — canonicalizes paths and verifies existence with `stat()`
+- `pathconf()` — partially implemented; only `_PC_PATH_MAX` supported (all
+  other queries return `-ENOSYS`)
+
+**Known limitations** (tracked in issue #364):
+- Pseudo-filesystems lack metadata support
+- FAT32 metadata is skeletal (size + read-only only)
+- File mutation syscalls (`chmod`, `utime`) remain stubs
 
 ## Compatibility notes
 
