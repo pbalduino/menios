@@ -11,6 +11,8 @@
 - Virtual file system with FAT32 read/write, block cache, and `/dev` nodes (`null`, `zero`, `tty0`, `fb0`).
 - Mosh interactive shell (history, completion, job control) plus a small `/bin`.
 - doomgeneric port bundled as a userland game target.
+- Vendored [Tiny C Compiler (TCC) 0.9.24](https://bellard.org/tcc/) under `vendor/tcc-0.9.24/`.
+- Vendored [GNU binutils 2.45](https://www.gnu.org/software/binutils/) under `vendor/binutils-2.45/` for native assembler/linker work.
 
 ## Goals
 

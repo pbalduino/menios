@@ -15,6 +15,7 @@ struct cpu_state_t;
 typedef struct proc_info_t* proc_info_p;
 
 #define SIG_MAX 32
+#define SIGNAL_ALLOWED_MASK ((SIG_MAX >= 32) ? 0x7FFFFFFFu : ((1u << (SIG_MAX - 1)) - 1u))
 
 static inline uint32_t sigbit(int signo) {
   if(signo <= 0 || signo >= SIG_MAX) {
@@ -29,6 +30,7 @@ void proc_signal_set_blocked(proc_info_p proc, uint32_t mask);
 void proc_signal_enqueue(proc_info_p proc, int signo);
 bool proc_signal_pending(proc_info_p proc);
 int  proc_signal_dequeue(proc_info_p proc);
+bool proc_signal_has_unblocked(proc_info_p proc);
 typedef enum {
   PROC_SIGNAL_DELIVERY_NONE = 0,
   PROC_SIGNAL_DELIVERY_HANDLED,
@@ -47,6 +49,7 @@ int  proc_signal_modify_mask(proc_info_p proc,
                              uint32_t mask,
                              uint32_t* old_mask);
 int  proc_signal_send(proc_info_p proc, int signo);
+int  proc_signal_take_pending(proc_info_p proc, uint32_t mask, siginfo_t* info);
 
 #ifdef __cplusplus
 }

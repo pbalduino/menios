@@ -160,6 +160,7 @@ static const file_ops_t procfs_file_ops = {
   .seek = NULL,
   .ioctl = NULL,
   .mmap = NULL,
+  .stat = NULL,
 };
 
 static int procfs_open(void* fs_ctx, const char* path, int flags, file_t** out_file) {

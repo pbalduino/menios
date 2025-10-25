@@ -1,19 +1,188 @@
 [
   {
-    "title": "Create PNP0A08 PCI host bridge driver",
+    "title": "Implement descriptor multiplexing (select, poll, epoll)",
     "github_issue": {
-      "number": 335,
-      "url": "https://github.com/pbalduino/menios/issues/335",
-      "state": "CLOSED"
+      "number": 348,
+      "url": "https://github.com/pbalduino/menios/issues/348",
+      "state": "OPEN"
     },
     "labels": [
-      "enhancement",
-      "drivers",
-      "kernel"
+      "kernel",
+      "libc"
     ],
     "assignees": [
       "pbalduino"
     ]
+  },
+  {
+    "title": "Implement TTY helper functions (ttyname, isatty, ctermid)",
+    "github_issue": {
+      "number": 347,
+      "url": "https://github.com/pbalduino/menios/issues/347",
+      "state": "OPEN"
+    },
+    "labels": [
+      "libc"
+    ],
+    "assignees": [
+      "pbalduino"
+    ]
+  },
+  {
+    "title": "Implement dynamic loader (dlopen, dlsym, dlclose)",
+    "github_issue": {
+      "number": 346,
+      "url": "https://github.com/pbalduino/menios/issues/346",
+      "state": "OPEN"
+    },
+    "labels": [
+      "nice to have",
+      "kernel",
+      "libc"
+    ],
+    "assignees": [
+      "pbalduino"
+    ]
+  },
+  {
+    "title": "Implement regex and POSIX pattern matching",
+    "github_issue": {
+      "number": 345,
+      "url": "https://github.com/pbalduino/menios/issues/345",
+      "state": "OPEN"
+    },
+    "labels": [
+      "libc"
+    ],
+    "assignees": [
+      "pbalduino"
+    ]
+  },
+  {
+    "title": "Implement extended math library functions",
+    "github_issue": {
+      "number": 344,
+      "url": "https://github.com/pbalduino/menios/issues/344",
+      "state": "OPEN"
+    },
+    "labels": [
+      "libc"
+    ],
+    "assignees": [
+      "pbalduino"
+    ]
+  },
+  {
+    "title": "Implement wide-character and multibyte string support",
+    "github_issue": {
+      "number": 343,
+      "url": "https://github.com/pbalduino/menios/issues/343",
+      "state": "OPEN"
+    },
+    "labels": [
+      "nice to have",
+      "libc"
+    ],
+    "assignees": [
+      "pbalduino"
+    ]
+  },
+  {
+    "title": "Implement locale and internationalization support",
+    "github_issue": {
+      "number": 342,
+      "url": "https://github.com/pbalduino/menios/issues/342",
+      "state": "OPEN"
+    },
+    "labels": [
+      "nice to have",
+      "libc"
+    ],
+    "assignees": [
+      "pbalduino"
+    ]
+  },
+  {
+    "title": "Implement socket and networking API",
+    "github_issue": {
+      "number": 341,
+      "url": "https://github.com/pbalduino/menios/issues/341",
+      "state": "OPEN"
+    },
+    "labels": [
+      "nice to have",
+      "libc"
+    ],
+    "assignees": [
+      "pbalduino"
+    ]
+  },
+  {
+    "title": "Implement extended stdio functions (popen, tmpfile, setvbuf)",
+    "github_issue": {
+      "number": 340,
+      "url": "https://github.com/pbalduino/menios/issues/340",
+      "state": "OPEN"
+    },
+    "labels": [
+      "libc"
+    ],
+    "assignees": [
+      "pbalduino"
+    ]
+  },
+  {
+    "title": "Implement thread-safe libc with proper locking",
+    "github_issue": {
+      "number": 339,
+      "url": "https://github.com/pbalduino/menios/issues/339",
+      "state": "OPEN"
+    },
+    "labels": [
+      "libc"
+    ],
+    "assignees": [
+      "pbalduino"
+    ]
+  },
+  {
+    "title": "Implement floating-point parsing and math helpers (strtod, ldexp)",
+    "github_issue": {
+      "number": 338,
+      "url": "https://github.com/pbalduino/menios/issues/338",
+      "state": "CLOSED"
+    },
+    "labels": [
+      "libc"
+    ],
+    "assignees": [
+      "pbalduino"
+    ]
+  },
+  {
+    "title": "Implement signal handling API in libc (sigaction, sigemptyset, etc.)",
+    "github_issue": {
+      "number": 337,
+      "url": "https://github.com/pbalduino/menios/issues/337",
+      "state": "CLOSED"
+    },
+    "labels": [
+      "kernel",
+      "libc"
+    ],
+    "assignees": [
+      "pbalduino"
+    ]
+  },
+  {
+    "title": "Add termios support for TTY line discipline",
+    "github_issue": {
+      "number": 336,
+      "url": "https://github.com/pbalduino/menios/issues/336",
+      "state": "OPEN"
+    },
+    "labels": [],
+    "assignees": []
   },
   {
     "title": "Basic timezone support (TZ environment variable)",
@@ -268,23 +437,6 @@
     "labels": [
       "enhancement",
       "nice to have",
-      "kernel"
-    ],
-    "assignees": [
-      "pbalduino"
-    ]
-  },
-  {
-    "title": "Implement PCI configuration space access API",
-    "github_issue": {
-      "number": 280,
-      "url": "https://github.com/pbalduino/menios/issues/280",
-      "state": "CLOSED"
-    },
-    "labels": [
-      "enhancement",
-      "nice to have",
-      "drivers",
       "kernel"
     ],
     "assignees": [
@@ -779,7 +931,8 @@
     },
     "labels": [
       "enhancement",
-      "nice to have"
+      "nice to have",
+      "blocked"
     ],
     "assignees": [
       "pbalduino"

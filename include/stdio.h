@@ -1,5 +1,5 @@
-#ifndef _INCLUDE_STDIO_H_
-#define _INCLUDE_STDIO_H_
+#ifndef _STDIO_H
+#define _STDIO_H
 
 #include <stdarg.h>
 #include <stddef.h>
@@ -11,19 +11,10 @@
 #define NULL ((void*)0)
 #endif
 
-struct __sFile {
-  int           fd;
-  unsigned int  flags;
-  unsigned char*buffer;
-  size_t        buffer_size;
-  size_t        buffer_pos;
-  size_t        buffer_end;
-  off_t         offset;
-  int           error_number;
-  int           last_op;
-};
-
-typedef struct __sFile FILE;
+struct _IO_FILE;
+typedef struct _IO_FILE FILE;
+typedef struct _IO_FILE __FILE;
+typedef struct _IO_FILE __sFILE;
 
 extern FILE *stdin;
 extern FILE *stdout;
@@ -60,10 +51,17 @@ int rename(const char* oldpath, const char* newpath);
 int fflush(FILE* stream);
 
 FILE* fopen(const char *filename, const char *mode);
+FILE* fdopen(int fd, const char* mode);
+FILE* tmpfile(void);
 int   fclose(FILE *stream);
 int   fprintf(FILE *stream, const char *format, ...);
 int   fputs(const char *text, FILE* file);
 int   fputc(int ch, FILE* file);
+int   putc(int ch, FILE* file);
+int   fgetc(FILE* file);
+int   getc(FILE* file);
+char* fgets(char* str, int size, FILE* file);
+int   ungetc(int ch, FILE* file);
 int fvprintf(FILE *stream, const char *format, va_list arg);
 size_t fread(void* ptr, size_t size, size_t nmemb, FILE* stream);
 size_t fwrite(const void* ptr, size_t size, size_t nmemb, FILE* stream);
@@ -71,6 +69,7 @@ int ferror(FILE* stream);
 void clearerr(FILE* stream);
 int feof(FILE* stream);
 void rewind(FILE* stream);
+int fileno(FILE* stream);
 
 FILE* freopen(const char *filename, const char *mode, FILE *file);
 

@@ -49,4 +49,40 @@ long double fabsl(long double x) {
 #endif
 }
 
+double ldexp(double x, int exp) {
+  return __builtin_ldexp(x, exp);
+}
+
+float ldexpf(float x, int exp) {
+  return __builtin_ldexpf(x, exp);
+}
+
+long double ldexpl(long double x, int exp) {
+  return __builtin_ldexpl(x, exp);
+}
+
+double frexp(double x, int* exp) {
+  return __builtin_frexp(x, exp);
+}
+
+float frexpf(float x, int* exp) {
+  return __builtin_frexpf(x, exp);
+}
+
+long double frexpl(long double x, int* exp) {
+  return __builtin_frexpl(x, exp);
+}
+
+double modf(double x, double* iptr) {
+  return __builtin_modf(x, iptr);
+}
+
+float modff(float x, float* iptr) {
+  return __builtin_modff(x, iptr);
+}
+
+long double modfl(long double x, long double* iptr) {
+  return __builtin_modfl(x, iptr);
+}
+
 #endif

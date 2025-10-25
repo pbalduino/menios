@@ -6,6 +6,7 @@
 #endif
 #include <stdint.h>
 #include <string.h>
+#include <strings.h>
 #include <types.h>
 
 #ifdef MENIOS_KERNEL
@@ -13,6 +14,20 @@
 
 static inline int memcpy_is_canonical(uintptr_t addr) {
   return ((addr >> 47) == 0ull) || ((addr >> 47) == 0x1ffffull);
+}
+#endif
+
+#ifndef MENIOS_KERNEL
+char* strerror(int errnum) {
+  switch(errnum) {
+    case EINVAL: return "Invalid argument";
+    case ENOMEM: return "Out of memory";
+    case ENOENT: return "No such file or directory";
+    case EIO:    return "Input/output error";
+    case EPERM:  return "Operation not permitted";
+    case EACCES: return "Permission denied";
+    default: return "Unknown error";
+  }
 }
 #endif
 
@@ -277,6 +292,74 @@ char* strrchr(const char* s, int c) {
   return (char*)last;
 }
 
+char* strpbrk(const char* s, const char* accept) {
+  if(s == NULL || accept == NULL) {
+    return NULL;
+  }
+
+  while(*s != '\0') {
+    const char* a = accept;
+    while(*a != '\0') {
+      if(*a == *s) {
+        return (char*)s;
+      }
+      a++;
+    }
+    s++;
+  }
+
+  return NULL;
+}
+
+size_t strspn(const char* s, const char* accept) {
+  if(s == NULL || accept == NULL) {
+    return 0;
+  }
+
+  size_t count = 0;
+  while(*s != '\0') {
+    const char* a = accept;
+    int found = 0;
+    while(*a != '\0') {
+      if(*a == *s) {
+        found = 1;
+        break;
+      }
+      a++;
+    }
+    if(!found) {
+      break;
+    }
+    count++;
+    s++;
+  }
+  return count;
+}
+
+size_t strcspn(const char* s, const char* reject) {
+  if(s == NULL || reject == NULL) {
+    return 0;
+  }
+
+  size_t count = 0;
+  while(*s != '\0') {
+    const char* r = reject;
+    while(*r != '\0') {
+      if(*r == *s) {
+        return count;
+      }
+      r++;
+    }
+    count++;
+    s++;
+  }
+  return count;
+}
+
+int strcoll(const char* s1, const char* s2) {
+  return strcmp(s1, s2);
+}
+
 #ifndef MENIOS_KERNEL
 
 char* strdup(const char* s) {
@@ -445,23 +528,20 @@ void* memcpy(void* dest, const void* src, size_t count) {
   const uintptr_t kernel_floor = 0xffff800000000000ull;
   if(count != 0 &&
      (!memcpy_is_canonical(dest_addr) || !memcpy_is_canonical(src_addr))) {
-    serial_printf("memcpy guard canonical: dest=%p src=%p len=%zu ra0=%p ra1=%p\n",
+    serial_printf("memcpy guard canonical: dest=%p src=%p len=%zu ra0=%p\n",
                   dest,
                   src,
                   count,
-                  __builtin_return_address(0),
-                  __builtin_return_address(1));
+                  __builtin_return_address(0));
     return dest;
   }
 
   if(count != 0 && (dest_addr < kernel_floor || src_addr < kernel_floor)) {
-    serial_printf("memcpy low addr: dest=%p src=%p len=%zu ra0=%p ra1=%p ra2=%p\n",
+    serial_printf("memcpy low addr: dest=%p src=%p len=%zu ra0=%p\n",
                   dest,
                   src,
                   count,
-                  __builtin_return_address(0),
-                  __builtin_return_address(1),
-                  __builtin_return_address(2));
+                  __builtin_return_address(0));
   }
 #endif
 
@@ -540,4 +620,19 @@ void* memchr(const void* ptr, int value, size_t count) {
   }
 
   return NULL;
+}
+
+int ffs(int value) {
+  unsigned int v = (unsigned int)value;
+  if(v == 0) {
+    return 0;
+  }
+
+  int index = 1;
+  while((v & 1u) == 0u) {
+    v >>= 1;
+    index++;
+  }
+
+  return index;
 }

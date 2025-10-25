@@ -1,0 +1,149 @@
+digraph LibcEcosystem {
+    // Graph styling
+    rankdir=TB;
+    ranksep=1.0;
+    nodesep=0.6;
+    bgcolor="white";
+    node [shape=box, style=filled, fontname="Arial", fontsize=10];
+    edge [fontname="Arial", fontsize=8];
+
+    // Title
+    labelloc="t";
+    label="libc Ecosystem - Standard Library Implementation";
+    fontsize=16;
+    fontname="Arial Bold";
+
+    // Foundation
+    subgraph cluster_foundation {
+        label="Foundation ✅ COMPLETE";
+        style=filled;
+        fillcolor="#E8F8E8";
+
+        issue193 [label="#193: Minimal libc\nBASIC FUNCTIONALITY", fillcolor="#90EE90", style="filled,dashed"];
+        issue213 [label="#213: Signal delivery", fillcolor="#90EE90", style="filled,dashed"];
+        issue109 [label="#109: pthread API", fillcolor="#B3E5FC"];
+        issue208 [label="#208: Pipes", fillcolor="#90EE90", style="filled,dashed"];
+        issue336 [label="#336: termios\nline discipline", fillcolor="#FFE4B5"];
+    }
+
+    // Doom libc (complete)
+    subgraph cluster_doom_libc {
+        label="Doom libc Gaps ✅ ALL COMPLETE";
+        style=filled;
+        fillcolor="#E8FFE8";
+
+        issue304 [label="#304: scanf family", fillcolor="#90EE90", style="filled,dashed"];
+        issue305 [label="#305: File stdio", fillcolor="#90EE90", style="filled,dashed"];
+        issue306 [label="#306: Filesystem helpers", fillcolor="#90EE90", style="filled,dashed"];
+        issue307 [label="#307: Environment", fillcolor="#90EE90", style="filled,dashed"];
+        issue308 [label="#308: String utilities", fillcolor="#90EE90", style="filled,dashed"];
+        issue309 [label="#309: Formatted I/O", fillcolor="#90EE90", style="filled,dashed"];
+        issue310 [label="#310: Basic math (fabs)", fillcolor="#90EE90", style="filled,dashed"];
+    }
+
+    // TCC blockers
+    subgraph cluster_tcc_blockers {
+        label="TCC Blockers ⚠️ CRITICAL";
+        style=filled;
+        fillcolor="#FFE4E4";
+
+        issue337 [label="#337: Signal API\nsigaction/sigemptyset\n\n⚠️ BLOCKS TCC\n5-6 weeks", fillcolor="#FFB6C1"];
+        issue338 [label="#338: Float parsing\nstrtod/ldexp\n\n⚠️ BLOCKS TCC\n8-11 weeks", fillcolor="#FFB6C1"];
+    }
+
+    // Thread safety
+    subgraph cluster_thread {
+        label="Threading & Concurrency";
+        style=filled;
+        fillcolor="#E6F3FF";
+
+        issue339 [label="#339: Thread-safe libc\nLocking & TLS\n\n6-8 weeks", fillcolor="#B3E5FC"];
+    }
+
+    // Extended features
+    subgraph cluster_extended {
+        label="Extended Features";
+        style=filled;
+        fillcolor="#FFF8E1";
+
+        issue340 [label="#340: Extended stdio\npopen/tmpfile/setvbuf\n\n4-6 weeks", fillcolor="#FFE4B5"];
+        issue344 [label="#344: Extended math\nsin/cos/exp/log\n\n12-16 weeks", fillcolor="#FFE4B5"];
+        issue345 [label="#345: Regex\nregcomp/fnmatch\n\n10-14 weeks", fillcolor="#FFE4B5"];
+        issue347 [label="#347: TTY helpers\nisatty/ttyname\n\n2-3 weeks", fillcolor="#FFE4B5"];
+        issue348 [label="#348: Multiplexing\nselect/poll/epoll\n\n8-12 weeks", fillcolor="#FFE4B5"];
+    }
+
+    // Future work
+    subgraph cluster_future {
+        label="Future / Nice to Have";
+        style=filled;
+        fillcolor="#F0F0FF";
+
+        issue341 [label="#341: Sockets\nsocket/bind/connect\n\n12+ weeks", fillcolor="#E6E6FA"];
+        issue342 [label="#342: Locale/i18n\nsetlocale\n\n8-10 weeks", fillcolor="#E6E6FA"];
+        issue343 [label="#343: Wide-char\nwchar_t/mbstate_t\n\n10-12 weeks", fillcolor="#E6E6FA"];
+        issue346 [label="#346: Dynamic loader\ndlopen/dlsym\n\n16+ weeks", fillcolor="#E6E6FA"];
+    }
+
+    // Dependencies - Foundation
+    issue193 -> issue304 [style=dashed, color=gray];
+    issue193 -> issue305 [style=dashed, color=gray];
+    issue193 -> issue306 [style=dashed, color=gray];
+    issue193 -> issue307 [style=dashed, color=gray];
+    issue193 -> issue308 [style=dashed, color=gray];
+    issue193 -> issue309 [style=dashed, color=gray];
+    issue193 -> issue310 [style=dashed, color=gray];
+
+    // TCC blockers
+    issue213 -> issue337 [color=red, penwidth=2, label="kernel"];
+    issue193 -> issue337 [color=red, penwidth=2];
+    issue310 -> issue338 [color=red, penwidth=2, label="fabs"];
+    issue193 -> issue338 [color=red, penwidth=2];
+
+    // Thread safety
+    issue109 -> issue339 [color=blue, penwidth=2, label="pthread"];
+    issue193 -> issue339 [color=blue];
+
+    // Extended features
+    issue193 -> issue340 [color=orange];
+    issue208 -> issue340 [color=orange, label="for popen"];
+
+    issue193 -> issue344 [color=orange];
+    issue338 -> issue344 [color=orange, label="ldexp"];
+
+    issue193 -> issue345 [color=orange];
+
+    issue193 -> issue347 [color=brown];
+    issue336 -> issue347 [color=brown, label="termios"];
+
+    issue193 -> issue348 [color=brown];
+
+    // Future
+    issue193 -> issue341 [color=purple, style=dotted];
+    issue193 -> issue342 [color=purple, style=dotted];
+    issue193 -> issue343 [color=purple, style=dotted];
+    issue193 -> issue346 [color=purple, style=dotted];
+
+    // Legend
+    subgraph cluster_legend {
+        label="Legend";
+        style=filled;
+        fillcolor="#F9F9F9";
+
+        legend_complete [label="Complete ✅", fillcolor="#90EE90", style="filled,dashed"];
+        legend_blocker [label="TCC Blocker ⚠️", fillcolor="#FFB6C1"];
+        legend_thread [label="Threading", fillcolor="#B3E5FC"];
+        legend_extended [label="Extended Features", fillcolor="#FFE4B5"];
+        legend_future [label="Future", fillcolor="#E6E6FA"];
+    }
+
+    // Priority annotation
+    subgraph cluster_priority {
+        label="Implementation Priority";
+        style=filled;
+        fillcolor="#FFFACD";
+
+        priority [label="1. Signal API (#337) - CRITICAL for TCC\n2. Float parsing (#338) - CRITICAL for TCC\n3. Thread-safe libc (#339) - After pthread\n4. Extended stdio (#340) - Medium priority\n5. TTY helpers (#347) - Quick win (2-3 weeks)\n6. Extended math (#344) - Medium priority\n7. Regex (#345) - Needed for text tools\n8. Multiplexing (#348) - High for servers",
+                 shape=note, fillcolor="#FFFACD", style=filled];
+    }
+}

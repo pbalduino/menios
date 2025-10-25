@@ -16,6 +16,7 @@ extern "C" {
 #define SYS_PIPE       22
 #define SYS_YIELD      24
 #define SYS_SLEEP      35
+#define SYS_GETPID     39
 #define SYS_DUP        32
 #define SYS_DUP2       33
 #define SYS_FORK       57
@@ -54,6 +55,12 @@ extern "C" {
 #define SYS_MKDIR         93
 #define SYS_RMDIR         94
 #define SYS_RENAME        95
+#define SYS_SIGPENDING    96
+#define SYS_SIGWAITINFO   97
+#define SYS_SIGSUSPEND    98
+#define SYS_STAT           99
+#define SYS_FSTAT         100
+#define SYS_LSTAT         101
 
 #ifdef __cplusplus
 }

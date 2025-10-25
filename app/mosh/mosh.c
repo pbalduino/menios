@@ -60,6 +60,7 @@ static void   debug_log_expand_start(const char* input, char* output, size_t cap
 static void   debug_log_expand_dollar(const char* cursor);
 static void   debug_dump_bytes(const char* label, const char* data);
 static bool   debug_ptr_readable(const void* ptr);
+static void   print_exec_error(const char* command, int err, bool not_found);
 
 typedef struct {
   char*  argv[MOSH_MAX_ARGS];
@@ -443,6 +444,8 @@ static int job_wait_foreground(job_t* job) {
 
   current_job = NULL;
 
+  char command_snapshot[MOSH_MAX_LINE_LENGTH];
+  str_copy(command_snapshot, sizeof(command_snapshot), job->command);
   int status = (job->state == JOB_STATE_DONE) ? job_raw_status(job) : job->last_status;
   if(job->state == JOB_STATE_DONE) {
     job_release(job);
@@ -451,6 +454,15 @@ static int job_wait_foreground(job_t* job) {
   }
 
   jobs_poll_updates(false);
+  int exit_code = decode_wait_status(status);
+  if(exit_code != 0 && command_snapshot[0] != '\0') {
+    write_str(STDOUT_FILENO, command_snapshot);
+    write_str(STDOUT_FILENO, " exited with code ");
+    char buf[16];
+    format_signed_value(exit_code, buf, sizeof(buf));
+    write_str(STDOUT_FILENO, buf);
+    write_str(STDOUT_FILENO, "\n");
+  }
   return status;
 }
 
@@ -4808,6 +4820,40 @@ static void debug_dump_bytes(const char* label, const char* data) {
   write_str(STDERR_FILENO, "\n");
 }
 
+static void print_exec_error(const char* command, int err, bool not_found) {
+  if(command == NULL) {
+    command = "";
+  }
+
+  if(not_found) {
+    write_str(STDERR_FILENO, "mosh: command not found: ");
+    write_str(STDERR_FILENO, command);
+    write_str(STDERR_FILENO, "\n");
+    return;
+  }
+
+  write_str(STDERR_FILENO, "mosh: exec failed");
+  if(command[0] != '\0') {
+    write_str(STDERR_FILENO, ": ");
+    write_str(STDERR_FILENO, command);
+  }
+
+  if(err != 0) {
+    write_str(STDERR_FILENO, ": ");
+    const char* err_text = strerror(err);
+    if(err_text != NULL && err_text[0] != '\0') {
+      write_str(STDERR_FILENO, err_text);
+    } else {
+      write_str(STDERR_FILENO, "error ");
+      char buf[32];
+      format_signed_value(err, buf, sizeof(buf));
+      write_str(STDERR_FILENO, buf);
+    }
+  }
+
+  write_str(STDERR_FILENO, "\n");
+}
+
 static bool debug_ptr_readable(const void* ptr) {
   uintptr_t value = (uintptr_t)ptr;
   const uintptr_t MIN_USER_PTR = 0x1000u;
@@ -4827,9 +4873,11 @@ static void exec_command(char** argv, size_t argc) {
   if(contains_slash(command)) {
     debug_log_exec_attempt("direct", command, argv, envp);
     long rc = mosh_execve(command, argv, envp);
+    int err = errno;
     debug_log_exec_result("direct", command, rc);
     if(rc < 0) {
-      write_str(STDERR_FILENO, "mosh: exec failed\n");
+      print_exec_error(command, err, false);
+      errno = err;
       _exit(126);
     }
     return;
@@ -4843,6 +4891,9 @@ static void exec_command(char** argv, size_t argc) {
   size_t command_len = str_len(command);
   static char candidate[256];
   const char* segment = path_value;
+  int last_err = 0;
+  bool have_error = false;
+  bool saw_non_enent = false;
 
   while(true) {
     size_t segment_len = 0;
@@ -4854,9 +4905,15 @@ static void exec_command(char** argv, size_t argc) {
     if(segment_len == 0) {
       debug_log_exec_attempt("empty_path", command, argv, envp);
       long rc = mosh_execve(command, argv, envp);
+      int err = errno;
       debug_log_exec_result("empty_path", command, rc);
       if(rc >= 0) {
         return;
+      }
+      last_err = err;
+      have_error = true;
+      if(err != ENOENT) {
+        saw_non_enent = true;
       }
     } else {
       bool append_slash = (segment[segment_len - 1] != '/');
@@ -4875,9 +4932,15 @@ static void exec_command(char** argv, size_t argc) {
         candidate[pos] = '\0';
         debug_log_exec_attempt("path", candidate, argv, envp);
         long rc = mosh_execve(candidate, argv, envp);
+        int err = errno;
         debug_log_exec_result("path", candidate, rc);
         if(rc >= 0) {
           return;
+        }
+        last_err = err;
+        have_error = true;
+        if(err != ENOENT) {
+          saw_non_enent = true;
         }
       }
     }
@@ -4888,7 +4951,14 @@ static void exec_command(char** argv, size_t argc) {
     segment += segment_len + 1;
   }
 
-  _exit(127);
+  bool not_found = !saw_non_enent;
+  if(!have_error) {
+    not_found = true;
+    last_err = ENOENT;
+  }
+  print_exec_error(command, last_err, not_found);
+  errno = last_err;
+  _exit(not_found ? 127 : 126);
 }
 
 static char* ltrim(char* text) {

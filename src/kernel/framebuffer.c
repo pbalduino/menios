@@ -11,6 +11,9 @@
 #include <kernel/serial.h>
 #include <kernel/proc.h>
 #include <kernel/pmm.h>
+#ifdef MENIOS_KERNEL
+#include <menios/stdio_internal.h>
+#endif
 
 #include <stdbool.h>
 #include <stdint.h>

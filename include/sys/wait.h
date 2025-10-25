@@ -1,7 +1,7 @@
 #ifndef MENIOS_INCLUDE_SYS_WAIT_H
 #define MENIOS_INCLUDE_SYS_WAIT_H
 
-#include <stdint.h>
+#include <sys/types.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -19,6 +19,9 @@ extern "C" {
 #define WIFSTOPPED(status)    (((status) & 0x7f) == 0x7f)
 #define WSTOPSIG(status)      (((status) >> 8) & 0xff)
 #define WIFCONTINUED(status)  ((status) == 0xffff)
+
+pid_t wait(int* status);
+pid_t waitpid(pid_t pid, int* status, int options);
 
 #ifdef __cplusplus
 }

@@ -7,6 +7,7 @@ extern "C" {
 
 #include <stddef.h>
 #include <types.h>
+#include <strings.h>
 
 void*	memcpy(void *dst, const void *src, size_t len);
 void memzero(void * s, uint64_t n);
@@ -35,6 +36,11 @@ char* strchr(const char *s, int c);
 char*	strfind(const char *s, char c);
 char *strstr (const char *str_1, const char *str_2);
 char* strrchr(const char* s, int c);
+char* strpbrk(const char* s, const char* accept);
+size_t strspn(const char* s, const char* accept);
+size_t strcspn(const char* s, const char* reject);
+int strcoll(const char* s1, const char* s2);
+char* strerror(int errnum);
 #ifndef MENIOS_KERNEL
 char* strdup(const char* s);
 char* strndup(const char* s, size_t n);

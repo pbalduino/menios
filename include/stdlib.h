@@ -2,12 +2,21 @@
 #define INCLUDE_STDLIB_H
 
 #include <types.h>
+#include <stddef.h>
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 #define __dead2 __attribute__((__noreturn__))
+
+#ifndef EXIT_SUCCESS
+#define EXIT_SUCCESS 0
+#endif
+
+#ifndef EXIT_FAILURE
+#define EXIT_FAILURE 1
+#endif
 
 #define RAND_MAX 0x7fffffff
 
@@ -45,17 +54,30 @@ int rand(void);
 void srand(unsigned int seed);
 
 long strtol(const char* nptr, char** endptr, int base);
+long long strtoll(const char* nptr, char** endptr, int base);
+unsigned long strtoul(const char* nptr, char** endptr, int base);
+unsigned long long strtoull(const char* nptr, char** endptr, int base);
 int atoi(const char* nptr);
 long atol(const char* nptr);
 double atof(const char* nptr);
+double strtod(const char* nptr, char** endptr);
+float strtof(const char* nptr, char** endptr);
+#define strtold strtod
+size_t mbstowcs(wchar_t* dest, const char* src, size_t max);
+size_t wcstombs(char* dest, const wchar_t* src, size_t max);
 int abs(int value);
 long labs(long value);
 long long llabs(long long value);
 int system(const char* command);
+char* mktemp(char* templ);
+int mkstemp(char* templ);
+void qsort(void* base, size_t nmemb, size_t size, int (*compar)(const void*, const void*));
+void* bsearch(const void* key, const void* base, size_t nmemb, size_t size, int (*compar)(const void*, const void*));
 
 void exit(int) __dead2;
 void abort(void) __dead2;
 int atexit(void (*func)(void));
+char* realpath(const char* path, char* resolved_path);
 
 extern char** environ;
 char* getenv(const char* name);

@@ -86,9 +86,14 @@ Running compilers natively on meniOS.
 | binutils Port | #191 | 🚀 READY | High | Nice to have |
 | GCC Port | - | ⛳ TODO | Very High | Future |
 
+The project vendors [Tiny C Compiler (TCC) 0.9.24](https://bellard.org/tcc/) under `vendor/tcc-0.9.24/`; those sources will be the starting point for issue #190.
+
+GNU [binutils 2.45](https://www.gnu.org/software/binutils/) has also been staged under `vendor/binutils-2.45/`. The upstream tree keeps each major component in its own directory (`binutils/` for user-facing tools, `bfd/` for the Binary File Descriptor library, `opcodes/` for disassembler tables, and `ld/` for the linker). Building it requires the usual GNU autotools flow (POSIX shell, `make`, a cross compiler targeting `x86_64-menios`—for now either `x86_64-elf-gcc` or `clang` with `-target x86_64-unknown-elf` paired with `lld`). For meniOS we plan to configure with options such as `--disable-nls`, `--disable-gdb`, `--disable-gprof`, `--disable-libdecnumber`, and `--disable-gold` to avoid pulling in unsupported libc features.
+
 **Dependencies for TCC (#190):**
 - ✅ #29 (cross-compiler complete) - COMPLETE
 - ✅ #193 (libc) - COMPLETE
+- ✅ #338 (floating-point parsing helpers: strtod/strtof; strtold currently aliases to strtod) - COMPLETE
 - ✅ Pipes & FIFOs - **FULLY COMPLETE!** (#206 ✅, #207 ✅, #208 ✅, #209 ✅)
 - ✅ #189 (file writes) - **COMPLETE!** (#291, #292, #293 all done)
 - ✅ #294 (VFS streaming I/O) - **COMPLETE!** (#295, #296, #297, #298 all done)

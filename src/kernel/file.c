@@ -23,6 +23,9 @@
 #include <kernel/spinlock.h>
 #include <kernel/vfs.h>
 #include <menios/fb.h>
+#ifdef MENIOS_KERNEL
+#include <menios/stdio_internal.h>
+#endif
 
 #define FD_STDIN   0
 #define FD_STDOUT  1
@@ -737,6 +740,7 @@ static const file_ops_t serial_file_ops = {
   .seek = NULL,
   .ioctl = NULL,
   .mmap = NULL,
+  .stat = NULL,
 };
 
 static const file_ops_t framebuffer_console_file_ops = {
@@ -746,6 +750,7 @@ static const file_ops_t framebuffer_console_file_ops = {
   .seek = NULL,
   .ioctl = framebuffer_ioctl_impl,
   .mmap = framebuffer_mmap_impl,
+  .stat = NULL,
 };
 
 static const file_ops_t framebuffer_device_file_ops = {
@@ -755,6 +760,7 @@ static const file_ops_t framebuffer_device_file_ops = {
   .seek = NULL,
   .ioctl = framebuffer_ioctl_impl,
   .mmap = framebuffer_mmap_impl,
+  .stat = NULL,
 };
 
 static const file_ops_t stdin_file_ops = {
@@ -764,6 +770,7 @@ static const file_ops_t stdin_file_ops = {
   .seek = NULL,
   .ioctl = NULL,
   .mmap = NULL,
+  .stat = NULL,
 };
 
 static int64_t tty_write_impl(file_t* file, const void* buffer, size_t length) {
@@ -807,6 +814,7 @@ static const file_ops_t tty_console_file_ops = {
   .seek = NULL,
   .ioctl = tty_ioctl_impl,
   .mmap = NULL,
+  .stat = NULL,
 };
 
 #ifdef MENIOS_KERNEL

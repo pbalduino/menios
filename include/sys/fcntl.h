@@ -22,6 +22,9 @@ extern "C" {
 #define O_DIRECTORY 0x1000
 #define O_CLOEXEC  0x2000
 
+int open(const char* path, int oflag, ...);
+int fcntl(int fd, int cmd, ...);
+
 #ifdef __cplusplus
 }
 #endif

@@ -6,6 +6,7 @@
 #include <stdbool.h>
 
 #include <types.h>
+#include <sys/stat.h>
 
 struct proc_info_t;
 
@@ -33,6 +34,7 @@ typedef struct file_ops_t {
   int (*mmap)(file_t* file,
               const file_mmap_request_t* request,
               file_mmap_result_t* result);
+  int (*stat)(file_t* file, struct stat* out_stat);
 } file_ops_t;
 
 struct file {

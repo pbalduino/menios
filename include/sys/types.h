@@ -10,6 +10,14 @@ typedef long long int time_t;
 typedef int pid_t;
 typedef int key_t;
 typedef long long off_t;
+typedef unsigned int uid_t;
+typedef unsigned int gid_t;
+typedef unsigned int mode_t;
+typedef unsigned long dev_t;
+typedef unsigned long ino_t;
+typedef unsigned long nlink_t;
+typedef long blksize_t;
+typedef long long blkcnt_t;
 
 #ifdef __cplusplus
 }

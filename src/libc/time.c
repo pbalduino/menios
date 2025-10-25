@@ -430,7 +430,7 @@ static bool append_three_digits(char* dest, size_t max, size_t* pos, int value) 
   return append_buffer(dest, max, pos, buf, sizeof(buf));
 }
 
-static bool append_four_digits(char* dest, size_t max, size_t* pos, int value) {
+static inline bool append_four_digits(char* dest, size_t max, size_t* pos, int value) {
   if(value < 0) {
     return false;
   }
@@ -483,7 +483,7 @@ static bool timespec_valid(const struct timespec* ts) {
   return true;
 }
 
-static bool timespec_to_microseconds(const struct timespec* ts, uint64_t* out_us) {
+static inline bool timespec_to_microseconds(const struct timespec* ts, uint64_t* out_us) {
   if(!timespec_valid(ts) || out_us == NULL) {
     return false;
   }
@@ -1024,6 +1024,18 @@ int clock_gettime(clockid_t clk_id, struct timespec* tp) {
   }
   return real_clock_gettime(clk_id, tp);
 #endif
+}
+
+clock_t clock(void) {
+  struct timespec ts;
+  if(clock_gettime(CLOCK_MONOTONIC, &ts) == 0) {
+    long long micros = (long long)ts.tv_sec * CLOCKS_PER_SEC + ts.tv_nsec / 1000;
+    return (clock_t)micros;
+  }
+#ifndef MENIOS_KERNEL
+  errno = ENOSYS;
+#endif
+  return (clock_t)-1;
 }
 
 int clock_settime(clockid_t clk_id, const struct timespec* tp) {
