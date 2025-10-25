@@ -37,6 +37,21 @@
 - Maintain backward-compatible buffered mode for devices that lack streaming.
 - Update FAT32 driver to expose streaming hooks.
 
+**Metadata Support (Implemented):**
+- The `.stat` callback in `file_ops` allows drivers to report file metadata
+  (size, permissions, timestamps, type, ownership) for both path-based and
+  descriptor-based queries.
+- VFS provides `vfs_path_info()` to query metadata by path and caches
+  `fs_path_info` on open files for efficient `fstat()` queries.
+- Syscalls `SYS_STAT`, `SYS_LSTAT`, `SYS_FSTAT` expose this to userspace,
+  enabling POSIX stat()/fstat()/lstat() operations.
+- **Current status:**
+  - FAT32: `.stat` implemented (skeletal - size and read-only only; timestamps
+    and full attributes tracked in #367)
+  - Pseudo-filesystems (tmpfs, procfs, devfs, pipes): `.stat = NULL` (tracked
+    in #366)
+- See `docs/architecture/filesystem.md` for detailed metadata architecture.
+
 ### 4. Read-Ahead and Write-Behind (#298)
 
 - Detect sequential access patterns and prefetch upcoming blocks via the buffer cache.

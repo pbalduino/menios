@@ -27,36 +27,36 @@ digraph CriticalPath {
         issue189 [label="#189: FAT32\nwrite", fillcolor="#90EE90", style="filled,dashed"];
     }
 
-    // TCC Blockers (CRITICAL)
+    // TCC Blockers - NOW COMPLETE!
     subgraph cluster_blockers {
-        label="TCC Blockers ⚠️ CRITICAL";
+        label="TCC Blockers ✅ COMPLETE!";
         style=filled;
-        fillcolor="#FFE4E4";
+        fillcolor="#E8F8E8";
 
-        issue337 [label="#337: Signal API\nsigaction/sigemptyset\n\n5-6 weeks", fillcolor="#FFB6C1"];
-        issue338 [label="#338: Float parsing\nstrtod/ldexp\n\n8-11 weeks", fillcolor="#FFB6C1"];
+        issue337 [label="#337: Signal API\nsigaction/sigemptyset\n\n✅ COMPLETE", fillcolor="#90EE90", style="filled,dashed"];
+        issue338 [label="#338: Float parsing\nstrtod/ldexp\n\n✅ COMPLETE", fillcolor="#90EE90", style="filled,dashed"];
     }
 
-    // Native Compilation
+    // Native Compilation - READY!
     subgraph cluster_native {
-        label="Native Compilation";
+        label="Native Compilation - READY! 🎉";
         style=filled;
         fillcolor="#E6F3FF";
 
-        issue190 [label="#190: TCC port\n\n4-6 weeks\n\nBLOCKED", fillcolor="#FFE4B5"];
-        issue191 [label="#191: binutils port\n\n6-8 weeks\n\nReady", fillcolor="#B3E5FC"];
+        issue190 [label="#190: TCC port\n\n4-6 weeks\n\n✅ READY TO START!", fillcolor="#B3E5FC"];
+        issue191 [label="#191: binutils port\n\n6-8 weeks\n\n✅ READY TO START!", fillcolor="#B3E5FC"];
     }
 
-    // Dependencies - Foundation to blockers
-    issue213 -> issue337 [label="kernel signals", color=red, penwidth=2, style=dashed];
-    issue193 -> issue337 [label="libc", color=red, penwidth=2, style=dashed];
+    // Dependencies - Foundation to blockers (NOW COMPLETE)
+    issue213 -> issue337 [label="kernel signals ✅", color=green, penwidth=2, style=dashed];
+    issue193 -> issue337 [label="libc ✅", color=green, penwidth=2, style=dashed];
 
-    issue310 -> issue338 [label="basic math", color=red, penwidth=2, style=dashed];
-    issue193 -> issue338 [label="libc", color=red, penwidth=2, style=dashed];
+    issue310 -> issue338 [label="basic math ✅", color=green, penwidth=2, style=dashed];
+    issue193 -> issue338 [label="libc ✅", color=green, penwidth=2, style=dashed];
 
-    // Blockers to TCC
-    issue337 -> issue190 [label="BLOCKS\nTCC", color=red, penwidth=4];
-    issue338 -> issue190 [label="BLOCKS\nTCC", color=red, penwidth=4];
+    // Blockers to TCC (NOW UNBLOCKED!)
+    issue337 -> issue190 [label="signals ✅", color=green, penwidth=2, style=dashed];
+    issue338 -> issue190 [label="float parsing ✅", color=green, penwidth=2, style=dashed];
 
     // Foundation to TCC (already satisfied)
     issue29 -> issue190 [label="toolchain ✅", color=green, penwidth=2, style=dashed];
@@ -74,11 +74,11 @@ digraph CriticalPath {
 
     // Timeline annotation
     subgraph cluster_timeline {
-        label="Timeline";
+        label="Timeline - UPDATED! 🎉";
         style=filled;
-        fillcolor="#F9F9F9";
+        fillcolor="#E8F8E8";
 
-        timeline [label="Total to TCC: 19-26 weeks\n\nPhase 1: Signal API (5-6 weeks)\nPhase 2: Float parsing (8-11 weeks)\nPhase 3: TCC port (4-6 weeks)\n\nbinutils: Ready now (parallel track)",
+        timeline [label="✅ ALL BLOCKERS COMPLETE!\n\nCompleted:\n• Phase 1: Signal API ✅\n• Phase 2: Float parsing ✅\n\nREADY TO START:\n• TCC port (#190) - 4-6 weeks\n• binutils port (#191) - 6-8 weeks\n\nRemaining work (optional):\n• Stubbed functions (#364) - nice-to-have\n  - stat family ✅ complete\n  - chmod/utime - for build systems\n  - pseudo-fs metadata - for full coverage",
                  shape=note, fillcolor="#FFFACD", style=filled];
     }
 

@@ -60,6 +60,97 @@ configuration files and, eventually, user binaries from persistent storage.
   requests, validating descriptor allocation, stream positioning, and error
   propagation for missing files or unsupported write flags.
 
+## File Metadata (stat family)
+
+The filesystem layer now exposes file metadata through a unified infrastructure
+spanning the kernel, VFS, and individual filesystem drivers. This enables
+userspace programs to query file properties via the POSIX stat() family.
+
+### Architecture
+
+**Kernel Infrastructure** (`include/kernel/fs.h:24`, `src/kernel/fs/fat32.c:2721`):
+- `struct fs_path_info` — uniform descriptor for file metadata including size,
+  permissions, timestamps, file type, ownership, and inode number.
+- `fs_path_info_to_stat()` — helper to convert `fs_path_info` to POSIX
+  `struct stat` format for userspace consumption.
+
+**VFS Integration** (`include/kernel/vfs.h:21`, `src/kernel/fs/vfs.c:203`):
+- `vfs_path_info()` — query function to retrieve metadata for a given path.
+  Resolves the path through the VFS namespace and delegates to the appropriate
+  filesystem driver.
+- `.stat` callback in `file_ops` — allows individual drivers to report metadata
+  for open file descriptors. The VFS invokes this during `fstat()` syscalls.
+- Metadata caching — when opening files, the VFS caches `fs_path_info` data for
+  efficient repeated queries via `fstat()` without re-parsing directory entries.
+
+**Syscall Interface** (`include/menios/syscall.h:40`,
+`src/kernel/syscall/syscall.c:933`):
+- `SYS_STAT` (89) — retrieve metadata by path, following symbolic links
+- `SYS_LSTAT` (90) — retrieve metadata by path, without following symlinks
+  (currently identical to `SYS_STAT` since symlinks are not yet implemented)
+- `SYS_FSTAT` (91) — retrieve metadata for an open file descriptor
+
+All three syscalls validate inputs, resolve paths or file descriptors through
+the VFS, invoke the appropriate driver callbacks, convert results to
+`struct stat` format, and copy the result to userspace memory.
+
+**Libc Wrappers** (`src/libc/stat.c:20`, `src/libc/unistd.c:325`,
+`user/libc/realpath.c:1`):
+- `stat()`, `lstat()`, `fstat()` — delegate directly to the corresponding
+  syscalls, handling error conversion and errno setting.
+- `access()` — uses `stat()` to check real mode bits for file accessibility,
+  replacing the previous stub that unconditionally failed.
+- `realpath()` — canonicalizes paths and validates existence with `stat()`,
+  ensuring POSIX-correct behavior.
+- `pathconf()` — partially implemented; returns `_PC_PATH_MAX` support. Other
+  queries still return `-ENOSYS` (tracked in issue #368).
+
+### Driver Support
+
+**FAT32** (`src/kernel/fs/fat32.c`):
+- Implements `.stat` callback (`fat32_stream_stat()`).
+- Parses directory entries to extract file size and read-only attribute.
+- **Current limitations** (tracked in issue #367):
+  - Timestamps (creation, modification, access) are not yet parsed from the FAT
+    directory entry date/time fields.
+  - DOS attributes beyond read-only (hidden, system, archive, volume) are
+    ignored.
+  - Long filename (LFN) metadata is not extracted for timestamps or permissions.
+  - Permissions are hard-coded (0644 for files, 0755 for directories) rather
+    than derived from FAT attributes.
+  - No ownership information (all files appear as uid=0, gid=0).
+
+**Pseudo-filesystems** (tracked in issue #366):
+- **tmpfs, procfs, devfs, pipes, console devices** — Currently expose
+  `.stat = NULL`, causing all stat queries to return `-ENOSYS`.
+- Each of these drivers needs to implement a `.stat` callback to report
+  appropriate metadata (file type, size for buffered data, timestamps, device
+  type for character/block devices, etc.).
+
+### Use Cases Enabled
+
+- **ls command** — Can display file sizes, permissions, and timestamps (once
+  full metadata is implemented).
+- **Build tools** — `make` and other build systems can use modification times
+  for incremental builds.
+- **File tests** — Shell scripts can use `test -f`, `test -d`, etc. to check
+  file types.
+- **find command** — Can filter by file type, size, or modification time.
+- **realpath()** — Resolves canonical paths and verifies existence.
+- **access()** — Checks file permissions correctly.
+
+### Outstanding Work
+
+- **Issue #366** — Implement `.stat` for pseudo-filesystems (tmpfs, procfs,
+  devfs, pipes, console devices).
+- **Issue #367** — Parse rich FAT32 metadata (timestamps, DOS attributes, LFN
+  information).
+- **Issue #365** — Implement `chmod()`/`fchmod()` syscalls to modify file
+  permissions (write-side of metadata).
+- **Issue #317** — Implement `utime()` syscall to modify file timestamps
+  (write-side of metadata).
+- **Issue #368** — Complete `pathconf()` implementation for all POSIX queries.
+
 ## Limitations and Follow-up Work
 
 - Write support remains limited to buffered, single-writer use cases; unlinking

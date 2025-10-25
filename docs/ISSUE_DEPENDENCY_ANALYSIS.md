@@ -217,6 +217,64 @@ These issues form the backbone of the system and should be prioritized:
 
 **Priority**: Deferred - track #202 once higher-priority work lands
 
+### 📚 libc Stubbed Functions (Issues #364-#369, #317, #347, #21, #327)
+```
+                    ┌──→ ✅ stat/fstat/lstat (COMPLETE for FAT32)
+                    │   ✅ access() (COMPLETE)
+                    │   ✅ realpath() (COMPLETE)
+#193 (libc) ────────┤   ⚠️  pathconf() (PARTIAL - only _PC_PATH_MAX) ──→ #368 (complete pathconf)
+                    │
+                    ├──→ #366 (pseudo-fs metadata) ──→ tmpfs, procfs, devfs, pipes .stat
+                    │
+                    ├──→ #367 (rich FAT32 metadata) ──→ timestamps, DOS attrs, LFN
+                    │
+                    ├──→ #365 (chmod/fchmod) ──┐
+                    │                           ├──→ File mutation APIs
+                    ├──→ #317 (utime) ─────────┘
+                    │
+                    ├──→ #347 (isatty, ttyname) ──→ TTY helper functions
+                    │
+                    ├──→ #21 (userspace heap) ──→ brk/sbrk implementation
+                    │
+                    ├──→ #369 (system()) ──→ shell command execution
+                    │
+                    └──→ #327 (timing APIs) ──→ nanosleep, alarm, clock_*, timers
+```
+
+**Implemented** (tracked in #364):
+- ✅ **stat()/lstat()/fstat()** - File metadata queries (FAT32 only, skeletal)
+  - Syscalls: `SYS_STAT`, `SYS_LSTAT`, `SYS_FSTAT` (89-91)
+  - Kernel infrastructure: `fs_path_info`, `fs_path_info_to_stat()`
+  - VFS integration: `vfs_path_info()`, `.stat` callback, metadata caching
+  - FAT32: size + read-only attribute only
+  - **Limitations**: No timestamps, limited attributes, pseudo-fs returns ENOSYS
+- ✅ **access()** - Uses stat() to check file permissions (was stub)
+- ✅ **realpath()** - POSIX-correct path resolution with stat() validation (was stub)
+- ⚠️ **pathconf()** - Partially implemented (only `_PC_PATH_MAX`)
+
+**Remaining Stubs**:
+- ❌ **chmod/fchmod** (#365) - Change file permissions
+- ❌ **utime** (#317) - Modify file timestamps
+- ❌ **isatty** (#347) - Check if fd is terminal
+- ❌ **brk/sbrk** (#21) - Dynamic memory allocation
+- ❌ **system()** (#369) - Execute shell commands
+- ❌ **Timing APIs** (#327) - nanosleep, alarm, clock_*, setitimer, getitimer
+
+**Sub-tasks**:
+- **#366** - Add `.stat` to pseudo-filesystems (tmpfs, procfs, devfs, pipes)
+- **#367** - Parse rich FAT32 metadata (timestamps, DOS attributes, LFN data)
+- **#368** - Complete pathconf() for all POSIX queries
+- **#363** - Serial port file descriptor for debug logging (separate enhancement)
+
+**Dependencies**:
+- stat infrastructure: ✅ Complete
+- #189 (FAT32 write): ✅ Complete (needed for chmod/utime)
+- #18 (syscalls): Ongoing (needed for most stubs)
+- #21 (heap): Needed for brk/sbrk
+- mosh with `-c` flag: Needed for system()
+
+**Priority**: **HIGH** - Many tools rely on stat() working on all filesystems, chmod/utime needed for build systems
+
 ## 🏗️ Updated Implementation Phases
 
 ### Phase 1: Core Foundation ✅ (COMPLETE!)

@@ -146,9 +146,9 @@ digraph IssueDependencies {
         style=filled;
         fillcolor="#FFF4E6";
 
-        // TCC blockers (CRITICAL)
-        issue337 [label="#337: Signal API\nsigaction/sigemptyset", fillcolor="#FFB6C1"];  // BLOCKS TCC
-        issue338 [label="#338: Float parsing\nstrtod/ldexp", fillcolor="#FFB6C1"];  // BLOCKS TCC
+        // TCC blockers (NOW COMPLETE!)
+        issue337 [label="#337: Signal API\nsigaction/sigemptyset\n✅ COMPLETE", fillcolor="#90EE90", style="filled,dashed"];  // UNBLOCKED TCC
+        issue338 [label="#338: Float parsing\nstrtod/ldexp\n✅ COMPLETE", fillcolor="#90EE90", style="filled,dashed"];  // UNBLOCKED TCC
 
         // Thread safety
         issue339 [label="#339: Thread-safe\nlibc", fillcolor="#FFE4B5"];
@@ -667,14 +667,14 @@ digraph IssueDependencies {
     issue213 -> issue336 [color=brown, style=dotted, label="signals"];  // signal delivery -> ISIG (nice to have) ✅
     issue158 -> issue336 [color=brown, style=dotted, label="job control"];  // job control -> TIOCGPGRP (nice to have) ✅
 
-    // Extended libc dependencies - TCC BLOCKERS
-    issue213 -> issue337 [color=red, penwidth=2, style=dashed, label="signal delivery"];  // signal delivery -> sigaction API ✅
-    issue193 -> issue337 [color=red, penwidth=2, style=dashed];  // libc -> signal API ✅
-    issue337 -> issue190 [color=red, penwidth=3, label="BLOCKS\nTCC"];  // signal API -> TCC ⚠️ CRITICAL
+    // Extended libc dependencies - TCC BLOCKERS NOW COMPLETE
+    issue213 -> issue337 [color=green, penwidth=2, style=dashed, label="signal delivery ✅"];  // signal delivery -> sigaction API ✅
+    issue193 -> issue337 [color=green, penwidth=2, style=dashed];  // libc -> signal API ✅
+    issue337 -> issue190 [color=green, penwidth=2, style=dashed, label="signals ✅"];  // signal API -> TCC ✅ UNBLOCKED
 
-    issue310 -> issue338 [color=red, penwidth=2, style=dashed, label="fabs"];  // basic math -> float parsing ✅
-    issue193 -> issue338 [color=red, penwidth=2, style=dashed];  // libc -> float parsing ✅
-    issue338 -> issue190 [color=red, penwidth=3, label="BLOCKS\nTCC"];  // float parsing -> TCC ⚠️ CRITICAL
+    issue310 -> issue338 [color=green, penwidth=2, style=dashed, label="fabs ✅"];  // basic math -> float parsing ✅
+    issue193 -> issue338 [color=green, penwidth=2, style=dashed];  // libc -> float parsing ✅
+    issue338 -> issue190 [color=green, penwidth=2, style=dashed, label="float parsing ✅"];  // float parsing -> TCC ✅ UNBLOCKED
 
     // Thread-safe libc
     issue109 -> issue339 [color=blue, penwidth=2];  // pthread -> thread-safe libc
@@ -685,7 +685,7 @@ digraph IssueDependencies {
 
     // Extended math
     issue193 -> issue344 [color=orange, style=dashed];  // libc -> extended math ✅
-    issue338 -> issue344 [color=orange];  // float parsing -> extended math
+    issue338 -> issue344 [color=green, style=dashed, label="ldexp ✅"];  // float parsing -> extended math ✅
 
     // Regex
     issue193 -> issue345 [color=orange, style=dashed];  // libc -> regex ✅

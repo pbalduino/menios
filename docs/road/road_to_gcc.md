@@ -93,12 +93,21 @@ GNU [binutils 2.45](https://www.gnu.org/software/binutils/) has also been staged
 **Dependencies for TCC (#190):**
 - ✅ #29 (cross-compiler complete) - COMPLETE
 - ✅ #193 (libc) - COMPLETE
-- ✅ #338 (floating-point parsing helpers: strtod/strtof; strtold currently aliases to strtod) - COMPLETE
+- ✅ #337 (signal API) - **COMPLETE!** (was TCC blocker)
+- ✅ #338 (floating-point parsing helpers: strtod/strtof; strtold currently aliases to strtod) - **COMPLETE!** (was TCC blocker)
+- ⚠️ #364 (stubbed libc functions) - **PARTIALLY COMPLETE** (stat family working, other stubs tracked)
+  - ✅ stat/fstat/lstat syscalls (SYS_STAT, SYS_LSTAT, SYS_FSTAT)
+  - ✅ access(), realpath() (using stat infrastructure)
+  - ⚠️ pathconf() (partial - only _PC_PATH_MAX) - #368
+  - ❌ chmod/fchmod (#365), utime (#317) - file mutation APIs
+  - ❌ pseudo-fs metadata (#366), rich FAT32 metadata (#367)
+  - ❌ isatty (#347), brk/sbrk (#21), system() (#369), timing APIs (#327)
 - ✅ Pipes & FIFOs - **FULLY COMPLETE!** (#206 ✅, #207 ✅, #208 ✅, #209 ✅)
 - ✅ #189 (file writes) - **COMPLETE!** (#291, #292, #293 all done)
 - ✅ #294 (VFS streaming I/O) - **COMPLETE!** (#295, #296, #297, #298 all done)
 - ✅ #205 (I/O scheduler) - COMPLETE
-- **🎉 ALL DEPENDENCIES MET - ZERO BLOCKERS!**
+- **🎉 ALL CRITICAL DEPENDENCIES MET - TCC BLOCKERS RESOLVED!**
+- **📝 Note:** Remaining stubbed functions (#364 sub-issues) are nice-to-have for full POSIX compliance but don't block TCC
 
 **Dependencies for binutils (#191):**
 - ✅ #29 (cross-compiler complete) - COMPLETE

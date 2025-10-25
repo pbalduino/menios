@@ -35,7 +35,15 @@ The meniOS project has grown to over 100+ tracked issues with complex interdepen
 **Shows:**
 - Foundation: Minimal libc #193 (complete ✅)
 - Doom libc gaps: #304-#310 (all complete ✅)
-- **TCC blockers:** #337 (Signal API), #338 (Float parsing) ⚠️
+- **TCC blockers:** #337 (Signal API ✅ CLOSED), #338 (Float parsing ✅ CLOSED)
+- **Stubbed functions:** #364 (parent), #365-#369, #317, #347, #21, #327
+  - ✅ stat/fstat/lstat (complete for FAT32, skeletal)
+  - ✅ access(), realpath() (complete)
+  - ⚠️ pathconf() (partial - #368)
+  - ❌ chmod/fchmod (#365), utime (#317)
+  - ❌ pseudo-fs metadata (#366), rich FAT32 metadata (#367)
+  - ❌ isatty (#347), brk/sbrk (#21), system() (#369)
+  - ❌ timing APIs (#327)
 - Thread safety: #339 (depends on pthread #109)
 - Extended features: stdio, math, regex, TTY helpers, multiplexing
 - Future work: sockets, locale, wide-char, dynamic loader
@@ -46,11 +54,16 @@ The meniOS project has grown to over 100+ tracked issues with complex interdepen
 - Identifying gaps for specific programs
 
 **Key Categories:**
-- ✅ **Complete:** Basic libc, Doom gaps (all done)
-- 🔴 **Critical:** Signal API, Float parsing (block TCC)
+- ✅ **Complete:** Basic libc, Doom gaps, Signal API, Float parsing
+- 🟡 **Stubbed Functions:** #364 tracking (partially complete - stat family done)
 - 🔵 **Threading:** Thread-safe libc (after pthread)
 - 🟡 **Extended:** Additional POSIX features
 - 🟣 **Future:** Nice-to-have features
+
+**Recent Progress:**
+- ✅ #337 (Signal API) - CLOSED
+- ✅ #338 (Float parsing) - CLOSED - TCC blockers resolved! 🎉
+- ⚠️ #364 (Stubbed functions) - Partially complete (stat family working)
 
 ---
 
