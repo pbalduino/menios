@@ -45,6 +45,44 @@ export MENIOS_HOST_CC=/opt/cross/bin/x86_64-elf-gcc
 export MENIOS_CROSS_PREFIX=x86_64-elf   # default prefix
 ```
 
+## Userland Tools
+
+MeniOS ships with a growing collection of userland utilities in `/bin`:
+
+### Shell & Core Utilities
+- **mosh** — Interactive shell with history, tab completion, and job control
+- **cat**, **echo**, **env**, **true**, **false** — Standard POSIX utilities
+- **touch** — Create files and update timestamps
+- **stat** — Display detailed file metadata (#370 - planned)
+
+### Development Tools (binutils 2.45)
+- **as** — GNU assembler (x86-64)
+- **ld** — GNU linker
+- **objdump** — Object file disassembler and analyzer
+- **nm** — Symbol table viewer
+- **ar** — Archive creator and manager
+- **ranlib** — Archive index generator
+
+### Example Workflow
+
+```bash
+# In meniOS shell (/bin/mosh)
+cd /HOME
+
+# Assemble, link, and inspect a binary
+as --64 -o hello.o HELLO.S
+ld -o hello hello.o
+objdump -d hello
+nm hello
+
+# Create a static library
+ar rcs libhello.a hello.o
+ranlib libhello.a
+nm libhello.a
+```
+
+See [issue #191](https://github.com/pbalduino/menios/issues/191) for the complete binutils integration test suite.
+
 ## Documentation
 
 - [Roadmaps](docs/road/) — milestone breakdowns for shell, buddy allocator, GCC toolchain, Doom integration, and more.

@@ -89,13 +89,14 @@ FALSE_ELF = $(OBJDIR)/usermode/false.elf
 LS_ELF = $(OBJDIR)/usermode/ls.elf
 KILL_ELF = $(OBJDIR)/usermode/kill.elf
 PS_ELF = $(OBJDIR)/usermode/ps.elf
+STAT_ELF = $(OBJDIR)/usermode/stat.elf
 MALLOC_STRESS_ELF = $(OBJDIR)/usermode/malloc_stress.elf
 MEM_ELF = $(OBJDIR)/usermode/mem.elf
 ALARM_DEMO_ELF = $(OBJDIR)/usermode/alarm_demo.elf
 TOUCH_ELF = $(OBJDIR)/usermode/touch.elf
 
-USER_PROGRAM_ELFS = $(MOSH_ELF) $(ECHO_ELF) $(CAT_ELF) $(ENV_ELF) $(TRUE_ELF) $(FALSE_ELF) $(LS_ELF) $(KILL_ELF) $(PS_ELF) $(MALLOC_STRESS_ELF) $(MEM_ELF) $(ALARM_DEMO_ELF) $(TOUCH_ELF)
-USERLAND_BINS = mosh echo cat env true false ls kill ps malloc_stress mem alarm_demo touch
+USER_PROGRAM_ELFS = $(MOSH_ELF) $(ECHO_ELF) $(CAT_ELF) $(ENV_ELF) $(TRUE_ELF) $(FALSE_ELF) $(LS_ELF) $(KILL_ELF) $(PS_ELF) $(STAT_ELF) $(MALLOC_STRESS_ELF) $(MEM_ELF) $(ALARM_DEMO_ELF) $(TOUCH_ELF)
+USERLAND_BINS = mosh echo cat env true false ls kill ps stat malloc_stress mem alarm_demo touch
 
 
 BINUTILS_TOOLS = as ld objdump nm ar ranlib
@@ -328,7 +329,7 @@ console: docker
 ifeq ($(OS_NAME),linux)
 	@echo "Skipping Docker console on Linux host"
 else
-	$(DOCKER) run --rm $(DOCKER_RUN_FLAGS) $(DOCKER_ENV) --platform linux/amd64 --mount type=bind,source=$$(pwd),target=/mnt $(DOCKER_IMAGE) /bin/bash
+	$(DOCKER) run -it --rm $(DOCKER_ENV) --mount type=bind,source=$$(pwd),target=/mnt $(DOCKER_IMAGE) /bin/bash
 endif
 
 $(SDK_OBJ_DIR)/%.o: %.c
@@ -512,6 +513,14 @@ else
 	$(DOCKER) run --rm $(DOCKER_RUN_FLAGS) $(DOCKER_ENV) --mount type=bind,source=$$(pwd),target=/mnt $(DOCKER_IMAGE) /bin/sh -c "cd /mnt && make EXTRA_CFLAGS='$(EXTRA_CFLAGS)' $@"
 endif
 
+$(STAT_ELF): app/stat/stat.c | sdk
+ifeq ($(OS_NAME),linux)
+	@mkdir -p $(dir $@)
+	$(SDK_BIN_DIR)/menios-gcc $(EXTRA_CFLAGS) $< -o $@
+else
+	$(DOCKER) run --rm $(DOCKER_RUN_FLAGS) $(DOCKER_ENV) --mount type=bind,source=$$(pwd),target=/mnt $(DOCKER_IMAGE) /bin/sh -c "cd /mnt && make EXTRA_CFLAGS='$(EXTRA_CFLAGS)' $@"
+endif
+
 $(PS_ELF): app/ps/ps.c | sdk
 ifeq ($(OS_NAME),linux)
 	@mkdir -p $(dir $@)
@@ -681,15 +690,16 @@ ifeq ($(OS_NAME),linux)
 	mcopy -i $(IMAGE_NAME).hdd@@2M $(OUTPUT_DIR)/bin/ls ::/bin/ls
 	mcopy -i $(IMAGE_NAME).hdd@@2M $(OUTPUT_DIR)/bin/kill ::/bin/kill
 	mcopy -i $(IMAGE_NAME).hdd@@2M $(OUTPUT_DIR)/bin/ps ::/bin/ps
-mcopy -i $(IMAGE_NAME).hdd@@2M $(OUTPUT_DIR)/bin/malloc_stress ::/bin/malloc_stress
-mcopy -i $(IMAGE_NAME).hdd@@2M $(OUTPUT_DIR)/bin/mem ::/bin/mem
-mcopy -i $(IMAGE_NAME).hdd@@2M $(OUTPUT_DIR)/bin/alarm_demo ::/bin/alarm_demo
-mcopy -i $(IMAGE_NAME).hdd@@2M $(OUTPUT_DIR)/bin/touch ::/bin/touch
-for tool in $(BINUTILS_TOOLS); do \
+	mcopy -i $(IMAGE_NAME).hdd@@2M $(OUTPUT_DIR)/bin/stat ::/bin/stat
+	mcopy -i $(IMAGE_NAME).hdd@@2M $(OUTPUT_DIR)/bin/malloc_stress ::/bin/malloc_stress
+	mcopy -i $(IMAGE_NAME).hdd@@2M $(OUTPUT_DIR)/bin/mem ::/bin/mem
+	mcopy -i $(IMAGE_NAME).hdd@@2M $(OUTPUT_DIR)/bin/alarm_demo ::/bin/alarm_demo
+	mcopy -i $(IMAGE_NAME).hdd@@2M $(OUTPUT_DIR)/bin/touch ::/bin/touch
+	for tool in $(BINUTILS_TOOLS); do \
 	if [ -f "$(OUTPUT_DIR)/bin/$$tool" ]; then \
 		mcopy -i $(IMAGE_NAME).hdd@@2M $(OUTPUT_DIR)/bin/$$tool ::/bin/$$tool; \
 	fi; \
-done
+	done
 	mcopy -i $(IMAGE_NAME).hdd@@2M $(OUTPUT_DIR)/home/.moshrc ::/home/.moshrc
 	mcopy -i $(IMAGE_NAME).hdd@@2M $(OUTPUT_DIR)/home/hello.s ::/home/hello.s
 	if [ -f "$(OUTPUT_DIR)/bin/doom" ]; then \
