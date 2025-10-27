@@ -138,7 +138,7 @@ static int print_stat_for_path(const char* path) {
          (long long)st.st_blocks,
          (long)st.st_blksize,
          file_type_string(st.st_mode));
-  printf("Device: %lxh/%lud   Inode: %-10lu  Links: %lu\n",
+  printf("Device: 0x%lx/%lu   Inode: %-10lu  Links: %lu\n",
          (unsigned long)st.st_dev,
          (unsigned long)st.st_dev,
          (unsigned long)st.st_ino,

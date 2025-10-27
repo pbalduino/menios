@@ -4477,13 +4477,21 @@ static bool handle_builtin(const char* raw_line, char* line, int* out_status) {
 
   if(command_len == 4 && str_ncmp(command_start, "echo", 4) == 0) {
     bool has_redirection = false;
-    for(size_t i = 0; arguments[i] != '\0'; i++) {
-      char ch = arguments[i];
-      if(ch == '>' || ch == '<' || ch == '|') {
-        has_redirection = true;
-        break;
+    if(raw_line != NULL) {
+      bool in_quotes = false;
+      for(size_t i = 0; raw_line[i] != '\0'; i++) {
+        char ch = raw_line[i];
+        if(ch == '"') {
+          in_quotes = !in_quotes;
+          continue;
+        }
+        if(!in_quotes && (ch == '>' || ch == '<' || ch == '|')) {
+          has_redirection = true;
+          break;
+        }
       }
     }
+
     if(has_redirection) {
       return false;
     }
