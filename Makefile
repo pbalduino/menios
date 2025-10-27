@@ -90,13 +90,14 @@ LS_ELF = $(OBJDIR)/usermode/ls.elf
 KILL_ELF = $(OBJDIR)/usermode/kill.elf
 PS_ELF = $(OBJDIR)/usermode/ps.elf
 STAT_ELF = $(OBJDIR)/usermode/stat.elf
+REALPATH_ELF = $(OBJDIR)/usermode/realpath.elf
 MALLOC_STRESS_ELF = $(OBJDIR)/usermode/malloc_stress.elf
 MEM_ELF = $(OBJDIR)/usermode/mem.elf
 ALARM_DEMO_ELF = $(OBJDIR)/usermode/alarm_demo.elf
 TOUCH_ELF = $(OBJDIR)/usermode/touch.elf
 
-USER_PROGRAM_ELFS = $(MOSH_ELF) $(ECHO_ELF) $(CAT_ELF) $(ENV_ELF) $(TRUE_ELF) $(FALSE_ELF) $(LS_ELF) $(KILL_ELF) $(PS_ELF) $(STAT_ELF) $(MALLOC_STRESS_ELF) $(MEM_ELF) $(ALARM_DEMO_ELF) $(TOUCH_ELF)
-USERLAND_BINS = mosh echo cat env true false ls kill ps stat malloc_stress mem alarm_demo touch
+USER_PROGRAM_ELFS = $(MOSH_ELF) $(ECHO_ELF) $(CAT_ELF) $(ENV_ELF) $(TRUE_ELF) $(FALSE_ELF) $(LS_ELF) $(KILL_ELF) $(PS_ELF) $(STAT_ELF) $(REALPATH_ELF) $(MALLOC_STRESS_ELF) $(MEM_ELF) $(ALARM_DEMO_ELF) $(TOUCH_ELF)
+USERLAND_BINS = mosh echo cat env true false ls kill ps stat realpath malloc_stress mem alarm_demo touch
 
 
 BINUTILS_TOOLS = as ld objdump nm ar ranlib
@@ -142,6 +143,7 @@ USERLIBC_SOURCES = \
 	user/libc/input.c \
 	user/libc/environ.c \
 	user/libc/dirent.c \
+	user/libc/realpath.c \
 	src/libc/ctype.c \
 	src/libc/assert.c \
 	src/libc/errno.c \
@@ -521,6 +523,14 @@ else
 	$(DOCKER) run --rm $(DOCKER_RUN_FLAGS) $(DOCKER_ENV) --mount type=bind,source=$$(pwd),target=/mnt $(DOCKER_IMAGE) /bin/sh -c "cd /mnt && make EXTRA_CFLAGS='$(EXTRA_CFLAGS)' $@"
 endif
 
+$(REALPATH_ELF): app/realpath/realpath.c | sdk
+ifeq ($(OS_NAME),linux)
+	@mkdir -p $(dir $@)
+	$(SDK_BIN_DIR)/menios-gcc $(EXTRA_CFLAGS) $< -o $@
+else
+	$(DOCKER) run --rm $(DOCKER_RUN_FLAGS) $(DOCKER_ENV) --mount type=bind,source=$$(pwd),target=/mnt $(DOCKER_IMAGE) /bin/sh -c "cd /mnt && make EXTRA_CFLAGS='$(EXTRA_CFLAGS)' $@"
+endif
+
 $(PS_ELF): app/ps/ps.c | sdk
 ifeq ($(OS_NAME),linux)
 	@mkdir -p $(dir $@)
@@ -691,6 +701,7 @@ ifeq ($(OS_NAME),linux)
 	mcopy -i $(IMAGE_NAME).hdd@@2M $(OUTPUT_DIR)/bin/kill ::/bin/kill
 	mcopy -i $(IMAGE_NAME).hdd@@2M $(OUTPUT_DIR)/bin/ps ::/bin/ps
 	mcopy -i $(IMAGE_NAME).hdd@@2M $(OUTPUT_DIR)/bin/stat ::/bin/stat
+	mcopy -i $(IMAGE_NAME).hdd@@2M $(OUTPUT_DIR)/bin/realpath ::/bin/realpath
 	mcopy -i $(IMAGE_NAME).hdd@@2M $(OUTPUT_DIR)/bin/malloc_stress ::/bin/malloc_stress
 	mcopy -i $(IMAGE_NAME).hdd@@2M $(OUTPUT_DIR)/bin/mem ::/bin/mem
 	mcopy -i $(IMAGE_NAME).hdd@@2M $(OUTPUT_DIR)/bin/alarm_demo ::/bin/alarm_demo
