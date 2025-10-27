@@ -977,12 +977,18 @@ static int menios_vsnprintf(char* dest, size_t size, const char* format, va_list
                       NULL);
         break;
       }
-      case 'u': {
+      case 'u':
+      case 'o': {
         unsigned long value = long_flag ? va_arg(args, unsigned long) : va_arg(args, unsigned int);
+        unsigned base = (spec == 'o') ? 8 : 10;
+        const char* prefix = NULL;
+        if(spec == 'o' && alternate_form && value != 0) {
+          prefix = "0";
+        }
         format_number(&buffer,
                       value,
                       false,
-                      10,
+                      base,
                       false,
                       left_align,
                       zero_pad_flag,
@@ -991,7 +997,7 @@ static int menios_vsnprintf(char* dest, size_t size, const char* format, va_list
                       precision_specified,
                       false,
                       false,
-                      NULL);
+                      prefix);
         break;
       }
       case 'x':
