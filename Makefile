@@ -674,7 +674,7 @@ ifeq ($(OS_NAME),linux)
 
 	@echo Building image
 	rm -f $(IMAGE_NAME).hdd
-	dd if=/dev/zero bs=1M count=0 seek=64 of=$(IMAGE_NAME).hdd
+	dd if=/dev/zero bs=1M count=0 seek=128 of=$(IMAGE_NAME).hdd
 	sgdisk $(IMAGE_NAME).hdd -n 1:2048:4095 -t 1:ef02
 	sgdisk $(IMAGE_NAME).hdd -n 2:4096 -t 2:ef00
 	mformat -F -i $(IMAGE_NAME).hdd@@2M
