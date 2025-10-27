@@ -100,7 +100,7 @@ USER_PROGRAM_ELFS = $(MOSH_ELF) $(ECHO_ELF) $(CAT_ELF) $(ENV_ELF) $(TRUE_ELF) $(
 USERLAND_BINS = mosh echo cat env true false ls kill ps stat realpath malloc_stress mem alarm_demo touch
 
 
-BINUTILS_TOOLS = as ld objdump nm ar ranlib
+BINUTILS_TOOLS = as ld objdump nm ar ranlib readelf
 
 ARCH_FLAGS := -march=x86-64
 
@@ -690,26 +690,26 @@ ifeq ($(OS_NAME),linux)
 	mcopy -i $(IMAGE_NAME).hdd@@2M $(OUTPUT_DIR)/limine-bios.sys ::/boot/
 	mcopy -i $(IMAGE_NAME).hdd@@2M $(OUTPUT_DIR)/limine-bios.sys ::/boot/limine/
 	mcopy -i $(IMAGE_NAME).hdd@@2M $(OUTPUT_DIR)/EFI/BOOT/BOOTX64.EFI ::/EFI/BOOT
-	mcopy -i $(IMAGE_NAME).hdd@@2M $(OUTPUT_DIR)/bin/user_demo ::/bin/user_demo
-	mcopy -i $(IMAGE_NAME).hdd@@2M $(OUTPUT_DIR)/bin/mosh ::/bin/mosh
-	mcopy -i $(IMAGE_NAME).hdd@@2M $(OUTPUT_DIR)/bin/echo ::/bin/echo
-	mcopy -i $(IMAGE_NAME).hdd@@2M $(OUTPUT_DIR)/bin/cat ::/bin/cat
-	mcopy -i $(IMAGE_NAME).hdd@@2M $(OUTPUT_DIR)/bin/env ::/bin/env
-	mcopy -i $(IMAGE_NAME).hdd@@2M $(OUTPUT_DIR)/bin/true ::/bin/true
-	mcopy -i $(IMAGE_NAME).hdd@@2M $(OUTPUT_DIR)/bin/false ::/bin/false
-	mcopy -i $(IMAGE_NAME).hdd@@2M $(OUTPUT_DIR)/bin/ls ::/bin/ls
-	mcopy -i $(IMAGE_NAME).hdd@@2M $(OUTPUT_DIR)/bin/kill ::/bin/kill
-	mcopy -i $(IMAGE_NAME).hdd@@2M $(OUTPUT_DIR)/bin/ps ::/bin/ps
-	mcopy -i $(IMAGE_NAME).hdd@@2M $(OUTPUT_DIR)/bin/stat ::/bin/stat
-	mcopy -i $(IMAGE_NAME).hdd@@2M $(OUTPUT_DIR)/bin/realpath ::/bin/realpath
-	mcopy -i $(IMAGE_NAME).hdd@@2M $(OUTPUT_DIR)/bin/readelf ::/bin/readelf
-	mcopy -i $(IMAGE_NAME).hdd@@2M $(OUTPUT_DIR)/bin/malloc_stress ::/bin/malloc_stress
-	mcopy -i $(IMAGE_NAME).hdd@@2M $(OUTPUT_DIR)/bin/mem ::/bin/mem
-	mcopy -i $(IMAGE_NAME).hdd@@2M $(OUTPUT_DIR)/bin/alarm_demo ::/bin/alarm_demo
-	mcopy -i $(IMAGE_NAME).hdd@@2M $(OUTPUT_DIR)/bin/touch ::/bin/touch
+	mcopy -o -i $(IMAGE_NAME).hdd@@2M $(OUTPUT_DIR)/bin/user_demo ::/bin/user_demo
+	mcopy -o -i $(IMAGE_NAME).hdd@@2M $(OUTPUT_DIR)/bin/mosh ::/bin/mosh
+	mcopy -o -i $(IMAGE_NAME).hdd@@2M $(OUTPUT_DIR)/bin/echo ::/bin/echo
+	mcopy -o -i $(IMAGE_NAME).hdd@@2M $(OUTPUT_DIR)/bin/cat ::/bin/cat
+	mcopy -o -i $(IMAGE_NAME).hdd@@2M $(OUTPUT_DIR)/bin/env ::/bin/env
+	mcopy -o -i $(IMAGE_NAME).hdd@@2M $(OUTPUT_DIR)/bin/true ::/bin/true
+	mcopy -o -i $(IMAGE_NAME).hdd@@2M $(OUTPUT_DIR)/bin/false ::/bin/false
+	mcopy -o -i $(IMAGE_NAME).hdd@@2M $(OUTPUT_DIR)/bin/ls ::/bin/ls
+	mcopy -o -i $(IMAGE_NAME).hdd@@2M $(OUTPUT_DIR)/bin/kill ::/bin/kill
+	mcopy -o -i $(IMAGE_NAME).hdd@@2M $(OUTPUT_DIR)/bin/ps ::/bin/ps
+	mcopy -o -i $(IMAGE_NAME).hdd@@2M $(OUTPUT_DIR)/bin/stat ::/bin/stat
+	mcopy -o -i $(IMAGE_NAME).hdd@@2M $(OUTPUT_DIR)/bin/realpath ::/bin/realpath
+	mcopy -o -i $(IMAGE_NAME).hdd@@2M $(OUTPUT_DIR)/bin/readelf ::/bin/readelf
+	mcopy -o -i $(IMAGE_NAME).hdd@@2M $(OUTPUT_DIR)/bin/malloc_stress ::/bin/malloc_stress
+	mcopy -o -i $(IMAGE_NAME).hdd@@2M $(OUTPUT_DIR)/bin/mem ::/bin/mem
+	mcopy -o -i $(IMAGE_NAME).hdd@@2M $(OUTPUT_DIR)/bin/alarm_demo ::/bin/alarm_demo
+	mcopy -o -i $(IMAGE_NAME).hdd@@2M $(OUTPUT_DIR)/bin/touch ::/bin/touch
 	for tool in $(BINUTILS_TOOLS); do \
 	if [ -f "$(OUTPUT_DIR)/bin/$$tool" ]; then \
-		mcopy -i $(IMAGE_NAME).hdd@@2M $(OUTPUT_DIR)/bin/$$tool ::/bin/$$tool; \
+		mcopy -o -i $(IMAGE_NAME).hdd@@2M $(OUTPUT_DIR)/bin/$$tool ::/bin/$$tool; \
 	fi; \
 	done
 	mcopy -i $(IMAGE_NAME).hdd@@2M $(OUTPUT_DIR)/home/.moshrc ::/home/.moshrc
