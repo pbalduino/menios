@@ -22,7 +22,11 @@ static int resolve_path(const char* input) {
     return 1;
   }
 
-  printf("%s\n", resolved);
+  size_t len = strlen(resolved);
+  if(write(STDOUT_FILENO, resolved, len) < 0 || write(STDOUT_FILENO, "\n", 1) < 0) {
+    /* fall back to stdio if write fails */
+    printf("%s\n", resolved);
+  }
   free(resolved);
   return 0;
 }
