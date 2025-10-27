@@ -100,7 +100,7 @@ USER_PROGRAM_ELFS = $(MOSH_ELF) $(ECHO_ELF) $(CAT_ELF) $(ENV_ELF) $(TRUE_ELF) $(
 USERLAND_BINS = mosh echo cat env true false ls kill ps stat realpath malloc_stress mem alarm_demo touch
 
 
-BINUTILS_TOOLS = as ld objdump nm ar ranlib readelf
+BINUTILS_TOOLS = as ld objdump nm ar ranlib readelf objcopy strip strings size
 
 ARCH_FLAGS := -march=x86-64
 
