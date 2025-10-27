@@ -37,14 +37,15 @@ digraph CriticalPath {
         issue338 [label="#338: Float parsing\nstrtod/ldexp\n\n✅ COMPLETE", fillcolor="#90EE90", style="filled,dashed"];
     }
 
-    // Native Compilation - READY!
+    // Native Compilation
     subgraph cluster_native {
-        label="Native Compilation - READY! 🎉";
+        label="Native Compilation";
         style=filled;
         fillcolor="#E6F3FF";
 
         issue190 [label="#190: TCC port\n\n4-6 weeks\n\n✅ READY TO START!", fillcolor="#B3E5FC"];
-        issue191 [label="#191: binutils port\n\n6-8 weeks\n\n✅ READY TO START!", fillcolor="#B3E5FC"];
+        issue191 [label="#191: binutils port\n\n6-8 weeks\n\n⚠️ BLOCKED BY #371", fillcolor="#FFE4B5"];
+        issue371 [label="#371: ld freeze bug\n\nTBD\n\n🚨 CRITICAL BLOCKER", fillcolor="#FFB6C1"];
     }
 
     // Dependencies - Foundation to blockers (NOW COMPLETE)
@@ -69,16 +70,19 @@ digraph CriticalPath {
     issue193 -> issue191 [label="libc ✅", color=green, penwidth=2, style=dashed];
     issue189 -> issue191 [label="file I/O ✅", color=green, penwidth=2, style=dashed];
 
+    // Bug blocking binutils
+    issue371 -> issue191 [label="BLOCKS", color=red, penwidth=3, style=bold];
+
     // TCC and binutils relationship
     issue191 -> issue190 [label="linker/assembler", color=blue, style=dotted];
 
     // Timeline annotation
     subgraph cluster_timeline {
-        label="Timeline - UPDATED! 🎉";
+        label="Timeline";
         style=filled;
         fillcolor="#E8F8E8";
 
-        timeline [label="✅ ALL BLOCKERS COMPLETE!\n\nCompleted:\n• Phase 1: Signal API ✅\n• Phase 2: Float parsing ✅\n\nREADY TO START:\n• TCC port (#190) - 4-6 weeks\n• binutils port (#191) - 6-8 weeks\n\nRemaining work (optional):\n• Stubbed functions (#364) - nice-to-have\n  - stat family ✅ complete\n  - chmod/utime - for build systems\n  - pseudo-fs metadata - for full coverage",
+        timeline [label="✅ TCC BLOCKERS COMPLETE!\n\nCompleted:\n• Phase 1: Signal API ✅\n• Phase 2: Float parsing ✅\n\nREADY TO START:\n• TCC port (#190) - 4-6 weeks ✅\n\nBLOCKED:\n• binutils port (#191) - ⚠️ BLOCKED BY #371\n  - Build complete ✅\n  - ld freeze bug must be fixed 🚨\n  - Testing: 1-2 weeks (after bug fix)\n\nRemaining work (optional):\n• Stubbed functions (#364) - nice-to-have\n  - stat family ✅ complete\n  - chmod/utime - for build systems\n  - pseudo-fs metadata - for full coverage",
                  shape=note, fillcolor="#FFFACD", style=filled];
     }
 

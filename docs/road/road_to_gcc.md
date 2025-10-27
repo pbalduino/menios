@@ -117,22 +117,29 @@ GNU [binutils 2.45](https://www.gnu.org/software/binutils/) has also been staged
 - ✅ #205 (I/O scheduler) - COMPLETE
 - **🎉 ALL DEPENDENCIES MET - ZERO BLOCKERS!**
 
-**Status:** 🔄 **BUILD COMPLETE - TESTING IN PROGRESS**
+**Status:** ⚠️ **BUILD COMPLETE - BLOCKED BY BUG #371**
 - ✅ Successfully built under `DOCKER_IMAGE=menios:trunk`
 - ✅ Integrated into disk image (`make userland` + `make build`)
 - ✅ Binaries staged in `/bin`: as, ld, objdump, nm, ar, ranlib, touch
-- 🔄 Integration testing: Need to boot meniOS and verify each tool works
-- 📝 Documentation pending: Usage examples, sanity check scripts
-- ❓ Decision needed: Include remaining binutils (strip, size, strings, etc.)?
+- ❌ **BLOCKED:** `ld` crashes/freezes on version queries (#371)
+  - `ld -V` and `ld --version` freeze indefinitely in meniOS
+  - Works correctly on Linux (immediate return)
+  - Blocks all ld testing and validation
+- 🔄 Integration testing blocked until #371 is resolved
+- 📝 Documentation complete: README updated with usage examples
+
+**Blocker:**
+- **#371:** Bug: ld crashes/freezes on simple version queries
 
 **Next Steps:**
-1. Boot meniOS and run integration tests for each binary
-2. Create simple workflow tests (assemble → link → inspect)
-3. Document usage and create regression test scripts
-4. Decide on remaining binutils binaries
-5. Close #191 once verified
+1. ⚠️ Fix #371 (ld freeze bug)
+2. Test if other binutils tools (`as`, `objdump`, `nm`) have similar issues
+3. Once #371 is resolved, run integration tests for each binary
+4. Create simple workflow tests (assemble → link → inspect)
+5. Create regression test scripts
+6. Close #191 once verified
 
-**Timeline Estimate:** Testing & docs: 1-2 weeks
+**Timeline Estimate:** Bug fix: TBD, then testing & verification: 1-2 weeks
 
 ## 🛣️ **Critical Path to Cross-Compilation**
 

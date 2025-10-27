@@ -371,22 +371,28 @@ These issues form the backbone of the system and should be prioritized:
 ### Phase 6: Native Compilation (Long Term)
 **Goal**: Compile on meniOS itself
 - **#190**: TCC port - ✅ **READY TO START** (all blockers resolved: #337 ✅, #338 ✅)
-- **#191**: binutils port - 🔄 **BUILD COMPLETE, TESTING IN PROGRESS**
+- **#191**: binutils port - ⚠️ **BUILD COMPLETE, BLOCKED BY #371**
   - ✅ Successfully built and integrated into disk image
   - ✅ Binaries staged: as, ld, objdump, nm, ar, ranlib, touch
-  - 🔄 Integration testing pending
-  - 📝 Documentation and sanity checks needed
+  - ❌ **BLOCKED:** ld crashes/freezes on version queries (#371)
+  - 🔄 Integration testing blocked until bug is fixed
+  - ✅ Documentation complete (README updated)
+- **#371**: ld freeze bug - 🚨 **CRITICAL BLOCKER**
+  - `ld -V` and `ld --version` freeze in meniOS (work on Linux)
+  - Blocks all linker testing and validation
+  - Must be fixed before #191 can complete
 - Possibly GCC port (future)
 
 **Timeline**:
 - TCC: 4-6 weeks (ready to start!)
-- binutils testing & docs: 1-2 weeks (build complete)
+- binutils bug fix (#371): TBD
+- binutils testing & verification: 1-2 weeks (after #371 fixed)
 - Full native compilation: 6-12 months total
 
 **Status**:
 - ✅ All TCC blockers resolved (#337, #338 complete)
-- 🔄 binutils built and awaiting testing
-- 🎉 Major progress toward native compilation!
+- ⚠️ binutils built but blocked by critical bug (#371)
+- 🚨 ld freeze must be debugged and fixed
 
 ## 🔴 Current Blocking Relationships
 

@@ -8,21 +8,25 @@ The meniOS project has grown to over 100+ tracked issues with complex interdepen
 
 **Focus:** The critical path to TCC/GCC native compilation
 
-**Size:** 174KB (compact and readable)
+**Size:** 237KB (compact and readable)
 
 **Shows:**
 - Foundation issues (all complete ✅)
-- TCC blockers: #337 (Signal API), #338 (Float parsing)
-- TCC port: #190
-- binutils port: #191
-- Timeline: 19-26 weeks to TCC
+- TCC blockers: #337 (Signal API ✅), #338 (Float parsing ✅) - **COMPLETE!**
+- TCC port: #190 - **READY TO START!**
+- binutils port: #191 - **BLOCKED BY #371**
+- Bug blocker: #371 (ld freeze) - **CRITICAL**
+- Timeline: TCC ready to start, binutils blocked pending bug fix
 
 **Use this for:**
 - Understanding what's blocking native compilation
 - Prioritizing toolchain work
 - Tracking progress to TCC milestone
 
-**Key Insight:** Only 2 issues block TCC (#337, #338), both are libc work with clear timelines.
+**Key Insights:**
+- ✅ TCC has zero blockers - ready to start!
+- ⚠️ binutils build complete but blocked by ld freeze bug (#371)
+- 🚨 #371 is the critical blocker for native compilation
 
 ---
 
@@ -65,7 +69,8 @@ The meniOS project has grown to over 100+ tracked issues with complex interdepen
 - ✅ #338 (Float parsing) - CLOSED - TCC blockers resolved! 🎉
 - ⚠️ #364 (Stubbed functions) - Partially complete (stat family working)
 - 🆕 #370 (stat command) - NEW - Userland tool to display file metadata
-- ✅ #191 (binutils) - Build complete, testing in progress
+- ✅ #191 (binutils) - Build complete, **BLOCKED BY #371**
+- 🚨 #371 (ld freeze bug) - NEW - **CRITICAL BLOCKER** for binutils testing
 
 **Recently Closed (17 issues):**
 - #58, #137, #138, #145, #149, #151, #152, #153, #155, #167, #168, #226, #284, #285, #316, #337, #338

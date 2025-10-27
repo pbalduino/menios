@@ -361,6 +361,7 @@ digraph IssueDependencies {
         issue320 [label="#320: Shell hang\nafter Doom crash", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED
         issue322 [label="#322: Shell alarm\ncrash (stack)", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED
         issue323 [label="#323: Shell crash\nafter Doom exit", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED
+        issue371 [label="#371: ld freeze bug\nversion queries hang", fillcolor="#FFB6C1"];
     }
 
     // Foundation dependencies
@@ -421,6 +422,7 @@ digraph IssueDependencies {
     issue189 -> issue191 [color=purple, style=dashed];  // FAT32 write ✅ COMPLETE!
     issue205 -> issue191 [color=teal, label="I/O perf", style=dashed];
     issue253 -> issue191 [color=green, penwidth=3, label="BUDDY\nCOMPLETE ✅", style=dashed];  // Buddy milestone complete!
+    issue371 -> issue191 [color=red, penwidth=3, label="BLOCKS\nBUG", style=bold];  // ld freeze bug blocks binutils
 
     // Shell UX dependencies (some complete)
     issue148 -> issue197 [color=cyan, style=dashed];
