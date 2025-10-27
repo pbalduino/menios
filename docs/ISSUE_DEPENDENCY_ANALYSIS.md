@@ -266,11 +266,21 @@ These issues form the backbone of the system and should be prioritized:
 - **#368** - Complete pathconf() for all POSIX queries
 - **#363** - Serial port file descriptor for debug logging (separate enhancement)
 
-**Userland Tooling (uses stat infrastructure)**:
+**Userland Tooling**:
 - **#370** - stat command - Display file metadata from shell
   - Uses stat/lstat/fstat syscalls ✅ (already working)
   - Will improve as #366 and #367 add more metadata
   - Useful for debugging and shell scripts
+- **#372** - shutdown command - Clean ACPI power-off from userland
+  - Exposes existing ACPI S5 power-button path via syscall
+  - Allows graceful shutdown from command line
+  - Quick win (2-4 days), improves UX significantly
+  - QEMU exits automatically on shutdown
+- **#373** - realpath command - Canonicalize file paths
+  - Uses realpath() libc function ✅ (already implemented)
+  - Resolves relative paths, `.`, and `..` components
+  - Quick win (2-3 days), useful for build systems
+  - Supports GNU coreutils options (-e, -m, -q, -z)
 
 **Dependencies**:
 - stat infrastructure: ✅ Complete

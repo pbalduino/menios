@@ -54,6 +54,8 @@ MeniOS ships with a growing collection of userland utilities in `/bin`:
 - **cat**, **echo**, **env**, **true**, **false** — Standard POSIX utilities
 - **touch** — Create files and update timestamps
 - **stat** — Display detailed file metadata (#370 - planned)
+- **shutdown** — Clean ACPI power-off (#372 - planned)
+- **realpath** — Canonicalize file paths (#373 - planned)
 
 ### Development Tools (binutils 2.45)
 - **as** — GNU assembler (x86-64)

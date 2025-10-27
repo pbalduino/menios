@@ -324,6 +324,8 @@ digraph IssueDependencies {
         issue318 [label="#318: uname command\nsystem information", fillcolor="#E0FFFF"];
         issue363 [label="#363: Serial port FD\ndebug logging", fillcolor="#FFE4B5"];
         issue370 [label="#370: stat command\nfile metadata display", fillcolor="#E0F0FF"];
+        issue372 [label="#372: shutdown command\nACPI power-off", fillcolor="#E0F0FF"];
+        issue373 [label="#373: realpath command\npath canonicalization", fillcolor="#E0F0FF"];
     }
 
     subgraph cluster_hibernation {
@@ -661,6 +663,14 @@ digraph IssueDependencies {
     issue193 -> issue370 [color=green, style=dashed];  // libc -> stat command
     issue366 -> issue370 [color=blue, style=dotted, label="improves output"];  // pseudo-fs metadata -> stat command
     issue367 -> issue370 [color=blue, style=dotted, label="improves output"];  // rich FAT32 metadata -> stat command
+
+    // shutdown command dependencies
+    issue193 -> issue372 [color=green, style=dashed];  // libc -> shutdown command
+    issue276 -> issue372 [color=teal, style=dotted, label="ACPI infra"];  // UACPI -> shutdown (ACPI already exists)
+
+    // realpath command dependencies
+    issue193 -> issue373 [color=green, style=dashed];  // libc -> realpath command
+    stat_done -> issue373 [color=green, penwidth=2, label="realpath() ✅"];  // realpath() function -> realpath command
 
     // Hibernation dependencies
     issue93 -> issue254 [label="fork/exec"];  // process mgmt -> hibernation infra

@@ -87,6 +87,8 @@ digraph LibcEcosystem {
         fillcolor="#F0F8FF";
 
         issue370 [label="#370: stat command\nDisplay file metadata\n\n3-5 days", fillcolor="#E0F0FF"];
+        issue372 [label="#372: shutdown command\nClean ACPI power-off\n\n2-4 days", fillcolor="#E0F0FF"];
+        issue373 [label="#373: realpath command\nPath canonicalization\n\n2-3 days", fillcolor="#E0F0FF"];
     }
 
     // Thread safety
@@ -156,6 +158,12 @@ digraph LibcEcosystem {
     issue193 -> issue370 [color=green, style=dashed, label="libc"];
     issue366 -> issue370 [color=blue, style=dotted, label="improves output"];
     issue367 -> issue370 [color=blue, style=dotted, label="improves output"];
+
+    issue193 -> issue372 [color=green, style=dashed, label="libc"];
+    issue213 -> issue372 [color=green, style=dotted, label="ACPI power button"];
+
+    stat_done -> issue373 [color=green, penwidth=2, label="realpath() ✅"];
+    issue193 -> issue373 [color=green, style=dashed, label="libc"];
 
     // Thread safety
     issue109 -> issue339 [color=blue, penwidth=2, label="pthread"];

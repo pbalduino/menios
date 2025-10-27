@@ -34,7 +34,7 @@ The meniOS project has grown to over 100+ tracked issues with complex interdepen
 
 **Focus:** All C standard library implementation work
 
-**Size:** 293KB
+**Size:** 491KB
 
 **Shows:**
 - Foundation: Minimal libc #193 (complete ✅)
@@ -69,6 +69,8 @@ The meniOS project has grown to over 100+ tracked issues with complex interdepen
 - ✅ #338 (Float parsing) - CLOSED - TCC blockers resolved! 🎉
 - ⚠️ #364 (Stubbed functions) - Partially complete (stat family working)
 - 🆕 #370 (stat command) - NEW - Userland tool to display file metadata
+- 🆕 #372 (shutdown command) - NEW - Clean ACPI power-off from userland (quick win)
+- 🆕 #373 (realpath command) - NEW - Path canonicalization tool (quick win)
 - ✅ #191 (binutils) - Build complete, **BLOCKED BY #371**
 - 🚨 #371 (ld freeze bug) - NEW - **CRITICAL BLOCKER** for binutils testing
 
@@ -108,7 +110,7 @@ The meniOS project has grown to over 100+ tracked issues with complex interdepen
 
 **Focus:** Complete dependency graph (all issues)
 
-**Size:** 854KB (large and complex)
+**Size:** 893KB (large and complex)
 
 **Shows:** Everything - all 100+ issues with all dependencies
 
@@ -125,10 +127,10 @@ The meniOS project has grown to over 100+ tracked issues with complex interdepen
 
 | Diagram | Size | Issues | Best For |
 |---------|------|--------|----------|
-| **Critical** | 174KB | ~15 | TCC/toolchain path |
-| **libc** | 293KB | ~30 | Library implementation |
+| **Critical** | 237KB | ~15 | TCC/toolchain path |
+| **libc** | 491KB | ~30 | Library implementation |
 | **Hardware** | 239KB | ~15 | Drivers & ACPI |
-| **Full** | 854KB | 100+ | Complete reference |
+| **Full** | 893KB | 100+ | Complete reference |
 
 ## Color Coding
 
