@@ -607,6 +607,46 @@ main (int argc, char **argv)
   expandargv (&argc, &argv);
   char ** saved_argv = dupargv (argv);
 
+  /* Pre-scan for the short -o option in environments where getopt_long_only
+     support is incomplete.  We strip recognised occurrences so they do not
+     confuse later option processing, while still honouring the user's
+     requested output name.  */
+  const char *preparsed_output = NULL;
+  int write_index = 1;
+  for (int read_index = 1; read_index < argc; ++read_index)
+    {
+      char *arg = argv[read_index];
+      if (arg[0] == '-' && arg[1] == 'o' && arg[2] != '-')
+	{
+	  const char *value = NULL;
+	  if (arg[2] != '\0')
+	    value = arg + 2;
+	  else
+	    {
+	      if (read_index + 1 >= argc)
+		{
+		  einfo (_("%P: option '-o' requires an argument\n"));
+		  xexit (1);
+		}
+	      value = argv[++read_index];
+	    }
+	  if (value[0] == '\0')
+	    {
+	      einfo (_("%P: option '-o' requires a non-empty argument\n"));
+	      xexit (1);
+	    }
+	  preparsed_output = value;
+	  continue;
+	}
+
+      argv[write_index++] = arg;
+    }
+  argv[write_index] = NULL;
+  argc = write_index;
+
+  if (preparsed_output != NULL)
+    lang_add_output (preparsed_output, 0);
+
   if (bfd_init () != BFD_INIT_MAGIC)
     fatal (_("%P: fatal error: libbfd ABI mismatch\n"));
 

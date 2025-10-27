@@ -191,11 +191,18 @@ char* realpath(const char* path, char* resolved_path) {
   struct stat st;
   if(stat(output, &st) < 0) {
     int err = errno;
-    if(allocated) {
-      free(output);
+    if(err != ENOENT) {
+      if(allocated) {
+        free(output);
+      }
+      errno = err;
+      return NULL;
     }
+    /* For ENOENT we still return the canonicalised path so callers that merely
+       need a stable string (such as libiberty's lrealpath) can compare file
+       names reliably.  Preserve the errno value so the caller can detect that
+       the path does not currently exist. */
     errno = err;
-    return NULL;
   }
 
   return output;
