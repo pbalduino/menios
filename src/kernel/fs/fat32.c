@@ -16,6 +16,62 @@
 #include <kernel/file.h>
 #include <kernel/file.h>
 
+#define FAT32_LOG_PATH_MAX 96
+
+static const char* fat32_debug_path(const char* path, char* buffer, size_t buffer_len) {
+  static const uintptr_t kernel_floor = 0xffff800000000000ull;
+  static const char hex_digits[] = "0123456789abcdef";
+
+  if(buffer == NULL || buffer_len == 0) {
+    return "";
+  }
+
+  if(path == NULL) {
+    static const char null_repr[] = "(null)";
+    size_t copy = sizeof(null_repr);
+    if(copy > buffer_len) {
+      copy = buffer_len;
+    }
+    memcpy(buffer, null_repr, copy - 1);
+    buffer[copy - 1] = '\0';
+    return buffer;
+  }
+
+  uintptr_t addr = (uintptr_t)path;
+  if(addr >= kernel_floor) {
+    size_t copy_len = strnlen(path, buffer_len - 1);
+    memcpy(buffer, path, copy_len);
+    buffer[copy_len] = '\0';
+    return buffer;
+  }
+
+  size_t pos = 0;
+  static const char prefix[] = "(user:0x";
+  for(size_t i = 0; i < sizeof(prefix) - 1 && pos < buffer_len - 1; i++) {
+    buffer[pos++] = prefix[i];
+  }
+
+  bool started = false;
+  for(int shift = (int)(sizeof(uintptr_t) * 8) - 4; shift >= 0 && pos < buffer_len - 1; shift -= 4) {
+    char digit = hex_digits[(addr >> shift) & 0xF];
+    if(!started) {
+      if(digit == '0' && shift > 0) {
+        continue;
+      }
+      started = true;
+    }
+    buffer[pos++] = digit;
+  }
+  if(!started && pos < buffer_len - 1) {
+    buffer[pos++] = '0';
+  }
+  if(pos < buffer_len - 1) {
+    buffer[pos++] = ')';
+  }
+  buffer[pos < buffer_len ? pos : buffer_len - 1] = '\0';
+  return buffer;
+}
+
 #define GPT_HEADER_SIGNATURE 0x5452415020494645ull
 #define FAT32_EOC_MARK        0x0FFFFFF8u
 #define FAT32_BAD_CLUSTER     0x0FFFFFF7u
@@ -1796,10 +1852,13 @@ static bool fat32_create_entry(fat32_fs_t* fs,
     return false;
   }
 
+  char path_repr[FAT32_LOG_PATH_MAX];
+  const char* printable_path = fat32_debug_path(path, path_repr, sizeof(path_repr));
+
   char parent[256];
   char name[256];
   if(!fat32_split_path(path, parent, sizeof(parent), name, sizeof(name))) {
-    serial_printf("fat32_create_entry: split failed path=%s\n", path);
+    serial_printf("fat32_create_entry: split failed path=%s\n", printable_path);
     return false;
   }
 
@@ -1809,8 +1868,8 @@ static bool fat32_create_entry(fat32_fs_t* fs,
   }
 
   fat32_dir_entry_info_t dir_info;
-  if(!fat32_traverse_path(fs, parent, &dir_info, true)) {
-    serial_printf("fat32_create_entry: parent missing path=%s parent=%s\n", path, parent);
+ if(!fat32_traverse_path(fs, parent, &dir_info, true)) {
+    serial_printf("fat32_create_entry: parent missing path=%s parent=%s\n", printable_path, parent);
     return false;
   }
 
@@ -1822,14 +1881,14 @@ static bool fat32_create_entry(fat32_fs_t* fs,
   fat32_dir_entry_info_t existing;
   if(fat32_find_entry(fs, dir_info.first_cluster, name, &existing, false)) {
     if(exclusive) {
-      serial_printf("fat32_create_entry: entry exists path=%s\n", path);
+      serial_printf("fat32_create_entry: entry exists path=%s\n", printable_path);
       return false;
     }
     if(existing.is_directory != create_directory) {
-      serial_printf("fat32_create_entry: type mismatch path=%s\n", path);
+      serial_printf("fat32_create_entry: type mismatch path=%s\n", printable_path);
       return false;
     }
-    serial_printf("fat32_create_entry: reusing existing entry path=%s\n", path);
+    serial_printf("fat32_create_entry: reusing existing entry path=%s\n", printable_path);
     if(out_info) {
       *out_info = existing;
     }
@@ -1843,7 +1902,7 @@ static bool fat32_create_entry(fat32_fs_t* fs,
   uint8_t sfn[11];
   bool requires_lfn = false;
   if(!fat32_generate_sfn(fs, dir_info.first_cluster, name, sfn, &requires_lfn)) {
-    serial_printf("fat32_create_entry: generate_sfn failed path=%s\n", path);
+    serial_printf("fat32_create_entry: generate_sfn failed path=%s\n", printable_path);
     return false;
   }
 
@@ -1860,7 +1919,7 @@ static bool fat32_create_entry(fat32_fs_t* fs,
                                         &entry_cluster,
                                         &entry_index,
                                         &used_end_marker)) {
-    serial_printf("fat32_create_entry: no free entries path=%s\n", path);
+    serial_printf("fat32_create_entry: no free entries path=%s\n", printable_path);
     return false;
   }
 
@@ -1873,13 +1932,13 @@ static bool fat32_create_entry(fat32_fs_t* fs,
   if(create_directory) {
     new_dir_cluster = fat32_allocate_cluster(fs);
     if(new_dir_cluster == 0) {
-      serial_printf("fat32_create_entry: allocate cluster failed path=%s\n", path);
+      serial_printf("fat32_create_entry: allocate cluster failed path=%s\n", printable_path);
       kfree(entry_bytes);
       return false;
     }
     if(!fat32_setup_directory_cluster(fs, new_dir_cluster, dir_info.first_cluster)) {
       fat32_set_fat_entry(fs, new_dir_cluster, 0);
-      serial_printf("fat32_create_entry: setup directory cluster failed path=%s\n", path);
+      serial_printf("fat32_create_entry: setup directory cluster failed path=%s\n", printable_path);
       kfree(entry_bytes);
       return false;
     }
@@ -1924,13 +1983,13 @@ static bool fat32_create_entry(fat32_fs_t* fs,
     if(create_directory && new_dir_cluster != 0) {
       fat32_set_fat_entry(fs, new_dir_cluster, 0);
     }
-    serial_printf("fat32_create_entry: write entries failed path=%s\n", path);
+    serial_printf("fat32_create_entry: write entries failed path=%s\n", printable_path);
     return false;
   }
 
   bool flush_ok = fat32_flush_fat(fs);
   if(!flush_ok) {
-    serial_printf("fat32_create_entry: flush FAT failed path=%s\n", path);
+    serial_printf("fat32_create_entry: flush FAT failed path=%s\n", printable_path);
   }
 
   if(out_info) {
@@ -1938,7 +1997,7 @@ static bool fat32_create_entry(fat32_fs_t* fs,
     if(fat32_find_entry(fs, dir_info.first_cluster, name, &info, false)) {
       *out_info = info;
     } else {
-      serial_printf("fat32_create_entry: post lookup failed path=%s\n", path);
+      serial_printf("fat32_create_entry: post lookup failed path=%s\n", printable_path);
       memset(out_info, 0, sizeof(*out_info));
       strncpy(out_info->name, name, sizeof(out_info->name) - 1u);
       out_info->name[sizeof(out_info->name) - 1u] = '\0';
@@ -1951,7 +2010,7 @@ static bool fat32_create_entry(fat32_fs_t* fs,
   }
 
   serial_printf("fat32_create_entry: created path=%s attr=%s\n",
-                path,
+                printable_path,
                 create_directory ? "dir" : "file");
   return flush_ok;
 }
@@ -2779,13 +2838,16 @@ bool fs_file_create(const fs_mount_t* mount, const char* path, bool exclusive) {
   }
 
   fat32_fs_t* fs = (fat32_fs_t*)&mount->fat32;
-  serial_printf("fs_file_create: path=%s exclusive=%s\n",
-                path ? path : "(null)",
+  char path_repr[FAT32_LOG_PATH_MAX];
+  const char* printable_path = fat32_debug_path(path, path_repr, sizeof(path_repr));
+  serial_printf("fs_file_create: path=%s ptr=%p exclusive=%s\n",
+                printable_path,
+                (void*)path,
                 exclusive ? "yes" : "no");
   bool ok = fat32_create_entry(fs, path, exclusive, false, NULL);
   serial_printf("fs_file_create: result=%s path=%s\n",
                 ok ? "ok" : "fail",
-                path ? path : "(null)");
+                printable_path);
   return ok;
 }
 

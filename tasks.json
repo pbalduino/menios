@@ -1,5 +1,360 @@
 [
   {
+    "title": "Implement shutdown command for ACPI power-off",
+    "github_issue": {
+      "number": 372,
+      "url": "https://github.com/pbalduino/menios/issues/372",
+      "state": "OPEN"
+    },
+    "labels": [
+      "enhancement",
+      "kernel"
+    ],
+    "assignees": [
+      "pbalduino"
+    ]
+  },
+  {
+    "title": "Bug: ld crashes/freezes on simple version queries",
+    "github_issue": {
+      "number": 371,
+      "url": "https://github.com/pbalduino/menios/issues/371",
+      "state": "OPEN"
+    },
+    "labels": [
+      "bug",
+      "blocked",
+      "build"
+    ],
+    "assignees": [
+      "pbalduino"
+    ]
+  },
+  {
+    "title": "Implement stat command for file information display",
+    "github_issue": {
+      "number": 370,
+      "url": "https://github.com/pbalduino/menios/issues/370",
+      "state": "OPEN"
+    },
+    "labels": [
+      "enhancement",
+      "libc"
+    ],
+    "assignees": [
+      "pbalduino"
+    ]
+  },
+  {
+    "title": "Implement system() function for shell command execution",
+    "github_issue": {
+      "number": 369,
+      "url": "https://github.com/pbalduino/menios/issues/369",
+      "state": "OPEN"
+    },
+    "labels": [
+      "enhancement",
+      "libc"
+    ],
+    "assignees": [
+      "pbalduino"
+    ]
+  },
+  {
+    "title": "Complete pathconf() implementation for all POSIX queries",
+    "github_issue": {
+      "number": 368,
+      "url": "https://github.com/pbalduino/menios/issues/368",
+      "state": "OPEN"
+    },
+    "labels": [
+      "enhancement",
+      "libc"
+    ],
+    "assignees": [
+      "pbalduino"
+    ]
+  },
+  {
+    "title": "Parse rich FAT32 metadata (timestamps, DOS attributes, LFN)",
+    "github_issue": {
+      "number": 367,
+      "url": "https://github.com/pbalduino/menios/issues/367",
+      "state": "OPEN"
+    },
+    "labels": [
+      "enhancement",
+      "kernel",
+      "libc"
+    ],
+    "assignees": [
+      "pbalduino"
+    ]
+  },
+  {
+    "title": "Add .stat support to pseudo-filesystems (tmpfs, procfs, devfs, pipes)",
+    "github_issue": {
+      "number": 366,
+      "url": "https://github.com/pbalduino/menios/issues/366",
+      "state": "OPEN"
+    },
+    "labels": [
+      "enhancement",
+      "kernel",
+      "libc"
+    ],
+    "assignees": [
+      "pbalduino"
+    ]
+  },
+  {
+    "title": "Implement chmod/fchmod syscalls for file permission modification",
+    "github_issue": {
+      "number": 365,
+      "url": "https://github.com/pbalduino/menios/issues/365",
+      "state": "OPEN"
+    },
+    "labels": [
+      "enhancement",
+      "kernel",
+      "libc"
+    ],
+    "assignees": [
+      "pbalduino"
+    ]
+  },
+  {
+    "title": "Implement stubbed libc functions",
+    "github_issue": {
+      "number": 364,
+      "url": "https://github.com/pbalduino/menios/issues/364",
+      "state": "OPEN"
+    },
+    "labels": [
+      "enhancement",
+      "kernel",
+      "libc"
+    ],
+    "assignees": [
+      "pbalduino"
+    ]
+  },
+  {
+    "title": "Separate debug messages from stderr using serial port file descriptor",
+    "github_issue": {
+      "number": 363,
+      "url": "https://github.com/pbalduino/menios/issues/363",
+      "state": "OPEN"
+    },
+    "labels": [
+      "enhancement",
+      "kernel"
+    ],
+    "assignees": [
+      "pbalduino"
+    ]
+  },
+  {
+    "title": "Create optional mk/helpers/macros.mk for reusable recipes",
+    "github_issue": {
+      "number": 362,
+      "url": "https://github.com/pbalduino/menios/issues/362",
+      "state": "OPEN"
+    },
+    "labels": [
+      "enhancement",
+      "nice to have",
+      "build"
+    ],
+    "assignees": [
+      "pbalduino"
+    ]
+  },
+  {
+    "title": "Extract external toolchain build to mk/external/binutils.mk",
+    "github_issue": {
+      "number": 361,
+      "url": "https://github.com/pbalduino/menios/issues/361",
+      "state": "OPEN"
+    },
+    "labels": [
+      "enhancement",
+      "build"
+    ],
+    "assignees": [
+      "pbalduino"
+    ]
+  },
+  {
+    "title": "Extract assets download and bundling to mk/assets/doom.mk",
+    "github_issue": {
+      "number": 360,
+      "url": "https://github.com/pbalduino/menios/issues/360",
+      "state": "OPEN"
+    },
+    "labels": [
+      "enhancement",
+      "doom",
+      "build"
+    ],
+    "assignees": [
+      "pbalduino"
+    ]
+  },
+  {
+    "title": "Extract host-test harness to mk/testing/host.mk",
+    "github_issue": {
+      "number": 359,
+      "url": "https://github.com/pbalduino/menios/issues/359",
+      "state": "OPEN"
+    },
+    "labels": [
+      "enhancement",
+      "testing",
+      "build"
+    ],
+    "assignees": [
+      "pbalduino"
+    ]
+  },
+  {
+    "title": "Extract runtime and launch targets to mk/runtime/run.mk",
+    "github_issue": {
+      "number": 358,
+      "url": "https://github.com/pbalduino/menios/issues/358",
+      "state": "OPEN"
+    },
+    "labels": [
+      "enhancement",
+      "build"
+    ],
+    "assignees": [
+      "pbalduino"
+    ]
+  },
+  {
+    "title": "Extract userland application build to mk/userland/apps.mk",
+    "github_issue": {
+      "number": 357,
+      "url": "https://github.com/pbalduino/menios/issues/357",
+      "state": "OPEN"
+    },
+    "labels": [
+      "enhancement",
+      "build"
+    ],
+    "assignees": [
+      "pbalduino"
+    ]
+  },
+  {
+    "title": "Extract kernel build logic to mk/kernel/build.mk",
+    "github_issue": {
+      "number": 356,
+      "url": "https://github.com/pbalduino/menios/issues/356",
+      "state": "OPEN"
+    },
+    "labels": [
+      "enhancement",
+      "kernel",
+      "build"
+    ],
+    "assignees": [
+      "pbalduino"
+    ]
+  },
+  {
+    "title": "Extract SDK staging rules to mk/sdk/sdk.mk",
+    "github_issue": {
+      "number": 355,
+      "url": "https://github.com/pbalduino/menios/issues/355",
+      "state": "OPEN"
+    },
+    "labels": [
+      "enhancement",
+      "build"
+    ],
+    "assignees": [
+      "pbalduino"
+    ]
+  },
+  {
+    "title": "Extract Docker helpers and host/Docker branching to mk/core/docker.mk",
+    "github_issue": {
+      "number": 354,
+      "url": "https://github.com/pbalduino/menios/issues/354",
+      "state": "OPEN"
+    },
+    "labels": [
+      "enhancement",
+      "build"
+    ],
+    "assignees": [
+      "pbalduino"
+    ]
+  },
+  {
+    "title": "Extract environment and toolchain configuration to mk/core/config.mk",
+    "github_issue": {
+      "number": 353,
+      "url": "https://github.com/pbalduino/menios/issues/353",
+      "state": "OPEN"
+    },
+    "labels": [
+      "enhancement",
+      "build"
+    ],
+    "assignees": [
+      "pbalduino"
+    ]
+  },
+  {
+    "title": "Refactor monolithic Makefile into modular domain-focused structure",
+    "github_issue": {
+      "number": 352,
+      "url": "https://github.com/pbalduino/menios/issues/352",
+      "state": "OPEN"
+    },
+    "labels": [
+      "enhancement",
+      "good first issue",
+      "build"
+    ],
+    "assignees": [
+      "pbalduino"
+    ]
+  },
+  {
+    "title": "Implement time command for mosh shell",
+    "github_issue": {
+      "number": 350,
+      "url": "https://github.com/pbalduino/menios/issues/350",
+      "state": "OPEN"
+    },
+    "labels": [
+      "mosh"
+    ],
+    "assignees": [
+      "pbalduino"
+    ]
+  },
+  {
+    "title": "Fix Arch Linux build failures (doomtype.h enum error, ATOMIC_FLAG_INIT deprecation)",
+    "github_issue": {
+      "number": 349,
+      "url": "https://github.com/pbalduino/menios/issues/349",
+      "state": "OPEN"
+    },
+    "labels": [
+      "bug",
+      "testing",
+      "doom"
+    ],
+    "assignees": [
+      "pbalduino"
+    ]
+  },
+  {
     "title": "Implement descriptor multiplexing (select, poll, epoll)",
     "github_issue": {
       "number": 348,
@@ -139,35 +494,6 @@
       "state": "OPEN"
     },
     "labels": [
-      "libc"
-    ],
-    "assignees": [
-      "pbalduino"
-    ]
-  },
-  {
-    "title": "Implement floating-point parsing and math helpers (strtod, ldexp)",
-    "github_issue": {
-      "number": 338,
-      "url": "https://github.com/pbalduino/menios/issues/338",
-      "state": "CLOSED"
-    },
-    "labels": [
-      "libc"
-    ],
-    "assignees": [
-      "pbalduino"
-    ]
-  },
-  {
-    "title": "Implement signal handling API in libc (sigaction, sigemptyset, etc.)",
-    "github_issue": {
-      "number": 337,
-      "url": "https://github.com/pbalduino/menios/issues/337",
-      "state": "CLOSED"
-    },
-    "labels": [
-      "kernel",
       "libc"
     ],
     "assignees": [
@@ -322,21 +648,6 @@
     ]
   },
   {
-    "title": "Implement touch command for file creation and timestamp updates",
-    "github_issue": {
-      "number": 316,
-      "url": "https://github.com/pbalduino/menios/issues/316",
-      "state": "OPEN"
-    },
-    "labels": [
-      "enhancement",
-      "libc"
-    ],
-    "assignees": [
-      "pbalduino"
-    ]
-  },
-  {
     "title": "Message of the Day (motd) support",
     "github_issue": {
       "number": 315,
@@ -375,37 +686,6 @@
     "labels": [
       "enhancement",
       "nice to have",
-      "kernel"
-    ],
-    "assignees": [
-      "pbalduino"
-    ]
-  },
-  {
-    "title": "Implement kernel timekeeper and system time management",
-    "github_issue": {
-      "number": 285,
-      "url": "https://github.com/pbalduino/menios/issues/285",
-      "state": "OPEN"
-    },
-    "labels": [
-      "enhancement",
-      "kernel"
-    ],
-    "assignees": [
-      "pbalduino"
-    ]
-  },
-  {
-    "title": "Implement RTC (Real-Time Clock) hardware driver",
-    "github_issue": {
-      "number": 284,
-      "url": "https://github.com/pbalduino/menios/issues/284",
-      "state": "OPEN"
-    },
-    "labels": [
-      "enhancement",
-      "drivers",
       "kernel"
     ],
     "assignees": [
@@ -800,21 +1080,6 @@
     ]
   },
   {
-    "title": "Implement RTC and time management syscalls",
-    "github_issue": {
-      "number": 226,
-      "url": "https://github.com/pbalduino/menios/issues/226",
-      "state": "OPEN"
-    },
-    "labels": [
-      "enhancement",
-      "kernel"
-    ],
-    "assignees": [
-      "pbalduino"
-    ]
-  },
-  {
     "title": "Implement cron job scheduling system",
     "github_issue": {
       "number": 225,
@@ -930,9 +1195,7 @@
       "state": "OPEN"
     },
     "labels": [
-      "enhancement",
-      "nice to have",
-      "blocked"
+      "enhancement"
     ],
     "assignees": [
       "pbalduino"
@@ -1071,34 +1334,6 @@
     ]
   },
   {
-    "title": "Console/VGA driver infrastructure",
-    "github_issue": {
-      "number": 168,
-      "url": "https://github.com/pbalduino/menios/issues/168",
-      "state": "OPEN"
-    },
-    "labels": [
-      "drivers"
-    ],
-    "assignees": [
-      "pbalduino"
-    ]
-  },
-  {
-    "title": "Implement /dev/zero device",
-    "github_issue": {
-      "number": 167,
-      "url": "https://github.com/pbalduino/menios/issues/167",
-      "state": "OPEN"
-    },
-    "labels": [
-      "devfs"
-    ],
-    "assignees": [
-      "pbalduino"
-    ]
-  },
-  {
     "title": "Hook shell I/O to virtual terminals/VGA",
     "github_issue": {
       "number": 166,
@@ -1107,21 +1342,6 @@
     },
     "labels": [
       "mosh"
-    ],
-    "assignees": [
-      "pbalduino"
-    ]
-  },
-  {
-    "title": "Add scripting support to mosh shell (if/while/for/functions)",
-    "github_issue": {
-      "number": 155,
-      "url": "https://github.com/pbalduino/menios/issues/155",
-      "state": "OPEN"
-    },
-    "labels": [
-      "enhancement",
-      "nice to have"
     ],
     "assignees": [
       "pbalduino"
@@ -1143,64 +1363,6 @@
     ]
   },
   {
-    "title": "Implement procfs process information filesystem for /proc",
-    "github_issue": {
-      "number": 153,
-      "url": "https://github.com/pbalduino/menios/issues/153",
-      "state": "OPEN"
-    },
-    "labels": [
-      "enhancement"
-    ],
-    "assignees": [
-      "pbalduino"
-    ]
-  },
-  {
-    "title": "Implement devfs device filesystem for /dev hierarchy",
-    "github_issue": {
-      "number": 152,
-      "url": "https://github.com/pbalduino/menios/issues/152",
-      "state": "OPEN"
-    },
-    "labels": [
-      "enhancement"
-    ],
-    "assignees": [
-      "pbalduino"
-    ]
-  },
-  {
-    "title": "Implement tmpfs/ramfs in-memory filesystem for /tmp",
-    "github_issue": {
-      "number": 151,
-      "url": "https://github.com/pbalduino/menios/issues/151",
-      "state": "OPEN"
-    },
-    "labels": [
-      "enhancement",
-      "good first issue"
-    ],
-    "assignees": [
-      "pbalduino"
-    ]
-  },
-  {
-    "title": "Implement barebone init program (PID 1) for process supervision",
-    "github_issue": {
-      "number": 149,
-      "url": "https://github.com/pbalduino/menios/issues/149",
-      "state": "OPEN"
-    },
-    "labels": [
-      "enhancement",
-      "init"
-    ],
-    "assignees": [
-      "pbalduino"
-    ]
-  },
-  {
     "title": "Implement zombie process state and orphan reparenting to init",
     "github_issue": {
       "number": 146,
@@ -1209,22 +1371,6 @@
     },
     "labels": [
       "enhancement",
-      "init"
-    ],
-    "assignees": [
-      "pbalduino"
-    ]
-  },
-  {
-    "title": "Implement wait/waitpid syscall for process synchronization",
-    "github_issue": {
-      "number": 145,
-      "url": "https://github.com/pbalduino/menios/issues/145",
-      "state": "OPEN"
-    },
-    "labels": [
-      "enhancement",
-      "good first issue",
       "init"
     ],
     "assignees": [
@@ -1298,35 +1444,6 @@
     },
     "labels": [
       "enhancement"
-    ],
-    "assignees": [
-      "pbalduino"
-    ]
-  },
-  {
-    "title": "Implement /dev/console and terminal device interfaces",
-    "github_issue": {
-      "number": 138,
-      "url": "https://github.com/pbalduino/menios/issues/138",
-      "state": "OPEN"
-    },
-    "labels": [
-      "enhancement"
-    ],
-    "assignees": [
-      "pbalduino"
-    ]
-  },
-  {
-    "title": "Implement /dev/null and /dev/zero virtual devices",
-    "github_issue": {
-      "number": 137,
-      "url": "https://github.com/pbalduino/menios/issues/137",
-      "state": "OPEN"
-    },
-    "labels": [
-      "enhancement",
-      "good first issue"
     ],
     "assignees": [
       "pbalduino"
@@ -2106,20 +2223,6 @@
     "github_issue": {
       "number": 59,
       "url": "https://github.com/pbalduino/menios/issues/59",
-      "state": "OPEN"
-    },
-    "labels": [
-      "enhancement"
-    ],
-    "assignees": [
-      "pbalduino"
-    ]
-  },
-  {
-    "title": "Integrate VM manager with loader and scheduler",
-    "github_issue": {
-      "number": 58,
-      "url": "https://github.com/pbalduino/menios/issues/58",
       "state": "OPEN"
     },
     "labels": [

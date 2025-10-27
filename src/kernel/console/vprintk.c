@@ -1,4 +1,5 @@
 #include <kernel/console.h>
+#include <kernel/serial.h>
 
 #include <ctype.h>
 #include <stdbool.h>
@@ -42,6 +43,43 @@ static int append_buffer(char* dest, size_t capacity, int pos, const char* buf, 
   return pos;
 }
 
+static void serial_print_hex(uintptr_t value) {
+#ifdef MENIOS_KERNEL
+  static const char digits[] = "0123456789abcdef";
+  char hexbuf[sizeof(uintptr_t) * 2];
+  for(int i = (int)sizeof(hexbuf) - 1; i >= 0; i--) {
+    hexbuf[i] = digits[value & 0xfu];
+    value >>= 4;
+  }
+  for(size_t i = 0; i < sizeof(hexbuf); i++) {
+    serial_putchar(hexbuf[i]);
+  }
+#else
+  (void)value;
+#endif
+}
+
+static void report_invalid_string(uintptr_t value_addr) {
+#ifdef MENIOS_KERNEL
+  serial_puts("[vsnprintk] invalid string pointer 0x");
+  serial_print_hex(value_addr);
+  serial_puts(" ra0=0x");
+  serial_print_hex((uintptr_t)__builtin_return_address(0));
+#if defined(__has_builtin)
+#  if __has_builtin(__builtin_return_address)
+  serial_puts(" ra1=0x");
+  serial_print_hex((uintptr_t)__builtin_return_address(1));
+#  endif
+#else
+  serial_puts(" ra1=0x");
+  serial_print_hex((uintptr_t)__builtin_return_address(1));
+#endif
+  serial_puts("\n");
+#else
+  (void)value_addr;
+#endif
+}
+
 static int format_string(char* dest,
                          size_t capacity,
                          int pos,
@@ -53,6 +91,12 @@ static int format_string(char* dest,
                          int precision) {
   if(value == NULL) {
     value = "(null)";
+  } else {
+    const uintptr_t kernel_floor = 0xffff800000000000ull;
+    if((uintptr_t)value < kernel_floor) {
+      report_invalid_string((uintptr_t)value);
+      value = "(invalid-string)";
+    }
   }
 
   int length = 0;

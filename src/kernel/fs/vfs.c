@@ -20,6 +20,62 @@ extern int fat32_mkdir_adapter(void* fs_ctx, const char* path, bool exclusive);
 extern int fat32_rmdir_adapter(void* fs_ctx, const char* path);
 extern int fat32_rename_adapter(void* fs_ctx, const char* old_path, const char* new_path);
 
+#define VFS_LOG_PATH_MAX 96
+
+static const char* vfs_debug_path(const char* path, char* buffer, size_t buffer_len) {
+  static const uintptr_t kernel_floor = 0xffff800000000000ull;
+  static const char hex_digits[] = "0123456789abcdef";
+
+  if(buffer == NULL || buffer_len == 0) {
+    return "";
+  }
+
+  if(path == NULL) {
+    static const char null_repr[] = "(null)";
+    size_t copy = sizeof(null_repr);
+    if(copy > buffer_len) {
+      copy = buffer_len;
+    }
+    memcpy(buffer, null_repr, copy - 1);
+    buffer[copy - 1] = '\0';
+    return buffer;
+  }
+
+  uintptr_t addr = (uintptr_t)path;
+  if(addr >= kernel_floor) {
+    size_t copy_len = strnlen(path, buffer_len - 1);
+    memcpy(buffer, path, copy_len);
+    buffer[copy_len] = '\0';
+    return buffer;
+  }
+
+  size_t pos = 0;
+  static const char prefix[] = "(user:0x";
+  for(size_t i = 0; i < sizeof(prefix) - 1 && pos < buffer_len - 1; i++) {
+    buffer[pos++] = prefix[i];
+  }
+
+  bool started = false;
+  for(int shift = (int)(sizeof(uintptr_t) * 8) - 4; shift >= 0 && pos < buffer_len - 1; shift -= 4) {
+    char digit = hex_digits[(addr >> shift) & 0xF];
+    if(!started) {
+      if(digit == '0' && shift > 0) {
+        continue;
+      }
+      started = true;
+    }
+    buffer[pos++] = digit;
+  }
+  if(!started && pos < buffer_len - 1) {
+    buffer[pos++] = '0';
+  }
+  if(pos < buffer_len - 1) {
+    buffer[pos++] = ')';
+  }
+  buffer[pos < buffer_len ? pos : buffer_len - 1] = '\0';
+  return buffer;
+}
+
 typedef struct vfs_mount_entry_t {
   char                        path[128];
   size_t                      path_len;
@@ -1195,14 +1251,17 @@ static bool fat32_create_file_adapter(void* fs_ctx, const char* path, bool exclu
   if(mount == NULL) {
     return false;
   }
-  serial_printf("fat32_create_file_adapter: path=%s exclusive=%s\n",
-                path ? path : "(null)",
+  char path_repr[VFS_LOG_PATH_MAX];
+  const char* printable_path = vfs_debug_path(path, path_repr, sizeof(path_repr));
+  serial_printf("fat32_create_file_adapter: path=%s ptr=%p exclusive=%s\n",
+                printable_path,
+                (void*)path,
                 exclusive ? "yes" : "no");
   if(fs_file_create(mount, path, exclusive)) {
-    serial_printf("fat32_create_file_adapter: created %s\n", path ? path : "(null)");
+    serial_printf("fat32_create_file_adapter: created %s\n", printable_path);
     return true;
   }
-  serial_printf("fat32_create_file_adapter: failed path=%s\n", path ? path : "(null)");
+  serial_printf("fat32_create_file_adapter: failed path=%s\n", printable_path);
   if(path != NULL && path[0] == '/' && path[1] != '\0') {
     return fs_file_create(mount, path + 1, exclusive);
   }

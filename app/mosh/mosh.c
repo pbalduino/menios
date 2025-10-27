@@ -4602,8 +4602,7 @@ static bool handle_builtin(const char* raw_line, char* line, int* out_status) {
       }
     }
 
-    long rc = syscall3(SYS_LISTDIR, (long)resolved, 0, 0);
-    if(rc < 0) {
+    if(chdir(resolved) != 0) {
       write_str(STDOUT_FILENO, "mosh: cd: unable to access directory\n");
       shell_finish_builtin_code(1, out_status);
       return true;

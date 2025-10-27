@@ -1253,6 +1253,19 @@ proc_info_p proc_fork(proc_info_p parent, const syscall_frame_t* frame, int* err
   memset(child, 0, sizeof(proc_info_t));
   proc_file_table_init(child);
   proc_file_table_clone(child, parent);
+  if(parent->cwd_len > 0 && parent->cwd[0] != '\0') {
+    size_t copy_len = parent->cwd_len;
+    if(copy_len >= PROC_CWD_MAX) {
+      copy_len = PROC_CWD_MAX - 1;
+    }
+    memcpy(child->cwd, parent->cwd, copy_len);
+    child->cwd[copy_len] = '\0';
+    child->cwd_len = copy_len;
+  } else {
+    child->cwd[0] = '/';
+    child->cwd[1] = '\0';
+    child->cwd_len = 1;
+  }
   proc_signal_state_copy(child, parent);
   memcpy(child->timers, parent->timers, sizeof(parent->timers));
   SCHED_TRACE("proc_fork: proc_info allocated\n");

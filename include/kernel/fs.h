@@ -63,7 +63,7 @@ static inline void fs_path_info_to_stat(const fs_path_info_t* info, struct stat*
   if(out_stat->st_blksize == 0) {
     out_stat->st_blksize = 512;
   }
-  out_stat->st_blocks = (blkcnt_t)((info->size + out_stat->st_blksize - 1ull) / out_stat->st_blksize);
+  out_stat->st_blocks = (blkcnt_t)((info->size + 511ull) / 512ull);
   out_stat->st_ino = (ino_t)info->inode;
   out_stat->st_dev = 0;
   out_stat->st_rdev = 0;
