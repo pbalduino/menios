@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 
 static int resolve_path(const char* input) {
   if(input == NULL || *input == '\0') {
