@@ -266,6 +266,12 @@ These issues form the backbone of the system and should be prioritized:
 - **#368** - Complete pathconf() for all POSIX queries
 - **#363** - Serial port file descriptor for debug logging (separate enhancement)
 
+**Userland Tooling (uses stat infrastructure)**:
+- **#370** - stat command - Display file metadata from shell
+  - Uses stat/lstat/fstat syscalls ✅ (already working)
+  - Will improve as #366 and #367 add more metadata
+  - Useful for debugging and shell scripts
+
 **Dependencies**:
 - stat infrastructure: ✅ Complete
 - #189 (FAT32 write): ✅ Complete (needed for chmod/utime)
@@ -364,12 +370,23 @@ These issues form the backbone of the system and should be prioritized:
 
 ### Phase 6: Native Compilation (Long Term)
 **Goal**: Compile on meniOS itself
-- **#190**: TCC port
-- **#191**: binutils port
+- **#190**: TCC port - ✅ **READY TO START** (all blockers resolved: #337 ✅, #338 ✅)
+- **#191**: binutils port - 🔄 **BUILD COMPLETE, TESTING IN PROGRESS**
+  - ✅ Successfully built and integrated into disk image
+  - ✅ Binaries staged: as, ld, objdump, nm, ar, ranlib, touch
+  - 🔄 Integration testing pending
+  - 📝 Documentation and sanity checks needed
 - Possibly GCC port (future)
 
-**Timeline**: 6-12 months
-**Status**: Research phase (#196 Fish shell)
+**Timeline**:
+- TCC: 4-6 weeks (ready to start!)
+- binutils testing & docs: 1-2 weeks (build complete)
+- Full native compilation: 6-12 months total
+
+**Status**:
+- ✅ All TCC blockers resolved (#337, #338 complete)
+- 🔄 binutils built and awaiting testing
+- 🎉 Major progress toward native compilation!
 
 ## 🔴 Current Blocking Relationships
 

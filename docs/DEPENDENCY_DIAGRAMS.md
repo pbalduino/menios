@@ -64,6 +64,11 @@ The meniOS project has grown to over 100+ tracked issues with complex interdepen
 - ✅ #337 (Signal API) - CLOSED
 - ✅ #338 (Float parsing) - CLOSED - TCC blockers resolved! 🎉
 - ⚠️ #364 (Stubbed functions) - Partially complete (stat family working)
+- 🆕 #370 (stat command) - NEW - Userland tool to display file metadata
+- ✅ #191 (binutils) - Build complete, testing in progress
+
+**Recently Closed (17 issues):**
+- #58, #137, #138, #145, #149, #151, #152, #153, #155, #167, #168, #226, #284, #285, #316, #337, #338
 
 ---
 

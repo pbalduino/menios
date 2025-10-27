@@ -150,6 +150,15 @@ digraph IssueDependencies {
         issue337 [label="#337: Signal API\nsigaction/sigemptyset\n✅ COMPLETE", fillcolor="#90EE90", style="filled,dashed"];  // UNBLOCKED TCC
         issue338 [label="#338: Float parsing\nstrtod/ldexp\n✅ COMPLETE", fillcolor="#90EE90", style="filled,dashed"];  // UNBLOCKED TCC
 
+        // Stubbed functions tracker and sub-issues
+        issue364 [label="#364: Stubbed functions\n(parent tracker)", fillcolor="#FFE4B5"];
+        stat_done [label="✅ stat/fstat/lstat\naccess/realpath", fillcolor="#90EE90", style="filled,dashed"];
+        issue365 [label="#365: chmod/fchmod\nfile permissions", fillcolor="#FFE4B5"];
+        issue366 [label="#366: Pseudo-fs metadata\ntmpfs/procfs/devfs", fillcolor="#FFE4B5"];
+        issue367 [label="#367: Rich FAT32 metadata\ntimestamps/DOS attrs", fillcolor="#FFE4B5"];
+        issue368 [label="#368: pathconf()\nall POSIX queries", fillcolor="#FFE4B5"];
+        issue369 [label="#369: system()\nshell execution", fillcolor="#FFE4B5"];
+
         // Thread safety
         issue339 [label="#339: Thread-safe\nlibc", fillcolor="#FFE4B5"];
 
@@ -311,8 +320,10 @@ digraph IssueDependencies {
         issue314 [label="#314: Shell startup scripts\n.moshrc support", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED
         issue315 [label="#315: Message of the day\nmotd command", fillcolor="#E0FFFF"];
         issue316 [label="#316: touch command\nfile creation", fillcolor="#E0FFFF"];
-        issue317 [label="#317: utime() syscall\ntimestamp modification", fillcolor="#E0FFFF"];
+        issue317 [label="#317: utime() syscall\ntimestamp modification", fillcolor="#FFE4B5"];
         issue318 [label="#318: uname command\nsystem information", fillcolor="#E0FFFF"];
+        issue363 [label="#363: Serial port FD\ndebug logging", fillcolor="#FFE4B5"];
+        issue370 [label="#370: stat command\nfile metadata display", fillcolor="#E0F0FF"];
     }
 
     subgraph cluster_hibernation {
@@ -628,6 +639,26 @@ digraph IssueDependencies {
     issue193 -> issue316 [label="libc", color=brown];  // libc -> touch
     issue193 -> issue317 [label="libc", color=brown];  // libc -> utime
     issue193 -> issue318 [label="libc", color=brown];  // libc -> uname
+    issue193 -> issue363 [label="libc", color=brown];  // libc -> serial port FD
+    issue96 -> issue363 [label="fd mgmt", color=brown];  // fd mgmt -> serial port FD
+
+    // Stubbed functions dependencies
+    issue193 -> issue364 [color=orange, penwidth=2];  // libc -> stubbed functions tracker
+    issue364 -> stat_done [style=dashed, color=green];  // tracker -> stat family (complete)
+    issue364 -> issue365 [color=orange];  // tracker -> chmod/fchmod
+    issue364 -> issue366 [color=orange];  // tracker -> pseudo-fs metadata
+    issue364 -> issue367 [color=orange];  // tracker -> rich FAT32 metadata
+    issue364 -> issue368 [color=orange, style=dotted];  // tracker -> pathconf (low priority)
+    issue364 -> issue369 [color=orange];  // tracker -> system()
+    stat_done -> issue365 [color=brown, style=dashed, label="uses stat"];  // stat -> chmod
+    stat_done -> issue317 [color=brown, style=dashed, label="uses stat"];  // stat -> utime
+    issue54 -> issue369 [label="mosh -c", color=brown];  // mosh shell -> system()
+
+    // stat command dependencies
+    stat_done -> issue370 [color=green, penwidth=2, label="stat syscalls"];  // stat infrastructure -> stat command
+    issue193 -> issue370 [color=green, style=dashed];  // libc -> stat command
+    issue366 -> issue370 [color=blue, style=dotted, label="improves output"];  // pseudo-fs metadata -> stat command
+    issue367 -> issue370 [color=blue, style=dotted, label="improves output"];  // rich FAT32 metadata -> stat command
 
     // Hibernation dependencies
     issue93 -> issue254 [label="fork/exec"];  // process mgmt -> hibernation infra

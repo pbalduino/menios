@@ -80,6 +80,15 @@ digraph LibcEcosystem {
         issue363 [label="#363: Serial port FD\ndebug logging", fillcolor="#FFE4B5"];
     }
 
+    // Userland tools (use stat infrastructure)
+    subgraph cluster_userland_tools {
+        label="Userland Tools";
+        style=filled;
+        fillcolor="#F0F8FF";
+
+        issue370 [label="#370: stat command\nDisplay file metadata\n\n3-5 days", fillcolor="#E0F0FF"];
+    }
+
     // Thread safety
     subgraph cluster_thread {
         label="Threading & Concurrency";
@@ -142,6 +151,12 @@ digraph LibcEcosystem {
     stat_done -> issue365 [color=brown, style=dashed, label="uses stat"];
     stat_done -> issue317 [color=brown, style=dashed, label="uses stat"];
 
+    // Userland tools dependencies
+    stat_done -> issue370 [color=green, penwidth=2, label="stat syscalls ✅"];
+    issue193 -> issue370 [color=green, style=dashed, label="libc"];
+    issue366 -> issue370 [color=blue, style=dotted, label="improves output"];
+    issue367 -> issue370 [color=blue, style=dotted, label="improves output"];
+
     // Thread safety
     issue109 -> issue339 [color=blue, penwidth=2, label="pthread"];
     issue193 -> issue339 [color=blue];
@@ -185,7 +200,7 @@ digraph LibcEcosystem {
         style=filled;
         fillcolor="#FFFACD";
 
-        priority [label="✅ COMPLETE: Signal API (#337), Float parsing (#338)\n\nCURRENT PRIORITIES:\n1. Pseudo-fs metadata (#366) - HIGH (stat on tmpfs/devfs)\n2. chmod/fchmod (#365) - MEDIUM (build systems)\n3. utime (#317) - MEDIUM (build systems)\n4. Rich FAT32 metadata (#367) - MEDIUM (timestamps)\n5. Thread-safe libc (#339) - After pthread\n6. system() (#369) - MEDIUM (utility scripts)\n7. TTY helpers (#347) - Quick win (2-3 weeks)\n8. pathconf (#368) - LOW (autoconf support)\n9. Extended stdio (#340) - Medium priority\n10. Extended math (#344) - Medium priority\n11. Regex (#345) - Needed for text tools\n12. Multiplexing (#348) - High for servers",
+        priority [label="✅ COMPLETE: Signal API (#337), Float parsing (#338)\n\nCURRENT PRIORITIES:\n1. Pseudo-fs metadata (#366) - HIGH (stat on tmpfs/devfs)\n2. stat command (#370) - MEDIUM (useful debugging tool, quick win)\n3. chmod/fchmod (#365) - MEDIUM (build systems)\n4. utime (#317) - MEDIUM (build systems)\n5. Rich FAT32 metadata (#367) - MEDIUM (timestamps)\n6. Thread-safe libc (#339) - After pthread\n7. system() (#369) - MEDIUM (utility scripts)\n8. TTY helpers (#347) - Quick win (2-3 weeks)\n9. pathconf (#368) - LOW (autoconf support)\n10. Extended stdio (#340) - Medium priority\n11. Extended math (#344) - Medium priority\n12. Regex (#345) - Needed for text tools\n13. Multiplexing (#348) - High for servers",
                  shape=note, fillcolor="#FFFACD", style=filled];
     }
 }

@@ -117,7 +117,22 @@ GNU [binutils 2.45](https://www.gnu.org/software/binutils/) has also been staged
 - ✅ #205 (I/O scheduler) - COMPLETE
 - **🎉 ALL DEPENDENCIES MET - ZERO BLOCKERS!**
 
-**Timeline Estimate:** 6-12 months
+**Status:** 🔄 **BUILD COMPLETE - TESTING IN PROGRESS**
+- ✅ Successfully built under `DOCKER_IMAGE=menios:trunk`
+- ✅ Integrated into disk image (`make userland` + `make build`)
+- ✅ Binaries staged in `/bin`: as, ld, objdump, nm, ar, ranlib, touch
+- 🔄 Integration testing: Need to boot meniOS and verify each tool works
+- 📝 Documentation pending: Usage examples, sanity check scripts
+- ❓ Decision needed: Include remaining binutils (strip, size, strings, etc.)?
+
+**Next Steps:**
+1. Boot meniOS and run integration tests for each binary
+2. Create simple workflow tests (assemble → link → inspect)
+3. Document usage and create regression test scripts
+4. Decide on remaining binutils binaries
+5. Close #191 once verified
+
+**Timeline Estimate:** Testing & docs: 1-2 weeks
 
 ## 🛣️ **Critical Path to Cross-Compilation**
 
