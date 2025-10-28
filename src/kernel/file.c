@@ -62,6 +62,147 @@ typedef struct stdin_ring_buffer_t {
 static stdin_ring_buffer_t stdin_buffer;
 static bool stdin_initialized = false;
 
+static const uintptr_t kernel_pointer_floor = 0xffff800000000000ull;
+#define FILE_IO_BOUNCE_CHUNK (PAGE_SIZE * 4u)
+
+static bool buffer_needs_user_copy(const void* buffer, size_t length) {
+  if(buffer == NULL || length == 0) {
+    return false;
+  }
+  if(current == NULL || !current->user_mode) {
+    return false;
+  }
+  return (uintptr_t)buffer < kernel_pointer_floor;
+}
+
+static int64_t file_user_read(file_t* file, void* buffer, size_t length) {
+  if(length == 0) {
+    return 0;
+  }
+
+  if(file == NULL || file->ops == NULL || file->ops->read == NULL) {
+    return -EBADF;
+  }
+
+  virt_addr_t dest = (virt_addr_t)(uintptr_t)buffer;
+  if(!proc_user_touch_range(current, dest, length, true)) {
+    return -EFAULT;
+  }
+
+  size_t chunk = length < FILE_IO_BOUNCE_CHUNK ? length : FILE_IO_BOUNCE_CHUNK;
+  if(chunk == 0) {
+    chunk = length;
+  }
+
+  uint8_t* bounce = kmalloc(chunk);
+  if(bounce == NULL) {
+    return -ENOMEM;
+  }
+
+  size_t total = 0;
+  int64_t result = 0;
+
+  while(total < length) {
+    size_t request = length - total;
+    if(request > chunk) {
+      request = chunk;
+    }
+
+    int64_t rc = file->ops->read(file, bounce, request);
+    if(rc < 0) {
+      result = rc;
+      break;
+    }
+    if(rc == 0) {
+      result = (int64_t)total;
+      break;
+    }
+
+    size_t copied = (size_t)rc;
+    if(!proc_user_copy_out(current, dest + total, bounce, copied)) {
+      result = -EFAULT;
+      break;
+    }
+
+    total += copied;
+    if(copied < request) {
+      result = (int64_t)total;
+      break;
+    }
+  }
+
+  if(result == 0 && total == length) {
+    result = (int64_t)total;
+  }
+
+  kfree(bounce);
+  return result;
+}
+
+static int64_t file_user_write(file_t* file, const void* buffer, size_t length) {
+  if(length == 0) {
+    return 0;
+  }
+
+  if(file == NULL || file->ops == NULL || file->ops->write == NULL) {
+    return -EBADF;
+  }
+
+  virt_addr_t src = (virt_addr_t)(uintptr_t)buffer;
+  if(!proc_user_touch_range(current, src, length, false)) {
+    return -EFAULT;
+  }
+
+  size_t chunk = length < FILE_IO_BOUNCE_CHUNK ? length : FILE_IO_BOUNCE_CHUNK;
+  if(chunk == 0) {
+    chunk = length;
+  }
+
+  uint8_t* bounce = kmalloc(chunk);
+  if(bounce == NULL) {
+    return -ENOMEM;
+  }
+
+  size_t total = 0;
+  int64_t result = 0;
+
+  while(total < length) {
+    size_t request = length - total;
+    if(request > chunk) {
+      request = chunk;
+    }
+
+    if(!proc_user_copy_in(current, bounce, src + total, request)) {
+      result = -EFAULT;
+      break;
+    }
+
+    int64_t rc = file->ops->write(file, bounce, request);
+    if(rc < 0) {
+      result = rc;
+      break;
+    }
+    if(rc == 0) {
+      result = (int64_t)total;
+      break;
+    }
+
+    size_t written_chunk = (size_t)rc;
+    total += written_chunk;
+    if(written_chunk < request) {
+      result = (int64_t)total;
+      break;
+    }
+  }
+
+  if(result == 0 && total == length) {
+    result = (int64_t)total;
+  }
+
+  kfree(bounce);
+  return result;
+}
+
 static struct proc_info_t* owning_proc(void) {
   if(current != NULL) {
     return current;
@@ -215,7 +356,12 @@ int64_t file_read(file_t* file, void* buffer, size_t length) {
     set_errno(EBADF);
     return -EBADF;
   }
-  int64_t result = file->ops->read(file, buffer, length);
+  int64_t result;
+  if(buffer_needs_user_copy(buffer, length)) {
+    result = file_user_read(file, buffer, length);
+  } else {
+    result = file->ops->read(file, buffer, length);
+  }
   if(result < 0) {
     set_errno((int)-result);
   } else if(current) {
@@ -233,7 +379,12 @@ int64_t file_write(file_t* file, const void* buffer, size_t length) {
     set_errno(EBADF);
     return -EBADF;
   }
-  int64_t result = file->ops->write(file, buffer, length);
+  int64_t result;
+  if(buffer_needs_user_copy(buffer, length)) {
+    result = file_user_write(file, buffer, length);
+  } else {
+    result = file->ops->write(file, buffer, length);
+  }
   if(result < 0) {
     set_errno((int)-result);
   } else if(current) {
