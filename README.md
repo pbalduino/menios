@@ -84,6 +84,8 @@ ranlib libhello.a
 nm libhello.a
 ```
 
+When running the binutils suite under the host harness (`MENIOS_HOST_TEST=1`), libc now forwards `chmod`, `fchmod`, and `utime` to the host OS so tools like `ar` keep permissions and timestamps intact. The kernel still lacks native support for these syscalls; see issues #365 and #317.
+
 See [issue #191](https://github.com/pbalduino/menios/issues/191) for the complete binutils integration test suite.
 
 ## Documentation

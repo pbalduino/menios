@@ -98,8 +98,9 @@ GNU [binutils 2.45](https://www.gnu.org/software/binutils/) has also been staged
 - ⚠️ #364 (stubbed libc functions) - **PARTIALLY COMPLETE** (stat family working, other stubs tracked)
   - ✅ stat/fstat/lstat syscalls (SYS_STAT, SYS_LSTAT, SYS_FSTAT)
   - ✅ access(), realpath() (using stat infrastructure)
-  - ⚠️ pathconf() (partial - only _PC_PATH_MAX) - #368
+- ⚠️ pathconf() (partial - only _PC_PATH_MAX) - #368
   - ❌ chmod/fchmod (#365), utime (#317) - file mutation APIs
+    - ✅ Host harness now forwards these calls to the underlying OS (MENIOS_HOST_TEST) so native tool tests keep metadata; kernel syscall support still pending.
   - ❌ pseudo-fs metadata (#366), rich FAT32 metadata (#367)
   - ❌ isatty (#347), brk/sbrk (#21), system() (#369), timing APIs (#327)
 - ✅ Pipes & FIFOs - **FULLY COMPLETE!** (#206 ✅, #207 ✅, #208 ✅, #209 ✅)
@@ -116,6 +117,7 @@ GNU [binutils 2.45](https://www.gnu.org/software/binutils/) has also been staged
 - ✅ #294 (VFS streaming I/O) - **COMPLETE!** (#295, #296, #297, #298 all done)
 - ✅ #205 (I/O scheduler) - COMPLETE
 - **🎉 ALL DEPENDENCIES MET - ZERO BLOCKERS!**
+- ✅ Host harness metadata bridge in libc allows `ar` to preserve mode/timestamps during tests; kernel work (#365, #317) remains open for on-device support.
 
 **Status:** ✅ **BUILD COMPLETE - READY FOR TESTING!**
 - ✅ Successfully built under `DOCKER_IMAGE=menios:trunk`
