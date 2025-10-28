@@ -2,9 +2,11 @@
 #include <stddef.h>
 #include <stdint.h>
 #include <string.h>
+#include <sys/stat.h>
 
 #include <kernel/condvar.h>
 #include <kernel/file.h>
+#include <kernel/fs.h>
 #include <kernel/heap.h>
 #include <kernel/mutex.h>
 #include <kernel/serial.h>
@@ -183,6 +185,43 @@ static int pipe_close_impl(file_t* file) {
   return 0;
 }
 
+static int pipe_stat_impl(file_t* file, struct stat* out_stat) {
+  if(file == NULL || out_stat == NULL) {
+    return -EINVAL;
+  }
+  pipe_endpoint_t* endpoint = (pipe_endpoint_t*)file->private_data;
+  if(endpoint == NULL || endpoint->shared == NULL) {
+    return -EINVAL;
+  }
+
+  pipe_shared_t* shared = endpoint->shared;
+  kmutex_lock(&shared->lock);
+  size_t count = shared->count;
+  kmutex_unlock(&shared->lock);
+
+  fs_path_info_t info;
+  memset(&info, 0, sizeof(info));
+  info.block_size = PIPE_BUFFER_SIZE;
+  info.size = count;
+  info.inode = (uint64_t)(uintptr_t)shared;
+  info.is_directory = false;
+  info.is_read_only = (file->mode & FILE_MODE_WRITE) == 0;
+  info.has_mode = true;
+
+  mode_t perms = 0;
+  if(file->mode & FILE_MODE_READ) {
+    perms |= 0444;
+  }
+  if(file->mode & FILE_MODE_WRITE) {
+    perms |= 0222;
+  }
+  info.mode = S_IFIFO | (perms ? perms : 0600);
+
+  fs_path_info_to_stat(&info, out_stat);
+  out_stat->st_rdev = 0;
+  return 0;
+}
+
 static const file_ops_t pipe_file_ops = {
   .read = pipe_read_impl,
   .write = pipe_write_impl,
@@ -190,7 +229,7 @@ static const file_ops_t pipe_file_ops = {
   .seek = NULL,
   .ioctl = NULL,
   .mmap = NULL,
-  .stat = NULL,
+  .stat = pipe_stat_impl,
   .chmod = NULL,
   .utimens = NULL,
 };

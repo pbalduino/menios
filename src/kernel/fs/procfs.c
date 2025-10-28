@@ -3,9 +3,11 @@
 #include <errno.h>
 #include <string.h>
 #include <sys/fcntl.h>
+#include <sys/stat.h>
 
 #include <kernel/console.h>
 #include <kernel/file.h>
+#include <kernel/fs.h>
 #include <kernel/heap.h>
 #include <kernel/pmm.h>
 #include <kernel/vfs.h>
@@ -20,6 +22,7 @@ typedef struct procfs_entry_t {
 } procfs_entry_t;
 
 typedef struct procfs_file_state_t {
+  const procfs_entry_t* entry;
   char*  buffer;
   size_t size;
   size_t offset;
@@ -78,6 +81,53 @@ static bool procfs_generate(const char* path, char** out_buffer, size_t* out_siz
     return false;
   }
   return entry->generate(out_buffer, out_size);
+}
+
+static void procfs_fill_file_info(const procfs_entry_t* entry,
+                                  size_t size,
+                                  fs_path_info_t* out_info) {
+  memset(out_info, 0, sizeof(*out_info));
+  out_info->block_size = 4096;
+  out_info->inode = entry ? (uint64_t)(entry - procfs_entries + 1) : 0;
+  out_info->is_read_only = true;
+  out_info->has_mode = true;
+  if(entry == NULL) {
+    out_info->is_directory = true;
+    out_info->mode = S_IFDIR | 0555;
+  } else {
+    out_info->is_directory = false;
+    out_info->size = size;
+    out_info->mode = S_IFREG | 0444;
+  }
+}
+
+static bool procfs_stat(void* fs_ctx, const char* path, fs_path_info_t* out_info) {
+  (void)fs_ctx;
+  if(out_info == NULL || path == NULL) {
+    return false;
+  }
+
+  if(path[0] == '\0' || strcmp(path, "/") == 0) {
+    procfs_fill_file_info(NULL, 0, out_info);
+    return true;
+  }
+
+  const procfs_entry_t* entry = procfs_find_entry(path);
+  if(entry == NULL) {
+    return false;
+  }
+
+  char* buffer = NULL;
+  size_t size = 0;
+  if(!entry->generate(&buffer, &size)) {
+    return false;
+  }
+  if(buffer != NULL) {
+    kfree(buffer);
+  }
+
+  procfs_fill_file_info(entry, size, out_info);
+  return true;
 }
 
 static bool procfs_read(void* fs_ctx,
@@ -153,6 +203,20 @@ static int procfs_file_close(file_t* file) {
   return 0;
 }
 
+static int procfs_file_stat(file_t* file, struct stat* out_stat) {
+  if(file == NULL || out_stat == NULL) {
+    return -EINVAL;
+  }
+  procfs_file_state_t* state = (procfs_file_state_t*)file->private_data;
+  if(state == NULL || state->entry == NULL) {
+    return -EINVAL;
+  }
+  fs_path_info_t info;
+  procfs_fill_file_info(state->entry, state->size, &info);
+  fs_path_info_to_stat(&info, out_stat);
+  return 0;
+}
+
 static const file_ops_t procfs_file_ops = {
   .read = procfs_file_read,
   .write = NULL,
@@ -160,7 +224,7 @@ static const file_ops_t procfs_file_ops = {
   .seek = NULL,
   .ioctl = NULL,
   .mmap = NULL,
-  .stat = NULL,
+  .stat = procfs_file_stat,
   .chmod = NULL,
   .utimens = NULL,
 };
@@ -174,6 +238,11 @@ static int procfs_open(void* fs_ctx, const char* path, int flags, file_t** out_f
     return -EACCES;
   }
 
+  const procfs_entry_t* entry = procfs_find_entry(path);
+  if(entry == NULL) {
+    return -ENOENT;
+  }
+
   char* buffer = NULL;
   size_t size = 0;
   if(!procfs_generate(path, &buffer, &size)) {
@@ -185,6 +254,7 @@ static int procfs_open(void* fs_ctx, const char* path, int flags, file_t** out_f
     kfree(buffer);
     return -ENOMEM;
   }
+  state->entry = entry;
   state->buffer = buffer;
   state->size = size;
   state->offset = 0;
@@ -241,7 +311,7 @@ static const vfs_fs_driver_t procfs_driver = {
   .write_all = procfs_write_all,
   .create_file = NULL,
   .truncate_file = NULL,
-  .stat = NULL,
+  .stat = procfs_stat,
   .open = procfs_open,
   .unlink = procfs_unlink,
   .mkdir = NULL,

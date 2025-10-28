@@ -3,16 +3,21 @@
 #include <errno.h>
 #include <string.h>
 #include <sys/fcntl.h>
+#include <sys/stat.h>
 
 #include <kernel/file.h>
+#include <kernel/fs.h>
 #include <kernel/serial.h>
 #include <kernel/vfs.h>
 
 typedef struct devfs_node_t {
   const char*        name;
-  uint32_t           mode;
-  file_t*           (*factory)(void);
+  uint32_t           access_mode;
+  file_t*           (*factory)(const struct devfs_node_t* node);
 } devfs_node_t;
+
+static void devfs_fill_info(const devfs_node_t* node, fs_path_info_t* out_info);
+static int devfs_file_stat(file_t* file, struct stat* out_stat);
 
 static int64_t devfs_null_read(file_t* file, void* buffer, size_t length) {
   (void)file;
@@ -42,7 +47,7 @@ static const file_ops_t devfs_null_ops = {
   .seek = NULL,
   .ioctl = NULL,
   .mmap = NULL,
-  .stat = NULL,
+  .stat = devfs_file_stat,
   .chmod = NULL,
   .utimens = NULL,
 };
@@ -54,33 +59,49 @@ static const file_ops_t devfs_zero_ops = {
   .seek = NULL,
   .ioctl = NULL,
   .mmap = NULL,
-  .stat = NULL,
+  .stat = devfs_file_stat,
   .chmod = NULL,
   .utimens = NULL,
 };
 
-static file_t* devfs_create_null(void) {
-  return file_create(&devfs_null_ops, NULL, FILE_MODE_WRITE);
+static file_t* devfs_create_null(const devfs_node_t* node) {
+  return file_create(&devfs_null_ops, (void*)node, node->access_mode);
 }
 
-static file_t* devfs_create_zero(void) {
-  return file_create(&devfs_zero_ops, NULL, FILE_MODE_READ);
+static file_t* devfs_create_zero(const devfs_node_t* node) {
+  return file_create(&devfs_zero_ops, (void*)node, node->access_mode);
 }
 
-static file_t* devfs_create_tty0(void) {
-  return file_create_tty_console_file();
+static file_t* devfs_create_tty0(const devfs_node_t* node) {
+  file_t* file = file_create_tty_console_file();
+  if(file != NULL) {
+    file->private_data = (void*)node;
+  }
+  return file;
 }
 
-static file_t* devfs_create_console(void) {
-  return file_create_framebuffer_console_file();
+static file_t* devfs_create_console(const devfs_node_t* node) {
+  file_t* file = file_create_framebuffer_console_file();
+  if(file != NULL) {
+    file->private_data = (void*)node;
+  }
+  return file;
 }
 
-static file_t* devfs_create_fb0(void) {
-  return file_create_framebuffer_device_file();
+static file_t* devfs_create_fb0(const devfs_node_t* node) {
+  file_t* file = file_create_framebuffer_device_file();
+  if(file != NULL) {
+    file->private_data = (void*)node;
+  }
+  return file;
 }
 
-static file_t* devfs_create_ttys0(void) {
-  return file_create_serial_console_file();
+static file_t* devfs_create_ttys0(const devfs_node_t* node) {
+  file_t* file = file_create_serial_console_file();
+  if(file != NULL) {
+    file->private_data = (void*)node;
+  }
+  return file;
 }
 
 static const devfs_node_t devfs_nodes[] = {
@@ -170,13 +191,14 @@ static int devfs_open(void* fs_ctx, const char* path, int flags, file_t** out_fi
     if(strcmp(path, node->name) != 0) {
       continue;
     }
-    if((node->mode & requested) != requested) {
+    if((node->access_mode & requested) != requested) {
       return -EACCES;
     }
-    file_t* file = node->factory();
+    file_t* file = node->factory(node);
     if(file == NULL) {
       return -ENOMEM;
     }
+    file->mode = node->access_mode;
     *out_file = file;
     return 0;
   }
@@ -194,6 +216,73 @@ static void devfs_destroy(void* fs_ctx) {
   (void)fs_ctx;
 }
 
+static mode_t devfs_mode_for_node(const devfs_node_t* node) {
+  mode_t perms = 0;
+  if(node->access_mode & FILE_MODE_READ) {
+    perms |= 0444;
+  }
+  if(node->access_mode & FILE_MODE_WRITE) {
+    perms |= 0222;
+  }
+  return S_IFCHR | perms;
+}
+
+static void devfs_fill_info(const devfs_node_t* node, fs_path_info_t* out_info) {
+  memset(out_info, 0, sizeof(*out_info));
+  out_info->block_size = 4096;
+  out_info->inode = node ? (uint64_t)(node - devfs_nodes + 1) : 0;
+  out_info->is_directory = false;
+  out_info->size = 0;
+  out_info->has_mode = true;
+  out_info->mode = devfs_mode_for_node(node);
+  out_info->is_read_only = (node->access_mode & FILE_MODE_WRITE) == 0;
+}
+
+static bool devfs_stat(void* fs_ctx, const char* path, fs_path_info_t* out_info) {
+  (void)fs_ctx;
+  if(path == NULL || out_info == NULL) {
+    return false;
+  }
+
+  if(path[0] == '\0' || strcmp(path, "/") == 0) {
+    memset(out_info, 0, sizeof(*out_info));
+    out_info->is_directory = true;
+    out_info->has_mode = true;
+    out_info->mode = S_IFDIR | 0555;
+    out_info->is_read_only = true;
+    out_info->block_size = 4096;
+    return true;
+  }
+
+  while(*path == '/') {
+    path++;
+  }
+
+  for(size_t i = 0; i < devfs_node_count(); i++) {
+    const devfs_node_t* node = &devfs_nodes[i];
+    if(strcmp(path, node->name) == 0) {
+      devfs_fill_info(node, out_info);
+      return true;
+    }
+  }
+  return false;
+}
+
+static int devfs_file_stat(file_t* file, struct stat* out_stat) {
+  if(file == NULL || out_stat == NULL) {
+    return -EINVAL;
+  }
+  const devfs_node_t* node = (const devfs_node_t*)file->private_data;
+  if(node == NULL) {
+    return -EINVAL;
+  }
+  fs_path_info_t info;
+  devfs_fill_info(node, &info);
+  fs_path_info_to_stat(&info, out_stat);
+  out_stat->st_rdev = (dev_t)(node - devfs_nodes + 1);
+  return 0;
+}
+
 static const vfs_fs_driver_t devfs_driver = {
   .list = devfs_list,
   .read = devfs_read,
@@ -202,7 +291,7 @@ static const vfs_fs_driver_t devfs_driver = {
   .write_all = NULL,
   .create_file = NULL,
   .truncate_file = NULL,
-  .stat = NULL,
+  .stat = devfs_stat,
   .open = devfs_open,
   .unlink = devfs_unlink,
   .mkdir = NULL,

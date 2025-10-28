@@ -7,11 +7,13 @@
 #include <sys/fcntl.h>
 #include <sys/ioctl.h>
 #include <sys/mman.h>
+#include <sys/stat.h>
 #include <time.h>
 
 #include <kernel/condvar.h>
 #include <kernel/file.h>
 #include <kernel/devfs.h>
+#include <kernel/fs.h>
 #include <kernel/procfs.h>
 #include <kernel/tmpfs.h>
 #include <kernel/framebuffer.h>
@@ -730,6 +732,36 @@ static int64_t framebuffer_console_write_impl(file_t* file, const void* buffer, 
   return (int64_t)length;
 }
 
+static int generic_char_stat(file_t* file, struct stat* out_stat) {
+  if(out_stat == NULL) {
+    return -EINVAL;
+  }
+  fs_path_info_t info;
+  memset(&info, 0, sizeof(info));
+  info.block_size = 4096;
+  info.size = 0;
+  info.is_directory = false;
+  info.has_mode = true;
+  info.inode = (uint64_t)(uintptr_t)file;
+
+  mode_t perms = 0;
+  if(file == NULL || (file->mode & FILE_MODE_READ)) {
+    perms |= 0444;
+  }
+  if(file == NULL || (file->mode & FILE_MODE_WRITE)) {
+    perms |= 0222;
+  }
+  if(perms == 0) {
+    perms = 0600;
+  }
+  info.mode = S_IFCHR | perms;
+  info.is_read_only = (file != NULL && (file->mode & FILE_MODE_WRITE) == 0);
+
+  fs_path_info_to_stat(&info, out_stat);
+  out_stat->st_rdev = 0;
+  return 0;
+}
+
 static size_t align_up_size(size_t value) {
   if(value == 0) {
     return PAGE_SIZE;
@@ -930,7 +962,7 @@ static const file_ops_t serial_file_ops = {
   .seek = NULL,
   .ioctl = NULL,
   .mmap = NULL,
-  .stat = NULL,
+  .stat = generic_char_stat,
   .chmod = NULL,
   .utimens = NULL,
 };
@@ -942,7 +974,7 @@ static const file_ops_t framebuffer_console_file_ops = {
   .seek = NULL,
   .ioctl = framebuffer_ioctl_impl,
   .mmap = framebuffer_mmap_impl,
-  .stat = NULL,
+  .stat = generic_char_stat,
   .chmod = NULL,
   .utimens = NULL,
 };
@@ -954,7 +986,7 @@ static const file_ops_t framebuffer_device_file_ops = {
   .seek = NULL,
   .ioctl = framebuffer_ioctl_impl,
   .mmap = framebuffer_mmap_impl,
-  .stat = NULL,
+  .stat = generic_char_stat,
   .chmod = NULL,
   .utimens = NULL,
 };
@@ -966,7 +998,7 @@ static const file_ops_t stdin_file_ops = {
   .seek = NULL,
   .ioctl = NULL,
   .mmap = NULL,
-  .stat = NULL,
+  .stat = generic_char_stat,
   .chmod = NULL,
   .utimens = NULL,
 };
@@ -1012,7 +1044,7 @@ static const file_ops_t tty_console_file_ops = {
   .seek = NULL,
   .ioctl = tty_ioctl_impl,
   .mmap = NULL,
-  .stat = NULL,
+  .stat = generic_char_stat,
   .chmod = NULL,
   .utimens = NULL,
 };

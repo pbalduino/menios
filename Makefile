@@ -762,11 +762,13 @@ ifeq ($(OS_NAME),linux)
 			test/unity.c \
 			test/stubs.c \
 			src/kernel/file.c \
-			src/kernel/fs/vfs.c \
-			src/kernel/fs/pipe.c \
-			src/kernel/fs/tmpfs.c \
-			src/kernel/syscall/syscall.c \
-			src/kernel/syscall/entry.c \
+		src/kernel/fs/vfs.c \
+		src/kernel/fs/pipe.c \
+		src/kernel/fs/tmpfs.c \
+		src/kernel/fs/procfs.c \
+		src/kernel/fs/devfs.c \
+		src/kernel/syscall/syscall.c \
+		src/kernel/syscall/entry.c \
 			src/kernel/mem/pmm.c \
 			src/kernel/console/vprintk.c \
 		src/kernel/console/ansi.c \
