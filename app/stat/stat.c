@@ -107,6 +107,10 @@ static void format_time(time_t value, char* out, size_t len) {
   }
 }
 
+static const char* bool_word(bool value) {
+  return value ? "yes" : "no";
+}
+
 static int print_stat_for_path(const char* path) {
   struct stat st;
   if(path == NULL || *path == '\0') {
@@ -154,7 +158,22 @@ static int print_stat_for_path(const char* path) {
   printf("Access: %s\n", atime_buffer);
   printf("Modify: %s\n", mtime_buffer);
   printf("Change: %s\n", ctime_buffer);
-  printf(" Birth: -\n\n");
+  printf(" Birth: -\n");
+
+  if((st.st_menios_flags & ST_MENIOS_FLAG_HAS_DOS_ATTRS) != 0) {
+    bool hidden = (st.st_menios_flags & ST_MENIOS_FLAG_DOS_HIDDEN) != 0;
+    bool system = (st.st_menios_flags & ST_MENIOS_FLAG_DOS_SYSTEM) != 0;
+    bool archived = (st.st_menios_flags & ST_MENIOS_FLAG_DOS_ARCHIVED) != 0;
+    printf("  DOS: attrs=0x%02x hidden=%s system=%s archived=%s\n",
+           st.st_menios_dos_attributes,
+           bool_word(hidden),
+           bool_word(system),
+           bool_word(archived));
+  } else {
+    printf("  DOS: attrs unavailable\n");
+  }
+
+  printf("\n");
   return 0;
 }
 

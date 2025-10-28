@@ -42,6 +42,11 @@ typedef struct fs_path_info_t {
   struct timespec atime;
   struct timespec mtime;
   struct timespec ctime;
+  bool     has_dos_attributes;
+  uint8_t  dos_attributes;
+  bool     is_hidden;
+  bool     is_system;
+  bool     is_archived;
 } fs_path_info_t;
 
 static inline void fs_path_info_to_stat(const fs_path_info_t* info, struct stat* out_stat) {
@@ -87,6 +92,22 @@ static inline void fs_path_info_to_stat(const fs_path_info_t* info, struct stat*
     out_stat->st_atime = 0;
     out_stat->st_mtime = 0;
     out_stat->st_ctime = 0;
+  }
+
+  out_stat->st_menios_flags = 0;
+  out_stat->st_menios_dos_attributes = 0;
+  if(info->has_dos_attributes) {
+    out_stat->st_menios_flags |= ST_MENIOS_FLAG_HAS_DOS_ATTRS;
+    out_stat->st_menios_dos_attributes = info->dos_attributes;
+    if(info->is_hidden) {
+      out_stat->st_menios_flags |= ST_MENIOS_FLAG_DOS_HIDDEN;
+    }
+    if(info->is_system) {
+      out_stat->st_menios_flags |= ST_MENIOS_FLAG_DOS_SYSTEM;
+    }
+    if(info->is_archived) {
+      out_stat->st_menios_flags |= ST_MENIOS_FLAG_DOS_ARCHIVED;
+    }
   }
 }
 

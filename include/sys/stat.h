@@ -1,6 +1,7 @@
 #ifndef MENIOS_INCLUDE_SYS_STAT_H
 #define MENIOS_INCLUDE_SYS_STAT_H
 
+#include <stdint.h>
 #include <sys/types.h>
 
 struct stat {
@@ -17,6 +18,8 @@ struct stat {
   time_t    st_atime;
   time_t    st_mtime;
   time_t    st_ctime;
+  uint8_t   st_menios_flags;
+  uint8_t   st_menios_dos_attributes;
 };
 
 #define S_IFMT   0170000
@@ -61,6 +64,11 @@ int lstat(const char* path, struct stat* buf);
 int chmod(const char* path, mode_t mode);
 int fchmod(int fd, mode_t mode);
 mode_t umask(mode_t mask);
+
+#define ST_MENIOS_FLAG_HAS_DOS_ATTRS 0x01u
+#define ST_MENIOS_FLAG_DOS_HIDDEN    0x02u
+#define ST_MENIOS_FLAG_DOS_SYSTEM    0x04u
+#define ST_MENIOS_FLAG_DOS_ARCHIVED  0x08u
 
 
 #endif

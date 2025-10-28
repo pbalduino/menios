@@ -109,16 +109,15 @@ the VFS, invoke the appropriate driver callbacks, convert results to
 
 **FAT32** (`src/kernel/fs/fat32.c`):
 - Implements `.stat` callback (`fat32_stream_stat()`).
-- Parses directory entries to extract file size and read-only attribute.
-- **Current limitations** (tracked in issue #367):
-  - Timestamps (creation, modification, access) are not yet parsed from the FAT
-    directory entry date/time fields.
-  - DOS attributes beyond read-only (hidden, system, archive, volume) are
-    ignored.
-  - Long filename (LFN) metadata is not extracted for timestamps or permissions.
-  - Permissions are hard-coded (0644 for files, 0755 for directories) rather
-    than derived from FAT attributes.
-  - No ownership information (all files appear as uid=0, gid=0).
+- Populates `fs_path_info` with cluster-derived metadata including timestamps,
+  DOS attribute byte, and derived POSIX mode bits.
+- Converts the FAT timestamps and attributes for both path-based queries and
+  open-file handles so VFS caching stays coherent.
+- **Remaining limitations** (tracked in issue #367 unless noted):
+  - `fat32_chmod_impl()` / `fat32_utimens_path()` still return `-ENOSYS`; the
+    kernel does not persist metadata mutations yet (follow-ups: #365, #317).
+  - Long filename (LFN) metadata is not used to refine permissions or locales.
+  - POSIX ownership remains synthetic (uid/gid are always zero).
 
 **Pseudo-filesystems** (tracked in issue #366):
 - **tmpfs, procfs, devfs, pipes, console devices** — Currently expose

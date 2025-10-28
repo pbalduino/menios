@@ -9,6 +9,8 @@
 #include <sys/fcntl.h>
 #include <sys/stat.h>
 #include <unistd.h>
+#include <time.h>
+#include <utime.h>
 
 #include <kernel/block_device.h>
 #include <kernel/block_cache.h>
@@ -16,9 +18,40 @@
 #include <kernel/serial.h>
 #include <kernel/file.h>
 #include <kernel/file.h>
+#include <kernel/tsc.h>
 
 #define FAT32_LOG_PATH_MAX 96
 
+#define FAT32_ATTR_READ_ONLY 0x01u
+#define FAT32_ATTR_HIDDEN    0x02u
+#define FAT32_ATTR_SYSTEM    0x04u
+#define FAT32_ATTR_VOLUME_ID 0x08u
+#define FAT32_ATTR_DIRECTORY 0x10u
+#define FAT32_ATTR_ARCHIVE   0x20u
+
+static bool fat32_path_is_root(const char* path) {
+  if(path == NULL) {
+    return false;
+  }
+  if(path[0] == '\0') {
+    return true;
+  }
+  if(path[0] == '/' && path[1] == '\0') {
+    return true;
+  }
+  return false;
+}
+
+int fat32_chmod_impl(void* fs_ctx, const char* path, mode_t mode);
+int fat32_utimens_path(void* fs_ctx, const char* path, const struct timespec times[2]);
+
+static int64_t fat32_days_from_civil(int year, unsigned month, unsigned day);
+static void fat32_civil_from_days(int64_t z, int* year, unsigned* month, unsigned* day);
+static bool fat32_timespec_to_fat_date(const struct timespec* ts, uint16_t* out_date);
+static bool fat32_timespec_to_fat_time(const struct timespec* ts,
+                                       uint16_t* out_time,
+                                       uint8_t* out_tenths);
+static struct timespec fat32_now_timespec(void);
 static const char* fat32_debug_path(const char* path, char* buffer, size_t buffer_len) {
   static const uintptr_t kernel_floor = 0xffff800000000000ull;
   static const char hex_digits[] = "0123456789abcdef";
@@ -1214,6 +1247,439 @@ typedef struct fat32_dir_entry_info_t {
   uint8_t                 lfn_entries;
   fat32_dir_entry_raw_t   raw_entry;
 } fat32_dir_entry_info_t;
+
+static int64_t fat32_days_from_civil(int year, unsigned month, unsigned day) {
+  year -= (int)(month <= 2u);
+  const int era = (year >= 0) ? year / 400 : (year - 399) / 400;
+  const unsigned yoe = (unsigned)(year - era * 400);
+  const unsigned doy = (153u * (month + (month > 2u ? -3u : 9u)) + 2u) / 5u + day - 1u;
+  const unsigned doe = yoe * 365u + yoe / 4u - yoe / 100u + doy;
+  return (int64_t)era * 146097 + (int64_t)doe - 719468;
+}
+
+static void fat32_civil_from_days(int64_t z, int* year, unsigned* month, unsigned* day) {
+  z += 719468;
+  const int era = (z >= 0 ? z : z - 146096) / 146097;
+  const unsigned doe = (unsigned)(z - (int64_t)era * 146097);
+  const unsigned yoe = (doe - doe / 1460u + doe / 36524u - doe / 146096u) / 365u;
+  int y = (int)yoe + era * 400;
+  const unsigned doy = doe - (365u * yoe + yoe / 4u - yoe / 100u);
+  const unsigned mp = (5u * doy + 2u) / 153u;
+  unsigned d = doy - (153u * mp + 2u) / 5u + 1u;
+  unsigned m;
+  if(mp < 10u) {
+    m = mp + 3u;
+  } else {
+    m = mp - 9u;
+  }
+  if(m <= 2u) {
+    y += 1;
+  }
+  if(year) {
+    *year = y;
+  }
+  if(month) {
+    *month = m;
+  }
+  if(day) {
+    *day = d;
+  }
+}
+
+static bool fat32_timespec_to_fat_date(const struct timespec* ts, uint16_t* out_date) {
+  if(ts == NULL || out_date == NULL) {
+    return false;
+  }
+
+  int64_t secs = ts->tv_sec;
+  int64_t days = secs / 86400;
+  int64_t rem = secs % 86400;
+  if(rem < 0) {
+    rem += 86400;
+    days -= 1;
+  }
+
+  int year = 0;
+  unsigned month = 0;
+  unsigned day = 0;
+  fat32_civil_from_days(days, &year, &month, &day);
+
+  if(year < 1980) {
+    year = 1980;
+    month = 1;
+    day = 1;
+  } else if(year > 2107) {
+    year = 2107;
+    month = 12;
+    day = 31;
+  }
+
+  if(month == 0) {
+    month = 1;
+  }
+  if(day == 0) {
+    day = 1;
+  }
+
+  *out_date = (uint16_t)(((year - 1980) & 0x7Fu) << 9 | ((month & 0x0Fu) << 5) | (day & 0x1Fu));
+  return true;
+}
+
+static bool fat32_timespec_to_fat_time(const struct timespec* ts,
+                                       uint16_t* out_time,
+                                       uint8_t* out_tenths) {
+  if(ts == NULL || out_time == NULL) {
+    return false;
+  }
+
+  int64_t secs = ts->tv_sec;
+  int64_t rem = secs % 86400;
+  if(rem < 0) {
+    rem += 86400;
+  }
+
+  unsigned hour = (unsigned)(rem / 3600);
+  rem %= 3600;
+  unsigned minute = (unsigned)(rem / 60);
+  unsigned second = (unsigned)(rem % 60);
+
+  if(hour > 23u) {
+    hour = 23u;
+  }
+  if(minute > 59u) {
+    minute = 59u;
+  }
+  if(second > 59u) {
+    second = 59u;
+  }
+
+  unsigned base_seconds = second / 2u;
+  if(base_seconds > 29u) {
+    base_seconds = 29u;
+  }
+  *out_time = (uint16_t)((hour << 11) | (minute << 5) | base_seconds);
+
+  if(out_tenths != NULL) {
+    unsigned extra_sec = second & 1u;
+    unsigned hundredths = (unsigned)(ts->tv_nsec / 10000000ull);
+    if(hundredths > 99u) {
+      hundredths = 99u;
+    }
+    unsigned value = extra_sec * 100u + hundredths;
+    if(value > 199u) {
+      value = 199u;
+    }
+    *out_tenths = (uint8_t)value;
+  }
+
+  return true;
+}
+
+static struct timespec fat32_now_timespec(void) {
+  uint64_t now_us = unix_time_us();
+  struct timespec ts;
+  ts.tv_sec = (time_t)(now_us / 1000000ull);
+  ts.tv_nsec = (long)((now_us % 1000000ull) * 1000ull);
+  return ts;
+}
+
+static bool fat32_datetime_to_timespec(uint16_t date,
+                                       uint16_t time,
+                                       uint8_t tenths,
+                                       bool has_time,
+                                       struct timespec* out_ts) {
+  if(out_ts == NULL || date == 0) {
+    return false;
+  }
+
+  unsigned day = date & 0x1Fu;
+  unsigned month = (date >> 5) & 0x0Fu;
+  unsigned year_field = (date >> 9) & 0x7Fu;
+
+  if(day == 0 || month == 0) {
+    return false;
+  }
+
+  int year = (int)year_field + 1980;
+  if(year < 1980) {
+    year = 1980;
+  } else if(year > 2107) {
+    year = 2107;
+  }
+
+  int64_t days = fat32_days_from_civil(year, month, day);
+  int64_t secs = days * 86400;
+
+  unsigned hour = 0;
+  unsigned minute = 0;
+  unsigned second = 0;
+  unsigned hundredths = 0;
+
+  if(has_time) {
+    hour = (time >> 11) & 0x1Fu;
+    minute = (time >> 5) & 0x3Fu;
+    unsigned base = time & 0x1Fu;
+    second = base * 2u;
+
+    if(hour > 23u) {
+      hour = 23u;
+    }
+    if(minute > 59u) {
+      minute = 59u;
+    }
+    if(second > 58u) {
+      second = 58u;
+    }
+
+    unsigned extra_sec = tenths / 100u;
+    if(extra_sec > 1u) {
+      extra_sec = 1u;
+    }
+    second += extra_sec;
+    if(second > 59u) {
+      second = 59u;
+    }
+
+    hundredths = tenths % 100u;
+    if(hundredths > 99u) {
+      hundredths = 99u;
+    }
+  }
+
+  secs += (int64_t)hour * 3600;
+  secs += (int64_t)minute * 60;
+  secs += second;
+
+  out_ts->tv_sec = secs;
+  out_ts->tv_nsec = (long)hundredths * 10000000l;
+  return true;
+}
+
+static bool fat32_select_times(const struct timespec times[2],
+                               struct timespec* out_atime,
+                               bool* update_atime,
+                               struct timespec* out_mtime,
+                               bool* update_mtime) {
+  struct timespec now = fat32_now_timespec();
+
+  if(times == NULL) {
+    if(out_atime) {
+      *out_atime = now;
+    }
+    if(out_mtime) {
+      *out_mtime = now;
+    }
+    if(update_atime) {
+      *update_atime = true;
+    }
+    if(update_mtime) {
+      *update_mtime = true;
+    }
+    return true;
+  }
+
+  const struct timespec* spec_a = &times[0];
+  const struct timespec* spec_m = &times[1];
+
+  bool ua = true;
+  bool um = true;
+
+#ifdef UTIME_OMIT
+  if(spec_a->tv_nsec == UTIME_OMIT) {
+    ua = false;
+  }
+#endif
+#ifdef UTIME_OMIT
+  if(spec_m->tv_nsec == UTIME_OMIT) {
+    um = false;
+  }
+#endif
+
+  if(ua && out_atime) {
+#ifdef UTIME_NOW
+    if(spec_a->tv_nsec == UTIME_NOW) {
+      *out_atime = now;
+    } else
+#endif
+    {
+      *out_atime = *spec_a;
+    }
+  }
+
+  if(um && out_mtime) {
+#ifdef UTIME_NOW
+    if(spec_m->tv_nsec == UTIME_NOW) {
+      *out_mtime = now;
+    } else
+#endif
+    {
+      *out_mtime = *spec_m;
+    }
+  }
+
+  if(update_atime) {
+    *update_atime = ua;
+  }
+  if(update_mtime) {
+    *update_mtime = um;
+  }
+
+  return ua || um;
+}
+
+static void fat32_populate_path_info(const fat32_fs_t* fs,
+                                     const fat32_dir_entry_info_t* src,
+                                     fs_path_info_t* dst) {
+  if(dst == NULL || fs == NULL || src == NULL) {
+    return;
+  }
+
+  memset(dst, 0, sizeof(*dst));
+  dst->is_directory = src->is_directory;
+  dst->size = src->size;
+  dst->block_size = fs->cluster_size_bytes ? fs->cluster_size_bytes : fs->bytes_per_sector;
+  dst->inode = src->first_cluster ? src->first_cluster
+                                  : (((uint64_t)src->dir_cluster << 32) | src->dir_entry_index);
+
+  bool read_only = (src->raw_entry.attr & 0x01u) != 0;
+  dst->is_read_only = read_only;
+
+  dst->has_mode = true;
+  mode_t base_mode = src->is_directory ? S_IFDIR : S_IFREG;
+  mode_t perms = src->is_directory ? 0755 : 0644;
+  if(read_only) {
+    perms &= ~(S_IWUSR | S_IWGRP | S_IWOTH);
+  }
+  dst->mode = base_mode | perms;
+
+  dst->has_times = false;
+  struct timespec tmp = {0, 0};
+
+  if(src->raw_entry.write_date != 0 &&
+     fat32_datetime_to_timespec(src->raw_entry.write_date,
+                                src->raw_entry.write_time,
+                                0,
+                                true,
+                                &tmp)) {
+    dst->mtime = tmp;
+    dst->has_times = true;
+  }
+
+  if(src->raw_entry.creation_date != 0 &&
+     fat32_datetime_to_timespec(src->raw_entry.creation_date,
+                                src->raw_entry.creation_time,
+                                src->raw_entry.creation_time_tenths,
+                                true,
+                                &tmp)) {
+    dst->ctime = tmp;
+    dst->has_times = true;
+  }
+
+  if(src->raw_entry.last_access_date != 0 &&
+     fat32_datetime_to_timespec(src->raw_entry.last_access_date,
+                                0,
+                                0,
+                                false,
+                                &tmp)) {
+    dst->atime = tmp;
+    dst->has_times = true;
+  }
+
+  if(dst->has_times) {
+    if(dst->mtime.tv_sec == 0 && dst->ctime.tv_sec != 0) {
+      dst->mtime = dst->ctime;
+    }
+    if(dst->mtime.tv_sec == 0 && dst->atime.tv_sec != 0) {
+      dst->mtime = dst->atime;
+    }
+    if(dst->ctime.tv_sec == 0 && dst->mtime.tv_sec != 0) {
+      dst->ctime = dst->mtime;
+    }
+    if(dst->atime.tv_sec == 0 && dst->mtime.tv_sec != 0) {
+      dst->atime = dst->mtime;
+    }
+  } else {
+    memset(&dst->atime, 0, sizeof(dst->atime));
+    memset(&dst->mtime, 0, sizeof(dst->mtime));
+    memset(&dst->ctime, 0, sizeof(dst->ctime));
+  }
+
+  dst->has_dos_attributes = true;
+  dst->dos_attributes = src->raw_entry.attr;
+  dst->is_hidden = (src->raw_entry.attr & 0x02u) != 0;
+  dst->is_system = (src->raw_entry.attr & 0x04u) != 0;
+  dst->is_archived = (src->raw_entry.attr & 0x20u) != 0;
+}
+
+typedef struct {
+  bool     update_attr;
+  uint8_t  attr;
+  bool     update_write;
+  uint16_t write_date;
+  uint16_t write_time;
+  bool     update_access;
+  uint16_t access_date;
+  bool     update_creation;
+  uint16_t creation_date;
+  uint16_t creation_time;
+  uint8_t  creation_time_tenths;
+} fat32_dir_entry_metadata_update_t;
+
+static bool fat32_apply_metadata_update(fat32_fs_t* fs,
+                                        const fat32_dir_entry_info_t* info,
+                                        const fat32_dir_entry_metadata_update_t* update,
+                                        fat32_dir_entry_raw_t* updated_entry_out) {
+  if(fs == NULL || info == NULL || update == NULL) {
+    return false;
+  }
+  if(info->dir_cluster < 2u ||
+     info->dir_entry_index >= fs->cluster_size_bytes / sizeof(fat32_dir_entry_raw_t)) {
+    return false;
+  }
+
+  uint8_t* buffer = kmalloc(fs->cluster_size_bytes);
+  if(buffer == NULL) {
+    return false;
+  }
+
+  bool ok = false;
+  if(!fat32_read_cluster(fs, info->dir_cluster, buffer)) {
+    goto done;
+  }
+
+  fat32_dir_entry_raw_t* entries = (fat32_dir_entry_raw_t*)buffer;
+  fat32_dir_entry_raw_t* entry = &entries[info->dir_entry_index];
+
+  if(update->update_attr) {
+    entry->attr = update->attr;
+  }
+  if(update->update_write) {
+    entry->write_date = update->write_date;
+    entry->write_time = update->write_time;
+  }
+  if(update->update_access) {
+    entry->last_access_date = update->access_date;
+  }
+  if(update->update_creation) {
+    entry->creation_date = update->creation_date;
+    entry->creation_time = update->creation_time;
+    entry->creation_time_tenths = update->creation_time_tenths;
+  }
+
+  if(!fat32_write_cluster(fs, info->dir_cluster, buffer)) {
+    goto done;
+  }
+
+  if(updated_entry_out != NULL) {
+    *updated_entry_out = *entry;
+  }
+
+  ok = true;
+
+done:
+  kfree(buffer);
+  return ok;
+}
 
 static void fat32_reset_lfn(char* buffer, size_t length) {
   if(buffer && length > 0) {
@@ -2817,28 +3283,11 @@ bool fs_path_info(const fs_mount_t* mount, const char* path, fs_path_info_t* out
     return false;
   }
 
-  memset(out_info, 0, sizeof(*out_info));
-  out_info->is_directory = info.is_directory;
-  out_info->size = info.size;
-  out_info->block_size = fs->cluster_size_bytes ? fs->cluster_size_bytes : fs->bytes_per_sector;
-  out_info->inode = info.first_cluster ? info.first_cluster
-                                       : (((uint64_t)info.dir_cluster << 32) | info.dir_entry_index);
-
-  if(info.raw_entry.attr != 0) {
-    out_info->is_read_only = (info.raw_entry.attr & 0x01u) != 0;
-  } else {
-    out_info->is_read_only = false;
+  fat32_populate_path_info(fs, &info, out_info);
+  if(out_info->block_size == 0) {
+    out_info->block_size =
+      fs->bytes_per_sector ? fs->bytes_per_sector : 512u;
   }
-
-  out_info->has_mode = true;
-  mode_t base_mode = info.is_directory ? S_IFDIR : S_IFREG;
-  mode_t perms = info.is_directory ? 0755 : 0644;
-  if(out_info->is_read_only) {
-    perms &= ~(S_IWUSR | S_IWGRP | S_IWOTH);
-  }
-  out_info->mode = base_mode | perms;
-  out_info->has_times = false;
-
   return true;
 }
 
@@ -3065,30 +3514,12 @@ static int fat32_stream_stat(file_t* file, struct stat* out_stat) {
   }
 
   fs_path_info_t info;
-  memset(&info, 0, sizeof(info));
-  info.is_directory = stream->info.is_directory;
-  info.is_read_only = (stream->info.raw_entry.attr & 0x01u) != 0;
-  info.block_size = stream->fs->cluster_size_bytes ? stream->fs->cluster_size_bytes
-                                                   : stream->fs->bytes_per_sector;
+  fat32_populate_path_info(stream->fs, &stream->info, &info);
   if(info.block_size == 0) {
-    info.block_size = 512;
+    const fat32_fs_t* fs = stream->fs;
+    uint32_t fallback = (fs != NULL && fs->bytes_per_sector != 0) ? fs->bytes_per_sector : 512u;
+    info.block_size = fallback;
   }
-  info.size = stream->info.size;
-  if(stream->info.first_cluster != 0) {
-    info.inode = stream->info.first_cluster;
-  } else {
-    info.inode = ((uint64_t)stream->info.dir_cluster << 32) | stream->info.dir_entry_index;
-  }
-
-  info.has_mode = true;
-  mode_t base_mode = stream->info.is_directory ? S_IFDIR : S_IFREG;
-  mode_t perms = stream->info.is_directory ? 0755 : 0644;
-  if(info.is_read_only) {
-    perms &= ~(S_IWUSR | S_IWGRP | S_IWOTH);
-  }
-  info.mode = base_mode | perms;
-  info.has_times = false;
-
   fs_path_info_to_stat(&info, out_stat);
   return 0;
 }
@@ -3199,4 +3630,145 @@ bool fs_directory_remove(const fs_mount_t* mount, const char* path) {
 
   fat32_fs_t* fs = (fat32_fs_t*)&mount->fat32;
   return fat32_remove_directory_path(fs, path) == 0;
+}
+
+int fat32_chmod_impl(void* fs_ctx, const char* path, mode_t mode) {
+  if(fs_ctx == NULL || path == NULL) {
+    return -EINVAL;
+  }
+  if(fat32_path_is_root(path)) {
+    return -EPERM;
+  }
+
+  fs_mount_t* mount = (fs_mount_t*)fs_ctx;
+  if(mount->type != FS_TYPE_FAT32) {
+    return -EINVAL;
+  }
+
+  fat32_fs_t* fs = &mount->fat32;
+
+  fat32_dir_entry_info_t info;
+  bool ok = fat32_traverse_path(fs, path, &info, false);
+  if(!ok && path[0] == '/' && path[1] != '\0') {
+    ok = fat32_traverse_path(fs, path + 1, &info, false);
+  }
+  if(!ok) {
+    return -ENOENT;
+  }
+
+  uint8_t current_attr = info.raw_entry.attr;
+  bool make_read_only = (mode & (S_IWUSR | S_IWGRP | S_IWOTH)) == 0;
+  uint8_t new_attr = current_attr;
+
+  if(make_read_only) {
+    new_attr |= FAT32_ATTR_READ_ONLY;
+  } else {
+    new_attr &= (uint8_t)~FAT32_ATTR_READ_ONLY;
+  }
+
+  if(new_attr == current_attr) {
+    return 0;
+  }
+
+  fat32_dir_entry_metadata_update_t update;
+  memset(&update, 0, sizeof(update));
+  update.update_attr = true;
+  update.attr = new_attr;
+
+  fat32_dir_entry_raw_t updated_entry;
+  if(!fat32_apply_metadata_update(fs, &info, &update, &updated_entry)) {
+    return -EIO;
+  }
+
+  return 0;
+}
+
+int fat32_utimens_path(void* fs_ctx, const char* path, const struct timespec times[2]) {
+  if(fs_ctx == NULL || path == NULL) {
+    return -EINVAL;
+  }
+  if(fat32_path_is_root(path)) {
+    return -EPERM;
+  }
+
+  fs_mount_t* mount = (fs_mount_t*)fs_ctx;
+  if(mount->type != FS_TYPE_FAT32) {
+    return -EINVAL;
+  }
+
+  fat32_fs_t* fs = &mount->fat32;
+  fat32_dir_entry_info_t info;
+  bool ok = fat32_traverse_path(fs, path, &info, false);
+  if(!ok && path[0] == '/' && path[1] != '\0') {
+    ok = fat32_traverse_path(fs, path + 1, &info, false);
+  }
+  if(!ok) {
+    return -ENOENT;
+  }
+
+  struct timespec atime = {0};
+  struct timespec mtime = {0};
+  bool update_atime = false;
+  bool update_mtime = false;
+  if(!fat32_select_times(times, &atime, &update_atime, &mtime, &update_mtime)) {
+    return 0;
+  }
+
+  fat32_dir_entry_metadata_update_t update;
+  memset(&update, 0, sizeof(update));
+
+  if(update_mtime) {
+    uint16_t write_date = 0;
+    uint16_t write_time = 0;
+    if(!fat32_timespec_to_fat_date(&mtime, &write_date) ||
+       !fat32_timespec_to_fat_time(&mtime, &write_time, NULL)) {
+      return -EINVAL;
+    }
+    update.update_write = true;
+    update.write_date = write_date;
+    update.write_time = write_time;
+  }
+
+  if(update_atime) {
+    uint16_t access_date = 0;
+    if(!fat32_timespec_to_fat_date(&atime, &access_date)) {
+      return -EINVAL;
+    }
+    update.update_access = true;
+    update.access_date = access_date;
+  }
+
+  if(update_mtime) {
+    uint16_t creation_date = 0;
+    uint16_t creation_time = 0;
+    uint8_t creation_tenths = 0;
+    if(!fat32_timespec_to_fat_date(&mtime, &creation_date) ||
+       !fat32_timespec_to_fat_time(&mtime, &creation_time, &creation_tenths)) {
+      return -EINVAL;
+    }
+    update.update_creation = true;
+    update.creation_date = creation_date;
+    update.creation_time = creation_time;
+    update.creation_time_tenths = creation_tenths;
+  }
+
+  uint8_t new_attr = info.raw_entry.attr;
+  if(update_mtime && !info.is_directory) {
+    new_attr |= FAT32_ATTR_ARCHIVE;
+  }
+  if(new_attr != info.raw_entry.attr) {
+    update.update_attr = true;
+    update.attr = new_attr;
+  }
+
+  if(!update.update_attr && !update.update_write && !update.update_access && !update.update_creation) {
+    return 0;
+  }
+
+  fat32_dir_entry_raw_t updated_entry;
+  if(!fat32_apply_metadata_update(fs, &info, &update, &updated_entry)) {
+    return -EIO;
+  }
+
+  return 0;
 }
