@@ -342,6 +342,104 @@ void test_remove_directory_requires_empty(void) {
   fat32_test_env_destroy(&env);
 }
 
+void test_fat32_chmod_toggles_read_only(void) {
+  fat32_test_env_t env;
+  fat32_test_env_init(&env, FAT32_TEST_CLUSTER_COUNT);
+
+  size_t next_index = 0;
+  write_directory_entry(&env, env.fs.root_cluster, &next_index, "LongFileName123.txt", false, NULL);
+
+  fs_mount_t mount = {
+    .type = FS_TYPE_FAT32,
+    .fat32 = env.fs,
+  };
+
+  int rc = fat32_chmod_impl(&mount, "/LongFileName123.txt", 0444);
+  TEST_ASSERT_EQUAL_INT(0, rc);
+
+  uint8_t buffer[512];
+  TEST_ASSERT_TRUE(fat32_read_cluster(&env.fs, env.fs.root_cluster, buffer));
+  fat32_dir_entry_raw_t* entries = (fat32_dir_entry_raw_t*)buffer;
+  fat32_dir_entry_raw_t* short_entry = &entries[2];
+  TEST_ASSERT_EQUAL_HEX8(FAT32_ATTR_ARCHIVE | FAT32_ATTR_READ_ONLY, short_entry->attr);
+
+  fs_path_info_t info;
+  TEST_ASSERT_TRUE(fs_path_info(&mount, "/LongFileName123.txt", &info));
+  TEST_ASSERT_TRUE(info.is_read_only);
+
+  rc = fat32_chmod_impl(&mount, "/LongFileName123.txt", 0644);
+  TEST_ASSERT_EQUAL_INT(0, rc);
+
+  TEST_ASSERT_TRUE(fat32_read_cluster(&env.fs, env.fs.root_cluster, buffer));
+  entries = (fat32_dir_entry_raw_t*)buffer;
+  short_entry = &entries[2];
+  TEST_ASSERT_EQUAL_HEX8(FAT32_ATTR_ARCHIVE, short_entry->attr);
+
+  TEST_ASSERT_TRUE(fs_path_info(&mount, "/LongFileName123.txt", &info));
+  TEST_ASSERT_FALSE(info.is_read_only);
+
+  fat32_test_env_destroy(&env);
+}
+
+void test_fat32_utimens_updates_timestamps(void) {
+  fat32_test_env_t env;
+  fat32_test_env_init(&env, FAT32_TEST_CLUSTER_COUNT);
+
+  size_t next_index = 0;
+  write_directory_entry(&env, env.fs.root_cluster, &next_index, "LongFileName123.txt", false, NULL);
+
+  fs_mount_t mount = {
+    .type = FS_TYPE_FAT32,
+    .fat32 = env.fs,
+  };
+
+  struct timespec req[2];
+  req[0].tv_sec = 1700000000ll;
+  req[0].tv_nsec = 0;
+  req[1].tv_sec = 1700001234ll;
+  req[1].tv_nsec = 0;
+
+  int rc = fat32_utimens_path(&mount, "/LongFileName123.txt", req);
+  TEST_ASSERT_EQUAL_INT(0, rc);
+
+  uint8_t buffer[512];
+  TEST_ASSERT_TRUE(fat32_read_cluster(&env.fs, env.fs.root_cluster, buffer));
+  fat32_dir_entry_raw_t* entries = (fat32_dir_entry_raw_t*)buffer;
+  fat32_dir_entry_raw_t* short_entry = &entries[2];
+
+  uint16_t expected_write_date = 0;
+  uint16_t expected_write_time = 0;
+  TEST_ASSERT_TRUE(fat32_timespec_to_fat_date(&req[1], &expected_write_date));
+  TEST_ASSERT_TRUE(fat32_timespec_to_fat_time(&req[1], &expected_write_time, NULL));
+  TEST_ASSERT_EQUAL_UINT16(expected_write_date, short_entry->write_date);
+  TEST_ASSERT_EQUAL_UINT16(expected_write_time, short_entry->write_time);
+
+  uint16_t expected_access_date = 0;
+  TEST_ASSERT_TRUE(fat32_timespec_to_fat_date(&req[0], &expected_access_date));
+  TEST_ASSERT_EQUAL_UINT16(expected_access_date, short_entry->last_access_date);
+
+  uint16_t expected_creation_date = 0;
+  uint16_t expected_creation_time = 0;
+  uint8_t expected_creation_tenths = 0;
+  TEST_ASSERT_TRUE(fat32_timespec_to_fat_date(&req[1], &expected_creation_date));
+  TEST_ASSERT_TRUE(fat32_timespec_to_fat_time(&req[1], &expected_creation_time, &expected_creation_tenths));
+  TEST_ASSERT_EQUAL_UINT16(expected_creation_date, short_entry->creation_date);
+  TEST_ASSERT_EQUAL_UINT16(expected_creation_time, short_entry->creation_time);
+  TEST_ASSERT_EQUAL_UINT8(expected_creation_tenths, short_entry->creation_time_tenths);
+  TEST_ASSERT_TRUE((short_entry->attr & FAT32_ATTR_ARCHIVE) != 0);
+
+  fs_path_info_t info;
+  TEST_ASSERT_TRUE(fs_path_info(&mount, "/LongFileName123.txt", &info));
+  TEST_ASSERT_TRUE(info.has_times);
+  TEST_ASSERT_EQUAL_INT64(req[1].tv_sec, info.mtime.tv_sec);
+  TEST_ASSERT_EQUAL_INT64(info.mtime.tv_sec, info.ctime.tv_sec);
+
+  time_t expected_atime_sec = (req[0].tv_sec / 86400ll) * 86400ll;
+  TEST_ASSERT_EQUAL_INT64(expected_atime_sec, info.atime.tv_sec);
+
+  fat32_test_env_destroy(&env);
+}
+
 int main(void) {
   UNITY_BEGIN();
   RUN_TEST(test_create_long_filename_file);
@@ -349,5 +447,7 @@ int main(void) {
   RUN_TEST(test_unique_short_name_generation);
   RUN_TEST(test_remove_file_marks_entries_deleted);
   RUN_TEST(test_remove_directory_requires_empty);
+  RUN_TEST(test_fat32_chmod_toggles_read_only);
+  RUN_TEST(test_fat32_utimens_updates_timestamps);
   return UNITY_END();
 }
