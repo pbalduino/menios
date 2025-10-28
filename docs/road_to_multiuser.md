@@ -155,5 +155,59 @@ Each milestone should land with dedicated tests, doc updates, and a stabilizatio
 2. Draft RFC detailing credential struct changes and enforcement policies; review with kernel maintainers.
 3. Spike a prototype branch adding dummy UID fields to quantify impact on context switch/scheduler.
 4. Inventory filesystem formats and builder scripts to scope metadata migration effort.
+5. ✅ **Complete FAT32 metadata work** (#367) - **DONE!**
+6. 🚀 **Add chmod support to FAT32** (#365) - READY TO START
+7. 🚀 **Add utime support to FAT32** (#317) - READY TO START
+8. **Add permission enforcement** to existing syscalls that already have metadata infrastructure
 
 Capturing answers to the open questions before implementation will reduce churn and keep the multi-user initiative on schedule.
+
+## Related Issues & Current Work
+
+### Completed Foundation
+- ✅ **#65** - VFS layer (provides permission infrastructure)
+- ✅ **#189** - FAT32 write support (persistent storage available)
+- ✅ **#181** - tmpfs validation (in-memory filesystem working)
+- ✅ **#364** - Stubbed libc functions (stat family complete)
+- ✅ **#367** - Parse rich FAT32 metadata (**COMPLETE!** - enables chmod/utime on FAT32)
+
+### Active Metadata Work (Building Blocks for Multi-User)
+- 🚀 **#365** - chmod/fchmod syscalls (tmpfs complete, **FAT32 READY TO START**)
+  - Unblocked by #367 completion
+  - Map POSIX permissions to/from DOS read-only bit
+  - Timeline: 3-5 days
+- 🚀 **#317** - utime syscall (tmpfs complete, **FAT32 READY TO START**)
+  - Unblocked by #367 completion
+  - Convert POSIX timestamps to/from DOS date/time
+  - Timeline: 3-5 days
+- ⏳ **#366** - Pseudo-fs metadata support (devfs/procfs consistency)
+  - Blocked by #365 and #317
+  - Timeline: 3-5 days after blockers
+
+### Planned Multi-User Work
+- 📋 **#232** - Implement chmod and chown syscalls (comprehensive plan exists)
+  - Builds on #365 (chmod infrastructure)
+  - Adds chown/fchown/lchown for ownership changes
+  - Includes permission validation and utilities
+
+### Future Requirements
+- **Phase 1:** Task struct extensions (uid, gid, euid, egid fields)
+- **Phase 2:** Syscall surface (getuid, setuid, setgid, umask, etc.)
+- **Phase 3:** Filesystem integration (ownership stored on-disk)
+- **Phase 4:** Authentication (/etc/passwd, login program)
+- **Phase 5:** Userland utilities (id, whoami, su, passwd)
+- **Phase 6:** Hardening and auditing
+
+### Key Dependencies
+**Before starting Phase 1:**
+1. ✅ Complete #367 (FAT32 metadata foundation) - **DONE!**
+2. 🚀 Complete #365, #317 (chmod/utime on all filesystems) - **READY TO START**
+3. ⏳ Complete #366 (pseudo-fs consistency) - blocked by #365, #317
+
+**These provide the filesystem metadata layer that multi-user support will build upon.**
+
+---
+
+**Last Updated:** 2025-10-28
+**Status:** ✅ #367 complete! #365 and #317 ready to start.
+**Timeline:** 2-3 weeks for full metadata support, then 6-12 months for full multi-user support

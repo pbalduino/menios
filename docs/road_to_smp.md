@@ -168,5 +168,142 @@ Each milestone should conclude with stabilisation, regression testing, and docum
 2. Draft an RFC outlining AP bring-up flow and required assembly additions.
 3. Build a spike branch enabling dual-core boot with minimal locking to validate infrastructure.
 4. Plan stress test harnesses and logging needed for early debugging.
+5. **Complete UACPI integration** (#276) - remaining 6 functions for full ACPI support
+6. **Resolve UACPI blockers** (#278 work queue, #279 dynamic IRQ, #281 I/O port mgmt)
 
 Collecting answers to the open questions before implementation will keep the SMP effort focused and reduce rework.
+
+## Related Issues & Current Work
+
+### Completed Foundation
+- ✅ **#93** - Fork/exec process creation (scheduler foundation)
+- ✅ **#57** - Virtual memory manager (memory infrastructure)
+- ✅ **Limine bootloader** - Provides SMP boot support
+- ✅ **APIC/LAPIC** - Basic interrupt routing infrastructure
+
+### Active ACPI/Hardware Work (SMP Prerequisites)
+- 🔄 **#276** - UACPI integration (73% complete, 16/22 functions)
+  - Enables MADT parsing for CPU enumeration
+  - Provides ACPI PM timer and FADT access
+  - **Remaining:** 6 functions for full support
+- 🔄 **#278** - Work queue infrastructure (blocks UACPI GPE handling)
+- 🔄 **#279** - Dynamic IRQ allocation (CRITICAL - blocks e1000 driver and UACPI)
+- 🔄 **#281** - I/O port management (blocks UACPI port access)
+- 🔄 **#280** - PCI infrastructure (complete for device enumeration)
+- 🔄 **#335** - PCI enumeration/access (complete for device discovery)
+
+### Planned SMP Work (Sequential Implementation)
+- 📋 **#80** - Implement per-CPU data infrastructure
+  - `get_cpu_var()` primitives
+  - TLS-like per-CPU storage
+  - CPU ID accessors
+
+- 📋 **#81** - Implement APIC/MADT CPU enumeration
+  - Parse MADT table for CPU APIC IDs
+  - Discover available cores
+  - Map LAPIC registers
+
+- 📋 **#82** - Implement AP startup and BSP → AP bring-up
+  - INIT-SIPI-SIPI sequence
+  - Trampoline code (16-bit → 64-bit transition)
+  - Per-CPU stack and GDT setup
+  - Rendezvous barrier
+
+- 📋 **#85** - Audit kernel structures for SMP safety
+  - Convert global data to per-CPU or locked
+  - Add spinlocks/mutexes with proper ordering
+  - Memory barriers and atomic operations
+  - Document lock hierarchies
+
+- 📋 **#83** - Extend scheduler for SMP with per-CPU runqueues
+  - Per-CPU run queues
+  - Load balancing (work stealing)
+  - CPU affinity support
+  - IPI-based preemption
+
+- 📋 **#84** - Implement interrupt distribution and IPIs
+  - Distribute device IRQs across cores
+  - Inter-processor interrupts (IPI)
+  - TLB shootdown IPIs
+  - Reschedule IPIs
+  - Per-CPU APIC timer setup
+
+- 📋 **#86** - Add SMP testing and diagnostics
+  - Multi-core QEMU configurations
+  - Stress tests (lock contention, scheduler fairness)
+  - Diagnostic tools (CPU topology, run queue state)
+  - Tracing/logging hooks
+
+### Implementation Order (Critical Path)
+
+```
+Phase 1: Foundation
+├─ Complete #276 (UACPI)
+├─ Complete #278, #279, #281 (UACPI blockers)
+├─ #80 (per-CPU data)
+└─ #81 (CPU enumeration)
+
+Phase 2: Bring-Up
+├─ #82 (AP startup)
+└─ #85 (SMP safety audit)
+
+Phase 3: Scheduler & Interrupts
+├─ #83 (per-CPU scheduler)
+└─ #84 (IRQ distribution + IPIs)
+
+Phase 4: Validation
+└─ #86 (testing & diagnostics)
+```
+
+### Key Dependencies
+
+**Before Phase 1:**
+1. ⏳ Complete #276 (UACPI integration to 100%)
+2. ⏳ Complete #279 (dynamic IRQ - critical for interrupt routing)
+3. ⏳ Complete #278, #281 (work queue, I/O port mgmt)
+
+**Before Phase 2:**
+1. ✅ Complete Phase 1 (#80, #81)
+2. 📝 Document current scheduler and memory manager assumptions
+3. 📝 Design per-CPU memory allocator strategy
+
+**Before Phase 3:**
+1. ✅ Complete Phase 2 (#82, #85)
+2. 📝 Define lock ordering and primitives
+3. 🧪 Validate dual-core boot in QEMU
+
+**Before Phase 4:**
+1. ✅ Complete Phase 3 (#83, #84)
+2. 🧪 Basic multi-core functionality working
+3. 📝 Performance baselines established
+
+### Estimated Timeline
+
+| Phase | Duration | Dependencies |
+|-------|----------|--------------|
+| **Phase 1** | 4-6 weeks | UACPI completion, per-CPU infra |
+| **Phase 2** | 4-6 weeks | AP bring-up, safety audit |
+| **Phase 3** | 6-8 weeks | Scheduler redesign, IPI impl |
+| **Phase 4** | 2-4 weeks | Testing, tuning, observability |
+| **Total** | **4-6 months** | Sequential with some overlap |
+
+### Current Blockers
+
+**High Priority:**
+- **#279** - Dynamic IRQ allocation (blocks interrupt distribution)
+- **#276** - UACPI completion (blocks CPU enumeration)
+
+**Medium Priority:**
+- **#278** - Work queue (needed for UACPI GPE)
+- **#281** - I/O port management (needed for UACPI)
+
+**Unblocked:**
+- **#80** - Per-CPU data (can start anytime)
+- **#85** - SMP safety audit (can start anytime)
+
+---
+
+**Last Updated:** 2025-10-28
+**Status:** Foundation in place (SMP-ready), awaiting UACPI completion to start Phase 1
+**Timeline:** 4-6 months for full SMP support (after UACPI blockers resolved)
+**Current Focus:** Complete #276 (UACPI) and #279 (dynamic IRQ) first

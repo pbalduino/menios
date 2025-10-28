@@ -103,7 +103,10 @@ GNU [binutils 2.45](https://www.gnu.org/software/binutils/) has also been staged
     - ✅ Host harness now forwards these calls to the underlying OS (MENIOS_HOST_TEST) so native tool tests keep metadata.
     - ✅ Kernel implements the syscalls for tmpfs-backed paths, so `/tmp` usage inside meniOS preserves permissions and timestamps.
     - ⚠️ FAT32/devfs/procfs still return `ENOSYS`; follow-up work required for full filesystem coverage.
-  - ❌ pseudo-fs metadata (#366), rich FAT32 metadata (#367)
+  - ✅ rich FAT32 metadata (#367) - **COMPLETE!**
+  - 🚀 chmod/fchmod on FAT32 (#365) - **READY TO START** (unblocked by #367)
+  - 🚀 utime on FAT32 (#317) - **READY TO START** (unblocked by #367)
+  - ⏳ pseudo-fs metadata (#366) - blocked by #365, #317
   - ❌ isatty (#347), brk/sbrk (#21), system() (#369), timing APIs (#327)
 - ✅ Pipes & FIFOs - **FULLY COMPLETE!** (#206 ✅, #207 ✅, #208 ✅, #209 ✅)
 - ✅ #189 (file writes) - **COMPLETE!** (#291, #292, #293 all done)
@@ -121,7 +124,9 @@ GNU [binutils 2.45](https://www.gnu.org/software/binutils/) has also been staged
 - **🎉 ALL DEPENDENCIES MET - ZERO BLOCKERS!**
 - ✅ Host harness metadata bridge in libc allows `ar` to preserve mode/timestamps during tests.
 - ✅ Kernel syscalls for `chmod`/`fchmod`/`utime` land for tmpfs, enabling native archive rewrites in `/tmp`.
-- ⚠️ FAT32 metadata updates remain blocked on #365/#317 follow-ups (attributes + timestamps).
+- ✅ FAT32 metadata foundation (#367) - **COMPLETE!**
+- 🚀 FAT32 chmod (#365) and utime (#317) ready to start - 2-3 weeks to completion
+- Full ar/ranlib support on /HOME (FAT32) after #365/#317/#366 complete
 
 **Status:** ✅ **BUILD COMPLETE - READY FOR TESTING!**
 - ✅ Successfully built under `DOCKER_IMAGE=menios:trunk`
