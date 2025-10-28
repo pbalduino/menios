@@ -53,9 +53,10 @@ MeniOS ships with a growing collection of userland utilities in `/bin`:
 - **mosh** — Interactive shell with history, tab completion, and job control
 - **cat**, **echo**, **env**, **true**, **false** — Standard POSIX utilities
 - **touch** — Create files and update timestamps
+- **realpath** — Canonicalize file paths
+- **head** — Display first lines of files (#374 - planned)
 - **stat** — Display detailed file metadata (#370 - planned)
 - **shutdown** — Clean ACPI power-off (#372 - planned)
-- **realpath** — Canonicalize file paths (#373 - planned)
 
 ### Development Tools (binutils 2.45)
 - **as** — GNU assembler (x86-64)

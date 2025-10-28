@@ -276,11 +276,10 @@ These issues form the backbone of the system and should be prioritized:
   - Allows graceful shutdown from command line
   - Quick win (2-4 days), improves UX significantly
   - QEMU exits automatically on shutdown
-- **#373** - realpath command - Canonicalize file paths
-  - Uses realpath() libc function ✅ (already implemented)
-  - Resolves relative paths, `.`, and `..` components
-  - Quick win (2-3 days), useful for build systems
-  - Supports GNU coreutils options (-e, -m, -q, -z)
+- ~~**#373** - realpath command~~ - ✅ **COMPLETE!**
+  - Path canonicalization tool now available in /bin
+  - Uses realpath() libc function
+  - Quick win completed ahead of schedule!
 
 **Dependencies**:
 - stat infrastructure: ✅ Complete

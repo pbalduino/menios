@@ -34,7 +34,7 @@ The meniOS project has grown to over 100+ tracked issues with complex interdepen
 
 **Focus:** All C standard library implementation work
 
-**Size:** 491KB
+**Size:** 494KB
 
 **Shows:**
 - Foundation: Minimal libc #193 (complete ✅)
@@ -67,15 +67,15 @@ The meniOS project has grown to over 100+ tracked issues with complex interdepen
 **Recent Progress:**
 - ✅ #337 (Signal API) - CLOSED
 - ✅ #338 (Float parsing) - CLOSED - TCC blockers resolved! 🎉
+- ✅ #371 (ld freeze bug) - **CLOSED** - as and ld working! 🎉
+- ✅ #373 (realpath command) - **CLOSED** - Quick win complete! 🎉
 - ⚠️ #364 (Stubbed functions) - Partially complete (stat family working)
 - 🆕 #370 (stat command) - NEW - Userland tool to display file metadata
 - 🆕 #372 (shutdown command) - NEW - Clean ACPI power-off from userland (quick win)
-- 🆕 #373 (realpath command) - NEW - Path canonicalization tool (quick win)
-- ✅ #191 (binutils) - Build complete, **BLOCKED BY #371**
-- 🚨 #371 (ld freeze bug) - NEW - **CRITICAL BLOCKER** for binutils testing
+- ✅ #191 (binutils) - Build complete, **READY FOR TESTING** (unblocked)
 
-**Recently Closed (17 issues):**
-- #58, #137, #138, #145, #149, #151, #152, #153, #155, #167, #168, #226, #284, #285, #316, #337, #338
+**Recently Closed (19 issues):**
+- #58, #137, #138, #145, #149, #151, #152, #153, #155, #167, #168, #226, #284, #285, #316, #337, #338, #371, #373
 
 ---
 
@@ -110,7 +110,7 @@ The meniOS project has grown to over 100+ tracked issues with complex interdepen
 
 **Focus:** Complete dependency graph (all issues)
 
-**Size:** 893KB (large and complex)
+**Size:** 894KB (large and complex)
 
 **Shows:** Everything - all 100+ issues with all dependencies
 
@@ -128,9 +128,9 @@ The meniOS project has grown to over 100+ tracked issues with complex interdepen
 | Diagram | Size | Issues | Best For |
 |---------|------|--------|----------|
 | **Critical** | 237KB | ~15 | TCC/toolchain path |
-| **libc** | 491KB | ~30 | Library implementation |
+| **libc** | 494KB | ~30 | Library implementation |
 | **Hardware** | 239KB | ~15 | Drivers & ACPI |
-| **Full** | 893KB | 100+ | Complete reference |
+| **Full** | 894KB | 100+ | Complete reference |
 
 ## Color Coding
 

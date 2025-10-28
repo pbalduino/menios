@@ -117,29 +117,33 @@ GNU [binutils 2.45](https://www.gnu.org/software/binutils/) has also been staged
 - ✅ #205 (I/O scheduler) - COMPLETE
 - **🎉 ALL DEPENDENCIES MET - ZERO BLOCKERS!**
 
-**Status:** ⚠️ **BUILD COMPLETE - BLOCKED BY BUG #371**
+**Status:** ✅ **BUILD COMPLETE - READY FOR TESTING!**
 - ✅ Successfully built under `DOCKER_IMAGE=menios:trunk`
 - ✅ Integrated into disk image (`make userland` + `make build`)
-- ✅ Binaries staged in `/bin`: as, ld, objdump, nm, ar, ranlib, touch
-- ❌ **BLOCKED:** `ld` crashes/freezes on version queries (#371)
-  - `ld -V` and `ld --version` freeze indefinitely in meniOS
-  - Works correctly on Linux (immediate return)
-  - Blocks all ld testing and validation
-- 🔄 Integration testing blocked until #371 is resolved
-- 📝 Documentation complete: README updated with usage examples
+- ✅ Binaries available in `/bin`: as, ld, objdump, nm, ar, ranlib, readelf, size, strings, strip, objcopy
+- ✅ Runtime fixes applied:
+  - `realpath()` fixed - ld argument parsing working
+  - `stat` format strings corrected
+  - `echo` redirection writes to files
+  - stdio buffers flush on `exit()`
+- ✅ Manual smoke tests PASSED:
+  - Core workflow verified: `as → ld → nm → objdump → readelf`
+  - All tested tools working correctly
+- ✅ **#371 (ld freeze bug) RESOLVED!** - `as` and `ld` fully functional
+- 📝 Automated test script created (`test_binutils.sh`)
 
-**Blocker:**
-- **#371:** Bug: ld crashes/freezes on simple version queries
+**Previous Blocker (RESOLVED):**
+- ~~**#371:** Bug: ld crashes/freezes on simple version queries~~ ✅ **FIXED!**
 
 **Next Steps:**
-1. ⚠️ Fix #371 (ld freeze bug)
-2. Test if other binutils tools (`as`, `objdump`, `nm`) have similar issues
-3. Once #371 is resolved, run integration tests for each binary
-4. Create simple workflow tests (assemble → link → inspect)
-5. Create regression test scripts
-6. Close #191 once verified
+1. ✅ ~~Fix #371 (ld freeze bug)~~ - COMPLETE!
+2. ⚠️ Run comprehensive tests for remaining tools (ar, ranlib, size, strings, strip, objcopy)
+3. ⚠️ Execute automated test script to validate all binutils
+4. ✅ ~~Test core workflow (assemble → link → inspect)~~ - COMPLETE!
+5. 📝 Final documentation update
+6. 🎉 Close #191 once all tools verified
 
-**Timeline Estimate:** Bug fix: TBD, then testing & verification: 1-2 weeks
+**Timeline Estimate:** Testing & final verification: 1-2 days
 
 ## 🛣️ **Critical Path to Cross-Compilation**
 

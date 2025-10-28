@@ -88,7 +88,7 @@ digraph LibcEcosystem {
 
         issue370 [label="#370: stat command\nDisplay file metadata\n\n3-5 days", fillcolor="#E0F0FF"];
         issue372 [label="#372: shutdown command\nClean ACPI power-off\n\n2-4 days", fillcolor="#E0F0FF"];
-        issue373 [label="#373: realpath command\nPath canonicalization\n\n2-3 days", fillcolor="#E0F0FF"];
+        issue373 [label="#373: realpath command\n✅ COMPLETE", fillcolor="#90EE90", style="filled,dashed"];
     }
 
     // Thread safety

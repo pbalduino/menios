@@ -15,6 +15,9 @@
 #include <sys/wait.h>
 #include <unistd.h>
 
+#ifdef MENIOS_HOST_TEST
+#include <termios.h>
+#endif
 #define GETCWD_DEFAULT_CAPACITY 256u
 
 #ifndef F_OK
@@ -366,9 +369,22 @@ int access(const char* path, int mode) {
 }
 
 int isatty(int fd) {
-  (void)fd;
-  errno = ENOTTY;
+#ifdef MENIOS_HOST_TEST
+  struct termios termios_state;
+  if(tcgetattr(fd, &termios_state) == 0) {
+    return 1;
+  }
   return 0;
+#else
+  struct winsize win;
+  if(ioctl(fd, TIOCGWINSZ, &win) == 0) {
+    return 1;
+  }
+  if(errno == ENOTTY) {
+    return 0;
+  }
+  return 0;
+#endif
 }
 
 long pathconf(const char* path, int name) {

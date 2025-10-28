@@ -325,7 +325,7 @@ digraph IssueDependencies {
         issue363 [label="#363: Serial port FD\ndebug logging", fillcolor="#FFE4B5"];
         issue370 [label="#370: stat command\nfile metadata display", fillcolor="#E0F0FF"];
         issue372 [label="#372: shutdown command\nACPI power-off", fillcolor="#E0F0FF"];
-        issue373 [label="#373: realpath command\npath canonicalization", fillcolor="#E0F0FF"];
+        issue373 [label="#373: realpath command\npath canonicalization", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED
     }
 
     subgraph cluster_hibernation {
