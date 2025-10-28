@@ -8,6 +8,7 @@ extern "C" {
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
+#include <time.h>
 
 #include <kernel/fs.h>
 #include <kernel/file.h>
@@ -32,6 +33,8 @@ typedef struct vfs_fs_driver_t {
   int (*mkdir)(void* fs_ctx, const char* path, bool exclusive);
   int (*rmdir)(void* fs_ctx, const char* path);
   int (*rename)(void* fs_ctx, const char* old_path, const char* new_path);
+  int (*chmod)(void* fs_ctx, const char* path, mode_t mode);
+  int (*utimens)(void* fs_ctx, const char* path, const struct timespec times[2]);
   void (*destroy)(void* fs_ctx);
 } vfs_fs_driver_t;
 
@@ -50,6 +53,8 @@ int vfs_unlink(const char* path);
 int vfs_rmdir(const char* path);
 int vfs_mkdir(const char* path);
 int vfs_rename(const char* old_path, const char* new_path);
+int vfs_chmod(const char* path, mode_t mode);
+int vfs_utimens(const char* path, const struct timespec times[2]);
 
 bool vfs_mount_fat32_root(block_device_t* device);
 

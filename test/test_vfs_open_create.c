@@ -5,6 +5,7 @@
 #include <stdint.h>
 #include <string.h>
 #include <sys/fcntl.h>
+#include <sys/stat.h>
 
 #include <kernel/file.h>
 #include <kernel/heap.h>
@@ -147,16 +148,24 @@ static bool fake_write_all(void* ctx, const char* path, const void* buffer, size
   return true;
 }
 
-static bool fake_stat(void* ctx, const char* path, size_t* out_size) {
+static bool fake_stat(void* ctx, const char* path, fs_path_info_t* out_info) {
   (void)ctx;
-  if(out_size == NULL) {
+  if(out_info == NULL) {
     return false;
   }
   fake_file_t* entry = find_entry(path);
   if(entry == NULL || !entry->exists) {
     return false;
   }
-  *out_size = entry->size;
+  memset(out_info, 0, sizeof(*out_info));
+  out_info->size = entry->size;
+  out_info->block_size = 512;
+  out_info->inode = 1;
+  out_info->is_directory = false;
+  out_info->is_read_only = false;
+  out_info->has_mode = true;
+  out_info->mode = S_IFREG | 0644;
+  out_info->has_times = false;
   return true;
 }
 
@@ -217,6 +226,8 @@ static const vfs_fs_driver_t fake_driver = {
   .mkdir = NULL,
   .rmdir = NULL,
   .rename = NULL,
+  .chmod = NULL,
+  .utimens = NULL,
   .destroy = NULL,
 };
 

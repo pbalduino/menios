@@ -7,6 +7,7 @@
 
 #include <types.h>
 #include <sys/stat.h>
+#include <time.h>
 
 struct proc_info_t;
 
@@ -35,6 +36,8 @@ typedef struct file_ops_t {
               const file_mmap_request_t* request,
               file_mmap_result_t* result);
   int (*stat)(file_t* file, struct stat* out_stat);
+  int (*chmod)(file_t* file, mode_t mode);
+  int (*utimens)(file_t* file, const struct timespec times[2]);
 } file_ops_t;
 
 struct file {
@@ -67,6 +70,8 @@ int file_ioctl(file_t* file, unsigned long request, void* argp);
 int file_mmap(file_t* file,
               const file_mmap_request_t* request,
               file_mmap_result_t* result);
+int file_chmod(file_t* file, mode_t mode);
+int file_utimens(file_t* file, const struct timespec times[2]);
 
 void proc_file_table_init(struct proc_info_t* proc);
 void proc_file_table_clone(struct proc_info_t* child, struct proc_info_t* parent);

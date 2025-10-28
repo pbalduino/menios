@@ -161,6 +161,8 @@ static const file_ops_t procfs_file_ops = {
   .ioctl = NULL,
   .mmap = NULL,
   .stat = NULL,
+  .chmod = NULL,
+  .utimens = NULL,
 };
 
 static int procfs_open(void* fs_ctx, const char* path, int flags, file_t** out_file) {
@@ -245,6 +247,8 @@ static const vfs_fs_driver_t procfs_driver = {
   .mkdir = NULL,
   .rmdir = NULL,
   .rename = NULL,
+  .chmod = NULL,
+  .utimens = NULL,
   .destroy = procfs_destroy,
 };
 

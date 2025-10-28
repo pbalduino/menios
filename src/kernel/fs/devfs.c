@@ -43,6 +43,8 @@ static const file_ops_t devfs_null_ops = {
   .ioctl = NULL,
   .mmap = NULL,
   .stat = NULL,
+  .chmod = NULL,
+  .utimens = NULL,
 };
 
 static const file_ops_t devfs_zero_ops = {
@@ -53,6 +55,8 @@ static const file_ops_t devfs_zero_ops = {
   .ioctl = NULL,
   .mmap = NULL,
   .stat = NULL,
+  .chmod = NULL,
+  .utimens = NULL,
 };
 
 static file_t* devfs_create_null(void) {
@@ -204,6 +208,8 @@ static const vfs_fs_driver_t devfs_driver = {
   .mkdir = NULL,
   .rmdir = NULL,
   .rename = NULL,
+  .chmod = NULL,
+  .utimens = NULL,
   .destroy = devfs_destroy,
 };
 

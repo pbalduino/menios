@@ -11,6 +11,7 @@ extern "C" {
 #include <string.h>
 
 #include <sys/stat.h>
+#include <time.h>
 
 #include <kernel/block_device.h>
 
@@ -35,6 +36,12 @@ typedef struct fs_path_info_t {
   uint32_t block_size;
   uint64_t inode;
   uint64_t size;
+  bool     has_mode;
+  mode_t   mode;
+  bool     has_times;
+  struct timespec atime;
+  struct timespec mtime;
+  struct timespec ctime;
 } fs_path_info_t;
 
 static inline void fs_path_info_to_stat(const fs_path_info_t* info, struct stat* out_stat) {
@@ -48,15 +55,18 @@ static inline void fs_path_info_to_stat(const fs_path_info_t* info, struct stat*
     return;
   }
 
-  mode_t mode = info->is_directory ? S_IFDIR : S_IFREG;
-  mode_t perms;
-  if(info->is_directory) {
-    perms = info->is_read_only ? 0555 : 0755;
+  if(info->has_mode) {
+    out_stat->st_mode = info->mode;
   } else {
-    perms = info->is_read_only ? 0444 : 0644;
+    mode_t mode = info->is_directory ? S_IFDIR : S_IFREG;
+    mode_t perms;
+    if(info->is_directory) {
+      perms = info->is_read_only ? 0555 : 0755;
+    } else {
+      perms = info->is_read_only ? 0444 : 0644;
+    }
+    out_stat->st_mode = mode | perms;
   }
-
-  out_stat->st_mode = mode | perms;
   out_stat->st_nlink = 1;
   out_stat->st_size = (off_t)info->size;
   out_stat->st_blksize = (blksize_t)(info->block_size ? info->block_size : 512);
@@ -69,9 +79,15 @@ static inline void fs_path_info_to_stat(const fs_path_info_t* info, struct stat*
   out_stat->st_rdev = 0;
   out_stat->st_uid = 0;
   out_stat->st_gid = 0;
-  out_stat->st_atime = 0;
-  out_stat->st_mtime = 0;
-  out_stat->st_ctime = 0;
+  if(info->has_times) {
+    out_stat->st_atime = (time_t)info->atime.tv_sec;
+    out_stat->st_mtime = (time_t)info->mtime.tv_sec;
+    out_stat->st_ctime = (time_t)info->ctime.tv_sec;
+  } else {
+    out_stat->st_atime = 0;
+    out_stat->st_mtime = 0;
+    out_stat->st_ctime = 0;
+  }
 }
 
 bool fs_mount_fat32_first(block_device_t* device, fs_mount_t** out_mount);

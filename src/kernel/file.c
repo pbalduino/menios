@@ -7,6 +7,7 @@
 #include <sys/fcntl.h>
 #include <sys/ioctl.h>
 #include <sys/mman.h>
+#include <time.h>
 
 #include <kernel/condvar.h>
 #include <kernel/file.h>
@@ -444,6 +445,44 @@ int file_mmap(file_t* file,
   }
 
   int rc = file->ops->mmap(file, request, result);
+  if(rc < 0) {
+    set_errno(-rc);
+  } else if(current) {
+    current->err_no = 0;
+  }
+  return rc;
+}
+
+int file_chmod(file_t* file, mode_t mode) {
+  if(file == NULL) {
+    set_errno(EINVAL);
+    return -EINVAL;
+  }
+  if(file->ops == NULL || file->ops->chmod == NULL) {
+    set_errno(ENOSYS);
+    return -ENOSYS;
+  }
+
+  int rc = file->ops->chmod(file, mode);
+  if(rc < 0) {
+    set_errno(-rc);
+  } else if(current) {
+    current->err_no = 0;
+  }
+  return rc;
+}
+
+int file_utimens(file_t* file, const struct timespec times[2]) {
+  if(file == NULL) {
+    set_errno(EINVAL);
+    return -EINVAL;
+  }
+  if(file->ops == NULL || file->ops->utimens == NULL) {
+    set_errno(ENOSYS);
+    return -ENOSYS;
+  }
+
+  int rc = file->ops->utimens(file, times);
   if(rc < 0) {
     set_errno(-rc);
   } else if(current) {
@@ -892,6 +931,8 @@ static const file_ops_t serial_file_ops = {
   .ioctl = NULL,
   .mmap = NULL,
   .stat = NULL,
+  .chmod = NULL,
+  .utimens = NULL,
 };
 
 static const file_ops_t framebuffer_console_file_ops = {
@@ -902,6 +943,8 @@ static const file_ops_t framebuffer_console_file_ops = {
   .ioctl = framebuffer_ioctl_impl,
   .mmap = framebuffer_mmap_impl,
   .stat = NULL,
+  .chmod = NULL,
+  .utimens = NULL,
 };
 
 static const file_ops_t framebuffer_device_file_ops = {
@@ -912,6 +955,8 @@ static const file_ops_t framebuffer_device_file_ops = {
   .ioctl = framebuffer_ioctl_impl,
   .mmap = framebuffer_mmap_impl,
   .stat = NULL,
+  .chmod = NULL,
+  .utimens = NULL,
 };
 
 static const file_ops_t stdin_file_ops = {
@@ -922,6 +967,8 @@ static const file_ops_t stdin_file_ops = {
   .ioctl = NULL,
   .mmap = NULL,
   .stat = NULL,
+  .chmod = NULL,
+  .utimens = NULL,
 };
 
 static int64_t tty_write_impl(file_t* file, const void* buffer, size_t length) {
@@ -966,6 +1013,8 @@ static const file_ops_t tty_console_file_ops = {
   .ioctl = tty_ioctl_impl,
   .mmap = NULL,
   .stat = NULL,
+  .chmod = NULL,
+  .utimens = NULL,
 };
 
 #ifdef MENIOS_KERNEL

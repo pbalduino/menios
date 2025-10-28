@@ -7,6 +7,7 @@
 #include <ctype.h>
 #include <errno.h>
 #include <sys/fcntl.h>
+#include <sys/stat.h>
 #include <unistd.h>
 
 #include <kernel/block_device.h>
@@ -2829,6 +2830,15 @@ bool fs_path_info(const fs_mount_t* mount, const char* path, fs_path_info_t* out
     out_info->is_read_only = false;
   }
 
+  out_info->has_mode = true;
+  mode_t base_mode = info.is_directory ? S_IFDIR : S_IFREG;
+  mode_t perms = info.is_directory ? 0755 : 0644;
+  if(out_info->is_read_only) {
+    perms &= ~(S_IWUSR | S_IWGRP | S_IWOTH);
+  }
+  out_info->mode = base_mode | perms;
+  out_info->has_times = false;
+
   return true;
 }
 
@@ -3070,6 +3080,15 @@ static int fat32_stream_stat(file_t* file, struct stat* out_stat) {
     info.inode = ((uint64_t)stream->info.dir_cluster << 32) | stream->info.dir_entry_index;
   }
 
+  info.has_mode = true;
+  mode_t base_mode = stream->info.is_directory ? S_IFDIR : S_IFREG;
+  mode_t perms = stream->info.is_directory ? 0755 : 0644;
+  if(info.is_read_only) {
+    perms &= ~(S_IWUSR | S_IWGRP | S_IWOTH);
+  }
+  info.mode = base_mode | perms;
+  info.has_times = false;
+
   fs_path_info_to_stat(&info, out_stat);
   return 0;
 }
@@ -3094,6 +3113,8 @@ static const file_ops_t fat32_stream_file_ops = {
   .ioctl = NULL,
   .mmap = NULL,
   .stat = fat32_stream_stat,
+  .chmod = NULL,
+  .utimens = NULL,
 };
 
 int fat32_open_adapter(void* fs_ctx, const char* path, int flags, file_t** out_file) {

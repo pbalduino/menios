@@ -61,6 +61,9 @@ extern "C" {
 #define SYS_STAT           99
 #define SYS_FSTAT         100
 #define SYS_LSTAT         101
+#define SYS_CHMOD         102
+#define SYS_FCHMOD        103
+#define SYS_UTIME         104
 
 #ifdef __cplusplus
 }

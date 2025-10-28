@@ -23,6 +23,7 @@
 #include <sys/time.h>
 #include <sys/stat.h>
 #include <time.h>
+#include <utime.h>
 #include <limits.h>
 #include <sys/wait.h>
 #include <string.h>
@@ -112,6 +113,9 @@ static uint64_t syscall_unlink_handler(syscall_frame_t* frame);
 static uint64_t syscall_mkdir_handler(syscall_frame_t* frame);
 static uint64_t syscall_rmdir_handler(syscall_frame_t* frame);
 static uint64_t syscall_rename_handler(syscall_frame_t* frame);
+static uint64_t syscall_chmod_handler(syscall_frame_t* frame);
+static uint64_t syscall_fchmod_handler(syscall_frame_t* frame);
+static uint64_t syscall_utime_handler(syscall_frame_t* frame);
 static uint64_t syscall_proc_kill_handler(syscall_frame_t* frame);
 static uint64_t syscall_kill_handler(syscall_frame_t* frame);
 static uint64_t syscall_sigaction_handler(syscall_frame_t* frame);
@@ -754,6 +758,9 @@ void syscall_init(void) {
   syscall_register(SYS_MKDIR, syscall_mkdir_handler);
   syscall_register(SYS_RMDIR, syscall_rmdir_handler);
   syscall_register(SYS_RENAME, syscall_rename_handler);
+  syscall_register(SYS_CHMOD, syscall_chmod_handler);
+  syscall_register(SYS_FCHMOD, syscall_fchmod_handler);
+  syscall_register(SYS_UTIME, syscall_utime_handler);
   syscall_register(SYS_GETPAGESIZE, syscall_getpagesize_handler);
   syscall_register(SYS_TIME, syscall_time_handler);
   syscall_register(SYS_GETTIMEOFDAY, syscall_gettimeofday_handler);
@@ -1737,6 +1744,110 @@ static uint64_t syscall_rename_handler(syscall_frame_t* frame) {
   }
 
   int rc = vfs_rename(old_absolute, new_absolute);
+  frame->rax = (uint64_t)rc;
+  return frame->rax;
+}
+
+static uint64_t syscall_chmod_handler(syscall_frame_t* frame) {
+  if(current == NULL) {
+    frame->rax = (uint64_t)(-EINVAL);
+    return frame->rax;
+  }
+
+  const char* user_path = (const char*)frame->rdi;
+  mode_t mode = (mode_t)frame->rsi;
+  if(user_path == NULL) {
+    frame->rax = (uint64_t)(-EFAULT);
+    return frame->rax;
+  }
+
+  char path[SYSCALL_PATH_MAX];
+  if(!copy_user_string(user_path, path, sizeof(path))) {
+    frame->rax = (uint64_t)(-EFAULT);
+    return frame->rax;
+  }
+
+  char absolute[VFS_PATH_MAX];
+  if(!vfs_build_absolute_path(current->cwd, path, absolute, sizeof(absolute))) {
+    frame->rax = (uint64_t)(-ENAMETOOLONG);
+    return frame->rax;
+  }
+
+  int rc = vfs_chmod(absolute, mode);
+  frame->rax = (uint64_t)rc;
+  return frame->rax;
+}
+
+static uint64_t syscall_fchmod_handler(syscall_frame_t* frame) {
+  if(current == NULL) {
+    frame->rax = (uint64_t)(-EINVAL);
+    return frame->rax;
+  }
+
+  int fd = (int)frame->rdi;
+  mode_t mode = (mode_t)frame->rsi;
+
+  file_t* file = proc_file_get(current, fd, NULL);
+  if(file == NULL) {
+    int err = current->err_no ? current->err_no : EBADF;
+    frame->rax = (uint64_t)(-err);
+    return frame->rax;
+  }
+
+  int rc = file_chmod(file, mode);
+  file_unref(file);
+  frame->rax = (uint64_t)rc;
+  return frame->rax;
+}
+
+static uint64_t syscall_utime_handler(syscall_frame_t* frame) {
+  if(current == NULL) {
+    frame->rax = (uint64_t)(-EINVAL);
+    return frame->rax;
+  }
+
+  const char* user_path = (const char*)frame->rdi;
+  const struct utimbuf* user_times = (const struct utimbuf*)frame->rsi;
+  if(user_path == NULL) {
+    frame->rax = (uint64_t)(-EFAULT);
+    return frame->rax;
+  }
+
+  char path[SYSCALL_PATH_MAX];
+  if(!copy_user_string(user_path, path, sizeof(path))) {
+    frame->rax = (uint64_t)(-EFAULT);
+    return frame->rax;
+  }
+
+  char absolute[VFS_PATH_MAX];
+  if(!vfs_build_absolute_path(current->cwd, path, absolute, sizeof(absolute))) {
+    frame->rax = (uint64_t)(-ENAMETOOLONG);
+    return frame->rax;
+  }
+
+  struct timespec times[2];
+  const struct timespec* times_ptr = NULL;
+
+  if(user_times != NULL) {
+    if(!proc_user_buffer_accessible(current, user_times, sizeof(struct utimbuf))) {
+      frame->rax = (uint64_t)(-EFAULT);
+      return frame->rax;
+    }
+    struct utimbuf tmp;
+    memcpy(&tmp, user_times, sizeof(tmp));
+    times[0].tv_sec = tmp.actime;
+    times[0].tv_nsec = 0;
+    times[1].tv_sec = tmp.modtime;
+    times[1].tv_nsec = 0;
+    times_ptr = times;
+  } else {
+    uint64_t now_us = realtime_now_us();
+    fill_timespec_from_us(&times[0], now_us);
+    times[1] = times[0];
+    times_ptr = times;
+  }
+
+  int rc = vfs_utimens(absolute, times_ptr);
   frame->rax = (uint64_t)rc;
   return frame->rax;
 }

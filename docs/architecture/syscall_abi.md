@@ -157,20 +157,30 @@ promise.  Below is a summary of the calls that ship in meniOS v0.1.0.
 - **`SYS_GETCWD` (79)** — `char *getcwd(char *buf, size_t size);`
   Copies the current working directory into user memory.  The return value is
   the provided buffer pointer on success.
-- **`SYS_STAT` (89)** — `int stat(const char *path, struct stat *buf);`
+- **`SYS_STAT` (99)** — `int stat(const char *path, struct stat *buf);`
   Retrieves file metadata for the given path.  Follows symbolic links.  Returns
   zero on success or `-ENOENT` if the path does not exist, `-EFAULT` if `buf`
   is inaccessible, or `-ENOSYS` for pseudo-filesystems that don't yet expose
-  metadata (tmpfs, procfs, devfs, pipes).  Currently only FAT32 returns full
-  metadata; other filesystems are in progress.
-- **`SYS_LSTAT` (90)** — `int lstat(const char *path, struct stat *buf);`
+  metadata (devfs, procfs, pipes).  FAT32 and tmpfs provide full metadata;
+  additional filesystems will be updated incrementally.
+- **`SYS_LSTAT` (100)** — `int lstat(const char *path, struct stat *buf);`
   Like `SYS_STAT` but does not follow symbolic links.  Since symbolic links are
   not yet implemented, this currently behaves identically to `SYS_STAT`.
-- **`SYS_FSTAT` (91)** — `int fstat(int fd, struct stat *buf);`
+- **`SYS_FSTAT` (101)** — `int fstat(int fd, struct stat *buf);`
   Retrieves file metadata for an open file descriptor.  Returns zero on success
   or `-EBADF` if the descriptor is invalid, `-EFAULT` if `buf` is inaccessible,
   or `-ENOSYS` if the underlying filesystem driver does not implement the
   `.stat` operation.  The VFS caches metadata at open time when available.
+- **`SYS_CHMOD` (102)** — `int chmod(const char *path, mode_t mode);`
+  Updates the permission bits associated with the path.  For tmpfs this
+  applies immediately; FAT32/devfs/procfs currently return `-ENOSYS`.
+- **`SYS_FCHMOD` (103)** — `int fchmod(int fd, mode_t mode);`
+  Updates permissions on an open file descriptor.  Behaves like `SYS_CHMOD`
+  but operates on an already opened handle.
+- **`SYS_UTIME` (104)** — `int utime(const char *path, const struct utimbuf *times);`
+  Sets the access and modification timestamps for the provided path.  Passing
+  `NULL` updates both to the current realtime clock.  Supported on tmpfs; other
+  filesystems currently respond `-ENOSYS`.
 
 ### Terminal helpers
 

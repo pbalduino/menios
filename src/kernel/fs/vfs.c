@@ -7,6 +7,7 @@
 #include <string.h>
 #include <sys/fcntl.h>
 #include <unistd.h>
+#include <time.h>
 
 #include <kernel/block_device.h>
 #include <kernel/fs.h>
@@ -95,6 +96,7 @@ typedef struct vfs_file_buffer_t {
   bool                   streaming;
   bool                   size_known;
   bool                   info_valid;
+  bool                   read_only;
   fs_path_info_t         info;
   const vfs_fs_driver_t* driver;
   void*                  fs_ctx;
@@ -680,6 +682,56 @@ static int vfs_file_stat_impl(file_t* file, struct stat* out_stat) {
   return 0;
 }
 
+static int vfs_file_chmod_impl(file_t* file, mode_t mode) {
+  if(file == NULL) {
+    return -EINVAL;
+  }
+
+  vfs_file_buffer_t* ctx = (vfs_file_buffer_t*)file->private_data;
+  if(ctx == NULL) {
+    return -EINVAL;
+  }
+
+  if(ctx->driver == NULL || ctx->driver->chmod == NULL) {
+    return -ENOSYS;
+  }
+
+  if(ctx->read_only) {
+    return -EROFS;
+  }
+
+  int rc = ctx->driver->chmod(ctx->fs_ctx, ctx->relative, mode);
+  if(rc == 0) {
+    ctx->info_valid = false;
+  }
+  return rc;
+}
+
+static int vfs_file_utimens_impl(file_t* file, const struct timespec times[2]) {
+  if(file == NULL) {
+    return -EINVAL;
+  }
+
+  vfs_file_buffer_t* ctx = (vfs_file_buffer_t*)file->private_data;
+  if(ctx == NULL) {
+    return -EINVAL;
+  }
+
+  if(ctx->driver == NULL || ctx->driver->utimens == NULL) {
+    return -ENOSYS;
+  }
+
+  if(ctx->read_only) {
+    return -EROFS;
+  }
+
+  int rc = ctx->driver->utimens(ctx->fs_ctx, ctx->relative, times);
+  if(rc == 0) {
+    ctx->info_valid = false;
+  }
+  return rc;
+}
+
 static int vfs_file_close_impl(file_t* file) {
   if(file == NULL) {
     return 0;
@@ -764,6 +816,8 @@ static const file_ops_t vfs_file_ops = {
   .ioctl = NULL,
   .mmap = NULL,
   .stat = vfs_file_stat_impl,
+  .chmod = vfs_file_chmod_impl,
+  .utimens = vfs_file_utimens_impl,
 };
 
 static int vfs_open_buffered(const vfs_fs_driver_t* driver,
@@ -881,6 +935,7 @@ static int vfs_open_buffered(const vfs_fs_driver_t* driver,
     ctx->fs_ctx = fs_ctx;
     strncpy(ctx->relative, relative_path, sizeof(ctx->relative) - 1);
     ctx->relative[sizeof(ctx->relative) - 1] = '\0';
+    ctx->read_only = read_only;
 
     if(append_requested) {
       if(!ctx->size_known && !vfs_stream_refresh_size(ctx) && driver->read_all != NULL) {
@@ -952,6 +1007,7 @@ static int vfs_open_buffered(const vfs_fs_driver_t* driver,
   ctx->fs_ctx = fs_ctx;
   strncpy(ctx->relative, relative_path, sizeof(ctx->relative) - 1);
   ctx->relative[sizeof(ctx->relative) - 1] = '\0';
+  ctx->read_only = read_only;
 
   if(append_requested) {
     ctx->offset = ctx->size;
@@ -1157,6 +1213,56 @@ int vfs_rename(const char* old_path, const char* new_path) {
   return old_driver->rename(old_ctx, old_relative, new_relative);
 }
 
+int vfs_chmod(const char* path, mode_t mode) {
+  if(path == NULL) {
+    return -EINVAL;
+  }
+
+  const vfs_fs_driver_t* driver = NULL;
+  void* fs_ctx = NULL;
+  char relative[VFS_PATH_MAX];
+  bool read_only = true;
+
+  if(!vfs_resolve(path, &driver, &fs_ctx, relative, sizeof(relative), &read_only)) {
+    return -ENOENT;
+  }
+
+  if(read_only) {
+    return -EROFS;
+  }
+
+  if(driver == NULL || driver->chmod == NULL) {
+    return -ENOSYS;
+  }
+
+  return driver->chmod(fs_ctx, relative, mode);
+}
+
+int vfs_utimens(const char* path, const struct timespec times[2]) {
+  if(path == NULL) {
+    return -EINVAL;
+  }
+
+  const vfs_fs_driver_t* driver = NULL;
+  void* fs_ctx = NULL;
+  char relative[VFS_PATH_MAX];
+  bool read_only = true;
+
+  if(!vfs_resolve(path, &driver, &fs_ctx, relative, sizeof(relative), &read_only)) {
+    return -ENOENT;
+  }
+
+  if(read_only) {
+    return -EROFS;
+  }
+
+  if(driver == NULL || driver->utimens == NULL) {
+    return -ENOSYS;
+  }
+
+  return driver->utimens(fs_ctx, relative, times);
+}
+
 static bool vfs_directory_probe_iter(const fs_dir_entry_t* entry, void* context) {
   (void)entry;
   (void)context;
@@ -1300,6 +1406,8 @@ static const vfs_fs_driver_t fat32_driver = {
   .mkdir = fat32_mkdir_adapter,
   .rmdir = fat32_rmdir_adapter,
   .rename = fat32_rename_adapter,
+  .chmod = NULL,
+  .utimens = NULL,
   .destroy = fat32_destroy_adapter,
 };
 

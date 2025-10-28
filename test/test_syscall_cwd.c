@@ -107,6 +107,8 @@ static const vfs_fs_driver_t stub_driver = {
   .mkdir = NULL,
   .rmdir = NULL,
   .rename = NULL,
+  .chmod = NULL,
+  .utimens = NULL,
   .destroy = NULL,
 };
 

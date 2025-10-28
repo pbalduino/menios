@@ -1,8 +1,11 @@
 #include <kernel/tmpfs.h>
 
 #include <errno.h>
+#include <stdint.h>
 #include <string.h>
 #include <sys/fcntl.h>
+#include <sys/stat.h>
+#include <time.h>
 
 #ifndef SEEK_SET
 #define SEEK_SET 0
@@ -15,6 +18,7 @@
 #include <kernel/file.h>
 #include <kernel/vfs.h>
 #include <kernel/serial.h>
+#include <kernel/tsc.h>
 
 typedef struct tmpfs_node_t {
   char               name[128];
@@ -24,6 +28,10 @@ typedef struct tmpfs_node_t {
   struct tmpfs_node_t* next;
   bool               deleted;
   uint32_t           refcount;
+  mode_t             mode;
+  struct timespec    atime;
+  struct timespec    mtime;
+  struct timespec    ctime;
 } tmpfs_node_t;
 
 typedef struct tmpfs_ctx_t {
@@ -39,6 +47,14 @@ typedef struct tmpfs_file_state_t {
 } tmpfs_file_state_t;
 
 static bool tmpfs_reserve(tmpfs_node_t* node, size_t new_capacity);
+
+static struct timespec tmpfs_current_time(void) {
+  uint64_t now_us = unix_time_us();
+  struct timespec ts;
+  ts.tv_sec = (time_t)(now_us / 1000000ull);
+  ts.tv_nsec = (long)((now_us % 1000000ull) * 1000ull);
+  return ts;
+}
 
 static tmpfs_node_t* tmpfs_find_node(tmpfs_ctx_t* ctx, const char* name) {
   tmpfs_node_t* node = ctx->head;
@@ -88,6 +104,11 @@ static tmpfs_node_t* tmpfs_create_node(tmpfs_ctx_t* ctx, const char* name) {
   node->capacity = 0;
   node->deleted = false;
   node->refcount = 0;
+  node->mode = S_IFREG | 0644;
+  struct timespec now = tmpfs_current_time();
+  node->atime = now;
+  node->mtime = now;
+  node->ctime = now;
   node->next = ctx->head;
   ctx->head = node;
   return node;
@@ -151,6 +172,9 @@ static bool tmpfs_read(void* fs_ctx,
   size_t to_copy = (length < available) ? length : available;
   memcpy(buffer, node->data + offset, to_copy);
   *bytes_read = to_copy;
+  if(to_copy > 0) {
+    node->atime = tmpfs_current_time();
+  }
   kmutex_unlock(&ctx->lock);
   return true;
 }
@@ -181,6 +205,9 @@ static bool tmpfs_read_all(void* fs_ctx, const char* path, void** out_buffer, si
   memcpy(copy, node->data, node->size);
   *out_buffer = copy;
   *out_size = node->size;
+  if(node->size > 0) {
+    node->atime = tmpfs_current_time();
+  }
   kmutex_unlock(&ctx->lock);
   return true;
 }
@@ -224,6 +251,11 @@ static bool tmpfs_driver_write(void* fs_ctx,
     node->size = end;
   }
 
+  struct timespec now = tmpfs_current_time();
+  node->mtime = now;
+  node->ctime = now;
+  node->atime = now;
+
   if(bytes_written) {
     *bytes_written = length;
   }
@@ -257,8 +289,116 @@ static bool tmpfs_driver_write_all(void* fs_ctx, const char* path, const void* b
 
   memcpy(node->data, buffer, size);
   node->size = size;
+  struct timespec now = tmpfs_current_time();
+  node->mtime = now;
+  node->ctime = now;
+  node->atime = now;
   kmutex_unlock(&ctx->lock);
   return true;
+}
+
+static bool tmpfs_stat_path(void* fs_ctx, const char* path, fs_path_info_t* out_info) {
+  tmpfs_ctx_t* ctx = (tmpfs_ctx_t*)fs_ctx;
+  if(path == NULL || out_info == NULL) {
+    return false;
+  }
+
+  const char* name = path;
+  while(*name == '/') {
+    name++;
+  }
+  if(*name == '\0') {
+    return false;
+  }
+
+  kmutex_lock(&ctx->lock);
+  tmpfs_node_t* node = tmpfs_find_node(ctx, name);
+  if(node == NULL || node->deleted) {
+    kmutex_unlock(&ctx->lock);
+    return false;
+  }
+
+  memset(out_info, 0, sizeof(*out_info));
+  out_info->is_directory = false;
+  out_info->is_read_only = false;
+  out_info->block_size = 4096;
+  out_info->size = node->size;
+  out_info->inode = (uint64_t)(uintptr_t)node;
+  out_info->has_mode = true;
+  out_info->mode = node->mode;
+  out_info->has_times = true;
+  out_info->atime = node->atime;
+  out_info->mtime = node->mtime;
+  out_info->ctime = node->ctime;
+  kmutex_unlock(&ctx->lock);
+  return true;
+}
+
+static int tmpfs_chmod(void* fs_ctx, const char* path, mode_t mode) {
+  tmpfs_ctx_t* ctx = (tmpfs_ctx_t*)fs_ctx;
+  if(path == NULL) {
+    return -EINVAL;
+  }
+
+  const char* name = path;
+  while(*name == '/') {
+    name++;
+  }
+  if(*name == '\0') {
+    return -EINVAL;
+  }
+
+  kmutex_lock(&ctx->lock);
+  tmpfs_node_t* node = tmpfs_find_node(ctx, name);
+  if(node == NULL || node->deleted) {
+    kmutex_unlock(&ctx->lock);
+    return -ENOENT;
+  }
+
+  mode_t preserved_type = node->mode & S_IFMT;
+  node->mode = preserved_type | (mode & ~S_IFMT);
+  node->ctime = tmpfs_current_time();
+  kmutex_unlock(&ctx->lock);
+  return 0;
+}
+
+static int tmpfs_utimens(void* fs_ctx, const char* path, const struct timespec times[2]) {
+  tmpfs_ctx_t* ctx = (tmpfs_ctx_t*)fs_ctx;
+  if(path == NULL) {
+    return -EINVAL;
+  }
+
+  struct timespec new_atime;
+  struct timespec new_mtime;
+  if(times != NULL) {
+    new_atime = times[0];
+    new_mtime = times[1];
+  } else {
+    struct timespec now = tmpfs_current_time();
+    new_atime = now;
+    new_mtime = now;
+  }
+
+  const char* name = path;
+  while(*name == '/') {
+    name++;
+  }
+  if(*name == '\0') {
+    return -EINVAL;
+  }
+
+  kmutex_lock(&ctx->lock);
+  tmpfs_node_t* node = tmpfs_find_node(ctx, name);
+  if(node == NULL || node->deleted) {
+    kmutex_unlock(&ctx->lock);
+    return -ENOENT;
+  }
+
+  node->atime = new_atime;
+  node->mtime = new_mtime;
+  node->ctime = tmpfs_current_time();
+  kmutex_unlock(&ctx->lock);
+  return 0;
 }
 
 static int tmpfs_close(file_t* file) {
@@ -282,6 +422,99 @@ static int tmpfs_close(file_t* file) {
 
   kfree(state);
   file->private_data = NULL;
+  return 0;
+}
+
+static int tmpfs_stat_impl(file_t* file, struct stat* out_stat) {
+  if(file == NULL || out_stat == NULL) {
+    return -EINVAL;
+  }
+
+  tmpfs_file_state_t* state = (tmpfs_file_state_t*)file->private_data;
+  if(state == NULL || state->node == NULL) {
+    return -EIO;
+  }
+
+  tmpfs_ctx_t* ctx = state->ctx;
+  kmutex_lock(&ctx->lock);
+  tmpfs_node_t* node = state->node;
+  if(node->deleted) {
+    kmutex_unlock(&ctx->lock);
+    return -ENOENT;
+  }
+
+  memset(out_stat, 0, sizeof(*out_stat));
+  out_stat->st_mode = node->mode;
+  out_stat->st_nlink = 1;
+  out_stat->st_size = (off_t)node->size;
+  out_stat->st_blksize = 4096;
+  out_stat->st_blocks = (blkcnt_t)((node->size + 511ull) / 512ull);
+  out_stat->st_ino = (ino_t)(uintptr_t)node;
+  out_stat->st_atime = (time_t)node->atime.tv_sec;
+  out_stat->st_mtime = (time_t)node->mtime.tv_sec;
+  out_stat->st_ctime = (time_t)node->ctime.tv_sec;
+  kmutex_unlock(&ctx->lock);
+  return 0;
+}
+
+static int tmpfs_file_chmod_impl(file_t* file, mode_t mode) {
+  if(file == NULL) {
+    return -EINVAL;
+  }
+
+  tmpfs_file_state_t* state = (tmpfs_file_state_t*)file->private_data;
+  if(state == NULL || state->node == NULL) {
+    return -EIO;
+  }
+
+  tmpfs_ctx_t* ctx = state->ctx;
+  kmutex_lock(&ctx->lock);
+  tmpfs_node_t* node = state->node;
+  if(node->deleted) {
+    kmutex_unlock(&ctx->lock);
+    return -ENOENT;
+  }
+
+  mode_t preserved_type = node->mode & S_IFMT;
+  node->mode = preserved_type | (mode & ~S_IFMT);
+  node->ctime = tmpfs_current_time();
+  kmutex_unlock(&ctx->lock);
+  return 0;
+}
+
+static int tmpfs_file_utimens_impl(file_t* file, const struct timespec times[2]) {
+  if(file == NULL) {
+    return -EINVAL;
+  }
+
+  tmpfs_file_state_t* state = (tmpfs_file_state_t*)file->private_data;
+  if(state == NULL || state->node == NULL) {
+    return -EIO;
+  }
+
+  struct timespec new_atime;
+  struct timespec new_mtime;
+  if(times != NULL) {
+    new_atime = times[0];
+    new_mtime = times[1];
+  } else {
+    struct timespec now = tmpfs_current_time();
+    new_atime = now;
+    new_mtime = now;
+  }
+
+  tmpfs_ctx_t* ctx = state->ctx;
+  kmutex_lock(&ctx->lock);
+  tmpfs_node_t* node = state->node;
+  if(node->deleted) {
+    kmutex_unlock(&ctx->lock);
+    return -ENOENT;
+  }
+
+  node->atime = new_atime;
+  node->mtime = new_mtime;
+  node->ctime = tmpfs_current_time();
+  kmutex_unlock(&ctx->lock);
   return 0;
 }
 
@@ -312,6 +545,9 @@ static int64_t tmpfs_read_impl(file_t* file, void* buffer, size_t length) {
   size_t to_copy = (length < available) ? length : available;
   memcpy(buffer, node->data + state->offset, to_copy);
   state->offset += to_copy;
+  if(to_copy > 0) {
+    node->atime = tmpfs_current_time();
+  }
   kmutex_unlock(&ctx->lock);
   return (int64_t)to_copy;
 }
@@ -368,6 +604,10 @@ static int64_t tmpfs_write_impl(file_t* file, const void* buffer, size_t length)
   if(end > node->size) {
     node->size = end;
   }
+  struct timespec now = tmpfs_current_time();
+  node->mtime = now;
+  node->ctime = now;
+  node->atime = now;
   kmutex_unlock(&ctx->lock);
   return (int64_t)length;
 }
@@ -414,7 +654,9 @@ static const file_ops_t tmpfs_file_ops = {
   .seek = tmpfs_seek_impl,
   .ioctl = NULL,
   .mmap = NULL,
-  .stat = NULL,
+  .stat = tmpfs_stat_impl,
+  .chmod = tmpfs_file_chmod_impl,
+  .utimens = tmpfs_file_utimens_impl,
 };
 
 static uint32_t tmpfs_requested_mode(int flags) {
@@ -481,6 +723,9 @@ static int tmpfs_open(void* fs_ctx, const char* path, int flags, file_t** out_fi
       }
       node->size = 0;
       node->capacity = 0;
+      struct timespec now = tmpfs_current_time();
+      node->mtime = now;
+      node->ctime = now;
     }
     node->deleted = false;
   }
@@ -574,12 +819,14 @@ static const vfs_fs_driver_t tmpfs_driver = {
   .write_all = tmpfs_driver_write_all,
   .create_file = NULL,
   .truncate_file = NULL,
-  .stat = NULL,
+  .stat = tmpfs_stat_path,
   .open = tmpfs_open,
   .unlink = tmpfs_unlink,
   .mkdir = NULL,
   .rmdir = NULL,
   .rename = NULL,
+  .chmod = tmpfs_chmod,
+  .utimens = tmpfs_utimens,
   .destroy = tmpfs_destroy,
 };
 
