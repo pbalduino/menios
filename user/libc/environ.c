@@ -36,6 +36,10 @@ void __menios_env_init(int argc, char** argv, char** envp) {
   size_t count = 0;
   if(envp != NULL) {
     while(envp[count] != NULL) {
+      uintptr_t entry_addr = (uintptr_t)envp[count];
+      if(entry_addr < 0x1000u) {
+        break;
+      }
       count++;
     }
   }
