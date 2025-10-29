@@ -383,7 +383,9 @@ These issues form the backbone of the system and should be prioritized:
 - **#191**: binutils port - ⚠️ **BUILD COMPLETE, BLOCKED BY #371**
   - ✅ Successfully built and integrated into disk image
   - ✅ Binaries staged: as, ld, objdump, nm, ar, ranlib, touch
-  - ⚠️ ar/ranlib ship but validation pending; tmpfs-only until #365/#317 land
+  - ✅ ar/ranlib validated on FAT32; metadata parity still needs #365/#317
+  - ✅ objcopy/strings/strip validated via native smoke tests
+  - ⚠️ size output formatting blocked by #376 (printf dynamic width)
   - ❌ **BLOCKED:** ld crashes/freezes on version queries (#371)
   - 🔄 Integration testing blocked until bug is fixed
   - ✅ Documentation complete (README updated)

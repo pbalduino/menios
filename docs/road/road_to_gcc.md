@@ -141,28 +141,29 @@ GNU [binutils 2.45](https://www.gnu.org/software/binutils/) has also been staged
   - `as` → `ld` → `nm` → `objdump` → `readelf` - Full workflow working on FAT32!
   - `stat`, `realpath` - Metadata and path operations working
 - ✅ **#371 (ld freeze bug) RESOLVED!** - `as` and `ld` fully functional
-- ❌ **ar/ranlib validation pending** - tmpfs-only success; FAT32 blocked by #365 (chmod) and #317 (utime)
-  - ✅ Works correctly on tmpfs (/tmp)
-  - ⚠️ Native validation incomplete until FAT32 metadata support lands
-- ⏳ **4 tools not tested yet:** objcopy, strings, strip, size
+- ✅ **ar/ranlib validated on FAT32** - workflows succeed; metadata polish pending (#365/#317)
+- ⚠️ **size command partial** - Runs but formatting broken (needs #376)
+- ✅ **objcopy/strings/strip validated** - native smoke tests pass
 - 📝 Automated test script created (`test_binutils.sh`)
 
 **Current Blockers:**
-- **#365** - chmod/fchmod syscalls on FAT32 (READY TO START, 3-5 days)
-- **#317** - utime syscall on FAT32 (READY TO START, 3-5 days)
+- **#365** - chmod/fchmod syscalls on FAT32 (READY TO START, 3-5 days) - needed for archive metadata parity
+- **#317** - utime syscall on FAT32 (READY TO START, 3-5 days) - needed for archive metadata parity
+- **#376** - printf dynamic field width (*) support (2-3 days) - blocks size table formatting
 
 **Next Steps:**
 1. ✅ ~~Fix #371 (ld freeze bug)~~ - COMPLETE!
 2. ✅ ~~Test core workflow (assemble → link → inspect)~~ - COMPLETE!
-3. 🚀 **Implement #365** (chmod on FAT32) - READY TO START
-4. 🚀 **Implement #317** (utime on FAT32) - READY TO START
-5. ⏳ Test ar/ranlib on FAT32 after #365/#317 complete
-6. ⏳ Test remaining tools (objcopy, strings, strip, size)
-7. ⏳ Execute automated test script to validate all binutils
-8. 📝 Final documentation update
-9. 🎉 Close #191 once all tools verified (1-2 weeks)
+3. 🚀 **Implement #376** (printf dynamic field width) - READY TO START (2-3 days)
+4. ⏳ Retest size command after #376 complete
+5. 🚀 **Implement #365** (chmod on FAT32) - READY TO START (3-5 days)
+6. 🚀 **Implement #317** (utime on FAT32) - READY TO START (3-5 days)
+7. ⏳ Re-validate archive metadata on FAT32 after #365/#317 complete
+8. ⏳ Execute automated test script to validate all binutils
+9. 📝 Final documentation update
+10. 🎉 Close #191 once all tools verified (2-3 weeks)
 
-**Timeline Estimate:** Testing & final verification: 1-2 days
+**Timeline Estimate:** 2-3 weeks for full binutils validation (#376 + #365 + #317 + testing)
 
 ## 🛣️ **Critical Path to Cross-Compilation**
 

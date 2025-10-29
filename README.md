@@ -63,8 +63,12 @@ MeniOS ships with a growing collection of userland utilities in `/bin`:
 - **ld** — GNU linker
 - **objdump** — Object file disassembler and analyzer
 - **nm** — Symbol table viewer
-- **ar** — Archive creator and manager (validation pending)
-- **ranlib** — Archive index generator (validation pending)
+- **ar** — Archive creator and manager (metadata updates pending for FAT32)
+- **ranlib** — Archive index generator (metadata updates pending for FAT32)
+- **objcopy** — Binary format translator (validated)
+- **strip** — Binary symbol stripper (validated)
+- **strings** — Extract ASCII strings from binaries (validated)
+- **size** — Segment size reporter (formatting blocked by #376)
 
 ### Example Workflow
 
@@ -78,7 +82,7 @@ ld -o hello hello.o
 objdump -d hello
 nm hello
 
-# Create a static library (ar/ranlib validation pending)
+# Create a static library (FAT32 metadata polish pending: #365/#317)
 ar rcs libhello.a hello.o
 ranlib libhello.a
 nm libhello.a
@@ -89,8 +93,9 @@ libc forwards `chmod`, `fchmod`, and `utime` to the host OS.
 That keeps tool metadata intact for workflows like `ar`.
 On meniOS itself, those syscalls now reach the kernel for tmpfs-backed paths (e.g., `/tmp`),
 preserving permissions and timestamps in native runs.
-FAT32 and other filesystems still return `ENOSYS`; follow issues #365 and #317 for that remaining work.
-`ar` and `ranlib` ship in `/bin`, but end-to-end validation on meniOS is still pending.
+FAT32 and other filesystems still return `ENOSYS`; follow issues #365 and #317 for that metadata work.
+`ar` and `ranlib` now pass native smoke tests, though FAT32 metadata fixes (#365/#317) still need to land.
+`objcopy`, `strip`, and `strings` now pass native smoke tests, while `size` runs but prints `%*s` placeholders until issue #376 lands.
 
 See [issue #191](https://github.com/pbalduino/menios/issues/191) for the complete binutils integration test suite.
 
