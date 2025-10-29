@@ -128,7 +128,7 @@ GNU [binutils 2.45](https://www.gnu.org/software/binutils/) has also been staged
 - 🚀 FAT32 chmod (#365) and utime (#317) ready to start - 2-3 weeks to completion
 - Full ar/ranlib validation on /HOME (FAT32) after #365/#317/#366 complete
 
-**Status:** ✅ **BUILD COMPLETE - NATIVE TESTING IN PROGRESS**
+**Status:** ✅ **BUILD COMPLETE - NATIVE TESTING COMPLETE**
 - ✅ Successfully built under `DOCKER_IMAGE=menios:trunk`
 - ✅ Integrated into disk image (`make userland` + `make build`)
 - ✅ Binaries available in `/bin`: as, ld, objdump, nm, ar, ranlib, readelf, size, strings, strip, objcopy
@@ -144,7 +144,7 @@ GNU [binutils 2.45](https://www.gnu.org/software/binutils/) has also been staged
 - ✅ **ar/ranlib validated on FAT32** - workflows succeed; metadata polish pending (#365/#317)
 - ✅ **size validated** - dynamic width formatting enabled
 - ✅ **objcopy/strings/strip validated** - native smoke tests pass
-- 📝 Automated test script created (`test_binutils.sh`)
+- ✅ Manual tool sweep executed (2025-10-29): assembled/linked/archived, ran `objdump`, `size`, `strings`, `strip`, and confirmed expected output
 
 **Remaining Enhancements:**
 - #365 - chmod/fchmod syscalls on FAT32 (nice to have for metadata parity)
@@ -158,11 +158,11 @@ GNU [binutils 2.45](https://www.gnu.org/software/binutils/) has also been staged
 4. ✅ ~~Test objcopy/strings/strip~~ - COMPLETE!
 5. ✅ ~~Implement #376~~ - COMPLETE! dynamic width now supported
 6. ✅ ~~Retest size command~~ - COMPLETE! output now renders correctly
-7. ⏳ Execute automated test script to validate all binutils
-8. 📝 Final documentation update
-9. 🎉 **Close #191** - Ready after automated sweep + docs refresh
+7. ✅ ~~Run binutils validation sweep~~ - COMPLETE! native commands confirmed working
+8. ✅ ~~Final documentation update~~ - COMPLETE!
+9. ✅ **Close #191** - Binutils port fully verified on meniOS
 
-**Timeline Estimate:** 1-2 days to full binutils completion (automated sweep + doc refresh)
+**Timeline Estimate:** Complete — binutils validation finished and issue #191 closed
 
 ## 🛣️ **Critical Path to Cross-Compilation**
 

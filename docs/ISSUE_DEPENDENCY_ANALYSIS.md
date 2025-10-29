@@ -380,18 +380,15 @@ These issues form the backbone of the system and should be prioritized:
 ### Phase 6: Native Compilation (Long Term)
 **Goal**: Compile on meniOS itself
 - **#190**: TCC port - ✅ **READY TO START** (all blockers resolved: #337 ✅, #338 ✅)
-- **#191**: binutils port - ⚠️ **BUILD COMPLETE, BLOCKED BY #371**
+- **#191**: binutils port - ✅ **COMPLETE**
   - ✅ Successfully built and integrated into disk image
   - ✅ Binaries staged: as, ld, objdump, nm, ar, ranlib, touch
   - ✅ ar/ranlib validated on FAT32; metadata parity still needs #365/#317
   - ✅ objcopy/strings/strip/size validated via native smoke tests
-  - ❌ **BLOCKED:** ld crashes/freezes on version queries (#371)
-  - 🔄 Integration testing blocked until bug is fixed
-  - ✅ Documentation complete (README updated)
-- **#371**: ld freeze bug - 🚨 **CRITICAL BLOCKER**
-  - `ld -V` and `ld --version` freeze in meniOS (work on Linux)
-  - Blocks all linker testing and validation
-  - Must be fixed before #191 can complete
+  - ✅ Manual validation sweep (2025-10-29) confirmed `as`/`ld` workflow, archive tooling, `objdump`, `strings`, `strip`, and `size`
+  - ✅ Documentation updated (README, roadmaps)
+- **#371**: ld freeze bug - ✅ **RESOLVED**
+  - `ld -V`/`ld --version` now behave correctly on meniOS
 - Possibly GCC port (future)
 
 **Timeline**:
