@@ -253,8 +253,7 @@ These issues form the backbone of the system and should be prioritized:
 - ⚠️ **pathconf()** - Partially implemented (only `_PC_PATH_MAX`)
 
 **Remaining Stubs**:
-- ❌ **chmod/fchmod** (#365) - Change file permissions
-- ❌ **utime** (#317) - Modify file timestamps
+- 🚧 **utime** (#317) - Modify file timestamps
 - ❌ **isatty** (#347) - Check if fd is terminal
 - ❌ **brk/sbrk** (#21) - Dynamic memory allocation
 - ❌ **system()** (#369) - Execute shell commands
@@ -383,7 +382,7 @@ These issues form the backbone of the system and should be prioritized:
 - **#191**: binutils port - ✅ **COMPLETE**
   - ✅ Successfully built and integrated into disk image
   - ✅ Binaries staged: as, ld, objdump, nm, ar, ranlib, touch
-  - ✅ ar/ranlib validated on FAT32; metadata parity still needs #365/#317
+  - ✅ ar/ranlib validated on FAT32; metadata parity still needs #317
   - ✅ objcopy/strings/strip/size validated via native smoke tests
   - ✅ Manual validation sweep (2025-10-29) confirmed `as`/`ld` workflow, archive tooling, `objdump`, `strings`, `strip`, and `size`
   - ✅ Documentation updated (README, roadmaps)

@@ -127,7 +127,7 @@
     "github_issue": {
       "number": 365,
       "url": "https://github.com/pbalduino/menios/issues/365",
-      "state": "OPEN"
+      "state": "CLOSED"
     },
     "labels": [
       "enhancement",

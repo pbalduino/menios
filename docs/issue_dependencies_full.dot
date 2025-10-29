@@ -153,7 +153,7 @@ digraph IssueDependencies {
         // Stubbed functions tracker and sub-issues
         issue364 [label="#364: Stubbed functions\n(parent tracker)", fillcolor="#FFE4B5"];
         stat_done [label="✅ stat/fstat/lstat\naccess/realpath", fillcolor="#90EE90", style="filled,dashed"];
-        issue365 [label="#365: chmod/fchmod\nfile permissions", fillcolor="#FFE4B5"];
+        issue365 [label="#365: chmod/fchmod\n✅ COMPLETE", fillcolor="#90EE90", style="filled,dashed"];
         issue366 [label="#366: Pseudo-fs metadata\ntmpfs/procfs/devfs", fillcolor="#FFE4B5"];
         issue367 [label="#367: Rich FAT32 metadata\ntimestamps/DOS attrs", fillcolor="#FFE4B5"];
         issue368 [label="#368: pathconf()\nall POSIX queries", fillcolor="#FFE4B5"];

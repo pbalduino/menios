@@ -5,6 +5,7 @@
 #include <string.h>
 #include <stddef.h>
 #include <errno.h>
+#include <fcntl.h>
 
 #include <kernel/block_device.h>
 
@@ -381,6 +382,41 @@ void test_fat32_chmod_toggles_read_only(void) {
   fat32_test_env_destroy(&env);
 }
 
+void test_fat32_fchmod_updates_read_only(void) {
+  fat32_test_env_t env;
+  fat32_test_env_init(&env, FAT32_TEST_CLUSTER_COUNT);
+
+  size_t next_index = 0;
+  write_directory_entry(&env, env.fs.root_cluster, &next_index, "LongFileName123.txt", false, NULL);
+
+  fs_mount_t mount = {
+    .type = FS_TYPE_FAT32,
+    .fat32 = env.fs,
+  };
+
+  file_t* file = NULL;
+  int rc = fat32_open_adapter(&mount, "/LongFileName123.txt", O_RDONLY, &file);
+  TEST_ASSERT_EQUAL_INT(0, rc);
+  TEST_ASSERT_NOT_NULL(file);
+
+  rc = file_chmod(file, 0444);
+  TEST_ASSERT_EQUAL_INT(0, rc);
+
+  file_unref(file);
+
+  uint8_t buffer[512];
+  TEST_ASSERT_TRUE(fat32_read_cluster(&env.fs, env.fs.root_cluster, buffer));
+  fat32_dir_entry_raw_t* entries = (fat32_dir_entry_raw_t*)buffer;
+  fat32_dir_entry_raw_t* short_entry = &entries[2];
+  TEST_ASSERT_EQUAL_HEX8(FAT32_ATTR_ARCHIVE | FAT32_ATTR_READ_ONLY, short_entry->attr);
+
+  fs_path_info_t info;
+  TEST_ASSERT_TRUE(fs_path_info(&mount, "/LongFileName123.txt", &info));
+  TEST_ASSERT_TRUE(info.is_read_only);
+
+  fat32_test_env_destroy(&env);
+}
+
 void test_fat32_utimens_updates_timestamps(void) {
   fat32_test_env_t env;
   fat32_test_env_init(&env, FAT32_TEST_CLUSTER_COUNT);
@@ -448,6 +484,7 @@ int main(void) {
   RUN_TEST(test_remove_file_marks_entries_deleted);
   RUN_TEST(test_remove_directory_requires_empty);
   RUN_TEST(test_fat32_chmod_toggles_read_only);
+  RUN_TEST(test_fat32_fchmod_updates_read_only);
   RUN_TEST(test_fat32_utimens_updates_timestamps);
   return UNITY_END();
 }

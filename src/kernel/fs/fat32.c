@@ -3382,6 +3382,44 @@ static file_t* fat32_stream_create(fat32_fs_t* fs,
                                    const fat32_dir_entry_info_t* info,
                                    int flags);
 
+static int fat32_stream_chmod(file_t* file, mode_t mode) {
+  if(file == NULL) {
+    return -EINVAL;
+  }
+
+  fat32_stream_t* stream = (fat32_stream_t*)file->private_data;
+  if(stream == NULL || stream->fs == NULL) {
+    return -EINVAL;
+  }
+
+  uint8_t current_attr = stream->info.raw_entry.attr;
+  bool make_read_only = (mode & (S_IWUSR | S_IWGRP | S_IWOTH)) == 0;
+  uint8_t new_attr = current_attr;
+
+  if(make_read_only) {
+    new_attr |= FAT32_ATTR_READ_ONLY;
+  } else {
+    new_attr &= (uint8_t)~FAT32_ATTR_READ_ONLY;
+  }
+
+  if(new_attr == current_attr) {
+    return 0;
+  }
+
+  fat32_dir_entry_metadata_update_t update;
+  memset(&update, 0, sizeof(update));
+  update.update_attr = true;
+  update.attr = new_attr;
+
+  fat32_dir_entry_raw_t updated_entry;
+  if(!fat32_apply_metadata_update(stream->fs, &stream->info, &update, &updated_entry)) {
+    return -EIO;
+  }
+
+  stream->info.raw_entry = updated_entry;
+  return 0;
+}
+
 static file_t* fat32_stream_create(fat32_fs_t* fs,
                                    const fat32_dir_entry_info_t* info,
                                    int flags) {
@@ -3630,7 +3668,7 @@ static const file_ops_t fat32_stream_file_ops = {
   .ioctl = NULL,
   .mmap = NULL,
   .stat = fat32_stream_stat,
-  .chmod = NULL,
+  .chmod = fat32_stream_chmod,
   .utimens = NULL,
 };
 

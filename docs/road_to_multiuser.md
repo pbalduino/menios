@@ -156,7 +156,7 @@ Each milestone should land with dedicated tests, doc updates, and a stabilizatio
 3. Spike a prototype branch adding dummy UID fields to quantify impact on context switch/scheduler.
 4. Inventory filesystem formats and builder scripts to scope metadata migration effort.
 5. ✅ **Complete FAT32 metadata work** (#367) - **DONE!**
-6. 🚀 **Add chmod support to FAT32** (#365) - READY TO START
+6. ✅ **Add chmod support to FAT32** (#365) - **DONE!**
 7. 🚀 **Add utime support to FAT32** (#317) - READY TO START
 8. **Add permission enforcement** to existing syscalls that already have metadata infrastructure
 
@@ -172,21 +172,19 @@ Capturing answers to the open questions before implementation will reduce churn 
 - ✅ **#367** - Parse rich FAT32 metadata (**COMPLETE!** - enables chmod/utime on FAT32)
 
 ### Active Metadata Work (Building Blocks for Multi-User)
-- 🚀 **#365** - chmod/fchmod syscalls (tmpfs complete, **FAT32 READY TO START**)
-  - Unblocked by #367 completion
-  - Map POSIX permissions to/from DOS read-only bit
-  - Timeline: 3-5 days
+- ✅ **#365** - chmod/fchmod syscalls (tmpfs + FAT32 support landed)
+  - Read-only bit now mirrors POSIX write permissions across FAT32 and tmpfs
 - 🚀 **#317** - utime syscall (tmpfs complete, **FAT32 READY TO START**)
   - Unblocked by #367 completion
   - Convert POSIX timestamps to/from DOS date/time
   - Timeline: 3-5 days
 - ⏳ **#366** - Pseudo-fs metadata support (devfs/procfs consistency)
-  - Blocked by #365 and #317
-  - Timeline: 3-5 days after blockers
+  - Blocked by #317
+  - Timeline: 3-5 days after utime lands
 
 ### Planned Multi-User Work
 - 📋 **#232** - Implement chmod and chown syscalls (comprehensive plan exists)
-  - Builds on #365 (chmod infrastructure)
+  - Builds on #365 (chmod infrastructure now available)
   - Adds chown/fchown/lchown for ownership changes
   - Includes permission validation and utilities
 
@@ -201,13 +199,14 @@ Capturing answers to the open questions before implementation will reduce churn 
 ### Key Dependencies
 **Before starting Phase 1:**
 1. ✅ Complete #367 (FAT32 metadata foundation) - **DONE!**
-2. 🚀 Complete #365, #317 (chmod/utime on all filesystems) - **READY TO START**
-3. ⏳ Complete #366 (pseudo-fs consistency) - blocked by #365, #317
+2. ✅ Complete #365 (chmod/utime parity groundwork) - **DONE!**
+3. 🚀 Complete #317 (utime on all filesystems) - **READY TO START**
+4. ⏳ Complete #366 (pseudo-fs consistency) - blocked by #317
 
 **These provide the filesystem metadata layer that multi-user support will build upon.**
 
 ---
 
-**Last Updated:** 2025-10-28
-**Status:** ✅ #367 complete! #365 and #317 ready to start.
-**Timeline:** 2-3 weeks for full metadata support, then 6-12 months for full multi-user support
+**Last Updated:** 2025-10-30
+**Status:** ✅ #365 and #367 complete! #317 ready to start.
+**Timeline:** ~2 weeks for remaining metadata support (#317/#366), then 6-12 months for full multi-user support

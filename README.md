@@ -96,10 +96,10 @@ readelf -h hello
 strings hello
 ```
 
-The complete binutils 2.45 suite is fully operational on meniOS with native metadata support across all filesystems (tmpfs, FAT32, devfs, procfs, pipes). All tools including `ar` and `ranlib` work correctly with full permission and timestamp preservation.
+The complete binutils 2.45 suite is fully operational on meniOS with native metadata support on tmpfs and FAT32. Core tools, including `ar` and `ranlib`, now preserve permissions when working in `/tmp` or FAT-based paths; read-only pseudo filesystems (`/dev`, `/proc`) continue to refuse metadata changes by design.
 
 **Implementation Details:**
-- Native syscalls: `chmod`, `fchmod`, `utime` implemented across all filesystems
+- Native syscalls: `chmod`/`fchmod` implemented across tmpfs and FAT32 (pseudo-fs remain read-only); `utime` on FAT32 tracked in #317
 - Host harness: Forwards metadata operations to host OS for cross-platform testing
 - Printf formatting: Dynamic field width support (`*`) enables proper table display in `size`
 
