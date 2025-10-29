@@ -1,5 +1,20 @@
 [
   {
+    "title": "printf: Support dynamic field width and precision specifiers (*)",
+    "github_issue": {
+      "number": 376,
+      "url": "https://github.com/pbalduino/menios/issues/376",
+      "state": "CLOSED"
+    },
+    "labels": [
+      "enhancement",
+      "libc"
+    ],
+    "assignees": [
+      "pbalduino"
+    ]
+  },
+  {
     "title": "Implement shutdown command for ACPI power-off",
     "github_issue": {
       "number": 372,
