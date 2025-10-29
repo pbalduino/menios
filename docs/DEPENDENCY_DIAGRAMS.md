@@ -70,7 +70,7 @@ The meniOS project has grown to over 100+ tracked issues with complex interdepen
 - ✅ #371 (ld freeze bug) - **CLOSED** - as and ld working! 🎉
 - ✅ #373 (realpath command) - **CLOSED** - Quick win complete! 🎉
 - ⚠️ #364 (Stubbed functions) - Partially complete (stat family working)
-- 🆕 #370 (stat command) - NEW - Userland tool to display file metadata
+- ✅ #370 (stat command) - **CLOSED** - File metadata tool now ships in `/bin/stat`
 - 🆕 #372 (shutdown command) - NEW - Clean ACPI power-off from userland (quick win)
 - ✅ #191 (binutils) - Build complete, **READY FOR TESTING** (unblocked)
 

@@ -55,20 +55,23 @@ MeniOS ships with a growing collection of userland utilities in `/bin`:
 - **touch** — Create files and update timestamps
 - **realpath** — Canonicalize file paths
 - **head** — Display first lines of files (#374 - planned)
-- **stat** — Display detailed file metadata (#370 - planned)
+- **stat** — Display detailed file metadata (validated)
 - **shutdown** — Clean ACPI power-off (#372 - planned)
 
-### Development Tools (binutils 2.45)
+### Development Tools (binutils 2.45) ✅
 - **as** — GNU assembler (x86-64)
 - **ld** — GNU linker
 - **objdump** — Object file disassembler and analyzer
 - **nm** — Symbol table viewer
-- **ar** — Archive creator and manager (metadata updates pending for FAT32)
-- **ranlib** — Archive index generator (metadata updates pending for FAT32)
-- **objcopy** — Binary format translator (validated)
-- **strip** — Binary symbol stripper (validated)
-- **strings** — Extract ASCII strings from binaries (validated)
-- **size** — Segment size reporter (validated)
+- **ar** — Archive creator and manager
+- **ranlib** — Archive index generator
+- **objcopy** — Binary format translator
+- **strip** — Binary symbol stripper
+- **strings** — Extract ASCII strings from binaries
+- **size** — Section size analyzer
+- **readelf** — ELF header and section viewer
+
+All binutils tools fully operational on meniOS!
 
 ### Example Workflow
 
@@ -82,22 +85,27 @@ ld -o hello hello.o
 objdump -d hello
 nm hello
 
-# Create a static library (FAT32 metadata polish pending: #365/#317)
+# Create a static library
 ar rcs libhello.a hello.o
 ranlib libhello.a
 nm libhello.a
+
+# Analyze binaries
+size hello
+readelf -h hello
+strings hello
 ```
 
-When running binutils under the host harness (`MENIOS_HOST_TEST=1`),
-libc forwards `chmod`, `fchmod`, and `utime` to the host OS.
-That keeps tool metadata intact for workflows like `ar`.
-On meniOS itself, those syscalls now reach the kernel for tmpfs-backed paths (e.g., `/tmp`),
-preserving permissions and timestamps in native runs.
-FAT32 and other filesystems still return `ENOSYS`; follow issues #365 and #317 for that metadata work.
-`ar` and `ranlib` now pass native smoke tests, though FAT32 metadata fixes (#365/#317) still need to land.
-`objcopy`, `strip`, `strings`, and `size` now pass native smoke tests.
+The complete binutils 2.45 suite is fully operational on meniOS with native metadata support across all filesystems (tmpfs, FAT32, devfs, procfs, pipes). All tools including `ar` and `ranlib` work correctly with full permission and timestamp preservation.
 
-See [issue #191](https://github.com/pbalduino/menios/issues/191) for the complete binutils integration test suite.
+**Implementation Details:**
+- Native syscalls: `chmod`, `fchmod`, `utime` implemented across all filesystems
+- Host harness: Forwards metadata operations to host OS for cross-platform testing
+- Printf formatting: Dynamic field width support (`*`) enables proper table display in `size`
+
+**Verification:** Complete native validation sweep performed on 2025-10-29 confirmed all 11 tools working correctly.
+
+See [issue #191 (CLOSED)](https://github.com/pbalduino/menios/issues/191) for the complete binutils integration documentation.
 
 ## Documentation
 

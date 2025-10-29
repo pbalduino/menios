@@ -267,10 +267,10 @@ These issues form the backbone of the system and should be prioritized:
 - **#363** - Serial port file descriptor for debug logging (separate enhancement)
 
 **Userland Tooling**:
-- **#370** - stat command - Display file metadata from shell
+- ✅ **#370** - stat command - Display file metadata from shell
   - Uses stat/lstat/fstat syscalls ✅ (already working)
-  - Will improve as #366 and #367 add more metadata
-  - Useful for debugging and shell scripts
+  - Delivers detailed permissions, DOS attributes, and timestamps
+  - Useful for debugging and shell scripts; ships in `/bin/stat`
 - **#372** - shutdown command - Clean ACPI power-off from userland
   - Exposes existing ACPI S5 power-button path via syscall
   - Allows graceful shutdown from command line

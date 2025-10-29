@@ -323,7 +323,7 @@ digraph IssueDependencies {
         issue317 [label="#317: utime() syscall\ntimestamp modification", fillcolor="#FFE4B5"];
         issue318 [label="#318: uname command\nsystem information", fillcolor="#E0FFFF"];
         issue363 [label="#363: Serial port FD\ndebug logging", fillcolor="#FFE4B5"];
-        issue370 [label="#370: stat command\nfile metadata display", fillcolor="#E0F0FF"];
+        issue370 [label="#370: stat command\n✅ COMPLETE", fillcolor="#90EE90", style="filled,dashed"];
         issue372 [label="#372: shutdown command\nACPI power-off", fillcolor="#E0F0FF"];
         issue373 [label="#373: realpath command\npath canonicalization", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED
     }
