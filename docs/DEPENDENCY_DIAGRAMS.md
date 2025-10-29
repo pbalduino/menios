@@ -45,7 +45,7 @@ The meniOS project has grown to over 100+ tracked issues with complex interdepen
   - ✅ access(), realpath() (complete)
   - ⚠️ pathconf() (partial - #368)
   - ✅ chmod/fchmod (#365); ✅ utime (#317)
-  - ✅ pseudo-fs metadata (#366); ❌ rich FAT32 metadata (#367)
+  - ✅ pseudo-fs metadata (#366); ✅ rich FAT32 metadata (#367)
   - ❌ isatty (#347), brk/sbrk (#21), system() (#369)
   - ❌ timing APIs (#327)
 - Thread safety: #339 (depends on pthread #109)

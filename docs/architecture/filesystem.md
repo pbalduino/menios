@@ -138,8 +138,8 @@ the VFS, invoke the appropriate driver callbacks, convert results to
 
 ### Outstanding Work
 
-- **Issue #367** — Parse rich FAT32 metadata (timestamps, DOS attributes, LFN
-  information).
+- ~~**Issue #367** — Parse rich FAT32 metadata (timestamps, DOS attributes, LFN
+  information).~~ ✅ Completed
 - ~~**Issue #317** — Implement `utime()` syscall to modify file timestamps~~ ✅ Completed
 - **Issue #368** — Complete `pathconf()` implementation for all POSIX queries.
 

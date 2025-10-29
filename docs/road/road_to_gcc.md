@@ -104,7 +104,7 @@ GNU [binutils 2.45](https://www.gnu.org/software/binutils/) has also been staged
     - ✅ Host harness now forwards these calls to the underlying OS (MENIOS_HOST_TEST) so native tool tests keep metadata.
     - ✅ Kernel implements the syscalls for tmpfs-backed paths, so `/tmp` usage inside meniOS preserves permissions and timestamps.
     - ⚠️ devfs/procfs intentionally remain read-only; metadata writes skipped by design.
-  - ✅ rich FAT32 metadata (#367) - **COMPLETE!**
+  - ✅ rich FAT32 metadata (#367) - **COMPLETE!** (DOS attributes + timestamps surface via stat)
   - ✅ chmod/fchmod on FAT32 (#365) - **COMPLETE!** (read-only bit mirrors POSIX perms)
   - ✅ utime on FAT32 (#317) - **COMPLETE!** (POSIX timestamps persist on FAT32)
   - ✅ pseudo-fs metadata (#366) - **COMPLETE!** (devfs/procfs/pipes surface synthetic metadata)
