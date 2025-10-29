@@ -61,6 +61,13 @@ static void   debug_log_expand_dollar(const char* cursor);
 static void   debug_dump_bytes(const char* label, const char* data);
 static bool   debug_ptr_readable(const void* ptr);
 static void   print_exec_error(const char* command, int err, bool not_found);
+static bool   compute_timespec_diff(const struct timespec* start,
+                                    const struct timespec* end,
+                                    long long* out_seconds,
+                                    long long* out_nanoseconds);
+static void   print_duration_line(const char* label,
+                                  long long seconds,
+                                  long long nanoseconds);
 
 typedef struct {
   char*  argv[MOSH_MAX_ARGS];
@@ -1473,6 +1480,69 @@ static void shell_finish_builtin_raw(int raw_status, int* out_status) {
   if(out_status != NULL) {
     *out_status = raw_status;
   }
+}
+
+static bool compute_timespec_diff(const struct timespec* start,
+                                  const struct timespec* end,
+                                  long long* out_seconds,
+                                  long long* out_nanoseconds) {
+  if(start == NULL || end == NULL || out_seconds == NULL || out_nanoseconds == NULL) {
+    return false;
+  }
+
+  const long long ns_per_sec = 1000000000LL;
+  long long seconds = (long long)end->tv_sec - (long long)start->tv_sec;
+  long long nanoseconds = (long long)end->tv_nsec - (long long)start->tv_nsec;
+
+  if(nanoseconds < 0) {
+    nanoseconds += ns_per_sec;
+    seconds -= 1;
+  }
+
+  if(seconds < 0) {
+    seconds = 0;
+    nanoseconds = 0;
+  }
+
+  if(nanoseconds < 0) {
+    nanoseconds = 0;
+  }
+
+  *out_seconds = seconds;
+  *out_nanoseconds = nanoseconds;
+  return true;
+}
+
+static void print_duration_line(const char* label,
+                                long long seconds,
+                                long long nanoseconds) {
+  if(label == NULL) {
+    label = "";
+  }
+  if(seconds < 0) {
+    seconds = 0;
+  }
+  if(nanoseconds < 0) {
+    nanoseconds = 0;
+  }
+
+  const long long ns_per_millisecond = 1000000LL;
+  long long fractional = nanoseconds / ns_per_millisecond;
+  if(fractional < 0) {
+    fractional = 0;
+  }
+  if(fractional > 999) {
+    fractional = 999;
+  }
+
+  char buffer[64];
+  int written = snprintf(buffer, sizeof(buffer), "%-4s %lld.%03llds\n", label, seconds, fractional);
+  if(written <= 0) {
+    return;
+  }
+
+  size_t to_write = (written < (int)sizeof(buffer)) ? (size_t)written : sizeof(buffer) - 1;
+  write_bytes(STDERR_FILENO, buffer, to_write);
 }
 
 static bool shell_is_token_boundary(char ch) {
@@ -4427,6 +4497,7 @@ static bool handle_builtin(const char* raw_line, char* line, int* out_status) {
               "  exit  - leave mosh\n"
               "  pwd   - print current directory\n"
               "  echo  - print arguments\n"
+              "  time  - measure command duration\n"
               "  cd    - change directory (limited)\n"
               "  jobs  - list background jobs\n"
               "  fg    - resume job in foreground\n"
@@ -4435,6 +4506,44 @@ static bool handle_builtin(const char* raw_line, char* line, int* out_status) {
               "  unset - remove shell variable\n"
               "  if/while/for/function - scripting constructs\n");
     shell_finish_builtin_code(0, out_status);
+    return true;
+  }
+
+  if(command_len == 4 && str_ncmp(command_start, "time", 4) == 0) {
+    if(raw_arguments[0] == '\0') {
+      write_str(STDERR_FILENO, "mosh: time: missing command\n");
+      shell_finish_builtin_code(1, out_status);
+      return true;
+    }
+
+    struct timespec start_ts;
+    bool have_start = (clock_gettime(CLOCK_MONOTONIC, &start_ts) == 0);
+
+    char timed_command[MOSH_MAX_FUNCTION_BODY];
+    str_copy(timed_command, sizeof(timed_command), raw_arguments);
+
+    int raw_result = launch_command(timed_command);
+
+    bool printed = false;
+    if(have_start) {
+      struct timespec end_ts;
+      if(clock_gettime(CLOCK_MONOTONIC, &end_ts) == 0) {
+        long long seconds = 0;
+        long long nanoseconds = 0;
+        if(compute_timespec_diff(&start_ts, &end_ts, &seconds, &nanoseconds)) {
+          print_duration_line("real", seconds, nanoseconds);
+          write_str(STDERR_FILENO, "user n/a\n");
+          write_str(STDERR_FILENO, "sys  n/a\n");
+          printed = true;
+        }
+      }
+    }
+
+    if(!printed) {
+      write_str(STDERR_FILENO, "mosh: time: unable to measure duration\n");
+    }
+
+    shell_finish_builtin_raw(raw_result, out_status);
     return true;
   }
 
