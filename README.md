@@ -116,6 +116,12 @@ See [issue #191 (CLOSED)](https://github.com/pbalduino/menios/issues/191) for th
 - [scheduler_issues.md](scheduler_issues.md) — notes on ready-queue redesign.
 - [CONTRIBUTING.md](CONTRIBUTING.md) & [CODING.md](CODING.md) — contribution workflow and style guide.
 
+## Testing
+
+- `make test` — build and run the host Unity suite (uses Docker automatically on macOS).
+- `make coverage` — rerun the suite with `gcov` instrumentation and write a summary to `build/gcov/summary.txt`.
+- `make coverage-report` — regenerate the coverage summary from existing `.gcda/.gcno` data.
+
 ## Repository Layout
 
 ```
