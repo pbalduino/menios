@@ -8,18 +8,12 @@
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
-#ifdef MENIOS_HOST_TEST
-typedef int wchar_t;
-#endif
 #include <stdatomic.h>
 #include <sys/errno.h>
 #include <sys/mman.h>
 #include <sys/fcntl.h>
 #include <unistd.h>
-
-#ifndef MENIOS_HOST_TEST
 #include <stdio.h>
-#endif
 
 static atomic_flag allocator_lock = ATOMIC_FLAG_INIT;
 

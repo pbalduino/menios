@@ -26,6 +26,7 @@ char* strerror(int errnum) {
     case EIO:    return "Input/output error";
     case EPERM:  return "Operation not permitted";
     case EACCES: return "Permission denied";
+    case ENOSPC: return "No space left on device";
     default: return "Unknown error";
   }
 }

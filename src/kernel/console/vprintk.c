@@ -1,5 +1,6 @@
 #include <kernel/console.h>
 #include <kernel/serial.h>
+#include <kernel/proc.h>
 
 #include <ctype.h>
 #include <stdbool.h>
@@ -93,7 +94,8 @@ static int format_string(char* dest,
     value = "(null)";
   } else {
     const uintptr_t kernel_floor = 0xffff800000000000ull;
-    if((uintptr_t)value < kernel_floor) {
+    bool user_pointer = (current != NULL && current->user_mode);
+    if(user_pointer && (uintptr_t)value < kernel_floor) {
       report_invalid_string((uintptr_t)value);
       value = "(invalid-string)";
     }

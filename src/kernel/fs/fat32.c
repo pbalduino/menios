@@ -2121,6 +2121,7 @@ static bool fat32_write_chain(fat32_fs_t* fs,
 
   while(cluster >= 2u && cluster < fs->max_cluster_index && written < length) {
     if(!fat32_read_cluster(fs, cluster, cluster_buffer)) {
+      serial_printf("fat32_write_chain: read_cluster failed cluster=%u\n", cluster);
       kfree(cluster_buffer);
       return false;
     }
@@ -2158,6 +2159,7 @@ static bool fat32_write_chain(fat32_fs_t* fs,
     memcpy(cluster_buffer + start, in + written, to_copy);
 
     if(!fat32_write_cluster(fs, cluster, cluster_buffer)) {
+      serial_printf("fat32_write_chain: write_cluster failed cluster=%u\n", cluster);
       kfree(cluster_buffer);
       return false;
     }
@@ -2247,6 +2249,14 @@ static bool fat32_adjust_file_size(fat32_fs_t* fs,
             fat32_set_fat_entry(fs, last_cluster, FAT32_EOC_MARK);
           }
         }
+        serial_printf("fat32_adjust_file_size: allocate_cluster failed old_size=%zu new_size=%zu current_clusters=%zu "
+                      "required_clusters=%zu first_cluster=%u last_cluster=%u\n",
+                      old_size,
+                      new_size,
+                      current_clusters,
+                      required_clusters,
+                      info->first_cluster,
+                      last_cluster);
         return false;
       }
 
@@ -2266,6 +2276,7 @@ static bool fat32_adjust_file_size(fat32_fs_t* fs,
         if(first_new != new_cluster) {
           fat32_free_cluster_chain(fs, first_new);
         }
+        serial_printf("fat32_adjust_file_size: zero_cluster failed new_cluster=%u\n", new_cluster);
         return false;
       }
     }
@@ -3085,7 +3096,22 @@ bool fs_file_read(const fs_mount_t* mount,
     return false;
   }
 
-  return fat32_read_chain(fs, info.first_cluster, info.size, offset, buffer, length, bytes_read);
+  serial_printf("fs_file_read: path=%s offset=%lu len=%lu first_cluster=%u size=%u\n",
+                path ? path : "(null)",
+                (unsigned long)offset,
+                (unsigned long)length,
+                info.first_cluster,
+                info.size);
+  bool ok = fat32_read_chain(fs, info.first_cluster, info.size, offset, buffer, length, bytes_read);
+  if(ok) {
+    size_t got = bytes_read ? *bytes_read : 0u;
+    serial_printf("fs_file_read: ok path=%s bytes=%lu\n",
+                  path ? path : "(null)",
+                  (unsigned long)got);
+  } else {
+    serial_printf("fs_file_read: failed path=%s\n", path ? path : "(null)");
+  }
+  return ok;
 }
 
 bool fs_file_read_all(const fs_mount_t* mount,
@@ -3133,6 +3159,10 @@ bool fs_file_write(const fs_mount_t* mount,
                    const void* buffer,
                    size_t length,
                    size_t* bytes_written) {
+  serial_printf("fs_file_write: entry path=%s offset=%lu len=%lu\n",
+                path ? path : "(null)",
+                (unsigned long)offset,
+                (unsigned long)length);
   if(mount == NULL || mount->type != FS_TYPE_FAT32) {
     return false;
   }
@@ -3151,10 +3181,12 @@ bool fs_file_write(const fs_mount_t* mount,
   fat32_fs_t* fs = (fat32_fs_t*)&mount->fat32;
   fat32_dir_entry_info_t info;
   if(!fat32_traverse_path(fs, path, &info, false)) {
+    serial_printf("fs_file_write: traverse failed path=%s\n", path ? path : "(null)");
     return false;
   }
 
   if(info.is_directory) {
+    serial_printf("fs_file_write: refused write to directory path=%s\n", path ? path : "(null)");
     return false;
   }
 
@@ -3163,12 +3195,24 @@ bool fs_file_write(const fs_mount_t* mount,
   bool fat_dirty = false;
   if(target_end > info.size) {
     if(!fat32_adjust_file_size(fs, &info, target_end, &fat_dirty)) {
+      serial_printf("fs_file_write: adjust_file_size failed path=%s offset=%lu len=%lu original=%lu target=%lu\n",
+                    path ? path : "(null)",
+                    (unsigned long)offset,
+                    (unsigned long)length,
+                    (unsigned long)original_size,
+                    (unsigned long)target_end);
       return false;
     }
   }
 
   size_t written = 0;
   if(!fat32_write_chain(fs, &info, original_size, offset, buffer, length, &written)) {
+    serial_printf("fs_file_write: write_chain failed path=%s offset=%lu len=%lu written=%lu first_cluster=%u\n",
+                  path ? path : "(null)",
+                  (unsigned long)offset,
+                  (unsigned long)length,
+                  (unsigned long)written,
+                  info.first_cluster);
     if(bytes_written) {
       *bytes_written = 0;
     }
@@ -3180,17 +3224,33 @@ bool fs_file_write(const fs_mount_t* mount,
   }
 
   if(!fat32_update_dir_entry(fs, &info, info.first_cluster, info.size)) {
+    serial_printf("fs_file_write: update_dir_entry failed path=%s cluster=%u size=%u\n",
+                  path ? path : "(null)",
+                  info.first_cluster,
+                  info.size);
     return false;
   }
 
   if(fat_dirty) {
     if(!fat32_flush_fat(fs)) {
+    serial_printf("fs_file_write: flush_fat failed path=%s\n", path ? path : "(null)");
       return false;
     }
   }
 
   if(bytes_written) {
     *bytes_written = written;
+  }
+
+  if(written != length) {
+    serial_printf("fs_file_write: short write path=%s requested=%lu written=%lu\n",
+                  path ? path : "(null)",
+                  (unsigned long)length,
+                  (unsigned long)written);
+  } else {
+    serial_printf("fs_file_write: complete path=%s bytes=%lu\n",
+                  path ? path : "(null)",
+                  (unsigned long)written);
   }
 
   return written == length;
@@ -3379,6 +3439,15 @@ static int64_t fat32_stream_read(file_t* file, void* buffer, size_t length) {
     return 0;
   }
 
+  unsigned long pos = (unsigned long)stream->position;
+  unsigned long req = (unsigned long)length;
+  unsigned long size = (unsigned long)stream->info.size;
+  serial_printf("fat32_stream_read: path=%s pos=%lu len=%lu size=%lu\n",
+                stream->info.name,
+                pos,
+                req,
+                size);
+
   size_t to_read = length;
   size_t remaining = stream->info.size - stream->position;
   if(to_read > remaining) {
@@ -3399,6 +3468,9 @@ static int64_t fat32_stream_read(file_t* file, void* buffer, size_t length) {
   }
 
   stream->position += bytes;
+  serial_printf("fat32_stream_read: read=%lu new_pos=%lu\n",
+                (unsigned long)bytes,
+                (unsigned long)stream->position);
   return (int64_t)bytes;
 }
 
@@ -3415,6 +3487,7 @@ static int64_t fat32_stream_write(file_t* file, const void* buffer, size_t lengt
   int accmode = stream->flags & O_ACCMODE;
   bool writable = (accmode == O_WRONLY || accmode == O_RDWR);
   if(!writable) {
+    serial_printf("fat32_stream_write: write denied flags=0x%x accmode=%d\n", stream->flags, accmode);
     return -EBADF;
   }
 
@@ -3435,6 +3508,10 @@ static int64_t fat32_stream_write(file_t* file, const void* buffer, size_t lengt
   bool fat_dirty = false;
   if(target_end > stream->info.size) {
     if(!fat32_adjust_file_size(stream->fs, &stream->info, target_end, &fat_dirty)) {
+      serial_printf("fat32_stream_write: adjust_file_size failed current_size=%u target_end=%zu length=%zu\n",
+                    stream->info.size,
+                    target_end,
+                    length);
       return -ENOSPC;
     }
   }
@@ -3447,6 +3524,11 @@ static int64_t fat32_stream_write(file_t* file, const void* buffer, size_t lengt
                         buffer,
                         length,
                         &written)) {
+    serial_printf("fat32_stream_write: write_chain failed first_cluster=%u pos=%zu len=%zu wrote=%zu\n",
+                  stream->info.first_cluster,
+                  stream->position,
+                  length,
+                  written);
     return -EIO;
   }
 
@@ -3459,11 +3541,15 @@ static int64_t fat32_stream_write(file_t* file, const void* buffer, size_t lengt
                              &stream->info,
                              stream->info.first_cluster,
                              stream->info.size)) {
+    serial_printf("fat32_stream_write: update_dir_entry failed cluster=%u size=%u\n",
+                  stream->info.first_cluster,
+                  stream->info.size);
     return -EIO;
   }
 
   if(fat_dirty) {
     if(!fat32_flush_fat(stream->fs)) {
+      serial_printf("fat32_stream_write: flush_fat failed\n");
       return -EIO;
     }
   }

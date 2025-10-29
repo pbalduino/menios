@@ -88,9 +88,6 @@ static int64_t file_user_read(file_t* file, void* buffer, size_t length) {
   }
 
   virt_addr_t dest = (virt_addr_t)(uintptr_t)buffer;
-  if(!proc_user_touch_range(current, dest, length, true)) {
-    return -EFAULT;
-  }
 
   size_t chunk = length < FILE_IO_BOUNCE_CHUNK ? length : FILE_IO_BOUNCE_CHUNK;
   if(chunk == 0) {
@@ -123,6 +120,10 @@ static int64_t file_user_read(file_t* file, void* buffer, size_t length) {
 
     size_t copied = (size_t)rc;
     if(!proc_user_copy_out(current, dest + total, bounce, copied)) {
+      serial_printf("file_user_read: copy_out failed pid=%u dest=%lx bytes=%lu\n",
+                    current ? current->pid : 0,
+                    (unsigned long)(dest + total),
+                    (unsigned long)copied);
       result = -EFAULT;
       break;
     }
@@ -356,6 +357,10 @@ int64_t file_read(file_t* file, void* buffer, size_t length) {
     return -EINVAL;
   }
   if((file->mode & FILE_MODE_READ) == 0 || file->ops == NULL || file->ops->read == NULL) {
+    serial_printf("file_read: denied file=%p mode=0x%x ops=%p\n",
+                  (void*)file,
+                  file ? file->mode : 0u,
+                  file ? (void*)file->ops : NULL);
     set_errno(EBADF);
     return -EBADF;
   }

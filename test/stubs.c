@@ -10,6 +10,7 @@
 #include <kernel/syscall.h>
 #include <kernel/vm.h>
 #include <kernel/thread.h>
+#include <sys/stat.h>
 #include <sys/wait.h>
 #include <errno.h>
 #include <stdarg.h>
@@ -19,6 +20,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stddef.h>
+#include <time.h>
 
 #ifdef serial_printf
 #undef serial_printf
@@ -36,6 +38,14 @@
 proc_info_p current;
 proc_info_t kernel_process_info;
 proc_info_p procs[PROC_MAX] = { &kernel_process_info };
+
+int chdir(const char* path) {
+  if(path == NULL) {
+    errno = EFAULT;
+    return -1;
+  }
+  return 0;
+}
 
 static void stub_init_proc(proc_info_p proc) {
   if(proc == NULL) {
@@ -201,6 +211,31 @@ __attribute__((weak)) bool fs_file_truncate(const fs_mount_t* mount, const char*
   (void)mount;
   (void)path;
   return false;
+}
+
+__attribute__((weak)) bool fs_path_info(const fs_mount_t* mount, const char* path, fs_path_info_t* out_info) {
+  (void)mount;
+  (void)path;
+  if(out_info != NULL) {
+    memset(out_info, 0, sizeof(*out_info));
+  }
+  return false;
+}
+
+__attribute__((weak)) int fat32_chmod_impl(void* fs_ctx, const char* path, mode_t mode) {
+  (void)fs_ctx;
+  (void)path;
+  (void)mode;
+  errno = ENOSYS;
+  return -1;
+}
+
+__attribute__((weak)) int fat32_utimens_path(void* fs_ctx, const char* path, const struct timespec times[2]) {
+  (void)fs_ctx;
+  (void)path;
+  (void)times;
+  errno = ENOSYS;
+  return -1;
 }
 
 __attribute__((weak)) bool fs_file_stat(const fs_mount_t* mount, const char* path, size_t* out_size) {

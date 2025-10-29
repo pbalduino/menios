@@ -1425,33 +1425,36 @@ int proc_exec_image(proc_info_p proc,
     goto fail;
   }
 
-  phys_addr_t initial_stack_phys = pmm_alloc_pages(1);
-  if(initial_stack_phys == 0) {
-    serial_printf("proc_exec_image: initial stack alloc failed\n");
-    goto fail;
+  phys_addr_t stack_phys[PROC_INITIAL_STACK_PAGES];
+  memset(stack_phys, 0, sizeof(stack_phys));
+  size_t stack_pages_mapped = 0;
+
+  for(size_t page = 0; page < PROC_INITIAL_STACK_PAGES; page++) {
+    phys_addr_t phys = pmm_alloc_pages(1);
+    if(phys == 0) {
+      serial_printf("proc_exec_image: initial stack alloc failed (page=%zu)\n", page);
+      goto fail_stack_map;
+    }
+    stack_phys[page] = phys;
+    void* stack_page_ptr = (void*)physical_to_virtual(phys);
+    memset(stack_page_ptr, 0, PAGE_SIZE);
+
+    virt_addr_t page_addr = stack_top - (virt_addr_t)((page + 1u) * PAGE_SIZE);
+    if(!pmm_map_page_in_root(new_root, page_addr, phys, true, true)) {
+      serial_printf("proc_exec_image: map stack page failed (page=%zu)\n", page);
+      goto fail_stack_map;
+    }
+    stack_pages_mapped++;
+
+    if(!proc_register_user_segment(staging, phys, 1)) {
+      serial_printf("proc_exec_image: register stack segment failed (page=%zu)\n", page);
+      goto fail_stack_map;
+    }
+
+    vm_region_note_mapping(stack_region, page_addr, PAGE_SIZE);
   }
-  SCHED_TRACE("proc_exec_image: initial stack phys=%lx\n", (unsigned long)initial_stack_phys);
-
-  void* stack_page_ptr = (void*)physical_to_virtual(initial_stack_phys);
-  memset(stack_page_ptr, 0, PAGE_SIZE);
-
-  virt_addr_t initial_stack_page = stack_top - PAGE_SIZE;
-  if(!pmm_map_page_in_root(new_root, initial_stack_page, initial_stack_phys, true, true)) {
-    pmm_free_pages(initial_stack_phys, 1);
-    serial_printf("proc_exec_image: map initial stack failed\n");
-    goto fail;
-  }
-  SCHED_TRACE("proc_exec_image: initial stack mapped\n");
-
-  if(!proc_register_user_segment(staging, initial_stack_phys, 1)) {
-    pmm_unmap_page_in_root(new_root, initial_stack_page);
-    pmm_free_pages(initial_stack_phys, 1);
-    serial_printf("proc_exec_image: register stack segment failed\n");
-    goto fail;
-  }
-  SCHED_TRACE("proc_exec_image: stack segment registered\n");
-
-  vm_region_note_mapping(stack_region, initial_stack_page, PAGE_SIZE);
+  SCHED_TRACE("proc_exec_image: stack segment registered (%zu pages)\n",
+              stack_pages_mapped);
 
   uint64_t entry = 0;
   if(!elf64_load_image(staging, new_root, elf_copy, size, &entry)) {
@@ -1549,6 +1552,18 @@ int proc_exec_image(proc_info_p proc,
   kfree(staging);
 
   return 0;
+
+fail_stack_map:
+  while(stack_pages_mapped > 0) {
+    stack_pages_mapped--;
+    phys_addr_t phys = stack_phys[stack_pages_mapped];
+    if(phys != 0) {
+      virt_addr_t page_addr = stack_top - (virt_addr_t)((stack_pages_mapped + 1u) * PAGE_SIZE);
+      pmm_unmap_page_in_root(new_root, page_addr);
+      pmm_free_pages(phys, 1);
+    }
+  }
+  goto fail;
 
 fail:
   if(staging != NULL) {
@@ -1999,33 +2014,34 @@ void proc_create_user(proc_info_p proc, const char* name, const void* code_blob,
     halt();
   }
 
-  // Map the initial stack page at the top of the region so early frames work without faults
-  phys_addr_t initial_stack_phys = pmm_alloc_pages(1);
-  if(initial_stack_phys == 0) {
-    serial_printf("proc_create_user: failed to allocate initial stack page\n");
-    halt();
-  }
+  for(size_t page = 0; page < PROC_INITIAL_STACK_PAGES; page++) {
+    phys_addr_t phys = pmm_alloc_pages(1);
+    if(phys == 0) {
+      serial_printf("proc_create_user: failed to allocate stack page %zu\n", page);
+      halt();
+    }
 
-  void* initial_page_ptr = (void*)physical_to_virtual(initial_stack_phys);
-  memset(initial_page_ptr, 0, PAGE_SIZE);
+    void* page_ptr = (void*)physical_to_virtual(phys);
+    memset(page_ptr, 0, PAGE_SIZE);
 
-  virt_addr_t initial_stack_page = stack_top - PAGE_SIZE;
-  if(!pmm_map_page_in_root(new_root, initial_stack_page, initial_stack_phys, true, true)) {
-    serial_printf("proc_create_user: failed to map initial stack page\n");
-    pmm_free_pages(initial_stack_phys, 1);
-    halt();
-  }
+    virt_addr_t page_addr = stack_top - (virt_addr_t)((page + 1u) * PAGE_SIZE);
+    if(!pmm_map_page_in_root(new_root, page_addr, phys, true, true)) {
+      serial_printf("proc_create_user: failed to map stack page %zu\n", page);
+      pmm_free_pages(phys, 1);
+      halt();
+    }
 
-  if(!proc_register_user_segment(proc, initial_stack_phys, 1)) {
-    serial_printf("proc_create_user: failed to register stack segment phys=%lx\n",
-                  initial_stack_phys);
-    pmm_free_pages(initial_stack_phys, 1);
-    halt();
-  }
+    if(!proc_register_user_segment(proc, phys, 1)) {
+      serial_printf("proc_create_user: failed to register stack segment phys=%lx\n", phys);
+      pmm_unmap_page_in_root(new_root, page_addr);
+      pmm_free_pages(phys, 1);
+      halt();
+    }
 
-  vm_region_t* stack_region = vm_region_find(proc, initial_stack_page);
-  if(stack_region != NULL) {
-    vm_region_note_mapping(stack_region, initial_stack_page, PAGE_SIZE);
+    vm_region_t* stack_region = vm_region_find(proc, page_addr);
+    if(stack_region != NULL) {
+      vm_region_note_mapping(stack_region, page_addr, PAGE_SIZE);
+    }
   }
 
   uint64_t entry = 0;

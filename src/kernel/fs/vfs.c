@@ -20,6 +20,8 @@ extern int fat32_unlink_adapter(void* fs_ctx, const char* path);
 extern int fat32_mkdir_adapter(void* fs_ctx, const char* path, bool exclusive);
 extern int fat32_rmdir_adapter(void* fs_ctx, const char* path);
 extern int fat32_rename_adapter(void* fs_ctx, const char* old_path, const char* new_path);
+extern int fat32_chmod_impl(void* fs_ctx, const char* path, mode_t mode);
+extern int fat32_utimens_path(void* fs_ctx, const char* path, const struct timespec times[2]);
 
 #define VFS_LOG_PATH_MAX 96
 
@@ -541,17 +543,29 @@ static int64_t vfs_file_read_impl(file_t* file, void* buffer, size_t length) {
   }
 
   if(ctx->streaming) {
+    serial_printf("vfs_file_read: entry path=%s offset=%lu len=%lu\n",
+                  ctx->relative,
+                  (unsigned long)ctx->offset,
+                  (unsigned long)length);
     if(ctx->driver == NULL || ctx->driver->read == NULL) {
       return -ENOSYS;
     }
     size_t bytes = 0;
     if(!ctx->driver->read(ctx->fs_ctx, ctx->relative, ctx->offset, buffer, length, &bytes)) {
+      serial_printf("vfs_file_read: driver read failed path=%s offset=%lu len=%lu\n",
+                    ctx->relative,
+                    (unsigned long)ctx->offset,
+                    (unsigned long)length);
       return -EIO;
     }
     ctx->offset += bytes;
     if(ctx->size_known && ctx->offset > ctx->size) {
       ctx->size = ctx->offset;
     }
+    serial_printf("vfs_file_read: success path=%s read=%lu new_offset=%lu\n",
+                  ctx->relative,
+                  (unsigned long)bytes,
+                  (unsigned long)ctx->offset);
     return (int64_t)bytes;
   }
 
@@ -589,11 +603,19 @@ static int64_t vfs_file_write_impl(file_t* file, const void* buffer, size_t leng
   }
 
   if(ctx->streaming) {
+    serial_printf("vfs_file_write: entry path=%s offset=%lu len=%lu\n",
+                  ctx->relative,
+                  (unsigned long)ctx->offset,
+                  (unsigned long)length);
     if(ctx->driver == NULL || ctx->driver->write == NULL) {
       return -ENOSYS;
     }
     size_t written = 0;
     if(!ctx->driver->write(ctx->fs_ctx, ctx->relative, ctx->offset, buffer, length, &written)) {
+      serial_printf("vfs_file_write: driver write failed path=%s offset=%lu len=%lu\n",
+                    ctx->relative,
+                    (unsigned long)ctx->offset,
+                    (unsigned long)length);
       return -EIO;
     }
     ctx->offset += written;
@@ -604,6 +626,18 @@ static int64_t vfs_file_write_impl(file_t* file, const void* buffer, size_t leng
     } else {
       ctx->size = ctx->offset;
       ctx->size_known = true;
+    }
+    if(written != length) {
+      serial_printf("vfs_file_write: short write path=%s requested=%lu written=%lu new_offset=%lu\n",
+                    ctx->relative,
+                    (unsigned long)length,
+                    (unsigned long)written,
+                    (unsigned long)ctx->offset);
+    } else {
+      serial_printf("vfs_file_write: success path=%s written=%lu new_offset=%lu\n",
+                    ctx->relative,
+                    (unsigned long)written,
+                    (unsigned long)ctx->offset);
     }
     return (int64_t)written;
   }
@@ -1322,10 +1356,18 @@ static bool fat32_write_adapter(void* fs_ctx,
                                 size_t length,
                                 size_t* bytes_written) {
   const fs_mount_t* mount = (const fs_mount_t*)fs_ctx;
+  serial_printf("fat32_write_adapter: path=%s offset=%llu len=%llu\n",
+                path ? path : "(null)",
+                (unsigned long long)offset,
+                (unsigned long long)length);
   bool ok = fs_file_write(mount, path, offset, buffer, length, bytes_written);
   if(!ok && path != NULL && path[0] == '/' && path[1] != '\0') {
+    serial_printf("fat32_write_adapter: retry without leading slash path=%s\n", path);
     ok = fs_file_write(mount, path + 1, offset, buffer, length, bytes_written);
   }
+  serial_printf("fat32_write_adapter: result=%s bytes_written=%llu\n",
+                ok ? "ok" : "fail",
+                (unsigned long long)(bytes_written ? *bytes_written : 0u));
   return ok;
 }
 
@@ -1406,8 +1448,8 @@ static const vfs_fs_driver_t fat32_driver = {
   .mkdir = fat32_mkdir_adapter,
   .rmdir = fat32_rmdir_adapter,
   .rename = fat32_rename_adapter,
-  .chmod = NULL,
-  .utimens = NULL,
+  .chmod = fat32_chmod_impl,
+  .utimens = fat32_utimens_path,
   .destroy = fat32_destroy_adapter,
 };
 

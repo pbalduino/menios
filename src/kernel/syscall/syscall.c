@@ -817,15 +817,25 @@ static uint64_t syscall_read_handler(syscall_frame_t* frame) {
   int fd = (int)frame->rdi;
   void* buffer = (void*)frame->rsi;
   size_t length = (size_t)frame->rdx;
+  serial_printf("syscall_read: pid=%u fd=%d len=%lu buf=%lx\n",
+                current->pid,
+                fd,
+                (unsigned long)length,
+                (unsigned long)(uintptr_t)buffer);
   file_t* file = proc_file_get(current, fd, NULL);
   if(file == NULL) {
     int err = current->err_no ? current->err_no : EBADF;
+    serial_printf("syscall_read: pid=%u fd=%d err=%d\n", current->pid, fd, err);
     frame->rax = (uint64_t)(-err);
     return frame->rax;
   }
 
   int64_t result = file_read(file, buffer, length);
   file_unref(file);
+  serial_printf("syscall_read: pid=%u fd=%d rc=%lld\n",
+                current->pid,
+                fd,
+                (long long)result);
   frame->rax = (uint64_t)result;
   return frame->rax;
 }
@@ -878,6 +888,7 @@ static uint64_t syscall_close_handler(syscall_frame_t* frame) {
 
   int fd = (int)frame->rdi;
   int rc = proc_file_close(current, fd);
+  serial_printf("syscall_close: pid=%u fd=%d rc=%d\n", current->pid, fd, rc);
   frame->rax = (uint64_t)rc;
   return frame->rax;
 }
@@ -933,6 +944,11 @@ static uint64_t syscall_open_handler(syscall_frame_t* frame) {
     return frame->rax;
   }
 
+  serial_printf("syscall_open: pid=%u path=%s flags=0x%x fd=%d\n",
+                current->pid,
+                absolute,
+                flags,
+                fd);
   frame->rax = (uint64_t)fd;
   return frame->rax;
 }
@@ -1034,16 +1050,29 @@ static uint64_t syscall_lseek_handler(syscall_frame_t* frame) {
   int fd = (int)frame->rdi;
   int64_t offset = (int64_t)frame->rsi;
   int whence = (int)frame->rdx;
+  serial_printf("syscall_lseek: pid=%u fd=%d offset=%lld whence=%d\n",
+                current->pid,
+                fd,
+                (long long)offset,
+                whence);
 
   file_t* file = proc_file_get(current, fd, NULL);
   if(file == NULL) {
     int err = current->err_no ? current->err_no : EBADF;
+    serial_printf("syscall_lseek: pid=%u fd=%d err=%d\n",
+                  current->pid,
+                  fd,
+                  err);
     frame->rax = (uint64_t)(-err);
     return frame->rax;
   }
 
   int64_t result = file_seek(file, offset, whence);
   file_unref(file);
+  serial_printf("syscall_lseek: pid=%u fd=%d rc=%lld\n",
+                current->pid,
+                fd,
+                (long long)result);
   frame->rax = (uint64_t)result;
   return frame->rax;
 }
@@ -1259,6 +1288,10 @@ static uint64_t syscall_dup_handler(syscall_frame_t* frame) {
 
   int oldfd = (int)frame->rdi;
   int rc = proc_file_dup(current, oldfd, -1, false);
+  serial_printf("syscall_dup: pid=%u oldfd=%d newfd=%d\n",
+                current->pid,
+                oldfd,
+                rc);
   frame->rax = (uint64_t)rc;
   return frame->rax;
 }
@@ -1272,6 +1305,11 @@ static uint64_t syscall_dup2_handler(syscall_frame_t* frame) {
   int oldfd = (int)frame->rdi;
   int newfd = (int)frame->rsi;
   int rc = proc_file_dup(current, oldfd, newfd, false);
+  serial_printf("syscall_dup2: pid=%u oldfd=%d newfd=%d rc=%d\n",
+                current->pid,
+                oldfd,
+                newfd,
+                rc);
   frame->rax = (uint64_t)rc;
   return frame->rax;
 }
