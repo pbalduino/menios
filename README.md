@@ -110,6 +110,7 @@ See [issue #191 (CLOSED)](https://github.com/pbalduino/menios/issues/191) for th
 ## Documentation
 
 - [Roadmaps](docs/road/) — milestone breakdowns for shell, buddy allocator, GCC toolchain, Doom integration, and more.
+- [docs/tools.md](docs/tools.md) — overview of the Menios toolchain wrapper scripts.
 - [docs/MILESTONES.md](docs/MILESTONES.md) — high-level progress tracker.
 - [scheduler_issues.md](scheduler_issues.md) — notes on ready-queue redesign.
 - [CONTRIBUTING.md](CONTRIBUTING.md) & [CODING.md](CODING.md) — contribution workflow and style guide.
