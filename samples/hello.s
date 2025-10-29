@@ -21,5 +21,5 @@ _start:
 
 	.section .rodata
 message:
-	.ascii	"Hello from hello.s on meniOS!\\n"
+	.ascii	"Hello from hello.s on meniOS!\n"
 message_len = . - message
