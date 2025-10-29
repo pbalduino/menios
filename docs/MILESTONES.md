@@ -153,7 +153,7 @@ This document tracks the major milestones for meniOS development.
 **Goal**: Enable native compilation on meniOS with GCC toolchain support
 **GitHub Milestone**: [GCC](https://github.com/pbalduino/menios/milestone/2)
 
-**Status**: 5/7 complete (71.4%)
+**Status**: 6/7 complete (85.7%)
 
 **Assigned Issues**:
 - [x] #192 - crt0 runtime startup code ✅
@@ -161,16 +161,18 @@ This document tracks the major milestones for meniOS development.
 - [x] #194 - Syscall ABI documentation ✅
 - [x] #195 - Userland build system ✅
 - [x] #29 - Cross-compiler toolchain integration ✅
+- [x] #191 - binutils port (as, ld, ar, ranlib, nm, objdump, readelf, size, objcopy, strip, strings) ✅ **CLOSED 2025-10-29**
 - [ ] #190 - TCC (Tiny C Compiler) port
-- [ ] #191 - binutils (as, ld) port
 
-**Critical Path**: #192 ✅ → #193 ✅ → #194 ✅ → #195 ✅ → #29 ✅ → #190/#191
+**Critical Path**: #192 ✅ → #193 ✅ → #194 ✅ → #195 ✅ → #29 ✅ → #191 ✅ → #190
 
 **Dependencies**:
-- #190 requires #29 ✅, #189 ✅ (FAT32 writes COMPLETE), **Buddy Allocator milestone** ✅ (COMPLETE)
-- #191 requires #29 ✅, #189 ✅ (FAT32 writes COMPLETE), **Buddy Allocator milestone** ✅ (COMPLETE)
+- #190 requires #29 ✅, #189 ✅ (FAT32 writes COMPLETE), **Buddy Allocator milestone** ✅ (COMPLETE), **#191 ✅** (binutils COMPLETE)
+- ~~#191 requires #29 ✅, #189 ✅ (FAT32 writes COMPLETE), **Buddy Allocator milestone** ✅ (COMPLETE)~~ ✅ COMPLETE
 
-**Progress**: Core toolchain complete! crt0, libc, syscall ABI docs, separated build system, and x86_64-elf cross-compiler integration all done. Remaining: TCC/binutils ports for native compilation.
+**Progress**: Core toolchain + binutils complete! Full GNU binutils 2.45 suite operational on meniOS with all 11 tools working (as, ld, ar, ranlib, nm, objdump, readelf, size, objcopy, strip, strings). Complete native development environment achieved. Remaining: TCC port for native compilation.
+
+**Achievement**: Complete GNU binutils 2.45 toolchain now available! Developers can assemble, link, create static libraries, and analyze binaries entirely within meniOS. This represents a major milestone in native development capabilities.
 
 ---
 

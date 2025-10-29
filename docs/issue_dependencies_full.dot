@@ -124,7 +124,7 @@ digraph IssueDependencies {
         issue194 [label="#194: Syscall\nABI docs", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED
         issue195 [label="#195: Userland\nbuild system", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED
         issue190 [label="#190: TCC\nport", fillcolor="#DDA0DD"];
-        issue191 [label="#191: binutils\nport", fillcolor="#DDA0DD"];
+        issue191 [label="#191: binutils\nport\n✅ COMPLETE", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED
     }
 
     subgraph cluster_libc_gaps {
@@ -155,7 +155,7 @@ digraph IssueDependencies {
         stat_done [label="✅ stat/fstat/lstat\naccess/realpath", fillcolor="#90EE90", style="filled,dashed"];
         issue365 [label="#365: chmod/fchmod\n✅ COMPLETE", fillcolor="#90EE90", style="filled,dashed"];
         issue366 [label="#366: Pseudo-fs metadata\n✅ COMPLETE", fillcolor="#90EE90", style="filled,dashed"];
-        issue367 [label="#367: Rich FAT32 metadata\ntimestamps/DOS attrs", fillcolor="#FFE4B5"];
+        issue367 [label="#367: Rich FAT32 metadata\n✅ COMPLETE", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED
         issue368 [label="#368: pathconf()\nall POSIX queries", fillcolor="#FFE4B5"];
         issue369 [label="#369: system()\nshell execution", fillcolor="#FFE4B5"];
 
@@ -356,7 +356,7 @@ digraph IssueDependencies {
 
         issue202 [label="#202: /dev/zero\nEOF bug", fillcolor="#FFB6C1"];
         issue203 [label="#203: Pipeline\nhang bug", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED
-        issue236 [label="#236: Delete key\nnot working", fillcolor="#FFB6C1"];
+        issue236 [label="#236: Delete key\nnot working", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED
         issue262 [label="#262: User-mode\npage fault handling", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED
         issue274 [label="#274: Init process\ncrash fix", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED
         issue319 [label="#319: Doom null\npointer crash", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED
