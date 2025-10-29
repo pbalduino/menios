@@ -100,14 +100,14 @@ GNU [binutils 2.45](https://www.gnu.org/software/binutils/) has also been staged
   - ✅ stat/fstat/lstat syscalls (SYS_STAT, SYS_LSTAT, SYS_FSTAT)
   - ✅ access(), realpath() (using stat infrastructure)
 - ⚠️ pathconf() (partial - only _PC_PATH_MAX) - #368
-  - ✅ chmod/fchmod (#365) implemented for tmpfs + FAT32; utime (#317) still pending
+  - ✅ chmod/fchmod/utime (#365/#317) implemented for tmpfs + FAT32
     - ✅ Host harness now forwards these calls to the underlying OS (MENIOS_HOST_TEST) so native tool tests keep metadata.
     - ✅ Kernel implements the syscalls for tmpfs-backed paths, so `/tmp` usage inside meniOS preserves permissions and timestamps.
-    - ⚠️ FAT32/devfs/procfs still return `ENOSYS`; follow-up work required for full filesystem coverage.
+    - ⚠️ devfs/procfs remain read-only; metadata writes skipped until #366.
   - ✅ rich FAT32 metadata (#367) - **COMPLETE!**
   - ✅ chmod/fchmod on FAT32 (#365) - **COMPLETE!** (read-only bit mirrors POSIX perms)
-  - 🚀 utime on FAT32 (#317) - **READY TO START** (unblocked by #367)
-  - ⏳ pseudo-fs metadata (#366) - blocked by #317
+  - ✅ utime on FAT32 (#317) - **COMPLETE!** (POSIX timestamps persist on FAT32)
+  - ⏳ pseudo-fs metadata (#366) - blocked by pseudo-fs read-only work
   - ❌ isatty (#347), brk/sbrk (#21), system() (#369), timing APIs (#327)
 - ✅ Pipes & FIFOs - **FULLY COMPLETE!** (#206 ✅, #207 ✅, #208 ✅, #209 ✅)
 - ✅ #189 (file writes) - **COMPLETE!** (#291, #292, #293 all done)
@@ -126,8 +126,8 @@ GNU [binutils 2.45](https://www.gnu.org/software/binutils/) has also been staged
 - ✅ Host harness metadata bridge in libc allows `ar` to preserve mode/timestamps during tests.
 - ✅ Kernel syscalls for `chmod`/`fchmod`/`utime` land for tmpfs, enabling native archive rewrites in `/tmp`.
 - ✅ FAT32 metadata foundation (#367) - **COMPLETE!**
-- 🚀 FAT32 utime (#317) ready to start - 2-3 weeks to completion
-- Full ar/ranlib validation on /HOME (FAT32) after #317/#366 complete
+- ✅ FAT32 chmod/utime (#365/#317) - COMPLETE! (metadata parity achieved for tmpfs/FAT32)
+- Full ar/ranlib validation on /HOME (FAT32) after #366 complete
 
 **Status:** ✅ **BUILD COMPLETE - NATIVE TESTING COMPLETE**
 - ✅ Successfully built under `DOCKER_IMAGE=menios:trunk`
@@ -142,19 +142,19 @@ GNU [binutils 2.45](https://www.gnu.org/software/binutils/) has also been staged
   - `as` → `ld` → `nm` → `objdump` → `readelf` - Full workflow working on FAT32!
   - `stat`, `realpath` - Metadata and path operations working
 - ✅ **#371 (ld freeze bug) RESOLVED!** - `as` and `ld` fully functional
-- ✅ **ar/ranlib validated on FAT32** - workflows succeed; metadata polish pending (#317)
+- ✅ **ar/ranlib validated on FAT32** - workflows succeed; metadata polish pending (#366)
 - ✅ **size validated** - dynamic width formatting enabled
 - ✅ **objcopy/strings/strip validated** - native smoke tests pass
 - ✅ Manual tool sweep executed (2025-10-29): assembled/linked/archived, ran `objdump`, `size`, `strings`, `strip`, and confirmed expected output
 
 **Remaining Enhancements:**
-- #317 - utime syscall on FAT32 (nice to have for metadata parity)
-- Note: ar/ranlib work correctly today; timestamp polish will land via #317.
+- #366 - pseudo-fs metadata (bring devfs/procfs/pipe stat parity)
+- Note: ar/ranlib work correctly today; metadata polish will land via #366.
 
 **Next Steps:**
 1. ✅ ~~Fix #371 (ld freeze bug)~~ - COMPLETE!
 2. ✅ ~~Test core workflow (assemble → link → inspect)~~ - COMPLETE!
-3. ✅ ~~Test ar/ranlib on FAT32~~ - COMPLETE! (works without #317)
+3. ✅ ~~Test ar/ranlib on FAT32~~ - COMPLETE! (works without #366)
 4. ✅ ~~Test objcopy/strings/strip~~ - COMPLETE!
 5. ✅ ~~Implement #376~~ - COMPLETE! dynamic width now supported
 6. ✅ ~~Retest size command~~ - COMPLETE! output now renders correctly

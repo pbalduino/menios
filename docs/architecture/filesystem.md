@@ -114,8 +114,7 @@ the VFS, invoke the appropriate driver callbacks, convert results to
 - Converts the FAT timestamps and attributes for both path-based queries and
   open-file handles so VFS caching stays coherent.
 - **Remaining limitations** (tracked in issue #367 unless noted):
-  - `fat32_utimens_path()` still returns `-ENOSYS`; timestamp mutations are
-    tracked under #317.
+  - Timestamp granularity follows FAT32 rules (2s resolution for mtime, date-only for atime).
   - Long filename (LFN) metadata is not used to refine permissions or locales.
   - POSIX ownership remains synthetic (uid/gid are always zero).
 
@@ -144,8 +143,7 @@ the VFS, invoke the appropriate driver callbacks, convert results to
   devfs, pipes, console devices).
 - **Issue #367** — Parse rich FAT32 metadata (timestamps, DOS attributes, LFN
   information).
-- **Issue #317** — Implement `utime()` syscall to modify file timestamps
-  (write-side of metadata).
+- ~~**Issue #317** — Implement `utime()` syscall to modify file timestamps~~ ✅ Completed
 - **Issue #368** — Complete `pathconf()` implementation for all POSIX queries.
 
 ## Limitations and Follow-up Work

@@ -157,7 +157,7 @@ Each milestone should land with dedicated tests, doc updates, and a stabilizatio
 4. Inventory filesystem formats and builder scripts to scope metadata migration effort.
 5. ✅ **Complete FAT32 metadata work** (#367) - **DONE!**
 6. ✅ **Add chmod support to FAT32** (#365) - **DONE!**
-7. 🚀 **Add utime support to FAT32** (#317) - READY TO START
+7. ✅ **Add utime support to FAT32** (#317) - **DONE!**
 8. **Add permission enforcement** to existing syscalls that already have metadata infrastructure
 
 Capturing answers to the open questions before implementation will reduce churn and keep the multi-user initiative on schedule.
@@ -174,13 +174,11 @@ Capturing answers to the open questions before implementation will reduce churn 
 ### Active Metadata Work (Building Blocks for Multi-User)
 - ✅ **#365** - chmod/fchmod syscalls (tmpfs + FAT32 support landed)
   - Read-only bit now mirrors POSIX write permissions across FAT32 and tmpfs
-- 🚀 **#317** - utime syscall (tmpfs complete, **FAT32 READY TO START**)
-  - Unblocked by #367 completion
-  - Convert POSIX timestamps to/from DOS date/time
-  - Timeline: 3-5 days
+- ✅ **#317** - utime syscall (tmpfs + FAT32 support landed)
+  - POSIX timestamps now persist across tmpfs and FAT32
 - ⏳ **#366** - Pseudo-fs metadata support (devfs/procfs consistency)
-  - Blocked by #317
-  - Timeline: 3-5 days after utime lands
+  - Ready to implement now that #317 is complete
+  - Timeline: 3-5 days
 
 ### Planned Multi-User Work
 - 📋 **#232** - Implement chmod and chown syscalls (comprehensive plan exists)
@@ -199,14 +197,14 @@ Capturing answers to the open questions before implementation will reduce churn 
 ### Key Dependencies
 **Before starting Phase 1:**
 1. ✅ Complete #367 (FAT32 metadata foundation) - **DONE!**
-2. ✅ Complete #365 (chmod/utime parity groundwork) - **DONE!**
-3. 🚀 Complete #317 (utime on all filesystems) - **READY TO START**
-4. ⏳ Complete #366 (pseudo-fs consistency) - blocked by #317
+2. ✅ Complete #365 (chmod parity) - **DONE!**
+3. ✅ Complete #317 (utime on all filesystems) - **DONE!**
+4. 🚀 Complete #366 (pseudo-fs consistency) - READY TO START
 
 **These provide the filesystem metadata layer that multi-user support will build upon.**
 
 ---
 
 **Last Updated:** 2025-10-30
-**Status:** ✅ #365 and #367 complete! #317 ready to start.
-**Timeline:** ~2 weeks for remaining metadata support (#317/#366), then 6-12 months for full multi-user support
+**Status:** ✅ #365/#317/#367 complete! #366 ready to start.
+**Timeline:** ~1 week for remaining metadata support (#366), then 6-12 months for full multi-user support

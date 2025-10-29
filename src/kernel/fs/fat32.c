@@ -3420,6 +3420,94 @@ static int fat32_stream_chmod(file_t* file, mode_t mode) {
   return 0;
 }
 
+static int fat32_update_entry_times(fat32_fs_t* fs,
+                                    fat32_dir_entry_info_t* info,
+                                    const struct timespec times[2]) {
+  if(fs == NULL || info == NULL) {
+    return -EINVAL;
+  }
+
+  struct timespec atime = {0};
+  struct timespec mtime = {0};
+  bool update_atime = false;
+  bool update_mtime = false;
+  if(!fat32_select_times(times, &atime, &update_atime, &mtime, &update_mtime)) {
+    return 0;
+  }
+
+  fat32_dir_entry_metadata_update_t update;
+  memset(&update, 0, sizeof(update));
+
+  if(update_mtime) {
+    uint16_t write_date = 0;
+    uint16_t write_time = 0;
+    if(!fat32_timespec_to_fat_date(&mtime, &write_date) ||
+       !fat32_timespec_to_fat_time(&mtime, &write_time, NULL)) {
+      return -EINVAL;
+    }
+    update.update_write = true;
+    update.write_date = write_date;
+    update.write_time = write_time;
+  }
+
+  if(update_atime) {
+    uint16_t access_date = 0;
+    if(!fat32_timespec_to_fat_date(&atime, &access_date)) {
+      return -EINVAL;
+    }
+    update.update_access = true;
+    update.access_date = access_date;
+  }
+
+  if(update_mtime) {
+    uint16_t creation_date = 0;
+    uint16_t creation_time = 0;
+    uint8_t creation_tenths = 0;
+    if(!fat32_timespec_to_fat_date(&mtime, &creation_date) ||
+       !fat32_timespec_to_fat_time(&mtime, &creation_time, &creation_tenths)) {
+      return -EINVAL;
+    }
+    update.update_creation = true;
+    update.creation_date = creation_date;
+    update.creation_time = creation_time;
+    update.creation_time_tenths = creation_tenths;
+  }
+
+  uint8_t new_attr = info->raw_entry.attr;
+  if(update_mtime && !info->is_directory) {
+    new_attr |= FAT32_ATTR_ARCHIVE;
+  }
+  if(new_attr != info->raw_entry.attr) {
+    update.update_attr = true;
+    update.attr = new_attr;
+  }
+
+  if(!update.update_attr && !update.update_write && !update.update_access && !update.update_creation) {
+    return 0;
+  }
+
+  fat32_dir_entry_raw_t updated_entry;
+  if(!fat32_apply_metadata_update(fs, info, &update, &updated_entry)) {
+    return -EIO;
+  }
+
+  info->raw_entry = updated_entry;
+  return 0;
+}
+
+static int fat32_stream_utimens(file_t* file, const struct timespec times[2]) {
+  if(file == NULL) {
+    return -EINVAL;
+  }
+
+  fat32_stream_t* stream = (fat32_stream_t*)file->private_data;
+  if(stream == NULL || stream->fs == NULL) {
+    return -EINVAL;
+  }
+
+  return fat32_update_entry_times(stream->fs, &stream->info, times);
+}
+
 static file_t* fat32_stream_create(fat32_fs_t* fs,
                                    const fat32_dir_entry_info_t* info,
                                    int flags) {
@@ -3669,7 +3757,7 @@ static const file_ops_t fat32_stream_file_ops = {
   .mmap = NULL,
   .stat = fat32_stream_stat,
   .chmod = fat32_stream_chmod,
-  .utimens = NULL,
+  .utimens = fat32_stream_utimens,
 };
 
 int fat32_open_adapter(void* fs_ctx, const char* path, int flags, file_t** out_file) {
@@ -3830,69 +3918,5 @@ int fat32_utimens_path(void* fs_ctx, const char* path, const struct timespec tim
     return -ENOENT;
   }
 
-  struct timespec atime = {0};
-  struct timespec mtime = {0};
-  bool update_atime = false;
-  bool update_mtime = false;
-  if(!fat32_select_times(times, &atime, &update_atime, &mtime, &update_mtime)) {
-    return 0;
-  }
-
-  fat32_dir_entry_metadata_update_t update;
-  memset(&update, 0, sizeof(update));
-
-  if(update_mtime) {
-    uint16_t write_date = 0;
-    uint16_t write_time = 0;
-    if(!fat32_timespec_to_fat_date(&mtime, &write_date) ||
-       !fat32_timespec_to_fat_time(&mtime, &write_time, NULL)) {
-      return -EINVAL;
-    }
-    update.update_write = true;
-    update.write_date = write_date;
-    update.write_time = write_time;
-  }
-
-  if(update_atime) {
-    uint16_t access_date = 0;
-    if(!fat32_timespec_to_fat_date(&atime, &access_date)) {
-      return -EINVAL;
-    }
-    update.update_access = true;
-    update.access_date = access_date;
-  }
-
-  if(update_mtime) {
-    uint16_t creation_date = 0;
-    uint16_t creation_time = 0;
-    uint8_t creation_tenths = 0;
-    if(!fat32_timespec_to_fat_date(&mtime, &creation_date) ||
-       !fat32_timespec_to_fat_time(&mtime, &creation_time, &creation_tenths)) {
-      return -EINVAL;
-    }
-    update.update_creation = true;
-    update.creation_date = creation_date;
-    update.creation_time = creation_time;
-    update.creation_time_tenths = creation_tenths;
-  }
-
-  uint8_t new_attr = info.raw_entry.attr;
-  if(update_mtime && !info.is_directory) {
-    new_attr |= FAT32_ATTR_ARCHIVE;
-  }
-  if(new_attr != info.raw_entry.attr) {
-    update.update_attr = true;
-    update.attr = new_attr;
-  }
-
-  if(!update.update_attr && !update.update_write && !update.update_access && !update.update_creation) {
-    return 0;
-  }
-
-  fat32_dir_entry_raw_t updated_entry;
-  if(!fat32_apply_metadata_update(fs, &info, &update, &updated_entry)) {
-    return -EIO;
-  }
-
-  return 0;
+  return fat32_update_entry_times(fs, &info, times);
 }

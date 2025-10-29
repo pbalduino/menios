@@ -320,7 +320,7 @@ digraph IssueDependencies {
         issue314 [label="#314: Shell startup scripts\n.moshrc support", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED
         issue315 [label="#315: Message of the day\nmotd command", fillcolor="#E0FFFF"];
         issue316 [label="#316: touch command\nfile creation", fillcolor="#E0FFFF"];
-        issue317 [label="#317: utime() syscall\ntimestamp modification", fillcolor="#FFE4B5"];
+        issue317 [label="#317: utime() syscall\n✅ COMPLETE", fillcolor="#90EE90", style="filled,dashed"];
         issue318 [label="#318: uname command\nsystem information", fillcolor="#E0FFFF"];
         issue363 [label="#363: Serial port FD\ndebug logging", fillcolor="#FFE4B5"];
         issue370 [label="#370: stat command\n✅ COMPLETE", fillcolor="#90EE90", style="filled,dashed"];

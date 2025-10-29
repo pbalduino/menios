@@ -6,6 +6,7 @@
 #include <stddef.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <time.h>
 
 #include <kernel/block_device.h>
 
@@ -417,6 +418,73 @@ void test_fat32_fchmod_updates_read_only(void) {
   fat32_test_env_destroy(&env);
 }
 
+void test_fat32_futimens_updates_timestamps(void) {
+  fat32_test_env_t env;
+  fat32_test_env_init(&env, FAT32_TEST_CLUSTER_COUNT);
+
+  size_t next_index = 0;
+  write_directory_entry(&env, env.fs.root_cluster, &next_index, "LongFileName123.txt", false, NULL);
+
+  fs_mount_t mount = {
+    .type = FS_TYPE_FAT32,
+    .fat32 = env.fs,
+  };
+
+  file_t* file = NULL;
+  int rc = fat32_open_adapter(&mount, "/LongFileName123.txt", O_RDONLY, &file);
+  TEST_ASSERT_EQUAL_INT(0, rc);
+  TEST_ASSERT_NOT_NULL(file);
+
+  struct timespec req[2];
+  req[0].tv_sec = 1700000500ll;
+  req[0].tv_nsec = 0;
+  req[1].tv_sec = 1700002000ll;
+  req[1].tv_nsec = 0;
+
+  rc = file_utimens(file, req);
+  TEST_ASSERT_EQUAL_INT(0, rc);
+
+  file_unref(file);
+
+  uint8_t buffer[512];
+  TEST_ASSERT_TRUE(fat32_read_cluster(&env.fs, env.fs.root_cluster, buffer));
+  fat32_dir_entry_raw_t* entries = (fat32_dir_entry_raw_t*)buffer;
+  fat32_dir_entry_raw_t* short_entry = &entries[2];
+
+  uint16_t expected_write_date = 0;
+  uint16_t expected_write_time = 0;
+  uint8_t expected_write_tenths = 0;
+  TEST_ASSERT_TRUE(fat32_timespec_to_fat_date(&req[1], &expected_write_date));
+  TEST_ASSERT_TRUE(fat32_timespec_to_fat_time(&req[1], &expected_write_time, &expected_write_tenths));
+  TEST_ASSERT_EQUAL_UINT16(expected_write_date, short_entry->write_date);
+  TEST_ASSERT_EQUAL_UINT16(expected_write_time, short_entry->write_time);
+
+  uint16_t expected_access_date = 0;
+  TEST_ASSERT_TRUE(fat32_timespec_to_fat_date(&req[0], &expected_access_date));
+  TEST_ASSERT_EQUAL_UINT16(expected_access_date, short_entry->last_access_date);
+
+  uint16_t expected_creation_date = 0;
+  uint16_t expected_creation_time = 0;
+  uint8_t expected_creation_tenths = 0;
+  TEST_ASSERT_TRUE(fat32_timespec_to_fat_date(&req[1], &expected_creation_date));
+  TEST_ASSERT_TRUE(fat32_timespec_to_fat_time(&req[1], &expected_creation_time, &expected_creation_tenths));
+  TEST_ASSERT_EQUAL_UINT16(expected_creation_date, short_entry->creation_date);
+  TEST_ASSERT_EQUAL_UINT16(expected_creation_time, short_entry->creation_time);
+  TEST_ASSERT_EQUAL_UINT8(expected_creation_tenths, short_entry->creation_time_tenths);
+  TEST_ASSERT_TRUE((short_entry->attr & FAT32_ATTR_ARCHIVE) != 0);
+
+  fs_path_info_t info;
+  TEST_ASSERT_TRUE(fs_path_info(&mount, "/LongFileName123.txt", &info));
+  TEST_ASSERT_TRUE(info.has_times);
+  TEST_ASSERT_EQUAL_INT64(req[1].tv_sec, info.mtime.tv_sec);
+  TEST_ASSERT_EQUAL_INT64(info.mtime.tv_sec, info.ctime.tv_sec);
+
+  time_t expected_atime_sec = (req[0].tv_sec / 86400ll) * 86400ll;
+  TEST_ASSERT_EQUAL_INT64(expected_atime_sec, info.atime.tv_sec);
+
+  fat32_test_env_destroy(&env);
+}
+
 void test_fat32_utimens_updates_timestamps(void) {
   fat32_test_env_t env;
   fat32_test_env_init(&env, FAT32_TEST_CLUSTER_COUNT);
@@ -485,6 +553,7 @@ int main(void) {
   RUN_TEST(test_remove_directory_requires_empty);
   RUN_TEST(test_fat32_chmod_toggles_read_only);
   RUN_TEST(test_fat32_fchmod_updates_read_only);
+  RUN_TEST(test_fat32_futimens_updates_timestamps);
   RUN_TEST(test_fat32_utimens_updates_timestamps);
   return UNITY_END();
 }

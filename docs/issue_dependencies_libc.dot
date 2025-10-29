@@ -72,7 +72,7 @@ digraph LibcEcosystem {
 
         // File mutation
         issue365 [label="#365: chmod/fchmod\n✅ COMPLETE", fillcolor="#90EE90", style="filled,dashed"];
-        issue317 [label="#317: utime\nfile timestamps\n\n2-3 weeks", fillcolor="#FFE4B5"];
+        issue317 [label="#317: utime\n✅ COMPLETE", fillcolor="#90EE90", style="filled,dashed"];
 
         // Other stubs
         issue368 [label="#368: Complete pathconf\nall POSIX queries\n\n1-2 weeks", fillcolor="#FFE4B5"];
@@ -208,7 +208,7 @@ digraph LibcEcosystem {
         style=filled;
         fillcolor="#FFFACD";
 
-        priority [label="✅ COMPLETE: Signal API (#337), Float parsing (#338)\n\nCURRENT PRIORITIES:\n1. Pseudo-fs metadata (#366) - HIGH (stat on tmpfs/devfs)\n2. stat command (#370) - MEDIUM (useful debugging tool, quick win)\n3. utime (#317) - MEDIUM (build systems)\n4. Rich FAT32 metadata (#367) - MEDIUM (timestamps)\n5. Thread-safe libc (#339) - After pthread\n6. system() (#369) - MEDIUM (utility scripts)\n7. TTY helpers (#347) - Quick win (2-3 weeks)\n8. pathconf (#368) - LOW (autoconf support)\n9. Extended stdio (#340) - Medium priority\n10. Extended math (#344) - Medium priority\n11. Regex (#345) - Needed for text tools\n12. Multiplexing (#348) - High for servers",
+        priority [label="✅ COMPLETE: Signal API (#337), Float parsing (#338)\n\nCURRENT PRIORITIES:\n1. Pseudo-fs metadata (#366) - HIGH (stat on tmpfs/devfs)\n2. stat command (#370) - MEDIUM (useful debugging tool, quick win)\n3. Rich FAT32 metadata (#367) - MEDIUM (timestamps)\n4. Thread-safe libc (#339) - After pthread\n5. system() (#369) - MEDIUM (utility scripts)\n6. TTY helpers (#347) - Quick win (2-3 weeks)\n7. pathconf (#368) - LOW (autoconf support)\n8. Extended stdio (#340) - Medium priority\n9. Extended math (#344) - Medium priority\n10. Regex (#345) - Needed for text tools\n11. Multiplexing (#348) - High for servers",
                  shape=note, fillcolor="#FFFACD", style=filled];
     }
 }

@@ -40,11 +40,11 @@ The meniOS project has grown to over 100+ tracked issues with complex interdepen
 - Foundation: Minimal libc #193 (complete ✅)
 - Doom libc gaps: #304-#310 (all complete ✅)
 - **TCC blockers:** #337 (Signal API ✅ CLOSED), #338 (Float parsing ✅ CLOSED)
-- **Stubbed functions:** #364 (parent), #366-#369, #317, #347, #21, #327
+- **Stubbed functions:** #364 (parent), #366-#369, #347, #21, #327
   - ✅ stat/fstat/lstat (complete for FAT32, skeletal)
   - ✅ access(), realpath() (complete)
   - ⚠️ pathconf() (partial - #368)
-  - ✅ chmod/fchmod (#365); ❌ utime (#317)
+  - ✅ chmod/fchmod (#365); ✅ utime (#317)
   - ❌ pseudo-fs metadata (#366), rich FAT32 metadata (#367)
   - ❌ isatty (#347), brk/sbrk (#21), system() (#369)
   - ❌ timing APIs (#327)

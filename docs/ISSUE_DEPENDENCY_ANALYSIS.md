@@ -217,7 +217,7 @@ These issues form the backbone of the system and should be prioritized:
 
 **Priority**: Deferred - track #202 once higher-priority work lands
 
-### 📚 libc Stubbed Functions (Issues #364-#369, #317, #347, #21, #327)
+### 📚 libc Stubbed Functions (Issues #364-#369, #347, #21, #327)
 ```
                     ┌──→ ✅ stat/fstat/lstat (COMPLETE for FAT32)
                     │   ✅ access() (COMPLETE)
@@ -230,7 +230,7 @@ These issues form the backbone of the system and should be prioritized:
                     │
                     ├──→ #365 (chmod/fchmod) ──┐
                     │                           ├──→ File mutation APIs
-                    ├──→ #317 (utime) ─────────┘
+                    ├──→ ~~#317 (utime)~~ ✅ ─────────┘
                     │
                     ├──→ #347 (isatty, ttyname) ──→ TTY helper functions
                     │
@@ -253,7 +253,6 @@ These issues form the backbone of the system and should be prioritized:
 - ⚠️ **pathconf()** - Partially implemented (only `_PC_PATH_MAX`)
 
 **Remaining Stubs**:
-- 🚧 **utime** (#317) - Modify file timestamps
 - ❌ **isatty** (#347) - Check if fd is terminal
 - ❌ **brk/sbrk** (#21) - Dynamic memory allocation
 - ❌ **system()** (#369) - Execute shell commands
@@ -382,7 +381,7 @@ These issues form the backbone of the system and should be prioritized:
 - **#191**: binutils port - ✅ **COMPLETE**
   - ✅ Successfully built and integrated into disk image
   - ✅ Binaries staged: as, ld, objdump, nm, ar, ranlib, touch
-  - ✅ ar/ranlib validated on FAT32; metadata parity still needs #317
+  - ✅ ar/ranlib validated on FAT32; pseudo-fs metadata still needs #366
   - ✅ objcopy/strings/strip/size validated via native smoke tests
   - ✅ Manual validation sweep (2025-10-29) confirmed `as`/`ld` workflow, archive tooling, `objdump`, `strings`, `strip`, and `size`
   - ✅ Documentation updated (README, roadmaps)
