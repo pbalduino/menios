@@ -126,9 +126,9 @@ GNU [binutils 2.45](https://www.gnu.org/software/binutils/) has also been staged
 - ✅ Kernel syscalls for `chmod`/`fchmod`/`utime` land for tmpfs, enabling native archive rewrites in `/tmp`.
 - ✅ FAT32 metadata foundation (#367) - **COMPLETE!**
 - 🚀 FAT32 chmod (#365) and utime (#317) ready to start - 2-3 weeks to completion
-- Full ar/ranlib support on /HOME (FAT32) after #365/#317/#366 complete
+- Full ar/ranlib validation on /HOME (FAT32) after #365/#317/#366 complete
 
-**Status:** ✅ **BUILD COMPLETE - READY FOR TESTING!**
+**Status:** ✅ **BUILD COMPLETE - NATIVE TESTING IN PROGRESS**
 - ✅ Successfully built under `DOCKER_IMAGE=menios:trunk`
 - ✅ Integrated into disk image (`make userland` + `make build`)
 - ✅ Binaries available in `/bin`: as, ld, objdump, nm, ar, ranlib, readelf, size, strings, strip, objcopy
@@ -137,22 +137,30 @@ GNU [binutils 2.45](https://www.gnu.org/software/binutils/) has also been staged
   - `stat` format strings corrected
   - `echo` redirection writes to files
   - stdio buffers flush on `exit()`
-- ✅ Manual smoke tests PASSED:
-  - Core workflow verified: `as → ld → nm → objdump → readelf`
-  - All tested tools working correctly
+- ✅ **Core toolchain verified (7 tools):**
+  - `as` → `ld` → `nm` → `objdump` → `readelf` - Full workflow working on FAT32!
+  - `stat`, `realpath` - Metadata and path operations working
 - ✅ **#371 (ld freeze bug) RESOLVED!** - `as` and `ld` fully functional
+- ❌ **ar/ranlib validation pending** - tmpfs-only success; FAT32 blocked by #365 (chmod) and #317 (utime)
+  - ✅ Works correctly on tmpfs (/tmp)
+  - ⚠️ Native validation incomplete until FAT32 metadata support lands
+- ⏳ **4 tools not tested yet:** objcopy, strings, strip, size
 - 📝 Automated test script created (`test_binutils.sh`)
 
-**Previous Blocker (RESOLVED):**
-- ~~**#371:** Bug: ld crashes/freezes on simple version queries~~ ✅ **FIXED!**
+**Current Blockers:**
+- **#365** - chmod/fchmod syscalls on FAT32 (READY TO START, 3-5 days)
+- **#317** - utime syscall on FAT32 (READY TO START, 3-5 days)
 
 **Next Steps:**
 1. ✅ ~~Fix #371 (ld freeze bug)~~ - COMPLETE!
-2. ⚠️ Run comprehensive tests for remaining tools (ar, ranlib, size, strings, strip, objcopy)
-3. ⚠️ Execute automated test script to validate all binutils
-4. ✅ ~~Test core workflow (assemble → link → inspect)~~ - COMPLETE!
-5. 📝 Final documentation update
-6. 🎉 Close #191 once all tools verified
+2. ✅ ~~Test core workflow (assemble → link → inspect)~~ - COMPLETE!
+3. 🚀 **Implement #365** (chmod on FAT32) - READY TO START
+4. 🚀 **Implement #317** (utime on FAT32) - READY TO START
+5. ⏳ Test ar/ranlib on FAT32 after #365/#317 complete
+6. ⏳ Test remaining tools (objcopy, strings, strip, size)
+7. ⏳ Execute automated test script to validate all binutils
+8. 📝 Final documentation update
+9. 🎉 Close #191 once all tools verified (1-2 weeks)
 
 **Timeline Estimate:** Testing & final verification: 1-2 days
 

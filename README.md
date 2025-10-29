@@ -63,8 +63,8 @@ MeniOS ships with a growing collection of userland utilities in `/bin`:
 - **ld** — GNU linker
 - **objdump** — Object file disassembler and analyzer
 - **nm** — Symbol table viewer
-- **ar** — Archive creator and manager
-- **ranlib** — Archive index generator
+- **ar** — Archive creator and manager (validation pending)
+- **ranlib** — Archive index generator (validation pending)
 
 ### Example Workflow
 
@@ -78,13 +78,19 @@ ld -o hello hello.o
 objdump -d hello
 nm hello
 
-# Create a static library
+# Create a static library (ar/ranlib validation pending)
 ar rcs libhello.a hello.o
 ranlib libhello.a
 nm libhello.a
 ```
 
-When running the binutils suite under the host harness (`MENIOS_HOST_TEST=1`), libc forwards `chmod`, `fchmod`, and `utime` to the host OS so tools like `ar` keep permissions and timestamps intact. On meniOS itself, those syscalls now reach the kernel for tmpfs-backed paths (e.g., `/tmp`), preserving permissions and timestamps in native runs. FAT32 and other filesystems still return `ENOSYS`; follow issues #365 and #317 for that remaining work.
+When running binutils under the host harness (`MENIOS_HOST_TEST=1`),
+libc forwards `chmod`, `fchmod`, and `utime` to the host OS.
+That keeps tool metadata intact for workflows like `ar`.
+On meniOS itself, those syscalls now reach the kernel for tmpfs-backed paths (e.g., `/tmp`),
+preserving permissions and timestamps in native runs.
+FAT32 and other filesystems still return `ENOSYS`; follow issues #365 and #317 for that remaining work.
+`ar` and `ranlib` ship in `/bin`, but end-to-end validation on meniOS is still pending.
 
 See [issue #191](https://github.com/pbalduino/menios/issues/191) for the complete binutils integration test suite.
 
