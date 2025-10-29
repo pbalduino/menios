@@ -3,6 +3,7 @@
 #include <stdint.h>
 #include <string.h>
 #include <sys/stat.h>
+#include <time.h>
 
 #include <kernel/condvar.h>
 #include <kernel/file.h>
@@ -10,6 +11,7 @@
 #include <kernel/heap.h>
 #include <kernel/mutex.h>
 #include <kernel/serial.h>
+#include <kernel/tsc.h>
 
 #define PIPE_BUFFER_SIZE 4096u
 
@@ -23,6 +25,9 @@ typedef struct pipe_shared_t {
   size_t     count;
   uint32_t   readers;
   uint32_t   writers;
+  struct timespec atime;
+  struct timespec mtime;
+  struct timespec ctime;
 } pipe_shared_t;
 
 typedef struct pipe_endpoint_t {
@@ -31,6 +36,14 @@ typedef struct pipe_endpoint_t {
 } pipe_endpoint_t;
 
 static const file_ops_t pipe_file_ops;
+
+static inline struct timespec pipe_now(void) {
+  uint64_t usec = unix_time_us();
+  struct timespec ts;
+  ts.tv_sec = (time_t)(usec / 1000000ull);
+  ts.tv_nsec = (long)((usec % 1000000ull) * 1000ull);
+  return ts;
+}
 
 static void pipe_shared_init(pipe_shared_t* shared) {
   kmutex_init(&shared->lock);
@@ -41,6 +54,10 @@ static void pipe_shared_init(pipe_shared_t* shared) {
   shared->count = 0;
   shared->readers = 1;
   shared->writers = 1;
+  struct timespec now = pipe_now();
+  shared->atime = now;
+  shared->mtime = now;
+  shared->ctime = now;
 }
 
 static void pipe_shared_write(pipe_shared_t* shared, const uint8_t* data, size_t length) {
@@ -91,6 +108,9 @@ static int64_t pipe_read_impl(file_t* file, void* buffer, size_t length) {
     size_t chunk = available < remaining ? available : remaining;
     chunk = pipe_shared_read(shared, out + total, chunk);
     total += chunk;
+    if(chunk > 0) {
+      shared->atime = pipe_now();
+    }
     kcondvar_signal(&shared->writable);
 
     if(total > 0) {
@@ -136,6 +156,11 @@ static int64_t pipe_write_impl(file_t* file, const void* buffer, size_t length) 
     size_t chunk = space < remaining ? space : remaining;
     pipe_shared_write(shared, data + total, chunk);
     total += chunk;
+    if(chunk > 0) {
+      struct timespec now = pipe_now();
+      shared->mtime = now;
+      shared->ctime = now;
+    }
     kcondvar_signal(&shared->readable);
 
     if(chunk == 0) {
@@ -174,6 +199,7 @@ static int pipe_close_impl(file_t* file) {
       kcondvar_broadcast(&shared->readable);
     }
   }
+  shared->ctime = pipe_now();
   cleanup = (shared->readers == 0 && shared->writers == 0);
   kmutex_unlock(&shared->lock);
 
@@ -197,6 +223,9 @@ static int pipe_stat_impl(file_t* file, struct stat* out_stat) {
   pipe_shared_t* shared = endpoint->shared;
   kmutex_lock(&shared->lock);
   size_t count = shared->count;
+  struct timespec atime = shared->atime;
+  struct timespec mtime = shared->mtime;
+  struct timespec ctime = shared->ctime;
   kmutex_unlock(&shared->lock);
 
   fs_path_info_t info;
@@ -216,6 +245,10 @@ static int pipe_stat_impl(file_t* file, struct stat* out_stat) {
     perms |= 0222;
   }
   info.mode = S_IFIFO | (perms ? perms : 0600);
+  info.has_times = true;
+  info.atime = atime;
+  info.mtime = mtime;
+  info.ctime = ctime;
 
   fs_path_info_to_stat(&info, out_stat);
   out_stat->st_rdev = 0;

@@ -4,12 +4,14 @@
 #include <string.h>
 #include <sys/fcntl.h>
 #include <sys/stat.h>
+#include <time.h>
 
 #include <kernel/console.h>
 #include <kernel/file.h>
 #include <kernel/fs.h>
 #include <kernel/heap.h>
 #include <kernel/pmm.h>
+#include <kernel/tsc.h>
 #include <kernel/vfs.h>
 
 #define PROCFS_MAX_NAME 64
@@ -26,6 +28,9 @@ typedef struct procfs_file_state_t {
   char*  buffer;
   size_t size;
   size_t offset;
+  struct timespec atime;
+  struct timespec mtime;
+  struct timespec ctime;
 } procfs_file_state_t;
 
 static bool procfs_generate_meminfo(char** out_buffer, size_t* out_size);
@@ -99,6 +104,14 @@ static void procfs_fill_file_info(const procfs_entry_t* entry,
     out_info->size = size;
     out_info->mode = S_IFREG | 0444;
   }
+  out_info->has_times = true;
+  uint64_t usec = unix_time_us();
+  struct timespec now;
+  now.tv_sec = (time_t)(usec / 1000000ull);
+  now.tv_nsec = (long)((usec % 1000000ull) * 1000ull);
+  out_info->atime = now;
+  out_info->mtime = now;
+  out_info->ctime = now;
 }
 
 static bool procfs_stat(void* fs_ctx, const char* path, fs_path_info_t* out_info) {
@@ -185,6 +198,11 @@ static int64_t procfs_file_read(file_t* file, void* buffer, size_t length) {
   }
   memcpy(buffer, state->buffer + state->offset, to_copy);
   state->offset += to_copy;
+  if(to_copy > 0) {
+    uint64_t usec = unix_time_us();
+    state->atime.tv_sec = (time_t)(usec / 1000000ull);
+    state->atime.tv_nsec = (long)((usec % 1000000ull) * 1000ull);
+  }
   return (int64_t)to_copy;
 }
 
@@ -213,6 +231,9 @@ static int procfs_file_stat(file_t* file, struct stat* out_stat) {
   }
   fs_path_info_t info;
   procfs_fill_file_info(state->entry, state->size, &info);
+  info.atime = state->atime;
+  info.mtime = state->mtime;
+  info.ctime = state->ctime;
   fs_path_info_to_stat(&info, out_stat);
   return 0;
 }
@@ -258,6 +279,11 @@ static int procfs_open(void* fs_ctx, const char* path, int flags, file_t** out_f
   state->buffer = buffer;
   state->size = size;
   state->offset = 0;
+  uint64_t usec = unix_time_us();
+  time_t sec = (time_t)(usec / 1000000ull);
+  long nsec = (long)((usec % 1000000ull) * 1000ull);
+  state->atime.tv_sec = state->mtime.tv_sec = state->ctime.tv_sec = sec;
+  state->atime.tv_nsec = state->mtime.tv_nsec = state->ctime.tv_nsec = nsec;
 
   file_t* handle = file_create(&procfs_file_ops, state, FILE_MODE_READ);
   if(handle == NULL) {

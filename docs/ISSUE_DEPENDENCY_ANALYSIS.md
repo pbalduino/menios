@@ -224,7 +224,7 @@ These issues form the backbone of the system and should be prioritized:
                     │   ✅ realpath() (COMPLETE)
 #193 (libc) ────────┤   ⚠️  pathconf() (PARTIAL - only _PC_PATH_MAX) ──→ #368 (complete pathconf)
                     │
-                    ├──→ #366 (pseudo-fs metadata) ──→ tmpfs, procfs, devfs, pipes .stat
+                    ├──→ ~~#366 (pseudo-fs metadata)~~ ✅ ──→ tmpfs, procfs, devfs, pipes .stat
                     │
                     ├──→ #367 (rich FAT32 metadata) ──→ timestamps, DOS attrs, LFN
                     │
@@ -242,12 +242,12 @@ These issues form the backbone of the system and should be prioritized:
 ```
 
 **Implemented** (tracked in #364):
-- ✅ **stat()/lstat()/fstat()** - File metadata queries (FAT32 only, skeletal)
+- ✅ **stat()/lstat()/fstat()** - File metadata queries (FAT32 + pseudo-fs coverage)
   - Syscalls: `SYS_STAT`, `SYS_LSTAT`, `SYS_FSTAT` (89-91)
   - Kernel infrastructure: `fs_path_info`, `fs_path_info_to_stat()`
   - VFS integration: `vfs_path_info()`, `.stat` callback, metadata caching
-  - FAT32: size + read-only attribute only
-  - **Limitations**: No timestamps, limited attributes, pseudo-fs returns ENOSYS
+  - FAT32: full metadata (timestamps, DOS attributes) gated by #367 for rich info
+  - **Limitations**: FAT32 still lacks rich metadata (#367); pseudo-fs report synthetic but stable timestamps
 - ✅ **access()** - Uses stat() to check file permissions (was stub)
 - ✅ **realpath()** - POSIX-correct path resolution with stat() validation (was stub)
 - ⚠️ **pathconf()** - Partially implemented (only `_PC_PATH_MAX`)
@@ -259,7 +259,7 @@ These issues form the backbone of the system and should be prioritized:
 - ❌ **Timing APIs** (#327) - nanosleep, alarm, clock_*, setitimer, getitimer
 
 **Sub-tasks**:
-- **#366** - Add `.stat` to pseudo-filesystems (tmpfs, procfs, devfs, pipes)
+- ~~**#366** - Add `.stat` to pseudo-filesystems (tmpfs, procfs, devfs, pipes)~~ ✅ COMPLETE
 - **#367** - Parse rich FAT32 metadata (timestamps, DOS attributes, LFN data)
 - **#368** - Complete pathconf() for all POSIX queries
 - **#363** - Serial port file descriptor for debug logging (separate enhancement)
@@ -381,7 +381,7 @@ These issues form the backbone of the system and should be prioritized:
 - **#191**: binutils port - ✅ **COMPLETE**
   - ✅ Successfully built and integrated into disk image
   - ✅ Binaries staged: as, ld, objdump, nm, ar, ranlib, touch
-  - ✅ ar/ranlib validated on FAT32; pseudo-fs metadata still needs #366
+  - ✅ ar/ranlib validated on FAT32; pseudo-fs metadata ✅ (devfs/procfs/pipes handled)
   - ✅ objcopy/strings/strip/size validated via native smoke tests
   - ✅ Manual validation sweep (2025-10-29) confirmed `as`/`ld` workflow, archive tooling, `objdump`, `strings`, `strip`, and `size`
   - ✅ Documentation updated (README, roadmaps)

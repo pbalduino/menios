@@ -46,10 +46,9 @@
 - Syscalls `SYS_STAT`, `SYS_LSTAT`, `SYS_FSTAT` expose this to userspace,
   enabling POSIX stat()/fstat()/lstat() operations.
 - **Current status:**
-  - FAT32: `.stat` implemented (skeletal - size and read-only only; timestamps
-    and full attributes tracked in #367)
-  - Pseudo-filesystems (tmpfs, procfs, devfs, pipes): `.stat = NULL` (tracked
-    in #366)
+  - FAT32: `.stat` implemented (rich metadata tracked in #367)
+  - Pseudo-filesystems (tmpfs, procfs, devfs, pipes): `.stat` implemented with
+    synthetic but stable metadata
 - See `docs/architecture/filesystem.md` for detailed metadata architecture.
 
 ### 4. Read-Ahead and Write-Behind (#298)

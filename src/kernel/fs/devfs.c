@@ -1,12 +1,15 @@
 #include <kernel/devfs.h>
 
 #include <errno.h>
+#include <stdint.h>
 #include <string.h>
 #include <sys/fcntl.h>
 #include <sys/stat.h>
+#include <time.h>
 
 #include <kernel/file.h>
 #include <kernel/fs.h>
+#include <kernel/tsc.h>
 #include <kernel/serial.h>
 #include <kernel/vfs.h>
 
@@ -236,6 +239,15 @@ static void devfs_fill_info(const devfs_node_t* node, fs_path_info_t* out_info) 
   out_info->has_mode = true;
   out_info->mode = devfs_mode_for_node(node);
   out_info->is_read_only = (node->access_mode & FILE_MODE_WRITE) == 0;
+  out_info->has_times = true;
+  uint64_t usec = unix_time_us();
+  struct timespec now = {
+    .tv_sec = (time_t)(usec / 1000000ull),
+    .tv_nsec = (long)((usec % 1000000ull) * 1000ull),
+  };
+  out_info->atime = now;
+  out_info->mtime = now;
+  out_info->ctime = now;
 }
 
 static bool devfs_stat(void* fs_ctx, const char* path, fs_path_info_t* out_info) {
@@ -251,6 +263,15 @@ static bool devfs_stat(void* fs_ctx, const char* path, fs_path_info_t* out_info)
     out_info->mode = S_IFDIR | 0555;
     out_info->is_read_only = true;
     out_info->block_size = 4096;
+    out_info->has_times = true;
+    uint64_t usec = unix_time_us();
+    struct timespec now = {
+      .tv_sec = (time_t)(usec / 1000000ull),
+      .tv_nsec = (long)((usec % 1000000ull) * 1000ull),
+    };
+    out_info->atime = now;
+    out_info->mtime = now;
+    out_info->ctime = now;
     return true;
   }
 

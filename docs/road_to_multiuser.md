@@ -158,7 +158,8 @@ Each milestone should land with dedicated tests, doc updates, and a stabilizatio
 5. ✅ **Complete FAT32 metadata work** (#367) - **DONE!**
 6. ✅ **Add chmod support to FAT32** (#365) - **DONE!**
 7. ✅ **Add utime support to FAT32** (#317) - **DONE!**
-8. **Add permission enforcement** to existing syscalls that already have metadata infrastructure
+8. ✅ **Add pseudo-fs metadata support** (#366) - **DONE!**
+9. **Add permission enforcement** to existing syscalls that already have metadata infrastructure
 
 Capturing answers to the open questions before implementation will reduce churn and keep the multi-user initiative on schedule.
 
@@ -176,9 +177,8 @@ Capturing answers to the open questions before implementation will reduce churn 
   - Read-only bit now mirrors POSIX write permissions across FAT32 and tmpfs
 - ✅ **#317** - utime syscall (tmpfs + FAT32 support landed)
   - POSIX timestamps now persist across tmpfs and FAT32
-- ⏳ **#366** - Pseudo-fs metadata support (devfs/procfs consistency)
-  - Ready to implement now that #317 is complete
-  - Timeline: 3-5 days
+- ✅ **#366** - Pseudo-fs metadata support (devfs/procfs consistency)
+  - `/dev`, `/proc`, and pipes now report stable metadata (type, perms, timestamps)
 
 ### Planned Multi-User Work
 - 📋 **#232** - Implement chmod and chown syscalls (comprehensive plan exists)
@@ -199,12 +199,12 @@ Capturing answers to the open questions before implementation will reduce churn 
 1. ✅ Complete #367 (FAT32 metadata foundation) - **DONE!**
 2. ✅ Complete #365 (chmod parity) - **DONE!**
 3. ✅ Complete #317 (utime on all filesystems) - **DONE!**
-4. 🚀 Complete #366 (pseudo-fs consistency) - READY TO START
+4. ✅ Complete #366 (pseudo-fs consistency) - **DONE!**
 
 **These provide the filesystem metadata layer that multi-user support will build upon.**
 
 ---
 
 **Last Updated:** 2025-10-30
-**Status:** ✅ #365/#317/#367 complete! #366 ready to start.
-**Timeline:** ~1 week for remaining metadata support (#366), then 6-12 months for full multi-user support
+**Status:** ✅ #365/#366/#367/#317 complete! Metadata foundation finished.
+**Timeline:** Move on to permission enforcement & credential work; multi-user remains a 6-12 month effort
