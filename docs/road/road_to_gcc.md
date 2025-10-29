@@ -142,28 +142,27 @@ GNU [binutils 2.45](https://www.gnu.org/software/binutils/) has also been staged
   - `stat`, `realpath` - Metadata and path operations working
 - ✅ **#371 (ld freeze bug) RESOLVED!** - `as` and `ld` fully functional
 - ✅ **ar/ranlib validated on FAT32** - workflows succeed; metadata polish pending (#365/#317)
-- ⚠️ **size command partial** - Runs but formatting broken (needs #376)
+- ✅ **size validated** - dynamic width formatting enabled
 - ✅ **objcopy/strings/strip validated** - native smoke tests pass
 - 📝 Automated test script created (`test_binutils.sh`)
 
-**Current Blockers:**
-- **#365** - chmod/fchmod syscalls on FAT32 (READY TO START, 3-5 days) - needed for archive metadata parity
-- **#317** - utime syscall on FAT32 (READY TO START, 3-5 days) - needed for archive metadata parity
-- **#376** - printf dynamic field width (*) support (2-3 days) - blocks size table formatting
+**Remaining Enhancements:**
+- #365 - chmod/fchmod syscalls on FAT32 (nice to have for metadata parity)
+- #317 - utime syscall on FAT32 (nice to have for metadata parity)
+- Note: ar/ranlib work correctly today; metadata polish will land via #365/#317.
 
 **Next Steps:**
 1. ✅ ~~Fix #371 (ld freeze bug)~~ - COMPLETE!
 2. ✅ ~~Test core workflow (assemble → link → inspect)~~ - COMPLETE!
-3. 🚀 **Implement #376** (printf dynamic field width) - READY TO START (2-3 days)
-4. ⏳ Retest size command after #376 complete
-5. 🚀 **Implement #365** (chmod on FAT32) - READY TO START (3-5 days)
-6. 🚀 **Implement #317** (utime on FAT32) - READY TO START (3-5 days)
-7. ⏳ Re-validate archive metadata on FAT32 after #365/#317 complete
-8. ⏳ Execute automated test script to validate all binutils
-9. 📝 Final documentation update
-10. 🎉 Close #191 once all tools verified (2-3 weeks)
+3. ✅ ~~Test ar/ranlib on FAT32~~ - COMPLETE! (works without #365/#317)
+4. ✅ ~~Test objcopy/strings/strip~~ - COMPLETE!
+5. ✅ ~~Implement #376~~ - COMPLETE! dynamic width now supported
+6. ✅ ~~Retest size command~~ - COMPLETE! output now renders correctly
+7. ⏳ Execute automated test script to validate all binutils
+8. 📝 Final documentation update
+9. 🎉 **Close #191** - Ready after automated sweep + docs refresh
 
-**Timeline Estimate:** 2-3 weeks for full binutils validation (#376 + #365 + #317 + testing)
+**Timeline Estimate:** 1-2 days to full binutils completion (automated sweep + doc refresh)
 
 ## 🛣️ **Critical Path to Cross-Compilation**
 

@@ -926,9 +926,18 @@ static int menios_vsnprintf(char* dest, size_t size, const char* format, va_list
     }
 
     int field_width = 0;
-    while(*cursor >= '0' && *cursor <= '9') {
-      field_width = field_width * 10 + (*cursor - '0');
+    if(*cursor == '*') {
       cursor++;
+      field_width = va_arg(args, int);
+      if(field_width < 0) {
+        left_align = true;
+        field_width = -field_width;
+      }
+    } else {
+      while(*cursor >= '0' && *cursor <= '9') {
+        field_width = field_width * 10 + (*cursor - '0');
+        cursor++;
+      }
     }
 
     bool precision_specified = false;
@@ -936,9 +945,18 @@ static int menios_vsnprintf(char* dest, size_t size, const char* format, va_list
     if(*cursor == '.') {
       cursor++;
       precision_specified = true;
-      while(*cursor >= '0' && *cursor <= '9') {
-        precision = precision * 10 + (*cursor - '0');
+      if(*cursor == '*') {
         cursor++;
+        precision = va_arg(args, int);
+        if(precision < 0) {
+          precision_specified = false;
+          precision = 0;
+        }
+      } else {
+        while(*cursor >= '0' && *cursor <= '9') {
+          precision = precision * 10 + (*cursor - '0');
+          cursor++;
+        }
       }
     }
 

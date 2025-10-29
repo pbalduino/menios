@@ -68,7 +68,7 @@ MeniOS ships with a growing collection of userland utilities in `/bin`:
 - **objcopy** — Binary format translator (validated)
 - **strip** — Binary symbol stripper (validated)
 - **strings** — Extract ASCII strings from binaries (validated)
-- **size** — Segment size reporter (formatting blocked by #376)
+- **size** — Segment size reporter (validated)
 
 ### Example Workflow
 
@@ -95,7 +95,7 @@ On meniOS itself, those syscalls now reach the kernel for tmpfs-backed paths (e.
 preserving permissions and timestamps in native runs.
 FAT32 and other filesystems still return `ENOSYS`; follow issues #365 and #317 for that metadata work.
 `ar` and `ranlib` now pass native smoke tests, though FAT32 metadata fixes (#365/#317) still need to land.
-`objcopy`, `strip`, and `strings` now pass native smoke tests, while `size` runs but prints `%*s` placeholders until issue #376 lands.
+`objcopy`, `strip`, `strings`, and `size` now pass native smoke tests.
 
 See [issue #191](https://github.com/pbalduino/menios/issues/191) for the complete binutils integration test suite.
 

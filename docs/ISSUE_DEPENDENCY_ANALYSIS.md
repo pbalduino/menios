@@ -384,8 +384,7 @@ These issues form the backbone of the system and should be prioritized:
   - ✅ Successfully built and integrated into disk image
   - ✅ Binaries staged: as, ld, objdump, nm, ar, ranlib, touch
   - ✅ ar/ranlib validated on FAT32; metadata parity still needs #365/#317
-  - ✅ objcopy/strings/strip validated via native smoke tests
-  - ⚠️ size output formatting blocked by #376 (printf dynamic width)
+  - ✅ objcopy/strings/strip/size validated via native smoke tests
   - ❌ **BLOCKED:** ld crashes/freezes on version queries (#371)
   - 🔄 Integration testing blocked until bug is fixed
   - ✅ Documentation complete (README updated)
