@@ -118,12 +118,11 @@ the VFS, invoke the appropriate driver callbacks, convert results to
   - Long filename (LFN) metadata is not used to refine permissions or locales.
   - POSIX ownership remains synthetic (uid/gid are always zero).
 
-**Pseudo-filesystems** (tracked in issue #366):
-- **tmpfs, procfs, devfs, pipes, console devices** — Currently expose
-  `.stat = NULL`, causing all stat queries to return `-ENOSYS`.
-- Each of these drivers needs to implement a `.stat` callback to report
-  appropriate metadata (file type, size for buffered data, timestamps, device
-  type for character/block devices, etc.).
+**Pseudo-filesystems**:
+- **tmpfs, procfs, devfs, pipes, console devices** — now expose fully populated
+  `.stat` callbacks with synthetic metadata (type, permissions, timestamps,
+  inode identifiers). Timestamps derive from boot-time monotonic clocks to
+  provide stable, non-zero values even though the data is virtual.
 
 ### Use Cases Enabled
 
@@ -139,8 +138,6 @@ the VFS, invoke the appropriate driver callbacks, convert results to
 
 ### Outstanding Work
 
-- **Issue #366** — Implement `.stat` for pseudo-filesystems (tmpfs, procfs,
-  devfs, pipes, console devices).
 - **Issue #367** — Parse rich FAT32 metadata (timestamps, DOS attributes, LFN
   information).
 - ~~**Issue #317** — Implement `utime()` syscall to modify file timestamps~~ ✅ Completed
