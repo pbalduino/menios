@@ -677,7 +677,7 @@ Active work:
     - Milestone: Doom
     - Priority: HIGH - Game stability blocker
     - **Root cause**: Race condition - early Up arrow keypress before player->mo initialized
-    - **Fix**: Keyboard input gating in app/doom/i_input.c:280 - defers input until player ready
+    - **Fix**: Keyboard input gating in vendor/genericdoom/i_input.c:280 - defers input until player ready
     - **Testing**: No crashes with early keypresses, logs confirm gating behavior
     - **Status**: CLOSED ✅
   - **#320** - Shell becomes unresponsive after Doom crashes
@@ -708,11 +708,11 @@ Active work:
     - Should investigate together - fixing one likely fixes both
 - **2025-10-19**: Closed #319 (Doom null pointer crash) ✅ **FIXED**
   - **Root cause**: Race condition between keyboard input and player initialization
-  - **Fix implemented**: Keyboard input gating in app/doom/i_input.c:280
+  - **Fix implemented**: Keyboard input gating in vendor/genericdoom/i_input.c:280
     - Input deferred until players[consoleplayer].mo exists
     - Logs show "delaying keyboard input" → "resuming keyboard input"
   - **Enhanced diagnostics**:
-    - Diagnostic breadcrumb retained in app/doom/p_user.c:232
+    - Diagnostic breadcrumb retained in vendor/genericdoom/p_user.c:232
     - Kernel page-fault dump expanded (src/kernel/idt.c:190) with full user registers
   - **Testing**: No crashes with early keypresses, gating behavior confirmed
   - **Impact**: Doom no longer crashes from early keyboard input
