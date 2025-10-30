@@ -19,6 +19,18 @@ typedef unsigned long nlink_t;
 typedef long blksize_t;
 typedef long long blkcnt_t;
 
+#define MENIOS_DEV_MAJOR_BITS 12u
+#define MENIOS_DEV_MINOR_BITS 20u
+#define MENIOS_DEV_MAJOR_MASK ((dev_t)((1ull << MENIOS_DEV_MAJOR_BITS) - 1ull))
+#define MENIOS_DEV_MINOR_MASK ((dev_t)((1ull << MENIOS_DEV_MINOR_BITS) - 1ull))
+
+#define MKDEV(ma, mi) \
+  ((dev_t)(((((dev_t)(ma)) & MENIOS_DEV_MAJOR_MASK) << MENIOS_DEV_MINOR_BITS) | \
+           (((dev_t)(mi)) & MENIOS_DEV_MINOR_MASK)))
+
+#define MAJOR(dev) ((unsigned int)((((dev_t)(dev)) >> MENIOS_DEV_MINOR_BITS) & MENIOS_DEV_MAJOR_MASK))
+#define MINOR(dev) ((unsigned int)(((dev_t)(dev)) & MENIOS_DEV_MINOR_MASK))
+
 #ifdef __cplusplus
 }
 #endif

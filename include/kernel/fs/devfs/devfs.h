@@ -6,6 +6,28 @@ extern "C" {
 #endif /* MENIOS_INCLUDE_KERNEL_FS_DEVFS_H */
 
 #include <stdbool.h>
+#include <stdint.h>
+#include <sys/types.h>
+
+struct file;
+typedef struct file file_t;
+
+typedef struct char_device char_device_t;
+
+typedef int (*char_device_open_fn)(char_device_t* device, int flags, file_t** out_file);
+
+struct char_device {
+  const char*         name;
+  uint32_t            access_mode;
+  char_device_open_fn open;
+  void*               driver_data;
+  dev_t               dev;
+  unsigned int        minor_count;
+};
+
+void char_device_system_init(void);
+int char_device_register(char_device_t* device);
+void char_device_unregister(char_device_t* device);
 
 bool devfs_mount(void);
 

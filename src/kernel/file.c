@@ -763,7 +763,16 @@ static int generic_char_stat(file_t* file, struct stat* out_stat) {
   info.is_read_only = (file != NULL && (file->mode & FILE_MODE_WRITE) == 0);
 
   fs_path_info_to_stat(&info, out_stat);
-  out_stat->st_rdev = 0;
+  if(file != NULL) {
+    char_device_t* device = (char_device_t*)file->private_data;
+    if(device != NULL) {
+      out_stat->st_rdev = device->dev;
+    } else {
+      out_stat->st_rdev = 0;
+    }
+  } else {
+    out_stat->st_rdev = 0;
+  }
   return 0;
 }
 
@@ -1083,6 +1092,7 @@ static void install_standard_streams(void) {
 void file_system_init(void) {
 #ifdef MENIOS_KERNEL
   install_standard_streams();
+  char_device_system_init();
   if(!devfs_mount()) {
     serial_printf("file_system_init: failed to mount devfs\n");
   }
