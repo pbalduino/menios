@@ -603,7 +603,7 @@ static void heap_set_errno(int err) {
   }
 }
 
-void init_heap(void* addr, size_t size) {
+void heap_init(void* addr, size_t size) {
   heap_reset_lock();
   heap_freed = false;
   heap = NULL;
@@ -615,7 +615,7 @@ void init_heap(void* addr, size_t size) {
     size_t aligned_size = align_down(size, PAGE_SIZE);
 
     if(aligned_size < PAGE_SIZE) {
-      serial_printf("init_heap: region too small (%lu)\n", size);
+      serial_printf("heap_init: region too small (%lu)\n", size);
       return;
     }
 
@@ -631,7 +631,7 @@ void init_heap(void* addr, size_t size) {
     heap_tail = node;
 
     if(heap_register_region(node, aligned_size, 0, aligned_size / PAGE_SIZE, false) == NULL) {
-      serial_printf("init_heap: failed to register static region\n");
+      serial_printf("heap_init: failed to register static region\n");
     }
 
     serial_printf("Heap initialized at %p with size %ld\n", addr, (long)aligned_size);
@@ -643,7 +643,7 @@ void init_heap(void* addr, size_t size) {
   }
 
   if(!heap_grow(size)) {
-    serial_printf("init_heap: unable to reserve %lu bytes\n", size);
+    serial_printf("heap_init: unable to reserve %lu bytes\n", size);
   } else {
     serial_printf("Heap initialized dynamically (%lu bytes)\n", align_up(size, PAGE_SIZE));
   }

@@ -2,10 +2,10 @@
 #include <kernel/core/services.h>
 #include <stdio.h>
 
-void init_services(void) {
+void services_init(void) {
   printf("- Initing background services.");
 
-  // init_memory_compactor();
+  // mem_compactor_init();
 
   printf("OK\n");
 }

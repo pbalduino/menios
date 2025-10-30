@@ -789,9 +789,9 @@ void pmm_get_stats(pmm_stats_t* stats) {
   stats->free_pages = pmm_free_page_count;
 }
 
-void init_kernel_offset() {
+void pmm_kernel_offset_init() {
   logk("Getting kernel offset.\n");
-  serial_printf("> init_kernel_offset\n");
+  serial_printf("> pmm_kernel_offset_init\n");
   kernel_offset = hhdm_request.response->offset;
   serial_printf("  Kernel offset %lx:\n", kernel_offset);
 }
@@ -804,7 +804,7 @@ virt_addr_t get_kernel_offset() {
   return kernel_offset;
 }
 
-void init_page_bitmap() {
+void pmm_page_bitmap_init() {
   logk("Initing page bitmap.\n");
   memsetl(&page_bitmap, PAGE_BITMAP_FULL, PAGE_BITMAP_SIZE);
 }
@@ -843,7 +843,7 @@ phys_addr_t read_cr3() {
 #endif
 }
 
-void init_cr3() {
+void pmm_cr3_init() {
   kernel_cr3_phys = read_cr3();
   cr3_vaddr = physical_to_virtual(kernel_cr3_phys);
   clear_kernel_user_permissions(kernel_cr3_phys);
@@ -961,11 +961,11 @@ void pmm_init() {
   logk("Initing Physical memory manager\n");
   serial_puts("\n- Initing Physical memory manager:\n");
 
-  init_page_bitmap();
+  pmm_page_bitmap_init();
 
   list_memory_areas();
   
-  init_kernel_offset();
+  pmm_kernel_offset_init();
 
-  init_cr3();
+  pmm_cr3_init();
 }

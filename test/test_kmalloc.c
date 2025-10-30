@@ -15,7 +15,7 @@ void setUp() {
   if(arena1 == NULL) {
     TEST_FAIL_MESSAGE("malloc failed");
   }
-  init_heap(arena1, PAGE_SIZE);
+  heap_init(arena1, PAGE_SIZE);
 }
 
 void tearDown() {

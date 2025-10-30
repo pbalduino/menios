@@ -4,6 +4,6 @@
 #include <types.h>
 
 void mem_init();
-void init_memory_compactor();
+void mem_compactor_init();
 
 #endif

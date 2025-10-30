@@ -15,7 +15,7 @@ void mem_init() {
   // init the physical memory management
   pmm_init();
 
-  init_heap(NULL, PAGE_SIZE * HEAP_SIZE);
+  heap_init(NULL, PAGE_SIZE * HEAP_SIZE);
 }
 
 int mem_compactor(void *unused) {
@@ -32,10 +32,10 @@ int mem_compactor(void *unused) {
   return 0;
 }
 
-void init_memory_compactor() {
+void mem_compactor_init() {
   kthread_p pthread = kmalloc(sizeof(kthread_t));
   if(pthread == NULL) {
-    serial_error("init_memory_compactor: failed to allocate thread descriptor\n");
+    serial_error("mem_compactor_init: failed to allocate thread descriptor\n");
     return;
   }
   memzero(pthread, sizeof(kthread_t));

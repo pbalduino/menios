@@ -824,6 +824,7 @@ endif
 		src/kernel/fs/vfs/vfs.c \
 		src/kernel/fs/core/pipe.c \
 		src/kernel/fs/tmpfs/tmpfs.c \
+		src/kernel/fs/devfs/devfs.c \
 		src/kernel/syscall/syscall.c \
 			src/kernel/syscall/entry.c \
 		src/kernel/mem/pmm.c \
@@ -859,6 +860,7 @@ endif
 		src/kernel/fs/vfs/vfs.c \
 		src/kernel/fs/core/pipe.c \
 		src/kernel/fs/tmpfs/tmpfs.c \
+	src/kernel/fs/devfs/devfs.c \
 		src/kernel/syscall/syscall.c \
 			src/kernel/syscall/entry.c \
 		src/kernel/mem/pmm.c \
@@ -894,6 +896,7 @@ src/libc/errno.c \
 		src/kernel/fs/vfs/vfs.c \
 		src/kernel/fs/core/pipe.c \
 		src/kernel/fs/tmpfs/tmpfs.c \
+	src/kernel/fs/devfs/devfs.c \
 		src/kernel/syscall/syscall.c \
 			src/kernel/syscall/entry.c \
 		src/kernel/mem/pmm.c \
@@ -929,6 +932,7 @@ src/libc/errno.c \
 		src/kernel/fs/vfs/vfs.c \
 		src/kernel/fs/core/pipe.c \
 		src/kernel/fs/tmpfs/tmpfs.c \
+	src/kernel/fs/devfs/devfs.c \
 		src/kernel/syscall/syscall.c \
 			src/kernel/syscall/entry.c \
 		src/kernel/mem/pmm.c \
@@ -964,6 +968,7 @@ src/libc/errno.c \
 		src/kernel/fs/vfs/vfs.c \
 		src/kernel/fs/core/pipe.c \
 		src/kernel/fs/tmpfs/tmpfs.c \
+	src/kernel/fs/devfs/devfs.c \
 		src/kernel/syscall/syscall.c \
 			src/kernel/syscall/entry.c \
 		src/kernel/mem/pmm.c \
@@ -1000,6 +1005,7 @@ src/libc/errno.c \
 		src/kernel/fs/vfs/vfs.c \
 		src/kernel/fs/core/pipe.c \
 		src/kernel/fs/tmpfs/tmpfs.c \
+	src/kernel/fs/devfs/devfs.c \
 		src/kernel/syscall/syscall.c \
 			src/kernel/syscall/entry.c \
 		src/kernel/mem/pmm.c \

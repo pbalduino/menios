@@ -14,6 +14,7 @@
 #endif
 
 #include <kernel/heap.h>
+#include <kernel/fs/devfs/devfs.h>
 #include <kernel/mutex.h>
 #include <kernel/file.h>
 #include <kernel/fs/vfs/vfs.h>
