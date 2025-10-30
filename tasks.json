@@ -82,9 +82,9 @@
   {
     "title": "PCI audio driver (AC'97 or Intel HDA)",
     "github_issue": {
-      "number": 382,
-      "url": "https://github.com/pbalduino/menios/issues/382",
-      "state": "OPEN"
+      "number": 368,
+      "url": "https://github.com/pbalduino/menios/issues/368",
+      "state": "CLOSED"
     },
     "labels": [
       "enhancement",
@@ -931,6 +931,21 @@
       "nice to have",
       "mosh",
       "testing"
+    ],
+    "assignees": [
+      "pbalduino"
+    ]
+  },
+  {
+    "title": "bug: Delete key not working in mosh shell",
+    "github_issue": {
+      "number": 236,
+      "url": "https://github.com/pbalduino/menios/issues/236",
+      "state": "CLOSED"
+    },
+    "labels": [
+      "bug",
+      "mosh"
     ],
     "assignees": [
       "pbalduino"

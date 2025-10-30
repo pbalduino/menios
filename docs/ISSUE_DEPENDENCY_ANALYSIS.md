@@ -222,11 +222,11 @@ These issues form the backbone of the system and should be prioritized:
                     ┌──→ ✅ stat/fstat/lstat (COMPLETE for FAT32)
                     │   ✅ access() (COMPLETE)
                     │   ✅ realpath() (COMPLETE)
-#193 (libc) ────────┤   ⚠️  pathconf() (PARTIAL - only _PC_PATH_MAX) ──→ #368 (complete pathconf)
+#193 (libc) ────────┤   ✅  pathconf() (COMPLETE) ──→ #368 (complete pathconf)
                     │
                     ├──→ ~~#366 (pseudo-fs metadata)~~ ✅ ──→ tmpfs, procfs, devfs, pipes .stat
                     │
-                    ├──→ #367 (rich FAT32 metadata) ──→ timestamps, DOS attrs, LFN
+                    ├──→ ~~#367 (rich FAT32 metadata)~~ ✅ ──→ timestamps, DOS attrs, LFN
                     │
                     ├──→ #365 (chmod/fchmod) ──┐
                     │                           ├──→ File mutation APIs
@@ -250,7 +250,7 @@ These issues form the backbone of the system and should be prioritized:
   - **Limitations**: FAT32 still lacks rich metadata (#367); pseudo-fs report synthetic but stable timestamps
 - ✅ **access()** - Uses stat() to check file permissions (was stub)
 - ✅ **realpath()** - POSIX-correct path resolution with stat() validation (was stub)
-- ⚠️ **pathconf()** - Partially implemented (only `_PC_PATH_MAX`)
+- ✅ **pathconf()** - path/directory queries return POSIX-compliant values
 
 **Remaining Stubs**:
 - ❌ **isatty** (#347) - Check if fd is terminal
@@ -261,7 +261,7 @@ These issues form the backbone of the system and should be prioritized:
 **Sub-tasks**:
 - ~~**#366** - Add `.stat` to pseudo-filesystems (tmpfs, procfs, devfs, pipes)~~ ✅ COMPLETE
 - **#367** - Parse rich FAT32 metadata (timestamps, DOS attributes, LFN data)
-- **#368** - Complete pathconf() for all POSIX queries
+- ~~**#368** - Complete pathconf() for all POSIX queries~~ ✅ COMPLETE
 - **#363** - Serial port file descriptor for debug logging (separate enhancement)
 
 **Userland Tooling**:

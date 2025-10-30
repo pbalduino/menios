@@ -100,6 +100,7 @@ The complete binutils 2.45 suite is fully operational on meniOS with native meta
 
 **Implementation Details:**
 - Native syscalls: `chmod`/`fchmod`/`utime` implemented across tmpfs and FAT32 (pseudo-fs remain read-only and ignore metadata changes)
+- FAT32 stat metadata now surfaces DOS attributes and timestamp fields (archived/hidden/system flags preserved)
 - Host harness: Forwards metadata operations to host OS for cross-platform testing
 - Printf formatting: Dynamic field width support (`*`) enables proper table display in `size`
 
