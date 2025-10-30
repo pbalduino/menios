@@ -297,13 +297,13 @@ This document tracks the major milestones for meniOS development.
 
 ## 📈 Overall Progress
 
-- **Total Issues Across Milestones**: 99 issues (includes foundational issues)
-- **Completed**: 91 issues (91.9%)
+- **Total Issues Across Milestones**: 106 issues (includes foundational issues)
+- **Completed**: 98 issues (92.5%)
 - **In Progress**: 8 issues
 - **Ready to Start**: 2 issues (no dependencies: #190, #191)
-- **Recently Completed**: #286-#293 ✅ (time management & FAT32 writes), #304 ✅ (scanf family), #302 ✅ (real key events), #301 ✅ (framebuffer mmap), #300 ✅ (menIOS Doom port layer), #136 ✅ (devfs), #140 ✅ (/dev/kbd0 and /dev/fb0), #221 ✅ (fast syscalls), #305-#310 ✅ (ALL libc gaps COMPLETE!), #311 ✅ (Doom build system), #314 ✅ (shell startup scripts), #331-#334 ✅ (test infrastructure fixes), #335 ✅ (PNP0A08 PCI host bridge driver)
-- **Recently Created**: #305-#312 ✅ (libc gaps & Doom build system), #313 (filesystem organization), #314 ✅ (shell startup scripts - COMPLETE), #315 (motd), #316 (touch command), #317 (utime syscall), #318 (uname command), #319-#323 ✅ (stability fixes - ALL COMPLETE!), #325-#330 (RTC and time management breakdown), #331-#334 ✅ (test infrastructure - ALL FIXED!)
-- **Next Up**: 🎉 Doom milestone COMPLETE (33/33)! TCC/binutils (#190, #191) ready for native compilation! RTC/time management refinements (#325-#330) continue. PCI infrastructure work now ready for device drivers.
+- **Recently Completed**: #191 ✅ (binutils port - ALL 11 TOOLS WORKING!), #365-#368 ✅ (filesystem metadata + pathconf COMPLETE), #317 ✅ (utime), #369 ✅ (system()), #370 ✅ (stat command), #372 ✅ (shutdown command), #373 ✅ (realpath command), #374 ✅ (head command), #376 ✅ (printf dynamic width), #387 ✅ (PCI device boot listing), #135 ✅ (Gcov integration), #236 ✅ (delete key), #350 ✅ (time command), #77 ✅ (tools docs)
+- **Recently Created**: #382-#386 (audio subsystem - 5 issues), #394 (terminal scrollback with mouse wheel), #387 ✅ (PCI boot listing - COMPLETE)
+- **Next Up**: 🎉 Doom milestone COMPLETE (33/33)! GCC milestone 85.7% (6/7) - only TCC remaining! Audio subsystem fully planned (5 issues). PCI diagnostics complete with color-coded driver detection.
 
 ## 🚀 Immediate Next Steps
 
@@ -342,19 +342,19 @@ Completed milestones:
 - **Doom**: ✅ COMPLETE (33/33 - 100%)
 
 Active work:
-- **GCC**: 5/7 complete (71.4%) - #190/#191 ready to start
+- **GCC**: 6/7 complete (85.7%) - Only #190 (TCC) remaining, binutils complete!
 
 ### Critical Dependencies
 - **Mosh milestone** ✅ COMPLETE (27/27 - 100%)
 - **Buddy Allocator milestone** ✅ COMPLETE (20/20 - 100%)
 - **Doom milestone** ✅ COMPLETE (33/33 - 100%)
-- **GCC milestone** - 5/7 complete (71.4%) - Only #190 (TCC) and #191 (binutils) remaining
+- **GCC milestone** - 6/7 complete (85.7%) - Only #190 (TCC) remaining, #191 (binutils) complete ✅
 
 ### Completion Order
 1. **Mosh** ✅ COMPLETE (27/27 - 100%) 🎉
 2. **Buddy Allocator** ✅ COMPLETE (20/20 - 100%) 🎉
 3. **Doom** ✅ COMPLETE (33/33 - 100%) 🎉
-4. **GCC** - In Progress (5/7 - 71.4%) - Enables native development
+4. **GCC** - In Progress (6/7 - 85.7%) - Enables native development, binutils complete!
 
 ### Recent Changes
 - **2025-10-08**: Expanded Mosh milestone from 10 to 30 issues to better track all shell work
@@ -775,9 +775,20 @@ Active work:
   - Eliminates duplication across PCI drivers (AHCI, e1000, USB, NVMe)
   - Foundational infrastructure for hardware support
 
+- **2025-10-29**: Closed #191 (binutils port - 100% complete, all 11 tools working) ✅
+- **2025-10-29**: Closed #365, #366, #367, #317 (complete filesystem metadata support) ✅
+- **2025-10-29**: Closed #368 (pathconf - full POSIX support), #369 (system()), #370 (stat cmd) ✅
+- **2025-10-29**: Closed #372 (shutdown cmd), #373 (realpath cmd), #374 (head cmd) ✅
+- **2025-10-29**: Closed #376 (printf dynamic width), #387 (PCI boot listing with color coding) ✅
+- **2025-10-29**: Closed #135 (Gcov integration), #236 (delete key), #350 (time cmd), #77 (tools docs) ✅
+- **2025-10-29**: Created #382-#386 (audio subsystem - 5 comprehensive issues, 9-12 weeks planned)
+- **2025-10-29**: Created #394 (terminal scrollback with mouse wheel - blocked by #143)
+- **2025-10-29**: Updated #364 (stubbed functions tracker to 71% complete - 10/14 functions)
+- **2025-10-29**: GCC milestone reaches 85.7% (6/7 complete) - only TCC port remaining!
+
 ---
 
-**Last Updated**: 2025-10-20
+**Last Updated**: 2025-10-29
 **See Also**:
 - [Road to Shell](road/road_to_shell.md)
 - [Road to Buddy Allocator](road/road_to_buddy_allocator.md)

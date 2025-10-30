@@ -16,6 +16,10 @@ build/
 *.gcov
 *.gcov.json.gz
 .DS_Store
+*.gcda
+*.gcno
+*.gcov
+*.gcov.json.gz
 .vscode/
 bochsout.txt
 core
