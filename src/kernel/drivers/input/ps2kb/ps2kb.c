@@ -4,11 +4,13 @@
 #include <kernel/drivers/input/ps2kb.h>
 #include <kernel/drivers/input/ps2.h>
 #include <kernel/file.h>
+#include <kernel/fs/devfs/devfs.h>
 #include <kernel/kernel.h>
 #include <kernel/input.h>
 #include <kernel/serial.h>
 #include <kernel/arch/x86_64/idt.h>
 #include <menios/input.h>
+#include <sys/stat.h>
 
 #include <uacpi/acpi.h>
 #include <uacpi/tables.h>
@@ -41,6 +43,7 @@ static bool right_alt;
 static bool caps_lock;
 static bool extended_code;
 static bool pic_remapped;
+static bool ps2kb_device_registered;
 
 static const char scancode_unshift[128] = {
   0,  27, '1', '2', '3', '4', '5', '6', '7', '8',     /* 9 */
@@ -116,6 +119,8 @@ static uint8_t buffer_pop(void) {
   }
   return value;
 }
+
+static uint8_t ps2kb_read(void);
 
 static bool is_alpha(char ch) {
   return (ch >= 'a' && ch <= 'z');
@@ -368,6 +373,82 @@ static bool ps2_read_byte(uint8_t *out) {
   return false;
 }
 
+static int64_t ps2kb_file_read(file_t* file, void* buffer, size_t length) {
+  (void)file;
+  if(buffer == NULL) {
+    return -EINVAL;
+  }
+  if(length == 0) {
+    return 0;
+  }
+
+  size_t produced = 0;
+  uint8_t* out = (uint8_t*)buffer;
+  while(produced < length) {
+    uint8_t ch = ps2kb_read();
+    if(ch == 0) {
+      break;
+    }
+    out[produced++] = ch;
+  }
+
+  return (int64_t)produced;
+}
+
+static int ps2kb_file_close(file_t* file) {
+  (void)file;
+  return 0;
+}
+
+static int ps2kb_file_stat(file_t* file, struct stat* out_stat) {
+  if(file == NULL || out_stat == NULL) {
+    return -EINVAL;
+  }
+
+  memset(out_stat, 0, sizeof(*out_stat));
+  out_stat->st_mode = S_IFCHR | 0444;
+  out_stat->st_nlink = 1;
+  out_stat->st_blksize = 4096;
+  char_device_t* device = (char_device_t*)file->private_data;
+  out_stat->st_rdev = device ? device->dev : 0;
+  return 0;
+}
+
+static const file_ops_t ps2kb_file_ops = {
+  .read = ps2kb_file_read,
+  .write = NULL,
+  .close = ps2kb_file_close,
+  .seek = NULL,
+  .ioctl = NULL,
+  .mmap = NULL,
+  .stat = ps2kb_file_stat,
+  .chmod = NULL,
+  .utimens = NULL,
+};
+
+static int ps2kb_device_open(char_device_t* device, int flags, file_t** out_file) {
+  (void)flags;
+  if(out_file == NULL) {
+    return -EINVAL;
+  }
+  file_t* file = file_create(&ps2kb_file_ops, device, FILE_MODE_READ);
+  if(file == NULL) {
+    return -ENOMEM;
+  }
+  file->private_data = device;
+  *out_file = file;
+  return 0;
+}
+
+static char_device_t ps2kb_char_device = {
+  .name = "kbd0",
+  .access_mode = FILE_MODE_READ,
+  .open = ps2kb_device_open,
+  .driver_data = NULL,
+  .dev = 0,
+  .minor_count = 1,
+};
+
 void ps2kb_start(void) {
   buffer_head = buffer_tail = 0;
   left_shift = right_shift = left_ctrl = right_ctrl = left_alt = right_alt = caps_lock = false;
@@ -426,11 +507,31 @@ void ps2kb_start(void) {
   outb(PIC1_DATA, mask);
 
   serial_printf("ps2kb_start: PS/2 keyboard initialised\n");
+
+  if(!ps2kb_device_registered) {
+    int rc = char_device_register(&ps2kb_char_device);
+    if(rc == 0) {
+      ps2kb_device_registered = true;
+      serial_printf("ps2kb_start: registered /dev/%s (major=%u minor=%u)\n",
+                    ps2kb_char_device.name,
+                    MAJOR(ps2kb_char_device.dev),
+                    MINOR(ps2kb_char_device.dev));
+    } else {
+      serial_printf("ps2kb_start: failed to register /dev/%s (%d)\n",
+                    ps2kb_char_device.name,
+                    rc);
+    }
+  }
 }
 
 void ps2kb_shutdown(void) {
   ps2_wait_write();
   ps2_write_command(PS2_DISABLE_FIRST_PORT);
+  if(ps2kb_device_registered) {
+    char_device_unregister(&ps2kb_char_device);
+    ps2kb_device_registered = false;
+    serial_printf("ps2kb_shutdown: unregistered /dev/%s\n", ps2kb_char_device.name);
+  }
 }
 
 static uint8_t ps2kb_read(void) {
