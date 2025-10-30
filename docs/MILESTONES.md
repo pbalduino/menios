@@ -266,6 +266,79 @@ This document tracks the major milestones for meniOS development.
 
 ---
 
+### 6. **GUI** (Graphical User Interface Milestone)
+**Goal**: Complete graphical user interface stack with Cairo graphics, Wayland-style compositor, window manager, and desktop environment
+**GitHub Milestone**: [GUI](https://github.com/pbalduino/menios/milestone/6)
+
+**Status**: 0/20 complete (0%)
+
+**Timeline**: 32-42 weeks (8-10 months)
+
+#### Milestone Structure
+
+**Phase 1: Graphics Foundation** (8-10 weeks)
+- [ ] #397 - Port Pixman (pixel manipulation library, Cairo dependency)
+- [ ] #398 - Port FreeType (font rendering library, Cairo dependency)
+- [ ] #396 - Port Cairo (2D graphics library, core rendering engine)
+
+**Phase 2: Input Stack** (4-5 weeks)
+- [ ] #399 - Implement GUI input event system
+- [ ] #400 - Implement mouse cursor rendering
+- Blocked on: #143 - PS/2 Mouse Driver (CRITICAL BLOCKER)
+
+**Phase 3: Shared Memory & IPC** (3-4 weeks)
+- [ ] #401 - Implement shared memory (POSIX shm) for GUI
+- [ ] #402 - Implement Unix domain sockets (AF_UNIX) for IPC
+
+**Phase 4: Compositor Core** (6-8 weeks)
+- [ ] #403 - Implement compositor core
+- [ ] #404 - Define window protocol for client-compositor communication
+- [ ] #405 - Implement composition engine with damage tracking
+
+**Phase 5: Window Manager** (5-7 weeks)
+- [ ] #406 - Implement window manager core
+- [ ] #407 - Implement focus management for windows
+- [ ] #408 - Implement window decorations (title bar, borders, buttons)
+
+**Phase 6: Desktop Environment** (6-8 weeks)
+- [ ] #409 - Implement desktop shell (panel, wallpaper, launcher)
+- [ ] #410 - Develop core GUI applications (terminal, editor, file manager)
+
+#### Related Issues (Supporting Infrastructure)
+- [ ] #143 - PS/2 Mouse Driver (CRITICAL - blocks input stack)
+- [ ] #129 - Unicode text rendering (complements Cairo text)
+- [ ] #109 - pthread API (needed for compositor threading)
+- [ ] #339 - Thread-safe libc (needed for multi-threaded apps)
+- [ ] #394 - Terminal scrollback with mouse wheel (will use in GUI terminal)
+
+**Architecture**: Wayland-style compositor where the display server and compositor are unified. Cairo provides 2D graphics rendering, Pixman handles low-level pixel manipulation, and FreeType enables high-quality font rendering.
+
+**Key Features**:
+- Vector graphics and anti-aliased rendering
+- High-quality text with TrueType fonts
+- Window management (move, resize, minimize, maximize, close)
+- Desktop shell with panel/taskbar and application launcher
+- Core GUI applications (terminal emulator, text editor, file manager)
+- Foundation for future 3D graphics (OpenGL/Vulkan)
+
+**Dependencies**:
+- #143 (PS/2 Mouse) - **CRITICAL BLOCKER** for input stack
+- #109 (pthread API) - Required for compositor threading
+- #339 (Thread-safe libc) - Required for multi-threaded GUI apps
+- #193 (libc) - Foundation for all userland code
+
+**Documentation**: See [docs/road/road_to_gui.md](road/road_to_gui.md) for complete GUI roadmap with implementation details, architecture diagrams, and code examples.
+
+**Success Criteria**:
+- Cairo renders to framebuffer with 60fps
+- Mouse and keyboard input working in GUI
+- Multiple windows can be displayed and managed
+- Can move, resize, and close windows
+- At least 3 GUI applications working (terminal, editor, file manager)
+- Professional desktop appearance
+
+---
+
 ## 🎯 Dependency Flow Between Milestones
 
 ```
@@ -297,13 +370,14 @@ This document tracks the major milestones for meniOS development.
 
 ## 📈 Overall Progress
 
-- **Total Issues Across Milestones**: 106 issues (includes foundational issues)
-- **Completed**: 98 issues (92.5%)
+- **Total Issues Across Milestones**: 126 issues (includes foundational issues)
+- **Completed**: 98 issues (77.8%)
 - **In Progress**: 8 issues
+- **GUI Milestone**: 0/20 issues (20 new GUI issues created)
 - **Ready to Start**: 2 issues (no dependencies: #190, #191)
 - **Recently Completed**: #191 ✅ (binutils port - ALL 11 TOOLS WORKING!), #365-#368 ✅ (filesystem metadata + pathconf COMPLETE), #317 ✅ (utime), #369 ✅ (system()), #370 ✅ (stat command), #372 ✅ (shutdown command), #373 ✅ (realpath command), #374 ✅ (head command), #376 ✅ (printf dynamic width), #387 ✅ (PCI device boot listing), #135 ✅ (Gcov integration), #236 ✅ (delete key), #350 ✅ (time command), #77 ✅ (tools docs)
-- **Recently Created**: #382-#386 (audio subsystem - 5 issues), #394 (terminal scrollback with mouse wheel), #387 ✅ (PCI boot listing - COMPLETE)
-- **Next Up**: 🎉 Doom milestone COMPLETE (33/33)! GCC milestone 85.7% (6/7) - only TCC remaining! Audio subsystem fully planned (5 issues). PCI diagnostics complete with color-coded driver detection.
+- **Recently Created**: #382-#386 (audio subsystem - 5 issues), #394 (terminal scrollback with mouse wheel), #387 ✅ (PCI boot listing - COMPLETE), #396-#410 (GUI stack - 15 issues), #411 (source file headers)
+- **Next Up**: 🎉 Doom milestone COMPLETE (33/33)! GCC milestone 85.7% (6/7) - only TCC remaining! 🎨 **GUI Milestone launched** - 20 issues created for complete graphical desktop environment! Audio subsystem fully planned (5 issues). PCI diagnostics complete with color-coded driver detection.
 
 ## 🚀 Immediate Next Steps
 
@@ -785,13 +859,25 @@ Active work:
 - **2025-10-29**: Created #394 (terminal scrollback with mouse wheel - blocked by #143)
 - **2025-10-29**: Updated #364 (stubbed functions tracker to 71% complete - 10/14 functions)
 - **2025-10-29**: GCC milestone reaches 85.7% (6/7 complete) - only TCC port remaining!
+- **2025-10-30**: 🎨 **GUI Milestone launched!** Created comprehensive GUI roadmap with 20 issues:
+  - **Graphics Foundation**: #396 (Cairo), #397 (Pixman), #398 (FreeType)
+  - **Input Stack**: #399 (input events), #400 (mouse cursor)
+  - **IPC**: #401 (shared memory), #402 (Unix sockets)
+  - **Compositor**: #403 (core), #404 (protocol), #405 (composition engine)
+  - **Window Manager**: #406 (core), #407 (focus), #408 (decorations)
+  - **Desktop**: #409 (shell), #410 (GUI apps)
+  - **Infrastructure**: Assigned #143 (mouse), #129 (Unicode), #109 (pthread), #339 (thread-safe libc), #394 (scrollback) to GUI milestone
+  - **Documentation**: Created [docs/road/road_to_gui.md](road/road_to_gui.md) - complete roadmap with architecture, code examples, 6 milestones (8-10 months)
+  - **Other**: #411 (source file headers with MIT License)
+  - Total project issues now: **127** (was 106), GUI milestone: 0/20 (just launched!)
 
 ---
 
-**Last Updated**: 2025-10-29
+**Last Updated**: 2025-10-30
 **See Also**:
 - [Road to Shell](road/road_to_shell.md)
 - [Road to Buddy Allocator](road/road_to_buddy_allocator.md)
 - [Road to GCC](road/road_to_gcc.md)
 - [Road to Doom](road/road_to_doom.md)
-- [Road to Real Hardware](road/road_to_real_hardware.md) 🆕
+- [Road to Real Hardware](road/road_to_real_hardware.md)
+- [Road to GUI](road/road_to_gui.md) 🆕 - Complete graphical user interface stack

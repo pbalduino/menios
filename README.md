@@ -18,6 +18,7 @@
 
 - ✅ Run classic Doom in userland
 - 🚀 Bring-up on real hardware (current long-term objective)
+- 🎨 Complete graphical user interface with compositor and window manager (next major milestone)
 
 ## Quick Start
 
@@ -110,7 +111,8 @@ See [issue #191 (CLOSED)](https://github.com/pbalduino/menios/issues/191) for th
 
 ## Documentation
 
-- [Roadmaps](docs/road/) — milestone breakdowns for shell, buddy allocator, GCC toolchain, Doom integration, and more.
+- [Roadmaps](docs/road/) — milestone breakdowns for shell, buddy allocator, GCC toolchain, Doom integration, **GUI stack**, and more.
+  - [docs/road/road_to_gui.md](docs/road/road_to_gui.md) — complete GUI roadmap (Cairo, compositor, window manager, desktop environment)
 - [docs/tools.md](docs/tools.md) — overview of the Menios toolchain wrapper scripts.
 - [docs/MILESTONES.md](docs/MILESTONES.md) — high-level progress tracker.
 - [scheduler_issues.md](scheduler_issues.md) — notes on ready-queue redesign.
