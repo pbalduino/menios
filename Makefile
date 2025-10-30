@@ -784,11 +784,11 @@ endif
 			test/unity.c \
 			test/stubs.c \
 			src/kernel/file.c \
-		src/kernel/fs/vfs.c \
-		src/kernel/fs/pipe.c \
-		src/kernel/fs/tmpfs.c \
-		src/kernel/fs/procfs.c \
-		src/kernel/fs/devfs.c \
+		src/kernel/fs/vfs/vfs.c \
+		src/kernel/fs/core/pipe.c \
+		src/kernel/fs/tmpfs/tmpfs.c \
+		src/kernel/fs/procfs/procfs.c \
+		src/kernel/fs/devfs/devfs.c \
 		src/kernel/syscall/syscall.c \
 		src/kernel/syscall/entry.c \
 			src/kernel/mem/pmm.c \
@@ -821,9 +821,9 @@ endif
 		test/unity.c \
 		test/stubs.c \
 		src/kernel/file.c \
-		src/kernel/fs/vfs.c \
-		src/kernel/fs/pipe.c \
-		src/kernel/fs/tmpfs.c \
+		src/kernel/fs/vfs/vfs.c \
+		src/kernel/fs/core/pipe.c \
+		src/kernel/fs/tmpfs/tmpfs.c \
 		src/kernel/syscall/syscall.c \
 			src/kernel/syscall/entry.c \
 		src/kernel/mem/pmm.c \
@@ -856,9 +856,9 @@ endif
 		test/unity.c \
 		test/stubs.c \
 		src/kernel/file.c \
-		src/kernel/fs/vfs.c \
-		src/kernel/fs/pipe.c \
-		src/kernel/fs/tmpfs.c \
+		src/kernel/fs/vfs/vfs.c \
+		src/kernel/fs/core/pipe.c \
+		src/kernel/fs/tmpfs/tmpfs.c \
 		src/kernel/syscall/syscall.c \
 			src/kernel/syscall/entry.c \
 		src/kernel/mem/pmm.c \
@@ -891,9 +891,9 @@ src/libc/errno.c \
 		test/unity.c \
 		test/stubs.c \
 		src/kernel/file.c \
-		src/kernel/fs/vfs.c \
-		src/kernel/fs/pipe.c \
-		src/kernel/fs/tmpfs.c \
+		src/kernel/fs/vfs/vfs.c \
+		src/kernel/fs/core/pipe.c \
+		src/kernel/fs/tmpfs/tmpfs.c \
 		src/kernel/syscall/syscall.c \
 			src/kernel/syscall/entry.c \
 		src/kernel/mem/pmm.c \
@@ -926,9 +926,9 @@ src/libc/errno.c \
 		test/unity.c \
 		test/stubs.c \
 		src/kernel/file.c \
-		src/kernel/fs/vfs.c \
-		src/kernel/fs/pipe.c \
-		src/kernel/fs/tmpfs.c \
+		src/kernel/fs/vfs/vfs.c \
+		src/kernel/fs/core/pipe.c \
+		src/kernel/fs/tmpfs/tmpfs.c \
 		src/kernel/syscall/syscall.c \
 			src/kernel/syscall/entry.c \
 		src/kernel/mem/pmm.c \
@@ -961,9 +961,9 @@ src/libc/errno.c \
 		test/unity.c \
 		test/stubs.c \
 		src/kernel/file.c \
-		src/kernel/fs/vfs.c \
-		src/kernel/fs/pipe.c \
-		src/kernel/fs/tmpfs.c \
+		src/kernel/fs/vfs/vfs.c \
+		src/kernel/fs/core/pipe.c \
+		src/kernel/fs/tmpfs/tmpfs.c \
 		src/kernel/syscall/syscall.c \
 			src/kernel/syscall/entry.c \
 		src/kernel/mem/pmm.c \
@@ -997,9 +997,9 @@ src/libc/errno.c \
 		test/unity.c \
 		test/stubs.c \
 		src/kernel/file.c \
-		src/kernel/fs/vfs.c \
-		src/kernel/fs/pipe.c \
-		src/kernel/fs/tmpfs.c \
+		src/kernel/fs/vfs/vfs.c \
+		src/kernel/fs/core/pipe.c \
+		src/kernel/fs/tmpfs/tmpfs.c \
 		src/kernel/syscall/syscall.c \
 			src/kernel/syscall/entry.c \
 		src/kernel/mem/pmm.c \
