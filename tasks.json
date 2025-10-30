@@ -354,6 +354,22 @@
     ]
   },
   {
+    "title": "Implement head command for file previews",
+    "github_issue": {
+      "number": 374,
+      "url": "https://github.com/pbalduino/menios/issues/374",
+      "state": "CLOSED"
+    },
+    "labels": [
+      "enhancement",
+      "good first issue",
+      "build"
+    ],
+    "assignees": [
+      "pbalduino"
+    ]
+  },
+  {
     "title": "Fix Arch Linux build failures (doomtype.h enum error, ATOMIC_FLAG_INIT deprecation)",
     "github_issue": {
       "number": 349,
