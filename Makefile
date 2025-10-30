@@ -247,7 +247,6 @@ QEMU_LOG_FILE=com1.log
 QEMU_OPTS = -smp cpus=2,maxcpus=4,sockets=1,dies=1,clusters=1,cores=2 \
 	-vga std \
 	-no-reboot \
-	--no-shutdown \
 	-M q35 \
 	-m $(QEMU_MEMORY) \
 	-device ahci,id=ahci \
