@@ -3935,16 +3935,24 @@ enum escape_state {
 };
 
 static int parse_escape_number(const char* params, size_t length) {
-  if(length == 0) {
+  if(params == NULL || length == 0) {
     return -1;
   }
   int value = 0;
+  bool have_digit = false;
   for(size_t i = 0; i < length; i++) {
     char ch = params[i];
+    if(ch == ';') {
+      break;
+    }
     if(ch < '0' || ch > '9') {
       return -1;
     }
+    have_digit = true;
     value = value * 10 + (ch - '0');
+  }
+  if(!have_digit) {
+    return -1;
   }
   return value;
 }
@@ -4397,6 +4405,16 @@ static size_t read_line(const char* prompt, char* buffer, size_t capacity) {
           case 'F':
             line_cursor_end(&state);
             break;
+          case 'P': {
+            int count = parse_escape_number(esc_params, esc_param_len);
+            if(count <= 0) {
+              count = 1;
+            }
+            for(int i = 0; i < count; i++) {
+              line_delete_at_cursor(&state);
+            }
+            break;
+          }
           case '~': {
             int code = parse_escape_number(esc_params, esc_param_len);
             if(code == 3) {

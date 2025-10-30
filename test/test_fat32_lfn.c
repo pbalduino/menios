@@ -544,6 +544,77 @@ void test_fat32_utimens_updates_timestamps(void) {
   fat32_test_env_destroy(&env);
 }
 
+void test_fat32_populate_path_info_rich_metadata(void) {
+  fat32_test_env_t env;
+  fat32_test_env_init(&env, FAT32_TEST_CLUSTER_COUNT);
+
+  size_t next_index = 0;
+  write_directory_entry(&env, env.fs.root_cluster, &next_index, "LongFileName123.txt", false, NULL);
+
+  struct timespec create_ts = { .tv_sec = 1700003001ll, .tv_nsec = 120000000l };
+  struct timespec modify_ts = { .tv_sec = 1700004002ll, .tv_nsec = 500000000l };
+  struct timespec access_ts = { .tv_sec = 1700005000ll, .tv_nsec = 0 };
+
+  uint8_t buffer[512];
+  TEST_ASSERT_TRUE(fat32_read_cluster(&env.fs, env.fs.root_cluster, buffer));
+  fat32_dir_entry_raw_t* entries = (fat32_dir_entry_raw_t*)buffer;
+  fat32_dir_entry_raw_t* short_entry = &entries[2];
+
+  short_entry->attr = FAT32_ATTR_READ_ONLY | FAT32_ATTR_HIDDEN | FAT32_ATTR_SYSTEM | FAT32_ATTR_ARCHIVE;
+  short_entry->file_size = 1234u;
+
+  uint16_t creation_date = 0;
+  uint16_t creation_time = 0;
+  uint8_t creation_tenths = 0;
+  uint16_t write_date = 0;
+  uint16_t write_time = 0;
+  uint16_t access_date = 0;
+
+  TEST_ASSERT_TRUE(fat32_timespec_to_fat_date(&create_ts, &creation_date));
+  TEST_ASSERT_TRUE(fat32_timespec_to_fat_time(&create_ts, &creation_time, &creation_tenths));
+  TEST_ASSERT_TRUE(fat32_timespec_to_fat_date(&modify_ts, &write_date));
+  TEST_ASSERT_TRUE(fat32_timespec_to_fat_time(&modify_ts, &write_time, NULL));
+  TEST_ASSERT_TRUE(fat32_timespec_to_fat_date(&access_ts, &access_date));
+
+  short_entry->creation_date = creation_date;
+  short_entry->creation_time = creation_time;
+  short_entry->creation_time_tenths = creation_tenths;
+  short_entry->write_date = write_date;
+  short_entry->write_time = write_time;
+  short_entry->last_access_date = access_date;
+
+  TEST_ASSERT_TRUE(fat32_write_cluster(&env.fs, env.fs.root_cluster, buffer));
+
+  fat32_dir_entry_info_t info;
+  TEST_ASSERT_TRUE(fat32_traverse_path(&env.fs, "/LongFileName123.txt", &info, false));
+
+  fs_path_info_t path_info;
+  fat32_populate_path_info(&env.fs, &info, &path_info);
+
+  TEST_ASSERT_TRUE(path_info.has_mode);
+  TEST_ASSERT_EQUAL_MESSAGE(S_IFREG | 0444, path_info.mode, "FAT32 mode mismatch");
+  TEST_ASSERT_TRUE(path_info.is_read_only);
+  TEST_ASSERT_EQUAL_UINT32(1234u, (uint32_t)path_info.size);
+
+  TEST_ASSERT_TRUE(path_info.has_dos_attributes);
+  TEST_ASSERT_TRUE(path_info.is_hidden);
+  TEST_ASSERT_TRUE(path_info.is_system);
+  TEST_ASSERT_TRUE(path_info.is_archived);
+
+  TEST_ASSERT_TRUE(path_info.has_times);
+  struct timespec decoded;
+  TEST_ASSERT_TRUE(fat32_datetime_to_timespec(write_date, write_time, 0, true, &decoded));
+  TEST_ASSERT_EQUAL_INT64(decoded.tv_sec, path_info.mtime.tv_sec);
+  TEST_ASSERT_EQUAL_INT(decoded.tv_nsec, path_info.mtime.tv_nsec);
+  TEST_ASSERT_TRUE(fat32_datetime_to_timespec(creation_date, creation_time, creation_tenths, true, &decoded));
+  TEST_ASSERT_EQUAL_INT64(decoded.tv_sec, path_info.ctime.tv_sec);
+  TEST_ASSERT_EQUAL_INT(decoded.tv_nsec, path_info.ctime.tv_nsec);
+  TEST_ASSERT_TRUE(fat32_datetime_to_timespec(access_date, 0, 0, false, &decoded));
+  TEST_ASSERT_EQUAL_INT64(decoded.tv_sec, path_info.atime.tv_sec);
+
+  fat32_test_env_destroy(&env);
+}
+
 int main(void) {
   UNITY_BEGIN();
   RUN_TEST(test_create_long_filename_file);
@@ -554,6 +625,7 @@ int main(void) {
   RUN_TEST(test_fat32_chmod_toggles_read_only);
   RUN_TEST(test_fat32_fchmod_updates_read_only);
   RUN_TEST(test_fat32_futimens_updates_timestamps);
+  RUN_TEST(test_fat32_populate_path_info_rich_metadata);
   RUN_TEST(test_fat32_utimens_updates_timestamps);
   return UNITY_END();
 }

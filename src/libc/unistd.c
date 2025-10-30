@@ -393,6 +393,11 @@ long pathconf(const char* path, int name) {
     return -1;
   }
 
+  struct stat st;
+  if(stat(path, &st) != 0) {
+    return -1;
+  }
+
   switch(name) {
     case _PC_PATH_MAX:
 #ifdef PATH_MAX
@@ -400,6 +405,19 @@ long pathconf(const char* path, int name) {
 #else
       return 256;
 #endif
+    case _PC_NAME_MAX:
+      return 255;
+    case _PC_LINK_MAX:
+      return 1;
+    case _PC_PIPE_BUF:
+      if(S_ISFIFO(st.st_mode)) {
+        return 4096;
+      }
+      return 4096;
+    case _PC_CHOWN_RESTRICTED:
+      return 1;
+    case _PC_NO_TRUNC:
+      return 1;
     default:
       errno = ENOSYS;
       return -1;

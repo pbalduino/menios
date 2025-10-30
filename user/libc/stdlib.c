@@ -12,8 +12,11 @@
 #include <sys/errno.h>
 #include <sys/mman.h>
 #include <sys/fcntl.h>
+#include <sys/wait.h>
 #include <unistd.h>
 #include <stdio.h>
+
+extern char** environ;
 
 static atomic_flag allocator_lock = ATOMIC_FLAG_INIT;
 
@@ -1938,10 +1941,74 @@ long long llabs(long long value) {
   return (value < 0) ? -value : value;
 }
 
+__attribute__((weak)) pid_t __menios_system_fork(void) {
+  return fork();
+}
+
+__attribute__((weak)) int __menios_system_execve(const char* path,
+                                                 char* const argv[],
+                                                 char* const envp[]) {
+  return execve(path, argv, envp);
+}
+
+__attribute__((weak)) pid_t __menios_system_waitpid(pid_t pid,
+                                                    int* status,
+                                                    int options) {
+  return waitpid(pid, status, options);
+}
+
+__attribute__((weak)) int __menios_system_access(const char* path, int mode) {
+  return access(path, mode);
+}
+
+__attribute__((weak)) char* __menios_system_getenv(const char* name) {
+  return getenv(name);
+}
+
+__attribute__((weak)) void __menios_system_exit(int status) {
+  _exit(status);
+}
+
 int system(const char* command) {
-  (void)command;
-  errno = ENOSYS;
-  return -1;
+  const char* shell = __menios_system_getenv("SHELL");
+  if(shell == NULL || *shell == '\0') {
+    shell = "/bin/mosh";
+  }
+
+  if(command == NULL) {
+    int saved_errno = errno;
+    int rc = __menios_system_access(shell, X_OK);
+    errno = saved_errno;
+    return (rc == 0) ? 1 : 0;
+  }
+
+  pid_t pid = __menios_system_fork();
+  if(pid < 0) {
+    return -1;
+  }
+
+  if(pid == 0) {
+    extern char** environ;
+    char* argv[4];
+    argv[0] = (char*)shell;
+    argv[1] = (char*)"-c";
+    argv[2] = (char*)command;
+    argv[3] = NULL;
+    (void)__menios_system_execve(shell, argv, environ);
+    __menios_system_exit(127);
+  }
+
+  int status = 0;
+  for(;;) {
+    pid_t waited = __menios_system_waitpid(pid, &status, 0);
+    if(waited < 0) {
+      if(errno == EINTR) {
+        continue;
+      }
+      return -1;
+    }
+    return status;
+  }
 }
 
 int atexit(void (*func)(void)) {

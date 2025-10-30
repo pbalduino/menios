@@ -1,14 +1,127 @@
 [
   {
-    "title": "printf: Support dynamic field width and precision specifiers (*)",
+    "title": "Display PCI device list on boot screen",
     "github_issue": {
-      "number": 376,
-      "url": "https://github.com/pbalduino/menios/issues/376",
+      "number": 387,
+      "url": "https://github.com/pbalduino/menios/issues/387",
       "state": "CLOSED"
     },
     "labels": [
       "enhancement",
+      "nice to have",
+      "kernel"
+    ],
+    "assignees": [
+      "pbalduino"
+    ]
+  },
+  {
+    "title": "Audio validation and tooling (WAV player, tests)",
+    "github_issue": {
+      "number": 386,
+      "url": "https://github.com/pbalduino/menios/issues/386",
+      "state": "OPEN"
+    },
+    "labels": [
+      "enhancement",
+      "testing",
+      "doom"
+    ],
+    "assignees": [
+      "pbalduino"
+    ]
+  },
+  {
+    "title": "Userland audio API and libc support",
+    "github_issue": {
+      "number": 385,
+      "url": "https://github.com/pbalduino/menios/issues/385",
+      "state": "OPEN"
+    },
+    "labels": [
+      "enhancement",
+      "doom",
       "libc"
+    ],
+    "assignees": [
+      "pbalduino"
+    ]
+  },
+  {
+    "title": "Audio syscalls and /dev/dsp device interface",
+    "github_issue": {
+      "number": 384,
+      "url": "https://github.com/pbalduino/menios/issues/384",
+      "state": "OPEN"
+    },
+    "labels": [
+      "enhancement",
+      "kernel",
+      "doom"
+    ],
+    "assignees": [
+      "pbalduino"
+    ]
+  },
+  {
+    "title": "Kernel audio core (PCM buffer manager and mixer)",
+    "github_issue": {
+      "number": 383,
+      "url": "https://github.com/pbalduino/menios/issues/383",
+      "state": "OPEN"
+    },
+    "labels": [
+      "enhancement",
+      "kernel",
+      "doom"
+    ],
+    "assignees": [
+      "pbalduino"
+    ]
+  },
+  {
+    "title": "PCI audio driver (AC'97 or Intel HDA)",
+    "github_issue": {
+      "number": 368,
+      "url": "https://github.com/pbalduino/menios/issues/368",
+      "state": "CLOSED"
+    },
+    "labels": [
+      "enhancement",
+      "drivers",
+      "kernel",
+      "doom"
+    ],
+    "assignees": [
+      "pbalduino"
+    ]
+  },
+  {
+    "title": "Implement uptime command - display system uptime and load averages",
+    "github_issue": {
+      "number": 375,
+      "url": "https://github.com/pbalduino/menios/issues/375",
+      "state": "OPEN"
+    },
+    "labels": [
+      "enhancement",
+      "build"
+    ],
+    "assignees": [
+      "pbalduino"
+    ]
+  },
+  {
+    "title": "Implement head command - display first lines of files",
+    "github_issue": {
+      "number": 374,
+      "url": "https://github.com/pbalduino/menios/issues/374",
+      "state": "OPEN"
+    },
+    "labels": [
+      "enhancement",
+      "good first issue",
+      "build"
     ],
     "assignees": [
       "pbalduino"
@@ -30,108 +143,14 @@
     ]
   },
   {
-    "title": "Bug: ld crashes/freezes on simple version queries",
-    "github_issue": {
-      "number": 371,
-      "url": "https://github.com/pbalduino/menios/issues/371",
-      "state": "CLOSED"
-    },
-    "labels": [
-      "bug",
-      "blocked",
-      "build"
-    ],
-    "assignees": [
-      "pbalduino"
-    ]
-  },
-  {
-    "title": "Implement stat command for file information display",
-    "github_issue": {
-      "number": 370,
-      "url": "https://github.com/pbalduino/menios/issues/370",
-      "state": "CLOSED"
-    },
-    "labels": [
-      "enhancement",
-      "libc"
-    ],
-    "assignees": [
-      "pbalduino"
-    ]
-  },
-  {
     "title": "Implement system() function for shell command execution",
     "github_issue": {
       "number": 369,
       "url": "https://github.com/pbalduino/menios/issues/369",
-      "state": "OPEN"
-    },
-    "labels": [
-      "enhancement",
-      "libc"
-    ],
-    "assignees": [
-      "pbalduino"
-    ]
-  },
-  {
-    "title": "Complete pathconf() implementation for all POSIX queries",
-    "github_issue": {
-      "number": 368,
-      "url": "https://github.com/pbalduino/menios/issues/368",
-      "state": "OPEN"
-    },
-    "labels": [
-      "enhancement",
-      "libc"
-    ],
-    "assignees": [
-      "pbalduino"
-    ]
-  },
-  {
-    "title": "Parse rich FAT32 metadata (timestamps, DOS attributes, LFN)",
-    "github_issue": {
-      "number": 367,
-      "url": "https://github.com/pbalduino/menios/issues/367",
       "state": "CLOSED"
     },
     "labels": [
       "enhancement",
-      "kernel",
-      "libc"
-    ],
-    "assignees": [
-      "pbalduino"
-    ]
-  },
-  {
-    "title": "Add .stat support to pseudo-filesystems (tmpfs, procfs, devfs, pipes)",
-    "github_issue": {
-      "number": 366,
-      "url": "https://github.com/pbalduino/menios/issues/366",
-      "state": "CLOSED"
-    },
-    "labels": [
-      "enhancement",
-      "kernel",
-      "libc"
-    ],
-    "assignees": [
-      "pbalduino"
-    ]
-  },
-  {
-    "title": "Implement chmod/fchmod syscalls for file permission modification",
-    "github_issue": {
-      "number": 365,
-      "url": "https://github.com/pbalduino/menios/issues/365",
-      "state": "CLOSED"
-    },
-    "labels": [
-      "enhancement",
-      "kernel",
       "libc"
     ],
     "assignees": [
@@ -348,6 +367,22 @@
     },
     "labels": [
       "mosh"
+    ],
+    "assignees": [
+      "pbalduino"
+    ]
+  },
+  {
+    "title": "Implement head command for file previews",
+    "github_issue": {
+      "number": 374,
+      "url": "https://github.com/pbalduino/menios/issues/374",
+      "state": "CLOSED"
+    },
+    "labels": [
+      "enhancement",
+      "good first issue",
+      "build"
     ],
     "assignees": [
       "pbalduino"
@@ -647,22 +682,6 @@
     ]
   },
   {
-    "title": "Implement utime() syscall for file timestamp modification",
-    "github_issue": {
-      "number": 317,
-      "url": "https://github.com/pbalduino/menios/issues/317",
-      "state": "CLOSED"
-    },
-    "labels": [
-      "enhancement",
-      "kernel",
-      "libc"
-    ],
-    "assignees": [
-      "pbalduino"
-    ]
-  },
-  {
     "title": "Message of the Day (motd) support",
     "github_issue": {
       "number": 315,
@@ -952,7 +971,7 @@
     "github_issue": {
       "number": 236,
       "url": "https://github.com/pbalduino/menios/issues/236",
-      "state": "OPEN"
+      "state": "CLOSED"
     },
     "labels": [
       "bug",
@@ -1178,21 +1197,6 @@
       "number": 196,
       "url": "https://github.com/pbalduino/menios/issues/196",
       "state": "OPEN"
-    },
-    "labels": [
-      "enhancement",
-      "nice to have"
-    ],
-    "assignees": [
-      "pbalduino"
-    ]
-  },
-  {
-    "title": "Port binutils (as, ld) to meniOS",
-    "github_issue": {
-      "number": 191,
-      "url": "https://github.com/pbalduino/menios/issues/191",
-      "state": "CLOSED"
     },
     "labels": [
       "enhancement",
@@ -1469,7 +1473,7 @@
     "github_issue": {
       "number": 135,
       "url": "https://github.com/pbalduino/menios/issues/135",
-      "state": "OPEN"
+      "state": "CLOSED"
     },
     "labels": [
       "enhancement",
@@ -2080,20 +2084,6 @@
     ]
   },
   {
-    "title": "Add docs for tools directory",
-    "github_issue": {
-      "number": 77,
-      "url": "https://github.com/pbalduino/menios/issues/77",
-      "state": "CLOSED"
-    },
-    "labels": [
-      "documentation"
-    ],
-    "assignees": [
-      "pbalduino"
-    ]
-  },
-  {
     "title": "Reorganize user-mode sources",
     "github_issue": {
       "number": 76,
@@ -2297,7 +2287,8 @@
       "state": "OPEN"
     },
     "labels": [
-      "enhancement"
+      "enhancement",
+      "doom"
     ],
     "assignees": [
       "pbalduino"
