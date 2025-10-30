@@ -1,4 +1,4 @@
-#include <kernel/apic.h>
+#include <kernel/arch/x86_64/apic.h>
 #include <kernel/pmm.h>
 #include <kernel/serial.h>
 
@@ -8,7 +8,7 @@ static uintptr_t addr;
 
 static uint32_t timer_freq = 10000000;
 
-void lapic_timer_init() {
+void lapic_timer_init(void) {
   serial_printf("lapic timer init\n");
   addr = physical_to_virtual(DEFAULT_LAPIC_ADDRESS);
   serial_printf("lapic address: %lx - virt: %lx\n", DEFAULT_LAPIC_ADDRESS, addr);

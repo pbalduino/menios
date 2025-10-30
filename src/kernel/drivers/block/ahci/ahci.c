@@ -1,9 +1,9 @@
 #include <kernel/ahci.h>
-#include <kernel/apic.h>
+#include <kernel/arch/x86_64/apic.h>
 #include <kernel/block_device.h>
 #include <kernel/dma.h>
 #include <kernel/heap.h>
-#include <kernel/idt.h>
+#include <kernel/arch/x86_64/idt.h>
 #include <kernel/mutex.h>
 #include <kernel/pci.h>
 #include <kernel/pmm.h>

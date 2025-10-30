@@ -1,6 +1,6 @@
 #include <kernel/console.h>
 #include <kernel/framebuffer.h>
-#include <kernel/gdt.h>
+#include <kernel/arch/x86_64/gdt.h>
 #include <kernel/heap.h>
 #include <kernel/kernel.h>
 #include <kernel/pmm.h>

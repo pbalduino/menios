@@ -1,3 +1,6 @@
-#pragma once
+#ifndef MENIOS_INCLUDE_KERNEL_CORE_SERVICES_H
+#define MENIOS_INCLUDE_KERNEL_CORE_SERVICES_H
 
-void init_services();
+void init_services(void);
+
+#endif /* MENIOS_INCLUDE_KERNEL_CORE_SERVICES_H */

@@ -1,5 +1,5 @@
-#ifndef MENIOS_INCLUDE_KERNEL_IDT_H
-#define MENIOS_INCLUDE_KERNEL_IDT_H
+#ifndef MENIOS_INCLUDE_KERNEL_ARCH_X86_64_IDT_H
+#define MENIOS_INCLUDE_KERNEL_ARCH_X86_64_IDT_H
 
 #include <stdbool.h>
 #include <types.h>
@@ -91,19 +91,19 @@ typedef struct {
   uint16_t descriptor_index;
 } idt_gpf_error_info_t;
 
-extern void idt_df_isr_asm_handler();
-extern void idt_generic_isr_asm_handler();
-extern void idt_gpf_isr_asm_handler();
+extern void idt_df_isr_asm_handler(void);
+extern void idt_generic_isr_asm_handler(void);
+extern void idt_gpf_isr_asm_handler(void);
 extern void idt_load(idt_pointer_t *idt_ptr);
-extern void idt_pf_isr_asm_handler();
-extern void idt_period_timer_isr_asm_handler();
-extern void ps2kb_isr_handler();
-extern void ahci_isr_handler();
-extern void syscall_isr_handler();
+extern void idt_pf_isr_asm_handler(void);
+extern void idt_period_timer_isr_asm_handler(void);
+extern void ps2kb_isr_handler(void);
+extern void ahci_isr_handler(void);
+extern void syscall_isr_handler(void);
 
 void idt_add_isr(int interruption, void* handler);
 void idt_add_user_isr(int interruption, void* handler);
-void idt_init();
+void idt_init(void);
 static inline void idt_decode_page_fault(uint64_t error_code, idt_pf_error_info_t *info) {
   info->present = (error_code & (1ull << 0)) != 0;
   info->write = (error_code & (1ull << 1)) != 0;
@@ -122,4 +122,4 @@ static inline void idt_decode_gpf(uint64_t error_code, idt_gpf_error_info_t *inf
   info->descriptor_index = (uint16_t)((error_code >> 3) & 0x1fffull);
 }
 
-#endif
+#endif /* MENIOS_INCLUDE_KERNEL_ARCH_X86_64_IDT_H */

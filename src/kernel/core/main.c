@@ -34,33 +34,33 @@
 #include <string.h>
 
 #include <kernel/acpi.h>
-#include <kernel/apic.h>
+#include <kernel/arch/x86_64/apic.h>
 #include <kernel/block_device.h>
 #include <kernel/console.h>
 #include <kernel/file.h>
 #include <kernel/fonts.h>
+#include <kernel/core/logo.h>
+#include <kernel/core/services.h>
 #include <kernel/framebuffer.h>
-#include <kernel/cpu.h>
-#include <kernel/gdt.h>
+#include <kernel/arch/x86_64/cpu.h>
+#include <kernel/arch/x86_64/gdt.h>
 #include <kernel/heap.h>
 #include <kernel/hw.h>
-#include <kernel/idt.h>
+#include <kernel/arch/x86_64/idt.h>
 #include <kernel/kernel.h>
 #include <kernel/mem.h>
 #include <kernel/proc.h>
 #include <kernel/rtc.h>
 #include <kernel/serial.h>
-#include <kernel/services.h>
 #include <kernel/shm.h>
 #include <kernel/thread.h>
 #include <kernel/timer.h>
 #include <kernel/tsc.h>
 #include <kernel/syscall.h>
 #include <kernel/user_mode.h>
-#include <kernel/driver/ps2kb.h>
+#include <kernel/drivers/input/ps2kb.h>
 #include <kernel/vfs.h>
 
-void print_logo();
 
 static void heap_demo(void) {
   heap_stats_t before = heap_get_stats();

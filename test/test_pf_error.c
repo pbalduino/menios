@@ -1,5 +1,5 @@
 #include <unity.h>
-#include <kernel/idt.h>
+#include <kernel/arch/x86_64/idt.h>
 
 static void check_decode(uint64_t code,
                          bool present,

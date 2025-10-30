@@ -1,0 +1,6 @@
+#ifndef MENIOS_INCLUDE_KERNEL_CORE_LOGO_H
+#define MENIOS_INCLUDE_KERNEL_CORE_LOGO_H
+
+void print_logo(void);
+
+#endif /* MENIOS_INCLUDE_KERNEL_CORE_LOGO_H */

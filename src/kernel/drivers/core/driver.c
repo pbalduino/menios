@@ -1,7 +1,7 @@
 #include <kernel/console.h>
 #include <kernel/driver.h>
-#include <kernel/driver/ps2kb.h>
-#include <kernel/driver/pciroot.h>
+#include <kernel/drivers/input/ps2kb.h>
+#include <kernel/drivers/bus/pciroot.h>
 #include <kernel/heap.h>
 #include <kernel/serial.h>
 #include <string.h>

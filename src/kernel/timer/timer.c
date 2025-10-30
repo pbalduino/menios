@@ -1,6 +1,6 @@
 #include <boot/limine.h>
 
-#include <kernel/apic.h>
+#include <kernel/arch/x86_64/apic.h>
 #include <kernel/console.h>
 #include <kernel/kernel.h>
 #include <kernel/pmm.h>

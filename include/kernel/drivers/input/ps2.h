@@ -1,4 +1,5 @@
-#pragma once
+#ifndef MENIOS_INCLUDE_KERNEL_DRIVERS_INPUT_PS2_H
+#define MENIOS_INCLUDE_KERNEL_DRIVERS_INPUT_PS2_H
 
 // PS/2 Controller Ports
 #define PS2_DATA_PORT          0x60
@@ -10,3 +11,5 @@
 #define PS2_WRITE_MODE         0x60
 #define PS2_ENABLE_SCANNING    0xf4
 #define PS2_RESET_COMMAND      0xff
+
+#endif /* MENIOS_INCLUDE_KERNEL_DRIVERS_INPUT_PS2_H */

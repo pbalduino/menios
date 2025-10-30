@@ -1,15 +1,16 @@
 [
   {
-    "title": "Display PCI device list on boot screen",
+    "title": "Terminal scrollback with mouse wheel support",
     "github_issue": {
-      "number": 387,
-      "url": "https://github.com/pbalduino/menios/issues/387",
-      "state": "CLOSED"
+      "number": 394,
+      "url": "https://github.com/pbalduino/menios/issues/394",
+      "state": "OPEN"
     },
     "labels": [
       "enhancement",
       "nice to have",
-      "kernel"
+      "mosh",
+      "drivers"
     ],
     "assignees": [
       "pbalduino"
@@ -82,9 +83,9 @@
   {
     "title": "PCI audio driver (AC'97 or Intel HDA)",
     "github_issue": {
-      "number": 368,
-      "url": "https://github.com/pbalduino/menios/issues/368",
-      "state": "CLOSED"
+      "number": 382,
+      "url": "https://github.com/pbalduino/menios/issues/382",
+      "state": "OPEN"
     },
     "labels": [
       "enhancement",
@@ -106,52 +107,6 @@
     "labels": [
       "enhancement",
       "build"
-    ],
-    "assignees": [
-      "pbalduino"
-    ]
-  },
-  {
-    "title": "Implement head command - display first lines of files",
-    "github_issue": {
-      "number": 374,
-      "url": "https://github.com/pbalduino/menios/issues/374",
-      "state": "OPEN"
-    },
-    "labels": [
-      "enhancement",
-      "good first issue",
-      "build"
-    ],
-    "assignees": [
-      "pbalduino"
-    ]
-  },
-  {
-    "title": "Implement shutdown command for ACPI power-off",
-    "github_issue": {
-      "number": 372,
-      "url": "https://github.com/pbalduino/menios/issues/372",
-      "state": "CLOSED"
-    },
-    "labels": [
-      "enhancement",
-      "kernel"
-    ],
-    "assignees": [
-      "pbalduino"
-    ]
-  },
-  {
-    "title": "Implement system() function for shell command execution",
-    "github_issue": {
-      "number": 369,
-      "url": "https://github.com/pbalduino/menios/issues/369",
-      "state": "CLOSED"
-    },
-    "labels": [
-      "enhancement",
-      "libc"
     ],
     "assignees": [
       "pbalduino"
@@ -348,36 +303,6 @@
       "number": 352,
       "url": "https://github.com/pbalduino/menios/issues/352",
       "state": "OPEN"
-    },
-    "labels": [
-      "enhancement",
-      "good first issue",
-      "build"
-    ],
-    "assignees": [
-      "pbalduino"
-    ]
-  },
-  {
-    "title": "Implement time command for mosh shell",
-    "github_issue": {
-      "number": 350,
-      "url": "https://github.com/pbalduino/menios/issues/350",
-      "state": "CLOSED"
-    },
-    "labels": [
-      "mosh"
-    ],
-    "assignees": [
-      "pbalduino"
-    ]
-  },
-  {
-    "title": "Implement head command for file previews",
-    "github_issue": {
-      "number": 374,
-      "url": "https://github.com/pbalduino/menios/issues/374",
-      "state": "CLOSED"
     },
     "labels": [
       "enhancement",
@@ -967,21 +892,6 @@
     ]
   },
   {
-    "title": "bug: Delete key not working in mosh shell",
-    "github_issue": {
-      "number": 236,
-      "url": "https://github.com/pbalduino/menios/issues/236",
-      "state": "CLOSED"
-    },
-    "labels": [
-      "bug",
-      "mosh"
-    ],
-    "assignees": [
-      "pbalduino"
-    ]
-  },
-  {
     "title": "Port xargs utility to meniOS",
     "github_issue": {
       "number": 235,
@@ -1332,7 +1242,9 @@
       "state": "OPEN"
     },
     "labels": [
-      "drivers"
+      "enhancement",
+      "drivers",
+      "kernel"
     ],
     "assignees": [
       "pbalduino"
@@ -1463,21 +1375,6 @@
     },
     "labels": [
       "enhancement"
-    ],
-    "assignees": [
-      "pbalduino"
-    ]
-  },
-  {
-    "title": "Add code coverage reporting to unit tests with Gcov integration",
-    "github_issue": {
-      "number": 135,
-      "url": "https://github.com/pbalduino/menios/issues/135",
-      "state": "CLOSED"
-    },
-    "labels": [
-      "enhancement",
-      "good first issue"
     ],
     "assignees": [
       "pbalduino"
@@ -2318,7 +2215,8 @@
     },
     "labels": [
       "enhancement",
-      "nice to have"
+      "nice to have",
+      "kernel"
     ],
     "assignees": [
       "pbalduino"

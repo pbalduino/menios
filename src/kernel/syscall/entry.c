@@ -1,4 +1,4 @@
-#include <kernel/gdt.h>
+#include <kernel/arch/x86_64/gdt.h>
 #include <kernel/msr.h>
 #include <kernel/serial.h>
 #include <kernel/syscall_entry.h>

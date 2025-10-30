@@ -1,13 +1,13 @@
 #include <errno.h>
 #include <kernel/console.h>
 #include <kernel/driver.h>
-#include <kernel/driver/ps2kb.h>
-#include <kernel/driver/ps2.h>
+#include <kernel/drivers/input/ps2kb.h>
+#include <kernel/drivers/input/ps2.h>
 #include <kernel/file.h>
 #include <kernel/kernel.h>
 #include <kernel/input.h>
 #include <kernel/serial.h>
-#include <kernel/idt.h>
+#include <kernel/arch/x86_64/idt.h>
 #include <menios/input.h>
 
 #include <uacpi/acpi.h>

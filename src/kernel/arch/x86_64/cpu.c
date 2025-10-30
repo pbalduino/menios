@@ -1,4 +1,4 @@
-#include <kernel/cpu.h>
+#include <kernel/arch/x86_64/cpu.h>
 
 static inline uint64_t read_cr0(void) {
   uint64_t value;

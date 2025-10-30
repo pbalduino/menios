@@ -1,7 +1,7 @@
-#include <kernel/apic.h>
+#include <kernel/arch/x86_64/apic.h>
 #include <kernel/console.h>
 #include <kernel/heap.h>
-#include <kernel/idt.h>
+#include <kernel/arch/x86_64/idt.h>
 #include <kernel/pmm.h>
 #include <kernel/kernel.h>
 #include <kernel/serial.h>
@@ -110,7 +110,7 @@ static inline void *getentry(int type, int n) {
 	return NULL;
 }
 
-void apic_init() {
+void apic_init(void) {
   logk("Enabling APIC");
 
   uacpi_table tbl;

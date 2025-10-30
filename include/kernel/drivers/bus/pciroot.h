@@ -1,3 +1,6 @@
-#pragma once
+#ifndef MENIOS_INCLUDE_KERNEL_DRIVERS_BUS_PCIROOT_H
+#define MENIOS_INCLUDE_KERNEL_DRIVERS_BUS_PCIROOT_H
 
-void pciroot_init();
+void pciroot_init(void);
+
+#endif /* MENIOS_INCLUDE_KERNEL_DRIVERS_BUS_PCIROOT_H */

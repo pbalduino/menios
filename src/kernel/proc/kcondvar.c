@@ -5,7 +5,7 @@
 #include <kernel/heap.h>
 #include <kernel/kernel.h>
 #include <kernel/proc.h>
-#include <kernel/gdt.h>
+#include <kernel/arch/x86_64/gdt.h>
 #include <kernel/spinlock.h>
 
 static inline void kcondvar_wait_cycle(void) {

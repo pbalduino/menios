@@ -1,8 +1,8 @@
-#ifndef KERNEL_CPU_H
-#define KERNEL_CPU_H
+#ifndef MENIOS_INCLUDE_KERNEL_ARCH_X86_64_CPU_H
+#define MENIOS_INCLUDE_KERNEL_ARCH_X86_64_CPU_H
 
 #include <stdint.h>
 
 void cpu_enable_sse(void);
 
-#endif /* KERNEL_CPU_H */
+#endif /* MENIOS_INCLUDE_KERNEL_ARCH_X86_64_CPU_H */

@@ -1,5 +1,5 @@
 #include <kernel/console.h>
-#include <kernel/gdt.h>
+#include <kernel/arch/x86_64/gdt.h>
 #include <kernel/serial.h>
 #include <stdio.h>
 #include <string.h>
@@ -76,7 +76,7 @@ static void gdt_initialize_tss(void) {
   gdt_set_tss(GDT_ENTRY_TSS_LOW, (uint64_t)&tss, sizeof(tss) - 1);
 }
 
-void gdt_init() {
+void gdt_init(void) {
   serial_log("Entering gdt_init");
   logk("Setting GDT");
 

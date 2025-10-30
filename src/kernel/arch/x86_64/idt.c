@@ -1,6 +1,6 @@
 #include <kernel/console.h>
-#include <kernel/gdt.h>
-#include <kernel/idt.h>
+#include <kernel/arch/x86_64/gdt.h>
+#include <kernel/arch/x86_64/idt.h>
 #include <kernel/kernel.h>
 #include <kernel/proc.h>
 #include <kernel/serial.h>
@@ -57,7 +57,7 @@ void idt_add_user_isr(int interruption, void* handler) {
   idt_set_entry(interruption, handler, 0xee);
 }
 
-void idt_init() {
+void idt_init(void) {
   logk("Setting IDT");
   idt_p.size = sizeof(idt) - 1;
   idt_p.offset = (uintptr_t)&idt;

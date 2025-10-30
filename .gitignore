@@ -23,6 +23,8 @@ build/
 .vscode/
 bochsout.txt
 core
+!src/kernel/core/
+!include/kernel/core/
 usermode
 !src/usermode/
 !src/usermode/*
