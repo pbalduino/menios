@@ -64,6 +64,7 @@ extern "C" {
 #define SYS_CHMOD         102
 #define SYS_FCHMOD        103
 #define SYS_UTIME         104
+#define SYS_SHUTDOWN      105
 
 #ifdef __cplusplus
 }

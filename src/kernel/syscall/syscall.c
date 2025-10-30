@@ -1,6 +1,7 @@
 #include <errno.h>
 #include <kernel/console.h>
 #include <kernel/file.h>
+#include <kernel/block_cache.h>
 #include <kernel/heap.h>
 #include <kernel/kernel.h>
 #include <kernel/mman.h>
@@ -17,6 +18,7 @@
 #include <kernel/input.h>
 #include <menios/signal_frame.h>
 #include <menios/input.h>
+#include <kernel/acpi.h>
 #include <kernel/signal.h>
 #include <sys/fcntl.h>
 #include <sys/shm.h>
@@ -133,6 +135,7 @@ static uint64_t syscall_shmctl_handler(syscall_frame_t* frame);
 static uint64_t syscall_getpagesize_handler(syscall_frame_t* frame);
 static uint64_t syscall_time_handler(syscall_frame_t* frame);
 static uint64_t syscall_gettimeofday_handler(syscall_frame_t* frame);
+static uint64_t syscall_shutdown_handler(syscall_frame_t* frame);
 
 static syscall_handler_t syscall_table[SYSCALL_MAX];
 
@@ -761,6 +764,7 @@ void syscall_init(void) {
   syscall_register(SYS_CHMOD, syscall_chmod_handler);
   syscall_register(SYS_FCHMOD, syscall_fchmod_handler);
   syscall_register(SYS_UTIME, syscall_utime_handler);
+  syscall_register(SYS_SHUTDOWN, syscall_shutdown_handler);
   syscall_register(SYS_GETPAGESIZE, syscall_getpagesize_handler);
   syscall_register(SYS_TIME, syscall_time_handler);
   syscall_register(SYS_GETTIMEOFDAY, syscall_gettimeofday_handler);
@@ -3234,6 +3238,22 @@ static uint64_t syscall_gettimeofday_handler(syscall_frame_t* frame) {
   if(tz != NULL) {
     tz->tz_minuteswest = 0;
     tz->tz_dsttime = 0;
+  }
+
+  frame->rax = 0;
+  return frame->rax;
+}
+
+static uint64_t syscall_shutdown_handler(syscall_frame_t* frame) {
+  (void)frame;
+
+  block_cache_shutdown();
+  vfs_shutdown();
+
+  int rc = acpi_shutdown();
+  if(rc < 0) {
+    frame->rax = (uint64_t)rc;
+    return frame->rax;
   }
 
   frame->rax = 0;

@@ -181,6 +181,11 @@ promise.  Below is a summary of the calls that ship in meniOS v0.1.0.
   Sets the access and modification timestamps for the provided path.  Passing
   `NULL` updates both to the current realtime clock.  Supported on tmpfs; other
   filesystems currently respond `-ENOSYS`.
+- **`SYS_SHUTDOWN` (105)** — `int shutdown(void);`
+  Initiates an orderly shutdown by flushing the block cache, dismantling VFS
+  mounts, and issuing an ACPI S5 power-off request.  Returns zero on success
+  (the system should power down before returning) or `-EIO` if ACPI reports a
+  failure.
 
 ### Terminal helpers
 

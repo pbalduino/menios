@@ -39,6 +39,14 @@ proc_info_p current;
 proc_info_t kernel_process_info;
 proc_info_p procs[PROC_MAX] = { &kernel_process_info };
 
+int test_stub_acpi_shutdown_calls = 0;
+int test_stub_acpi_shutdown_result = 0;
+
+int acpi_shutdown(void) {
+  test_stub_acpi_shutdown_calls++;
+  return test_stub_acpi_shutdown_result;
+}
+
 int chdir(const char* path) {
   if(path == NULL) {
     errno = EFAULT;
