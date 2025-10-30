@@ -6,7 +6,8 @@ DOCKER_IMAGE = $(IMAGE_NAME):$(GIT_BRANCH)
 DOCKER_RUN_FLAGS := $(shell if [ -t 1 ]; then printf -- "-it"; fi)
 DOCKER_RUN_FLAGS += --rm
 DOCKER_RUN_FLAGS += --platform=linux/amd64
-DOCKER_ENV := $(if $(EXTRA_CFLAGS),--env EXTRA_CFLAGS="$(EXTRA_CFLAGS)",)
+DOCKER_ENV = $(if $(EXTRA_CFLAGS),--env EXTRA_CFLAGS="$(EXTRA_CFLAGS)",)
+DOCKER_ENV += $(if $(GCOV_ENABLED),--env GCOV=$(GCOV) --env GCOV_DIR=$(GCOV_DIR),)
 
 OS_NAME = $(shell uname -s | tr A-Z a-z)
 
@@ -17,6 +18,11 @@ LIB_DIR = src/libc
 
 DEFAULT_CROSS_PREFIX ?= x86_64-elf
 CROSS_PREFIX ?= $(DEFAULT_CROSS_PREFIX)
+
+GCOV ?= 0
+GCOV_DIR ?= $(BUILD_DIR)/gcov
+GCOV_ENABLED := $(filter 1 true TRUE yes YES,$(GCOV))
+GCOV_FLAGS := $(if $(GCOV_ENABLED),--coverage,)
 
 ifneq ($(MENIOS_HOST_CC),)
 USER_CC := $(MENIOS_HOST_CC)
@@ -754,10 +760,17 @@ test: docker
 
 ifeq ($(OS_NAME),linux)
 	@echo "Testing inside Linux"
+ifneq ($(GCOV_ENABLED),)
+	@echo "Coverage instrumentation enabled; cleaning previous profiling data"
+	@rm -rf $(GCOV_DIR)
+	@mkdir -p $(GCOV_DIR)
+	@find . -name '*.gcda' -delete || true
+	@find . -name '*.gcov' -delete || true
+endif
 
 	# Skip host-unsafe tests until proper stubs land.
 	for file in $(shell find -L test -type f -name 'test_*.c' ! -name 'test_kmalloc.c' ! -name 'test_malloc_stress.c' ! -name 'test_buddy_allocator.c' ! -name 'test_malloc_stats.c' ! -name 'test_malloc_direct.c' ! -name 'test_heap_virtual.c' ! -name 'test_scanf.c'); do \
-		gcc -std=gnu11 -DMENIOS_NO_DEBUG -DMENIOS_HOST_TEST -DUNITY_EXCLUDE_SETJMP_H -I./include \
+		gcc $(GCOV_FLAGS) -std=gnu11 -DMENIOS_NO_DEBUG -DMENIOS_HOST_TEST -DUNITY_EXCLUDE_SETJMP_H -I./include \
 			$$file \
 			test/unity.c \
 			test/stubs.c \
@@ -794,7 +807,7 @@ ifeq ($(OS_NAME),linux)
 	done;
 
 	# Host-stubbed allocator stress test exercises user/libc/stdlib.c explicitly.
-	gcc -std=gnu11 -DMENIOS_NO_DEBUG -DMENIOS_HOST_TEST -DUNITY_EXCLUDE_SETJMP_H -I./include \
+	gcc $(GCOV_FLAGS) -std=gnu11 -DMENIOS_NO_DEBUG -DMENIOS_HOST_TEST -DUNITY_EXCLUDE_SETJMP_H -I./include \
 		test/test_buddy_allocator.c \
 		test/unity.c \
 		test/stubs.c \
@@ -829,7 +842,7 @@ ifeq ($(OS_NAME),linux)
 	if [ $$rc -ne 0 ]; then exit $$rc; fi;
 
 	# Direct allocation tests require user/libc/stdlib.c to exercise custom alignment logic.
-	gcc -std=gnu11 -DMENIOS_NO_DEBUG -DMENIOS_HOST_TEST -DUNITY_EXCLUDE_SETJMP_H -I./include \
+	gcc $(GCOV_FLAGS) -std=gnu11 -DMENIOS_NO_DEBUG -DMENIOS_HOST_TEST -DUNITY_EXCLUDE_SETJMP_H -I./include \
 		test/test_malloc_direct.c \
 		test/unity.c \
 		test/stubs.c \
@@ -864,7 +877,7 @@ src/libc/errno.c \
 	if [ $$rc -ne 0 ]; then exit $$rc; fi;
 
 	# Host-stubbed malloc stats test ensures diagnostics stay consistent.
-	gcc -std=gnu11 -DMENIOS_NO_DEBUG -DMENIOS_HOST_TEST -DUNITY_EXCLUDE_SETJMP_H -I./include \
+	gcc $(GCOV_FLAGS) -std=gnu11 -DMENIOS_NO_DEBUG -DMENIOS_HOST_TEST -DUNITY_EXCLUDE_SETJMP_H -I./include \
 		test/test_malloc_stats.c \
 		test/unity.c \
 		test/stubs.c \
@@ -898,7 +911,7 @@ src/libc/errno.c \
 	if [ $$rc -ne 0 ]; then exit $$rc; fi;
 
 	# Kernel heap virtual range accounting tests need kmalloc.
-	gcc -std=gnu11 -DMENIOS_NO_DEBUG -DMENIOS_HOST_TEST -DUNITY_EXCLUDE_SETJMP_H -I./include \
+	gcc $(GCOV_FLAGS) -std=gnu11 -DMENIOS_NO_DEBUG -DMENIOS_HOST_TEST -DUNITY_EXCLUDE_SETJMP_H -I./include \
 		test/test_heap_virtual.c \
 		test/unity.c \
 		test/stubs.c \
@@ -934,7 +947,7 @@ src/libc/errno.c \
 	if [ $$rc -ne 0 ]; then exit $$rc; fi;
 
 	# Host-stubbed allocator stress test exercises user/libc/stdlib.c explicitly.
-	gcc -std=gnu11 -DMENIOS_NO_DEBUG -DMENIOS_HOST_TEST -DUNITY_EXCLUDE_SETJMP_H -I./include \
+	gcc $(GCOV_FLAGS) -std=gnu11 -DMENIOS_NO_DEBUG -DMENIOS_HOST_TEST -DUNITY_EXCLUDE_SETJMP_H -I./include \
 		test/test_malloc_stress.c \
 		test/unity.c \
 		test/stubs.c \
@@ -969,7 +982,7 @@ src/libc/errno.c \
 	if [ $$rc -ne 0 ]; then exit $$rc; fi;
 
 	# scanf family tests exercise formatted input helpers.
-	gcc -std=gnu11 -DMENIOS_NO_DEBUG -DMENIOS_HOST_TEST -DUNITY_EXCLUDE_SETJMP_H -I./include \
+	gcc $(GCOV_FLAGS) -std=gnu11 -DMENIOS_NO_DEBUG -DMENIOS_HOST_TEST -DUNITY_EXCLUDE_SETJMP_H -I./include \
 		test/test_scanf.c \
 		user/libc/stdio.c \
 		user/libc/stdlib.c \
@@ -987,6 +1000,24 @@ src/libc/errno.c \
 else
 	@echo "Testing inside Docker"
 	$(DOCKER) run --rm $(DOCKER_RUN_FLAGS) $(DOCKER_ENV) --mount type=bind,source=$$(pwd),target=/mnt $(DOCKER_IMAGE) /bin/sh -c "cd /mnt && make test"
+endif
+
+.PHONY: coverage coverage-report
+coverage:
+	@rm -rf $(GCOV_DIR)
+	@mkdir -p $(GCOV_DIR)
+	$(MAKE) GCOV=1 GCOV_DIR=$(GCOV_DIR) test
+	$(MAKE) GCOV=1 GCOV_DIR=$(GCOV_DIR) coverage-report
+	@find . -name '*.gcda' -delete || true
+	@find . -name '*.gcno' -delete || true
+	@find . -name '*.gcov' -delete || true
+	@find $(GCOV_DIR) -name '*.gcov.json.gz' -delete || true
+
+coverage-report:
+ifeq ($(OS_NAME),linux)
+	@./scripts/gcov-report.sh $(GCOV_DIR)
+else
+	$(DOCKER) run --rm $(DOCKER_RUN_FLAGS) $(DOCKER_ENV) --mount type=bind,source=$$(pwd),target=/mnt $(DOCKER_IMAGE) /bin/sh -c "cd /mnt && ./scripts/gcov-report.sh $(GCOV_DIR)"
 endif
 
 .PHONY: shell
