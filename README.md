@@ -56,7 +56,7 @@ MeniOS ships with a growing collection of userland utilities in `/bin`:
 - **realpath** — Canonicalize file paths
 - **head** — Display first lines of files (#374 - planned)
 - **stat** — Display detailed file metadata (validated)
-- **shutdown** — Clean ACPI power-off (#372 - planned)
+- **shutdown** — Clean ACPI power-off (#372)
 
 ### Development Tools (binutils 2.45) ✅
 - **as** — GNU assembler (x86-64)
