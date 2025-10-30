@@ -893,6 +893,7 @@ src/libc/errno.c \
 		src/kernel/ipc/shm.c \
 		src/kernel/user/vm_region.c \
 		src/kernel/timer/tsc.c \
+		src/kernel/block/block_cache.c \
 		src/libc/itoa.c \
 		src/libc/string.c \
 		src/libc/time.c \
