@@ -101,9 +101,10 @@ MALLOC_STRESS_ELF = $(OBJDIR)/usermode/malloc_stress.elf
 MEM_ELF = $(OBJDIR)/usermode/mem.elf
 ALARM_DEMO_ELF = $(OBJDIR)/usermode/alarm_demo.elf
 TOUCH_ELF = $(OBJDIR)/usermode/touch.elf
+SHUTDOWN_ELF = $(OBJDIR)/usermode/shutdown.elf
 
-USER_PROGRAM_ELFS = $(MOSH_ELF) $(ECHO_ELF) $(CAT_ELF) $(ENV_ELF) $(TRUE_ELF) $(FALSE_ELF) $(LS_ELF) $(KILL_ELF) $(PS_ELF) $(STAT_ELF) $(REALPATH_ELF) $(MALLOC_STRESS_ELF) $(MEM_ELF) $(ALARM_DEMO_ELF) $(TOUCH_ELF)
-USERLAND_BINS = mosh echo cat env true false ls kill ps stat realpath malloc_stress mem alarm_demo touch
+USER_PROGRAM_ELFS = $(MOSH_ELF) $(ECHO_ELF) $(CAT_ELF) $(ENV_ELF) $(TRUE_ELF) $(FALSE_ELF) $(LS_ELF) $(KILL_ELF) $(PS_ELF) $(STAT_ELF) $(REALPATH_ELF) $(MALLOC_STRESS_ELF) $(MEM_ELF) $(ALARM_DEMO_ELF) $(TOUCH_ELF) $(SHUTDOWN_ELF)
+USERLAND_BINS = mosh echo cat env true false ls kill ps stat realpath malloc_stress mem alarm_demo touch shutdown
 
 
 BINUTILS_TOOLS = as ld objdump nm ar ranlib readelf objcopy strip strings size addr2line
@@ -252,7 +253,6 @@ QEMU_LOG_FILE=com1.log
 QEMU_OPTS = -smp cpus=2,maxcpus=4,sockets=1,dies=1,clusters=1,cores=2 \
 	-vga std \
 	-no-reboot \
-	--no-shutdown \
 	-M q35 \
 	-m $(QEMU_MEMORY) \
 	-device ahci,id=ahci \
@@ -569,6 +569,14 @@ else
 	$(DOCKER) run --rm $(DOCKER_RUN_FLAGS) $(DOCKER_ENV) --mount type=bind,source=$$(pwd),target=/mnt $(DOCKER_IMAGE) /bin/sh -c "cd /mnt && make EXTRA_CFLAGS='$(EXTRA_CFLAGS)' $@"
 endif
 
+$(SHUTDOWN_ELF): app/shutdown/shutdown.c | sdk
+ifeq ($(OS_NAME),linux)
+	@mkdir -p $(dir $@)
+	$(SDK_BIN_DIR)/menios-gcc $(EXTRA_CFLAGS) $< -o $@
+else
+	$(DOCKER) run --rm $(DOCKER_RUN_FLAGS) $(DOCKER_ENV) --mount type=bind,source=$$(pwd),target=/mnt $(DOCKER_IMAGE) /bin/sh -c "cd /mnt && make EXTRA_CFLAGS='$(EXTRA_CFLAGS)' $@"
+endif
+
 $(MALLOC_STRESS_ELF): app/malloc_stress/malloc_stress.c | sdk
 ifeq ($(OS_NAME),linux)
 	@mkdir -p $(dir $@)
@@ -713,6 +721,7 @@ ifeq ($(OS_NAME),linux)
 	mcopy -o -i $(IMAGE_NAME).hdd@@2M $(OUTPUT_DIR)/bin/mem ::/bin/mem
 	mcopy -o -i $(IMAGE_NAME).hdd@@2M $(OUTPUT_DIR)/bin/alarm_demo ::/bin/alarm_demo
 	mcopy -o -i $(IMAGE_NAME).hdd@@2M $(OUTPUT_DIR)/bin/touch ::/bin/touch
+	mcopy -o -i $(IMAGE_NAME).hdd@@2M $(OUTPUT_DIR)/bin/shutdown ::/bin/shutdown
 	for tool in $(BINUTILS_TOOLS); do \
 	if [ -f "$(OUTPUT_DIR)/bin/$$tool" ]; then \
 		mcopy -o -i $(IMAGE_NAME).hdd@@2M $(OUTPUT_DIR)/bin/$$tool ::/bin/$$tool; \
@@ -896,6 +905,7 @@ src/libc/errno.c \
 		src/kernel/ipc/shm.c \
 		src/kernel/user/vm_region.c \
 		src/kernel/timer/tsc.c \
+		src/kernel/block/block_cache.c \
 		src/libc/itoa.c \
 		src/libc/string.c \
 		src/libc/time.c \
