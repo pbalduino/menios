@@ -24,6 +24,21 @@ extern "C" {
 #ifndef _PC_PATH_MAX
 #define _PC_PATH_MAX 1
 #endif
+#ifndef _PC_NAME_MAX
+#define _PC_NAME_MAX 2
+#endif
+#ifndef _PC_LINK_MAX
+#define _PC_LINK_MAX 3
+#endif
+#ifndef _PC_PIPE_BUF
+#define _PC_PIPE_BUF 4
+#endif
+#ifndef _PC_CHOWN_RESTRICTED
+#define _PC_CHOWN_RESTRICTED 5
+#endif
+#ifndef _PC_NO_TRUNC
+#define _PC_NO_TRUNC 6
+#endif
 
 typedef long ssize_t;
 

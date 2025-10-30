@@ -54,7 +54,7 @@ MeniOS ships with a growing collection of userland utilities in `/bin`:
 - **cat**, **echo**, **env**, **true**, **false** — Standard POSIX utilities
 - **touch** — Create files and update timestamps
 - **realpath** — Canonicalize file paths
-- **head** — Display first lines of files (#374 - planned)
+- **head** — Display first lines of files
 - **stat** — Display detailed file metadata (validated)
 - **shutdown** — Clean ACPI power-off (#372 - planned)
 
@@ -100,6 +100,7 @@ The complete binutils 2.45 suite is fully operational on meniOS with native meta
 
 **Implementation Details:**
 - Native syscalls: `chmod`/`fchmod`/`utime` implemented across tmpfs and FAT32 (pseudo-fs remain read-only and ignore metadata changes)
+- FAT32 stat metadata now surfaces DOS attributes and timestamp fields (archived/hidden/system flags preserved)
 - Host harness: Forwards metadata operations to host OS for cross-platform testing
 - Printf formatting: Dynamic field width support (`*`) enables proper table display in `size`
 
@@ -114,6 +115,12 @@ See [issue #191 (CLOSED)](https://github.com/pbalduino/menios/issues/191) for th
 - [docs/MILESTONES.md](docs/MILESTONES.md) — high-level progress tracker.
 - [scheduler_issues.md](scheduler_issues.md) — notes on ready-queue redesign.
 - [CONTRIBUTING.md](CONTRIBUTING.md) & [CODING.md](CODING.md) — contribution workflow and style guide.
+
+## Testing
+
+- `make test` — build and run the host Unity suite (uses Docker automatically on macOS).
+- `make coverage` — rerun the suite with `gcov` instrumentation and write a summary to `build/gcov/summary.txt`.
+- `make coverage-report` — regenerate the coverage summary from existing `.gcda/.gcno` data.
 
 ## Repository Layout
 
