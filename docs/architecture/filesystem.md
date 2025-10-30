@@ -102,8 +102,8 @@ the VFS, invoke the appropriate driver callbacks, convert results to
   replacing the previous stub that unconditionally failed.
 - `realpath()` — canonicalizes paths and validates existence with `stat()`,
   ensuring POSIX-correct behavior.
-- `pathconf()` — partially implemented; returns `_PC_PATH_MAX` support. Other
-  queries still return `-ENOSYS` (tracked in issue #368).
+- `pathconf()` — returns POSIX-compliant values for `_PC_PATH_MAX`, `_PC_NAME_MAX`,
+  `_PC_LINK_MAX`, `_PC_CHOWN_RESTRICTED`, `_PC_NO_TRUNC` (issue #368 closed).
 
 ### Driver Support
 
@@ -138,8 +138,8 @@ the VFS, invoke the appropriate driver callbacks, convert results to
 
 ### Outstanding Work
 
-- **Issue #367** — Parse rich FAT32 metadata (timestamps, DOS attributes, LFN
-  information).
+- ~~**Issue #367** — Parse rich FAT32 metadata (timestamps, DOS attributes, LFN
+  information).~~ ✅ Completed
 - ~~**Issue #317** — Implement `utime()` syscall to modify file timestamps~~ ✅ Completed
 - **Issue #368** — Complete `pathconf()` implementation for all POSIX queries.
 

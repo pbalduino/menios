@@ -1,4 +1,5 @@
 #include <errno.h>
+#include <stdbool.h>
 #include <kernel/ahci.h>
 #include <kernel/console.h>
 #include <kernel/driver.h>
@@ -10,11 +11,220 @@
 #include <uacpi/acpi.h>
 #include <uacpi/tables.h>
 
+static bool pciroot_device_has_driver(uint32_t vendor_device, uint32_t class_reg) {
+  (void)vendor_device;
+
+  uint8_t base_class = (uint8_t)((class_reg >> 24) & 0xffu);
+  uint8_t subclass = (uint8_t)((class_reg >> 16) & 0xffu);
+
+  if(base_class == 0x01 && subclass == 0x06) {
+    return true;  // AHCI SATA controller
+  }
+
+  return false;
+}
+
+static const char* pciroot_class_name(uint8_t base_class, uint8_t subclass, uint8_t prog_if) {
+  switch(base_class) {
+    case 0x00:
+      return "Legacy device";
+    case 0x01:
+      switch(subclass) {
+        case 0x00:
+          return "SCSI controller";
+        case 0x01:
+          return "IDE controller";
+        case 0x02:
+          return "Floppy controller";
+        case 0x03:
+          return "IPI controller";
+        case 0x04:
+          return "RAID controller";
+        case 0x05:
+          return "ATA controller";
+        case 0x06:
+          return (prog_if == 0x01) ? "AHCI controller" : "SATA controller";
+        case 0x07:
+          return "Serial Attached SCSI controller";
+        case 0x08:
+          return "NVMe controller";
+        default:
+          return "Mass storage controller";
+      }
+    case 0x02:
+      switch(subclass) {
+        case 0x00:
+          return "Ethernet controller";
+        case 0x01:
+          return "Token Ring controller";
+        case 0x02:
+          return "FDDI controller";
+        case 0x03:
+          return "ATM controller";
+        default:
+          return "Network controller";
+      }
+    case 0x03:
+      switch(subclass) {
+        case 0x00:
+          return "VGA controller";
+        case 0x01:
+          return "XGA controller";
+        case 0x02:
+          return "3D controller";
+        default:
+          return "Display controller";
+      }
+    case 0x04:
+      switch(subclass) {
+        case 0x00:
+          return "Video device";
+        case 0x01:
+          return "Audio device";
+        case 0x02:
+          return "Computer telephony device";
+        case 0x03:
+          return "HD Audio device";
+        default:
+          return "Multimedia device";
+      }
+    case 0x05:
+      switch(subclass) {
+        case 0x00:
+          return "RAM controller";
+        case 0x01:
+          return "Flash controller";
+        default:
+          return "Memory controller";
+      }
+    case 0x06:
+      switch(subclass) {
+        case 0x00:
+          return "Host bridge";
+        case 0x01:
+          return "ISA bridge";
+        case 0x02:
+          return "EISA bridge";
+        case 0x04:
+          return "PCI-to-PCI bridge";
+        case 0x07:
+          return "CardBus bridge";
+        case 0x09:
+          return "PCI-to-PCI bridge (secondary)";
+        default:
+          return "Bridge device";
+      }
+    case 0x07:
+      switch(subclass) {
+        case 0x00:
+          return "Serial controller";
+        case 0x01:
+          return "Parallel controller";
+        case 0x02:
+          return "Multiport serial controller";
+        default:
+          return "Communication controller";
+      }
+    case 0x08:
+      switch(subclass) {
+        case 0x00:
+          return "PIC";
+        case 0x01:
+          return "DMA controller";
+        case 0x02:
+          return "Timer";
+        case 0x03:
+          return "RTC";
+        default:
+          return "System peripheral";
+      }
+    case 0x09:
+      return "Input controller";
+    case 0x0A:
+      return "Docking station";
+    case 0x0B:
+      return "Processor device";
+    case 0x0C:
+      switch(subclass) {
+        case 0x00:
+          return "FireWire controller";
+        case 0x01:
+          return "ACCESS.bus controller";
+        case 0x02:
+          return "SSA controller";
+        case 0x03:
+          switch(prog_if) {
+            case 0x00:
+              return "UHCI USB controller";
+            case 0x10:
+              return "OHCI USB controller";
+            case 0x20:
+              return "EHCI USB controller";
+            case 0x30:
+              return "xHCI USB controller";
+            case 0x80:
+              return "Generic USB controller";
+            default:
+              return "USB controller";
+          }
+        case 0x05:
+          return "SMBus controller";
+        default:
+          return "Serial bus controller";
+      }
+    case 0x0D:
+      return "Wireless controller";
+    case 0x0E:
+      return "Intelligent I/O controller";
+    case 0x0F:
+      return "Satellite communication controller";
+    case 0x10:
+      return "Encryption controller";
+    case 0x11:
+      return "Signal processing controller";
+    default:
+      return "Unknown device";
+  }
+}
+
 static void pciroot_visit_device(const pci_device_location_t* location,
                                  uint32_t vendor_device,
                                  uint32_t class_reg,
                                  void* context) {
   (void)context;
+
+  uint16_t vendor = (uint16_t)(vendor_device & 0xffffu);
+  uint16_t device = (uint16_t)((vendor_device >> 16) & 0xffffu);
+  uint8_t base_class = (uint8_t)((class_reg >> 24) & 0xffu);
+  uint8_t subclass = (uint8_t)((class_reg >> 16) & 0xffu);
+  uint8_t prog_if = (uint8_t)((class_reg >> 8) & 0xffu);
+
+  const char* class_name = pciroot_class_name(base_class, subclass, prog_if);
+  bool has_driver = pciroot_device_has_driver(vendor_device, class_reg);
+
+  if(has_driver) {
+    logk("PCI %02x:%02x.%x (%04x:%04x) class %02x/%02x/%02x - %s\n",
+         location->bus,
+         location->device,
+         location->function,
+         vendor,
+         device,
+         base_class,
+         subclass,
+         prog_if,
+         class_name);
+  } else {
+    errk("PCI %02x:%02x.%x (%04x:%04x) class %02x/%02x/%02x - %s\n",
+         location->bus,
+         location->device,
+         location->function,
+         vendor,
+         device,
+         base_class,
+         subclass,
+         prog_if,
+         class_name);
+  }
 
   ahci_pci_probe(location, vendor_device, class_reg);
 }
@@ -60,6 +270,7 @@ void pciroot_start(void) {
   }
 
   ahci_init();
+  logk("Enumerating PCI devices:\n");
   pci_enumerate_devices(pciroot_visit_device, NULL);
 }
 

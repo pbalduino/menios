@@ -11,6 +11,10 @@ build/
 *.log
 *.o
 *.d
+*.gcda
+*.gcno
+*.gcov
+*.gcov.json.gz
 .DS_Store
 .vscode/
 bochsout.txt

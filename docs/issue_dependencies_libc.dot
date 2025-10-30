@@ -75,7 +75,7 @@ digraph LibcEcosystem {
         issue317 [label="#317: utime\n✅ COMPLETE", fillcolor="#90EE90", style="filled,dashed"];
 
         // Other stubs
-        issue368 [label="#368: Complete pathconf\nall POSIX queries\n\n1-2 weeks", fillcolor="#FFE4B5"];
+            issue368 [label="#368: Complete pathconf\n✅ COMPLETE", fillcolor="#90EE90", style="filled,dashed"];
         issue369 [label="#369: system()\nshell execution\n\n1-2 weeks", fillcolor="#FFE4B5"];
         issue363 [label="#363: Serial port FD\ndebug logging", fillcolor="#FFE4B5"];
     }

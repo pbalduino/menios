@@ -99,12 +99,12 @@ GNU [binutils 2.45](https://www.gnu.org/software/binutils/) has also been staged
 - ⚠️ #364 (stubbed libc functions) - **PARTIALLY COMPLETE** (stat family working, other stubs tracked)
   - ✅ stat/fstat/lstat syscalls (SYS_STAT, SYS_LSTAT, SYS_FSTAT)
   - ✅ access(), realpath() (using stat infrastructure)
-- ⚠️ pathconf() (partial - only _PC_PATH_MAX) - #368
+- ✅ pathconf() (POSIX queries covered) - **COMPLETE!** (#368)
   - ✅ chmod/fchmod/utime (#365/#317) implemented for tmpfs + FAT32
     - ✅ Host harness now forwards these calls to the underlying OS (MENIOS_HOST_TEST) so native tool tests keep metadata.
     - ✅ Kernel implements the syscalls for tmpfs-backed paths, so `/tmp` usage inside meniOS preserves permissions and timestamps.
     - ⚠️ devfs/procfs intentionally remain read-only; metadata writes skipped by design.
-  - ✅ rich FAT32 metadata (#367) - **COMPLETE!**
+  - ✅ rich FAT32 metadata (#367) - **COMPLETE!** (DOS attributes + timestamps surface via stat)
   - ✅ chmod/fchmod on FAT32 (#365) - **COMPLETE!** (read-only bit mirrors POSIX perms)
   - ✅ utime on FAT32 (#317) - **COMPLETE!** (POSIX timestamps persist on FAT32)
   - ✅ pseudo-fs metadata (#366) - **COMPLETE!** (devfs/procfs/pipes surface synthetic metadata)
@@ -148,8 +148,7 @@ GNU [binutils 2.45](https://www.gnu.org/software/binutils/) has also been staged
 - ✅ Manual tool sweep executed (2025-10-29): assembled/linked/archived, ran `objdump`, `size`, `strings`, `strip`, and confirmed expected output
 
 **Remaining Enhancements:**
-- #368 - pathconf() coverage (needed by Autoconf-style probes)
-- Note: ar/ranlib work correctly today; further metadata polish covered by #367/#368.
+- Note: ar/ranlib work correctly today; further metadata polish covered by #367/#366.
 
 **Next Steps:**
 1. ✅ ~~Fix #371 (ld freeze bug)~~ - COMPLETE!
