@@ -226,7 +226,7 @@ These issues form the backbone of the system and should be prioritized:
                     │
                     ├──→ ~~#366 (pseudo-fs metadata)~~ ✅ ──→ tmpfs, procfs, devfs, pipes .stat
                     │
-                    ├──→ #367 (rich FAT32 metadata) ──→ timestamps, DOS attrs, LFN
+                    ├──→ ~~#367 (rich FAT32 metadata)~~ ✅ ──→ timestamps, DOS attrs, LFN
                     │
                     ├──→ #365 (chmod/fchmod) ──┐
                     │                           ├──→ File mutation APIs
