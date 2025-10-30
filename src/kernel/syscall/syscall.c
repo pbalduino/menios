@@ -13,7 +13,7 @@
 #include <kernel/syscall.h>
 #include <kernel/syscall_entry.h>
 #include <kernel/tsc.h>
-#include <kernel/vfs.h>
+#include <kernel/fs/vfs/vfs.h>
 #include <kernel/vm.h>
 #include <kernel/input.h>
 #include <menios/signal_frame.h>

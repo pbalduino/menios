@@ -1,4 +1,4 @@
-#include <kernel/procfs.h>
+#include <kernel/fs/procfs/procfs.h>
 
 #include <errno.h>
 #include <string.h>
@@ -8,11 +8,11 @@
 
 #include <kernel/console.h>
 #include <kernel/file.h>
-#include <kernel/fs.h>
+#include <kernel/fs/core.h>
 #include <kernel/heap.h>
 #include <kernel/pmm.h>
 #include <kernel/tsc.h>
-#include <kernel/vfs.h>
+#include <kernel/fs/vfs/vfs.h>
 
 #define PROCFS_MAX_NAME 64
 

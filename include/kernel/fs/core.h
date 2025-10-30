@@ -1,9 +1,9 @@
-#ifndef MENIOS_INCLUDE_KERNEL_FS_H
-#define MENIOS_INCLUDE_KERNEL_FS_H
+#ifndef MENIOS_INCLUDE_KERNEL_FS_CORE_H
+#define MENIOS_INCLUDE_KERNEL_FS_CORE_H
 
 #ifdef __cplusplus
 extern "C" {
-#endif
+#endif /* MENIOS_INCLUDE_KERNEL_FS_CORE_H */
 
 #include <stdbool.h>
 #include <stddef.h>

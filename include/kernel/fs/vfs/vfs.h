@@ -1,16 +1,16 @@
-#ifndef MENIOS_INCLUDE_KERNEL_VFS_H
-#define MENIOS_INCLUDE_KERNEL_VFS_H
+#ifndef MENIOS_INCLUDE_KERNEL_FS_VFS_H
+#define MENIOS_INCLUDE_KERNEL_FS_VFS_H
 
 #ifdef __cplusplus
 extern "C" {
-#endif
+#endif /* MENIOS_INCLUDE_KERNEL_FS_VFS_H */
 
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
 #include <time.h>
 
-#include <kernel/fs.h>
+#include <kernel/fs/core.h>
 #include <kernel/file.h>
 #include <kernel/block_device.h>
 

@@ -1,4 +1,4 @@
-#include <kernel/devfs.h>
+#include <kernel/fs/devfs/devfs.h>
 
 #include <errno.h>
 #include <stdint.h>
@@ -8,10 +8,10 @@
 #include <time.h>
 
 #include <kernel/file.h>
-#include <kernel/fs.h>
+#include <kernel/fs/core.h>
 #include <kernel/tsc.h>
 #include <kernel/serial.h>
-#include <kernel/vfs.h>
+#include <kernel/fs/vfs/vfs.h>
 
 typedef struct devfs_node_t {
   const char*        name;

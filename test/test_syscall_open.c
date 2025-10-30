@@ -11,7 +11,7 @@
 #include <kernel/heap.h>
 #include <kernel/proc.h>
 #include <kernel/syscall.h>
-#include <kernel/vfs.h>
+#include <kernel/fs/vfs/vfs.h>
 
 extern proc_info_p current;
 

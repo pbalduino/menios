@@ -1,4 +1,4 @@
-#include <kernel/vfs.h>
+#include <kernel/fs/vfs/vfs.h>
 
 #include <errno.h>
 #include <stdbool.h>
@@ -10,7 +10,7 @@
 #include <time.h>
 
 #include <kernel/block_device.h>
-#include <kernel/fs.h>
+#include <kernel/fs/core.h>
 #include <kernel/heap.h>
 #include <kernel/mutex.h>
 #include <kernel/serial.h>

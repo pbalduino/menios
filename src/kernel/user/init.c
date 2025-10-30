@@ -7,7 +7,7 @@
 #include <kernel/heap.h>
 #include <kernel/proc.h>
 #include <kernel/serial.h>
-#include <kernel/vfs.h>
+#include <kernel/fs/vfs/vfs.h>
 
 extern const uint8_t init_elf_start[];
 extern const uint8_t init_elf_end[];

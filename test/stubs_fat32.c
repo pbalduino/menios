@@ -3,7 +3,7 @@
 #include <stdint.h>
 #include <time.h>
 
-#include <kernel/fs.h>
+#include <kernel/fs/core.h>
 
 #ifndef MENIOS_HOST_TEST
 #error "stubs_fat32.c should only be compiled for host tests"

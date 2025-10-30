@@ -3,11 +3,11 @@
 #include <sys/fcntl.h>
 #include <sys/stat.h>
 
-#include <kernel/devfs.h>
+#include <kernel/fs/devfs/devfs.h>
 #include <kernel/file.h>
-#include <kernel/fs.h>
-#include <kernel/procfs.h>
-#include <kernel/vfs.h>
+#include <kernel/fs/core.h>
+#include <kernel/fs/procfs/procfs.h>
+#include <kernel/fs/vfs/vfs.h>
 
 void setUp(void) {
   vfs_shutdown();

@@ -7,7 +7,7 @@
 
 #include <kernel/condvar.h>
 #include <kernel/file.h>
-#include <kernel/fs.h>
+#include <kernel/fs/core.h>
 #include <kernel/heap.h>
 #include <kernel/mutex.h>
 #include <kernel/serial.h>

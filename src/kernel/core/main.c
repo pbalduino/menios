@@ -59,7 +59,7 @@
 #include <kernel/syscall.h>
 #include <kernel/user_mode.h>
 #include <kernel/drivers/input/ps2kb.h>
-#include <kernel/vfs.h>
+#include <kernel/fs/vfs/vfs.h>
 
 
 static void heap_demo(void) {

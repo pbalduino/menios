@@ -1,4 +1,4 @@
-#include <kernel/tmpfs.h>
+#include <kernel/fs/tmpfs/tmpfs.h>
 
 #include <errno.h>
 #include <stdint.h>
@@ -16,7 +16,7 @@
 #include <kernel/heap.h>
 #include <kernel/mutex.h>
 #include <kernel/file.h>
-#include <kernel/vfs.h>
+#include <kernel/fs/vfs/vfs.h>
 #include <kernel/serial.h>
 #include <kernel/tsc.h>
 

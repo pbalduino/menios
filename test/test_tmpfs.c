@@ -1,7 +1,7 @@
 #include <unity.h>
 
-#include <kernel/tmpfs.h>
-#include <kernel/vfs.h>
+#include <kernel/fs/tmpfs/tmpfs.h>
+#include <kernel/fs/vfs/vfs.h>
 #include <kernel/file.h>
 #include <sys/fcntl.h>
 #include <stdint.h>

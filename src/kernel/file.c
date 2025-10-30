@@ -12,10 +12,10 @@
 
 #include <kernel/condvar.h>
 #include <kernel/file.h>
-#include <kernel/devfs.h>
-#include <kernel/fs.h>
-#include <kernel/procfs.h>
-#include <kernel/tmpfs.h>
+#include <kernel/fs/devfs/devfs.h>
+#include <kernel/fs/core.h>
+#include <kernel/fs/procfs/procfs.h>
+#include <kernel/fs/tmpfs/tmpfs.h>
 #include <kernel/framebuffer.h>
 #include <kernel/mman.h>
 #include <kernel/pmm.h>
@@ -24,7 +24,7 @@
 #include <kernel/proc.h>
 #include <kernel/serial.h>
 #include <kernel/spinlock.h>
-#include <kernel/vfs.h>
+#include <kernel/fs/vfs/vfs.h>
 #include <menios/fb.h>
 #ifdef MENIOS_KERNEL
 #include <menios/stdio_internal.h>
