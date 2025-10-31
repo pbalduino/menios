@@ -58,6 +58,7 @@ struct stat {
 #define S_IRWXO (S_IROTH | S_IWOTH | S_IXOTH)
 
 int mkdir(const char* path, mode_t mode);
+int mknod(const char* path, mode_t mode, dev_t dev);
 int fstat(int fd, struct stat* buf);
 int stat(const char* path, struct stat* buf);
 int lstat(const char* path, struct stat* buf);
