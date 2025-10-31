@@ -1163,6 +1163,36 @@ int vfs_rmdir(const char* path) {
   return driver->rmdir(fs_ctx, relative);
 }
 
+int vfs_mknod(const char* path, mode_t mode, dev_t dev) {
+  if(path == NULL) {
+    return -EINVAL;
+  }
+
+  const vfs_fs_driver_t* driver = NULL;
+  void* fs_ctx = NULL;
+  char relative[VFS_PATH_MAX];
+  bool read_only = true;
+
+  if(!vfs_resolve(path, &driver, &fs_ctx, relative, sizeof(relative), &read_only)) {
+    return -ENOENT;
+  }
+
+  if(read_only) {
+    return -EROFS;
+  }
+
+  if(driver->mknod == NULL) {
+    return -ENOSYS;
+  }
+
+  fs_path_info_t info;
+  if(vfs_path_info(path, &info)) {
+    return -EEXIST;
+  }
+
+  return driver->mknod(fs_ctx, relative, mode, dev);
+}
+
 int vfs_mkdir(const char* path) {
   if(path == NULL) {
     return -EINVAL;
@@ -1448,6 +1478,7 @@ static const vfs_fs_driver_t fat32_driver = {
   .mkdir = fat32_mkdir_adapter,
   .rmdir = fat32_rmdir_adapter,
   .rename = fat32_rename_adapter,
+  .mknod = NULL,
   .chmod = fat32_chmod_impl,
   .utimens = fat32_utimens_path,
   .destroy = fat32_destroy_adapter,

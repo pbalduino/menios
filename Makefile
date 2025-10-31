@@ -102,9 +102,10 @@ MEM_ELF = $(OBJDIR)/usermode/mem.elf
 ALARM_DEMO_ELF = $(OBJDIR)/usermode/alarm_demo.elf
 TOUCH_ELF = $(OBJDIR)/usermode/touch.elf
 SHUTDOWN_ELF = $(OBJDIR)/usermode/shutdown.elf
+MKNOD_ELF = $(OBJDIR)/usermode/mknod.elf
 
-USER_PROGRAM_ELFS = $(MOSH_ELF) $(ECHO_ELF) $(CAT_ELF) $(ENV_ELF) $(TRUE_ELF) $(FALSE_ELF) $(LS_ELF) $(KILL_ELF) $(PS_ELF) $(STAT_ELF) $(REALPATH_ELF) $(MALLOC_STRESS_ELF) $(MEM_ELF) $(ALARM_DEMO_ELF) $(TOUCH_ELF) $(SHUTDOWN_ELF)
-USERLAND_BINS = mosh echo cat env true false ls kill ps stat realpath malloc_stress mem alarm_demo touch shutdown
+USER_PROGRAM_ELFS = $(MOSH_ELF) $(ECHO_ELF) $(CAT_ELF) $(ENV_ELF) $(TRUE_ELF) $(FALSE_ELF) $(LS_ELF) $(KILL_ELF) $(PS_ELF) $(STAT_ELF) $(REALPATH_ELF) $(MALLOC_STRESS_ELF) $(MEM_ELF) $(ALARM_DEMO_ELF) $(TOUCH_ELF) $(MKNOD_ELF) $(SHUTDOWN_ELF)
+USERLAND_BINS = mosh echo cat env true false ls kill ps stat realpath malloc_stress mem alarm_demo touch mknod shutdown
 
 
 BINUTILS_TOOLS = as ld objdump nm ar ranlib readelf objcopy strip strings size addr2line
@@ -562,6 +563,14 @@ else
 endif
 
 $(TOUCH_ELF): app/touch/touch.c | sdk
+ifeq ($(OS_NAME),linux)
+	@mkdir -p $(dir $@)
+	$(SDK_BIN_DIR)/menios-gcc $(EXTRA_CFLAGS) $< -o $@
+else
+	$(DOCKER) run --rm $(DOCKER_RUN_FLAGS) $(DOCKER_ENV) --mount type=bind,source=$$(pwd),target=/mnt $(DOCKER_IMAGE) /bin/sh -c "cd /mnt && make EXTRA_CFLAGS='$(EXTRA_CFLAGS)' $@"
+endif
+
+$(MKNOD_ELF): app/mknod/mknod.c | sdk
 ifeq ($(OS_NAME),linux)
 	@mkdir -p $(dir $@)
 	$(SDK_BIN_DIR)/menios-gcc $(EXTRA_CFLAGS) $< -o $@

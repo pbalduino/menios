@@ -9,6 +9,7 @@
 #include <kernel/console.h>
 #include <kernel/file.h>
 #include <kernel/fs/core.h>
+#include <kernel/fs/devfs/devfs.h>
 #include <kernel/heap.h>
 #include <kernel/pmm.h>
 #include <kernel/tsc.h>
@@ -34,9 +35,11 @@ typedef struct procfs_file_state_t {
 } procfs_file_state_t;
 
 static bool procfs_generate_meminfo(char** out_buffer, size_t* out_size);
+static bool procfs_generate_devices(char** out_buffer, size_t* out_size);
 
 static const procfs_entry_t procfs_entries[] = {
   { "meminfo", procfs_generate_meminfo },
+  { "devices", procfs_generate_devices },
 };
 
 static size_t procfs_entry_count(void) {
@@ -329,6 +332,80 @@ static void procfs_destroy(void* fs_ctx) {
   (void)fs_ctx;
 }
 
+typedef struct {
+  char*  buffer;
+  size_t length;
+  size_t capacity;
+  bool   truncated;
+} procfs_device_list_ctx_t;
+
+static void procfs_devices_iterate_cb(const char_device_t* device, void* data) {
+  procfs_device_list_ctx_t* ctx = (procfs_device_list_ctx_t*)data;
+  if(device == NULL || ctx == NULL || ctx->truncated) {
+    return;
+  }
+
+  char line[128];
+  int line_len = vprintk(line, " %u %s\n", MAJOR(device->dev), device->name);
+  if(line_len <= 0) {
+    return;
+  }
+
+  size_t needed = ctx->length + (size_t)line_len;
+  if(needed >= ctx->capacity) {
+    size_t new_capacity = ctx->capacity * 2;
+    while(new_capacity <= needed) {
+      new_capacity *= 2;
+    }
+    char* new_buffer = krealloc(ctx->buffer, new_capacity);
+    if(new_buffer == NULL) {
+      ctx->truncated = true;
+      return;
+    }
+    ctx->buffer = new_buffer;
+    ctx->capacity = new_capacity;
+  }
+
+  memcpy(ctx->buffer + ctx->length, line, (size_t)line_len);
+  ctx->length += (size_t)line_len;
+}
+
+static bool procfs_generate_devices(char** out_buffer, size_t* out_size) {
+  if(out_buffer == NULL || out_size == NULL) {
+    return false;
+  }
+
+  size_t capacity = 256;
+  char* buffer = kmalloc(capacity);
+  if(buffer == NULL) {
+    return false;
+  }
+
+  int header_len = vprintk(buffer, "Character devices:\n");
+  if(header_len < 0) {
+    kfree(buffer);
+    return false;
+  }
+
+  procfs_device_list_ctx_t ctx = {
+    .buffer = buffer,
+    .length = (size_t)header_len,
+    .capacity = capacity,
+    .truncated = false,
+  };
+
+  char_device_iterate(procfs_devices_iterate_cb, &ctx);
+
+  if(ctx.truncated) {
+    kfree(ctx.buffer);
+    return false;
+  }
+
+  *out_buffer = ctx.buffer;
+  *out_size = ctx.length;
+  return true;
+}
+
 static const vfs_fs_driver_t procfs_driver = {
   .list = procfs_list,
   .read = procfs_read,
@@ -343,6 +420,7 @@ static const vfs_fs_driver_t procfs_driver = {
   .mkdir = NULL,
   .rmdir = NULL,
   .rename = NULL,
+  .mknod = NULL,
   .chmod = NULL,
   .utimens = NULL,
   .destroy = procfs_destroy,

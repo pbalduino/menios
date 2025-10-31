@@ -33,6 +33,7 @@ typedef struct vfs_fs_driver_t {
   int (*mkdir)(void* fs_ctx, const char* path, bool exclusive);
   int (*rmdir)(void* fs_ctx, const char* path);
   int (*rename)(void* fs_ctx, const char* old_path, const char* new_path);
+  int (*mknod)(void* fs_ctx, const char* path, mode_t mode, dev_t dev);
   int (*chmod)(void* fs_ctx, const char* path, mode_t mode);
   int (*utimens)(void* fs_ctx, const char* path, const struct timespec times[2]);
   void (*destroy)(void* fs_ctx);
@@ -53,6 +54,7 @@ int vfs_unlink(const char* path);
 int vfs_rmdir(const char* path);
 int vfs_mkdir(const char* path);
 int vfs_rename(const char* old_path, const char* new_path);
+int vfs_mknod(const char* path, mode_t mode, dev_t dev);
 int vfs_chmod(const char* path, mode_t mode);
 int vfs_utimens(const char* path, const struct timespec times[2]);
 

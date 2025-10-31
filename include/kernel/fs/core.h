@@ -38,6 +38,8 @@ typedef struct fs_path_info_t {
   uint64_t size;
   bool     has_mode;
   mode_t   mode;
+  bool     has_rdev;
+  dev_t    rdev;
   bool     has_times;
   struct timespec atime;
   struct timespec mtime;
@@ -81,7 +83,11 @@ static inline void fs_path_info_to_stat(const fs_path_info_t* info, struct stat*
   out_stat->st_blocks = (blkcnt_t)((info->size + 511ull) / 512ull);
   out_stat->st_ino = (ino_t)info->inode;
   out_stat->st_dev = 0;
-  out_stat->st_rdev = 0;
+  if(info->has_rdev) {
+    out_stat->st_rdev = info->rdev;
+  } else {
+    out_stat->st_rdev = 0;
+  }
   out_stat->st_uid = 0;
   out_stat->st_gid = 0;
   if(info->has_times) {

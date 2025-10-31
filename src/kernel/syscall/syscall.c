@@ -115,9 +115,11 @@ static uint64_t syscall_unlink_handler(syscall_frame_t* frame);
 static uint64_t syscall_mkdir_handler(syscall_frame_t* frame);
 static uint64_t syscall_rmdir_handler(syscall_frame_t* frame);
 static uint64_t syscall_rename_handler(syscall_frame_t* frame);
+static uint64_t syscall_mknod_handler(syscall_frame_t* frame);
 static uint64_t syscall_chmod_handler(syscall_frame_t* frame);
 static uint64_t syscall_fchmod_handler(syscall_frame_t* frame);
 static uint64_t syscall_utime_handler(syscall_frame_t* frame);
+static uint64_t syscall_mknod_handler(syscall_frame_t* frame);
 static uint64_t syscall_proc_kill_handler(syscall_frame_t* frame);
 static uint64_t syscall_kill_handler(syscall_frame_t* frame);
 static uint64_t syscall_sigaction_handler(syscall_frame_t* frame);
@@ -761,6 +763,7 @@ void syscall_init(void) {
   syscall_register(SYS_MKDIR, syscall_mkdir_handler);
   syscall_register(SYS_RMDIR, syscall_rmdir_handler);
   syscall_register(SYS_RENAME, syscall_rename_handler);
+  syscall_register(SYS_MKNOD, syscall_mknod_handler);
   syscall_register(SYS_CHMOD, syscall_chmod_handler);
   syscall_register(SYS_FCHMOD, syscall_fchmod_handler);
   syscall_register(SYS_UTIME, syscall_utime_handler);
@@ -1786,6 +1789,49 @@ static uint64_t syscall_rename_handler(syscall_frame_t* frame) {
   }
 
   int rc = vfs_rename(old_absolute, new_absolute);
+  frame->rax = (uint64_t)rc;
+  return frame->rax;
+}
+
+static uint64_t syscall_mknod_handler(syscall_frame_t* frame) {
+  if(current == NULL) {
+    frame->rax = (uint64_t)(-EINVAL);
+    return frame->rax;
+  }
+
+  const char* user_path = (const char*)frame->rdi;
+  mode_t mode = (mode_t)frame->rsi;
+  dev_t dev = (dev_t)frame->rdx;
+
+  if(user_path == NULL) {
+    frame->rax = (uint64_t)(-EFAULT);
+    return frame->rax;
+  }
+
+  if(!S_ISCHR(mode)) {
+    frame->rax = (uint64_t)(-EINVAL);
+    return frame->rax;
+  }
+
+  char path[SYSCALL_PATH_MAX];
+  if(!copy_user_string(user_path, path, sizeof(path))) {
+    frame->rax = (uint64_t)(-EFAULT);
+    return frame->rax;
+  }
+
+  if(path[0] == '\0') {
+    frame->rax = (uint64_t)(-EINVAL);
+    return frame->rax;
+  }
+
+  char absolute[VFS_PATH_MAX];
+  if(!vfs_build_absolute_path(current->cwd, path, absolute, sizeof(absolute))) {
+    frame->rax = (uint64_t)(-ENAMETOOLONG);
+    return frame->rax;
+  }
+
+  mode_t final_mode = (mode & 07777) | S_IFCHR;
+  int rc = vfs_mknod(absolute, final_mode, dev);
   frame->rax = (uint64_t)rc;
   return frame->rax;
 }

@@ -33,6 +33,9 @@ typedef struct tmpfs_node_t {
   struct timespec    atime;
   struct timespec    mtime;
   struct timespec    ctime;
+  bool               is_char_device;
+  dev_t              rdev;
+  char_device_t*     char_device;
 } tmpfs_node_t;
 
 typedef struct tmpfs_ctx_t {
@@ -92,7 +95,7 @@ static void tmpfs_detach_node(tmpfs_ctx_t* ctx, tmpfs_node_t* target) {
   kfree(node);
 }
 
-static tmpfs_node_t* tmpfs_create_node(tmpfs_ctx_t* ctx, const char* name) {
+static tmpfs_node_t* tmpfs_create_node(tmpfs_ctx_t* ctx, const char* name, mode_t mode) {
   tmpfs_node_t* node = kmalloc(sizeof(tmpfs_node_t));
   if(node == NULL) {
     return NULL;
@@ -105,7 +108,10 @@ static tmpfs_node_t* tmpfs_create_node(tmpfs_ctx_t* ctx, const char* name) {
   node->capacity = 0;
   node->deleted = false;
   node->refcount = 0;
-  node->mode = S_IFREG | 0644;
+  node->mode = mode;
+  node->is_char_device = S_ISCHR(mode);
+  node->rdev = 0;
+  node->char_device = NULL;
   struct timespec now = tmpfs_current_time();
   node->atime = now;
   node->mtime = now;
@@ -158,7 +164,7 @@ static bool tmpfs_read(void* fs_ctx,
 
   kmutex_lock(&ctx->lock);
   tmpfs_node_t* node = tmpfs_find_node(ctx, name);
-  if(node == NULL || node->deleted) {
+  if(node == NULL || node->deleted || node->is_char_device) {
     kmutex_unlock(&ctx->lock);
     return false;
   }
@@ -193,7 +199,7 @@ static bool tmpfs_read_all(void* fs_ctx, const char* path, void** out_buffer, si
 
   kmutex_lock(&ctx->lock);
   tmpfs_node_t* node = tmpfs_find_node(ctx, name);
-  if(node == NULL || node->deleted) {
+  if(node == NULL || node->deleted || node->is_char_device) {
     kmutex_unlock(&ctx->lock);
     return false;
   }
@@ -231,7 +237,7 @@ static bool tmpfs_driver_write(void* fs_ctx,
 
   kmutex_lock(&ctx->lock);
   tmpfs_node_t* node = tmpfs_find_node(ctx, name);
-  if(node == NULL || node->deleted) {
+  if(node == NULL || node->deleted || node->is_char_device) {
     kmutex_unlock(&ctx->lock);
     return false;
   }
@@ -321,9 +327,7 @@ static bool tmpfs_stat_path(void* fs_ctx, const char* path, fs_path_info_t* out_
 
   memset(out_info, 0, sizeof(*out_info));
   out_info->is_directory = false;
-  out_info->is_read_only = false;
   out_info->block_size = 4096;
-  out_info->size = node->size;
   out_info->inode = (uint64_t)(uintptr_t)node;
   out_info->has_mode = true;
   out_info->mode = node->mode;
@@ -331,6 +335,17 @@ static bool tmpfs_stat_path(void* fs_ctx, const char* path, fs_path_info_t* out_
   out_info->atime = node->atime;
   out_info->mtime = node->mtime;
   out_info->ctime = node->ctime;
+  if(node->is_char_device) {
+    out_info->size = 0;
+    out_info->is_read_only = (node->char_device == NULL) ? true : ((node->char_device->access_mode & FILE_MODE_WRITE) == 0);
+    out_info->has_rdev = true;
+    out_info->rdev = node->rdev;
+  } else {
+    out_info->size = node->size;
+    out_info->is_read_only = false;
+    out_info->has_rdev = false;
+    out_info->rdev = 0;
+  }
   kmutex_unlock(&ctx->lock);
   return true;
 }
@@ -451,6 +466,14 @@ static int tmpfs_stat_impl(file_t* file, struct stat* out_stat) {
   out_stat->st_blksize = 4096;
   out_stat->st_blocks = (blkcnt_t)((node->size + 511ull) / 512ull);
   out_stat->st_ino = (ino_t)(uintptr_t)node;
+  if(node->is_char_device) {
+    out_stat->st_mode = (out_stat->st_mode & ~S_IFMT) | S_IFCHR;
+    out_stat->st_size = 0;
+    out_stat->st_blocks = 0;
+    out_stat->st_rdev = node->rdev;
+  } else {
+    out_stat->st_rdev = 0;
+  }
   out_stat->st_atime = (time_t)node->atime.tv_sec;
   out_stat->st_mtime = (time_t)node->mtime.tv_sec;
   out_stat->st_ctime = (time_t)node->ctime.tv_sec;
@@ -536,6 +559,10 @@ static int64_t tmpfs_read_impl(file_t* file, void* buffer, size_t length) {
     kmutex_unlock(&ctx->lock);
     return -ENOENT;
   }
+  if(node->is_char_device) {
+    kmutex_unlock(&ctx->lock);
+    return -ENOTTY;
+  }
 
   if(state->offset >= node->size) {
     kmutex_unlock(&ctx->lock);
@@ -588,6 +615,10 @@ static int64_t tmpfs_write_impl(file_t* file, const void* buffer, size_t length)
   if(node->deleted) {
     kmutex_unlock(&ctx->lock);
     return -ENOENT;
+  }
+  if(node->is_char_device) {
+    kmutex_unlock(&ctx->lock);
+    return -ENOTTY;
   }
 
   if((state->flags & O_APPEND) != 0) {
@@ -671,6 +702,60 @@ static uint32_t tmpfs_requested_mode(int flags) {
   }
 }
 
+static int tmpfs_mknod(void* fs_ctx, const char* path, mode_t mode, dev_t dev) {
+  tmpfs_ctx_t* ctx = (tmpfs_ctx_t*)fs_ctx;
+  if(path == NULL) {
+    return -EINVAL;
+  }
+
+  if(!S_ISCHR(mode)) {
+    return -EINVAL;
+  }
+
+  char_device_t* device = char_device_lookup(dev);
+  if(device == NULL || device->open == NULL) {
+    return -ENODEV;
+  }
+
+  const char* name = path;
+  while(*name == '/') {
+    name++;
+  }
+  if(*name == '\0') {
+    return -EINVAL;
+  }
+  for(const char* it = name; *it != '\0'; ++it) {
+    if(*it == '/') {
+      return -EINVAL;
+    }
+  }
+
+  kmutex_lock(&ctx->lock);
+  tmpfs_node_t* existing = tmpfs_find_node(ctx, name);
+  if(existing != NULL) {
+    if(existing->deleted && existing->refcount == 0) {
+      tmpfs_detach_node(ctx, existing);
+    } else {
+      kmutex_unlock(&ctx->lock);
+      return existing->deleted ? -EBUSY : -EEXIST;
+    }
+  }
+
+  mode_t final_mode = (mode & 07777) | S_IFCHR;
+  tmpfs_node_t* node = tmpfs_create_node(ctx, name, final_mode);
+  if(node == NULL) {
+    kmutex_unlock(&ctx->lock);
+    return -ENOMEM;
+  }
+  node->is_char_device = true;
+  node->char_device = device;
+  node->rdev = dev;
+  node->size = 0;
+  node->capacity = 0;
+  kmutex_unlock(&ctx->lock);
+  return 0;
+}
+
 static int tmpfs_open(void* fs_ctx, const char* path, int flags, file_t** out_file) {
   tmpfs_ctx_t* ctx = (tmpfs_ctx_t*)fs_ctx;
   if(path == NULL || out_file == NULL) {
@@ -695,6 +780,7 @@ static int tmpfs_open(void* fs_ctx, const char* path, int flags, file_t** out_fi
   bool create = (flags & O_CREAT) != 0;
   bool exclusive = (flags & O_EXCL) != 0;
   bool trunc = (flags & O_TRUNC) != 0;
+  uint32_t requested_modes = tmpfs_requested_mode(flags);
 
   kmutex_lock(&ctx->lock);
   tmpfs_node_t* node = tmpfs_find_node(ctx, name);
@@ -704,7 +790,7 @@ static int tmpfs_open(void* fs_ctx, const char* path, int flags, file_t** out_fi
       kmutex_unlock(&ctx->lock);
       return -ENOENT;
     }
-    node = tmpfs_create_node(ctx, name);
+    node = tmpfs_create_node(ctx, name, S_IFREG | 0644);
     if(node == NULL) {
       serial_printf("tmpfs_open: '%s' allocation failed\n", name);
       kmutex_unlock(&ctx->lock);
@@ -712,6 +798,34 @@ static int tmpfs_open(void* fs_ctx, const char* path, int flags, file_t** out_fi
     }
     serial_printf("tmpfs_open: created '%s'\n", name);
   } else {
+    if(S_ISCHR(node->mode)) {
+      if(create && exclusive) {
+        kmutex_unlock(&ctx->lock);
+        return -EEXIST;
+      }
+      if(trunc) {
+        kmutex_unlock(&ctx->lock);
+        return -EINVAL;
+      }
+      char_device_t* device = node->char_device;
+      if(device == NULL) {
+        kmutex_unlock(&ctx->lock);
+        return -ENODEV;
+      }
+      if((device->access_mode & requested_modes) != requested_modes) {
+        kmutex_unlock(&ctx->lock);
+        return -EACCES;
+      }
+      node->atime = tmpfs_current_time();
+      kmutex_unlock(&ctx->lock);
+      file_t* device_file = NULL;
+      int rc = device->open(device, flags, &device_file);
+      if(rc != 0) {
+        return rc;
+      }
+      *out_file = device_file;
+      return 0;
+    }
     if(create && exclusive) {
       serial_printf("tmpfs_open: '%s' exists with O_EXCL\n", name);
       kmutex_unlock(&ctx->lock);
@@ -747,7 +861,7 @@ static int tmpfs_open(void* fs_ctx, const char* path, int flags, file_t** out_fi
   state->flags = flags;
   state->offset = ((flags & O_APPEND) != 0) ? node->size : 0;
 
-  uint32_t mode = tmpfs_requested_mode(flags);
+  uint32_t mode = requested_modes;
   file_t* file = file_create(&tmpfs_file_ops, state, mode);
   if(file == NULL) {
     kmutex_lock(&ctx->lock);
@@ -826,6 +940,7 @@ static const vfs_fs_driver_t tmpfs_driver = {
   .mkdir = NULL,
   .rmdir = NULL,
   .rename = NULL,
+  .mknod = tmpfs_mknod,
   .chmod = tmpfs_chmod,
   .utimens = tmpfs_utimens,
   .destroy = tmpfs_destroy,
