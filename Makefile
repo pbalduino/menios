@@ -64,8 +64,42 @@ LIBDIR         = lib
 UACPI_OBJ      = $(OBJDIR)/uacpi
 KERNEL_OBJ     = $(OBJDIR)/kernel
 
-KERNEL_SRC = $(shell find -L src -path 'src/usermode' -prune -o -type f -name '*.c' -print)
-KERNEL_ASM = $(shell find -L src/kernel -type f \( -name '*.s' -o -name '*.S' \))
+KERNEL_C_DIRS = \
+	src/kernel \
+	src/kernel/acpi \
+	src/kernel/arch/x86_64 \
+	src/kernel/block \
+	src/kernel/console \
+	src/kernel/core \
+	src/kernel/drivers/audio/sb \
+	src/kernel/drivers/block/ahci \
+	src/kernel/drivers/bus/pciroot \
+	src/kernel/drivers/core \
+	src/kernel/drivers/input/ps2kb \
+	src/kernel/framebuffer \
+	src/kernel/fs/core \
+	src/kernel/fs/devfs \
+	src/kernel/fs/fat32 \
+	src/kernel/fs/procfs \
+	src/kernel/fs/tmpfs \
+	src/kernel/fs/vfs \
+	src/kernel/hw \
+	src/kernel/input \
+	src/kernel/ipc \
+	src/kernel/mem \
+	src/kernel/proc \
+	src/kernel/syscall \
+	src/kernel/timer \
+	src/kernel/user
+
+KERNEL_SRC = $(sort $(foreach dir,$(KERNEL_C_DIRS),$(wildcard $(dir)/*.c)))
+
+KERNEL_ASM_DIRS = \
+	src/kernel \
+	src/kernel/arch/x86_64 \
+	src/kernel/user
+
+KERNEL_ASM = $(sort $(foreach dir,$(KERNEL_ASM_DIRS),$(wildcard $(dir)/*.s) $(wildcard $(dir)/*.S)))
 KERNEL_OBJS = $(patsubst %.c, %.o, $(KERNEL_SRC))
 KERNEL_ASM_GAS_OBJS = $(patsubst %.S, %.o, $(filter %.S,$(KERNEL_ASM)))
 ARCH_NASM_OBJECTS := lgdt.o pit.o lidt.o
