@@ -34,7 +34,7 @@ When `make sdk` runs, the build copies these wrappers into
 `build/sdk/bin/menios-*` (and the matching `x86_64-menios-*` aliases) so that
 userland components can rely on a self-contained toolchain. User applications
 and helper makefiles reference the staged copies—for example,
-`app/doom/Makefile.menios` exports `MENIOS_GCC=$(ROOT_DIR)/build/sdk/bin/menios-gcc`.
+`vendor/genericdoom/Makefile.menios` exports `MENIOS_GCC=$(ROOT_DIR)/build/sdk/bin/menios-gcc`.
 
 The same wrappers are threaded through optional host toolchain builds. During
 `make toolchain`, the top-level makefile sets `AR=$(abspath tools/menios-ar.sh)`

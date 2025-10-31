@@ -72,13 +72,13 @@ void uacpi_kernel_stall(uacpi_u8 usec) {
 uacpi_status uacpi_kernel_get_rsdp(uacpi_phys_addr *out_rdsp_address) {
   if(rsdp_request.response == NULL) {
     printf(">>> Error loading device table.\n");
-    serial_printf("acpi_init: Error loading device table.\n");
+    serial_printf("acpi_initialize: Error loading device table.\n");
     halt();
   }
 
   uintptr_t addr = virtual_to_physical((uintptr_t)rsdp_request.response->address);
 
-  serial_printf("acpi_init: RSDP address: %p\n", addr);
+  serial_printf("acpi_initialize: RSDP address: %p\n", addr);
 
   *out_rdsp_address = addr;
 
@@ -226,7 +226,7 @@ uacpi_handle uacpi_kernel_create_event(void) {
     return NULL;
   }
 
-  ksem_init(&event->sem, 0);
+  ksem_initialize(&event->sem, 0);
   return event;
 }
 

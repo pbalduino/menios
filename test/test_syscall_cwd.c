@@ -4,7 +4,7 @@
 #include <kernel/heap.h>
 #include <kernel/proc.h>
 #include <kernel/syscall.h>
-#include <kernel/vfs.h>
+#include <kernel/fs/vfs/vfs.h>
 #include <menios/syscall.h>
 
 #include <errno.h>
@@ -124,8 +124,8 @@ void setUp(void) {
   test_proc.cpu_state = &cpu_state;
   current = &test_proc;
 
-  syscall_init();
-  vfs_init();
+  syscall_initialize();
+  vfs_initialize();
   bool mounted = vfs_mount("/", &stub_driver, &fs_state, true);
   TEST_ASSERT_TRUE_MESSAGE(mounted, "failed to mount stub fs");
 }

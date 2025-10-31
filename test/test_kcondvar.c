@@ -1,5 +1,5 @@
 #include <kernel/condvar.h>
-#include <kernel/gdt.h>
+#include <kernel/arch/x86_64/gdt.h>
 #include <kernel/mutex.h>
 #include <kernel/proc.h>
 #include <unity.h>

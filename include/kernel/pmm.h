@@ -128,7 +128,7 @@ uintptr_t   read_cr2();
 phys_addr_t read_cr3();
 void write_cr3(phys_addr_t value);
 
-void pmm_init();
+void pmm_initialize(void);
 
 uint64_t get_first_free_page();
 

@@ -49,7 +49,7 @@ typedef struct hpet_table_t {
   uint8_t           page_protection;
 } __attribute__((packed)) hpet_table_t;
 
-hpet_status_t hpet_timer_init();
+hpet_status_t hpet_timer_initialize(void);
 
 #ifdef __cplusplus
 }

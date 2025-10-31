@@ -1,6 +1,6 @@
 #include <boot/limine.h>
 
-#include <kernel/apic.h>
+#include <kernel/arch/x86_64/apic.h>
 #include <kernel/console.h>
 #include <kernel/kernel.h>
 #include <kernel/pmm.h>
@@ -41,17 +41,17 @@ void register_timer_callback(void (*cb)(void*)) {
   callback[last_callback++] = cb;
 }
 
-void timer_init() {
+void timer_initialize(void) {
   logk("Initing timer\n");
   for(int i = 0; i < 16; i++) {
     callback[i] = NULL;
   };
 
   logk("  Initing LAPIC timer\n");
-  lapic_timer_init();
+  lapic_timer_initialize();
 
   logk("  Initing TSC\n");
-  tsc_init();
+  tsc_initialize();
 
   if(!has_invariant_tsc()) {
     errk("  Invariant TSC not supported.\n");
@@ -59,7 +59,7 @@ void timer_init() {
     logk("  Invariant TSC supported, but ignored.\n");
   }
 
-  if(hpet_timer_init() == HPET_OK) {
+  if(hpet_timer_initialize() == HPET_OK) {
     errk("  HPET timer supported, but ignored.\n");
   } else {
     errk("  HPET timer not supported.\n");

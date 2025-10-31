@@ -1,0 +1,7 @@
+#ifndef MENIOS_INCLUDE_KERNEL_DRIVERS_INPUT_PS2KB_H
+#define MENIOS_INCLUDE_KERNEL_DRIVERS_INPUT_PS2KB_H
+
+void ps2kb_register_driver(void);
+int kgetchar(void);
+
+#endif /* MENIOS_INCLUDE_KERNEL_DRIVERS_INPUT_PS2KB_H */

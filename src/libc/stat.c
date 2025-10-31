@@ -25,6 +25,17 @@ int mkdir(const char* path, mode_t mode) {
   return 0;
 }
 
+int mknod(const char* path, mode_t mode, dev_t dev) {
+  long rc = __menios_syscall3(SYS_MKNOD, (long)path, (long)mode, (long)dev);
+
+  if(rc < 0) {
+    errno = (int)(-rc);
+    return -1;
+  }
+
+  return 0;
+}
+
 int fstat(int fd, struct stat* buf) {
   long rc = __menios_syscall2(SYS_FSTAT, (long)fd, (long)buf);
 

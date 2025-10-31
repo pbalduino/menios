@@ -12,7 +12,7 @@ opaque `file_t` handles with reference counting and close-on-exec semantics.
 - **Per-process tables** – `proc_file_table_init/clone/cleanup` manage the
   descriptor array embedded in `proc_info_t`. Cloning bumps refcounts while
   exec drops any descriptors flagged with `FD_CLOEXEC`.
-- **Kernel bootstrap** – `file_system_init()` now runs after the heap is ready
+- **Kernel bootstrap** – `file_system_initialize()` now runs after the heap is ready
   and installs a ring-buffer-backed stdin plus two serial-backed streams for
   stdout and stderr. Consoles and logging go through these descriptors rather
   than hard-coded serial writes, while keystrokes arriving from the PS/2 driver

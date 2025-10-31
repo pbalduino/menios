@@ -1,6 +1,6 @@
 #include <kernel/console.h>
 #include <kernel/framebuffer.h>
-#include <kernel/gdt.h>
+#include <kernel/arch/x86_64/gdt.h>
 #include <kernel/heap.h>
 #include <kernel/kernel.h>
 #include <kernel/pmm.h>
@@ -729,11 +729,11 @@ void proc_create(proc_info_p proc, const char* name, void (*entrypoint)(void *),
   proc->parent = current;
   proc->pid = last_pid++;
   proc_table_insert(proc);
-  proc_file_table_init(proc);
+  proc_file_table_initialize(proc);
   if(current != NULL) {
     proc_file_table_clone(proc, current);
   }
-  proc_signal_state_init(proc);
+  proc_signal_state_initialize(proc);
   proc->stopped = false;
   proc->stop_status_pending = false;
   proc->stop_status = 0;
@@ -1251,7 +1251,7 @@ proc_info_p proc_fork(proc_info_p parent, const syscall_frame_t* frame, int* err
     return NULL;
   }
   memset(child, 0, sizeof(proc_info_t));
-  proc_file_table_init(child);
+  proc_file_table_initialize(child);
   proc_file_table_clone(child, parent);
   if(parent->cwd_len > 0 && parent->cwd[0] != '\0') {
     size_t copy_len = parent->cwd_len;
@@ -2071,10 +2071,10 @@ void proc_execute(proc_info_p proc) {
   SCHED_TRACE("proc_execute: queued process %s (priority %u)\n", proc->name, proc->priority);
 }
 
-void scheduler_init() {
+void scheduler_initialize(void) {
   logk("Initing scheduler");
   current = &kernel_process_info;
-  proc_signal_state_init(current);
+  proc_signal_state_initialize(current);
   memset(ready_queues, 0, sizeof(ready_queues));
   sleep_queue_head = NULL;
   scheduler_actions = 0;

@@ -3,7 +3,7 @@
 #include <string.h>
 
 #include <kernel/block_device.h>
-#include <kernel/vfs.h>
+#include <kernel/fs/vfs/vfs.h>
 #include <kernel/heap.h>
 #include <kernel/proc.h>
 #include <kernel/serial.h>

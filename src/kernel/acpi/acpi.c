@@ -35,7 +35,7 @@ static uacpi_interrupt_ret handle_power_button(uacpi_handle ctx) {
   return UACPI_INTERRUPT_HANDLED;
 }
 
-int power_button_init(void) {
+int power_button_initialize(void) {
   serial_printf("power_button_init: Initializing power button.\n");
 
   uacpi_status ret = uacpi_install_fixed_event_handler(
@@ -51,9 +51,9 @@ int power_button_init(void) {
   return 0;
 }
 
-int acpi_init() {
+int acpi_initialize(void) {
   logk("Initializing ACPI.");
-  serial_printf("acpi_init: Initializing ACPI.\n");
+  serial_printf("acpi_initialize: Initializing ACPI.\n");
 
   uacpi_setup_early_table_access((void*)uacpi_arena, UACPI_ARENA_SIZE);
   printf(".");
@@ -85,14 +85,14 @@ int acpi_init() {
     return -ENODEV;
   }
 
-  ret = power_button_init();
+  ret = power_button_initialize();
   if(uacpi_unlikely_error(ret)) {
     serial_printf("power_button_init error: %s", uacpi_status_to_string(ret));
     return -ENODEV;
   }
 
   printf(".OK\n");
-  serial_printf("acpi_init: uacpi initialized.\n");
+  serial_printf("acpi_initialize: uacpi initialized.\n");
 
   return 0;
 }

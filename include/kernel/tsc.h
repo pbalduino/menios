@@ -10,7 +10,7 @@ extern "C" {
 
 #define TICKS_PER_SECOND 1000000000
 
-void tsc_init();
+void tsc_initialize(void);
 
 void tsc_override_calibration(uint64_t frequency_hz, uint64_t boot_seconds);
 

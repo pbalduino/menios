@@ -9,7 +9,7 @@
 
 #include <kernel/file.h>
 #include <kernel/heap.h>
-#include <kernel/vfs.h>
+#include <kernel/fs/vfs/vfs.h>
 
 typedef struct fake_file_entry_t {
   const char* path;

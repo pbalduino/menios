@@ -321,38 +321,43 @@ void test_memory_allocation_success(void) {
 
 ```
 menios/
-├── src/               # Kernel source code
-│   ├── kernel/        # Core kernel functionality
-│   ├── drivers/       # Hardware drivers
-│   └── libc/          # Basic C library functions
-├── include/           # Header files
-│   └── kernel/        # Kernel-specific headers
-├── test/              # Unit tests
-├── bin/               # Build artifacts
-├── vendor/            # Third-party dependencies
-└── docs/              # Project documentation
+├── app/               # User-facing programs installed into /bin
+├── build/             # Generated artifacts (kernel, userland, disk images)
+├── docs/              # Architecture notes and roadmaps
+├── include/           # Exported headers (mirrors source hierarchy)
+├── src/               # Kernel and shared libc sources
+│   ├── kernel/        # Kernel subsystems (core, arch, drivers, fs, …)
+│   └── libc/          # Target libc implementation shared with userland
+├── test/              # Unity-based host tests and stubs
+├── user/              # Userland runtime (crt0, libc glue)
+└── vendor/            # Third-party toolchains and helpers (doomgeneric, uACPI)
 ```
 
 ### Key Components
 
-1. **Memory Management** (`src/kernel/memory/`)
+1. **Memory Management** (`src/kernel/mem/`)
    - Physical memory manager (PMM)
    - Virtual memory manager (VMM)
    - Kernel heap (kmalloc)
 
-2. **Process Management** (`src/kernel/process/`)
+2. **Process Management** (`src/kernel/proc/`)
    - Kernel threading
    - Basic scheduler
    - Synchronization primitives
 
-3. **I/O Systems** (`src/drivers/`)
-   - PS/2 keyboard driver
-   - Console/framebuffer
-   - Future: VGA, audio, storage
+3. **I/O Systems** (`src/kernel/drivers/`, `src/kernel/console/`, `src/kernel/framebuffer/`)
+   - PS/2 keyboard driver and input pipeline
+   - ANSI/serial/front-buffer consoles
+   - Storage controllers (AHCI) and future devices
 
 4. **System Calls** (`src/kernel/syscall/`)
    - Syscall dispatcher
    - Individual syscall implementations
+
+Additional detail on the layout can be found in
+[`docs/architecture/code_structure.md`](docs/architecture/code_structure.md). When
+adding new modules ensure sources, headers, and Makefile entries follow the
+patterns outlined there.
 
 ### Adding New Features
 

@@ -87,9 +87,9 @@ void acpi_enumerate() {
   uacpi_namespace_for_each_node_depth_first(uacpi_namespace_root(), register_device, UACPI_NULL);
 }
 
-void hardware_init() {
+void hardware_initialize(void) {
   devices_head = NULL;
-  driver_init();
+  driver_registry_init();
   logk("Probing hardware\n");
   acpi_enumerate();
   hardware_log_devices();

@@ -71,7 +71,7 @@ int proc_signal_take_pending(proc_info_p proc,
   return 0;
 }
 
-void proc_signal_state_init(proc_info_p proc) {
+void proc_signal_state_initialize(proc_info_p proc) {
   if(proc == NULL) {
     return;
   }

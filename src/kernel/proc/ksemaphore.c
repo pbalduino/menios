@@ -1,6 +1,6 @@
 #include <kernel/semaphore.h>
 
-void ksem_init(ksem_t* sem, int64_t value) {
+void ksem_initialize(ksem_t* sem, int64_t value) {
   if(sem == NULL) {
     return;
   }

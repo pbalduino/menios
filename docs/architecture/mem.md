@@ -13,7 +13,7 @@ This note collects the decisions we have made around memory management in meniOS
 
 * The PMM is a bitmap allocator defined in `src/kernel/mem/pmm.c`.
 * Page size is 4 KiB; the bitmap is sized by `PAGE_BITMAP_SIZE` (see `include/kernel/pmm.h`). Each bit tracks the availability of one physical page.
-* During `pmm_init()` we:
+* During `pmm_initialize()` we:
   1. Initialise the bitmap marking everything used (`init_page_bitmap`).
   2. Iterate Limine's memory map and mark usable ranges as free (`bulk_page_bitmap_as_free`).
   3. Capture the HHDM offset so we can translate physical↔virtual addresses via `physical_to_virtual()` / `virtual_to_physical()`.
@@ -37,7 +37,7 @@ Other points:
 
 ## Heap & Kernel Allocations
 
-* The kernel heap is initialised by `init_heap(NULL, PAGE_SIZE * HEAP_SIZE)` in `mem_init()`. At the moment the heap carves memory from the higher-half mapping; it is not yet virtual-memory aware.
+* The kernel heap is initialised by `heap_initialize(NULL, PAGE_SIZE * HEAP_SIZE)` in `memory_initialize()`. At the moment the heap carves memory from the higher-half mapping; it is not yet virtual-memory aware.
 * The heap feeds `kmalloc`, `kfree`, and related APIs. Memory compaction is handled by a background thread (`mem_compactor`).
 
 ## User Address Spaces (Current State)

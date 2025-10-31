@@ -61,7 +61,7 @@ void test_pipe_write_after_reader_closed_returns_epipe(void) {
 void test_pipe_syscall_roundtrip(void) {
   reset_current();
   current = &kernel_process_info;
-  proc_file_table_init(current);
+  proc_file_table_initialize(current);
 
   int fds[2] = { -1, -1 };
   TEST_ASSERT_EQUAL_INT(0, pipe(fds));

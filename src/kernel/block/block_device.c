@@ -34,9 +34,9 @@ static bool block_device_submit(block_device_t* device,
                                 bool write);
 #endif
 
-void block_device_system_init(void) {
+void block_device_system_initialize(void) {
   kmutex_init(&block_device_lock);
-  block_cache_init();
+  block_cache_initialize();
   block_device_head = NULL;
   block_device_initialized = true;
 }

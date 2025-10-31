@@ -64,13 +64,108 @@ LIBDIR         = lib
 UACPI_OBJ      = $(OBJDIR)/uacpi
 KERNEL_OBJ     = $(OBJDIR)/kernel
 
-KERNEL_SRC = $(shell find -L src -path 'src/usermode' -prune -o -type f -name '*.c' -print)
-KERNEL_ASM = $(shell find -L src/kernel -type f \( -name '*.s' -o -name '*.S' \))
+KERNEL_SRC = \
+	src/kernel/acpi/acpi.c \
+	src/kernel/acpi/acpica.c \
+	src/kernel/acpi/uacpi_menios.c \
+	src/kernel/arch/x86_64/apic.c \
+	src/kernel/arch/x86_64/cpu.c \
+	src/kernel/arch/x86_64/gdt.c \
+	src/kernel/arch/x86_64/idt.c \
+	src/kernel/block/block_cache.c \
+	src/kernel/block/block_device.c \
+	src/kernel/console/ansi.c \
+	src/kernel/console/console.c \
+	src/kernel/console/vprintk.c \
+	src/kernel/core/halt.c \
+	src/kernel/core/logo.c \
+	src/kernel/core/main.c \
+	src/kernel/core/panic.c \
+	src/kernel/core/services.c \
+	src/kernel/drivers/audio/sb/sb.c \
+	src/kernel/drivers/block/ahci/ahci.c \
+	src/kernel/drivers/bus/pciroot/pci.c \
+	src/kernel/drivers/bus/pciroot/pciroot.c \
+	src/kernel/drivers/core/driver.c \
+	src/kernel/drivers/input/ps2kb/ps2kb.c \
+	src/kernel/fs/core/file.c \
+	src/kernel/fs/core/pipe.c \
+	src/kernel/fs/devfs/devfs.c \
+	src/kernel/fs/fat32/fat32.c \
+	src/kernel/fs/procfs/procfs.c \
+	src/kernel/fs/tmpfs/tmpfs.c \
+	src/kernel/fs/vfs/vfs.c \
+	src/kernel/hw/hw.c \
+	src/kernel/input/keyboard.c \
+	src/kernel/ipc/shm.c \
+	src/kernel/framebuffer/framebuffer.c \
+	src/kernel/framebuffer/fonts.c \
+	src/kernel/mem/compactor.c \
+	src/kernel/mem/dma.c \
+	src/kernel/mem/kmalloc.c \
+	src/kernel/mem/kmmap.c \
+	src/kernel/mem/mem.c \
+	src/kernel/mem/mem_utils.c \
+	src/kernel/mem/pmm.c \
+	src/kernel/mem/sbrk.c \
+	src/kernel/proc/kcondvar.c \
+	src/kernel/proc/kmutex.c \
+	src/kernel/proc/krwlock.c \
+	src/kernel/proc/ksemaphore.c \
+	src/kernel/proc/kthread.c \
+	src/kernel/proc/proc.c \
+	src/kernel/proc/signal.c \
+	src/kernel/console/serial.c \
+	src/kernel/syscall/entry.c \
+	src/kernel/syscall/syscall.c \
+	src/kernel/timer/hpet.c \
+	src/kernel/timer/lapic.c \
+	src/kernel/timer/rtc.c \
+	src/kernel/timer/timer.c \
+	src/kernel/timer/tsc.c \
+	src/kernel/user/elf_loader.c \
+	src/kernel/user/init.c \
+	src/kernel/user/user_demo.c \
+	src/kernel/user/vm.c \
+	src/kernel/user/vm_region.c \
+	src/libc/assert.c \
+	src/libc/ctype.c \
+	src/libc/errno.c \
+	src/libc/itoa.c \
+	src/libc/string.c \
+	src/libc/time.c
+
+KERNEL_ASM = \
+	src/kernel/arch/x86_64/context_switch.S \
+	src/kernel/arch/x86_64/proc_entry.S \
+	src/kernel/lgdt.s \
+	src/kernel/lidt.s \
+	src/kernel/pit.s \
+	src/kernel/user/user_mode.S
 KERNEL_OBJS = $(patsubst %.c, %.o, $(KERNEL_SRC))
 KERNEL_ASM_GAS_OBJS = $(patsubst %.S, %.o, $(filter %.S,$(KERNEL_ASM)))
 ARCH_NASM_OBJECTS := lgdt.o pit.o lidt.o
 
-UACPI_SRC = $(shell find -L vendor/uacpi -type f -name '*.c')
+UACPI_SRC = \
+	vendor/uacpi/osi.c \
+	vendor/uacpi/tables.c \
+	vendor/uacpi/opregion.c \
+	vendor/uacpi/io.c \
+	vendor/uacpi/mutex.c \
+	vendor/uacpi/default_handlers.c \
+	vendor/uacpi/stdlib.c \
+	vendor/uacpi/sleep.c \
+	vendor/uacpi/event.c \
+	vendor/uacpi/types.c \
+	vendor/uacpi/shareable.c \
+	vendor/uacpi/resources.c \
+	vendor/uacpi/utilities.c \
+	vendor/uacpi/interpreter.c \
+	vendor/uacpi/registers.c \
+	vendor/uacpi/notify.c \
+	vendor/uacpi/opcodes.c \
+	vendor/uacpi/namespace.c \
+	vendor/uacpi/uacpi.c
 UACPI_OBJS := $(patsubst %.c, %.o, $(UACPI_SRC))
 
 OBJS = $(KERNEL_OBJS) $(KERNEL_ASM_GAS_OBJS) $(UACPI_OBJS)
@@ -102,9 +197,10 @@ MEM_ELF = $(OBJDIR)/usermode/mem.elf
 ALARM_DEMO_ELF = $(OBJDIR)/usermode/alarm_demo.elf
 TOUCH_ELF = $(OBJDIR)/usermode/touch.elf
 SHUTDOWN_ELF = $(OBJDIR)/usermode/shutdown.elf
+MKNOD_ELF = $(OBJDIR)/usermode/mknod.elf
 
-USER_PROGRAM_ELFS = $(MOSH_ELF) $(ECHO_ELF) $(CAT_ELF) $(ENV_ELF) $(TRUE_ELF) $(FALSE_ELF) $(LS_ELF) $(KILL_ELF) $(PS_ELF) $(STAT_ELF) $(REALPATH_ELF) $(MALLOC_STRESS_ELF) $(MEM_ELF) $(ALARM_DEMO_ELF) $(TOUCH_ELF) $(SHUTDOWN_ELF)
-USERLAND_BINS = mosh echo cat env true false ls kill ps stat realpath malloc_stress mem alarm_demo touch shutdown
+USER_PROGRAM_ELFS = $(MOSH_ELF) $(ECHO_ELF) $(CAT_ELF) $(ENV_ELF) $(TRUE_ELF) $(FALSE_ELF) $(LS_ELF) $(KILL_ELF) $(PS_ELF) $(STAT_ELF) $(REALPATH_ELF) $(MALLOC_STRESS_ELF) $(MEM_ELF) $(ALARM_DEMO_ELF) $(TOUCH_ELF) $(MKNOD_ELF) $(SHUTDOWN_ELF)
+USERLAND_BINS = mosh echo cat env true false ls kill ps stat realpath malloc_stress mem alarm_demo touch mknod shutdown
 
 
 BINUTILS_TOOLS = as ld objdump nm ar ranlib readelf objcopy strip strings size addr2line
@@ -569,6 +665,14 @@ else
 	$(DOCKER) run --rm $(DOCKER_RUN_FLAGS) $(DOCKER_ENV) --mount type=bind,source=$$(pwd),target=/mnt $(DOCKER_IMAGE) /bin/sh -c "cd /mnt && make EXTRA_CFLAGS='$(EXTRA_CFLAGS)' $@"
 endif
 
+$(MKNOD_ELF): app/mknod/mknod.c | sdk
+ifeq ($(OS_NAME),linux)
+	@mkdir -p $(dir $@)
+	$(SDK_BIN_DIR)/menios-gcc $(EXTRA_CFLAGS) $< -o $@
+else
+	$(DOCKER) run --rm $(DOCKER_RUN_FLAGS) $(DOCKER_ENV) --mount type=bind,source=$$(pwd),target=/mnt $(DOCKER_IMAGE) /bin/sh -c "cd /mnt && make EXTRA_CFLAGS='$(EXTRA_CFLAGS)' $@"
+endif
+
 $(SHUTDOWN_ELF): app/shutdown/shutdown.c | sdk
 ifeq ($(OS_NAME),linux)
 	@mkdir -p $(dir $@)
@@ -778,17 +882,17 @@ ifneq ($(GCOV_ENABLED),)
 endif
 
 	# Skip host-unsafe tests until proper stubs land.
-	for file in $(shell find -L test -type f -name 'test_*.c' ! -name 'test_kmalloc.c' ! -name 'test_malloc_stress.c' ! -name 'test_buddy_allocator.c' ! -name 'test_malloc_stats.c' ! -name 'test_malloc_direct.c' ! -name 'test_heap_virtual.c' ! -name 'test_scanf.c' ! -name 'test_system.c'); do \
+	for file in $(HOST_TEST_SRCS); do \
 		gcc $(GCOV_FLAGS) -std=gnu11 -DMENIOS_NO_DEBUG -DMENIOS_HOST_TEST -DUNITY_EXCLUDE_SETJMP_H -I./include \
 			$$file \
 			test/unity.c \
 			test/stubs.c \
-			src/kernel/file.c \
-		src/kernel/fs/vfs.c \
-		src/kernel/fs/pipe.c \
-		src/kernel/fs/tmpfs.c \
-		src/kernel/fs/procfs.c \
-		src/kernel/fs/devfs.c \
+			src/kernel/fs/core/file.c \
+		src/kernel/fs/vfs/vfs.c \
+		src/kernel/fs/core/pipe.c \
+		src/kernel/fs/tmpfs/tmpfs.c \
+		src/kernel/fs/procfs/procfs.c \
+		src/kernel/fs/devfs/devfs.c \
 		src/kernel/syscall/syscall.c \
 		src/kernel/syscall/entry.c \
 			src/kernel/mem/pmm.c \
@@ -820,10 +924,11 @@ endif
 		test/test_buddy_allocator.c \
 		test/unity.c \
 		test/stubs.c \
-		src/kernel/file.c \
-		src/kernel/fs/vfs.c \
-		src/kernel/fs/pipe.c \
-		src/kernel/fs/tmpfs.c \
+		src/kernel/fs/core/file.c \
+		src/kernel/fs/vfs/vfs.c \
+		src/kernel/fs/core/pipe.c \
+		src/kernel/fs/tmpfs/tmpfs.c \
+		src/kernel/fs/devfs/devfs.c \
 		src/kernel/syscall/syscall.c \
 			src/kernel/syscall/entry.c \
 		src/kernel/mem/pmm.c \
@@ -855,10 +960,11 @@ endif
 		test/test_malloc_direct.c \
 		test/unity.c \
 		test/stubs.c \
-		src/kernel/file.c \
-		src/kernel/fs/vfs.c \
-		src/kernel/fs/pipe.c \
-		src/kernel/fs/tmpfs.c \
+		src/kernel/fs/core/file.c \
+		src/kernel/fs/vfs/vfs.c \
+		src/kernel/fs/core/pipe.c \
+		src/kernel/fs/tmpfs/tmpfs.c \
+	src/kernel/fs/devfs/devfs.c \
 		src/kernel/syscall/syscall.c \
 			src/kernel/syscall/entry.c \
 		src/kernel/mem/pmm.c \
@@ -890,10 +996,11 @@ src/libc/errno.c \
 		test/test_malloc_stats.c \
 		test/unity.c \
 		test/stubs.c \
-		src/kernel/file.c \
-		src/kernel/fs/vfs.c \
-		src/kernel/fs/pipe.c \
-		src/kernel/fs/tmpfs.c \
+		src/kernel/fs/core/file.c \
+		src/kernel/fs/vfs/vfs.c \
+		src/kernel/fs/core/pipe.c \
+		src/kernel/fs/tmpfs/tmpfs.c \
+	src/kernel/fs/devfs/devfs.c \
 		src/kernel/syscall/syscall.c \
 			src/kernel/syscall/entry.c \
 		src/kernel/mem/pmm.c \
@@ -925,10 +1032,11 @@ src/libc/errno.c \
 		test/test_system.c \
 		test/unity.c \
 		test/stubs.c \
-		src/kernel/file.c \
-		src/kernel/fs/vfs.c \
-		src/kernel/fs/pipe.c \
-		src/kernel/fs/tmpfs.c \
+		src/kernel/fs/core/file.c \
+		src/kernel/fs/vfs/vfs.c \
+		src/kernel/fs/core/pipe.c \
+		src/kernel/fs/tmpfs/tmpfs.c \
+	src/kernel/fs/devfs/devfs.c \
 		src/kernel/syscall/syscall.c \
 			src/kernel/syscall/entry.c \
 		src/kernel/mem/pmm.c \
@@ -960,10 +1068,11 @@ src/libc/errno.c \
 		test/test_heap_virtual.c \
 		test/unity.c \
 		test/stubs.c \
-		src/kernel/file.c \
-		src/kernel/fs/vfs.c \
-		src/kernel/fs/pipe.c \
-		src/kernel/fs/tmpfs.c \
+		src/kernel/fs/core/file.c \
+		src/kernel/fs/vfs/vfs.c \
+		src/kernel/fs/core/pipe.c \
+		src/kernel/fs/tmpfs/tmpfs.c \
+	src/kernel/fs/devfs/devfs.c \
 		src/kernel/syscall/syscall.c \
 			src/kernel/syscall/entry.c \
 		src/kernel/mem/pmm.c \
@@ -996,10 +1105,11 @@ src/libc/errno.c \
 		test/test_malloc_stress.c \
 		test/unity.c \
 		test/stubs.c \
-		src/kernel/file.c \
-		src/kernel/fs/vfs.c \
-		src/kernel/fs/pipe.c \
-		src/kernel/fs/tmpfs.c \
+		src/kernel/fs/core/file.c \
+		src/kernel/fs/vfs/vfs.c \
+		src/kernel/fs/core/pipe.c \
+		src/kernel/fs/tmpfs/tmpfs.c \
+	src/kernel/fs/devfs/devfs.c \
 		src/kernel/syscall/syscall.c \
 			src/kernel/syscall/entry.c \
 		src/kernel/mem/pmm.c \
@@ -1072,9 +1182,9 @@ shell:
 .PHONY: doom
 doom: sdk
 ifeq ($(OS_NAME),linux)
-	$(MAKE) -C app/doom -f Makefile.menios
+	$(MAKE) -C vendor/genericdoom -f Makefile.menios
 else
-	$(DOCKER) run --rm $(DOCKER_RUN_FLAGS) $(DOCKER_ENV) --mount type=bind,source=$$(pwd),target=/mnt $(DOCKER_IMAGE) /bin/sh -c "cd /mnt && make sdk && make -C app/doom -f Makefile.menios"
+	$(DOCKER) run --rm $(DOCKER_RUN_FLAGS) $(DOCKER_ENV) --mount type=bind,source=$$(pwd),target=/mnt $(DOCKER_IMAGE) /bin/sh -c "cd /mnt && make sdk && make -C vendor/genericdoom -f Makefile.menios"
 endif
 
 .PHONY: build-apps
@@ -1181,3 +1291,43 @@ $(BINUTILS_NATIVE_BUILD_DIR)/Makefile: sdk
 		  --prefix=$(BINUTILS_PREFIX) \
 		  $(BINUTILS_CONFIGURE_FLAGS) \
 		  --with-zstd=no
+HOST_TEST_SRCS = \
+	test/test_ansi.c \
+	test/test_atomic.c \
+	test/test_char_device_registry.c \
+	test/test_fat32_lfn.c \
+	test/test_gpf_error.c \
+	test/test_init_supervision.c \
+	test/test_ioctl.c \
+	test/test_kcondvar.c \
+	test/test_kmutex.c \
+	test/test_libc_string.c \
+	test/test_malloc_realloc.c \
+	test/test_mosh_exec.c \
+	test/test_mosh_line.c \
+	test/test_mosh_pipeline.c \
+	test/test_pathconf.c \
+	test/test_pf_error.c \
+	test/test_pipe.c \
+	test/test_pseudo_stat.c \
+	test/test_shm_cleanup.c \
+	test/test_shm_manager.c \
+	test/test_shutdown_command.c \
+	test/test_signal_syscalls.c \
+	test/test_signal.c \
+	test/test_spinlock.c \
+	test/test_syscall_alarm.c \
+	test/test_syscall_cwd.c \
+	test/test_syscall_finalize.c \
+	test/test_syscall_getpagesize.c \
+	test/test_syscall_open.c \
+	test/test_syscall_shm.c \
+	test/test_syscall_shutdown.c \
+	test/test_time_conv.c \
+	test/test_tmpfs.c \
+	test/test_tsc.c \
+	test/test_vfs_open_create.c \
+	test/test_vfs_open.c \
+	test/test_virtual_to_physical.c \
+	test/test_vsprintk.c \
+	test/test_waitpid.c

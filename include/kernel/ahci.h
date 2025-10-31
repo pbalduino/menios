@@ -32,7 +32,7 @@ typedef struct ahci_controller_t {
 
 typedef ahci_controller_t* ahci_controller_p;
 
-void ahci_init(void);
+void ahci_initialize(void);
 void ahci_pci_probe(const pci_device_location_t* location,
                     uint32_t vendor_device,
                     uint32_t class_reg);

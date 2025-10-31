@@ -74,7 +74,7 @@ typedef struct acpi_address_t {
   phys_addr_t address;
 } acpi_address_t;
 
-int acpi_init();
+int acpi_initialize(void);
 int acpi_shutdown();
 
 #ifdef __cplusplus
@@ -82,4 +82,3 @@ int acpi_shutdown();
 #endif
 
 #endif /* MENIOS_INCLUDE_KERNEL_ACPI_H */
-

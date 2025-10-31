@@ -28,7 +28,7 @@ static const block_device_ops_t test_disk_ops = {
   .flush = test_disk_flush,
 };
 
-#include "../src/kernel/fs/fat32.c"
+#include "../src/kernel/fs/fat32/fat32.c"
 
 typedef struct fat32_test_env_t {
   fat32_fs_t        fs;

@@ -33,7 +33,7 @@ typedef struct syscall_frame_t {
 
 typedef uint64_t (*syscall_handler_t)(syscall_frame_t* frame);
 
-void syscall_init(void);
+void syscall_initialize(void);
 uint64_t syscall_dispatch(syscall_frame_t* frame);
 
 #ifdef __cplusplus

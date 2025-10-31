@@ -6,7 +6,7 @@
 
 **✅ ALL 33 REQUIRED ISSUES COMPLETE (100%)!** The Doom milestone has been fully achieved in release v0.1.666. All infrastructure needed to run the classic 1993 Doom game in userland is now implemented, tested, and integrated into the build system.
 
-**Using [doomgeneric](https://github.com/ozkl/doomgeneric)**: meniOS integrates the excellent doomgeneric port by [@ozkl](https://github.com/ozkl), which provides a clean platform abstraction layer. The meniOS-specific implementation is in `app/doom/doomgeneric_menios.c`, providing graphics, input, timing, and file I/O integration.
+**Using [doomgeneric](https://github.com/ozkl/doomgeneric)**: meniOS integrates the excellent doomgeneric port by [@ozkl](https://github.com/ozkl), which provides a clean platform abstraction layer. The meniOS-specific implementation is in `vendor/genericdoom/doomgeneric_menios.c`, providing graphics, input, timing, and file I/O integration.
 
 ## 📊 **Progress Assessment**
 
@@ -269,7 +269,7 @@ Port layer, graphics, input, and build integration for running Doom:
   - mmap support for direct video RAM access
   - ioctl interface for geometry/format queries (FBIOGET_VSCREENINFO)
   - Expose width, height, pitch, pixel format to userland
-- **Current Gap**: `src/kernel/file.c:507` routes through `fb_putchar` only
+- **Current Gap**: `src/kernel/fs/core/file.c:507` routes through `fb_putchar` only
 - **Impact**: DG_DrawFrame() needs raw scanline blitting to video memory
 
 #### **Real Key Events Delivery** (Issue #302) ✅ **COMPLETE**
@@ -291,7 +291,7 @@ Port layer, graphics, input, and build integration for running Doom:
   - Core format parser for %d, %i, %u, %x, %o, %f, %s, %c, %n, %[...] specifiers
   - Width specifiers and assignment suppression (*)
   - Length modifiers (hh, h, l, ll, L, z, t)
-- **Impact**: Doom config parsing (app/doom/m_config.c, m_misc.c) now functional
+- **Impact**: Doom config parsing (vendor/genericdoom/m_config.c, m_misc.c) now functional
 
 #### **Wire Up meniOS Port Layer** (Issue #300) ✅ **COMPLETE**
 - ✅ **Status**: Doomgeneric now drives meniOS graphics, input, and timing end-to-end.
@@ -305,7 +305,7 @@ Port layer, graphics, input, and build integration for running Doom:
 #### **Doom meniOS-Specific Build System** (Issue #311) ✅ **COMPLETE**
 - ✅ **Status**: meniOS now ships a dedicated Doom build flow.
 - **Highlights**:
-  - ✅ Added `app/doom/Makefile.menios` that compiles and links `build/bin/doom.elf` with the meniOS SDK.
+  - ✅ Added `vendor/genericdoom/Makefile.menios` that compiles and links `build/bin/doom.elf` with the meniOS SDK.
   - ✅ Top-level `make doom` target builds the full binary (Docker-aware) for rapid iteration.
   - ✅ Extended SDK headers (`stdio.h`, `stdlib.h`, `string.h`, etc.) so Doom sources compile cleanly.
 - **Impact**: Build infrastructure is done; final packaging and install steps move to #312 after libc work.

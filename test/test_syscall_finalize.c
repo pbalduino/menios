@@ -16,7 +16,7 @@ static int init_done = 0;
 
 void setUp(void) {
   if(!init_done) {
-    syscall_init();
+    syscall_initialize();
     init_done = 1;
   }
 

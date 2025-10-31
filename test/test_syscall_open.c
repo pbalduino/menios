@@ -11,7 +11,7 @@
 #include <kernel/heap.h>
 #include <kernel/proc.h>
 #include <kernel/syscall.h>
-#include <kernel/vfs.h>
+#include <kernel/fs/vfs/vfs.h>
 
 extern proc_info_p current;
 
@@ -95,7 +95,7 @@ static cpu_state_t cpu_state;
 
 void setUp(void) {
   memset(&proc_state, 0, sizeof(proc_state));
-  proc_file_table_init(&proc_state);
+  proc_file_table_initialize(&proc_state);
   proc_state.cwd[0] = '/';
   proc_state.cwd[1] = '\0';
   proc_state.cwd_len = 1;
@@ -104,7 +104,7 @@ void setUp(void) {
   current = &proc_state;
   vfs_shutdown();
   TEST_ASSERT_TRUE(vfs_mount_root(&fake_driver, NULL, true));
-  syscall_init();
+  syscall_initialize();
 }
 
 void tearDown(void) {

@@ -45,7 +45,7 @@ typedef struct heap_stats_t {
 
 HEAP_INSPECT_RESULT inspect_heap(uint32_t node_index, heap_node_p* node);
 
-void init_heap(void* addr, size_t size);
+void heap_initialize(void* addr, size_t size);
 
 void* kmalloc(size_t size);
 void* kcalloc(size_t nelem, size_t elsize);

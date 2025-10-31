@@ -7,7 +7,7 @@
 #include <uacpi/tables.h>
 #include <uacpi/utilities.h>
 
-hpet_status_t hpet_timer_init() {
+hpet_status_t hpet_timer_initialize(void) {
   uacpi_table tbl;
 
   uacpi_status ret = uacpi_table_find_by_signature("APIC", &tbl);

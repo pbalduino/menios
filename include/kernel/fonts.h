@@ -21,7 +21,7 @@ typedef struct {
   glyph_t glyphs[192];
 } font2_t;
 
-void font_init();
+void font_initialize(void);
 glypht_t font_glyph(uint8_t ascii);
 
 #endif

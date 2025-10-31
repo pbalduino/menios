@@ -20,7 +20,7 @@ typedef struct krwlock_t {
   bool        writer_active;
 } krwlock_t;
 
-void krwlock_init(krwlock_t* rwlock);
+void krwlock_initialize(krwlock_t* rwlock);
 void krwlock_destroy(krwlock_t* rwlock);
 
 void krwlock_rdlock(krwlock_t* rwlock);

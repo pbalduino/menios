@@ -144,7 +144,7 @@ static inline uint64_t tsc_ns_to_ticks_internal(uint64_t ns) {
   return div_u128_u64(hi, lo, 1000000000ull);
 }
 
-void tsc_init() {
+void tsc_initialize(void) {
   boot_time_sec = boot_time();
   tsc_calibrate();
   tick_start = read_tsc();

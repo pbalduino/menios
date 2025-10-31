@@ -7,7 +7,7 @@ extern "C" {
 
 #include <types.h>
 
-void timer_init();
+void timer_initialize(void);
 void timer_eoi();
 
 uint64_t boot_time();
