@@ -2,6 +2,7 @@
 #include <kernel/console.h>
 #include <kernel/heap.h>
 #include <kernel/arch/x86_64/idt.h>
+#include <kernel/irq.h>
 #include <kernel/pmm.h>
 #include <kernel/kernel.h>
 #include <kernel/serial.h>
@@ -160,6 +161,7 @@ void apic_initialize(void) {
       puts(".");
     }
   }
+  irq_apic_online();
   printf(".OK\n");
 }
 

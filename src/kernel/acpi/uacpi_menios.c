@@ -11,6 +11,7 @@
 #include <kernel/proc.h>
 #include <kernel/serial.h>
 #include <kernel/pci.h>
+#include <kernel/irq.h>
 
 #include <boot/limine.h>
 
@@ -23,6 +24,26 @@
 typedef struct uacpi_kevent {
   ksem_t sem;
 } uacpi_kevent;
+
+typedef struct uacpi_irq_binding {
+  struct irq_handle* irq_handle;
+  uacpi_interrupt_handler handler;
+  uacpi_handle ctx;
+} uacpi_irq_binding;
+
+static bool uacpi_irq_dispatch(void* opaque) {
+  if(opaque == NULL) {
+    return false;
+  }
+
+  uacpi_irq_binding* binding = (uacpi_irq_binding*)opaque;
+  if(binding->handler == NULL) {
+    return false;
+  }
+
+  uacpi_interrupt_ret result = binding->handler(binding->ctx);
+  return result != UACPI_INTERRUPT_NOT_HANDLED;
+}
 
 static volatile struct limine_rsdp_request rsdp_request = {
   .id = LIMINE_RSDP_REQUEST,
@@ -177,17 +198,64 @@ uacpi_status uacpi_kernel_wait_for_work_completion(void) {
 }
 
 uacpi_status uacpi_kernel_install_interrupt_handler(
-    uacpi_u32 irq, uacpi_interrupt_handler, uacpi_handle ctx,
+    uacpi_u32 irq,
+    uacpi_interrupt_handler handler,
+    uacpi_handle ctx,
     uacpi_handle *out_irq_handle
 ) {
-  serial_printf("uacpi_kernel_install_interrupt_handler not implemented\n");
+  if(handler == NULL || out_irq_handle == NULL) {
+    return UACPI_STATUS_INVALID_ARGUMENT;
+  }
+
+  uacpi_irq_binding* binding = kmalloc(sizeof(*binding));
+  if(binding == NULL) {
+    return UACPI_STATUS_OUT_OF_MEMORY;
+  }
+
+  binding->handler = handler;
+  binding->ctx = ctx;
+  binding->irq_handle = NULL;
+
+  int rc = irq_register(irq, uacpi_irq_dispatch, binding, &binding->irq_handle);
+  if(rc != 0) {
+    kfree(binding);
+    if(rc == -ENOMEM) {
+      return UACPI_STATUS_OUT_OF_MEMORY;
+    }
+    return UACPI_STATUS_ERROR;
+  }
+
+  *out_irq_handle = (uacpi_handle)binding;
   return UACPI_STATUS_OK;
 }
 
 uacpi_status uacpi_kernel_uninstall_interrupt_handler(
-    uacpi_interrupt_handler, uacpi_handle irq_handle
+    uacpi_interrupt_handler handler,
+    uacpi_handle irq_handle
 ) {
-  serial_printf("uacpi_kernel_uninstall_interrupt_handler not implemented\n");
+  if(irq_handle == UACPI_NULL) {
+    return UACPI_STATUS_INVALID_ARGUMENT;
+  }
+
+  uacpi_irq_binding* binding = (uacpi_irq_binding*)irq_handle;
+  if(handler != NULL && handler != binding->handler) {
+    return UACPI_STATUS_INVALID_ARGUMENT;
+  }
+
+  if(binding->irq_handle == NULL) {
+    kfree(binding);
+    return UACPI_STATUS_ERROR;
+  }
+
+  int rc = irq_unregister(binding->irq_handle);
+  binding->irq_handle = NULL;
+
+  kfree(binding);
+
+  if(rc != 0) {
+    return UACPI_STATUS_ERROR;
+  }
+
   return UACPI_STATUS_OK;
 }
 

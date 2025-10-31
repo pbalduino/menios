@@ -47,6 +47,7 @@
 #include <kernel/heap.h>
 #include <kernel/hw.h>
 #include <kernel/arch/x86_64/idt.h>
+#include <kernel/irq.h>
 #include <kernel/kernel.h>
 #include <kernel/mem.h>
 #include <kernel/proc.h>
@@ -163,6 +164,7 @@ void _start() {
   gdt_initialize();
 
   idt_initialize();
+  irq_initialize();
 
   cpu_enable_sse();
 

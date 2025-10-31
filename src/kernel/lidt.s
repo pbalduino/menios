@@ -20,6 +20,7 @@ extern syscall_dispatch
 extern serial_printf
 extern syscall_last_return_value
 extern syscall_last_return_slot_value
+extern irq_dispatch
 
 %define ENABLE_SYSCALL_TRACE 1
 %ifdef ENABLE_SYSCALL_TRACE
@@ -41,6 +42,10 @@ extern syscall_trace_return
 
 %define USER_CODE_SELECTOR  0x3B
 %define USER_DATA_SELECTOR  0x43
+
+%define IRQ_VECTOR_BASE 0x60
+%define IRQ_VECTOR_LIMIT 0xEF
+%define IRQ_VECTOR_COUNT ((IRQ_VECTOR_LIMIT - IRQ_VECTOR_BASE) + 1)
 
 idt_load:
   lidt [rdi]   ; Load the IDT from the memory location pointed to by rdi
@@ -370,6 +375,68 @@ syscall_entry:
   swapgs
   iretq
 
+%macro IRQ_PUSH_REGS 0
+  push rax
+  push rbx
+  push rcx
+  push rdx
+  push rbp
+  push rsi
+  push rdi
+  push r8
+  push r9
+  push r10
+  push r11
+  push r12
+  push r13
+  push r14
+  push r15
+%endmacro
+
+%macro IRQ_POP_REGS 0
+  pop r15
+  pop r14
+  pop r13
+  pop r12
+  pop r11
+  pop r10
+  pop r9
+  pop r8
+  pop rdi
+  pop rsi
+  pop rbp
+  pop rdx
+  pop rcx
+  pop rbx
+  pop rax
+%endmacro
+
+%macro IRQ_DYNAMIC_STUB 1
+global irq_stub_%1
+irq_stub_%1:
+  IRQ_PUSH_REGS
+  cld
+  mov edi, %1
+  call irq_dispatch
+  IRQ_POP_REGS
+  iretq
+%endmacro
+
+%assign __irq_vector IRQ_VECTOR_BASE
+%rep IRQ_VECTOR_COUNT
+IRQ_DYNAMIC_STUB __irq_vector
+%assign __irq_vector __irq_vector + 1
+%endrep
+
 section .rodata
+global irq_vector_stubs
+align 8
+irq_vector_stubs:
+%assign __irq_vector IRQ_VECTOR_BASE
+%rep IRQ_VECTOR_COUNT
+  dq irq_stub_%__irq_vector
+%assign __irq_vector __irq_vector + 1
+%endrep
+
 sysret_value_fmt:
   db "[sysret] value=%lx slot=%lx", 10, 0

@@ -72,6 +72,7 @@ KERNEL_SRC = \
 	src/kernel/arch/x86_64/cpu.c \
 	src/kernel/arch/x86_64/gdt.c \
 	src/kernel/arch/x86_64/idt.c \
+	src/kernel/arch/x86_64/irq.c \
 	src/kernel/block/block_cache.c \
 	src/kernel/block/block_device.c \
 	src/kernel/console/ansi.c \
