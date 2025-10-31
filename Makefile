@@ -64,42 +64,78 @@ LIBDIR         = lib
 UACPI_OBJ      = $(OBJDIR)/uacpi
 KERNEL_OBJ     = $(OBJDIR)/kernel
 
-KERNEL_C_DIRS = \
-	src/kernel \
-	src/kernel/acpi \
-	src/kernel/arch/x86_64 \
-	src/kernel/block \
-	src/kernel/console \
-	src/kernel/core \
-	src/kernel/drivers/audio/sb \
-	src/kernel/drivers/block/ahci \
-	src/kernel/drivers/bus/pciroot \
-	src/kernel/drivers/core \
-	src/kernel/drivers/input/ps2kb \
-	src/kernel/framebuffer \
-	src/kernel/fs/core \
-	src/kernel/fs/devfs \
-	src/kernel/fs/fat32 \
-	src/kernel/fs/procfs \
-	src/kernel/fs/tmpfs \
-	src/kernel/fs/vfs \
-	src/kernel/hw \
-	src/kernel/input \
-	src/kernel/ipc \
-	src/kernel/mem \
-	src/kernel/proc \
-	src/kernel/syscall \
-	src/kernel/timer \
-	src/kernel/user
+KERNEL_SRC = \
+	src/kernel/acpi/acpi.c \
+	src/kernel/acpi/acpica.c \
+	src/kernel/acpi/uacpi_menios.c \
+	src/kernel/arch/x86_64/apic.c \
+	src/kernel/arch/x86_64/cpu.c \
+	src/kernel/arch/x86_64/gdt.c \
+	src/kernel/arch/x86_64/idt.c \
+	src/kernel/block/block_cache.c \
+	src/kernel/block/block_device.c \
+	src/kernel/console/ansi.c \
+	src/kernel/console/console.c \
+	src/kernel/console/vprintk.c \
+	src/kernel/core/halt.c \
+	src/kernel/core/logo.c \
+	src/kernel/core/main.c \
+	src/kernel/core/panic.c \
+	src/kernel/core/services.c \
+	src/kernel/drivers/audio/sb/sb.c \
+	src/kernel/drivers/block/ahci/ahci.c \
+	src/kernel/drivers/bus/pciroot/pci.c \
+	src/kernel/drivers/bus/pciroot/pciroot.c \
+	src/kernel/drivers/core/driver.c \
+	src/kernel/drivers/input/ps2kb/ps2kb.c \
+	src/kernel/file.c \
+	src/kernel/fonts.c \
+	src/kernel/framebuffer.c \
+	src/kernel/fs/core/pipe.c \
+	src/kernel/fs/devfs/devfs.c \
+	src/kernel/fs/fat32/fat32.c \
+	src/kernel/fs/procfs/procfs.c \
+	src/kernel/fs/tmpfs/tmpfs.c \
+	src/kernel/fs/vfs/vfs.c \
+	src/kernel/hw/hw.c \
+	src/kernel/input/keyboard.c \
+	src/kernel/ipc/shm.c \
+	src/kernel/mem/compactor.c \
+	src/kernel/mem/dma.c \
+	src/kernel/mem/kmalloc.c \
+	src/kernel/mem/kmmap.c \
+	src/kernel/mem/mem.c \
+	src/kernel/mem/mem_utils.c \
+	src/kernel/mem/pmm.c \
+	src/kernel/mem/sbrk.c \
+	src/kernel/proc/kcondvar.c \
+	src/kernel/proc/kmutex.c \
+	src/kernel/proc/krwlock.c \
+	src/kernel/proc/ksemaphore.c \
+	src/kernel/proc/kthread.c \
+	src/kernel/proc/proc.c \
+	src/kernel/proc/signal.c \
+	src/kernel/serial.c \
+	src/kernel/syscall/entry.c \
+	src/kernel/syscall/syscall.c \
+	src/kernel/timer/hpet.c \
+	src/kernel/timer/lapic.c \
+	src/kernel/timer/rtc.c \
+	src/kernel/timer/timer.c \
+	src/kernel/timer/tsc.c \
+	src/kernel/user/elf_loader.c \
+	src/kernel/user/init.c \
+	src/kernel/user/user_demo.c \
+	src/kernel/user/vm.c \
+	src/kernel/user/vm_region.c
 
-KERNEL_SRC = $(sort $(foreach dir,$(KERNEL_C_DIRS),$(wildcard $(dir)/*.c)))
-
-KERNEL_ASM_DIRS = \
-	src/kernel \
-	src/kernel/arch/x86_64 \
-	src/kernel/user
-
-KERNEL_ASM = $(sort $(foreach dir,$(KERNEL_ASM_DIRS),$(wildcard $(dir)/*.s) $(wildcard $(dir)/*.S)))
+KERNEL_ASM = \
+	src/kernel/arch/x86_64/context_switch.S \
+	src/kernel/arch/x86_64/proc_entry.S \
+	src/kernel/lgdt.s \
+	src/kernel/lidt.s \
+	src/kernel/pit.s \
+	src/kernel/user/user_mode.S
 KERNEL_OBJS = $(patsubst %.c, %.o, $(KERNEL_SRC))
 KERNEL_ASM_GAS_OBJS = $(patsubst %.S, %.o, $(filter %.S,$(KERNEL_ASM)))
 ARCH_NASM_OBJECTS := lgdt.o pit.o lidt.o
