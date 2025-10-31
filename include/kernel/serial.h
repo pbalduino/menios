@@ -5,7 +5,7 @@
 #include <stdbool.h>
 
 #ifdef MENIOS_KERNEL
-void serial_init();
+void serial_initialize(void);
 int serial_putchar(int ch);
 int serial_puts(const char* text);
 int serial_printf(const char* format, ...);
@@ -17,7 +17,7 @@ int serial_vprintf(const char *format, va_list args);
 
 #else
 #ifdef MENIOS_NO_DEBUG
-  #define serial_init()
+  #define serial_initialize()
   #define serial_putchar(a)
   #define serial_puts(a)
   #define serial_printf(fmt, ...)
@@ -28,7 +28,7 @@ int serial_vprintf(const char *format, va_list args);
   #define serial_error(a)
 #else
   #warning Calling printf as serial_printf
-  #define serial_init()
+  #define serial_initialize()
   #define serial_putchar(a)          putchar(a)
   #define serial_puts(a)             puts(a)
   #define serial_printf(fmt, ...)    printf(fmt, ##__VA_ARGS__)

@@ -8,7 +8,7 @@ static uintptr_t addr;
 
 static uint32_t timer_freq = 10000000;
 
-void lapic_timer_init(void) {
+void lapic_timer_initialize(void) {
   serial_printf("lapic timer init\n");
   addr = physical_to_virtual(DEFAULT_LAPIC_ADDRESS);
   serial_printf("lapic address: %lx - virt: %lx\n", DEFAULT_LAPIC_ADDRESS, addr);

@@ -220,7 +220,7 @@ static inline void set_errno(int err) {
   }
 }
 
-static inline void stdin_buffer_init(void) {
+static inline void stdin_buffer_initialize(void) {
   if(stdin_initialized) {
     return;
   }
@@ -307,7 +307,7 @@ static int64_t stdin_read_impl(file_t* file, void* buffer, size_t length) {
 
 void stdin_enqueue_char(uint8_t ch) {
   if(!stdin_initialized) {
-    stdin_buffer_init();
+    stdin_buffer_initialize();
   }
   (void)stdin_buffer_push(ch);
   kcondvar_signal(&stdin_buffer.waiters);
@@ -498,7 +498,7 @@ int file_utimens(file_t* file, const struct timespec times[2]) {
   return rc;
 }
 
-void proc_file_table_init(struct proc_info_t* proc) {
+void proc_file_table_initialize(struct proc_info_t* proc) {
   if(proc == NULL) {
     return;
   }
@@ -1065,9 +1065,9 @@ static const file_ops_t tty_console_file_ops = {
 
 #ifdef MENIOS_KERNEL
 static void install_standard_streams(void) {
-  proc_file_table_init(&kernel_process_info);
+  proc_file_table_initialize(&kernel_process_info);
 
-  stdin_buffer_init();
+  stdin_buffer_initialize();
 
   stdin_stream_file = file_create(&stdin_file_ops, NULL, FILE_MODE_READ);
   if(stdin_stream_file != NULL) {
@@ -1089,18 +1089,18 @@ static void install_standard_streams(void) {
 }
 #endif
 
-void file_system_init(void) {
+void file_system_initialize(void) {
 #ifdef MENIOS_KERNEL
   install_standard_streams();
-  char_device_system_init();
+  char_device_system_initialize();
   if(!devfs_mount()) {
-    serial_printf("file_system_init: failed to mount devfs\n");
+    serial_printf("file_system_initialize: failed to mount devfs\n");
   }
   if(!tmpfs_mount()) {
-    serial_printf("file_system_init: failed to mount tmpfs\n");
+    serial_printf("file_system_initialize: failed to mount tmpfs\n");
   }
   if(!procfs_mount()) {
-    serial_printf("file_system_init: failed to mount procfs\n");
+    serial_printf("file_system_initialize: failed to mount procfs\n");
   }
 #endif
 }
@@ -1238,6 +1238,6 @@ file_t* file_create_framebuffer_device_file(void) {
 }
 
 file_t* file_create_tty_console_file(void) {
-  stdin_buffer_init();
+  stdin_buffer_initialize();
   return file_create(&tty_console_file_ops, NULL, FILE_MODE_READ | FILE_MODE_WRITE);
 }

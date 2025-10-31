@@ -108,7 +108,7 @@ static void heap_demo(void) {
     (unsigned long)final.free_bytes);
 }
 
-void boot_graphics_init() {
+static void boot_graphics_initialize(void) {
   framebuffer_init();
   font_initialize();
 
@@ -144,25 +144,25 @@ static void kernel_idle_loop(void) {
 
 void _start() {
   serial_debug = true;
-  tsc_init();
+  tsc_initialize();
 
-  serial_init();
+  serial_initialize();
 
-  mem_init();
+  memory_initialize();
 
-  shm_manager_init();
+  shm_manager_initialize();
 
-  file_system_init();
+  file_system_initialize();
 
   block_device_system_initialize();
 
-  vfs_init();
+  vfs_initialize();
 
-  boot_graphics_init();
+  boot_graphics_initialize();
 
-  gdt_init();
+  gdt_initialize();
 
-  idt_init();
+  idt_initialize();
 
   cpu_enable_sse();
 
@@ -173,13 +173,13 @@ void _start() {
   heap_demo();
   logk("Finished heap demo\n");
 
-  acpi_init();
+  acpi_initialize();
 
-  apic_init();
+  apic_initialize();
 
-  timer_init();
+  timer_initialize();
   
-  scheduler_init();
+  scheduler_initialize();
 
   hardware_init();
 

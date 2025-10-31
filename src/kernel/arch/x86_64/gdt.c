@@ -76,8 +76,8 @@ static void gdt_initialize_tss(void) {
   gdt_set_tss(GDT_ENTRY_TSS_LOW, (uint64_t)&tss, sizeof(tss) - 1);
 }
 
-void gdt_init(void) {
-  serial_log("Entering gdt_init");
+void gdt_initialize(void) {
+  serial_log("Entering gdt_initialize");
   logk("Setting GDT");
 
   gdt_set_entry(GDT_ENTRY_NULL, 0, 0, 0, 0);
@@ -103,7 +103,7 @@ void gdt_init(void) {
   asm volatile("ltr %w0" : : "r" (tss_selector) : "memory");
 
   puts("OK\n");
-  serial_log("Leaving gdt_init");
+  serial_log("Leaving gdt_initialize");
 }
 
 void tss_update_kernel_stack(uint64_t stack_top) {

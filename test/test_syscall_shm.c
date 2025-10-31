@@ -31,7 +31,7 @@ static void host_free_pages(phys_addr_t base, size_t page_count) {
 }
 
 void setUp(void) {
-  shm_manager_init();
+  shm_manager_initialize();
   shm_set_allocator(host_alloc_pages, host_free_pages);
   syscall_initialize();
 

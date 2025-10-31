@@ -14,8 +14,8 @@ static proc_info_t parent;
 void setUp(void) {
   memset(&proc, 0, sizeof(proc));
   memset(&parent, 0, sizeof(parent));
-  proc_signal_state_init(&proc);
-  proc_signal_state_init(&parent);
+  proc_signal_state_initialize(&proc);
+  proc_signal_state_initialize(&parent);
   proc.user_mode = true;
   parent.user_mode = true;
   proc.quantum_us = 1000;
@@ -224,7 +224,7 @@ void test_signal_handle_pending_default_continues_process(void) {
 void test_proc_waitpid_reports_stop_status(void) {
   proc_info_t child;
   memset(&child, 0, sizeof(child));
-  proc_signal_state_init(&child);
+  proc_signal_state_initialize(&child);
   child.pid = 1234;
   child.state = PROC_STATE_STOPPED;
   child.stop_status = ((SIGTSTP & 0x7f) << 8) | 0x7f;
@@ -245,7 +245,7 @@ void test_proc_waitpid_reports_stop_status(void) {
 void test_proc_waitpid_reports_continued_status(void) {
   proc_info_t child;
   memset(&child, 0, sizeof(child));
-  proc_signal_state_init(&child);
+  proc_signal_state_initialize(&child);
   child.pid = 4321;
   child.state = PROC_STATE_READY;
   child.continue_status = 0xffff;

@@ -208,7 +208,7 @@ extern proc_info_t kernel_process_info;
 extern proc_info_p procs[PROC_MAX];
 extern proc_info_p current;
 
-void scheduler_init();
+void scheduler_initialize(void);
 void proc_create(proc_info_p proc, const char* name, void (*entrypoint)(void *), void* arg);
 void proc_execute(proc_info_p proc);
 void proc_exit(int code);

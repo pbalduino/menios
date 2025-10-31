@@ -59,7 +59,7 @@ typedef struct file_descriptor_entry_t {
 
 #define FD_FLAG_CLOEXEC  (1u << 0)
 
-void file_system_init(void);
+void file_system_initialize(void);
 file_t* file_create(const file_ops_t* ops, void* private_data, uint32_t mode);
 void file_ref(file_t* file);
 void file_unref(file_t* file);
@@ -73,7 +73,7 @@ int file_mmap(file_t* file,
 int file_chmod(file_t* file, mode_t mode);
 int file_utimens(file_t* file, const struct timespec times[2]);
 
-void proc_file_table_init(struct proc_info_t* proc);
+void proc_file_table_initialize(struct proc_info_t* proc);
 void proc_file_table_clone(struct proc_info_t* child, struct proc_info_t* parent);
 void proc_file_table_cleanup(struct proc_info_t* proc);
 void proc_file_table_prepare_exec(struct proc_info_t* proc);

@@ -51,9 +51,9 @@ int power_button_init(void) {
   return 0;
 }
 
-int acpi_init() {
+int acpi_initialize(void) {
   logk("Initializing ACPI.");
-  serial_printf("acpi_init: Initializing ACPI.\n");
+  serial_printf("acpi_initialize: Initializing ACPI.\n");
 
   uacpi_setup_early_table_access((void*)uacpi_arena, UACPI_ARENA_SIZE);
   printf(".");
@@ -92,7 +92,7 @@ int acpi_init() {
   }
 
   printf(".OK\n");
-  serial_printf("acpi_init: uacpi initialized.\n");
+  serial_printf("acpi_initialize: uacpi initialized.\n");
 
   return 0;
 }

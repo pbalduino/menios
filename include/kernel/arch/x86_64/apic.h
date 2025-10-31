@@ -33,8 +33,8 @@
 #define DIV_BY_128  0x0a
 #define DIV_BY_1    0x0b
 
-void apic_init(void);
-void lapic_timer_init(void);
+void apic_initialize(void);
+void lapic_timer_initialize(void);
 void timer_frequency(uint32_t freq);
 void write_lapic(uintptr_t reg, uint32_t value);
 

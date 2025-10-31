@@ -26,7 +26,7 @@ void setUp(void) {
   init_proc.user_mode = true;
   init_proc.quantum_us = 1000;
 
-  proc_signal_state_init(&init_proc);
+  proc_signal_state_initialize(&init_proc);
 
   current = &init_proc;
   procs[0] = &kernel_process_info;

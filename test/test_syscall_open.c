@@ -95,7 +95,7 @@ static cpu_state_t cpu_state;
 
 void setUp(void) {
   memset(&proc_state, 0, sizeof(proc_state));
-  proc_file_table_init(&proc_state);
+  proc_file_table_initialize(&proc_state);
   proc_state.cwd[0] = '/';
   proc_state.cwd[1] = '\0';
   proc_state.cwd_len = 1;

@@ -54,7 +54,7 @@ typedef enum {
 typedef phys_addr_t (*shm_page_alloc_fn)(size_t page_count);
 typedef void (*shm_page_free_fn)(phys_addr_t base, size_t page_count);
 
-void shm_manager_init(void);
+void shm_manager_initialize(void);
 
 void shm_set_allocator(shm_page_alloc_fn alloc_fn,
                        shm_page_free_fn free_fn);

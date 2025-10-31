@@ -13,8 +13,8 @@ void driver_registry_init() {
   serial_line("Initing driver lookup table");
   driver_list = NULL;
 
-  ps2kb_init();
-  pciroot_init();
+  ps2kb_register_driver();
+  pciroot_register_driver();
 }
 
 void driver_register(driver_p driver) {

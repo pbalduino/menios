@@ -29,7 +29,7 @@ static char_device_t make_test_device(const char* name, uint32_t mode, unsigned 
 }
 
 void setUp(void) {
-  char_device_system_init();
+  char_device_system_initialize();
 }
 
 void tearDown(void) {

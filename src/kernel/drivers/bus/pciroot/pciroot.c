@@ -302,6 +302,6 @@ static struct driver_t pciroot_driver = {
   .shutdown = &pciroot_shutdown
 };
 
-void pciroot_init(void) {
+void pciroot_register_driver(void) {
   driver_register(&pciroot_driver);
 }

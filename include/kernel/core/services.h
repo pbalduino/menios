@@ -1,6 +1,6 @@
 #ifndef MENIOS_INCLUDE_KERNEL_CORE_SERVICES_H
 #define MENIOS_INCLUDE_KERNEL_CORE_SERVICES_H
 
-void services_init(void);
+void services_initialize(void);
 
 #endif /* MENIOS_INCLUDE_KERNEL_CORE_SERVICES_H */

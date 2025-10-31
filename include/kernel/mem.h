@@ -3,7 +3,7 @@
 
 #include <types.h>
 
-void mem_init();
-void mem_compactor_init();
+void memory_initialize(void);
+void mem_compactor_initialize(void);
 
 #endif

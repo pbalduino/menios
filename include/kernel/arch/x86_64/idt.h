@@ -103,7 +103,7 @@ extern void syscall_isr_handler(void);
 
 void idt_add_isr(int interruption, void* handler);
 void idt_add_user_isr(int interruption, void* handler);
-void idt_init(void);
+void idt_initialize(void);
 static inline void idt_decode_page_fault(uint64_t error_code, idt_pf_error_info_t *info) {
   info->present = (error_code & (1ull << 0)) != 0;
   info->write = (error_code & (1ull << 1)) != 0;

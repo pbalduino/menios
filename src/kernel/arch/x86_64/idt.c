@@ -57,11 +57,11 @@ void idt_add_user_isr(int interruption, void* handler) {
   idt_set_entry(interruption, handler, 0xee);
 }
 
-void idt_init(void) {
+void idt_initialize(void) {
   logk("Setting IDT");
   idt_p.size = sizeof(idt) - 1;
   idt_p.offset = (uintptr_t)&idt;
-  serial_printf("idt_init: idt_p @ %p - offset: %lx\n", idt_p, idt_p.offset);
+  serial_printf("idt_initialize: idt_p @ %p - offset: %lx\n", idt_p, idt_p.offset);
   idt_add_isr(ISR_DIVISION_BY_ZERO, &idt_generic_isr_asm_handler);
   idt_add_isr(ISR_DEBUG, &idt_generic_isr_asm_handler);
   idt_add_isr(ISR_BREAKPOINT, &idt_generic_isr_asm_handler);

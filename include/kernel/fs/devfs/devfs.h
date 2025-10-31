@@ -25,7 +25,7 @@ struct char_device {
   unsigned int        minor_count;
 };
 
-void char_device_system_init(void);
+void char_device_system_initialize(void);
 int char_device_register(char_device_t* device);
 void char_device_unregister(char_device_t* device);
 

@@ -96,7 +96,7 @@ static int shm_manager_allocate_id_locked(void) {
   return -1;
 }
 
-void shm_manager_init(void) {
+void shm_manager_initialize(void) {
   kmutex_init(&shm_manager.lock);
   shm_manager.head = NULL;
   shm_manager.next_id = 1;

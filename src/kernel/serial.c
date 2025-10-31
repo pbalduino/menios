@@ -9,7 +9,7 @@
 bool serial_debug = false;
 static spinlock_t serial_printf_lock;
 
-void serial_init() {
+void serial_initialize(void) {
   // Disable interrupts
   outb(0x3f8 + 1, 0x00);
 

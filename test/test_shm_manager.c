@@ -19,7 +19,7 @@ static void fake_free(phys_addr_t base, size_t page_count) {
 }
 
 void setUp(void) {
-  shm_manager_init();
+  shm_manager_initialize();
   shm_set_allocator(fake_alloc, fake_free);
 }
 

@@ -39,7 +39,7 @@ typedef struct vfs_fs_driver_t {
   void (*destroy)(void* fs_ctx);
 } vfs_fs_driver_t;
 
-bool vfs_init(void);
+bool vfs_initialize(void);
 void vfs_shutdown(void);
 bool vfs_mount(const char* path, const vfs_fs_driver_t* driver, void* fs_ctx, bool read_only);
 bool vfs_mount_root(const vfs_fs_driver_t* driver, void* fs_ctx, bool read_only);

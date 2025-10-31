@@ -24,7 +24,7 @@ static inline uint32_t sigbit(int signo) {
   return (uint32_t)(1u << (signo - 1));
 }
 
-void proc_signal_state_init(proc_info_p proc);
+void proc_signal_state_initialize(proc_info_p proc);
 void proc_signal_state_copy(proc_info_p dst, proc_info_p src);
 void proc_signal_set_blocked(proc_info_p proc, uint32_t mask);
 void proc_signal_enqueue(proc_info_p proc, int signo);

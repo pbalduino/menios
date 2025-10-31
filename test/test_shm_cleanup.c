@@ -55,7 +55,7 @@ static void init_proc(proc_info_p proc) {
 }
 
 void setUp(void) {
-  shm_manager_init();
+  shm_manager_initialize();
   shm_set_allocator(fake_alloc, fake_free);
   init_proc(&parent_proc);
   init_proc(&child_proc);

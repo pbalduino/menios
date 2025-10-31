@@ -295,7 +295,7 @@ bool vfs_path_info(const char* path, fs_path_info_t* out_info) {
   return true;
 }
 
-bool vfs_init(void) {
+bool vfs_initialize(void) {
   if(vfs_initialized) {
     return true;
   }
@@ -356,7 +356,7 @@ static vfs_mount_entry_t* vfs_find_mount_locked(const char* path, size_t path_le
 }
 
 bool vfs_mount(const char* path, const vfs_fs_driver_t* driver, void* fs_ctx, bool read_only) {
-  if(!vfs_initialized && !vfs_init()) {
+  if(!vfs_initialized && !vfs_initialize()) {
     return false;
   }
 

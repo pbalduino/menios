@@ -562,8 +562,8 @@ static struct driver_t ps2kb_driver = {
   .write = ps2kb_write,
 };
 
-void ps2kb_init(void) {
-  serial_printf("ps2kb_init: Registering driver '%s' for HID '%s'\n", ps2kb_driver.name, ps2kb_driver.hid);
+void ps2kb_register_driver(void) {
+  serial_printf("ps2kb_register_driver: registering '%s' for HID '%s'\n", ps2kb_driver.name, ps2kb_driver.hid);
   driver_register(&ps2kb_driver);
 }
 

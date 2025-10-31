@@ -110,7 +110,7 @@ static inline void *getentry(int type, int n) {
 	return NULL;
 }
 
-void apic_init(void) {
+void apic_initialize(void) {
   logk("Enabling APIC");
 
   uacpi_table tbl;
@@ -130,7 +130,7 @@ void apic_init(void) {
 	lapiccount = getcount(ACPI_MADT_ENTRY_TYPE_LAPIC);
 	lapicnmicount = getcount(ACPI_MADT_ENTRY_TYPE_LAPIC_NMI);
 
-  serial_printf("acpi_init: table @ %p\n", tbl.ptr);
+  serial_printf("acpi_initialize: table @ %p\n", tbl.ptr);
 
   struct acpi_madt_lapic_address_override *lapic64 = getentry(ACPI_MADT_ENTRY_TYPE_LAPIC_ADDRESS_OVERRIDE, 0);
 
@@ -140,13 +140,13 @@ void apic_init(void) {
 		serial_printf("\e[94mUsing 64 bit override for the local APIC address\n\e[0m");
   }
 
-  serial_printf("acpi_init: local APIC address: %p\n", paddr);
+  serial_printf("acpi_initialize: local APIC address: %p\n", paddr);
 
   lapicaddr = (void*)physical_to_virtual((uintptr_t)paddr);
 
   ioapics = (ioapicdesc_t*)kmalloc(sizeof(ioapicdesc_t) * iocount);
 
-  serial_printf("acpi_init: iocount: %d\n", iocount);
+  serial_printf("acpi_initialize: iocount: %d\n", iocount);
 
   for(size_t i = 0; i < iocount; ++i) {
 		struct acpi_madt_ioapic *entry = getentry(ACPI_MADT_ENTRY_TYPE_IOAPIC, i);

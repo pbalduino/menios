@@ -10,7 +10,7 @@
 #include <stdio.h>
 #include <string.h>
 
-void mem_init() {
+void memory_initialize(void) {
   serial_puts("\n- Initing memory management:\n");
   // init the physical memory management
   pmm_init();
@@ -32,10 +32,10 @@ int mem_compactor(void *unused) {
   return 0;
 }
 
-void mem_compactor_init() {
+void mem_compactor_initialize(void) {
   kthread_p pthread = kmalloc(sizeof(kthread_t));
   if(pthread == NULL) {
-    serial_error("mem_compactor_init: failed to allocate thread descriptor\n");
+    serial_error("mem_compactor_initialize: failed to allocate thread descriptor\n");
     return;
   }
   memzero(pthread, sizeof(kthread_t));

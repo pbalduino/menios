@@ -685,7 +685,7 @@ static char_device_t ttyS0_device = {
   .minor_count = 1,
 };
 
-void char_device_system_init(void) {
+void char_device_system_initialize(void) {
   devfs_init_once();
 
   static bool builtins_registered = false;
@@ -695,22 +695,22 @@ void char_device_system_init(void) {
   builtins_registered = true;
 
   if(char_device_register(&null_device) != 0) {
-    serial_printf("char_device_system_init: failed to register /dev/null\n");
+    serial_printf("char_device_system_initialize: failed to register /dev/null\n");
   }
   if(char_device_register(&zero_device) != 0) {
-    serial_printf("char_device_system_init: failed to register /dev/zero\n");
+    serial_printf("char_device_system_initialize: failed to register /dev/zero\n");
   }
   if(char_device_register(&tty0_device) != 0) {
-    serial_printf("char_device_system_init: failed to register /dev/tty0\n");
+    serial_printf("char_device_system_initialize: failed to register /dev/tty0\n");
   }
   if(char_device_register(&fb0_device) != 0) {
-    serial_printf("char_device_system_init: failed to register /dev/fb0\n");
+    serial_printf("char_device_system_initialize: failed to register /dev/fb0\n");
   }
   if(char_device_register(&console_device) != 0) {
-    serial_printf("char_device_system_init: failed to register /dev/console\n");
+    serial_printf("char_device_system_initialize: failed to register /dev/console\n");
   }
   if(char_device_register(&ttyS0_device) != 0) {
-    serial_printf("char_device_system_init: failed to register /dev/ttyS0\n");
+    serial_printf("char_device_system_initialize: failed to register /dev/ttyS0\n");
   }
 }
 
@@ -746,6 +746,6 @@ void char_device_reserve_major(unsigned int major) {
 }
 
 bool devfs_mount(void) {
-  char_device_system_init();
+  char_device_system_initialize();
   return vfs_mount("/dev", &devfs_driver, NULL, true);
 }

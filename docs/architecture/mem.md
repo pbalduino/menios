@@ -37,7 +37,7 @@ Other points:
 
 ## Heap & Kernel Allocations
 
-* The kernel heap is initialised by `heap_init(NULL, PAGE_SIZE * HEAP_SIZE)` in `mem_init()`. At the moment the heap carves memory from the higher-half mapping; it is not yet virtual-memory aware.
+* The kernel heap is initialised by `heap_init(NULL, PAGE_SIZE * HEAP_SIZE)` in `memory_initialize()`. At the moment the heap carves memory from the higher-half mapping; it is not yet virtual-memory aware.
 * The heap feeds `kmalloc`, `kfree`, and related APIs. Memory compaction is handled by a background thread (`mem_compactor`).
 
 ## User Address Spaces (Current State)

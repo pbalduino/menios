@@ -20,8 +20,8 @@ void setUp(void) {
   init_proc.pid = 1;
   child_proc.pid = 42;
 
-  proc_signal_state_init(&init_proc);
-  proc_signal_state_init(&child_proc);
+  proc_signal_state_initialize(&init_proc);
+  proc_signal_state_initialize(&child_proc);
 
   procs[0] = &kernel_process_info;
   procs[1] = &init_proc;
