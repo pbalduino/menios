@@ -1249,14 +1249,43 @@ $(BINUTILS_NATIVE_BUILD_DIR)/Makefile: sdk
 		  --prefix=$(BINUTILS_PREFIX) \
 		  $(BINUTILS_CONFIGURE_FLAGS) \
 		  --with-zstd=no
-HOST_TEST_EXCLUDES = \
-	test/test_kmalloc.c \
-	test/test_malloc_stress.c \
-	test/test_buddy_allocator.c \
-	test/test_malloc_stats.c \
-	test/test_malloc_direct.c \
-	test/test_heap_virtual.c \
-	test/test_scanf.c \
-	test/test_system.c
-
-HOST_TEST_SRCS = $(filter-out $(HOST_TEST_EXCLUDES),$(wildcard test/test_*.c))
+HOST_TEST_SRCS = \
+	test/test_ansi.c \
+	test/test_atomic.c \
+	test/test_char_device_registry.c \
+	test/test_fat32_lfn.c \
+	test/test_gpf_error.c \
+	test/test_init_supervision.c \
+	test/test_ioctl.c \
+	test/test_kcondvar.c \
+	test/test_kmutex.c \
+	test/test_libc_string.c \
+	test/test_malloc_realloc.c \
+	test/test_mosh_exec.c \
+	test/test_mosh_line.c \
+	test/test_mosh_pipeline.c \
+	test/test_pathconf.c \
+	test/test_pf_error.c \
+	test/test_pipe.c \
+	test/test_pseudo_stat.c \
+	test/test_shm_cleanup.c \
+	test/test_shm_manager.c \
+	test/test_shutdown_command.c \
+	test/test_signal_syscalls.c \
+	test/test_signal.c \
+	test/test_spinlock.c \
+	test/test_syscall_alarm.c \
+	test/test_syscall_cwd.c \
+	test/test_syscall_finalize.c \
+	test/test_syscall_getpagesize.c \
+	test/test_syscall_open.c \
+	test/test_syscall_shm.c \
+	test/test_syscall_shutdown.c \
+	test/test_time_conv.c \
+	test/test_tmpfs.c \
+	test/test_tsc.c \
+	test/test_vfs_open_create.c \
+	test/test_vfs_open.c \
+	test/test_virtual_to_physical.c \
+	test/test_vsprintk.c \
+	test/test_waitpid.c
