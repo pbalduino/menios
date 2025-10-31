@@ -115,6 +115,7 @@ See [issue #191 (CLOSED)](https://github.com/pbalduino/menios/issues/191) for th
   - [docs/road/road_to_gui.md](docs/road/road_to_gui.md) — complete GUI roadmap (Cairo, compositor, window manager, desktop environment)
 - [docs/tools.md](docs/tools.md) — overview of the Menios toolchain wrapper scripts.
 - [docs/MILESTONES.md](docs/MILESTONES.md) — high-level progress tracker.
+- [docs/architecture/code_structure.md](docs/architecture/code_structure.md) — reference for the current kernel/userland layout and naming conventions.
 - [scheduler_issues.md](scheduler_issues.md) — notes on ready-queue redesign.
 - [CONTRIBUTING.md](CONTRIBUTING.md) & [CODING.md](CODING.md) — contribution workflow and style guide.
 
@@ -127,11 +128,14 @@ See [issue #191 (CLOSED)](https://github.com/pbalduino/menios/issues/191) for th
 ## Repository Layout
 
 ```
-app/        user programs (doom, shell utilities, demos)
-include/    public kernel and libc headers
-src/        kernel source (arch, drivers, subsystems)
-user/       libc, crt, and test harnesses
-docs/       design references and milestone plans
+app/        user programs (doom helpers, shell utilities, demos)
+build/      generated artifacts (kernel, userland, disk images, SDK)
+docs/       architecture notes, roadmaps, design references
+include/    exported kernel/libc headers (mirrors source hierarchy)
+src/        kernel and shared libc sources
+test/       Unity-based host tests and stubs
+user/       libc runtime pieces (crt0, stdio glue) shared by apps
+vendor/     third-party dependencies (uACPI, doomgeneric, binutils)
 tools/      build helpers and automation scripts
 ```
 
