@@ -35,7 +35,7 @@ static uacpi_interrupt_ret handle_power_button(uacpi_handle ctx) {
   return UACPI_INTERRUPT_HANDLED;
 }
 
-int power_button_init(void) {
+int power_button_initialize(void) {
   serial_printf("power_button_init: Initializing power button.\n");
 
   uacpi_status ret = uacpi_install_fixed_event_handler(
@@ -85,7 +85,7 @@ int acpi_initialize(void) {
     return -ENODEV;
   }
 
-  ret = power_button_init();
+  ret = power_button_initialize();
   if(uacpi_unlikely_error(ret)) {
     serial_printf("power_button_init error: %s", uacpi_status_to_string(ret));
     return -ENODEV;

@@ -13,9 +13,9 @@
 void memory_initialize(void) {
   serial_puts("\n- Initing memory management:\n");
   // init the physical memory management
-  pmm_init();
+  pmm_initialize();
 
-  heap_init(NULL, PAGE_SIZE * HEAP_SIZE);
+  heap_initialize(NULL, PAGE_SIZE * HEAP_SIZE);
 }
 
 int mem_compactor(void *unused) {
