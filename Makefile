@@ -104,7 +104,26 @@ KERNEL_OBJS = $(patsubst %.c, %.o, $(KERNEL_SRC))
 KERNEL_ASM_GAS_OBJS = $(patsubst %.S, %.o, $(filter %.S,$(KERNEL_ASM)))
 ARCH_NASM_OBJECTS := lgdt.o pit.o lidt.o
 
-UACPI_SRC = $(shell find -L vendor/uacpi -type f -name '*.c')
+UACPI_SRC = \
+	vendor/uacpi/osi.c \
+	vendor/uacpi/tables.c \
+	vendor/uacpi/opregion.c \
+	vendor/uacpi/io.c \
+	vendor/uacpi/mutex.c \
+	vendor/uacpi/default_handlers.c \
+	vendor/uacpi/stdlib.c \
+	vendor/uacpi/sleep.c \
+	vendor/uacpi/event.c \
+	vendor/uacpi/types.c \
+	vendor/uacpi/shareable.c \
+	vendor/uacpi/resources.c \
+	vendor/uacpi/utilities.c \
+	vendor/uacpi/interpreter.c \
+	vendor/uacpi/registers.c \
+	vendor/uacpi/notify.c \
+	vendor/uacpi/opcodes.c \
+	vendor/uacpi/namespace.c \
+	vendor/uacpi/uacpi.c
 UACPI_OBJS := $(patsubst %.c, %.o, $(UACPI_SRC))
 
 OBJS = $(KERNEL_OBJS) $(KERNEL_ASM_GAS_OBJS) $(UACPI_OBJS)
@@ -821,7 +840,7 @@ ifneq ($(GCOV_ENABLED),)
 endif
 
 	# Skip host-unsafe tests until proper stubs land.
-	for file in $(shell find -L test -type f -name 'test_*.c' ! -name 'test_kmalloc.c' ! -name 'test_malloc_stress.c' ! -name 'test_buddy_allocator.c' ! -name 'test_malloc_stats.c' ! -name 'test_malloc_direct.c' ! -name 'test_heap_virtual.c' ! -name 'test_scanf.c' ! -name 'test_system.c'); do \
+	for file in $(HOST_TEST_SRCS); do \
 		gcc $(GCOV_FLAGS) -std=gnu11 -DMENIOS_NO_DEBUG -DMENIOS_HOST_TEST -DUNITY_EXCLUDE_SETJMP_H -I./include \
 			$$file \
 			test/unity.c \
@@ -1230,3 +1249,14 @@ $(BINUTILS_NATIVE_BUILD_DIR)/Makefile: sdk
 		  --prefix=$(BINUTILS_PREFIX) \
 		  $(BINUTILS_CONFIGURE_FLAGS) \
 		  --with-zstd=no
+HOST_TEST_EXCLUDES = \
+	test/test_kmalloc.c \
+	test/test_malloc_stress.c \
+	test/test_buddy_allocator.c \
+	test/test_malloc_stats.c \
+	test/test_malloc_direct.c \
+	test/test_heap_virtual.c \
+	test/test_scanf.c \
+	test/test_system.c
+
+HOST_TEST_SRCS = $(filter-out $(HOST_TEST_EXCLUDES),$(wildcard test/test_*.c))
