@@ -19,7 +19,7 @@ typedef struct ksem_t {
 
 typedef ksem_t* ksem_p;
 
-void ksem_init(ksem_t* sem, int64_t value);
+void ksem_initialize(ksem_t* sem, int64_t value);
 void ksem_destroy(ksem_t* sem);
 bool ksem_trywait(ksem_t* sem);
 void ksem_wait(ksem_t* sem);

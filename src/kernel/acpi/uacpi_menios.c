@@ -226,7 +226,7 @@ uacpi_handle uacpi_kernel_create_event(void) {
     return NULL;
   }
 
-  ksem_init(&event->sem, 0);
+  ksem_initialize(&event->sem, 0);
   return event;
 }
 

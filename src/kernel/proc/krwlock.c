@@ -1,6 +1,6 @@
 #include <kernel/rwlock.h>
 
-void krwlock_init(krwlock_t* rwlock) {
+void krwlock_initialize(krwlock_t* rwlock) {
   if(rwlock == NULL) {
     return;
   }
