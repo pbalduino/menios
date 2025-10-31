@@ -109,7 +109,7 @@ static void heap_demo(void) {
 }
 
 void boot_graphics_init() {
-  fb_init();
+  framebuffer_init();
   font_init();
 
   print_logo();

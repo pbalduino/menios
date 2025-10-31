@@ -133,7 +133,7 @@ void fb_get_boot_mode(framebuffer_mode_info_t* out) {
 }
 
 void fb_draw(void) {}
-void fb_init(void) {}
+void framebuffer_init(void) {}
 void fb_putpixel(uint32_t x, uint32_t y, uint32_t rgb) {
   (void)x;
   (void)y;
