@@ -2225,9 +2225,6 @@ static bool builtin_while(const char* line, int* out_status) {
 
   int last_status = encode_raw_status_from_code(0);
   while(true) {
-#ifdef MOSH_TEST
-    write_str(STDOUT_FILENO, "[debug while] entering\n");
-#endif
     int cond_status = shell_run_command_string(condition);
     int cond_code = decode_wait_status(cond_status);
     if(cond_code != 0) {
@@ -2409,9 +2406,6 @@ static bool builtin_set_test_counter(char* line, int* out_status) {
 }
 
 static bool builtin_test_counter_lt(int* out_status) {
-#ifdef MOSH_TEST
-  write_str(STDOUT_FILENO, "[debug counter]\n");
-#endif
   if(test_counter_value < test_counter_limit) {
     test_counter_value++;
     shell_finish_builtin_code(0, out_status);

@@ -1,5 +1,323 @@
 [
   {
+    "title": "Bug: ls /tmp shows mount points (/dev, /proc, /tmp) instead of its contents",
+    "github_issue": {
+      "number": 417,
+      "url": "https://github.com/pbalduino/menios/issues/417",
+      "state": "OPEN"
+    },
+    "labels": [
+      "bug",
+      "kernel"
+    ],
+    "assignees": []
+  },
+  {
+    "title": "Create bootable USB/physical device image for real hardware deployment",
+    "github_issue": {
+      "number": 415,
+      "url": "https://github.com/pbalduino/menios/issues/415",
+      "state": "OPEN"
+    },
+    "labels": [
+      "enhancement",
+      "kernel",
+      "build"
+    ],
+    "assignees": [
+      "pbalduino"
+    ]
+  },
+  {
+    "title": "Migrate NASM code to GAS",
+    "github_issue": {
+      "number": 414,
+      "url": "https://github.com/pbalduino/menios/issues/414",
+      "state": "OPEN"
+    },
+    "labels": [
+      "kernel",
+      "build"
+    ],
+    "assignees": [
+      "pbalduino"
+    ]
+  },
+  {
+    "title": "Enhance page fault handler to support all region types and lazy allocation",
+    "github_issue": {
+      "number": 413,
+      "url": "https://github.com/pbalduino/menios/issues/413",
+      "state": "OPEN"
+    },
+    "labels": [
+      "enhancement",
+      "security"
+    ],
+    "assignees": [
+      "pbalduino"
+    ]
+  },
+  {
+    "title": "Audit and harden user pointer validation across all syscalls",
+    "github_issue": {
+      "number": 412,
+      "url": "https://github.com/pbalduino/menios/issues/412",
+      "state": "OPEN"
+    },
+    "labels": [
+      "enhancement",
+      "security"
+    ],
+    "assignees": [
+      "pbalduino"
+    ]
+  },
+  {
+    "title": "Add standard headers to all meniOS source files",
+    "github_issue": {
+      "number": 411,
+      "url": "https://github.com/pbalduino/menios/issues/411",
+      "state": "OPEN"
+    },
+    "labels": [
+      "documentation",
+      "enhancement"
+    ],
+    "assignees": [
+      "pbalduino"
+    ]
+  },
+  {
+    "title": "Develop core GUI applications (terminal, editor, file manager)",
+    "github_issue": {
+      "number": 410,
+      "url": "https://github.com/pbalduino/menios/issues/410",
+      "state": "OPEN"
+    },
+    "labels": [
+      "enhancement",
+      "GUI"
+    ],
+    "assignees": [
+      "pbalduino"
+    ]
+  },
+  {
+    "title": "Implement desktop shell (panel, wallpaper, launcher)",
+    "github_issue": {
+      "number": 409,
+      "url": "https://github.com/pbalduino/menios/issues/409",
+      "state": "OPEN"
+    },
+    "labels": [
+      "enhancement",
+      "GUI"
+    ],
+    "assignees": [
+      "pbalduino"
+    ]
+  },
+  {
+    "title": "Implement window decorations (title bar, borders, buttons)",
+    "github_issue": {
+      "number": 408,
+      "url": "https://github.com/pbalduino/menios/issues/408",
+      "state": "OPEN"
+    },
+    "labels": [
+      "enhancement",
+      "GUI"
+    ],
+    "assignees": [
+      "pbalduino"
+    ]
+  },
+  {
+    "title": "Implement focus management for windows",
+    "github_issue": {
+      "number": 407,
+      "url": "https://github.com/pbalduino/menios/issues/407",
+      "state": "OPEN"
+    },
+    "labels": [
+      "enhancement",
+      "GUI"
+    ],
+    "assignees": [
+      "pbalduino"
+    ]
+  },
+  {
+    "title": "Implement window manager core",
+    "github_issue": {
+      "number": 406,
+      "url": "https://github.com/pbalduino/menios/issues/406",
+      "state": "OPEN"
+    },
+    "labels": [
+      "enhancement",
+      "GUI"
+    ],
+    "assignees": [
+      "pbalduino"
+    ]
+  },
+  {
+    "title": "Implement composition engine with damage tracking",
+    "github_issue": {
+      "number": 405,
+      "url": "https://github.com/pbalduino/menios/issues/405",
+      "state": "OPEN"
+    },
+    "labels": [
+      "enhancement",
+      "GUI"
+    ],
+    "assignees": [
+      "pbalduino"
+    ]
+  },
+  {
+    "title": "Define window protocol for client-compositor communication",
+    "github_issue": {
+      "number": 404,
+      "url": "https://github.com/pbalduino/menios/issues/404",
+      "state": "OPEN"
+    },
+    "labels": [
+      "enhancement",
+      "GUI"
+    ],
+    "assignees": [
+      "pbalduino"
+    ]
+  },
+  {
+    "title": "Implement compositor core",
+    "github_issue": {
+      "number": 403,
+      "url": "https://github.com/pbalduino/menios/issues/403",
+      "state": "OPEN"
+    },
+    "labels": [
+      "enhancement",
+      "GUI"
+    ],
+    "assignees": [
+      "pbalduino"
+    ]
+  },
+  {
+    "title": "Implement Unix domain sockets (AF_UNIX) for IPC",
+    "github_issue": {
+      "number": 402,
+      "url": "https://github.com/pbalduino/menios/issues/402",
+      "state": "OPEN"
+    },
+    "labels": [
+      "enhancement",
+      "kernel",
+      "GUI"
+    ],
+    "assignees": [
+      "pbalduino"
+    ]
+  },
+  {
+    "title": "Implement shared memory (POSIX shm) for GUI",
+    "github_issue": {
+      "number": 401,
+      "url": "https://github.com/pbalduino/menios/issues/401",
+      "state": "OPEN"
+    },
+    "labels": [
+      "enhancement",
+      "kernel",
+      "GUI"
+    ],
+    "assignees": [
+      "pbalduino"
+    ]
+  },
+  {
+    "title": "Implement mouse cursor rendering",
+    "github_issue": {
+      "number": 400,
+      "url": "https://github.com/pbalduino/menios/issues/400",
+      "state": "OPEN"
+    },
+    "labels": [
+      "enhancement",
+      "drivers",
+      "GUI"
+    ],
+    "assignees": [
+      "pbalduino"
+    ]
+  },
+  {
+    "title": "Implement GUI input event system",
+    "github_issue": {
+      "number": 399,
+      "url": "https://github.com/pbalduino/menios/issues/399",
+      "state": "OPEN"
+    },
+    "labels": [
+      "enhancement",
+      "kernel",
+      "GUI"
+    ],
+    "assignees": [
+      "pbalduino"
+    ]
+  },
+  {
+    "title": "Port FreeType font rendering library to meniOS",
+    "github_issue": {
+      "number": 398,
+      "url": "https://github.com/pbalduino/menios/issues/398",
+      "state": "OPEN"
+    },
+    "labels": [
+      "enhancement",
+      "GUI"
+    ],
+    "assignees": [
+      "pbalduino"
+    ]
+  },
+  {
+    "title": "Port Pixman pixel manipulation library to meniOS",
+    "github_issue": {
+      "number": 397,
+      "url": "https://github.com/pbalduino/menios/issues/397",
+      "state": "OPEN"
+    },
+    "labels": [
+      "enhancement",
+      "GUI"
+    ],
+    "assignees": [
+      "pbalduino"
+    ]
+  },
+  {
+    "title": "Port Cairo 2D graphics library to meniOS",
+    "github_issue": {
+      "number": 396,
+      "url": "https://github.com/pbalduino/menios/issues/396",
+      "state": "OPEN"
+    },
+    "labels": [
+      "enhancement",
+      "GUI"
+    ],
+    "assignees": [
+      "pbalduino"
+    ]
+  },
+  {
     "title": "Terminal scrollback with mouse wheel support",
     "github_issue": {
       "number": 394,
@@ -482,8 +800,14 @@
       "url": "https://github.com/pbalduino/menios/issues/336",
       "state": "OPEN"
     },
-    "labels": [],
-    "assignees": []
+    "labels": [
+      "enhancement",
+      "drivers",
+      "kernel"
+    ],
+    "assignees": [
+      "pbalduino"
+    ]
   },
   {
     "title": "Basic timezone support (TZ environment variable)",
@@ -928,7 +1252,8 @@
     },
     "labels": [
       "bug",
-      "testing"
+      "testing",
+      "security"
     ],
     "assignees": [
       "pbalduino"
@@ -943,7 +1268,8 @@
     },
     "labels": [
       "enhancement",
-      "kernel"
+      "kernel",
+      "security"
     ],
     "assignees": [
       "pbalduino"
@@ -2142,7 +2468,8 @@
       "state": "OPEN"
     },
     "labels": [
-      "enhancement"
+      "enhancement",
+      "security"
     ],
     "assignees": [
       "pbalduino"
@@ -2201,22 +2528,6 @@
     "labels": [
       "enhancement",
       "nice to have"
-    ],
-    "assignees": [
-      "pbalduino"
-    ]
-  },
-  {
-    "title": "Refactor code structure to make it more organized",
-    "github_issue": {
-      "number": 23,
-      "url": "https://github.com/pbalduino/menios/issues/23",
-      "state": "CLOSED"
-    },
-    "labels": [
-      "enhancement",
-      "nice to have",
-      "kernel"
     ],
     "assignees": [
       "pbalduino"

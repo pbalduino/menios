@@ -81,28 +81,38 @@ The meniOS project has grown to over 100+ tracked issues with complex interdepen
 
 ### 3. Hardware Infrastructure (`issue_dependencies_hardware.png`) ⚡
 
-**Focus:** ACPI, PCI, device drivers, and networking
+**Focus:** ACPI, PCI, device drivers, audio, and networking
 
-**Size:** 239KB
+**Size:** ~250KB
 
 **Shows:**
 - PCI infrastructure: #335, #280 (complete ✅)
 - UACPI integration: #276 (73% complete, 16/22 functions)
 - **Missing infrastructure:**
   - #278 (Work queue) - blocks UACPI
-  - #279 (Dynamic IRQ) - **CRITICAL** blocker for e1000
+  - #279 (Dynamic IRQ) - **CRITICAL** blocker - blocks 5 issues
   - #281 (I/O port mgmt) - blocks UACPI
 - Drivers:
   - #67 (e1000 network) - blocked by #279
   - #336 (termios) - ready to implement ✅
+- **Audio subsystem (Doom):**
+  - #33 (parent) - blocked by #279
+  - #382 (AC'97 driver) - blocked by #279
+  - #383 (kernel audio core) - blocked by #279
 - Networking stack (future)
 
 **Use this for:**
 - Hardware bring-up planning
 - Driver development priorities
 - Understanding ACPI/UACPI status
+- Audio subsystem dependencies
 
-**Key Insight:** #279 (Dynamic IRQ) is the critical blocker - unblocks both e1000 driver and completes UACPI interrupt support.
+**Key Insight:** #279 (Dynamic IRQ) is the **HIGHEST PRIORITY** blocker - blocks 5 open issues:
+- #276 (UACPI interrupt handlers)
+- #67 (e1000 network driver)
+- #382 (AC'97 audio driver)
+- #383 (Kernel audio core)
+- #33 (Audio subsystem - Doom milestone)
 
 ---
 
@@ -182,6 +192,35 @@ When updating diagrams:
 
 ---
 
-**Last Updated:** 2025-10-21
+**Last Updated:** 2025-10-31
 **Total Issues Tracked:** 100+
 **Diagrams:** 4 (3 focused + 1 complete)
+
+---
+
+## Critical Blocking Issue: #279
+
+**Issue #279 (Dynamic IRQ handler registration)** is currently the highest priority blocker in the project, blocking 5 open issues across 3 major subsystems:
+
+### Blocked Issues
+
+1. **#276** - UACPI kernel interface (ACPI System Control Interrupt handling)
+2. **#67** - e1000 network driver (TX/RX interrupts)
+3. **#382** - AC'97 audio driver (DMA buffer completion interrupts)
+4. **#383** - Kernel audio core (interrupt notification path)
+5. **#33** - Audio subsystem parent (blocks entire audio stack for Doom)
+
+### Impact
+
+Without #279:
+- ❌ No ACPI event handling (power button, thermal events)
+- ❌ No interrupt-driven networking (must use inefficient polling)
+- ❌ No audio subsystem (blocks Doom audio milestone)
+- ❌ Cannot achieve acceptable audio latency
+
+### Recommendation
+
+**Prioritize #279 as the highest priority task** to unblock:
+- ACPI infrastructure (1 issue)
+- Networking stack (1 issue)
+- Audio subsystem (3 issues + Doom milestone)

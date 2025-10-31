@@ -53,6 +53,17 @@ digraph HardwareInfrastructure {
         issue336 [label="#336: termios\nTTY line discipline\n\n✅ Ready to implement\n9-13 weeks", fillcolor="#B3E5FC"];
     }
 
+    // Audio Subsystem
+    subgraph cluster_audio {
+        label="Audio Subsystem (Doom)";
+        style=filled;
+        fillcolor="#FFE4F0";
+
+        issue33 [label="#33: Audio subsystem\nParent issue\n\n⚠️ BLOCKED by #279\n9-12 weeks", fillcolor="#FFB6E8"];
+        issue382 [label="#382: AC'97 audio driver\nDMA interrupts\n\n⚠️ BLOCKED by #279\n2-3 weeks", fillcolor="#FFE4B5"];
+        issue383 [label="#383: Kernel audio core\nInterrupt notification\n\n⚠️ BLOCKED by #279\n2-3 weeks", fillcolor="#FFE4B5"];
+    }
+
     // Future networking
     subgraph cluster_network {
         label="Networking Stack (Future)";
@@ -77,6 +88,14 @@ digraph HardwareInfrastructure {
     issue280 -> issue67 [label="PCI config ✅", color=green, penwidth=2, style=dashed];
     issue279 -> issue67 [label="IRQ handlers\n⚠️ BLOCKS", color=red, penwidth=3];
 
+    // Audio subsystem dependencies
+    issue335 -> issue382 [label="PCI enumeration ✅", color=green, penwidth=2, style=dashed];
+    issue280 -> issue382 [label="PCI config ✅", color=green, penwidth=2, style=dashed];
+    issue279 -> issue382 [label="DMA interrupts\n⚠️ BLOCKS", color=red, penwidth=3];
+    issue279 -> issue383 [label="Interrupt notify\n⚠️ BLOCKS", color=red, penwidth=3];
+    issue382 -> issue33 [label="driver ready", color=purple, penwidth=2];
+    issue383 -> issue33 [label="core ready", color=purple, penwidth=2];
+
     // Networking stack
     issue67 -> tcpip [label="NIC driver → TCP/IP", color=purple, style=dotted];
     tcpip -> issue341 [label="TCP/IP → sockets", color=purple, style=dotted];
@@ -90,7 +109,7 @@ digraph HardwareInfrastructure {
         style=filled;
         fillcolor="#FFFACD";
 
-        status [label="✅ PCI Infrastructure: COMPLETE (#335, #280)\n✅ UACPI: 73% complete (16/22 functions)\n⚠️ Work Queue: Needed (#278)\n⚠️ Dynamic IRQ: CRITICAL blocker (#279)\n⚠️ I/O Port Mgmt: Needed (#281)\n✅ termios: Ready to implement (#336)\n⚠️ e1000: Blocked by #279",
+        status [label="✅ PCI Infrastructure: COMPLETE (#335, #280)\n✅ UACPI: 73% complete (16/22 functions)\n⚠️ Work Queue: Needed (#278)\n🚨 Dynamic IRQ: CRITICAL blocker (#279)\n   ├─ Blocks: e1000 network driver (#67)\n   ├─ Blocks: AC'97 audio driver (#382)\n   ├─ Blocks: Kernel audio core (#383)\n   ├─ Blocks: Audio subsystem (#33)\n   └─ Blocks: UACPI interrupt handlers (#276)\n⚠️ I/O Port Mgmt: Needed (#281)\n✅ termios: Ready to implement (#336)",
                shape=note, fillcolor="#FFFACD", style=filled];
     }
 
@@ -100,7 +119,7 @@ digraph HardwareInfrastructure {
         style=filled;
         fillcolor="#E8F8FF";
 
-        priority [label="Critical Path:\n\n1. #279 (Dynamic IRQ) - 8-10 weeks\n   → Unblocks e1000 driver\n   → Completes UACPI interrupts\n\n2. #278 (Work queue) - 8-11 weeks\n   → Completes UACPI deferred work\n\n3. #67 (e1000 driver) - 10-12 weeks\n   → Requires #279 first\n   → Enables networking\n\nParallel Track:\n\n• #336 (termios) - 9-13 weeks\n  → Ready now, no blockers\n\n• #281 (I/O port mgmt) - 7 weeks\n  → Completes UACPI I/O ops",
+        priority [label="Critical Path:\n\n🚨 #279 (Dynamic IRQ) - 8-10 weeks\n   HIGHEST PRIORITY - Blocks 5 issues:\n   ├─ #276 (UACPI interrupt handlers)\n   ├─ #67 (e1000 network driver)\n   ├─ #382 (AC'97 audio driver)\n   ├─ #383 (Kernel audio core)\n   └─ #33 (Audio subsystem - Doom)\n\n2. #278 (Work queue) - 8-11 weeks\n   → Completes UACPI deferred work\n\n3. Audio Stack - 9-12 weeks\n   → Requires #279 first\n   → #382 + #383 + #384 + #385 + #386\n   → Enables Doom audio\n\n4. #67 (e1000 driver) - 10-12 weeks\n   → Requires #279 first\n   → Enables networking\n\nParallel Track:\n\n• #336 (termios) - 9-13 weeks\n  → Ready now, no blockers\n\n• #281 (I/O port mgmt) - 7 weeks\n  → Completes UACPI I/O ops",
                 shape=note, fillcolor="#E8F8FF", style=filled];
     }
 
