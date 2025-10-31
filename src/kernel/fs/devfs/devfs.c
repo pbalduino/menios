@@ -15,15 +15,31 @@
 #include <kernel/serial.h>
 #include <kernel/tsc.h>
 
+#define CHAR_DEVICE_DYNAMIC_MAJOR_MIN 10u
+#define CHAR_DEVICE_MAJOR_COUNT      (MENIOS_DEV_MAJOR_MASK + 1u)
+
 typedef struct devfs_entry_t {
   char_device_t*        device;
   struct devfs_entry_t* next;
 } devfs_entry_t;
 
+typedef struct char_minor_allocation_t {
+  unsigned int                    start;
+  unsigned int                    count;
+  char_device_t*                  device;
+  struct char_minor_allocation_t* next;
+} char_minor_allocation_t;
+
+typedef struct {
+  bool                   reserved;
+  char_minor_allocation_t* allocations;
+} char_major_state_t;
+
 static kmutex_t       devfs_lock;
 static devfs_entry_t* devfs_devices;
 static bool           devfs_ready;
-static unsigned int   next_dynamic_major = 1;
+static unsigned int   next_dynamic_major = CHAR_DEVICE_DYNAMIC_MAJOR_MIN;
+static char_major_state_t char_major_table[CHAR_DEVICE_MAJOR_COUNT];
 
 static void devfs_init_once(void) {
   if(devfs_ready) {
@@ -31,7 +47,10 @@ static void devfs_init_once(void) {
   }
   kmutex_init(&devfs_lock);
   devfs_devices = NULL;
-  next_dynamic_major = 1;
+  next_dynamic_major = CHAR_DEVICE_DYNAMIC_MAJOR_MIN;
+  for(unsigned int major = 0; major < CHAR_DEVICE_DYNAMIC_MAJOR_MIN && major < CHAR_DEVICE_MAJOR_COUNT; ++major) {
+    char_major_table[major].reserved = true;
+  }
   devfs_ready = true;
 }
 
@@ -45,12 +64,123 @@ static devfs_entry_t* devfs_find_by_name(const char* name) {
 }
 
 static devfs_entry_t* devfs_find_by_dev(dev_t dev) {
+  unsigned int target_major = MAJOR(dev);
+  unsigned int target_minor = MINOR(dev);
   for(devfs_entry_t* entry = devfs_devices; entry != NULL; entry = entry->next) {
-    if(entry->device->dev == dev) {
+    const char_device_t* device = entry->device;
+    unsigned int device_major = MAJOR(device->dev);
+    if(device_major != target_major) {
+      continue;
+    }
+    unsigned int device_minor = MINOR(device->dev);
+    unsigned int range = device->minor_count == 0 ? 1u : device->minor_count;
+    if(target_minor >= device_minor && target_minor < device_minor + range) {
       return entry;
     }
   }
   return NULL;
+}
+
+static bool char_major_has_overlap(unsigned int major, unsigned int start_minor, unsigned int count) {
+  if(major >= CHAR_DEVICE_MAJOR_COUNT) {
+    return true;
+  }
+  char_minor_allocation_t* allocation = char_major_table[major].allocations;
+  unsigned int end = start_minor + count - 1u;
+  while(allocation != NULL) {
+    unsigned int allocation_start = allocation->start;
+    unsigned int allocation_end = allocation_start + allocation->count - 1u;
+    if(!(end < allocation_start || start_minor > allocation_end)) {
+      return true;
+    }
+    allocation = allocation->next;
+  }
+  return false;
+}
+
+static int char_major_track_range(char_device_t* device,
+                                  unsigned int major,
+                                  unsigned int start_minor,
+                                  unsigned int count) {
+  if(major >= CHAR_DEVICE_MAJOR_COUNT) {
+    return -ERANGE;
+  }
+  char_major_state_t* state = &char_major_table[major];
+  if(char_major_has_overlap(major, start_minor, count)) {
+    return -EEXIST;
+  }
+  char_minor_allocation_t* allocation = kmalloc(sizeof(char_minor_allocation_t));
+  if(allocation == NULL) {
+    return -ENOMEM;
+  }
+  allocation->start = start_minor;
+  allocation->count = count;
+  allocation->device = device;
+  allocation->next = state->allocations;
+  state->allocations = allocation;
+  return 0;
+}
+
+static void char_major_untrack_range(char_device_t* device) {
+  if(device == NULL) {
+    return;
+  }
+  unsigned int major = MAJOR(device->dev);
+  if(major >= CHAR_DEVICE_MAJOR_COUNT) {
+    return;
+  }
+  char_major_state_t* state = &char_major_table[major];
+  char_minor_allocation_t** cursor = &state->allocations;
+  while(*cursor != NULL) {
+    if((*cursor)->device == device) {
+      char_minor_allocation_t* victim = *cursor;
+      *cursor = victim->next;
+      kfree(victim);
+      return;
+    }
+    cursor = &(*cursor)->next;
+  }
+}
+
+static bool char_major_is_reserved(unsigned int major) {
+  if(major >= CHAR_DEVICE_MAJOR_COUNT) {
+    return true;
+  }
+  return char_major_table[major].reserved;
+}
+
+static bool char_major_is_unused(unsigned int major) {
+  if(major >= CHAR_DEVICE_MAJOR_COUNT) {
+    return false;
+  }
+  if(char_major_table[major].reserved) {
+    return false;
+  }
+  return char_major_table[major].allocations == NULL;
+}
+
+static dev_t allocate_dynamic_dev(unsigned int minor_count) {
+  unsigned int count = minor_count == 0 ? 1u : minor_count;
+  if(count == 0 || count > (MENIOS_DEV_MINOR_MASK + 1u)) {
+    return 0;
+  }
+  unsigned int start_major = next_dynamic_major;
+  if(start_major < CHAR_DEVICE_DYNAMIC_MAJOR_MIN) {
+    start_major = CHAR_DEVICE_DYNAMIC_MAJOR_MIN;
+  }
+
+  unsigned int major = start_major;
+  for(int pass = 0; pass < 2; ++pass) {
+    while(major < CHAR_DEVICE_MAJOR_COUNT) {
+      if(char_major_is_unused(major)) {
+        next_dynamic_major = major + 1;
+        return MKDEV(major, 0);
+      }
+      major++;
+    }
+    major = CHAR_DEVICE_DYNAMIC_MAJOR_MIN;
+  }
+  return 0;
 }
 
 static mode_t devfs_mode_for_device(const char_device_t* device) {
@@ -76,6 +206,8 @@ static void devfs_fill_info(const char_device_t* device, fs_path_info_t* out_inf
   out_info->has_mode = true;
   out_info->mode = devfs_mode_for_device(device);
   out_info->is_read_only = (device->access_mode & FILE_MODE_WRITE) == 0;
+  out_info->has_rdev = true;
+  out_info->rdev = device->dev;
   out_info->has_times = true;
   uint64_t usec = unix_time_us();
   struct timespec now = {
@@ -268,6 +400,7 @@ static const vfs_fs_driver_t devfs_driver = {
   .mkdir = NULL,
   .rmdir = NULL,
   .rename = NULL,
+  .mknod = NULL,
   .chmod = NULL,
   .utimens = NULL,
   .destroy = devfs_destroy,
@@ -297,16 +430,6 @@ static void devfs_unregister_entry(char_device_t* device) {
   }
 }
 
-static dev_t allocate_dynamic_dev(unsigned int minor_count) {
-  (void)minor_count;
-  if(next_dynamic_major > MENIOS_DEV_MAJOR_MASK) {
-    return 0;
-  }
-  dev_t dev = MKDEV(next_dynamic_major, 0);
-  next_dynamic_major++;
-  return dev;
-}
-
 int char_device_register(char_device_t* device) {
   if(device == NULL || device->name == NULL || device->open == NULL) {
     return -EINVAL;
@@ -324,25 +447,61 @@ int char_device_register(char_device_t* device) {
     return -EEXIST;
   }
 
-  if(device->dev != 0) {
-    if(devfs_find_by_dev(device->dev) != NULL) {
-      kmutex_unlock(&devfs_lock);
-      return -EEXIST;
-    }
-  } else {
-    dev_t dev = allocate_dynamic_dev(device->minor_count == 0 ? 1u : device->minor_count);
+  unsigned int requested_count = device->minor_count == 0 ? 1u : device->minor_count;
+  if(requested_count > (MENIOS_DEV_MINOR_MASK + 1u)) {
+    kmutex_unlock(&devfs_lock);
+    return -ERANGE;
+  }
+
+  bool allocated_dynamic = false;
+  dev_t original_dev = device->dev;
+
+  if(device->dev == 0) {
+    dev_t dev = allocate_dynamic_dev(requested_count);
     if(dev == 0) {
       kmutex_unlock(&devfs_lock);
       return -ENOSPC;
     }
     device->dev = dev;
+    allocated_dynamic = true;
+  }
+
+  unsigned int major = MAJOR(device->dev);
+  unsigned int base_minor = MINOR(device->dev);
+  if(base_minor + requested_count - 1u > MENIOS_DEV_MINOR_MASK) {
+    device->dev = allocated_dynamic ? original_dev : device->dev;
+    kmutex_unlock(&devfs_lock);
+    return -ERANGE;
+  }
+
+  if(char_major_has_overlap(major, base_minor, requested_count)) {
+    if(allocated_dynamic) {
+      device->dev = original_dev;
+    }
+    kmutex_unlock(&devfs_lock);
+    return -EEXIST;
+  }
+
+  int range_rc = char_major_track_range(device, major, base_minor, requested_count);
+  if(range_rc != 0) {
+    if(allocated_dynamic) {
+      device->dev = original_dev;
+    }
+    kmutex_unlock(&devfs_lock);
+    return range_rc;
   }
 
   int rc = devfs_register_entry(device);
   if(rc == 0) {
+    device->minor_count = requested_count;
     unsigned int major = MAJOR(device->dev);
     if(major >= next_dynamic_major) {
       next_dynamic_major = major + 1;
+    }
+  } else {
+    char_major_untrack_range(device);
+    if(allocated_dynamic) {
+      device->dev = original_dev;
     }
   }
   kmutex_unlock(&devfs_lock);
@@ -357,6 +516,7 @@ void char_device_unregister(char_device_t* device) {
   devfs_init_once();
   kmutex_lock(&devfs_lock);
   devfs_unregister_entry(device);
+  char_major_untrack_range(device);
   kmutex_unlock(&devfs_lock);
 }
 
@@ -552,6 +712,37 @@ void char_device_system_init(void) {
   if(char_device_register(&ttyS0_device) != 0) {
     serial_printf("char_device_system_init: failed to register /dev/ttyS0\n");
   }
+}
+
+void char_device_iterate(char_device_iter_fn fn, void* context) {
+  if(fn == NULL) {
+    return;
+  }
+  devfs_init_once();
+  kmutex_lock(&devfs_lock);
+  for(devfs_entry_t* entry = devfs_devices; entry != NULL; entry = entry->next) {
+    fn(entry->device, context);
+  }
+  kmutex_unlock(&devfs_lock);
+}
+
+char_device_t* char_device_lookup(dev_t dev) {
+  devfs_init_once();
+  kmutex_lock(&devfs_lock);
+  devfs_entry_t* entry = devfs_find_by_dev(dev);
+  char_device_t* device = entry ? entry->device : NULL;
+  kmutex_unlock(&devfs_lock);
+  return device;
+}
+
+void char_device_reserve_major(unsigned int major) {
+  devfs_init_once();
+  if(major >= CHAR_DEVICE_MAJOR_COUNT) {
+    return;
+  }
+  kmutex_lock(&devfs_lock);
+  char_major_table[major].reserved = true;
+  kmutex_unlock(&devfs_lock);
 }
 
 bool devfs_mount(void) {

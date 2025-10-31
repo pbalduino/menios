@@ -29,6 +29,11 @@ void char_device_system_init(void);
 int char_device_register(char_device_t* device);
 void char_device_unregister(char_device_t* device);
 
+typedef void (*char_device_iter_fn)(const char_device_t* device, void* context);
+void char_device_iterate(char_device_iter_fn fn, void* context);
+char_device_t* char_device_lookup(dev_t dev);
+void char_device_reserve_major(unsigned int major);
+
 bool devfs_mount(void);
 
 #ifdef __cplusplus
