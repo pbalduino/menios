@@ -66,7 +66,7 @@ bool fb_is_boot_mode(uint64_t width, uint64_t height, uint16_t bpp);
 void fb_get_boot_mode(framebuffer_mode_info_t* out);
 
 void fb_draw();
-void framebuffer_init(void);
+void framebuffer_initialize(void);
 void fb_putpixel(uint32_t x, uint32_t y, uint32_t rgb);
 int fb_putchar(int c);
 void fb_list_modes();

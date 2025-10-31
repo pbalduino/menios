@@ -17,7 +17,7 @@ struct hardware_device_t {
   hardware_device_p next;
 };
 
-void hardware_init();
+void hardware_initialize(void);
 hardware_device_p hardware_devices(void);
 void hardware_log_devices(void);
 

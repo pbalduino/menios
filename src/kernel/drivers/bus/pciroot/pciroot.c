@@ -269,7 +269,7 @@ void pciroot_start(void) {
     }
   }
 
-  ahci_init();
+  ahci_initialize();
   logk("Enumerating PCI devices:\n");
   pci_enumerate_devices(pciroot_visit_device, NULL);
 }

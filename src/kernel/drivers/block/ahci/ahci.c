@@ -192,7 +192,7 @@ static void ahci_register_controller(uint16_t segment,
 static void ahci_controller_configure(ahci_controller_t* controller);
 static bool ahci_controller_enable_interrupts(ahci_controller_t* controller);
 static void ahci_controller_discover_ports(ahci_controller_t* controller);
-static void ahci_port_init(ahci_port_t* port, ahci_controller_t* controller, uint8_t index);
+static void ahci_port_initialize(ahci_port_t* port, ahci_controller_t* controller, uint8_t index);
 static bool ahci_port_configure_dma(ahci_port_t* port);
 static void ahci_port_shutdown_dma(ahci_port_t* port);
 static bool ahci_port_device_present(ahci_port_t* port);
@@ -374,7 +374,7 @@ static void ahci_controller_discover_ports(ahci_controller_t* controller) {
     }
 
     ahci_port_t* port = &ports[port_index];
-    ahci_port_init(port, controller, (uint8_t)port_index);
+    ahci_port_initialize(port, controller, (uint8_t)port_index);
 
     if(port->state == AHCI_PORT_STATE_ONLINE) {
       controller->port_count++;
@@ -382,7 +382,7 @@ static void ahci_controller_discover_ports(ahci_controller_t* controller) {
   }
 }
 
-static void ahci_port_init(ahci_port_t* port, ahci_controller_t* controller, uint8_t index) {
+static void ahci_port_initialize(ahci_port_t* port, ahci_controller_t* controller, uint8_t index) {
   memset(port, 0, sizeof(*port));
   port->controller = controller;
   port->index = index;
@@ -1016,7 +1016,7 @@ void ahci_irq_handler(void) {
 #endif
 }
 
-void ahci_init(void) {
+void ahci_initialize(void) {
   if(ahci_initialized) {
     return;
   }
@@ -1042,7 +1042,7 @@ void ahci_pci_probe(const pci_device_location_t* location,
   }
 
   if(!ahci_initialized) {
-    ahci_init();
+    ahci_initialize();
   }
 
   if(!ahci_is_candidate(class_reg)) {

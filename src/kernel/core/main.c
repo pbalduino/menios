@@ -109,7 +109,7 @@ static void heap_demo(void) {
 }
 
 static void boot_graphics_initialize(void) {
-  framebuffer_init();
+  framebuffer_initialize();
   font_initialize();
 
   print_logo();
@@ -181,7 +181,7 @@ void _start() {
   
   scheduler_initialize();
 
-  hardware_init();
+  hardware_initialize();
 
   user_init_launch();
 

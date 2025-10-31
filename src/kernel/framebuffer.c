@@ -353,9 +353,9 @@ static void render_viewport(void) {
   }
 }
 
-void framebuffer_init(void) {
+void framebuffer_initialize(void) {
   if(framebuffer_request.response == NULL || framebuffer_request.response->framebuffer_count < 1) {
-    serial_error("Panic in framebuffer.c:framebuffer_init");
+    serial_error("Panic in framebuffer.c:framebuffer_initialize");
     halt();
   }
 
