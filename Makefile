@@ -127,7 +127,13 @@ KERNEL_SRC = \
 	src/kernel/user/init.c \
 	src/kernel/user/user_demo.c \
 	src/kernel/user/vm.c \
-	src/kernel/user/vm_region.c
+	src/kernel/user/vm_region.c \
+	src/libc/assert.c \
+	src/libc/ctype.c \
+	src/libc/errno.c \
+	src/libc/itoa.c \
+	src/libc/string.c \
+	src/libc/time.c
 
 KERNEL_ASM = \
 	src/kernel/arch/x86_64/context_switch.S \
