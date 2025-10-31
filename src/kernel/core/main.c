@@ -59,6 +59,7 @@
 #include <kernel/tsc.h>
 #include <kernel/syscall.h>
 #include <kernel/user_mode.h>
+#include <kernel/workqueue.h>
 #include <kernel/drivers/input/ps2kb.h>
 #include <kernel/fs/vfs/vfs.h>
 
@@ -165,6 +166,7 @@ void _start() {
 
   idt_initialize();
   irq_initialize();
+  workqueue_initialize();
 
   cpu_enable_sse();
 
@@ -182,6 +184,7 @@ void _start() {
   timer_initialize();
   
   scheduler_initialize();
+  workqueue_start();
 
   hardware_initialize();
 

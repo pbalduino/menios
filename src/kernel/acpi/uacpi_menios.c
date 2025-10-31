@@ -11,12 +11,14 @@
 #include <kernel/proc.h>
 #include <kernel/serial.h>
 #include <kernel/pci.h>
+#include <kernel/workqueue.h>
 #include <kernel/irq.h>
 
 #include <boot/limine.h>
 
 #include <uacpi/kernel_api.h>
 
+#include <errno.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <string.h>
@@ -31,6 +33,11 @@ typedef struct uacpi_irq_binding {
   uacpi_handle ctx;
 } uacpi_irq_binding;
 
+typedef struct uacpi_work_binding {
+  uacpi_work_handler handler;
+  uacpi_handle ctx;
+} uacpi_work_binding;
+
 static bool uacpi_irq_dispatch(void* opaque) {
   if(opaque == NULL) {
     return false;
@@ -43,6 +50,29 @@ static bool uacpi_irq_dispatch(void* opaque) {
 
   uacpi_interrupt_ret result = binding->handler(binding->ctx);
   return result != UACPI_INTERRUPT_NOT_HANDLED;
+}
+
+static void uacpi_work_dispatch(void* opaque) {
+  if(opaque == NULL) {
+    return;
+  }
+
+  uacpi_work_binding* binding = (uacpi_work_binding*)opaque;
+  if(binding->handler != NULL) {
+    binding->handler(binding->ctx);
+  }
+  kfree(binding);
+}
+
+static workqueue_class_t uacpi_workqueue_class(uacpi_work_type type) {
+  switch(type) {
+    case UACPI_WORK_GPE_EXECUTION:
+      return WORKQUEUE_CLASS_ACPI_GPE;
+    case UACPI_WORK_NOTIFICATION:
+      return WORKQUEUE_CLASS_ACPI_NOTIFY;
+    default:
+      return WORKQUEUE_CLASS_GENERIC;
+  }
 }
 
 static volatile struct limine_rsdp_request rsdp_request = {
@@ -186,14 +216,35 @@ void uacpi_kernel_unmap(void *addr, uacpi_size len) {
 }
 
 uacpi_status uacpi_kernel_schedule_work(
-    uacpi_work_type, uacpi_work_handler, uacpi_handle ctx
+    uacpi_work_type work_type, uacpi_work_handler work_handler, uacpi_handle ctx
 ) {
-  serial_printf("uacpi_kernel_schedule_work not implemented\n");
+  if(work_handler == NULL) {
+    return UACPI_STATUS_INVALID_ARGUMENT;
+  }
+
+  uacpi_work_binding* binding = kmalloc(sizeof(*binding));
+  if(binding == NULL) {
+    return UACPI_STATUS_OUT_OF_MEMORY;
+  }
+
+  binding->handler = work_handler;
+  binding->ctx = ctx;
+
+  workqueue_class_t cls = uacpi_workqueue_class(work_type);
+  int rc = workqueue_submit(cls, uacpi_work_dispatch, binding);
+  if(rc != 0) {
+    kfree(binding);
+    if(rc == -ENOMEM) {
+      return UACPI_STATUS_OUT_OF_MEMORY;
+    }
+    return UACPI_STATUS_ERROR;
+  }
+
   return UACPI_STATUS_OK;
 }
 
 uacpi_status uacpi_kernel_wait_for_work_completion(void) {
-  serial_printf("uacpi_kernel_wait_for_work_completion not implemented\n");
+  workqueue_wait_idle();
   return UACPI_STATUS_OK;
 }
 

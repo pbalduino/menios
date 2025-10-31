@@ -83,6 +83,7 @@ KERNEL_SRC = \
 	src/kernel/core/main.c \
 	src/kernel/core/panic.c \
 	src/kernel/core/services.c \
+	src/kernel/core/workqueue.c \
 	src/kernel/drivers/audio/sb/sb.c \
 	src/kernel/drivers/block/ahci/ahci.c \
 	src/kernel/drivers/bus/pciroot/pci.c \
