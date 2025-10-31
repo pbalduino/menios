@@ -8,7 +8,7 @@
 
 static driver_list_p driver_list;
 
-void driver_init() {
+void driver_registry_init() {
   logk("Initing driver lookup table\n");
   serial_line("Initing driver lookup table");
   driver_list = NULL;

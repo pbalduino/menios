@@ -30,7 +30,7 @@ typedef struct driver_list_t {
 
 typedef struct driver_list_t* driver_list_p;
 
-void driver_init();
+void driver_registry_init(void);
 
 void driver_register(driver_t*);
 driver_p driver_load(const char* hid);

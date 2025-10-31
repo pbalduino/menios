@@ -89,7 +89,7 @@ void acpi_enumerate() {
 
 void hardware_init() {
   devices_head = NULL;
-  driver_init();
+  driver_registry_init();
   logk("Probing hardware\n");
   acpi_enumerate();
   hardware_log_devices();
