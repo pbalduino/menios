@@ -32,7 +32,7 @@ void setUp(void) {
   procs[0] = &kernel_process_info;
   procs[1] = &init_proc;
 
-  syscall_init();
+  syscall_initialize();
 }
 
 void tearDown(void) {

@@ -211,7 +211,7 @@ static void bcache_release_locked(buffer_head_t* bh) {
   kcondvar_broadcast(&bcache_cv);
 }
 
-void block_cache_init(void) {
+void block_cache_initialize(void) {
   if(bcache_initialized) {
     return;
   }

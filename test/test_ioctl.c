@@ -39,7 +39,7 @@ void setUp(void) {
   memset(&proc_state, 0, sizeof(proc_state));
   proc_file_table_init(&proc_state);
   current = &proc_state;
-  syscall_init();
+  syscall_initialize();
 }
 
 void tearDown(void) {

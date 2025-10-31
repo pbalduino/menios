@@ -104,7 +104,7 @@ void setUp(void) {
   current = &proc_state;
   vfs_shutdown();
   TEST_ASSERT_TRUE(vfs_mount_root(&fake_driver, NULL, true));
-  syscall_init();
+  syscall_initialize();
 }
 
 void tearDown(void) {

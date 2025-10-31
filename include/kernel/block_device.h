@@ -42,7 +42,7 @@ struct block_device_t {
 
 typedef bool (*block_device_iter_t)(block_device_t* device, void* context);
 
-void block_device_system_init(void);
+void block_device_system_initialize(void);
 bool block_device_register(block_device_t* device);
 void block_device_unregister(block_device_t* device);
 block_device_t* block_device_lookup(const char* name);

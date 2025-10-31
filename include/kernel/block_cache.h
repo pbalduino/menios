@@ -26,7 +26,7 @@ typedef struct buffer_head {
   struct buffer_head*  lru_next;
 } buffer_head_t;
 
-void block_cache_init(void);
+void block_cache_initialize(void);
 void block_cache_shutdown(void);
 
 buffer_head_t* bread(block_device_t* device, uint64_t lba);

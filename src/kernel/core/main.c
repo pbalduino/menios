@@ -110,7 +110,7 @@ static void heap_demo(void) {
 
 void boot_graphics_init() {
   framebuffer_init();
-  font_init();
+  font_initialize();
 
   print_logo();
 
@@ -154,7 +154,7 @@ void _start() {
 
   file_system_init();
 
-  block_device_system_init();
+  block_device_system_initialize();
 
   vfs_init();
 
@@ -166,7 +166,7 @@ void _start() {
 
   cpu_enable_sse();
 
-  syscall_init();
+  syscall_initialize();
 
   printf("Heap demo\n");
   logk("Heap demo\n");

@@ -28,7 +28,7 @@ void setUp(void) {
   current = &proc_state;
   test_stub_acpi_shutdown_calls = 0;
   test_stub_acpi_shutdown_result = 0;
-  syscall_init();
+  syscall_initialize();
 }
 
 void tearDown(void) {

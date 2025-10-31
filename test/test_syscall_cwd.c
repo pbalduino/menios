@@ -124,7 +124,7 @@ void setUp(void) {
   test_proc.cpu_state = &cpu_state;
   current = &test_proc;
 
-  syscall_init();
+  syscall_initialize();
   vfs_init();
   bool mounted = vfs_mount("/", &stub_driver, &fs_state, true);
   TEST_ASSERT_TRUE_MESSAGE(mounted, "failed to mount stub fs");

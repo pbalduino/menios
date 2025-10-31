@@ -704,8 +704,8 @@ static void syscall_register(uint64_t number, syscall_handler_t handler) {
   syscall_table[number] = handler ? handler : syscall_stub_unimplemented;
 }
 
-void syscall_init(void) {
-  syscall_arch_init();
+void syscall_initialize(void) {
+  syscall_arch_initialize();
 
   for(size_t i = 0; i < SYSCALL_MAX; i++) {
     syscall_table[i] = syscall_stub_unimplemented;
@@ -772,7 +772,7 @@ void syscall_init(void) {
   syscall_register(SYS_TIME, syscall_time_handler);
   syscall_register(SYS_GETTIMEOFDAY, syscall_gettimeofday_handler);
 
-  serial_printf("syscall_init: dispatcher ready (syscall/sysret)\n");
+  serial_printf("syscall_initialize: dispatcher ready (syscall/sysret)\n");
 }
 
 uint64_t syscall_dispatch(syscall_frame_t* frame) {

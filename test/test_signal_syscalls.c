@@ -29,7 +29,7 @@ void setUp(void) {
 
   current = &init_proc;
 
-  syscall_init();
+  syscall_initialize();
 }
 
 void tearDown(void) {

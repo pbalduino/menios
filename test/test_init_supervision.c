@@ -17,7 +17,7 @@ static bool syscalls_ready = false;
 
 void setUp(void) {
   if(!syscalls_ready) {
-    syscall_init();
+    syscall_initialize();
     syscalls_ready = true;
   }
 

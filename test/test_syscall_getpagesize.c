@@ -5,7 +5,7 @@
 #include <menios/syscall.h>
 
 void setUp(void) {
-  syscall_init();
+  syscall_initialize();
 }
 
 void tearDown(void) {}

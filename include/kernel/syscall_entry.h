@@ -7,7 +7,7 @@
 extern "C" {
 #endif
 
-void syscall_arch_init(void);
+void syscall_arch_initialize(void);
 void syscall_set_kernel_stack(uint64_t rsp);
 
 #ifdef __cplusplus

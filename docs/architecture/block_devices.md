@@ -26,7 +26,7 @@ to higher layers.
 
 ## Initialization Flow
 
-1. `block_device_system_init()` runs early during boot (invoked from `_start`
+1. `block_device_system_initialize()` runs early during boot (invoked from `_start`
    after the heap and file layer are available).
 2. Storage drivers (e.g., the AHCI PCI controller) discover hardware, obtain
    memory-mapped register ranges, and allocate bookkeeping structures.
