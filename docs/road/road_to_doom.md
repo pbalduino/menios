@@ -269,7 +269,7 @@ Port layer, graphics, input, and build integration for running Doom:
   - mmap support for direct video RAM access
   - ioctl interface for geometry/format queries (FBIOGET_VSCREENINFO)
   - Expose width, height, pitch, pixel format to userland
-- **Current Gap**: `src/kernel/file.c:507` routes through `fb_putchar` only
+- **Current Gap**: `src/kernel/fs/core/file.c:507` routes through `fb_putchar` only
 - **Impact**: DG_DrawFrame() needs raw scanline blitting to video memory
 
 #### **Real Key Events Delivery** (Issue #302) ✅ **COMPLETE**

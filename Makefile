@@ -88,9 +88,7 @@ KERNEL_SRC = \
 	src/kernel/drivers/bus/pciroot/pciroot.c \
 	src/kernel/drivers/core/driver.c \
 	src/kernel/drivers/input/ps2kb/ps2kb.c \
-	src/kernel/file.c \
-	src/kernel/fonts.c \
-	src/kernel/framebuffer.c \
+	src/kernel/fs/core/file.c \
 	src/kernel/fs/core/pipe.c \
 	src/kernel/fs/devfs/devfs.c \
 	src/kernel/fs/fat32/fat32.c \
@@ -100,6 +98,8 @@ KERNEL_SRC = \
 	src/kernel/hw/hw.c \
 	src/kernel/input/keyboard.c \
 	src/kernel/ipc/shm.c \
+	src/kernel/framebuffer/framebuffer.c \
+	src/kernel/framebuffer/fonts.c \
 	src/kernel/mem/compactor.c \
 	src/kernel/mem/dma.c \
 	src/kernel/mem/kmalloc.c \
@@ -115,7 +115,7 @@ KERNEL_SRC = \
 	src/kernel/proc/kthread.c \
 	src/kernel/proc/proc.c \
 	src/kernel/proc/signal.c \
-	src/kernel/serial.c \
+	src/kernel/console/serial.c \
 	src/kernel/syscall/entry.c \
 	src/kernel/syscall/syscall.c \
 	src/kernel/timer/hpet.c \
@@ -887,7 +887,7 @@ endif
 			$$file \
 			test/unity.c \
 			test/stubs.c \
-			src/kernel/file.c \
+			src/kernel/fs/core/file.c \
 		src/kernel/fs/vfs/vfs.c \
 		src/kernel/fs/core/pipe.c \
 		src/kernel/fs/tmpfs/tmpfs.c \
@@ -924,7 +924,7 @@ endif
 		test/test_buddy_allocator.c \
 		test/unity.c \
 		test/stubs.c \
-		src/kernel/file.c \
+		src/kernel/fs/core/file.c \
 		src/kernel/fs/vfs/vfs.c \
 		src/kernel/fs/core/pipe.c \
 		src/kernel/fs/tmpfs/tmpfs.c \
@@ -960,7 +960,7 @@ endif
 		test/test_malloc_direct.c \
 		test/unity.c \
 		test/stubs.c \
-		src/kernel/file.c \
+		src/kernel/fs/core/file.c \
 		src/kernel/fs/vfs/vfs.c \
 		src/kernel/fs/core/pipe.c \
 		src/kernel/fs/tmpfs/tmpfs.c \
@@ -996,7 +996,7 @@ src/libc/errno.c \
 		test/test_malloc_stats.c \
 		test/unity.c \
 		test/stubs.c \
-		src/kernel/file.c \
+		src/kernel/fs/core/file.c \
 		src/kernel/fs/vfs/vfs.c \
 		src/kernel/fs/core/pipe.c \
 		src/kernel/fs/tmpfs/tmpfs.c \
@@ -1032,7 +1032,7 @@ src/libc/errno.c \
 		test/test_system.c \
 		test/unity.c \
 		test/stubs.c \
-		src/kernel/file.c \
+		src/kernel/fs/core/file.c \
 		src/kernel/fs/vfs/vfs.c \
 		src/kernel/fs/core/pipe.c \
 		src/kernel/fs/tmpfs/tmpfs.c \
@@ -1068,7 +1068,7 @@ src/libc/errno.c \
 		test/test_heap_virtual.c \
 		test/unity.c \
 		test/stubs.c \
-		src/kernel/file.c \
+		src/kernel/fs/core/file.c \
 		src/kernel/fs/vfs/vfs.c \
 		src/kernel/fs/core/pipe.c \
 		src/kernel/fs/tmpfs/tmpfs.c \
@@ -1105,7 +1105,7 @@ src/libc/errno.c \
 		test/test_malloc_stress.c \
 		test/unity.c \
 		test/stubs.c \
-		src/kernel/file.c \
+		src/kernel/fs/core/file.c \
 		src/kernel/fs/vfs/vfs.c \
 		src/kernel/fs/core/pipe.c \
 		src/kernel/fs/tmpfs/tmpfs.c \
