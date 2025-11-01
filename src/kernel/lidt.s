@@ -411,8 +411,14 @@ syscall_entry:
   pop rax
 %endmacro
 
+section .rodata
+global irq_vector_stubs
+align 8
+irq_vector_stubs:
+
 %macro IRQ_DYNAMIC_STUB 1
-%%stub:
+section .text
+%%irq_stub:
   IRQ_PUSH_REGS
   cld
   mov edi, %1
@@ -420,16 +426,8 @@ syscall_entry:
   IRQ_POP_REGS
   iretq
 section .rodata
-  dq %%stub
-section .text
+  dq %%irq_stub
 %endmacro
-
-section .rodata
-global irq_vector_stubs
-align 8
-irq_vector_stubs:
-
-section .text
 
 %assign __irq_vector IRQ_VECTOR_BASE
 %rep IRQ_VECTOR_COUNT
