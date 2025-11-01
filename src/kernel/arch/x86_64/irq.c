@@ -12,7 +12,7 @@
 #include <kernel/spinlock.h>
 #include <kernel/heap.h>
 
-#define IRQ_MAX_CPUS 16
+#define IRQ_MAX_APIC_ID 256
 #define IRQ_DISPATCH_MAX_DEPTH 16
 
 typedef struct irq_subscription {
@@ -50,12 +50,15 @@ static irq_line_t irq_lines[IRQ_VECTOR_COUNT];
 static spinlock_t irq_lock;
 static bool irq_system_initialized = false;
 static bool irq_apic_ready = false;
-static irq_subscription_t* irq_dispatch_stack[IRQ_MAX_CPUS][IRQ_DISPATCH_MAX_DEPTH];
-static size_t irq_dispatch_stack_depth[IRQ_MAX_CPUS];
+static irq_subscription_t* irq_dispatch_stack[IRQ_MAX_APIC_ID][IRQ_DISPATCH_MAX_DEPTH];
+static size_t irq_dispatch_stack_depth[IRQ_MAX_APIC_ID];
 
 static inline uint32_t irq_current_cpu_index(void) {
   uint32_t apic_id = apic_current_processor_id();
-  return apic_id % IRQ_MAX_CPUS;
+  if(apic_id >= IRQ_MAX_APIC_ID) {
+    return 0;
+  }
+  return apic_id;
 }
 
 static inline irq_line_t* irq_find_line(uint32_t irq) {
