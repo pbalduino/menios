@@ -162,9 +162,10 @@ static void irq_prune_removed(irq_line_t* line) {
       subscription->line = NULL;
       if(subscription->waiting_cleanup) {
         ksem_post(&subscription->cleanup_sem);
+      } else {
+        ksem_destroy(&subscription->cleanup_sem);
+        kfree(subscription);
       }
-      ksem_destroy(&subscription->cleanup_sem);
-      kfree(subscription);
       continue;
     }
     link = &subscription->next;
@@ -325,6 +326,8 @@ int irq_unregister(struct irq_handle* handle) {
 
   if(wait_needed) {
     ksem_wait(&subscription->cleanup_sem);
+    ksem_destroy(&subscription->cleanup_sem);
+    kfree(subscription);
   }
 
   kfree(handle);
