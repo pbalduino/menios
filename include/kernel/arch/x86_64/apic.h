@@ -7,6 +7,9 @@
 #define CPUID_INFO 0x1
 
 #define LAPIC_BASE_MSR 0x1b
+#define LAPIC_BASE_X2APIC_ENABLE (1ull << 10)
+
+#define IA32_X2APIC_APICID 0x00000802u
 
 #define PIC1_COMMAND_PORT 0x20
 #define PIC1_DATA_PORT    0x21

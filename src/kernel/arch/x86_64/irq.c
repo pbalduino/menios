@@ -12,7 +12,6 @@
 #include <kernel/spinlock.h>
 #include <kernel/heap.h>
 
-#define IRQ_MAX_APIC_IDS 1024
 #define IRQ_MAX_CPU_SLOTS 256
 #define IRQ_DISPATCH_MAX_DEPTH 16
 
@@ -53,31 +52,33 @@ static bool irq_system_initialized = false;
 static bool irq_apic_ready = false;
 static irq_subscription_t* irq_dispatch_stack[IRQ_MAX_CPU_SLOTS][IRQ_DISPATCH_MAX_DEPTH];
 static size_t irq_dispatch_stack_depth[IRQ_MAX_CPU_SLOTS];
-static uint32_t irq_apic_slot_map[IRQ_MAX_APIC_IDS];
+typedef struct irq_apic_slot_entry {
+  uint32_t apic_id;
+  uint32_t slot;
+} irq_apic_slot_entry_t;
+static irq_apic_slot_entry_t irq_apic_slots[IRQ_MAX_CPU_SLOTS];
 static uint32_t irq_apic_slot_count = 0;
 static spinlock_t irq_apic_slot_lock;
 
 static inline uint32_t irq_apic_slot_for(uint32_t apic_id) {
-  if(apic_id >= IRQ_MAX_APIC_IDS) {
-    panic("irq: APIC ID %u exceeds supported range", apic_id);
-  }
-
-  uint32_t slot = irq_apic_slot_map[apic_id];
-  if(slot != UINT32_MAX) {
-    return slot;
-  }
-
-  spinlock_lock(&irq_apic_slot_lock);
-  slot = irq_apic_slot_map[apic_id];
-  if(slot == UINT32_MAX) {
-    if(irq_apic_slot_count >= IRQ_MAX_CPU_SLOTS) {
-      spinlock_unlock(&irq_apic_slot_lock);
-      panic("irq: CPU slot capacity exceeded (APIC ID %u)", apic_id);
+  uint64_t flags = spinlock_lock_irqsave(&irq_apic_slot_lock);
+  for(uint32_t index = 0; index < irq_apic_slot_count; ++index) {
+    if(irq_apic_slots[index].apic_id == apic_id) {
+      uint32_t slot = irq_apic_slots[index].slot;
+      spinlock_unlock_irqrestore(&irq_apic_slot_lock, flags);
+      return slot;
     }
-    slot = irq_apic_slot_count++;
-    irq_apic_slot_map[apic_id] = slot;
   }
-  spinlock_unlock(&irq_apic_slot_lock);
+
+  if(irq_apic_slot_count >= IRQ_MAX_CPU_SLOTS) {
+    spinlock_unlock_irqrestore(&irq_apic_slot_lock, flags);
+    panic("irq: CPU slot capacity exceeded (APIC ID %u)", apic_id);
+  }
+
+  uint32_t slot = irq_apic_slot_count++;
+  irq_apic_slots[slot].slot = slot;
+  irq_apic_slots[slot].apic_id = apic_id;
+  spinlock_unlock_irqrestore(&irq_apic_slot_lock, flags);
   return slot;
 }
 
@@ -223,14 +224,13 @@ void irq_initialize(void) {
 
   spinlock_init(&irq_lock);
   spinlock_init(&irq_apic_slot_lock);
-  for(size_t i = 0; i < IRQ_MAX_APIC_IDS; ++i) {
-    irq_apic_slot_map[i] = UINT32_MAX;
-  }
   for(size_t i = 0; i < IRQ_MAX_CPU_SLOTS; ++i) {
     irq_dispatch_stack_depth[i] = 0;
     for(size_t j = 0; j < IRQ_DISPATCH_MAX_DEPTH; ++j) {
       irq_dispatch_stack[i][j] = NULL;
     }
+    irq_apic_slots[i].apic_id = UINT32_MAX;
+    irq_apic_slots[i].slot = UINT32_MAX;
   }
   irq_apic_slot_count = 0;
 

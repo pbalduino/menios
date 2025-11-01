@@ -1,10 +1,11 @@
 #include <kernel/arch/x86_64/apic.h>
+#include <kernel/arch/x86_64/idt.h>
 #include <kernel/console.h>
 #include <kernel/heap.h>
-#include <kernel/arch/x86_64/idt.h>
 #include <kernel/irq.h>
-#include <kernel/pmm.h>
 #include <kernel/kernel.h>
+#include <kernel/msr.h>
+#include <kernel/pmm.h>
 #include <kernel/serial.h>
 
 #include <uacpi/acpi.h>
@@ -28,6 +29,8 @@ static struct acpi_madt *madt;
 static struct acpi_entry_hdr *liststart;
 static struct acpi_entry_hdr *listend;
 static void *lapicaddr;
+
+static bool lapic_x2apic_enabled = false;
 
 static size_t overridecount;
 static size_t iocount;
@@ -136,6 +139,10 @@ void apic_initialize(void) {
   struct acpi_madt_lapic_address_override *lapic64 = getentry(ACPI_MADT_ENTRY_TYPE_LAPIC_ADDRESS_OVERRIDE, 0);
 
 	void *paddr = lapic64 ? (void *)lapic64->address : (void *)(uint64_t)madt->local_interrupt_controller_address;
+
+  uint64_t apic_base = msr_read(LAPIC_BASE_MSR);
+  lapic_x2apic_enabled = (apic_base & LAPIC_BASE_X2APIC_ENABLE) != 0;
+  serial_printf("acpi_initialize: x2APIC %s\n", lapic_x2apic_enabled ? "enabled" : "disabled");
 
 	if(lapic64) {
 		serial_printf("\e[94mUsing 64 bit override for the local APIC address\n\e[0m");
@@ -258,6 +265,10 @@ bool apic_update_irq_mask(uint32_t gsi, bool masked) {
 }
 
 uint32_t apic_current_processor_id(void) {
+  if(lapic_x2apic_enabled) {
+    return (uint32_t)msr_read(IA32_X2APIC_APICID);
+  }
+
   if(lapicaddr == NULL) {
     return 0;
   }
