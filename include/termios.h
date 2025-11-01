@@ -63,6 +63,11 @@ struct termios {
 #define CSIZE   0x00000030u
 #define CS8     0x00000030u
 #define CREAD   0x00000080u
+#define PARENB  0x00000100u
+#define PARODD  0x00000200u
+#define CSTOPB  0x00000400u
+#define HUPCL   0x00000800u
+#define CLOCAL  0x00001000u
 
 /* Local flags */
 #define ISIG    0x00000001u

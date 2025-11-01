@@ -284,29 +284,6 @@ static size_t tty_cooked_count_locked(const tty_state_t* state) {
   return (TTY_INPUT_BUFFER_SIZE - state->cooked_tail) + state->cooked_head;
 }
 
-static size_t tty_cooked_count(tty_state_t* state) {
-  size_t count;
-  spinlock_lock(&state->cooked_lock);
-  count = tty_cooked_count_locked(state);
-  spinlock_unlock(&state->cooked_lock);
-  return count;
-}
-
-static size_t tty_cooked_pop_bulk(tty_state_t* state, uint8_t* buffer, size_t length) {
-  if(length == 0) {
-    return 0;
-  }
-
-  size_t copied = 0;
-  spinlock_lock(&state->cooked_lock);
-  while(copied < length && state->cooked_head != state->cooked_tail) {
-    buffer[copied++] = state->cooked[state->cooked_tail];
-    state->cooked_tail = (state->cooked_tail + 1) % TTY_INPUT_BUFFER_SIZE;
-  }
-  spinlock_unlock(&state->cooked_lock);
-  return copied;
-}
-
 static bool tty_cooked_try_pop(tty_state_t* state, uint8_t* ch) {
   bool has_value = false;
   spinlock_lock(&state->cooked_lock);
@@ -412,11 +389,21 @@ static int64_t stdin_read_impl(file_t* file, void* buffer, size_t length) {
 
   kmutex_lock(&state->wait_lock);
 
+  uint8_t* out = (uint8_t*)buffer;
   int64_t result = 0;
+
   for(;;) {
-    size_t available = tty_cooked_count(state);
-    bool canonical = tty_state_canonical(state);
-    uint8_t vmin = state->termios.c_cc[VMIN];
+    struct termios termios_snapshot;
+    size_t available = 0;
+    bool eof_now = false;
+
+    spinlock_lock(&state->cooked_lock);
+    termios_snapshot = state->termios;
+    available = tty_cooked_count_locked(state);
+    eof_now = state->eof_pending;
+
+    bool canonical = (termios_snapshot.c_lflag & ICANON) != 0;
+    uint8_t vmin = termios_snapshot.c_cc[VMIN];
     size_t to_copy = 0;
 
     if(canonical) {
@@ -425,15 +412,15 @@ static int64_t stdin_read_impl(file_t* file, void* buffer, size_t length) {
       }
     } else {
       if(vmin == 0) {
-        if(available > 0) {
-          to_copy = available < length ? available : length;
-        } else {
+        if(available == 0) {
+          spinlock_unlock(&state->cooked_lock);
           result = 0;
           break;
         }
+        to_copy = available < length ? available : length;
       } else {
         size_t threshold = vmin;
-        if(length < threshold) {
+        if(threshold > length) {
           threshold = length;
         }
         if(available >= threshold) {
@@ -443,16 +430,23 @@ static int64_t stdin_read_impl(file_t* file, void* buffer, size_t length) {
     }
 
     if(to_copy > 0) {
-      result = (int64_t)tty_cooked_pop_bulk(state, (uint8_t*)buffer, to_copy);
+      for(size_t idx = 0; idx < to_copy; idx++) {
+        out[idx] = state->cooked[state->cooked_tail];
+        state->cooked_tail = (state->cooked_tail + 1) % TTY_INPUT_BUFFER_SIZE;
+      }
+      spinlock_unlock(&state->cooked_lock);
+      result = (int64_t)to_copy;
       break;
     }
 
-    if(state->eof_pending) {
+    if(eof_now) {
       state->eof_pending = false;
+      spinlock_unlock(&state->cooked_lock);
       result = 0;
       break;
     }
 
+    spinlock_unlock(&state->cooked_lock);
     kcondvar_wait(&state->waiters, &state->wait_lock);
   }
 
@@ -1393,16 +1387,23 @@ static int tty_ioctl_impl(file_t* file, unsigned long request, void* argp) {
       if(argp == NULL) {
         return -EINVAL;
       }
-      if(current != NULL && !proc_user_buffer_accessible(current, argp, sizeof(struct winsize))) {
-        return -EFAULT;
-      }
       struct winsize ws = {
         .ws_row = 25,
         .ws_col = 80,
         .ws_xpixel = 0,
         .ws_ypixel = 0,
       };
-      memcpy(argp, &ws, sizeof(ws));
+      if(current != NULL) {
+        if(!proc_user_buffer_accessible(current, argp, sizeof(ws))) {
+          return -EFAULT;
+        }
+        virt_addr_t dest = (virt_addr_t)(uintptr_t)argp;
+        if(!proc_user_copy_out(current, dest, &ws, sizeof(ws))) {
+          return -EFAULT;
+        }
+      } else {
+        memcpy(argp, &ws, sizeof(ws));
+      }
       return 0;
     }
     default:
