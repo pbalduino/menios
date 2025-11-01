@@ -411,20 +411,16 @@ syscall_entry:
   pop rax
 %endmacro
 
-%macro IRQ_DYNAMIC_STUB 1
-global irq_stub_%1
-irq_stub_%1:
+%assign __irq_vector IRQ_VECTOR_BASE
+%rep IRQ_VECTOR_COUNT
+global irq_stub_%+__irq_vector
+irq_stub_%+__irq_vector:
   IRQ_PUSH_REGS
   cld
-  mov edi, %1
+  mov edi, __irq_vector
   call irq_dispatch
   IRQ_POP_REGS
   iretq
-%endmacro
-
-%assign __irq_vector IRQ_VECTOR_BASE
-%rep IRQ_VECTOR_COUNT
-IRQ_DYNAMIC_STUB __irq_vector
 %assign __irq_vector __irq_vector + 1
 %endrep
 
@@ -434,7 +430,7 @@ align 8
 irq_vector_stubs:
 %assign __irq_vector IRQ_VECTOR_BASE
 %rep IRQ_VECTOR_COUNT
-  dq irq_stub_%__irq_vector
+  dq irq_stub_%+__irq_vector
 %assign __irq_vector __irq_vector + 1
 %endrep
 

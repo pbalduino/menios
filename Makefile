@@ -823,7 +823,6 @@ ifeq ($(OS_NAME),linux)
 	mcopy -o -i $(IMAGE_NAME).hdd@@2M $(OUTPUT_DIR)/bin/ps ::/bin/ps
 	mcopy -o -i $(IMAGE_NAME).hdd@@2M $(OUTPUT_DIR)/bin/stat ::/bin/stat
 	mcopy -o -i $(IMAGE_NAME).hdd@@2M $(OUTPUT_DIR)/bin/realpath ::/bin/realpath
-	mcopy -o -i $(IMAGE_NAME).hdd@@2M $(OUTPUT_DIR)/bin/readelf ::/bin/readelf
 	mcopy -o -i $(IMAGE_NAME).hdd@@2M $(OUTPUT_DIR)/bin/malloc_stress ::/bin/malloc_stress
 	mcopy -o -i $(IMAGE_NAME).hdd@@2M $(OUTPUT_DIR)/bin/mem ::/bin/mem
 	mcopy -o -i $(IMAGE_NAME).hdd@@2M $(OUTPUT_DIR)/bin/alarm_demo ::/bin/alarm_demo

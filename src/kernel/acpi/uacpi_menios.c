@@ -272,7 +272,7 @@ uacpi_status uacpi_kernel_schedule_work(
     if(rc == -ENOMEM) {
       return UACPI_STATUS_OUT_OF_MEMORY;
     }
-    return UACPI_STATUS_ERROR;
+    return UACPI_STATUS_INTERNAL_ERROR;
   }
 
   return UACPI_STATUS_OK;
@@ -313,7 +313,7 @@ uacpi_status uacpi_kernel_install_interrupt_handler(
     if(rc == -ENOMEM) {
       return UACPI_STATUS_OUT_OF_MEMORY;
     }
-    return UACPI_STATUS_ERROR;
+    return UACPI_STATUS_INTERNAL_ERROR;
   }
 
   *out_irq_handle = (uacpi_handle)binding;
@@ -335,12 +335,12 @@ uacpi_status uacpi_kernel_uninstall_interrupt_handler(
 
   if(binding->irq_handle == NULL) {
     kfree(binding);
-    return UACPI_STATUS_ERROR;
+    return UACPI_STATUS_INTERNAL_ERROR;
   }
 
   int rc = irq_unregister(binding->irq_handle);
   if(rc != 0) {
-    return UACPI_STATUS_ERROR;
+    return UACPI_STATUS_INTERNAL_ERROR;
   }
 
   binding->irq_handle = NULL;
