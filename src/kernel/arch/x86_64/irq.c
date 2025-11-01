@@ -10,7 +10,6 @@
 #include <kernel/serial.h>
 #include <kernel/spinlock.h>
 #include <kernel/heap.h>
-#include <kernel/thread.h>
 
 typedef struct irq_subscription {
   irq_handler_fn handler;
@@ -303,13 +302,9 @@ int irq_unregister(struct irq_handle* handle) {
 
   line->needs_cleanup = true;
 
-  while(subscription->active_calls > 0 || line->dispatch_depth > 0) {
-    spinlock_unlock(&irq_lock);
-    ksleep(1);
-    spinlock_lock(&irq_lock);
+  if(subscription->active_calls == 0 && line->dispatch_depth == 0) {
+    irq_prune_removed(line);
   }
-
-  irq_prune_removed(line);
 
   spinlock_unlock(&irq_lock);
 
@@ -362,7 +357,7 @@ void irq_dispatch(uint8_t vector) {
       }
     }
     if(current->removed && current->active_calls == 0) {
-      irq_prune_removed(line);
+      line->needs_cleanup = true;
     }
     current = next;
     spinlock_unlock(&irq_lock);
