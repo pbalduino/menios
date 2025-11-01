@@ -40,16 +40,16 @@ The meniOS project has grown to over 100+ tracked issues with complex interdepen
 - Foundation: Minimal libc #193 (complete ✅)
 - Doom libc gaps: #304-#310 (all complete ✅)
 - **TCC blockers:** #337 (Signal API ✅ CLOSED), #338 (Float parsing ✅ CLOSED)
-- **Stubbed functions:** #364 (parent), #367-#369, #347, #21, #327
+- **Stubbed functions:** #364 (parent), #367, #21, #327
   - ✅ stat/fstat/lstat (complete for FAT32, skeletal)
   - ✅ access(), realpath() (complete)
-  - ⚠️ pathconf() (partial - #368)
+  - ✅ pathconf() (#368) (complete)
   - ✅ chmod/fchmod (#365); ✅ utime (#317)
   - ✅ pseudo-fs metadata (#366); ✅ rich FAT32 metadata (#367)
-  - ❌ isatty (#347), brk/sbrk (#21), system() (#369)
+  - ❌ brk/sbrk (#21)
   - ❌ timing APIs (#327)
 - Thread safety: #339 (depends on pthread #109)
-- Extended features: stdio, math, regex, TTY helpers, multiplexing
+- Extended features: stdio, math, regex, multiplexing (TTY helpers ✅)
 - Future work: sockets, locale, wide-char, dynamic loader
 
 **Use this for:**
@@ -73,6 +73,7 @@ The meniOS project has grown to over 100+ tracked issues with complex interdepen
 - ✅ #370 (stat command) - **CLOSED** - File metadata tool now ships in `/bin/stat`
 - 🆕 #372 (shutdown command) - NEW - Clean ACPI power-off from userland (quick win)
 - ✅ #191 (binutils) - Build complete, **READY FOR TESTING** (unblocked)
+- ✅ #347 (TTY helpers) - **CLOSED** - isatty(), ttyname(), ctermid() wired through termios
 
 **Recently Closed (19 issues):**
 - #58, #137, #138, #145, #149, #151, #152, #153, #155, #167, #168, #226, #284, #285, #316, #337, #338, #371, #373

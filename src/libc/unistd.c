@@ -15,9 +15,7 @@
 #include <sys/wait.h>
 #include <unistd.h>
 
-#ifdef MENIOS_HOST_TEST
 #include <termios.h>
-#endif
 #define GETCWD_DEFAULT_CAPACITY 256u
 
 #ifndef F_OK
@@ -368,23 +366,69 @@ int access(const char* path, int mode) {
   return 0;
 }
 
+static const char* tty_path_for_device(dev_t device) {
+  unsigned int major = MAJOR(device);
+  unsigned int minor = MINOR(device);
+
+  if(major == 4) {
+    if(minor == 0) {
+      return "/dev/tty0";
+    }
+    if(minor == 64) {
+      return "/dev/ttyS0";
+    }
+  }
+
+  return NULL;
+}
+
 int isatty(int fd) {
-#ifdef MENIOS_HOST_TEST
   struct termios termios_state;
   if(tcgetattr(fd, &termios_state) == 0) {
     return 1;
   }
   return 0;
-#else
-  struct winsize win;
-  if(ioctl(fd, TIOCGWINSZ, &win) == 0) {
-    return 1;
+}
+
+char* ttyname(int fd) {
+  static char ttyname_buffer[32];
+  struct stat st;
+
+  if(fstat(fd, &st) != 0) {
+    return NULL;
   }
-  if(errno == ENOTTY) {
-    return 0;
+  if(!S_ISCHR(st.st_mode)) {
+    errno = ENOTTY;
+    return NULL;
   }
-  return 0;
-#endif
+
+  const char* path = tty_path_for_device(st.st_rdev);
+  if(path == NULL) {
+    errno = ENOTTY;
+    return NULL;
+  }
+
+  size_t path_len = strlen(path);
+  if(path_len >= sizeof(ttyname_buffer)) {
+    errno = ERANGE;
+    return NULL;
+  }
+
+  memcpy(ttyname_buffer, path, path_len + 1);
+  return ttyname_buffer;
+}
+
+char* ctermid(char* s) {
+  static char default_name[] = "/dev/tty0";
+  char* dest = s;
+
+  if(dest == NULL) {
+    return default_name;
+  }
+
+  size_t name_len = strlen(default_name);
+  memcpy(dest, default_name, name_len + 1);
+  return dest;
 }
 
 long pathconf(const char* path, int name) {

@@ -217,7 +217,7 @@ These issues form the backbone of the system and should be prioritized:
 
 **Priority**: Deferred - track #202 once higher-priority work lands
 
-### 📚 libc Stubbed Functions (Issues #364-#369, #347, #21, #327)
+### 📚 libc Stubbed Functions (Issues #364-#369, #21, #327)
 ```
                     ┌──→ ✅ stat/fstat/lstat (COMPLETE for FAT32)
                     │   ✅ access() (COMPLETE)
@@ -232,7 +232,7 @@ These issues form the backbone of the system and should be prioritized:
                     │                           ├──→ File mutation APIs
                     ├──→ ~~#317 (utime)~~ ✅ ─────────┘
                     │
-                    ├──→ #347 (isatty, ttyname) ──→ TTY helper functions
+                    ├──→ ~~#347 (isatty, ttyname)~~ ✅ ──→ TTY helper functions
                     │
                     ├──→ #21 (userspace heap) ──→ brk/sbrk implementation
                     │
@@ -253,9 +253,7 @@ These issues form the backbone of the system and should be prioritized:
 - ✅ **pathconf()** - path/directory queries return POSIX-compliant values
 
 **Remaining Stubs**:
-- ❌ **isatty** (#347) - Check if fd is terminal
 - ❌ **brk/sbrk** (#21) - Dynamic memory allocation
-- ❌ **system()** (#369) - Execute shell commands
 - ❌ **Timing APIs** (#327) - nanosleep, alarm, clock_*, setitimer, getitimer
 
 **Sub-tasks**:

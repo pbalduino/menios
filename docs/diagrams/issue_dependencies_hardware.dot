@@ -50,7 +50,7 @@ digraph HardwareInfrastructure {
         fillcolor="#FFF8E1";
 
         issue67 [label="#67: e1000 network driver\nInterrupt-driven NIC\n\nReady to implement\n10-12 weeks", fillcolor="#FFE4B5"];
-        issue336 [label="#336: termios\nTTY line discipline\n\n✅ Ready to implement\n9-13 weeks", fillcolor="#B3E5FC"];
+        issue336 [label="#336: termios\nTTY line discipline\n✅ Complete", fillcolor="#90EE90", style="filled,dashed"];
     }
 
     // Audio Subsystem
@@ -109,7 +109,7 @@ digraph HardwareInfrastructure {
         style=filled;
         fillcolor="#FFFACD";
 
-        status [label="✅ PCI Infrastructure: COMPLETE (#335, #280)\n✅ UACPI kernel interface: COMPLETE (#276)\n✅ Work queue / deferred execution: COMPLETE (#278)\n✅ Dynamic IRQ subsystem: COMPLETE (#279)\n✅ I/O port manager: COMPLETE (#281)\n\nNext focus:\n• #67 e1000 network driver\n• #33 Audio subsystem (AC'97 + core)\n• #336 termios line discipline",
+        status [label="✅ PCI Infrastructure: COMPLETE (#335, #280)\n✅ UACPI kernel interface: COMPLETE (#276)\n✅ Work queue / deferred execution: COMPLETE (#278)\n✅ Dynamic IRQ subsystem: COMPLETE (#279)\n✅ I/O port manager: COMPLETE (#281)\n✅ Termios line discipline (#336)\n\nNext focus:\n• #67 e1000 network driver\n• #33 Audio subsystem (AC'97 + core)",
                shape=note, fillcolor="#FFFACD", style=filled];
     }
 
@@ -119,7 +119,7 @@ digraph HardwareInfrastructure {
         style=filled;
         fillcolor="#E8F8FF";
 
-        priority [label="Current Priorities:\n\n1. #67 (e1000 driver) - 10-12 weeks\n   → Networking enablement, now unblocked\n\n2. Audio stack (#382 + #383 + #33) - 9-12 weeks\n   → Doom audio milestone\n\n3. #336 (termios) - 9-13 weeks\n   → Improves TTY UX\n\nFoundation complete:\n• Work queue (#278)\n• Dynamic IRQ (#279)\n• I/O port manager (#281)",
+        priority [label="Current Priorities:\n\n1. #67 (e1000 driver) - 10-12 weeks\n   → Networking enablement, now unblocked\n\n2. Audio stack (#382 + #383 + #33) - 9-12 weeks\n   → Doom audio milestone\n\nFoundation complete:\n• Work queue (#278)\n• Dynamic IRQ (#279)\n• I/O port manager (#281)\n• Termios line discipline (#336)",
                 shape=note, fillcolor="#E8F8FF", style=filled];
     }
 

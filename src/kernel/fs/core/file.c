@@ -9,6 +9,7 @@
 #include <sys/mman.h>
 #include <sys/stat.h>
 #include <time.h>
+#include <termios.h>
 
 #include <kernel/condvar.h>
 #include <kernel/file.h>
@@ -35,7 +36,6 @@
 #define FD_STDERR  2
 
 static const file_ops_t serial_file_ops;
-static const file_ops_t stdin_file_ops;
 
 #ifdef MENIOS_KERNEL
 static FILE kernel_stdin_stream = { .fd = FD_STDIN };
@@ -51,19 +51,24 @@ static file_t* serial_stdout_file = NULL;
 static file_t* serial_stderr_file = NULL;
 static file_t* stdin_stream_file  = NULL;
 
-#define STDIN_BUFFER_SIZE 256
+#define TTY_INPUT_BUFFER_SIZE 1024
+#define TTY_CANON_BUFFER_SIZE 1024
 
-typedef struct stdin_ring_buffer_t {
-  spinlock_t lock;
-  kmutex_t   wait_lock;
+typedef struct tty_state {
+  spinlock_t cooked_lock;
+  kmutex_t wait_lock;
   kcondvar_t waiters;
-  uint8_t    data[STDIN_BUFFER_SIZE];
-  size_t     head;
-  size_t     tail;
-} stdin_ring_buffer_t;
+  uint8_t cooked[TTY_INPUT_BUFFER_SIZE];
+  size_t cooked_head;
+  size_t cooked_tail;
+  char canonical[TTY_CANON_BUFFER_SIZE];
+  size_t canonical_len;
+  bool initialized;
+  bool eof_pending;
+  struct termios termios;
+} tty_state_t;
 
-static stdin_ring_buffer_t stdin_buffer;
-static bool stdin_initialized = false;
+static tty_state_t tty_console_state;
 
 static const uintptr_t kernel_pointer_floor = 0xffff800000000000ull;
 #define FILE_IO_BOUNCE_CHUNK (PAGE_SIZE * 4u)
@@ -220,97 +225,372 @@ static inline void set_errno(int err) {
   }
 }
 
-static inline void stdin_buffer_initialize(void) {
-  if(stdin_initialized) {
+static inline tty_state_t* tty_state(void) {
+  return &tty_console_state;
+}
+
+static void tty_state_set_defaults(struct termios* termios_p) {
+  memset(termios_p, 0, sizeof(*termios_p));
+  termios_p->c_iflag = ICRNL | IXON;
+  termios_p->c_oflag = OPOST | ONLCR;
+  termios_p->c_cflag = CREAD | CS8;
+  termios_p->c_lflag = ISIG | ICANON | ECHO | ECHOE | ECHOK | ECHONL | IEXTEN;
+  termios_p->c_cc[VINTR] = 0x03;
+  termios_p->c_cc[VQUIT] = 0x1c;
+  termios_p->c_cc[VERASE] = 0x7f;
+  termios_p->c_cc[VKILL] = 0x15;
+  termios_p->c_cc[VEOF] = 0x04;
+  termios_p->c_cc[VTIME] = 0;
+  termios_p->c_cc[VMIN] = 1;
+  termios_p->c_cc[VSTART] = 0x11;
+  termios_p->c_cc[VSTOP] = 0x13;
+  termios_p->c_cc[VSUSP] = 0x1a;
+  termios_p->c_cc[VREPRINT] = 0x12;
+  termios_p->c_cc[VDISCARD] = 0x0f;
+  termios_p->c_cc[VWERASE] = 0x17;
+  termios_p->c_cc[VLNEXT] = 0x16;
+  termios_p->c_ispeed = B38400;
+  termios_p->c_ospeed = B38400;
+}
+
+static inline void tty_state_initialize(void) {
+  tty_state_t* state = tty_state();
+  if(state->initialized) {
     return;
   }
-  spinlock_init(&stdin_buffer.lock);
-  kmutex_init(&stdin_buffer.wait_lock);
-  kcondvar_init(&stdin_buffer.waiters);
-  stdin_buffer.head = 0;
-  stdin_buffer.tail = 0;
-  stdin_initialized = true;
+  spinlock_init(&state->cooked_lock);
+  kmutex_init(&state->wait_lock);
+  kcondvar_init(&state->waiters);
+  state->cooked_head = 0;
+  state->cooked_tail = 0;
+  state->canonical_len = 0;
+  state->eof_pending = false;
+  tty_state_set_defaults(&state->termios);
+  state->initialized = true;
 }
 
-static bool stdin_buffer_pop(uint8_t* ch) {
-  bool result = false;
-  spinlock_lock(&stdin_buffer.lock);
-  if(stdin_buffer.head != stdin_buffer.tail) {
-    *ch = stdin_buffer.data[stdin_buffer.tail];
-    stdin_buffer.tail = (stdin_buffer.tail + 1) % STDIN_BUFFER_SIZE;
-    result = true;
-  }
-  spinlock_unlock(&stdin_buffer.lock);
-  return result;
+static inline void stdin_buffer_initialize(void) {
+  tty_state_initialize();
 }
 
-static bool stdin_buffer_push(uint8_t ch) {
-  bool was_empty;
-  spinlock_lock(&stdin_buffer.lock);
-  was_empty = (stdin_buffer.head == stdin_buffer.tail);
-  size_t next = (stdin_buffer.head + 1) % STDIN_BUFFER_SIZE;
-  if(next == stdin_buffer.tail) {
-    stdin_buffer.tail = (stdin_buffer.tail + 1) % STDIN_BUFFER_SIZE;
+static inline bool tty_state_canonical(const tty_state_t* state) {
+  return (state->termios.c_lflag & ICANON) != 0;
+}
+
+static size_t tty_cooked_count_locked(const tty_state_t* state) {
+  if(state->cooked_head >= state->cooked_tail) {
+    return state->cooked_head - state->cooked_tail;
   }
-  stdin_buffer.data[stdin_buffer.head] = ch;
-  stdin_buffer.head = next;
-  spinlock_unlock(&stdin_buffer.lock);
+  return (TTY_INPUT_BUFFER_SIZE - state->cooked_tail) + state->cooked_head;
+}
+
+static size_t tty_cooked_count(tty_state_t* state) {
+  size_t count;
+  spinlock_lock(&state->cooked_lock);
+  count = tty_cooked_count_locked(state);
+  spinlock_unlock(&state->cooked_lock);
+  return count;
+}
+
+static size_t tty_cooked_pop_bulk(tty_state_t* state, uint8_t* buffer, size_t length) {
+  if(length == 0) {
+    return 0;
+  }
+
+  size_t copied = 0;
+  spinlock_lock(&state->cooked_lock);
+  while(copied < length && state->cooked_head != state->cooked_tail) {
+    buffer[copied++] = state->cooked[state->cooked_tail];
+    state->cooked_tail = (state->cooked_tail + 1) % TTY_INPUT_BUFFER_SIZE;
+  }
+  spinlock_unlock(&state->cooked_lock);
+  return copied;
+}
+
+static bool tty_cooked_try_pop(tty_state_t* state, uint8_t* ch) {
+  bool has_value = false;
+  spinlock_lock(&state->cooked_lock);
+  if(state->cooked_head != state->cooked_tail) {
+    *ch = state->cooked[state->cooked_tail];
+    state->cooked_tail = (state->cooked_tail + 1) % TTY_INPUT_BUFFER_SIZE;
+    has_value = true;
+  }
+  spinlock_unlock(&state->cooked_lock);
+  return has_value;
+}
+
+static bool tty_publish_locked(tty_state_t* state, const char* data, size_t length) {
+  if(length == 0) {
+    return false;
+  }
+
+  bool was_empty = (state->cooked_head == state->cooked_tail);
+  for(size_t idx = 0; idx < length; idx++) {
+    size_t next = (state->cooked_head + 1) % TTY_INPUT_BUFFER_SIZE;
+    if(next == state->cooked_tail) {
+      state->cooked_tail = (state->cooked_tail + 1) % TTY_INPUT_BUFFER_SIZE;
+    }
+    state->cooked[state->cooked_head] = (uint8_t)data[idx];
+    state->cooked_head = next;
+  }
   return was_empty;
+}
+
+static void tty_canonical_reset_locked(tty_state_t* state) {
+  state->canonical_len = 0;
+}
+
+static void tty_flush_input_locked(tty_state_t* state) {
+  state->cooked_head = 0;
+  state->cooked_tail = 0;
+  state->canonical_len = 0;
+  state->eof_pending = false;
+}
+
+static void tty_output_char_raw(char ch) {
+  serial_putchar(ch);
+  fb_putchar(ch);
+}
+
+static void tty_output_raw(const char* data, size_t length) {
+  if(data == NULL || length == 0) {
+    return;
+  }
+  for(size_t idx = 0; idx < length; idx++) {
+    tty_output_char_raw(data[idx]);
+  }
+}
+
+static void tty_output_buffer(const char* data, size_t length, bool convert_newline) {
+  if(data == NULL || length == 0) {
+    return;
+  }
+  for(size_t idx = 0; idx < length; idx++) {
+    char ch = data[idx];
+    if(convert_newline && ch == '\n') {
+      tty_output_char_raw('\r');
+    }
+    tty_output_char_raw(ch);
+  }
+}
+
+static void tty_emit_backspace_sequence(bool erase) {
+  if(erase) {
+    const char seq[] = "\b \b";
+    tty_output_raw(seq, sizeof(seq) - 1);
+  } else {
+    const char ch = '\b';
+    tty_output_char_raw(ch);
+  }
+}
+
+static bool tty_is_eol_char(const struct termios* tio, uint8_t ch) {
+  if(ch == '\n') {
+    return true;
+  }
+  if(tio->c_cc[VEOL] != 0 && ch == tio->c_cc[VEOL]) {
+    return true;
+  }
+  if(tio->c_cc[VEOL2] != 0 && ch == tio->c_cc[VEOL2]) {
+    return true;
+  }
+  return false;
+}
+
+static int64_t stdin_read_impl(file_t* file, void* buffer, size_t length) {
+  (void)file;
+  if(buffer == NULL) {
+    set_errno(EINVAL);
+    return -EINVAL;
+  }
+  if(length == 0) {
+    return 0;
+  }
+
+  tty_state_initialize();
+  tty_state_t* state = tty_state();
+
+  kmutex_lock(&state->wait_lock);
+
+  int64_t result = 0;
+  for(;;) {
+    size_t available = tty_cooked_count(state);
+    bool canonical = tty_state_canonical(state);
+    uint8_t vmin = state->termios.c_cc[VMIN];
+    size_t to_copy = 0;
+
+    if(canonical) {
+      if(available > 0) {
+        to_copy = available < length ? available : length;
+      }
+    } else {
+      if(vmin == 0) {
+        if(available > 0) {
+          to_copy = available < length ? available : length;
+        } else {
+          result = 0;
+          break;
+        }
+      } else {
+        size_t threshold = vmin;
+        if(length < threshold) {
+          threshold = length;
+        }
+        if(available >= threshold) {
+          to_copy = available < length ? available : length;
+        }
+      }
+    }
+
+    if(to_copy > 0) {
+      result = (int64_t)tty_cooked_pop_bulk(state, (uint8_t*)buffer, to_copy);
+      break;
+    }
+
+    if(state->eof_pending) {
+      state->eof_pending = false;
+      result = 0;
+      break;
+    }
+
+    kcondvar_wait(&state->waiters, &state->wait_lock);
+  }
+
+  kmutex_unlock(&state->wait_lock);
+  return result;
 }
 
 bool stdin_try_pop(uint8_t* ch) {
   if(ch == NULL) {
     return false;
   }
-  return stdin_buffer_pop(ch);
-}
-
-static int64_t stdin_read_impl(file_t* file, void* buffer, size_t length) {
-  (void)file;
-
-  if(buffer == NULL) {
-    set_errno(EINVAL);
-    return -EINVAL;
+  if(!tty_console_state.initialized) {
+    return false;
   }
-
-  if(length == 0) {
-    return 0;
-  }
-
-  uint8_t* out = (uint8_t*)buffer;
-  size_t total = 0;
-
-  while(total < length) {
-    uint8_t ch = 0;
-    if(stdin_buffer_pop(&ch)) {
-      out[total++] = ch;
-      continue;
-    }
-
-    if(total > 0) {
-      break;
-    }
-
-    kmutex_lock(&stdin_buffer.wait_lock);
-    for(;;) {
-      if(stdin_buffer_pop(&ch)) {
-        kmutex_unlock(&stdin_buffer.wait_lock);
-        out[total++] = ch;
-        break;
-      }
-      kcondvar_wait(&stdin_buffer.waiters, &stdin_buffer.wait_lock);
-    }
-  }
-
-  return (int64_t)total;
+  return tty_cooked_try_pop(&tty_console_state, ch);
 }
 
 void stdin_enqueue_char(uint8_t ch) {
-  if(!stdin_initialized) {
-    stdin_buffer_initialize();
+  tty_state_initialize();
+  tty_state_t* state = tty_state();
+
+  char echo_buffer[8];
+  size_t echo_len = 0;
+  bool wake_readers = false;
+  bool signal_eof = false;
+  bool convert_newline = false;
+
+  spinlock_lock(&state->cooked_lock);
+
+  struct termios* tio = &state->termios;
+  bool canonical = tty_state_canonical(state);
+  uint32_t oflag = tio->c_oflag;
+  convert_newline = ((oflag & (OPOST | ONLCR)) == (OPOST | ONLCR));
+
+  if(ch == '\r') {
+    if((tio->c_iflag & IGNCR) != 0) {
+      spinlock_unlock(&state->cooked_lock);
+      return;
+    }
+    if((tio->c_iflag & ICRNL) != 0) {
+      ch = '\n';
+    }
+  } else if(ch == '\n' && (tio->c_iflag & INLCR) != 0) {
+    ch = '\r';
   }
-  (void)stdin_buffer_push(ch);
-  kcondvar_signal(&stdin_buffer.waiters);
+
+  if(canonical) {
+    uint8_t erase = tio->c_cc[VERASE];
+    uint8_t kill = tio->c_cc[VKILL];
+    uint8_t eofc = tio->c_cc[VEOF];
+
+    if(ch == erase) {
+      if(state->canonical_len > 0) {
+        state->canonical_len--;
+        bool erase_visually = (tio->c_lflag & ECHOE) != 0;
+        bool echo_enabled = (tio->c_lflag & ECHO) != 0;
+        spinlock_unlock(&state->cooked_lock);
+        if(echo_enabled) {
+          tty_emit_backspace_sequence(erase_visually);
+        }
+        return;
+      }
+      spinlock_unlock(&state->cooked_lock);
+      return;
+    }
+
+    if(ch == kill) {
+      size_t removed = state->canonical_len;
+      state->canonical_len = 0;
+      bool echo_kill = (tio->c_lflag & ECHOK) != 0;
+      bool echo_erase = (tio->c_lflag & ECHOE) != 0;
+      spinlock_unlock(&state->cooked_lock);
+      if(echo_kill) {
+        const char newline = '\n';
+        tty_output_buffer(&newline, 1, convert_newline);
+      } else if(echo_erase && removed > 0) {
+        const char seq[] = "\r\n";
+        tty_output_raw(seq, sizeof(seq) - 1);
+      }
+      return;
+    }
+
+    if(ch == eofc) {
+      if(state->canonical_len == 0) {
+        state->eof_pending = true;
+        signal_eof = true;
+        spinlock_unlock(&state->cooked_lock);
+        goto notify;
+      }
+      (void)tty_publish_locked(state, state->canonical, state->canonical_len);
+      tty_canonical_reset_locked(state);
+      wake_readers = true;
+      spinlock_unlock(&state->cooked_lock);
+      goto notify;
+    }
+
+    if(state->canonical_len < TTY_CANON_BUFFER_SIZE) {
+      state->canonical[state->canonical_len++] = (char)ch;
+    }
+
+    if(tty_is_eol_char(tio, ch)) {
+      (void)tty_publish_locked(state, state->canonical, state->canonical_len);
+      tty_canonical_reset_locked(state);
+      wake_readers = true;
+    }
+
+    bool echo_char = (tio->c_lflag & ECHO) != 0 && ch != '\n';
+    bool echo_newline = (ch == '\n') && ((tio->c_lflag & (ECHO | ECHONL)) != 0);
+
+    spinlock_unlock(&state->cooked_lock);
+
+    if(echo_char) {
+      echo_buffer[echo_len++] = (char)ch;
+    }
+    if(echo_newline) {
+      echo_buffer[echo_len++] = '\n';
+    }
+    goto notify;
+  }
+
+  (void)tty_publish_locked(state, (const char*)&ch, 1);
+  wake_readers = true;
+  bool echo_char = (tio->c_lflag & ECHO) != 0;
+  spinlock_unlock(&state->cooked_lock);
+
+  if(echo_char) {
+    echo_buffer[echo_len++] = (char)ch;
+  }
+
+notify:
+  if(echo_len > 0) {
+    tty_output_buffer(echo_buffer, echo_len, convert_newline);
+  }
+  if(signal_eof) {
+    kcondvar_broadcast(&state->waiters);
+  } else if(wake_readers) {
+    kcondvar_signal(&state->waiters);
+  }
 }
 
 file_t* file_create(const file_ops_t* ops, void* private_data, uint32_t mode) {
@@ -1032,14 +1312,83 @@ static int64_t tty_write_impl(file_t* file, const void* buffer, size_t length) {
   if(buffer == NULL) {
     return -EINVAL;
   }
-  serial_write_impl(NULL, buffer, length);
-  framebuffer_console_write_impl(NULL, buffer, length);
+  if(length == 0) {
+    return 0;
+  }
+
+  tty_state_initialize();
+  tty_state_t* state = tty_state();
+
+  struct termios termios_snapshot;
+  spinlock_lock(&state->cooked_lock);
+  termios_snapshot = state->termios;
+  spinlock_unlock(&state->cooked_lock);
+
+  bool convert_newline = ((termios_snapshot.c_oflag & (OPOST | ONLCR)) == (OPOST | ONLCR));
+  tty_output_buffer((const char*)buffer, length, convert_newline);
   return (int64_t)length;
 }
 
 static int tty_ioctl_impl(file_t* file, unsigned long request, void* argp) {
   (void)file;
+  tty_state_initialize();
+  tty_state_t* state = tty_state();
+
   switch(request) {
+    case TCGETS: {
+      if(argp == NULL) {
+        return -EINVAL;
+      }
+      struct termios snapshot;
+      spinlock_lock(&state->cooked_lock);
+      snapshot = state->termios;
+      spinlock_unlock(&state->cooked_lock);
+
+      if(current != NULL) {
+        if(!proc_user_buffer_accessible(current, argp, sizeof(snapshot))) {
+          return -EFAULT;
+        }
+        virt_addr_t dest = (virt_addr_t)(uintptr_t)argp;
+        if(!proc_user_copy_out(current, dest, &snapshot, sizeof(snapshot))) {
+          return -EFAULT;
+        }
+      } else {
+        memcpy(argp, &snapshot, sizeof(snapshot));
+      }
+      return 0;
+    }
+    case TCSETS:
+    case TCSETSW:
+    case TCSETSF: {
+      if(argp == NULL) {
+        return -EINVAL;
+      }
+      struct termios new_termios;
+      if(current != NULL) {
+        if(!proc_user_buffer_accessible(current, argp, sizeof(new_termios))) {
+          return -EFAULT;
+        }
+        virt_addr_t src = (virt_addr_t)(uintptr_t)argp;
+        if(!proc_user_copy_in(current, &new_termios, src, sizeof(new_termios))) {
+          return -EFAULT;
+        }
+      } else {
+        memcpy(&new_termios, argp, sizeof(new_termios));
+      }
+
+      bool flush = (request == TCSETSF);
+      spinlock_lock(&state->cooked_lock);
+      state->termios = new_termios;
+      if(flush) {
+        tty_flush_input_locked(state);
+      }
+      spinlock_unlock(&state->cooked_lock);
+
+      if(flush) {
+        kcondvar_broadcast(&state->waiters);
+      }
+      return 0;
+    }
     case TIOCGWINSZ: {
       if(argp == NULL) {
         return -EINVAL;

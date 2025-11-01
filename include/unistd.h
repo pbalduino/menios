@@ -73,6 +73,8 @@ int unlink(const char* path);
 int rmdir(const char* path);
 int access(const char* path, int mode);
 int isatty(int fd);
+char* ttyname(int fd);
+char* ctermid(char* s);
 long pathconf(const char* path, int name);
 
 #ifdef __cplusplus

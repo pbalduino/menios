@@ -11,6 +11,10 @@
 #define NULL ((void*)0)
 #endif
 
+#ifndef L_ctermid
+#define L_ctermid 32
+#endif
+
 struct _IO_FILE;
 typedef struct _IO_FILE FILE;
 typedef struct _IO_FILE __FILE;

@@ -683,7 +683,7 @@
     "github_issue": {
       "number": 347,
       "url": "https://github.com/pbalduino/menios/issues/347",
-      "state": "OPEN"
+      "state": "CLOSED"
     },
     "labels": [
       "libc"
@@ -814,7 +814,7 @@
     "github_issue": {
       "number": 336,
       "url": "https://github.com/pbalduino/menios/issues/336",
-      "state": "OPEN"
+      "state": "CLOSED"
     },
     "labels": [
       "enhancement",
