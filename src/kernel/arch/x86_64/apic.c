@@ -1,9 +1,11 @@
 #include <kernel/arch/x86_64/apic.h>
+#include <kernel/arch/x86_64/idt.h>
 #include <kernel/console.h>
 #include <kernel/heap.h>
-#include <kernel/arch/x86_64/idt.h>
-#include <kernel/pmm.h>
+#include <kernel/irq.h>
 #include <kernel/kernel.h>
+#include <kernel/msr.h>
+#include <kernel/pmm.h>
 #include <kernel/serial.h>
 
 #include <uacpi/acpi.h>
@@ -27,6 +29,8 @@ static struct acpi_madt *madt;
 static struct acpi_entry_hdr *liststart;
 static struct acpi_entry_hdr *listend;
 static void *lapicaddr;
+
+static bool lapic_x2apic_enabled = false;
 
 static size_t overridecount;
 static size_t iocount;
@@ -136,6 +140,10 @@ void apic_initialize(void) {
 
 	void *paddr = lapic64 ? (void *)lapic64->address : (void *)(uint64_t)madt->local_interrupt_controller_address;
 
+  uint64_t apic_base = msr_read(LAPIC_BASE_MSR);
+  lapic_x2apic_enabled = (apic_base & LAPIC_BASE_X2APIC_ENABLE) != 0;
+  serial_printf("acpi_initialize: x2APIC %s\n", lapic_x2apic_enabled ? "enabled" : "disabled");
+
 	if(lapic64) {
 		serial_printf("\e[94mUsing 64 bit override for the local APIC address\n\e[0m");
   }
@@ -160,15 +168,53 @@ void apic_initialize(void) {
       puts(".");
     }
   }
+  irq_apic_online();
   printf(".OK\n");
 }
 
-void write_lapic(uintptr_t reg, uint32_t value) {
-  *((volatile uint32_t*) reg) = value;
+static void pic_set_mask(uint32_t irq, bool masked) {
+  if(irq >= 16) {
+    return;
+  }
+
+  uint16_t port = (irq < 8) ? PIC1_DATA_PORT : PIC2_DATA_PORT;
+  uint8_t bit = (uint8_t)(1u << (irq % 8));
+  uint8_t value = inb(port);
+  if(masked) {
+    value |= bit;
+  } else {
+    value &= (uint8_t)~bit;
+  }
+  outb(port, value);
 }
 
-uint32_t read_lapic(uintptr_t reg) {
-  return *((volatile uint32_t*) reg);
+void write_lapic(uint32_t reg, uint32_t value) {
+  if(lapic_x2apic_enabled) {
+    uint32_t msr = IA32_X2APIC_BASE + (reg >> 4);
+    msr_write(msr, (uint64_t)value);
+    return;
+  }
+
+  if(lapicaddr == NULL) {
+    return;
+  }
+
+  volatile uint32_t* target = (volatile uint32_t*)((uintptr_t)lapicaddr + reg);
+  *target = value;
+}
+
+uint32_t read_lapic(uint32_t reg) {
+  if(lapic_x2apic_enabled) {
+    uint32_t msr = IA32_X2APIC_BASE + (reg >> 4);
+    return (uint32_t)msr_read(msr);
+  }
+
+  if(lapicaddr == NULL) {
+    return 0;
+  }
+
+  volatile uint32_t* target = (volatile uint32_t*)((uintptr_t)lapicaddr + reg);
+  return *target;
 }
 
 static ioapicdesc_t* apic_find_ioapic(uint32_t gsi) {
@@ -210,13 +256,60 @@ bool apic_configure_irq(uint32_t gsi,
                 level_triggered ? "yes" : "no",
                 active_low ? "yes" : "no");
 
+  pic_set_mask(gsi, true);
+
   return true;
 }
 
-void apic_send_eoi(void) {
+bool apic_update_irq_mask(uint32_t gsi, bool masked) {
+  ioapicdesc_t* desc = apic_find_ioapic(gsi);
+  if(desc == NULL) {
+    if(gsi < 16) {
+      pic_set_mask(gsi, masked);
+      return true;
+    }
+    return false;
+  }
+
+  uint8_t entry = (uint8_t)(gsi - (uint32_t)desc->base);
+  uint32_t value = readioapic(desc->addr, 0x10 + entry * 2);
+  if(masked) {
+    value |= (1u << 16);
+  } else {
+    value &= ~(1u << 16);
+  }
+  writeioapic(desc->addr, 0x10 + entry * 2, value);
+
+  pic_set_mask(gsi, true);
+
+  return true;
+}
+
+uint32_t apic_current_processor_id(void) {
+  if(lapic_x2apic_enabled) {
+    return (uint32_t)msr_read(IA32_X2APIC_APICID);
+  }
+
   if(lapicaddr == NULL) {
+    return 0;
+  }
+
+  volatile uint32_t* reg = (volatile uint32_t*)((uintptr_t)lapicaddr + 0x20);
+  return (*reg >> 24) & 0xFFu;
+}
+
+void apic_send_eoi(void) {
+  if(lapicaddr == NULL && !lapic_x2apic_enabled) {
     return;
   }
 
-  write_lapic((uintptr_t)lapicaddr + LAPIC_EOI, 0);
+  write_lapic(LAPIC_EOI, 0);
+}
+
+void* apic_get_lapic_base(void) {
+  return lapicaddr;
+}
+
+bool apic_is_x2apic_enabled(void) {
+  return lapic_x2apic_enabled;
 }

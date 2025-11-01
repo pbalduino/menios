@@ -47,6 +47,8 @@
 #include <kernel/heap.h>
 #include <kernel/hw.h>
 #include <kernel/arch/x86_64/idt.h>
+#include <kernel/irq.h>
+#include <kernel/ioport.h>
 #include <kernel/kernel.h>
 #include <kernel/mem.h>
 #include <kernel/proc.h>
@@ -58,6 +60,7 @@
 #include <kernel/tsc.h>
 #include <kernel/syscall.h>
 #include <kernel/user_mode.h>
+#include <kernel/workqueue.h>
 #include <kernel/drivers/input/ps2kb.h>
 #include <kernel/fs/vfs/vfs.h>
 
@@ -163,6 +166,9 @@ void _start() {
   gdt_initialize();
 
   idt_initialize();
+  irq_initialize();
+  workqueue_initialize();
+  ioport_manager_initialize();
 
   cpu_enable_sse();
 
@@ -180,6 +186,7 @@ void _start() {
   timer_initialize();
   
   scheduler_initialize();
+  workqueue_start();
 
   hardware_initialize();
 

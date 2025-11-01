@@ -72,6 +72,7 @@ KERNEL_SRC = \
 	src/kernel/arch/x86_64/cpu.c \
 	src/kernel/arch/x86_64/gdt.c \
 	src/kernel/arch/x86_64/idt.c \
+	src/kernel/arch/x86_64/irq.c \
 	src/kernel/block/block_cache.c \
 	src/kernel/block/block_device.c \
 	src/kernel/console/ansi.c \
@@ -82,6 +83,7 @@ KERNEL_SRC = \
 	src/kernel/core/main.c \
 	src/kernel/core/panic.c \
 	src/kernel/core/services.c \
+	src/kernel/core/workqueue.c \
 	src/kernel/drivers/audio/sb/sb.c \
 	src/kernel/drivers/block/ahci/ahci.c \
 	src/kernel/drivers/bus/pciroot/pci.c \
@@ -96,6 +98,7 @@ KERNEL_SRC = \
 	src/kernel/fs/tmpfs/tmpfs.c \
 	src/kernel/fs/vfs/vfs.c \
 	src/kernel/hw/hw.c \
+	src/kernel/hw/ioport.c \
 	src/kernel/input/keyboard.c \
 	src/kernel/ipc/shm.c \
 	src/kernel/framebuffer/framebuffer.c \

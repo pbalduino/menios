@@ -11,11 +11,16 @@
 #include <kernel/proc.h>
 #include <kernel/serial.h>
 #include <kernel/pci.h>
+#include <kernel/ioport.h>
+#include <kernel/workqueue.h>
+#include <kernel/irq.h>
 
 #include <boot/limine.h>
 
 #include <uacpi/kernel_api.h>
 
+#include <errno.h>
+#include <assert.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <string.h>
@@ -23,6 +28,72 @@
 typedef struct uacpi_kevent {
   ksem_t sem;
 } uacpi_kevent;
+
+typedef struct uacpi_irq_binding {
+  struct irq_handle* irq_handle;
+  uacpi_interrupt_handler handler;
+  uacpi_handle ctx;
+} uacpi_irq_binding;
+
+typedef struct uacpi_work_binding {
+  uacpi_work_handler handler;
+  uacpi_handle ctx;
+} uacpi_work_binding;
+
+static bool uacpi_irq_dispatch(void* opaque) {
+  if(opaque == NULL) {
+    return false;
+  }
+
+  uacpi_irq_binding* binding = (uacpi_irq_binding*)opaque;
+  if(binding->handler == NULL) {
+    return false;
+  }
+
+  uacpi_interrupt_ret result = binding->handler(binding->ctx);
+  return result != UACPI_INTERRUPT_NOT_HANDLED;
+}
+
+static void uacpi_work_dispatch(void* opaque) {
+  if(opaque == NULL) {
+    return;
+  }
+
+  uacpi_work_binding* binding = (uacpi_work_binding*)opaque;
+  if(binding->handler != NULL) {
+    binding->handler(binding->ctx);
+  }
+  kfree(binding);
+}
+
+static workqueue_class_t uacpi_workqueue_class(uacpi_work_type type) {
+  switch(type) {
+    case UACPI_WORK_GPE_EXECUTION:
+      return WORKQUEUE_CLASS_ACPI_GPE;
+    case UACPI_WORK_NOTIFICATION:
+      return WORKQUEUE_CLASS_ACPI_NOTIFY;
+    default:
+      return WORKQUEUE_CLASS_GENERIC;
+  }
+}
+
+static uacpi_status uacpi_status_from_errno(int err) {
+  if(err == 0) {
+    return UACPI_STATUS_OK;
+  }
+
+  switch(err) {
+    case -ENOMEM:
+      return UACPI_STATUS_OUT_OF_MEMORY;
+    case -EBUSY:
+      return UACPI_STATUS_ALREADY_EXISTS;
+    case -EINVAL:
+    case -ERANGE:
+      return UACPI_STATUS_INVALID_ARGUMENT;
+    default:
+      return UACPI_STATUS_MAPPING_FAILED;
+  }
+}
 
 static volatile struct limine_rsdp_request rsdp_request = {
   .id = LIMINE_RSDP_REQUEST,
@@ -88,6 +159,10 @@ uacpi_status uacpi_kernel_get_rsdp(uacpi_phys_addr *out_rdsp_address) {
 uacpi_status uacpi_kernel_raw_io_read(
     uacpi_io_addr address, uacpi_u8 byte_width, uacpi_u64 *out_value
 ) {
+  if(out_value == NULL) {
+    return UACPI_STATUS_INVALID_ARGUMENT;
+  }
+
   switch(byte_width) {
     case 1:
       *out_value = inb(address);
@@ -130,7 +205,14 @@ void uacpi_kernel_log(uacpi_log_level level, const uacpi_char* msg) {
 }
 
 void *uacpi_kernel_calloc(uacpi_size count, uacpi_size size) {
+  if(size != 0 && count > SIZE_MAX / size) {
+    return NULL;
+  }
+
   void* obj = kmalloc(count * size);
+  if(obj == NULL) {
+    return NULL;
+  }
   memset(obj, 0, count * size);
   return obj;
 }
@@ -156,38 +238,114 @@ void uacpi_kernel_release_mutex(uacpi_handle handle) {
 }
 
 void* uacpi_kernel_map(uacpi_phys_addr addr, uacpi_size len) {
-  return (void*)physical_to_virtual(addr);
-  // return kmmap((void*)addr, len, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
+  if(len == 0) {
+    return NULL;
+  }
+
+  return (void*)physical_to_virtual((phys_addr_t)addr);
 }
 
 void uacpi_kernel_unmap(void *addr, uacpi_size len) {
-  kmunmap(addr, len);
+  (void)addr;
+  (void)len;
 }
 
 uacpi_status uacpi_kernel_schedule_work(
-    uacpi_work_type, uacpi_work_handler, uacpi_handle ctx
+    uacpi_work_type work_type, uacpi_work_handler work_handler, uacpi_handle ctx
 ) {
-  serial_printf("uacpi_kernel_schedule_work not implemented\n");
+  if(work_handler == NULL) {
+    return UACPI_STATUS_INVALID_ARGUMENT;
+  }
+
+  uacpi_work_binding* binding = kmalloc(sizeof(*binding));
+  if(binding == NULL) {
+    return UACPI_STATUS_OUT_OF_MEMORY;
+  }
+
+  binding->handler = work_handler;
+  binding->ctx = ctx;
+
+  workqueue_class_t cls = uacpi_workqueue_class(work_type);
+  int rc = workqueue_submit(cls, uacpi_work_dispatch, binding);
+  if(rc != 0) {
+    kfree(binding);
+    if(rc == -ENOMEM) {
+      return UACPI_STATUS_OUT_OF_MEMORY;
+    }
+    return UACPI_STATUS_ERROR;
+  }
+
   return UACPI_STATUS_OK;
 }
 
 uacpi_status uacpi_kernel_wait_for_work_completion(void) {
-  serial_printf("uacpi_kernel_wait_for_work_completion not implemented\n");
+  workqueue_wait_idle();
   return UACPI_STATUS_OK;
 }
 
 uacpi_status uacpi_kernel_install_interrupt_handler(
-    uacpi_u32 irq, uacpi_interrupt_handler, uacpi_handle ctx,
+    uacpi_u32 irq,
+    uacpi_interrupt_handler handler,
+    uacpi_handle ctx,
     uacpi_handle *out_irq_handle
 ) {
-  serial_printf("uacpi_kernel_install_interrupt_handler not implemented\n");
+  if(handler == NULL || out_irq_handle == NULL) {
+    return UACPI_STATUS_INVALID_ARGUMENT;
+  }
+
+  uacpi_irq_binding* binding = kmalloc(sizeof(*binding));
+  if(binding == NULL) {
+    return UACPI_STATUS_OUT_OF_MEMORY;
+  }
+
+  binding->handler = handler;
+  binding->ctx = ctx;
+  binding->irq_handle = NULL;
+
+  irq_config_t config = {
+    .level_triggered = true,
+    .active_low = true
+  };
+
+  int rc = irq_register(irq, uacpi_irq_dispatch, binding, &config, &binding->irq_handle);
+  if(rc != 0) {
+    kfree(binding);
+    if(rc == -ENOMEM) {
+      return UACPI_STATUS_OUT_OF_MEMORY;
+    }
+    return UACPI_STATUS_ERROR;
+  }
+
+  *out_irq_handle = (uacpi_handle)binding;
   return UACPI_STATUS_OK;
 }
 
 uacpi_status uacpi_kernel_uninstall_interrupt_handler(
-    uacpi_interrupt_handler, uacpi_handle irq_handle
+    uacpi_interrupt_handler handler,
+    uacpi_handle irq_handle
 ) {
-  serial_printf("uacpi_kernel_uninstall_interrupt_handler not implemented\n");
+  if(irq_handle == UACPI_NULL) {
+    return UACPI_STATUS_INVALID_ARGUMENT;
+  }
+
+  uacpi_irq_binding* binding = (uacpi_irq_binding*)irq_handle;
+  if(handler != NULL && handler != binding->handler) {
+    return UACPI_STATUS_INVALID_ARGUMENT;
+  }
+
+  if(binding->irq_handle == NULL) {
+    kfree(binding);
+    return UACPI_STATUS_ERROR;
+  }
+
+  int rc = irq_unregister(binding->irq_handle);
+  if(rc != 0) {
+    return UACPI_STATUS_ERROR;
+  }
+
+  binding->irq_handle = NULL;
+  kfree(binding);
+
   return UACPI_STATUS_OK;
 }
 
@@ -242,6 +400,9 @@ void uacpi_kernel_free_event(uacpi_handle handle) {
 
 uacpi_handle uacpi_kernel_create_spinlock(void) {
   spinlock_t* lock = kmalloc(sizeof(spinlock_t));
+  if(lock == NULL) {
+    return NULL;
+  }
   spinlock_init(lock);
   serial_printf("uacpi_kernel_create_spinlock: %p\n", lock);
   return lock;
@@ -254,6 +415,9 @@ void uacpi_kernel_free_spinlock(uacpi_handle handle) {
 
 uacpi_handle uacpi_kernel_create_mutex(void) {
   kmutex_t* mutex = kmalloc(sizeof(kmutex_t));
+  if(mutex == NULL) {
+    return NULL;
+  }
   memset(mutex, 0, sizeof(kmutex_t));
   kmutex_init(mutex);
   return mutex;
@@ -313,26 +477,47 @@ uacpi_bool uacpi_kernel_wait_for_event(uacpi_handle handle, uacpi_u16 timeout) {
   return UACPI_FALSE;
 }
 
-uacpi_status uacpi_kernel_handle_firmware_request(uacpi_firmware_request*) {
-  serial_printf("uacpi_kernel_handle_firmware_request not implemented\n");
-  return UACPI_STATUS_OK;
+uacpi_status uacpi_kernel_handle_firmware_request(uacpi_firmware_request* request) {
+  if(request == NULL) {
+    return UACPI_STATUS_INVALID_ARGUMENT;
+  }
+
+  switch(request->type) {
+    case UACPI_FIRMWARE_REQUEST_TYPE_BREAKPOINT:
+      serial_printf("uacpi: firmware breakpoint signaled (ctx=%p)\n", request->breakpoint.ctx);
+      return UACPI_STATUS_OK;
+    case UACPI_FIRMWARE_REQUEST_TYPE_FATAL:
+      panic("uacpi fatal firmware request: type=%u code=%u arg=%p",
+            request->fatal.type,
+            request->fatal.code,
+            (void*)request->fatal.arg);
+      return UACPI_STATUS_DENIED;
+    default:
+      serial_printf("uacpi: unknown firmware request type %u\n", request->type);
+      return UACPI_STATUS_INVALID_ARGUMENT;
+  }
 }
 
 uacpi_status uacpi_kernel_raw_memory_read(
     uacpi_phys_addr address, uacpi_u8 byte_width, uacpi_u64 *out_value
 ) {
+  if(out_value == NULL) {
+    return UACPI_STATUS_INVALID_ARGUMENT;
+  }
+
+  volatile uint8_t* virt = (volatile uint8_t*)physical_to_virtual((phys_addr_t)address);
   switch(byte_width) {
     case 1:
-      *out_value = *(uacpi_u8*)address;
+      *out_value = *virt;
       break;
     case 2:
-      *out_value = *(uacpi_u16*)address;
+      *out_value = *(volatile uacpi_u16*)virt;
       break;
     case 4:
-      *out_value = *(uacpi_u32*)address;
+      *out_value = *(volatile uacpi_u32*)virt;
       break;
     case 8:
-      *out_value = *(uacpi_u64*)address;
+      *out_value = *(volatile uacpi_u64*)virt;
       break;
     default:
       serial_printf("uacpi_kernel_raw_memory_read: Invalid byte width: %d\n", byte_width);
@@ -345,18 +530,19 @@ uacpi_status uacpi_kernel_raw_memory_read(
 uacpi_status uacpi_kernel_raw_memory_write(
     uacpi_phys_addr address, uacpi_u8 byte_width, uacpi_u64 in_value
 ) {
+  volatile uint8_t* virt = (volatile uint8_t*)physical_to_virtual((phys_addr_t)address);
   switch(byte_width) {
     case 1:
-      *(uacpi_u8*)address = in_value;
+      *(volatile uacpi_u8*)virt = (uacpi_u8)in_value;
       break;
     case 2:
-      *(uacpi_u16*)address = in_value;
+      *(volatile uacpi_u16*)virt = (uacpi_u16)in_value;
       break;
     case 4:
-      *(uacpi_u32*)address = in_value;
+      *(volatile uacpi_u32*)virt = (uacpi_u32)in_value;
       break;
     case 8:
-      *(uacpi_u64*)address = in_value;
+      *(volatile uacpi_u64*)virt = (uacpi_u64)in_value;
       break;
     default:
       serial_printf("uacpi_kernel_raw_memory_write: Invalid byte width: %d\n", byte_width);
@@ -409,11 +595,11 @@ uacpi_status uacpi_kernel_pci_read(
   uint8_t device = (uint8_t)address->device;
   uint8_t function = (uint8_t)address->function;
 
-  uacpi_u64 result = 0;
+    uacpi_u64 result = 0;
 
-  for(uacpi_size i = 0; i < byte_width; ++i) {
+    for(uacpi_size i = 0; i < byte_width; ++i) {
     uacpi_size byte_offset = offset + i;
-    uint8_t aligned = (uint8_t)(byte_offset & ~0x3u);
+    uint16_t aligned = (uint16_t)(byte_offset & ~0x3u);
     uint32_t raw = pci_config_read_segment(segment, bus, device, function, aligned);
     uint32_t shift = (uint32_t)(byte_offset & 0x3u) * 8u;
     uacpi_u64 byte_value = (raw >> shift) & 0xFFu;
@@ -449,7 +635,7 @@ uacpi_status uacpi_kernel_pci_write(
                                            bus,
                                            device,
                                            function,
-                                           (uint8_t)aligned);
+                                           (uint16_t)aligned);
 
     for(uacpi_size i = 0; i < 4; ++i) {
       uacpi_size byte_index = aligned + i;
@@ -467,7 +653,7 @@ uacpi_status uacpi_kernel_pci_write(
                              bus,
                              device,
                              function,
-                             (uint8_t)aligned,
+                             (uint16_t)aligned,
                              raw);
   }
 
@@ -477,28 +663,64 @@ uacpi_status uacpi_kernel_pci_write(
 uacpi_status uacpi_kernel_io_map(
     uacpi_io_addr base, uacpi_size len, uacpi_handle *out_handle
 ) {
-  serial_printf("uacpi_kernel_io_map not implemented\n");
+  if(out_handle == NULL || len == 0) {
+    return UACPI_STATUS_INVALID_ARGUMENT;
+  }
+
+  if(base > 0xFFFFu || len >= 0x10000u || (base + len) > 0x10000u) {
+    return UACPI_STATUS_INVALID_ARGUMENT;
+  }
+
+  ioport_region_t* region = NULL;
+  int rc = ioport_reserve((uint16_t)base, (uint16_t)len, &region);
+  uacpi_status status = uacpi_status_from_errno(rc);
+  if(status != UACPI_STATUS_OK) {
+    return status;
+  }
+
+  *out_handle = region;
   return UACPI_STATUS_OK;
 }
 
 void uacpi_kernel_io_unmap(uacpi_handle handle) {
-  serial_printf("uacpi_kernel_io_unmap not implemented\n");
+  ioport_region_t* region = (ioport_region_t*)handle;
+  if(region != NULL) {
+    ioport_release(region);
+  }
 }
 
 uacpi_status uacpi_kernel_io_read(
-    uacpi_handle, uacpi_size offset,
-    uacpi_u8 byte_width, uacpi_u64 *value
+    uacpi_handle handle,
+    uacpi_size offset,
+    uacpi_u8 byte_width,
+    uacpi_u64 *value
 ) {
-  serial_printf("uacpi_kernel_io_read not implemented\n");
-  return UACPI_STATUS_OK;
+  if(value == NULL) {
+    return UACPI_STATUS_INVALID_ARGUMENT;
+  }
+
+  if(offset > 0xFFFFu) {
+    return UACPI_STATUS_INVALID_ARGUMENT;
+  }
+
+  ioport_region_t* region = (ioport_region_t*)handle;
+  int rc = ioport_read(region, (uint16_t)offset, byte_width, value);
+  return uacpi_status_from_errno(rc);
 }
 
 uacpi_status uacpi_kernel_io_write(
-    uacpi_handle, uacpi_size offset,
-    uacpi_u8 byte_width, uacpi_u64 value
+    uacpi_handle handle,
+    uacpi_size offset,
+    uacpi_u8 byte_width,
+    uacpi_u64 value
 ) {
-  serial_printf("uacpi_kernel_io_write not implemented - offset: %lx - width: %lx - value: %lx\n", offset, byte_width, value);
-  return UACPI_STATUS_OK;
+  if(offset > 0xFFFFu) {
+    return UACPI_STATUS_INVALID_ARGUMENT;
+  }
+
+  ioport_region_t* region = (ioport_region_t*)handle;
+  int rc = ioport_write(region, (uint16_t)offset, byte_width, value);
+  return uacpi_status_from_errno(rc);
 }
 
 
