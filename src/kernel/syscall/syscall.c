@@ -76,6 +76,26 @@ void syscall_trace_return(uint64_t value) {
 
 #define SYSCALL_MAX 256
 
+static bool syscall_copy_from_user(void* dest, const void* user_src, size_t size) {
+  if(size == 0) {
+    return true;
+  }
+  if(dest == NULL || user_src == NULL || current == NULL) {
+    return false;
+  }
+  return proc_user_copy_in(current, dest, (virt_addr_t)(uintptr_t)user_src, size);
+}
+
+static bool syscall_copy_to_user(void* user_dest, const void* src, size_t size) {
+  if(size == 0) {
+    return true;
+  }
+  if(user_dest == NULL || src == NULL || current == NULL) {
+    return false;
+  }
+  return proc_user_copy_out(current, (virt_addr_t)(uintptr_t)user_dest, src, size);
+}
+
 static uint64_t syscall_stub_unimplemented(syscall_frame_t* frame);
 static uint64_t syscall_read_handler(syscall_frame_t* frame);
 static uint64_t syscall_write_handler(syscall_frame_t* frame);
@@ -986,11 +1006,9 @@ static int kernel_stat_copy_to_user(const char* user_path, struct stat* user_buf
   struct stat kstat;
   fs_path_info_to_stat(&info, &kstat);
 
-  if(!proc_user_buffer_accessible(current, user_buf, sizeof(struct stat))) {
+  if(!syscall_copy_to_user(user_buf, &kstat, sizeof(kstat))) {
     return -EFAULT;
   }
-
-  memcpy(user_buf, &kstat, sizeof(struct stat));
   return 0;
 }
 
@@ -1038,12 +1056,10 @@ static uint64_t syscall_fstat_handler(syscall_frame_t* frame) {
     return frame->rax;
   }
 
-  if(!proc_user_buffer_accessible(current, user_buf, sizeof(struct stat))) {
+  if(!syscall_copy_to_user(user_buf, &kstat, sizeof(kstat))) {
     frame->rax = (uint64_t)(-EFAULT);
     return frame->rax;
   }
-
-  memcpy(user_buf, &kstat, sizeof(struct stat));
   frame->rax = 0;
   return frame->rax;
 }
@@ -1281,8 +1297,13 @@ static uint64_t syscall_pipe_handler(syscall_frame_t* frame) {
   file_unref(read_end);
   file_unref(write_end);
 
-  fds[0] = read_fd;
-  fds[1] = write_fd;
+  int fds_local[2] = { read_fd, write_fd };
+  if(!syscall_copy_to_user(fds, fds_local, sizeof(fds_local))) {
+    proc_file_close(current, read_fd);
+    proc_file_close(current, write_fd);
+    frame->rax = (uint64_t)(-EFAULT);
+    return frame->rax;
+  }
   frame->rax = 0;
   return frame->rax;
 }
@@ -1480,13 +1501,12 @@ static uint64_t syscall_waitpid_handler(syscall_frame_t* frame) {
 
     if(result > 0) {
       if(status_ptr != NULL) {
-        if(!proc_user_buffer_accessible(caller, status_ptr, sizeof(int))) {
+        if(!syscall_copy_to_user(status_ptr, &status, sizeof(status))) {
           caller->waitpid_waiting = false;
           caller->waitpid_target = -1;
           frame->rax = (uint64_t)(-EFAULT);
           return frame->rax;
         }
-        *status_ptr = status;
       }
       caller->waitpid_waiting = false;
       caller->waitpid_target = -1;
@@ -1647,12 +1667,10 @@ static uint64_t syscall_getcwd_handler(syscall_frame_t* frame) {
     return frame->rax;
   }
 
-  if(!proc_user_buffer_accessible(current, user_buffer, needed)) {
+  if(!syscall_copy_to_user(user_buffer, current->cwd, needed)) {
     frame->rax = (uint64_t)(-EFAULT);
     return frame->rax;
   }
-
-  memcpy(user_buffer, current->cwd, needed);
   frame->rax = (uint64_t)user_buffer;
   return frame->rax;
 }
@@ -1917,12 +1935,11 @@ static uint64_t syscall_utime_handler(syscall_frame_t* frame) {
   const struct timespec* times_ptr = NULL;
 
   if(user_times != NULL) {
-    if(!proc_user_buffer_accessible(current, user_times, sizeof(struct utimbuf))) {
+    struct utimbuf tmp;
+    if(!syscall_copy_from_user(&tmp, user_times, sizeof(tmp))) {
       frame->rax = (uint64_t)(-EFAULT);
       return frame->rax;
     }
-    struct utimbuf tmp;
-    memcpy(&tmp, user_times, sizeof(tmp));
     times[0].tv_sec = tmp.actime;
     times[0].tv_nsec = 0;
     times[1].tv_sec = tmp.modtime;
@@ -2043,13 +2060,11 @@ static uint64_t syscall_proc_list_handler(syscall_frame_t* frame) {
     return frame->rax;
   }
 
-  if(!proc_user_buffer_accessible(current, user_buffer, out_len + 1)) {
+  output[out_len] = '\0';
+  if(!syscall_copy_to_user(user_buffer, output, out_len + 1)) {
     frame->rax = (uint64_t)(-EFAULT);
     return frame->rax;
   }
-
-  memcpy(user_buffer, output, out_len);
-  user_buffer[out_len] = '\0';
 
   frame->rax = out_len;
   return frame->rax;
@@ -2079,19 +2094,11 @@ static uint64_t syscall_input_event_handler(syscall_frame_t* frame) {
     return frame->rax;
   }
 
-  if(!proc_user_buffer_accessible(current, user_event, sizeof(event))) {
+  if(!syscall_copy_to_user(user_event, &event, sizeof(event))) {
     keyboard_event_push(&event);
     frame->rax = (uint64_t)(-EFAULT);
     return frame->rax;
   }
-
-  if(!proc_user_touch_range(current, (virt_addr_t)user_event, sizeof(event), true)) {
-    keyboard_event_push(&event);
-    frame->rax = (uint64_t)(-EFAULT);
-    return frame->rax;
-  }
-
-  memcpy(user_event, &event, sizeof(event));
   frame->rax = 0;
   return frame->rax;
 }
@@ -2144,11 +2151,10 @@ static uint64_t syscall_sigaction_handler(syscall_frame_t* frame) {
   struct sigaction new_action;
   struct sigaction* new_action_ptr = NULL;
   if(user_act != NULL) {
-    if(!proc_user_buffer_accessible(current, user_act, sizeof(struct sigaction))) {
+    if(!syscall_copy_from_user(&new_action, user_act, sizeof(new_action))) {
       frame->rax = (uint64_t)(-EFAULT);
       return frame->rax;
     }
-    memcpy(&new_action, user_act, sizeof(struct sigaction));
     new_action_ptr = &new_action;
   }
 
@@ -2162,11 +2168,10 @@ static uint64_t syscall_sigaction_handler(syscall_frame_t* frame) {
   }
 
   if(user_oldact != NULL) {
-    if(!proc_user_buffer_accessible(current, user_oldact, sizeof(struct sigaction))) {
+    if(!syscall_copy_to_user(user_oldact, &old_action, sizeof(old_action))) {
       frame->rax = (uint64_t)(-EFAULT);
       return frame->rax;
     }
-    memcpy(user_oldact, &old_action, sizeof(struct sigaction));
   }
 
   frame->rax = 0;
@@ -2187,11 +2192,11 @@ static uint64_t syscall_sigprocmask_handler(syscall_frame_t* frame) {
   int rc = 0;
 
   if(user_set != NULL) {
-    if(!proc_user_buffer_accessible(current, user_set, sizeof(sigset_t))) {
+    sigset_t mask_value;
+    if(!syscall_copy_from_user(&mask_value, user_set, sizeof(mask_value))) {
       frame->rax = (uint64_t)(-EFAULT);
       return frame->rax;
     }
-    sigset_t mask_value = *user_set;
     rc = proc_signal_modify_mask(current, how, (uint32_t)mask_value, &previous_mask);
     if(rc != 0) {
       frame->rax = (uint64_t)rc;
@@ -2202,11 +2207,11 @@ static uint64_t syscall_sigprocmask_handler(syscall_frame_t* frame) {
   }
 
   if(user_oldset != NULL) {
-    if(!proc_user_buffer_accessible(current, user_oldset, sizeof(sigset_t))) {
+    sigset_t value = (sigset_t)previous_mask;
+    if(!syscall_copy_to_user(user_oldset, &value, sizeof(value))) {
       frame->rax = (uint64_t)(-EFAULT);
       return frame->rax;
     }
-    *user_oldset = (sigset_t)previous_mask;
   }
 
   frame->rax = 0;
@@ -2221,14 +2226,13 @@ static uint64_t syscall_sigpending_handler(syscall_frame_t* frame) {
     return frame->rax;
   }
 
-  if(user_set == NULL ||
-     !proc_user_buffer_accessible(current, user_set, sizeof(sigset_t))) {
+  if(user_set == NULL) {
     frame->rax = (uint64_t)(-EFAULT);
     return frame->rax;
   }
 
   sigset_t pending = (sigset_t)(current->signal_pending);
-  if(!proc_user_copy_out(current, (virt_addr_t)user_set, &pending, sizeof(pending))) {
+  if(!syscall_copy_to_user(user_set, &pending, sizeof(pending))) {
     frame->rax = (uint64_t)(-EFAULT);
     return frame->rax;
   }
@@ -2248,14 +2252,16 @@ static uint64_t syscall_sigwaitinfo_handler(syscall_frame_t* frame) {
   siginfo_t* user_info = (siginfo_t*)frame->rsi;
   const struct timespec* user_timeout = (const struct timespec*)frame->rdx;
 
-  if(user_set == NULL ||
-     !proc_user_buffer_accessible(caller, user_set, sizeof(sigset_t))) {
+  if(user_set == NULL) {
     frame->rax = (uint64_t)(-EFAULT);
     return frame->rax;
   }
 
   sigset_t set_value;
-  memcpy(&set_value, user_set, sizeof(set_value));
+  if(!syscall_copy_from_user(&set_value, user_set, sizeof(set_value))) {
+    frame->rax = (uint64_t)(-EFAULT);
+    return frame->rax;
+  }
 
   uint32_t mask = ((uint32_t)set_value) & SIGNAL_ALLOWED_MASK;
   mask &= ~(sigbit(SIGKILL) | sigbit(SIGSTOP));
@@ -2265,21 +2271,15 @@ static uint64_t syscall_sigwaitinfo_handler(syscall_frame_t* frame) {
   }
 
   bool capture_info = (user_info != NULL);
-  if(capture_info &&
-     !proc_user_buffer_accessible(caller, user_info, sizeof(siginfo_t))) {
-    frame->rax = (uint64_t)(-EFAULT);
-    return frame->rax;
-  }
 
   bool has_timeout = false;
   uint64_t timeout_ns = 0;
   struct timespec timeout;
   if(user_timeout != NULL) {
-    if(!proc_user_buffer_accessible(caller, user_timeout, sizeof(struct timespec))) {
+    if(!syscall_copy_from_user(&timeout, user_timeout, sizeof(timeout))) {
       frame->rax = (uint64_t)(-EFAULT);
       return frame->rax;
     }
-    memcpy(&timeout, user_timeout, sizeof(timeout));
     if(timeout.tv_sec < 0 ||
        timeout.tv_nsec < 0 ||
        timeout.tv_nsec >= 1000000000L) {
@@ -2308,7 +2308,7 @@ static uint64_t syscall_sigwaitinfo_handler(syscall_frame_t* frame) {
       caller->signal_wait_capture_info = false;
       caller->signal_wait_result_ready = false;
       if(capture_info) {
-        if(!proc_user_copy_out(caller, (virt_addr_t)user_info, &info_local, sizeof(info_local))) {
+        if(!syscall_copy_to_user(user_info, &info_local, sizeof(info_local))) {
           frame->rax = (uint64_t)(-EFAULT);
           return frame->rax;
         }
@@ -2434,14 +2434,16 @@ static uint64_t syscall_sigsuspend_handler(syscall_frame_t* frame) {
   }
 
   const sigset_t* user_mask = (const sigset_t*)frame->rdi;
-  if(user_mask == NULL ||
-     !proc_user_buffer_accessible(caller, user_mask, sizeof(sigset_t))) {
+  if(user_mask == NULL) {
     frame->rax = (uint64_t)(-EFAULT);
     return frame->rax;
   }
 
   sigset_t mask_value;
-  memcpy(&mask_value, user_mask, sizeof(mask_value));
+  if(!syscall_copy_from_user(&mask_value, user_mask, sizeof(mask_value))) {
+    frame->rax = (uint64_t)(-EFAULT);
+    return frame->rax;
+  }
 
   uint32_t new_mask = ((uint32_t)mask_value) & SIGNAL_ALLOWED_MASK;
   new_mask &= ~(sigbit(SIGKILL) | sigbit(SIGSTOP));
@@ -2568,14 +2570,16 @@ static uint64_t syscall_nanosleep_handler(syscall_frame_t* frame) {
     return frame->rax;
   }
 
-  if(user_req == NULL ||
-     !proc_user_buffer_accessible(current, user_req, sizeof(struct timespec))) {
+  if(user_req == NULL) {
     frame->rax = (uint64_t)(-EFAULT);
     return frame->rax;
   }
 
   struct timespec req;
-  memcpy(&req, user_req, sizeof(req));
+  if(!syscall_copy_from_user(&req, user_req, sizeof(req))) {
+    frame->rax = (uint64_t)(-EFAULT);
+    return frame->rax;
+  }
 
   if(req.tv_sec < 0 || req.tv_nsec < 0 || req.tv_nsec >= 1000000000L) {
     frame->rax = (uint64_t)(-EINVAL);
@@ -2583,10 +2587,12 @@ static uint64_t syscall_nanosleep_handler(syscall_frame_t* frame) {
   }
 
   if(req.tv_sec == 0 && req.tv_nsec == 0) {
-    if(user_rem != NULL &&
-       proc_user_buffer_accessible(current, user_rem, sizeof(struct timespec))) {
+    if(user_rem != NULL) {
       struct timespec zero = {0, 0};
-      memcpy(user_rem, &zero, sizeof(zero));
+      if(!syscall_copy_to_user(user_rem, &zero, sizeof(zero))) {
+        frame->rax = (uint64_t)(-EFAULT);
+        return frame->rax;
+      }
     }
     frame->rax = 0;
     return 0;
@@ -2625,26 +2631,24 @@ static uint64_t syscall_nanosleep_handler(syscall_frame_t* frame) {
 
   if(remaining_us > 0) {
     if(user_rem != NULL) {
-      if(!proc_user_buffer_accessible(current, user_rem, sizeof(struct timespec))) {
-        frame->rax = (uint64_t)(-EFAULT);
-        return frame->rax;
-      }
       struct timespec rem;
       rem.tv_sec = (time_t)(remaining_us / 1000000ull);
       rem.tv_nsec = (long)((remaining_us % 1000000ull) * 1000ull);
-      memcpy(user_rem, &rem, sizeof(rem));
+      if(!syscall_copy_to_user(user_rem, &rem, sizeof(rem))) {
+        frame->rax = (uint64_t)(-EFAULT);
+        return frame->rax;
+      }
     }
     frame->rax = (uint64_t)(-EINTR);
     return frame->rax;
   }
 
   if(user_rem != NULL) {
-    if(!proc_user_buffer_accessible(current, user_rem, sizeof(struct timespec))) {
+    struct timespec zero = {0, 0};
+    if(!syscall_copy_to_user(user_rem, &zero, sizeof(zero))) {
       frame->rax = (uint64_t)(-EFAULT);
       return frame->rax;
     }
-    struct timespec zero = {0, 0};
-    memcpy(user_rem, &zero, sizeof(zero));
   }
 
   frame->rax = 0;
@@ -2655,8 +2659,7 @@ static uint64_t syscall_clock_gettime_handler(syscall_frame_t* frame) {
   clockid_t clk_id = (clockid_t)frame->rdi;
   struct timespec* user_tp = (struct timespec*)frame->rsi;
 
-  if(user_tp == NULL ||
-     !proc_user_buffer_accessible(current, user_tp, sizeof(struct timespec))) {
+  if(user_tp == NULL) {
     frame->rax = (uint64_t)(-EFAULT);
     return frame->rax;
   }
@@ -2679,7 +2682,10 @@ static uint64_t syscall_clock_gettime_handler(syscall_frame_t* frame) {
       return frame->rax;
   }
 
-  memcpy(user_tp, &ts, sizeof(ts));
+  if(!syscall_copy_to_user(user_tp, &ts, sizeof(ts))) {
+    frame->rax = (uint64_t)(-EFAULT);
+    return frame->rax;
+  }
   frame->rax = 0;
   return 0;
 }
@@ -2693,14 +2699,16 @@ static uint64_t syscall_clock_settime_handler(syscall_frame_t* frame) {
     return frame->rax;
   }
 
-  if(user_tp == NULL ||
-     !proc_user_buffer_accessible(current, user_tp, sizeof(struct timespec))) {
+  if(user_tp == NULL) {
     frame->rax = (uint64_t)(-EFAULT);
     return frame->rax;
   }
 
   struct timespec ts;
-  memcpy(&ts, user_tp, sizeof(ts));
+  if(!syscall_copy_from_user(&ts, user_tp, sizeof(ts))) {
+    frame->rax = (uint64_t)(-EFAULT);
+    return frame->rax;
+  }
 
   uint64_t desired_us;
   if(!timespec_to_microseconds(&ts, &desired_us)) {
@@ -2720,8 +2728,7 @@ static uint64_t syscall_clock_getres_handler(syscall_frame_t* frame) {
   clockid_t clk_id = (clockid_t)frame->rdi;
   struct timespec* user_res = (struct timespec*)frame->rsi;
 
-  if(user_res == NULL ||
-     !proc_user_buffer_accessible(current, user_res, sizeof(struct timespec))) {
+  if(user_res == NULL) {
     frame->rax = (uint64_t)(-EFAULT);
     return frame->rax;
   }
@@ -2739,7 +2746,10 @@ static uint64_t syscall_clock_getres_handler(syscall_frame_t* frame) {
       return frame->rax;
   }
 
-  memcpy(user_res, &ts, sizeof(ts));
+  if(!syscall_copy_to_user(user_res, &ts, sizeof(ts))) {
+    frame->rax = (uint64_t)(-EFAULT);
+    return frame->rax;
+  }
   frame->rax = 0;
   return 0;
 }
@@ -2776,20 +2786,14 @@ static uint64_t syscall_setitimer_handler(syscall_frame_t* frame) {
 
   struct itimerval new_value;
   if(user_new == NULL ||
-     !proc_user_buffer_accessible(proc, user_new, sizeof(struct itimerval))) {
+     !syscall_copy_from_user(&new_value, user_new, sizeof(new_value))) {
     frame->rax = (uint64_t)(-EFAULT);
     return frame->rax;
   }
-  memcpy(&new_value, user_new, sizeof(new_value));
 
   uint64_t now = realtime_now_us();
 
   if(user_old != NULL) {
-    if(!proc_user_buffer_accessible(proc, user_old, sizeof(struct itimerval))) {
-      frame->rax = (uint64_t)(-EFAULT);
-      return frame->rax;
-    }
-
     struct itimerval old_value;
     if(timer->active && timer->expires_us > now) {
       uint64_t remaining = timer->expires_us - now;
@@ -2799,7 +2803,10 @@ static uint64_t syscall_setitimer_handler(syscall_frame_t* frame) {
       old_value.it_value.tv_usec = 0;
     }
     microseconds_to_timeval(timer->interval_us, &old_value.it_interval);
-    memcpy(user_old, &old_value, sizeof(old_value));
+    if(!syscall_copy_to_user(user_old, &old_value, sizeof(old_value))) {
+      frame->rax = (uint64_t)(-EFAULT);
+      return frame->rax;
+    }
   }
 
   uint64_t value_us = 0;
@@ -2845,8 +2852,7 @@ static uint64_t syscall_getitimer_handler(syscall_frame_t* frame) {
     return frame->rax;
   }
 
-  if(user_value == NULL ||
-     !proc_user_buffer_accessible(proc, user_value, sizeof(struct itimerval))) {
+  if(user_value == NULL) {
     frame->rax = (uint64_t)(-EFAULT);
     return frame->rax;
   }
@@ -2869,7 +2875,10 @@ static uint64_t syscall_getitimer_handler(syscall_frame_t* frame) {
   }
 
   microseconds_to_timeval(timer->interval_us, &value.it_interval);
-  memcpy(user_value, &value, sizeof(value));
+  if(!syscall_copy_to_user(user_value, &value, sizeof(value))) {
+    frame->rax = (uint64_t)(-EFAULT);
+    return frame->rax;
+  }
 
   frame->rax = 0;
   return 0;
@@ -3200,8 +3209,7 @@ static uint64_t syscall_shmctl_handler(syscall_frame_t* frame) {
       shm_region_set_marked_for_removal(region, true);
       break;
     case IPC_STAT: {
-      if(user_buf == NULL ||
-         !proc_user_buffer_accessible(current, user_buf, sizeof(struct shmid_ds))) {
+      if(user_buf == NULL) {
         result = (uint64_t)(-EFAULT);
         break;
       }
@@ -3212,7 +3220,10 @@ static uint64_t syscall_shmctl_handler(syscall_frame_t* frame) {
       info.shm_perm.mode = shm_region_mode(region);
       info.shm_segsz = shm_region_size(region);
       info.shm_nattch = (unsigned short)shm_region_attachment_count(region);
-      memcpy(user_buf, &info, sizeof(info));
+      if(!syscall_copy_to_user(user_buf, &info, sizeof(info))) {
+        result = (uint64_t)(-EFAULT);
+        break;
+      }
       break;
     }
     default:
@@ -3245,11 +3256,10 @@ static uint64_t syscall_time_handler(syscall_frame_t* frame) {
   time_t now = (time_t)(now_us / 1000000ull);
 
   if(user_ptr != NULL) {
-    if(!proc_user_buffer_accessible(current, user_ptr, sizeof(time_t))) {
+    if(!syscall_copy_to_user(user_ptr, &now, sizeof(now))) {
       frame->rax = (uint64_t)(-EFAULT);
       return frame->rax;
     }
-    *user_ptr = now;
   }
 
   frame->rax = (uint64_t)now;
@@ -3260,30 +3270,24 @@ static uint64_t syscall_gettimeofday_handler(syscall_frame_t* frame) {
   struct timeval* tv = (struct timeval*)frame->rdi;
   struct timezone* tz = (struct timezone*)frame->rsi;
 
-  if(tv != NULL) {
-    if(!proc_user_buffer_accessible(current, tv, sizeof(struct timeval))) {
-      frame->rax = (uint64_t)(-EFAULT);
-      return frame->rax;
-    }
-  }
-
-  if(tz != NULL) {
-    if(!proc_user_buffer_accessible(current, tz, sizeof(struct timezone))) {
-      frame->rax = (uint64_t)(-EFAULT);
-      return frame->rax;
-    }
-  }
-
   uint64_t now_us = realtime_now_us();
 
   if(tv != NULL) {
-    tv->tv_sec = (time_t)(now_us / 1000000ull);
-    tv->tv_usec = (suseconds_t)(now_us % 1000000ull);
+    struct timeval tv_local;
+    tv_local.tv_sec = (time_t)(now_us / 1000000ull);
+    tv_local.tv_usec = (suseconds_t)(now_us % 1000000ull);
+    if(!syscall_copy_to_user(tv, &tv_local, sizeof(tv_local))) {
+      frame->rax = (uint64_t)(-EFAULT);
+      return frame->rax;
+    }
   }
 
   if(tz != NULL) {
-    tz->tz_minuteswest = 0;
-    tz->tz_dsttime = 0;
+    struct timezone tz_local = {0, 0};
+    if(!syscall_copy_to_user(tz, &tz_local, sizeof(tz_local))) {
+      frame->rax = (uint64_t)(-EFAULT);
+      return frame->rax;
+    }
   }
 
   frame->rax = 0;

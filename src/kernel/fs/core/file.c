@@ -352,9 +352,19 @@ void file_unref(file_t* file) {
 }
 
 int64_t file_read(file_t* file, void* buffer, size_t length) {
-  if(file == NULL || buffer == NULL || length == 0) {
+  if(file == NULL) {
     set_errno(EINVAL);
     return -EINVAL;
+  }
+  if(length == 0) {
+    if(current) {
+      current->err_no = 0;
+    }
+    return 0;
+  }
+  if(buffer == NULL) {
+    set_errno(EFAULT);
+    return -EFAULT;
   }
   if((file->mode & FILE_MODE_READ) == 0 || file->ops == NULL || file->ops->read == NULL) {
     serial_printf("file_read: denied file=%p mode=0x%x ops=%p\n",
