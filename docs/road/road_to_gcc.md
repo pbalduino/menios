@@ -109,7 +109,7 @@ GNU [binutils 2.45](https://www.gnu.org/software/binutils/) has also been staged
   - ✅ utime on FAT32 (#317) - **COMPLETE!** (POSIX timestamps persist on FAT32)
   - ✅ pseudo-fs metadata (#366) - **COMPLETE!** (devfs/procfs/pipes surface synthetic metadata)
   - ✅ isatty (#347)
-  - ⚠️ Remaining gaps: brk/sbrk (#21), timing APIs (#327)
+  - ⚠️ Remaining gaps: brk/sbrk (#21), timing APIs (#327), raw-mode VTIME timeouts (follow-up)
 - ✅ Pipes & FIFOs - **FULLY COMPLETE!** (#206 ✅, #207 ✅, #208 ✅, #209 ✅)
 - ✅ #189 (file writes) - **COMPLETE!** (#291, #292, #293 all done)
 - ✅ #294 (VFS streaming I/O) - **COMPLETE!** (#295, #296, #297, #298 all done)

@@ -232,7 +232,7 @@ These issues form the backbone of the system and should be prioritized:
                     │                           ├──→ File mutation APIs
                     ├──→ ~~#317 (utime)~~ ✅ ─────────┘
                     │
-                    ├──→ ~~#347 (isatty, ttyname)~~ ✅ ──→ TTY helper functions
+                    ├──→ ~~#347 (isatty, ttyname)~~ ✅ ──→ TTY helper functions *(VTIME raw-mode timeout follow-up pending)*
                     │
                     ├──→ #21 (userspace heap) ──→ brk/sbrk implementation
                     │
