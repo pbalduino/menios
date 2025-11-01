@@ -8,6 +8,7 @@
 #include <kernel/irq.h>
 #include <kernel/kernel.h>
 #include <kernel/serial.h>
+#include <kernel/semaphore.h>
 #include <kernel/spinlock.h>
 #include <kernel/heap.h>
 
@@ -18,6 +19,8 @@ typedef struct irq_subscription {
   struct irq_subscription* next;
   bool removed;
   uint32_t active_calls;
+  bool waiting_cleanup;
+  ksem_t cleanup_sem;
 } irq_subscription_t;
 
 typedef struct irq_line {
@@ -157,6 +160,10 @@ static void irq_prune_removed(irq_line_t* line) {
         line->handler_count--;
       }
       subscription->line = NULL;
+      if(subscription->waiting_cleanup) {
+        ksem_post(&subscription->cleanup_sem);
+      }
+      ksem_destroy(&subscription->cleanup_sem);
       kfree(subscription);
       continue;
     }
@@ -228,6 +235,8 @@ int irq_register(uint32_t irq,
   subscription->next = NULL;
   subscription->removed = false;
   subscription->active_calls = 0;
+  subscription->waiting_cleanup = false;
+  ksem_initialize(&subscription->cleanup_sem, 0);
 
   spinlock_lock(&irq_lock);
 
@@ -289,6 +298,7 @@ int irq_unregister(struct irq_handle* handle) {
 
   irq_subscription_t* subscription = handle->subscription;
   irq_line_t* line = subscription->line;
+  bool wait_needed = false;
 
   spinlock_lock(&irq_lock);
 
@@ -304,11 +314,19 @@ int irq_unregister(struct irq_handle* handle) {
 
   if(subscription->active_calls == 0 && line->dispatch_depth == 0) {
     irq_prune_removed(line);
+  } else {
+    subscription->waiting_cleanup = true;
+    wait_needed = true;
   }
 
   spinlock_unlock(&irq_lock);
 
   handle->subscription = NULL;
+
+  if(wait_needed) {
+    ksem_wait(&subscription->cleanup_sem);
+  }
+
   kfree(handle);
   return 0;
 }
