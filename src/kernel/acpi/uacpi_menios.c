@@ -202,6 +202,9 @@ void uacpi_kernel_log(uacpi_log_level level, const uacpi_char* msg) {
 
 void *uacpi_kernel_calloc(uacpi_size count, uacpi_size size) {
   void* obj = kmalloc(count * size);
+  if(obj == NULL) {
+    return NULL;
+  }
   memset(obj, 0, count * size);
   return obj;
 }
@@ -390,6 +393,9 @@ void uacpi_kernel_free_event(uacpi_handle handle) {
 
 uacpi_handle uacpi_kernel_create_spinlock(void) {
   spinlock_t* lock = kmalloc(sizeof(spinlock_t));
+  if(lock == NULL) {
+    return NULL;
+  }
   spinlock_init(lock);
   serial_printf("uacpi_kernel_create_spinlock: %p\n", lock);
   return lock;
@@ -402,6 +408,9 @@ void uacpi_kernel_free_spinlock(uacpi_handle handle) {
 
 uacpi_handle uacpi_kernel_create_mutex(void) {
   kmutex_t* mutex = kmalloc(sizeof(kmutex_t));
+  if(mutex == NULL) {
+    return NULL;
+  }
   memset(mutex, 0, sizeof(kmutex_t));
   kmutex_init(mutex);
   return mutex;
