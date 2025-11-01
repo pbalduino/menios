@@ -412,29 +412,28 @@ syscall_entry:
 %endmacro
 
 %macro IRQ_DYNAMIC_STUB 1
-global irq_stub_%1
-irq_stub_%1:
+%%stub:
   IRQ_PUSH_REGS
   cld
   mov edi, %1
   call irq_dispatch
   IRQ_POP_REGS
   iretq
+section .rodata
+  dq %%stub
+section .text
 %endmacro
-
-%assign __irq_vector IRQ_VECTOR_BASE
-%rep IRQ_VECTOR_COUNT
-IRQ_DYNAMIC_STUB __irq_vector
-%assign __irq_vector __irq_vector + 1
-%endrep
 
 section .rodata
 global irq_vector_stubs
 align 8
 irq_vector_stubs:
+
+section .text
+
 %assign __irq_vector IRQ_VECTOR_BASE
 %rep IRQ_VECTOR_COUNT
-  dq irq_stub_%__irq_vector
+IRQ_DYNAMIC_STUB __irq_vector
 %assign __irq_vector __irq_vector + 1
 %endrep
 

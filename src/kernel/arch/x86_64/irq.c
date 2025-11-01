@@ -3,6 +3,7 @@
 #include <stdint.h>
 #include <string.h>
 
+#include <assert.h>
 #include <kernel/arch/x86_64/apic.h>
 #include <kernel/arch/x86_64/idt.h>
 #include <kernel/irq.h>
