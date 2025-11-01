@@ -12,6 +12,8 @@
 #include <kernel/spinlock.h>
 #include <kernel/heap.h>
 
+#define IRQ_DISPATCH_MAX_DEPTH 16
+
 typedef struct irq_subscription {
   irq_handler_fn handler;
   void* ctx;
@@ -47,6 +49,8 @@ static irq_line_t irq_lines[IRQ_VECTOR_COUNT];
 static spinlock_t irq_lock;
 static bool irq_system_initialized = false;
 static bool irq_apic_ready = false;
+static irq_subscription_t* irq_dispatch_stack[IRQ_DISPATCH_MAX_DEPTH];
+static size_t irq_dispatch_stack_depth = 0;
 
 static inline irq_line_t* irq_find_line(uint32_t irq) {
   for(size_t index = 0; index < IRQ_VECTOR_COUNT; ++index) {
@@ -300,12 +304,20 @@ int irq_unregister(struct irq_handle* handle) {
   irq_subscription_t* subscription = handle->subscription;
   irq_line_t* line = subscription->line;
   bool wait_needed = false;
+  bool in_dispatch = false;
 
   spinlock_lock(&irq_lock);
 
   if(line == NULL || !line->in_use) {
     spinlock_unlock(&irq_lock);
     return -EINVAL;
+  }
+
+  for(size_t i = 0; i < irq_dispatch_stack_depth; ++i) {
+    if(irq_dispatch_stack[i] == subscription) {
+      in_dispatch = true;
+      break;
+    }
   }
 
   subscription->removed = true;
@@ -315,7 +327,7 @@ int irq_unregister(struct irq_handle* handle) {
 
   if(subscription->active_calls == 0 && line->dispatch_depth == 0) {
     irq_prune_removed(line);
-  } else {
+  } else if(!in_dispatch) {
     subscription->waiting_cleanup = true;
     wait_needed = true;
   }
@@ -350,16 +362,25 @@ void irq_dispatch(uint8_t vector) {
   bool handled_any = false;
 
   while(current != NULL) {
+    irq_subscription_t* executing = current;
     irq_subscription_t* next;
     irq_handler_fn handler = NULL;
     void* ctx = NULL;
+    bool pushed = false;
 
     spinlock_lock(&irq_lock);
-    next = current->next;
-    handler = current->handler;
-    ctx = current->ctx;
+    next = executing->next;
+    handler = executing->handler;
+    ctx = executing->ctx;
     if(handler != NULL) {
-      current->active_calls++;
+      if(irq_dispatch_stack_depth < IRQ_DISPATCH_MAX_DEPTH) {
+        irq_dispatch_stack[irq_dispatch_stack_depth++] = executing;
+        pushed = true;
+        executing->active_calls++;
+      } else {
+        serial_printf("irq: dispatch stack overflow (GSI %u)\n", gsi);
+        handler = NULL;
+      }
     }
     spinlock_unlock(&irq_lock);
 
@@ -370,14 +391,32 @@ void irq_dispatch(uint8_t vector) {
 
     spinlock_lock(&irq_lock);
     if(handler != NULL) {
-      if(current->active_calls > 0) {
-        current->active_calls--;
+      if(executing->active_calls > 0) {
+        executing->active_calls--;
+      }
+      if(pushed) {
+        if(irq_dispatch_stack_depth > 0 &&
+           irq_dispatch_stack[irq_dispatch_stack_depth - 1] == executing) {
+          irq_dispatch_stack[irq_dispatch_stack_depth - 1] = NULL;
+          irq_dispatch_stack_depth--;
+        } else {
+          for(size_t i = 0; i < irq_dispatch_stack_depth; ++i) {
+            if(irq_dispatch_stack[i] == executing) {
+              for(size_t j = i + 1; j < irq_dispatch_stack_depth; ++j) {
+                irq_dispatch_stack[j - 1] = irq_dispatch_stack[j];
+              }
+              irq_dispatch_stack[irq_dispatch_stack_depth - 1] = NULL;
+              irq_dispatch_stack_depth--;
+              break;
+            }
+          }
+        }
       }
       if(handled) {
         handled_any = true;
       }
     }
-    if(current->removed && current->active_calls == 0) {
+    if(executing->removed && executing->active_calls == 0) {
       line->needs_cleanup = true;
     }
     current = next;
