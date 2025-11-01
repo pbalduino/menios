@@ -168,8 +168,8 @@ Each milestone should conclude with stabilisation, regression testing, and docum
 2. Draft an RFC outlining AP bring-up flow and required assembly additions.
 3. Build a spike branch enabling dual-core boot with minimal locking to validate infrastructure.
 4. Plan stress test harnesses and logging needed for early debugging.
-5. **Complete UACPI integration** (#276) - remaining 6 functions for full ACPI support
-6. **Resolve UACPI blockers** (#278 work queue, #279 dynamic IRQ, #281 I/O port mgmt)
+5. Capture the updated UACPI capabilities in design docs and confirm SCI routing with the new IRQ slot map.
+6. Prioritise driver bring-up (#67 e1000, #382/#383 audio) now that the infrastructure is in place.
 
 Collecting answers to the open questions before implementation will keep the SMP effort focused and reduce rework.
 
@@ -181,16 +181,14 @@ Collecting answers to the open questions before implementation will keep the SMP
 - ✅ **Limine bootloader** - Provides SMP boot support
 - ✅ **APIC/LAPIC** - Basic interrupt routing infrastructure
 
-### Active ACPI/Hardware Work (SMP Prerequisites)
-- 🔄 **#276** - UACPI integration (73% complete, 16/22 functions)
-  - Enables MADT parsing for CPU enumeration
-  - Provides ACPI PM timer and FADT access
-  - **Remaining:** 6 functions for full support
-- 🔄 **#278** - Work queue infrastructure (blocks UACPI GPE handling)
-- 🔄 **#279** - Dynamic IRQ allocation (CRITICAL - blocks e1000 driver and UACPI)
-- 🔄 **#281** - I/O port management (blocks UACPI port access)
-- 🔄 **#280** - PCI infrastructure (complete for device enumeration)
-- 🔄 **#335** - PCI enumeration/access (complete for device discovery)
+### ACPI/Hardware Prerequisites (Completed)
+- ✅ **#276** - UACPI integration (22/22 primitives)
+  - MADT parsing, PM timer, firmware requests, SCI IRQ path
+- ✅ **#278** - Work queue infrastructure (deferred GPE/Notify support)
+- ✅ **#279** - Dynamic IRQ allocation (slot map + user-mode aware IRQ teardown)
+- ✅ **#281** - I/O port management (safe reservation API)
+- ✅ **#280** - PCI configuration space access (MMCONFIG support)
+- ✅ **#335** - PCI enumeration/access (device discovery ready)
 
 ### Planned SMP Work (Sequential Implementation)
 - 📋 **#80** - Implement per-CPU data infrastructure

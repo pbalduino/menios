@@ -234,11 +234,11 @@ digraph IssueDependencies {
         fillcolor="#E8F8FF";
 
         // ACPI & PCI
-        issue276 [label="#276: UACPI kernel\ninterface (16/22)", fillcolor="#B3E5FC"];
-        issue278 [label="#278: Kernel work\nqueue system", fillcolor="#E0F2F1"];
-        issue279 [label="#279: Dynamic IRQ\nhandler registration", fillcolor="#E0F2F1"];
+        issue276 [label="#276: UACPI kernel\ninterface (22/22)", fillcolor="#90EE90", style="filled,dashed"];
+        issue278 [label="#278: Kernel work\nqueue system", fillcolor="#90EE90", style="filled,dashed"];
+        issue279 [label="#279: Dynamic IRQ\nhandler registration", fillcolor="#90EE90", style="filled,dashed"];
         issue280 [label="#280: PCI config\nspace API", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED
-        issue281 [label="#281: I/O port\nresource mgmt", fillcolor="#E0F2F1"];
+        issue281 [label="#281: I/O port\nresource mgmt", fillcolor="#90EE90", style="filled,dashed"];
         issue335 [label="#335: PNP0A08 PCI\nhost bridge", fillcolor="#90EE90", style="filled,dashed"];  // CLOSED
 
         // Network
@@ -692,14 +692,14 @@ digraph IssueDependencies {
     // ACPI and PCI infrastructure dependencies
     issue335 -> issue280 [color=teal, penwidth=2, style=dashed, label="PCI root"];  // PCI host bridge -> config API ✅
     issue280 -> issue276 [color=teal, penwidth=2, style=dashed];  // PCI config -> UACPI (for pci_read/write) ✅
-    issue278 -> issue276 [color=teal, penwidth=2];  // work queue -> UACPI (for schedule_work)
-    issue279 -> issue276 [color=teal, penwidth=2];  // IRQ handlers -> UACPI (for install/uninstall interrupt)
-    issue281 -> issue276 [color=teal, penwidth=2];  // I/O port mgmt -> UACPI (for io_map/unmap/read/write)
+    issue278 -> issue276 [color=green, penwidth=2, style=dashed];  // work queue -> UACPI (for schedule_work)
+    issue279 -> issue276 [color=green, penwidth=2, style=dashed];  // IRQ handlers -> UACPI (for install/uninstall interrupt)
+    issue281 -> issue276 [color=green, penwidth=2, style=dashed];  // I/O port mgmt -> UACPI (for io_map/unmap/read/write)
 
     // Network driver dependencies
     issue335 -> issue67 [color=teal, style=dashed, label="PCI enum"];  // PCI enumeration -> e1000 ✅
     issue280 -> issue67 [color=teal, style=dashed];  // PCI config -> e1000 ✅
-    issue279 -> issue67 [color=teal, penwidth=2, label="IRQ"];  // IRQ handlers -> e1000 (for interrupt-driven I/O)
+    issue279 -> issue67 [color=green, penwidth=2, style=dashed, label="IRQ"];  // IRQ handlers -> e1000 (for interrupt-driven I/O)
 
     // TTY termios dependencies
     issue220 -> issue336 [color=brown, style=dashed, label="ioctl"];  // ioctl syscall -> termios ✅

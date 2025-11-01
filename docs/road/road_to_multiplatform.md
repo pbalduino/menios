@@ -498,42 +498,23 @@ Month 8: Documentation & Release
 
 ### UACPI Integration (#276)
 
-Significant progress on UACPI kernel interface implementation:
-- **50% complete**: 8 out of 16 functions implemented
-- **Production-ready**: Thread IDs, events (semaphore-backed), sleep, tick counter (TSC-based)
-- **Remaining work**: Now tracked as infrastructure issues (#278, #279, #281). Issue #280 (PCI configuration access) is COMPLETE.
-- **Current status**: Sufficient for basic x86_64 ACPI operations
+The kernel/uACPI glue layer is now **100% complete (22/22 primitives)**:
+- Memory/IO/PCI accessors are wired through the new MSR-backed LAPIC & PCI helpers (#418, #280).
+- Deferred work, interrupt registration, and I/O port management rely on the completed infrastructure from #278, #279, and #281.
+- Firmware requests, sleep/tick helpers, and event/mutex/spinlock primitives all return valid kernel-backed implementations.
 
-The remaining UACPI functions require substantial kernel infrastructure:
-
-1. **#278 - Kernel Work Queue System** (Medium priority, 8-11 weeks)
-   - Deferred work execution infrastructure
-   - Required for: `uacpi_kernel_schedule_work()`, `uacpi_kernel_wait_for_work_completion()`
-   - Benefits beyond ACPI: Driver infrastructure, interrupt bottom-halves
-
-2. **#279 - Dynamic IRQ Handler Registration** (Medium priority, 8-10 weeks)
-   - Runtime interrupt handler management
-   - Required for: `uacpi_kernel_install_interrupt_handler()`, `uacpi_kernel_uninstall_interrupt_handler()`
-   - Benefits beyond ACPI: Shared interrupts, ACPI SCI, device drivers
-
-3. **#280 - PCI Configuration Space Access** ✅ COMPLETE
-   - PCI MMCONFIG handling & config-space API now live in the root bridge driver
-   - Enables `uacpi_kernel_pci_read()` / `uacpi_kernel_pci_write()` and centralized PCI enumeration
-
-4. **#281 - I/O Port Resource Management** (Low priority, 7 weeks)
-   - I/O port allocation and tracking
-   - Required for: `uacpi_kernel_io_map()`, `uacpi_kernel_io_unmap()`, etc.
-   - Benefits beyond ACPI: Resource conflict detection, debugging
+**What’s next:**
+- Exercise the SCI IRQ path under real ACPI tables (validate the IRQ slot map under firmware load).
+- Expand test coverage around `uacpi_kernel_schedule_work()` to stress nested ACPI notifications.
+- Close out higher-level ACPI features (power button, thermal, sleep states) that now have the kernel plumbing.
 
 ### Infrastructure Dependencies
 
-These kernel infrastructure pieces are valuable beyond just ACPI:
-- **Work queues**: Generic deferred work for all subsystems
-- **IRQ management**: Dynamic handler registration for all drivers
-- **PCI access**: Foundation for PCI driver framework
-- **I/O port management**: Resource tracking across the kernel
-
-While these are medium-to-low priority for multi-platform support, they represent important kernel capabilities that should be considered when planning the overall architecture.
+These kernel infrastructure pieces are now ready for broader reuse:
+- **Work queues** (#278): Generic deferred work for all subsystems
+- **IRQ management** (#279): Dynamic handler registration for drivers
+- **PCI access** (#280): Foundation for PCI driver framework
+- **I/O port management** (#281): Resource tracking across the kernel
 
 ## Related Issues
 
@@ -543,11 +524,11 @@ While these are medium-to-low priority for multi-platform support, they represen
 - **#97**: Architecture abstraction layer (if exists)
 
 ### Infrastructure (Supporting ACPI and Multi-Platform)
-- **#276**: UACPI kernel interface implementation (50% complete)
-- **#278**: Kernel work queue system (Medium priority)
-- **#279**: Dynamic IRQ handler registration (Medium priority)
-~ **#280**: PCI configuration space access (Low priority) ✅ COMPLETE
-- **#281**: I/O port resource management (Low priority)
+- ✅ **#276**: UACPI kernel interface implementation (complete)
+- ✅ **#278**: Kernel work queue system (complete)
+- ✅ **#279**: Dynamic IRQ handler registration (complete)
+- ✅ **#280**: PCI configuration space access (complete)
+- ✅ **#281**: I/O port resource management (complete)
 
 ## References
 

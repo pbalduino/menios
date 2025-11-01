@@ -87,32 +87,20 @@ The meniOS project has grown to over 100+ tracked issues with complex interdepen
 
 **Shows:**
 - PCI infrastructure: #335, #280 (complete ✅)
-- UACPI integration: #276 (73% complete, 16/22 functions)
-- **Missing infrastructure:**
-  - #278 (Work queue) - blocks UACPI
-  - #279 (Dynamic IRQ) - **CRITICAL** blocker - blocks 5 issues
-  - #281 (I/O port mgmt) - blocks UACPI
-- Drivers:
-  - #67 (e1000 network) - blocked by #279
-  - #336 (termios) - ready to implement ✅
-- **Audio subsystem (Doom):**
-  - #33 (parent) - blocked by #279
-  - #382 (AC'97 driver) - blocked by #279
-  - #383 (kernel audio core) - blocked by #279
+- UACPI integration: #276 (complete ✅ – 22/22 primitives)
+- Work queue / IRQ / I/O port infrastructure (#278/#279/#281) marked complete ✅
+- Drivers ready to implement:
+  - #67 (e1000 network)
+  - #336 (termios)
+  - #382 / #383 (audio stack)
 - Networking stack (future)
 
 **Use this for:**
-- Hardware bring-up planning
-- Driver development priorities
-- Understanding ACPI/UACPI status
-- Audio subsystem dependencies
+- Planning driver bring-up now that ACPI infrastructure is done
+- Prioritising networking vs. audio milestones
+- Tracking remaining hardware-focused work after UACPI
 
-**Key Insight:** #279 (Dynamic IRQ) is the **HIGHEST PRIORITY** blocker - blocks 5 open issues:
-- #276 (UACPI interrupt handlers)
-- #67 (e1000 network driver)
-- #382 (AC'97 audio driver)
-- #383 (Kernel audio core)
-- #33 (Audio subsystem - Doom milestone)
+**Key Insight:** Infrastructure is finished; the next milestones are the e1000 network driver and the Doom audio stack.
 
 ---
 
