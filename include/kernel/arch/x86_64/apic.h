@@ -48,5 +48,6 @@ bool apic_configure_irq(uint32_t gsi,
 bool apic_update_irq_mask(uint32_t gsi, bool masked);
 
 void apic_send_eoi(void);
+uint32_t apic_current_processor_id(void);
 
 #endif /* MENIOS_INCLUDE_KERNEL_ARCH_X86_64_APIC_H */

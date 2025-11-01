@@ -12,6 +12,7 @@
 #include <kernel/spinlock.h>
 #include <kernel/heap.h>
 
+#define IRQ_MAX_CPUS 16
 #define IRQ_DISPATCH_MAX_DEPTH 16
 
 typedef struct irq_subscription {
@@ -49,8 +50,13 @@ static irq_line_t irq_lines[IRQ_VECTOR_COUNT];
 static spinlock_t irq_lock;
 static bool irq_system_initialized = false;
 static bool irq_apic_ready = false;
-static irq_subscription_t* irq_dispatch_stack[IRQ_DISPATCH_MAX_DEPTH];
-static size_t irq_dispatch_stack_depth = 0;
+static irq_subscription_t* irq_dispatch_stack[IRQ_MAX_CPUS][IRQ_DISPATCH_MAX_DEPTH];
+static size_t irq_dispatch_stack_depth[IRQ_MAX_CPUS];
+
+static inline uint32_t irq_current_cpu_index(void) {
+  uint32_t apic_id = apic_current_processor_id();
+  return apic_id % IRQ_MAX_CPUS;
+}
 
 static inline irq_line_t* irq_find_line(uint32_t irq) {
   for(size_t index = 0; index < IRQ_VECTOR_COUNT; ++index) {
@@ -305,6 +311,7 @@ int irq_unregister(struct irq_handle* handle) {
   irq_line_t* line = subscription->line;
   bool wait_needed = false;
   bool in_dispatch = false;
+  uint32_t cpu_index = irq_current_cpu_index();
 
   spinlock_lock(&irq_lock);
 
@@ -313,8 +320,8 @@ int irq_unregister(struct irq_handle* handle) {
     return -EINVAL;
   }
 
-  for(size_t i = 0; i < irq_dispatch_stack_depth; ++i) {
-    if(irq_dispatch_stack[i] == subscription) {
+  for(size_t i = 0; i < irq_dispatch_stack_depth[cpu_index]; ++i) {
+    if(irq_dispatch_stack[cpu_index][i] == subscription) {
       in_dispatch = true;
       break;
     }
@@ -355,6 +362,7 @@ void irq_dispatch(uint8_t vector) {
 
   spinlock_lock(&irq_lock);
   uint32_t gsi = line->irq;
+  uint32_t cpu_index = irq_current_cpu_index();
   line->dispatch_depth++;
   irq_subscription_t* current = line->handlers;
   spinlock_unlock(&irq_lock);
@@ -373,8 +381,8 @@ void irq_dispatch(uint8_t vector) {
     handler = executing->handler;
     ctx = executing->ctx;
     if(handler != NULL) {
-      if(irq_dispatch_stack_depth < IRQ_DISPATCH_MAX_DEPTH) {
-        irq_dispatch_stack[irq_dispatch_stack_depth++] = executing;
+      if(irq_dispatch_stack_depth[cpu_index] < IRQ_DISPATCH_MAX_DEPTH) {
+        irq_dispatch_stack[cpu_index][irq_dispatch_stack_depth[cpu_index]++] = executing;
         pushed = true;
         executing->active_calls++;
       } else {
@@ -395,18 +403,18 @@ void irq_dispatch(uint8_t vector) {
         executing->active_calls--;
       }
       if(pushed) {
-        if(irq_dispatch_stack_depth > 0 &&
-           irq_dispatch_stack[irq_dispatch_stack_depth - 1] == executing) {
-          irq_dispatch_stack[irq_dispatch_stack_depth - 1] = NULL;
-          irq_dispatch_stack_depth--;
+        if(irq_dispatch_stack_depth[cpu_index] > 0 &&
+           irq_dispatch_stack[cpu_index][irq_dispatch_stack_depth[cpu_index] - 1] == executing) {
+          irq_dispatch_stack[cpu_index][irq_dispatch_stack_depth[cpu_index] - 1] = NULL;
+          irq_dispatch_stack_depth[cpu_index]--;
         } else {
-          for(size_t i = 0; i < irq_dispatch_stack_depth; ++i) {
-            if(irq_dispatch_stack[i] == executing) {
-              for(size_t j = i + 1; j < irq_dispatch_stack_depth; ++j) {
-                irq_dispatch_stack[j - 1] = irq_dispatch_stack[j];
+          for(size_t i = 0; i < irq_dispatch_stack_depth[cpu_index]; ++i) {
+            if(irq_dispatch_stack[cpu_index][i] == executing) {
+              for(size_t j = i + 1; j < irq_dispatch_stack_depth[cpu_index]; ++j) {
+                irq_dispatch_stack[cpu_index][j - 1] = irq_dispatch_stack[cpu_index][j];
               }
-              irq_dispatch_stack[irq_dispatch_stack_depth - 1] = NULL;
-              irq_dispatch_stack_depth--;
+              irq_dispatch_stack[cpu_index][irq_dispatch_stack_depth[cpu_index] - 1] = NULL;
+              irq_dispatch_stack_depth[cpu_index]--;
               break;
             }
           }

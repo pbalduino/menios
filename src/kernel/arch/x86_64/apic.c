@@ -257,6 +257,15 @@ bool apic_update_irq_mask(uint32_t gsi, bool masked) {
   return true;
 }
 
+uint32_t apic_current_processor_id(void) {
+  if(lapicaddr == NULL) {
+    return 0;
+  }
+
+  volatile uint32_t* reg = (volatile uint32_t*)((uintptr_t)lapicaddr + 0x20);
+  return (*reg >> 24) & 0xFFu;
+}
+
 void apic_send_eoi(void) {
   if(lapicaddr == NULL) {
     return;
