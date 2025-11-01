@@ -9,6 +9,7 @@
 #define LAPIC_BASE_MSR 0x1b
 #define LAPIC_BASE_X2APIC_ENABLE (1ull << 10)
 
+#define IA32_X2APIC_BASE 0x00000800u
 #define IA32_X2APIC_APICID 0x00000802u
 
 #define PIC1_COMMAND_PORT 0x20
@@ -39,9 +40,9 @@
 void apic_initialize(void);
 void lapic_timer_initialize(void);
 void timer_frequency(uint32_t freq);
-void write_lapic(uintptr_t reg, uint32_t value);
+void write_lapic(uint32_t reg, uint32_t value);
 
-uint32_t read_lapic(uintptr_t reg);
+uint32_t read_lapic(uint32_t reg);
 
 bool apic_configure_irq(uint32_t gsi,
                         uint8_t vector,
@@ -52,5 +53,7 @@ bool apic_update_irq_mask(uint32_t gsi, bool masked);
 
 void apic_send_eoi(void);
 uint32_t apic_current_processor_id(void);
+void* apic_get_lapic_base(void);
+bool apic_is_x2apic_enabled(void);
 
 #endif /* MENIOS_INCLUDE_KERNEL_ARCH_X86_64_APIC_H */

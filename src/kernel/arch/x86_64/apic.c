@@ -188,12 +188,33 @@ static void pic_set_mask(uint32_t irq, bool masked) {
   outb(port, value);
 }
 
-void write_lapic(uintptr_t reg, uint32_t value) {
-  *((volatile uint32_t*) reg) = value;
+void write_lapic(uint32_t reg, uint32_t value) {
+  if(lapic_x2apic_enabled) {
+    uint32_t msr = IA32_X2APIC_BASE + (reg >> 4);
+    msr_write(msr, (uint64_t)value);
+    return;
+  }
+
+  if(lapicaddr == NULL) {
+    return;
+  }
+
+  volatile uint32_t* target = (volatile uint32_t*)((uintptr_t)lapicaddr + reg);
+  *target = value;
 }
 
-uint32_t read_lapic(uintptr_t reg) {
-  return *((volatile uint32_t*) reg);
+uint32_t read_lapic(uint32_t reg) {
+  if(lapic_x2apic_enabled) {
+    uint32_t msr = IA32_X2APIC_BASE + (reg >> 4);
+    return (uint32_t)msr_read(msr);
+  }
+
+  if(lapicaddr == NULL) {
+    return 0;
+  }
+
+  volatile uint32_t* target = (volatile uint32_t*)((uintptr_t)lapicaddr + reg);
+  return *target;
 }
 
 static ioapicdesc_t* apic_find_ioapic(uint32_t gsi) {
@@ -278,9 +299,17 @@ uint32_t apic_current_processor_id(void) {
 }
 
 void apic_send_eoi(void) {
-  if(lapicaddr == NULL) {
+  if(lapicaddr == NULL && !lapic_x2apic_enabled) {
     return;
   }
 
-  write_lapic((uintptr_t)lapicaddr + LAPIC_EOI, 0);
+  write_lapic(LAPIC_EOI, 0);
+}
+
+void* apic_get_lapic_base(void) {
+  return lapicaddr;
+}
+
+bool apic_is_x2apic_enabled(void) {
+  return lapic_x2apic_enabled;
 }

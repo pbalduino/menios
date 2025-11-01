@@ -1,5 +1,21 @@
 [
   {
+    "title": "Implement MSR-backed LAPIC operations for x2APIC systems",
+    "github_issue": {
+      "number": 418,
+      "url": "https://github.com/pbalduino/menios/issues/418",
+      "state": "OPEN"
+    },
+    "labels": [
+      "enhancement",
+      "drivers",
+      "kernel"
+    ],
+    "assignees": [
+      "pbalduino"
+    ]
+  },
+  {
     "title": "Bug: ls /tmp shows mount points (/dev, /proc, /tmp) instead of its contents",
     "github_issue": {
       "number": 417,
