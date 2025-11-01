@@ -595,11 +595,11 @@ uacpi_status uacpi_kernel_pci_read(
   uint8_t device = (uint8_t)address->device;
   uint8_t function = (uint8_t)address->function;
 
-  uacpi_u64 result = 0;
+    uacpi_u64 result = 0;
 
-  for(uacpi_size i = 0; i < byte_width; ++i) {
+    for(uacpi_size i = 0; i < byte_width; ++i) {
     uacpi_size byte_offset = offset + i;
-    uint8_t aligned = (uint8_t)(byte_offset & ~0x3u);
+    uint16_t aligned = (uint16_t)(byte_offset & ~0x3u);
     uint32_t raw = pci_config_read_segment(segment, bus, device, function, aligned);
     uint32_t shift = (uint32_t)(byte_offset & 0x3u) * 8u;
     uacpi_u64 byte_value = (raw >> shift) & 0xFFu;
@@ -635,7 +635,7 @@ uacpi_status uacpi_kernel_pci_write(
                                            bus,
                                            device,
                                            function,
-                                           (uint8_t)aligned);
+                                           (uint16_t)aligned);
 
     for(uacpi_size i = 0; i < 4; ++i) {
       uacpi_size byte_index = aligned + i;
@@ -653,7 +653,7 @@ uacpi_status uacpi_kernel_pci_write(
                              bus,
                              device,
                              function,
-                             (uint8_t)aligned,
+                             (uint16_t)aligned,
                              raw);
   }
 
