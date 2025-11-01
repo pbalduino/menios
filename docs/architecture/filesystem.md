@@ -159,3 +159,163 @@ the VFS, invoke the appropriate driver callbacks, convert results to
 Despite these gaps, the kernel can now load configuration files directly from
 its install media—an essential milestone on the road to user-space loaders and a
 shell.
+
+## Future: ext2 Filesystem Support
+
+While FAT32 provides a functional foundation, meniOS is planning to add ext2
+(Second Extended Filesystem) support to enable proper UNIX filesystem features.
+
+### Motivation
+
+ext2 offers significant advantages over FAT32:
+- **POSIX permissions** — full rwx permission model with user/group/other
+- **Ownership** — UID/GID tracking for multi-user support
+- **Symbolic links** — native symlink support for flexible filesystem organization
+- **Hard links** — multiple directory entries pointing to same inode
+- **Better metadata** — access/modification/change times with second precision
+- **Timestamps** — proper UNIX timestamps instead of DOS date/time format
+- **Larger files** — support for files up to 4GB (with potential for larger)
+- **Standard Linux FS** — compatible with all Linux tools and utilities
+
+### Implementation Roadmap
+
+See [Filesystem Infrastructure Diagram](../diagrams/issue_dependencies_filesystem.png)
+for the complete dependency graph.
+
+#### Phase 1: Read-Only Support (#154) — 2-3 weeks
+- Superblock parsing and validation (magic 0xEF53)
+- Block group descriptor reading
+- Inode structures and metadata
+- Directory traversal (ext2_dir_entry parsing)
+- File reading via direct blocks (files ≤48KB)
+- VFS integration for read operations
+
+**Deliverable:** Can mount and read ext2 partitions (read-only mode)
+
+#### Phase 2: Indirect Block Support (#227 partial) — 1 week
+- Single indirect block pointers (files up to 4MB)
+- Double indirect block pointers (files up to 4GB)
+- Triple indirect block pointers (theoretical 4TB support)
+- Large file reading capabilities
+
+**Deliverable:** Can read large files from ext2 partitions
+
+#### Phase 3: Write Support (#227 full) — 2-3 weeks
+- Block allocation via bitmap management
+- Inode allocation and freeing
+- File creation and writing
+- Directory creation (mkdir)
+- Metadata updates (timestamps, permissions)
+
+**Deliverable:** Full read-write ext2 support
+
+#### Phase 4: Advanced Operations (#227 complete) — 2 weeks
+- File and directory deletion
+- Hard link creation (link)
+- Symbolic link creation (symlink) and following
+- Permission management (chmod, chown)
+- File truncation and resize
+
+**Deliverable:** Complete ext2 implementation with all standard operations
+
+#### Phase 5: Multi-Partition Infrastructure (#420, #421) — 4-6 weeks
+- **Partition table parsing** (#420):
+  - GPT (GUID Partition Table) support
+  - MBR (Master Boot Record) support
+  - Partition type detection (FAT32, ext2/3/4, Linux swap, etc.)
+- **VFS mount points** (#421):
+  - Mount point data structures
+  - Path lookup across mount boundaries
+  - Mount/unmount operations
+  - /proc/mounts support
+
+**Deliverable:** Can detect and mount multiple partitions
+
+#### Phase 6: Dual-Partition Boot (#228) — 5 weeks
+- FAT32 boot partition mounted at `/boot`
+- ext2 root partition mounted at `/`
+- Kernel command line parsing (root=, rootfstype=)
+- Boot sequence integration
+- Disk image creation scripts (dual partition layout)
+- Standard Linux filesystem hierarchy (FHS compliance)
+
+**Deliverable:** Production boot configuration with proper FS separation
+
+#### Phase 7: Binary Migration (#229) — 1.5-2 weeks
+- Build system updates to install binaries on ext2
+- Migration of `/bin` utilities from FAT32 to ext2
+- Proper permission setup (755 for executables)
+- Ownership configuration (root:root)
+- Symbolic link creation (`/bin/sh` → `mosh`)
+- Environment configuration (`/etc/environment`, PATH)
+
+**Deliverable:** System binaries live on ext2 with proper permissions
+
+### Timeline Summary
+
+- **ext2 read-only:** 2-3 weeks (#154)
+- **ext2 full write:** 8-11 weeks total (#227)
+- **Multi-partition infra:** 4-6 weeks (#420, #421)
+- **Dual-partition boot:** 5 weeks (#228)
+- **Binary migration:** 1.5-2 weeks (#229)
+
+**Total estimated:** ~23-31 weeks for complete ext2 + dual-partition setup
+
+### Architecture After ext2
+
+```
+Disk Layout:
+┌────────────────────────────────────┐
+│ GPT Header                         │
+├────────────────────────────────────┤
+│ Partition 1: FAT32 (100MB)         │ ← /boot
+│   - Bootloader (Limine)            │
+│   - Kernel (kernel.elf)            │
+│   - Boot config (limine.cfg)       │
+│   - initrd (future)                │
+├────────────────────────────────────┤
+│ Partition 2: ext2 (remainder)      │ ← /
+│   - /bin (system binaries)         │
+│   - /etc (configuration)           │
+│   - /home (user files)             │
+│   - /usr (user programs)           │
+│   - /var (variable data)           │
+│   - /tmp (tmpfs overlay)           │
+│   - /dev (devfs)                   │
+│   - /proc (procfs)                 │
+│   - /boot (mount point for part 1) │
+└────────────────────────────────────┘
+```
+
+### Benefits
+
+**Security:**
+- Proper file permissions prevent unauthorized access
+- Ownership model supports multi-user environments
+- Executable bit prevents accidental code execution
+
+**Organization:**
+- Boot files isolated from system files
+- Standard Linux directory hierarchy (FHS)
+- Symbolic links enable flexible organization
+
+**Compatibility:**
+- Can mount Linux-formatted USB drives
+- Compatible with standard Linux tools (mkfs.ext2, fsck, etc.)
+- Foundation for ext3/ext4 upgrades (journaling)
+
+**Features:**
+- UNIX semantics for all file operations
+- Native support for POSIX applications
+- Better developer experience (familiar FS)
+
+### Current Status
+
+- ✅ **Foundation complete:** Block device (#62), block cache (#63), VFS (#65)
+- ✅ **FAT32 working:** Full read-write support (#189)
+- 📋 **ext2 planned:** Issues #227, #154, #228, #229, #420, #421 created
+- 📊 **Priority:** Medium (not blocking Doom or GCC milestones)
+- 🎯 **Recommendation:** Start with #420 (partitions) + #154 (ext2 read-only)
+
+See the [Filesystem Infrastructure Diagram](../diagrams/issue_dependencies_filesystem.png)
+for detailed dependency relationships and implementation phases.
