@@ -159,6 +159,10 @@ uacpi_status uacpi_kernel_get_rsdp(uacpi_phys_addr *out_rdsp_address) {
 uacpi_status uacpi_kernel_raw_io_read(
     uacpi_io_addr address, uacpi_u8 byte_width, uacpi_u64 *out_value
 ) {
+  if(out_value == NULL) {
+    return UACPI_STATUS_INVALID_ARGUMENT;
+  }
+
   switch(byte_width) {
     case 1:
       *out_value = inb(address);
@@ -201,6 +205,10 @@ void uacpi_kernel_log(uacpi_log_level level, const uacpi_char* msg) {
 }
 
 void *uacpi_kernel_calloc(uacpi_size count, uacpi_size size) {
+  if(size != 0 && count > SIZE_MAX / size) {
+    return NULL;
+  }
+
   void* obj = kmalloc(count * size);
   if(obj == NULL) {
     return NULL;
@@ -659,7 +667,7 @@ uacpi_status uacpi_kernel_io_map(
     return UACPI_STATUS_INVALID_ARGUMENT;
   }
 
-  if(base > 0xFFFFu || len > 0x10000u || (base + len) > 0x10000u) {
+  if(base > 0xFFFFu || len >= 0x10000u || (base + len) > 0x10000u) {
     return UACPI_STATUS_INVALID_ARGUMENT;
   }
 
