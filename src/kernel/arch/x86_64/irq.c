@@ -56,7 +56,7 @@ static size_t irq_dispatch_stack_depth[IRQ_MAX_APIC_ID];
 static inline uint32_t irq_current_cpu_index(void) {
   uint32_t apic_id = apic_current_processor_id();
   if(apic_id >= IRQ_MAX_APIC_ID) {
-    return 0;
+    panic("irq: APIC ID %u exceeds dispatch capacity", apic_id);
   }
   return apic_id;
 }
