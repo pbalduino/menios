@@ -98,6 +98,7 @@ KERNEL_SRC = \
 	src/kernel/fs/tmpfs/tmpfs.c \
 	src/kernel/fs/vfs/vfs.c \
 	src/kernel/hw/hw.c \
+	src/kernel/hw/ioport.c \
 	src/kernel/input/keyboard.c \
 	src/kernel/ipc/shm.c \
 	src/kernel/framebuffer/framebuffer.c \

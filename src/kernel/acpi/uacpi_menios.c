@@ -11,6 +11,7 @@
 #include <kernel/proc.h>
 #include <kernel/serial.h>
 #include <kernel/pci.h>
+#include <kernel/ioport.h>
 #include <kernel/workqueue.h>
 #include <kernel/irq.h>
 
@@ -72,6 +73,24 @@ static workqueue_class_t uacpi_workqueue_class(uacpi_work_type type) {
       return WORKQUEUE_CLASS_ACPI_NOTIFY;
     default:
       return WORKQUEUE_CLASS_GENERIC;
+  }
+}
+
+static uacpi_status uacpi_status_from_errno(int err) {
+  if(err == 0) {
+    return UACPI_STATUS_OK;
+  }
+
+  switch(err) {
+    case -ENOMEM:
+      return UACPI_STATUS_OUT_OF_MEMORY;
+    case -EBUSY:
+      return UACPI_STATUS_ALREADY_EXISTS;
+    case -EINVAL:
+    case -ERANGE:
+      return UACPI_STATUS_INVALID_ARGUMENT;
+    default:
+      return UACPI_STATUS_MAPPING_FAILED;
   }
 }
 
@@ -596,28 +615,64 @@ uacpi_status uacpi_kernel_pci_write(
 uacpi_status uacpi_kernel_io_map(
     uacpi_io_addr base, uacpi_size len, uacpi_handle *out_handle
 ) {
-  serial_printf("uacpi_kernel_io_map not implemented\n");
+  if(out_handle == NULL || len == 0) {
+    return UACPI_STATUS_INVALID_ARGUMENT;
+  }
+
+  if(base > 0xFFFFu || len > 0x10000u || (base + len) > 0x10000u) {
+    return UACPI_STATUS_INVALID_ARGUMENT;
+  }
+
+  ioport_region_t* region = NULL;
+  int rc = ioport_reserve((uint16_t)base, (uint16_t)len, &region);
+  uacpi_status status = uacpi_status_from_errno(rc);
+  if(status != UACPI_STATUS_OK) {
+    return status;
+  }
+
+  *out_handle = region;
   return UACPI_STATUS_OK;
 }
 
 void uacpi_kernel_io_unmap(uacpi_handle handle) {
-  serial_printf("uacpi_kernel_io_unmap not implemented\n");
+  ioport_region_t* region = (ioport_region_t*)handle;
+  if(region != NULL) {
+    ioport_release(region);
+  }
 }
 
 uacpi_status uacpi_kernel_io_read(
-    uacpi_handle, uacpi_size offset,
-    uacpi_u8 byte_width, uacpi_u64 *value
+    uacpi_handle handle,
+    uacpi_size offset,
+    uacpi_u8 byte_width,
+    uacpi_u64 *value
 ) {
-  serial_printf("uacpi_kernel_io_read not implemented\n");
-  return UACPI_STATUS_OK;
+  if(value == NULL) {
+    return UACPI_STATUS_INVALID_ARGUMENT;
+  }
+
+  if(offset > 0xFFFFu) {
+    return UACPI_STATUS_INVALID_ARGUMENT;
+  }
+
+  ioport_region_t* region = (ioport_region_t*)handle;
+  int rc = ioport_read(region, (uint16_t)offset, byte_width, value);
+  return uacpi_status_from_errno(rc);
 }
 
 uacpi_status uacpi_kernel_io_write(
-    uacpi_handle, uacpi_size offset,
-    uacpi_u8 byte_width, uacpi_u64 value
+    uacpi_handle handle,
+    uacpi_size offset,
+    uacpi_u8 byte_width,
+    uacpi_u64 value
 ) {
-  serial_printf("uacpi_kernel_io_write not implemented - offset: %lx - width: %lx - value: %lx\n", offset, byte_width, value);
-  return UACPI_STATUS_OK;
+  if(offset > 0xFFFFu) {
+    return UACPI_STATUS_INVALID_ARGUMENT;
+  }
+
+  ioport_region_t* region = (ioport_region_t*)handle;
+  int rc = ioport_write(region, (uint16_t)offset, byte_width, value);
+  return uacpi_status_from_errno(rc);
 }
 
 
