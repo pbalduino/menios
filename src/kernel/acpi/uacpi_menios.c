@@ -331,13 +331,12 @@ uacpi_status uacpi_kernel_uninstall_interrupt_handler(
   }
 
   int rc = irq_unregister(binding->irq_handle);
-  binding->irq_handle = NULL;
-
-  kfree(binding);
-
   if(rc != 0) {
     return UACPI_STATUS_ERROR;
   }
+
+  binding->irq_handle = NULL;
+  kfree(binding);
 
   return UACPI_STATUS_OK;
 }
