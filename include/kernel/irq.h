@@ -17,10 +17,19 @@ struct irq_handle;
 
 typedef bool (*irq_handler_fn)(void *ctx);
 
+typedef struct irq_config {
+  bool level_triggered;
+  bool active_low;
+} irq_config_t;
+
 void irq_initialize(void);
 void irq_apic_online(void);
 
-int irq_register(uint32_t irq, irq_handler_fn handler, void *ctx, struct irq_handle **out_handle);
+int irq_register(uint32_t irq,
+                 irq_handler_fn handler,
+                 void *ctx,
+                 const irq_config_t *config,
+                 struct irq_handle **out_handle);
 int irq_unregister(struct irq_handle *handle);
 
 #ifdef __cplusplus

@@ -10,6 +10,7 @@
 #include <kernel/serial.h>
 #include <kernel/spinlock.h>
 #include <kernel/heap.h>
+#include <kernel/thread.h>
 
 typedef struct irq_subscription {
   irq_handler_fn handler;
@@ -17,6 +18,7 @@ typedef struct irq_subscription {
   struct irq_line* line;
   struct irq_subscription* next;
   bool removed;
+  uint32_t active_calls;
 } irq_subscription_t;
 
 typedef struct irq_line {
@@ -29,6 +31,8 @@ typedef struct irq_line {
   uint32_t handler_count;
   uint32_t dispatch_depth;
   irq_subscription_t* handlers;
+  bool level_triggered;
+  bool active_low;
 } irq_line_t;
 
 struct irq_handle {
@@ -62,6 +66,8 @@ static inline irq_line_t* irq_line_from_vector(uint8_t vector) {
 static void irq_line_reset(irq_line_t* line, uint8_t vector) {
   memset(line, 0, sizeof(*line));
   line->vector = vector;
+  line->level_triggered = true;
+  line->active_low = true;
 }
 
 static irq_line_t* irq_allocate_line(uint32_t irq) {
@@ -81,6 +87,11 @@ static irq_line_t* irq_allocate_line(uint32_t irq) {
 static void irq_line_disable(irq_line_t* line) {
   if(line == NULL) {
     return;
+  }
+
+  uint32_t last_irq = line->irq;
+  if(line->in_use && line->configured) {
+    apic_update_irq_mask(last_irq, true);
   }
 
   line->irq = 0;
@@ -106,7 +117,10 @@ static bool irq_configure_line(irq_line_t* line) {
     return true;
   }
 
-  bool configured = apic_configure_irq(line->irq, line->vector, true, true);
+  bool configured = apic_configure_irq(line->irq,
+                                      line->vector,
+                                      line->level_triggered,
+                                      line->active_low);
   if(!configured) {
     serial_printf("irq: failed to configure GSI %u -> vector 0x%02x\n",
                   line->irq,
@@ -138,7 +152,7 @@ static void irq_prune_removed(irq_line_t* line) {
   irq_subscription_t** link = &line->handlers;
   while(*link != NULL) {
     irq_subscription_t* subscription = *link;
-    if(subscription->removed) {
+    if(subscription->removed && subscription->active_calls == 0) {
       *link = subscription->next;
       if(line->handler_count > 0) {
         line->handler_count--;
@@ -192,6 +206,7 @@ void irq_apic_online(void) {
 int irq_register(uint32_t irq,
                  irq_handler_fn handler,
                  void* ctx,
+                 const irq_config_t* config,
                  struct irq_handle** out_handle) {
   if(handler == NULL || out_handle == NULL) {
     return -EINVAL;
@@ -213,12 +228,25 @@ int irq_register(uint32_t irq,
   subscription->line = NULL;
   subscription->next = NULL;
   subscription->removed = false;
+  subscription->active_calls = 0;
 
   spinlock_lock(&irq_lock);
 
   irq_line_t* line = irq_find_line(irq);
   if(line == NULL) {
     line = irq_allocate_line(irq);
+    if(line != NULL && config != NULL) {
+      line->level_triggered = config->level_triggered;
+      line->active_low = config->active_low;
+    }
+  } else if(config != NULL) {
+    if(line->level_triggered != config->level_triggered ||
+       line->active_low != config->active_low) {
+      spinlock_unlock(&irq_lock);
+      kfree(handle);
+      kfree(subscription);
+      return -EINVAL;
+    }
   }
 
   if(line == NULL) {
@@ -273,11 +301,15 @@ int irq_unregister(struct irq_handle* handle) {
   subscription->removed = true;
   subscription->handler = NULL;
 
-  if(line->dispatch_depth == 0) {
-    irq_prune_removed(line);
-  } else {
-    line->needs_cleanup = true;
+  line->needs_cleanup = true;
+
+  while(subscription->active_calls > 0 || line->dispatch_depth > 0) {
+    spinlock_unlock(&irq_lock);
+    ksleep(1);
+    spinlock_lock(&irq_lock);
   }
+
+  irq_prune_removed(line);
 
   spinlock_unlock(&irq_lock);
 
@@ -294,28 +326,49 @@ void irq_dispatch(uint8_t vector) {
   }
 
   spinlock_lock(&irq_lock);
+  uint32_t gsi = line->irq;
   line->dispatch_depth++;
-  irq_subscription_t* subscription = line->handlers;
+  irq_subscription_t* current = line->handlers;
   spinlock_unlock(&irq_lock);
 
-  while(subscription != NULL) {
-    irq_handler_fn handler;
-    void* ctx;
+  bool handled_any = false;
+
+  while(current != NULL) {
     irq_subscription_t* next;
+    irq_handler_fn handler = NULL;
+    void* ctx = NULL;
 
     spinlock_lock(&irq_lock);
-    handler = subscription->handler;
-    ctx = subscription->ctx;
-    next = subscription->next;
+    next = current->next;
+    handler = current->handler;
+    ctx = current->ctx;
+    if(handler != NULL) {
+      current->active_calls++;
+    }
     spinlock_unlock(&irq_lock);
 
+    bool handled = false;
     if(handler != NULL) {
-      handler(ctx);
+      handled = handler(ctx);
     }
 
-    subscription = next;
+    spinlock_lock(&irq_lock);
+    if(handler != NULL) {
+      if(current->active_calls > 0) {
+        current->active_calls--;
+      }
+      if(handled) {
+        handled_any = true;
+      }
+    }
+    if(current->removed && current->active_calls == 0) {
+      irq_prune_removed(line);
+    }
+    current = next;
+    spinlock_unlock(&irq_lock);
   }
 
+  bool has_handlers = false;
   spinlock_lock(&irq_lock);
   if(line->dispatch_depth > 0) {
     line->dispatch_depth--;
@@ -323,8 +376,15 @@ void irq_dispatch(uint8_t vector) {
   if(line->dispatch_depth == 0 && line->needs_cleanup) {
     irq_prune_removed(line);
   }
+  has_handlers = (line->handler_count > 0);
   spinlock_unlock(&irq_lock);
 
-  pic_send_eoi(line->irq);
+  if(gsi < 16) {
+    pic_send_eoi(gsi);
+  }
   apic_send_eoi();
+
+  if(!handled_any && has_handlers) {
+    serial_printf("irq: vector 0x%02x (GSI %u) was unhandled\n", vector, gsi);
+  }
 }

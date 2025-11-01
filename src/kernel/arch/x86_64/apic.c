@@ -165,6 +165,22 @@ void apic_initialize(void) {
   printf(".OK\n");
 }
 
+static void pic_set_mask(uint32_t irq, bool masked) {
+  if(irq >= 16) {
+    return;
+  }
+
+  uint16_t port = (irq < 8) ? PIC1_DATA_PORT : PIC2_DATA_PORT;
+  uint8_t bit = (uint8_t)(1u << (irq % 8));
+  uint8_t value = inb(port);
+  if(masked) {
+    value |= bit;
+  } else {
+    value &= (uint8_t)~bit;
+  }
+  outb(port, value);
+}
+
 void write_lapic(uintptr_t reg, uint32_t value) {
   *((volatile uint32_t*) reg) = value;
 }
@@ -211,6 +227,32 @@ bool apic_configure_irq(uint32_t gsi,
                 (unsigned)vector,
                 level_triggered ? "yes" : "no",
                 active_low ? "yes" : "no");
+
+  pic_set_mask(gsi, true);
+
+  return true;
+}
+
+bool apic_update_irq_mask(uint32_t gsi, bool masked) {
+  ioapicdesc_t* desc = apic_find_ioapic(gsi);
+  if(desc == NULL) {
+    if(gsi < 16) {
+      pic_set_mask(gsi, masked);
+      return true;
+    }
+    return false;
+  }
+
+  uint8_t entry = (uint8_t)(gsi - (uint32_t)desc->base);
+  uint32_t value = readioapic(desc->addr, 0x10 + entry * 2);
+  if(masked) {
+    value |= (1u << 16);
+  } else {
+    value &= ~(1u << 16);
+  }
+  writeioapic(desc->addr, 0x10 + entry * 2, value);
+
+  pic_set_mask(gsi, true);
 
   return true;
 }

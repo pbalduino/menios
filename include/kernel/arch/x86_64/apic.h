@@ -45,6 +45,8 @@ bool apic_configure_irq(uint32_t gsi,
                         bool level_triggered,
                         bool active_low);
 
+bool apic_update_irq_mask(uint32_t gsi, bool masked);
+
 void apic_send_eoi(void);
 
 #endif /* MENIOS_INCLUDE_KERNEL_ARCH_X86_64_APIC_H */

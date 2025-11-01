@@ -20,6 +20,7 @@
 #include <uacpi/kernel_api.h>
 
 #include <errno.h>
+#include <assert.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <string.h>
@@ -226,12 +227,16 @@ void uacpi_kernel_release_mutex(uacpi_handle handle) {
 }
 
 void* uacpi_kernel_map(uacpi_phys_addr addr, uacpi_size len) {
-  return (void*)physical_to_virtual(addr);
-  // return kmmap((void*)addr, len, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
+  if(len == 0) {
+    return NULL;
+  }
+
+  return (void*)physical_to_virtual((phys_addr_t)addr);
 }
 
 void uacpi_kernel_unmap(void *addr, uacpi_size len) {
-  kmunmap(addr, len);
+  (void)addr;
+  (void)len;
 }
 
 uacpi_status uacpi_kernel_schedule_work(
@@ -286,7 +291,12 @@ uacpi_status uacpi_kernel_install_interrupt_handler(
   binding->ctx = ctx;
   binding->irq_handle = NULL;
 
-  int rc = irq_register(irq, uacpi_irq_dispatch, binding, &binding->irq_handle);
+  irq_config_t config = {
+    .level_triggered = true,
+    .active_low = true
+  };
+
+  int rc = irq_register(irq, uacpi_irq_dispatch, binding, &config, &binding->irq_handle);
   if(rc != 0) {
     kfree(binding);
     if(rc == -ENOMEM) {
@@ -451,26 +461,47 @@ uacpi_bool uacpi_kernel_wait_for_event(uacpi_handle handle, uacpi_u16 timeout) {
   return UACPI_FALSE;
 }
 
-uacpi_status uacpi_kernel_handle_firmware_request(uacpi_firmware_request*) {
-  serial_printf("uacpi_kernel_handle_firmware_request not implemented\n");
-  return UACPI_STATUS_OK;
+uacpi_status uacpi_kernel_handle_firmware_request(uacpi_firmware_request* request) {
+  if(request == NULL) {
+    return UACPI_STATUS_INVALID_ARGUMENT;
+  }
+
+  switch(request->type) {
+    case UACPI_FIRMWARE_REQUEST_TYPE_BREAKPOINT:
+      serial_printf("uacpi: firmware breakpoint signaled (ctx=%p)\n", request->breakpoint.ctx);
+      return UACPI_STATUS_OK;
+    case UACPI_FIRMWARE_REQUEST_TYPE_FATAL:
+      panic("uacpi fatal firmware request: type=%u code=%u arg=%p",
+            request->fatal.type,
+            request->fatal.code,
+            (void*)request->fatal.arg);
+      return UACPI_STATUS_DENIED;
+    default:
+      serial_printf("uacpi: unknown firmware request type %u\n", request->type);
+      return UACPI_STATUS_INVALID_ARGUMENT;
+  }
 }
 
 uacpi_status uacpi_kernel_raw_memory_read(
     uacpi_phys_addr address, uacpi_u8 byte_width, uacpi_u64 *out_value
 ) {
+  if(out_value == NULL) {
+    return UACPI_STATUS_INVALID_ARGUMENT;
+  }
+
+  volatile uint8_t* virt = (volatile uint8_t*)physical_to_virtual((phys_addr_t)address);
   switch(byte_width) {
     case 1:
-      *out_value = *(uacpi_u8*)address;
+      *out_value = *virt;
       break;
     case 2:
-      *out_value = *(uacpi_u16*)address;
+      *out_value = *(volatile uacpi_u16*)virt;
       break;
     case 4:
-      *out_value = *(uacpi_u32*)address;
+      *out_value = *(volatile uacpi_u32*)virt;
       break;
     case 8:
-      *out_value = *(uacpi_u64*)address;
+      *out_value = *(volatile uacpi_u64*)virt;
       break;
     default:
       serial_printf("uacpi_kernel_raw_memory_read: Invalid byte width: %d\n", byte_width);
@@ -483,18 +514,19 @@ uacpi_status uacpi_kernel_raw_memory_read(
 uacpi_status uacpi_kernel_raw_memory_write(
     uacpi_phys_addr address, uacpi_u8 byte_width, uacpi_u64 in_value
 ) {
+  volatile uint8_t* virt = (volatile uint8_t*)physical_to_virtual((phys_addr_t)address);
   switch(byte_width) {
     case 1:
-      *(uacpi_u8*)address = in_value;
+      *(volatile uacpi_u8*)virt = (uacpi_u8)in_value;
       break;
     case 2:
-      *(uacpi_u16*)address = in_value;
+      *(volatile uacpi_u16*)virt = (uacpi_u16)in_value;
       break;
     case 4:
-      *(uacpi_u32*)address = in_value;
+      *(volatile uacpi_u32*)virt = (uacpi_u32)in_value;
       break;
     case 8:
-      *(uacpi_u64*)address = in_value;
+      *(volatile uacpi_u64*)virt = (uacpi_u64)in_value;
       break;
     default:
       serial_printf("uacpi_kernel_raw_memory_write: Invalid byte width: %d\n", byte_width);
