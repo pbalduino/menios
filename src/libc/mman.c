@@ -6,6 +6,16 @@
 #include <sys/mman.h>
 #include <unistd.h>
 
+#ifdef MENIOS_HOST_TEST
+#if defined(__linux__)
+#define MENIOS_HOST_MAP_ANONYMOUS 0x20
+#elif defined(__APPLE__)
+#define MENIOS_HOST_MAP_ANONYMOUS 0x1000
+#else
+#define MENIOS_HOST_MAP_ANONYMOUS MAP_ANONYMOUS
+#endif
+#endif
+
 static size_t log_append_str(char* buffer, size_t pos, size_t capacity, const char* text) {
   while(text != NULL && *text != '\0' && pos < capacity) {
     buffer[pos++] = *text++;
@@ -35,6 +45,13 @@ static size_t log_append_hex(char* buffer, size_t pos, size_t capacity, uint64_t
 }
 
 void* mmap(void* addr, size_t length, int prot, int flags, int fd, off_t offset) {
+#ifdef MENIOS_HOST_TEST
+  if((flags & MAP_ANONYMOUS) != 0) {
+    flags &= ~MAP_ANONYMOUS;
+    flags |= MENIOS_HOST_MAP_ANONYMOUS;
+  }
+#endif
+
   long rc = __menios_syscall6(SYS_MMAP,
                               (long)addr,
                               (long)length,
@@ -42,6 +59,7 @@ void* mmap(void* addr, size_t length, int prot, int flags, int fd, off_t offset)
                               (long)flags,
                               (long)fd,
                               (long)offset);
+#ifndef MENIOS_HOST_TEST
   long rc_trace = __menios_syscall_last_result;
 
   {
@@ -56,6 +74,7 @@ void* mmap(void* addr, size_t length, int prot, int flags, int fd, off_t offset)
     }
     (void)write(2, rawbuf, rawpos);
   }
+#endif
 
   if(rc < 0) {
     errno = (int)(-rc);
@@ -67,6 +86,7 @@ void* mmap(void* addr, size_t length, int prot, int flags, int fd, off_t offset)
   uintptr_t result = (uintptr_t)rc;
   uintptr_t result_hi = result >> 32;
 
+#ifndef MENIOS_HOST_TEST
   {
     char buf[128];
     size_t pos = 0u;
@@ -83,6 +103,7 @@ void* mmap(void* addr, size_t length, int prot, int flags, int fd, off_t offset)
     }
     (void)write(2, buf, pos);
   }
+#endif
 
   return (void*)result;
 }

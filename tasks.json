@@ -1,5 +1,21 @@
 [
   {
+    "title": "Implement brk/sbrk compatibility shim over mmap",
+    "github_issue": {
+      "number": 423,
+      "url": "https://github.com/pbalduino/menios/issues/423",
+      "state": "OPEN"
+    },
+    "labels": [
+      "enhancement",
+      "kernel",
+      "libc"
+    ],
+    "assignees": [
+      "pbalduino"
+    ]
+  },
+  {
     "title": "Implement MSR-backed LAPIC operations for x2APIC systems",
     "github_issue": {
       "number": 418,
