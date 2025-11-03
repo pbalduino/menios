@@ -870,10 +870,16 @@ Active work:
   - **Documentation**: Created [docs/road/road_to_gui.md](road/road_to_gui.md) - complete roadmap with architecture, code examples, 6 milestones (8-10 months)
   - **Other**: #411 (source file headers with MIT License)
   - Total project issues now: **127** (was 106), GUI milestone: 0/20 (just launched!)
+- **2025-11-03**: Closed #423 (brk/sbrk compatibility shim) and #364 (stubbed functions tracker) ✅
+  - Implemented userland brk/sbrk via mmap(MAP_ANONYMOUS) in `src/libc/brk.c`
+  - Added test coverage in `test/test_brk_sbrk.c`
+  - Updated mmap under MENIOS_HOST_TEST for better host compatibility
+  - Stubbed functions tracker now 93% complete (13/14 functions working - only gets() remains)
+  - gets() deliberately not implemented (security vulnerability, removed from C11)
 
 ---
 
-**Last Updated**: 2025-10-30
+**Last Updated**: 2025-11-03
 **See Also**:
 - [Road to Shell](road/road_to_shell.md)
 - [Road to Buddy Allocator](road/road_to_buddy_allocator.md)

@@ -46,8 +46,8 @@ The meniOS project has grown to over 100+ tracked issues with complex interdepen
   - ⚠️ pathconf() (partial - #368)
   - ✅ chmod/fchmod (#365); ✅ utime (#317)
   - ✅ pseudo-fs metadata (#366); ✅ rich FAT32 metadata (#367)
-  - ❌ isatty (#347), brk/sbrk (#21), system() (#369)
-  - ❌ timing APIs (#327)
+  - ✅ brk/sbrk (#423 - libc shim)
+  - ❌ gets() (deliberately not implemented - security vulnerability)
 - Thread safety: #339 (depends on pthread #109)
 - Extended features: stdio, math, regex, TTY helpers, multiplexing
 - Future work: sockets, locale, wide-char, dynamic loader
@@ -69,13 +69,13 @@ The meniOS project has grown to over 100+ tracked issues with complex interdepen
 - ✅ #338 (Float parsing) - CLOSED - TCC blockers resolved! 🎉
 - ✅ #371 (ld freeze bug) - **CLOSED** - as and ld working! 🎉
 - ✅ #373 (realpath command) - **CLOSED** - Quick win complete! 🎉
-- ⚠️ #364 (Stubbed functions) - Partially complete (stat family working)
+- ✅ #364 (Stubbed functions) - CLOSED (93% complete: 13/14 functions, only gets() remains)
 - ✅ #370 (stat command) - **CLOSED** - File metadata tool now ships in `/bin/stat`
 - 🆕 #372 (shutdown command) - NEW - Clean ACPI power-off from userland (quick win)
 - ✅ #191 (binutils) - Build complete, **READY FOR TESTING** (unblocked)
 
-**Recently Closed (19 issues):**
-- #58, #137, #138, #145, #149, #151, #152, #153, #155, #167, #168, #226, #284, #285, #316, #337, #338, #371, #373
+**Recently Closed (21 issues):**
+- #58, #137, #138, #145, #149, #151, #152, #153, #155, #167, #168, #226, #284, #285, #316, #337, #338, #364, #371, #373, #423
 
 ---
 

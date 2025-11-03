@@ -45,7 +45,7 @@ Other points:
 * `proc_create_user()` still clones the kernel PML4 via `pmm_clone_kernel_address_space()`, giving each process the shared higher-half mappings while providing a unique CR3 for user pages.
 * Each process carries `vm_regions[]` metadata. The stack region is registered as grow-down; only the top page is mapped eagerly so the task can start executing, and further growth is handled lazily.
 * `elf64_load_image()` maps PT_LOAD segments and records them in both `user_segments` (for physical cleanup) and the owning region metadata so we know exactly which virtual ranges are populated.
-* There is not yet a heap region (`brk`/`mmap`), but the infrastructure for grow-up regions is ready—only the stack uses it today.
+* A userland heap shim (`brk`/`sbrk`) has been implemented via `src/libc/brk.c`. It maintains a locked arena backed by `mmap(MAP_ANONYMOUS)`, providing POSIX-compatible dynamic memory allocation without kernel syscalls. Native kernel-side heap regions remain planned for future work.
 * User-mode page faults are intercepted by `vm_region_handle_page_fault()`. Faults inside growable regions allocate zeroed pages on demand; illegal or permission-violating faults still fall back to the diagnostic handler.
 
 ## User Address Spaces (Planned Enhancements)
@@ -53,8 +53,8 @@ Other points:
 Work remaining after issue #28 (also expanded in `docs/architecture/per_process_vm.md`):
 
 * **Canonical Layout**: Define fixed bases for text, rodata, data/BSS, heap, stack, and mmappable regions so PIDs no longer influence addresses and we can reserve guard pages.
-* **Heap Region**: Introduce a grow-up region for `brk`/`mmap`, wire it into the lazy allocation path, and converge cleanup logic on the region metadata instead of the flat `user_segments` array.
-* **Address-Space Isolation**: Replace the “clone kernel CR3” strategy with a curated template that maps only the required shared kernel ranges plus user regions, then teach `proc_exit` to unmap via region descriptors.
+* **Native Kernel Heap Region**: Introduce a true kernel-managed grow-up heap region for `brk`/`sbrk` syscalls, wire it into the lazy allocation path, and converge cleanup logic on the region metadata instead of the flat `user_segments` array. (Currently, userland uses a libc shim backed by `mmap`.)
+* **Address-Space Isolation**: Replace the "clone kernel CR3" strategy with a curated template that maps only the required shared kernel ranges plus user regions, then teach `proc_exit` to unmap via region descriptors.
 * **Demand Paging**: Build on the region infrastructure to lazily populate PT_LOAD segments or file-backed mappings once the filesystem and VFS layers arrive.
 
 ## Open Questions / Future Work
@@ -67,4 +67,4 @@ Work remaining after issue #28 (also expanded in `docs/architecture/per_process_
 
 ---
 
-_Last updated: 2025-09-26_
+_Last updated: 2025-11-03_
