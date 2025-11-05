@@ -37,6 +37,8 @@ static uint64_t last_exec = 0;
 
 static void __attribute__((noreturn)) proc_first_entry(void);
 static void proc_prepare_switch_frame(proc_info_p proc);
+static inline uint64_t canonicalize_address(uint64_t addr);
+static inline bool is_canonical_address(uint64_t addr);
 
 extern void proc_enter_userspace(syscall_frame_t* frame) __attribute__((noreturn));
 
@@ -136,6 +138,10 @@ static void proc_prepare_switch_frame(proc_info_p proc) {
   top -= sizeof(uint64_t);
   *((uint64_t*)top) = (uint64_t)proc_first_entry;
   proc->kernel_rsp = (uint64_t)top;
+  SCHED_TRACE("proc_prepare_switch_frame: pid=%u kernel_rsp=%lx frame=%p\n",
+              proc->pid,
+              (unsigned long)proc->kernel_rsp,
+              (void*)proc->cpu_state);
 }
 
 static void __attribute__((noreturn)) proc_first_entry(void) {
@@ -169,6 +175,18 @@ static void __attribute__((noreturn)) proc_first_entry(void) {
 
   proc_exit(0);
   halt();
+}
+
+static inline uint64_t canonicalize_address(uint64_t addr) {
+  const uint64_t sign_bit = 1ull << 47;
+  if(addr & sign_bit) {
+    return addr | (~((1ull << 48) - 1));
+  }
+  return addr & ((1ull << 48) - 1);
+}
+
+static inline bool is_canonical_address(uint64_t addr) {
+  return canonicalize_address(addr) == addr;
 }
 
 static inline int encode_stopped_status(int signo) {
@@ -295,7 +313,10 @@ static void proc_free_resources(proc_info_p proc) {
   proc_file_table_cleanup(proc);
 
   if(proc->address_space_root) {
-    pmm_free_pages(proc->address_space_root, 1);
+    pmm_free_pages(phys_frame_from_addr(proc->address_space_root), 1);
+    serial_printf("proc_free_resources: pid=%u freed address_space_root=%lx\n",
+                  proc->pid,
+                  (unsigned long)proc->address_space_root);
     proc->address_space_root = 0;
   }
 
@@ -327,6 +348,7 @@ static void ready_queue_push(proc_info_p proc) {
     queue->head = proc;
   }
   queue->tail = proc;
+  SCHED_TRACE("ready_queue_push: pid=%u priority=%u\n", proc->pid, proc->priority);
 }
 
 static proc_info_p ready_queue_pop_at_priority(uint8_t priority) {
@@ -371,6 +393,7 @@ static proc_info_p ready_queue_pop_highest(void) {
   for(int pr = PROC_PRIORITY_MAX; pr >= PROC_PRIO_IDLE; --pr) {
     proc_info_p proc = ready_queue_pop_at_priority((uint8_t)pr);
     if(proc != NULL) {
+      SCHED_TRACE("ready_queue_pop_highest: priority=%d pid=%u\n", pr, proc->pid);
       return proc;
     }
   }
@@ -481,13 +504,16 @@ static void scheduler_cleanup_process(proc_info_p proc) {
 
   for(size_t seg = 0; seg < proc->user_segment_count; seg++) {
     if(proc->user_segments[seg].phys) {
-      pmm_free_pages(proc->user_segments[seg].phys, proc->user_segments[seg].pages);
+      pmm_free_pages(phys_frame_from_addr(proc->user_segments[seg].phys), proc->user_segments[seg].pages);
     }
   }
   proc->user_segment_count = 0;
 
   if(proc->address_space_root && proc->address_space_root != pmm_get_kernel_cr3()) {
-    pmm_free_pages(proc->address_space_root, 1);
+    pmm_free_pages(phys_frame_from_addr(proc->address_space_root), 1);
+    serial_printf("scheduler_cleanup_process: pid=%u freed address_space_root=%lx\n",
+                  proc->pid,
+                  (unsigned long)proc->address_space_root);
     proc->address_space_root = 0;
   }
 
@@ -530,27 +556,68 @@ cpu_state_p proc_switch(cpu_state_p frame) {
 
   if(current && current->cpu_state) {
     if(frame != NULL && frame != current->cpu_state) {
-      uintptr_t frame_addr = (uintptr_t)frame;
-      const uintptr_t kernel_floor = 0xffff800000000000ull;
-      if(frame_addr < kernel_floor) {
-        SCHED_TRACE("proc_switch: low frame addr pid=%u frame=%p current_state=%p\n",
+      uintptr_t frame_addr_check = (uintptr_t)frame;
+      bool frame_on_stack = false;
+      if(current->stack_base != NULL) {
+        uintptr_t stack_base_addr = (uintptr_t)current->stack_base;
+        uintptr_t stack_top_addr = stack_base_addr + PROC_STACK_SIZE;
+        if(frame_addr_check >= stack_base_addr && frame_addr_check < stack_top_addr) {
+          frame_on_stack = true;
+        }
+      }
+      if(!frame_on_stack) {
+        uintptr_t saved_addr = (uintptr_t)&current->syscall_saved_frame;
+        if(frame_addr_check >= saved_addr && frame_addr_check < saved_addr + sizeof(syscall_frame_t)) {
+          frame_on_stack = true;
+        }
+      }
+      if(frame_on_stack) {
+        serial_printf("proc_switch: save pid=%u frame=%p cpu_state=%p\n",
+                      current->pid,
+                      (void*)frame,
+                      (void*)current->cpu_state);
+        uintptr_t frame_addr = (uintptr_t)frame;
+        const uintptr_t kernel_floor = 0xffff800000000000ull;
+        if(frame_addr < kernel_floor) {
+          SCHED_TRACE("proc_switch: low frame addr pid=%u frame=%p current_state=%p\n",
+                      current->pid,
+                      (void*)frame,
+                      (void*)current->cpu_state);
+        }
+        SCHED_TRACE("proc_switch: memcpy save pid=%u frame=%p dest=%p size=%zu\n",
                     current->pid,
                     (void*)frame,
-                    (void*)current->cpu_state);
+                    (void*)current->cpu_state,
+                    sizeof(cpu_state_t));
+        SCHED_TRACE("proc_switch: frame values rip=%lx rsp=%lx rdi=%lx rsi=%lx rdx=%lx rcx=%lx\n",
+                    ((cpu_state_t*)frame)->rip,
+                    ((cpu_state_t*)frame)->rsp,
+                    ((cpu_state_t*)frame)->rdi,
+                    ((cpu_state_t*)frame)->rsi,
+                    ((cpu_state_t*)frame)->rdx,
+                    ((cpu_state_t*)frame)->rcx);
+        memcpy(current->cpu_state, frame, sizeof(cpu_state_t));
+        if(current->user_mode && current->user_stack_size > 0) {
+          virt_addr_t stack_base = current->user_stack_base_vaddr;
+          virt_addr_t stack_top = stack_base + current->user_stack_size;
+          virt_addr_t saved_rsp = current->cpu_state->rsp;
+          if(saved_rsp < stack_base || saved_rsp > stack_top) {
+            serial_printf("proc_switch: saved rsp out of range pid=%u rsp=%lx stack=[%lx,%lx)\n",
+                          current->pid,
+                          (unsigned long)saved_rsp,
+                          (unsigned long)stack_base,
+                          (unsigned long)stack_top);
+          }
+        }
+      } else {
+        uintptr_t stack_base_addr = current->stack_base ? (uintptr_t)current->stack_base : 0;
+        uintptr_t stack_top_addr = stack_base_addr ? stack_base_addr + PROC_STACK_SIZE : 0;
+        serial_printf("proc_switch: skip copy pid=%u frame=%p stack=[%p,%p)\n",
+                      current->pid,
+                      (void*)frame,
+                      current->stack_base,
+                      current->stack_base ? (void*)stack_top_addr : NULL);
       }
-      SCHED_TRACE("proc_switch: memcpy save pid=%u frame=%p dest=%p size=%zu\n",
-                  current->pid,
-                  (void*)frame,
-                  (void*)current->cpu_state,
-                  sizeof(cpu_state_t));
-      SCHED_TRACE("proc_switch: frame values rip=%lx rsp=%lx rdi=%lx rsi=%lx rdx=%lx rcx=%lx\n",
-                  ((cpu_state_t*)frame)->rip,
-                  ((cpu_state_t*)frame)->rsp,
-                  ((cpu_state_t*)frame)->rdi,
-                  ((cpu_state_t*)frame)->rsi,
-                  ((cpu_state_t*)frame)->rdx,
-                  ((cpu_state_t*)frame)->rcx);
-      memcpy(current->cpu_state, frame, sizeof(cpu_state_t));
     }
   }
 
@@ -665,12 +732,23 @@ cpu_state_p proc_switch(cpu_state_p frame) {
   current->time_slice_remaining_us = current->quantum_us;
   current->last_dispatch_us = now;
 
+  serial_printf("proc_switch: next pid=%u cpu_state=%p kernel_rsp=%lx\n",
+                current->pid,
+                (void*)current->cpu_state,
+                (unsigned long)current->kernel_rsp);
+
   if(current->syscall_gs_needs_restore) {
     __asm__ volatile("swapgs" ::: "memory");
     current->syscall_gs_needs_restore = false;
   }
 
   phys_addr_t desired_cr3 = current->address_space_root ? current->address_space_root : pmm_get_kernel_cr3();
+  serial_printf("proc_switch: activate pid=%u as_root=%lx desired_cr3=%lx kernel_cr3=%lx current_cr3=%lx\n",
+                current->pid,
+                (unsigned long)current->address_space_root,
+                (unsigned long)desired_cr3,
+                (unsigned long)pmm_get_kernel_cr3(),
+                (unsigned long)read_cr3());
   if(read_cr3() != desired_cr3) {
     write_cr3(desired_cr3);
   }
@@ -686,6 +764,11 @@ cpu_state_p proc_switch(cpu_state_p frame) {
               current->cpu_state->rsi,
               current->cpu_state->rdx,
               current->cpu_state->rcx);
+  serial_printf("proc_switch: resume pid=%u rip=%lx rsp=%lx rbp=%lx\n",
+                current->pid,
+                (unsigned long)current->cpu_state->rip,
+                (unsigned long)current->cpu_state->rsp,
+                (unsigned long)current->cpu_state->rbp);
 
   uint64_t kernel_stack = proc_kernel_stack_top(current);
   if(kernel_stack != 0) {
@@ -706,10 +789,9 @@ cpu_state_p proc_switch(cpu_state_p frame) {
   if(next_rsp != 0) {
     uint64_t* slot = (uint64_t*)next_rsp;
     uint64_t ret = *slot;
-    uint64_t hi = ret & 0xFFFF000000000000ull;
-    if(ret != 0 && hi != 0xFFFF000000000000ull) {
-      uint64_t corrected = 0xFFFFFFFF00000000ull | (ret & 0x00000000FFFFFFFFull);
-      SCHED_TRACE("proc_switch: repaired kernel ret pid=%u old=%lx corrected=%lx\n",
+    if(ret != 0 && !is_canonical_address(ret)) {
+      uint64_t corrected = canonicalize_address(ret);
+      SCHED_TRACE("proc_switch: repaired return addr pid=%u old=%lx corrected=%lx\n",
                   current->pid,
                   ret,
                   corrected);
@@ -776,6 +858,13 @@ void proc_create(proc_info_p proc, const char* name, void (*entrypoint)(void *),
   proc->waitpid_waiting = false;
   proc->syscall_gs_active = false;
   proc->syscall_gs_needs_restore = false;
+  proc->syscall_trap_frame_valid = false;
+  proc->syscall_user_rip = 0;
+  proc->syscall_user_rsp = 0;
+  proc->syscall_user_cs = 0;
+  proc->syscall_user_ss = 0;
+  proc->syscall_user_rflags = 0;
+  memset(&proc->syscall_saved_frame, 0, sizeof(proc->syscall_saved_frame));
   proc_prepare_switch_frame(proc);
   proc->cpu_state->rip = (uint64_t)entrypoint;
   proc->cpu_state->rdi = (uint64_t)arg;
@@ -803,10 +892,14 @@ static inline virt_addr_t user_code_base(uint32_t pid) {
   return base + (stride * pid);
 }
 
-static inline virt_addr_t user_stack_top(uint32_t pid) {
-  const virt_addr_t base = 0x0000000000800000ull;
-  const virt_addr_t stride = 0x200000ull; // 2MB per process
+static inline virt_addr_t user_stack_base(uint32_t pid) {
+  const virt_addr_t base = 0x0000000100000000ull; // 4 GiB
+  const virt_addr_t stride = (virt_addr_t)PROC_USER_STACK_SIZE;
   return base + (stride * pid);
+}
+
+static inline virt_addr_t user_stack_top(uint32_t pid) {
+  return user_stack_base(pid) + PROC_USER_STACK_SIZE;
 }
 
 static inline virt_addr_t user_mmap_base(uint32_t pid) {
@@ -831,6 +924,14 @@ static inline bool segment_can_extend(const proc_user_segment_t* segment,
 
 static bool proc_register_user_segment_internal(proc_info_p proc, phys_addr_t phys, size_t pages) {
   if(pages == 0 || phys == 0) {
+    return false;
+  }
+
+  uintptr_t offset = get_kernel_offset();
+  if(offset != 0 && phys >= offset) {
+    serial_printf("proc_register_user_segment: rejecting HHDM address phys=%lx offset=%lx\n",
+                  (unsigned long)phys,
+                  (unsigned long)offset);
     return false;
   }
 
@@ -1313,6 +1414,9 @@ proc_info_p proc_fork(proc_info_p parent, const syscall_frame_t* frame, int* err
     return NULL;
   }
   child->address_space_root = new_root;
+  serial_printf("proc_fork: pid=%u new address_space_root=%lx\n",
+                child->pid,
+                (unsigned long)new_root);
   SCHED_TRACE("proc_fork: new address space=%lx\n", (unsigned long)new_root);
 
   child->user_segment_count = 0;
@@ -1358,7 +1462,9 @@ proc_info_p proc_fork(proc_info_p parent, const syscall_frame_t* frame, int* err
 
 static bool proc_setup_exec_stack(proc_info_p proc,
                                  syscall_frame_t* frame,
-                                 const proc_exec_args_t* args);
+                                 const proc_exec_args_t* args,
+                                 virt_addr_t stack_base,
+                                 virt_addr_t stack_top);
 
 int proc_exec_image(proc_info_p proc,
                     const uint8_t* image,
@@ -1390,7 +1496,7 @@ int proc_exec_image(proc_info_p proc,
 
   proc_info_t* staging = kmalloc(sizeof(proc_info_t));
   if(staging == NULL) {
-    pmm_free_pages(new_root, 1);
+    pmm_free_pages(phys_frame_from_addr(new_root), 1);
     kfree(elf_copy);
     serial_printf("proc_exec_image: staging allocation failed\n");
     return -ENOMEM;
@@ -1403,8 +1509,8 @@ int proc_exec_image(proc_info_p proc,
   proc_file_table_prepare_exec(proc);
   SCHED_TRACE("proc_exec_image: file table prepared\n");
 
-  virt_addr_t stack_top = user_stack_top(proc->pid);
-  virt_addr_t stack_base_vaddr = stack_top - PROC_USER_STACK_SIZE;
+  virt_addr_t stack_base_vaddr = user_stack_base(proc->pid);
+  virt_addr_t stack_top = stack_base_vaddr + PROC_USER_STACK_SIZE;
   staging->user_stack_base_vaddr = stack_base_vaddr;
   staging->user_stack_size = PROC_USER_STACK_SIZE;
 
@@ -1430,18 +1536,21 @@ int proc_exec_image(proc_info_p proc,
   size_t stack_pages_mapped = 0;
 
   for(size_t page = 0; page < PROC_INITIAL_STACK_PAGES; page++) {
-    phys_addr_t phys = pmm_alloc_pages(1);
-    if(phys == 0) {
+    phys_frame_t frame = pmm_alloc_pages(1);
+    if(!phys_frame_is_valid(frame)) {
       serial_printf("proc_exec_image: initial stack alloc failed (page=%zu)\n", page);
       goto fail_stack_map;
     }
+    phys_addr_t phys = phys_frame_to_addr(frame);
     stack_phys[page] = phys;
     void* stack_page_ptr = (void*)physical_to_virtual(phys);
     memset(stack_page_ptr, 0, PAGE_SIZE);
 
     virt_addr_t page_addr = stack_top - (virt_addr_t)((page + 1u) * PAGE_SIZE);
-    if(!pmm_map_page_in_root(new_root, page_addr, phys, true, true)) {
+    if(!pmm_map_page_in_root(new_root, page_addr, frame, true, true)) {
       serial_printf("proc_exec_image: map stack page failed (page=%zu)\n", page);
+      pmm_free_pages(frame, 1);
+      stack_phys[page] = 0;
       goto fail_stack_map;
     }
     stack_pages_mapped++;
@@ -1472,10 +1581,14 @@ int proc_exec_image(proc_info_p proc,
   proc_release_user_memory(proc);
 
   if(old_root != 0 && old_root != new_root && old_root != pmm_get_kernel_cr3()) {
-    pmm_free_pages(old_root, 1);
+    pmm_free_pages(phys_frame_from_addr(old_root), 1);
   }
 
   proc->address_space_root = new_root;
+  serial_printf("proc_exec_image: pid=%u new address_space_root=%lx (old=%lx)\n",
+                proc->pid,
+                (unsigned long)new_root,
+                (unsigned long)old_root);
   proc->user_stack_base_vaddr = staging->user_stack_base_vaddr;
   proc->user_stack_size = staging->user_stack_size;
   proc->user_segment_count = staging->user_segment_count;
@@ -1497,11 +1610,19 @@ int proc_exec_image(proc_info_p proc,
 
   if(current == proc) {
     write_cr3(proc->address_space_root);
+    phys_addr_t final_phys = 0;
+    if(pmm_get_mapping(proc->address_space_root, frame->rsp, &final_phys, NULL, NULL)) {
+      serial_printf("proc_exec_image: final stack mapping rsp=%lx -> phys=%lx\n",
+                    (unsigned long)frame->rsp,
+                    (unsigned long)final_phys);
+    } else {
+      serial_printf("proc_exec_image: final stack mapping missing rsp=%lx\n",
+                    (unsigned long)frame->rsp);
+    }
   }
 
   frame->rip = entry;
-  frame->rsp = stack_top;
-  frame->rbp = stack_top;
+  frame->rbp = frame->rsp;
   frame->rax = 0;
   frame->rbx = 0;
   frame->rcx = 0;
@@ -1529,10 +1650,60 @@ int proc_exec_image(proc_info_p proc,
     }
   }
 
-  if(!proc_setup_exec_stack(proc, frame, args)) {
+  phys_addr_t active_root = read_cr3();
+  bool switched_root = active_root != new_root;
+  if(switched_root) {
+    write_cr3(new_root);
+  }
+
+  if(!proc_setup_exec_stack(proc, frame, args, stack_base_vaddr, stack_top)) {
+    if(switched_root) {
+      write_cr3(active_root);
+    }
     result = -EFAULT;
     serial_printf("proc_exec_image: setup_exec_stack failed\n");
     goto fail;
+  }
+
+  phys_addr_t verify_phys = 0;
+  virt_addr_t verify_addr = proc->user_stack_base_vaddr + PROC_USER_STACK_SIZE - PAGE_SIZE;
+  if(pmm_get_mapping(new_root, verify_addr, &verify_phys, NULL, NULL)) {
+    serial_printf("proc_exec_image: verified stack phys=%lx for addr=%lx\n",
+                  (unsigned long)verify_phys,
+                  (unsigned long)verify_addr);
+  } else {
+    serial_printf("proc_exec_image: missing stack mapping addr=%lx\n",
+                  (unsigned long)verify_addr);
+  }
+
+  if(frame != NULL) {
+    uintptr_t* argv_user_ptr = (uintptr_t*)frame->rsi;
+    uintptr_t* envp_user_ptr = (uintptr_t*)frame->rdx;
+    serial_printf("proc_exec_image: argv_user=%lx", (unsigned long)argv_user_ptr);
+    if(argv_user_ptr != NULL) {
+      for(size_t i = 0; i < 6; i++) {
+        serial_printf(" argv[%lu]=%lx", (unsigned long)i, (unsigned long)argv_user_ptr[i]);
+        if(argv_user_ptr[i] == 0) {
+          break;
+        }
+      }
+    }
+    serial_printf("\n");
+
+    serial_printf("proc_exec_image: envp_user=%lx", (unsigned long)envp_user_ptr);
+    if(envp_user_ptr != NULL) {
+      for(size_t i = 0; i < 6; i++) {
+        serial_printf(" envp[%lu]=%lx", (unsigned long)i, (unsigned long)envp_user_ptr[i]);
+        if(envp_user_ptr[i] == 0) {
+          break;
+        }
+      }
+    }
+    serial_printf("\n");
+  }
+
+  if(switched_root) {
+    write_cr3(active_root);
   }
 
   memcpy(proc->cpu_state, frame, sizeof(syscall_frame_t));
@@ -1560,7 +1731,7 @@ fail_stack_map:
     if(phys != 0) {
       virt_addr_t page_addr = stack_top - (virt_addr_t)((stack_pages_mapped + 1u) * PAGE_SIZE);
       pmm_unmap_page_in_root(new_root, page_addr);
-      pmm_free_pages(phys, 1);
+      pmm_free_pages(phys_frame_from_addr(phys), 1);
     }
   }
   goto fail;
@@ -1570,7 +1741,7 @@ fail:
     proc_release_user_memory(staging);
   }
   if(new_root != 0) {
-    pmm_free_pages(new_root, 1);
+    pmm_free_pages(phys_frame_from_addr(new_root), 1);
   }
   if(elf_copy != NULL) {
     kfree(elf_copy);
@@ -1584,7 +1755,9 @@ fail:
 
 static bool proc_setup_exec_stack(proc_info_p proc,
                                  syscall_frame_t* frame,
-                                 const proc_exec_args_t* args) {
+                                 const proc_exec_args_t* args,
+                                 virt_addr_t stack_base,
+                                 virt_addr_t stack_top) {
   if(proc == NULL || frame == NULL) {
     return false;
   }
@@ -1601,8 +1774,7 @@ static bool proc_setup_exec_stack(proc_info_p proc,
   char** argv = args->argv;
   char** envp = args->envp;
 
-  uintptr_t sp = frame->rsp;
-  uintptr_t stack_base = proc->user_stack_base_vaddr;
+  uintptr_t sp = stack_top;
 
   uintptr_t* argv_ptrs = NULL;
   uintptr_t* envp_ptrs = NULL;
@@ -1666,6 +1838,14 @@ static bool proc_setup_exec_stack(proc_info_p proc,
 
   sp &= ~((uintptr_t)0xf);
 
+  if(argc > 0 || envc > 0) {
+    serial_printf("proc_setup_exec_stack vals: argc=%lu argv0=%lx env0=%lx sp=%lx\n",
+                  (unsigned long)argc,
+                  (unsigned long)(argc > 0 ? argv_ptrs[0] : 0),
+                  (unsigned long)(envc > 0 ? envp_ptrs[0] : 0),
+                  (unsigned long)sp);
+  }
+
   if(sp < stack_base + sizeof(uintptr_t)) {
     if(argv_ptrs) {
       kfree(argv_ptrs);
@@ -1676,8 +1856,9 @@ static bool proc_setup_exec_stack(proc_info_p proc,
     return false;
   }
 
+  uintptr_t zero = 0;
   sp -= sizeof(uintptr_t);
-  *((uintptr_t*)sp) = 0;
+  *((uintptr_t*)sp) = zero;
   for(size_t i = envc; i > 0; i--) {
     sp -= sizeof(uintptr_t);
     *((uintptr_t*)sp) = envp_ptrs ? envp_ptrs[i - 1] : 0;
@@ -1685,7 +1866,7 @@ static bool proc_setup_exec_stack(proc_info_p proc,
   uintptr_t envp_user = sp;
 
   sp -= sizeof(uintptr_t);
-  *((uintptr_t*)sp) = 0;
+  *((uintptr_t*)sp) = zero;
   for(size_t i = argc; i > 0; i--) {
     sp -= sizeof(uintptr_t);
     *((uintptr_t*)sp) = argv_ptrs ? argv_ptrs[i - 1] : 0;
@@ -1694,8 +1875,9 @@ static bool proc_setup_exec_stack(proc_info_p proc,
 
   sp &= ~((uintptr_t)0xf);
 
+  uintptr_t argc_value = argc;
   sp -= sizeof(uintptr_t);
-  *((uintptr_t*)sp) = argc;
+  *((uintptr_t*)sp) = argc_value;
 
   frame->rsp = sp;
   frame->rdi = argc;
@@ -1854,6 +2036,14 @@ bool proc_user_touch_range(proc_info_p proc, virt_addr_t addr, size_t length, bo
   while(offset < length) {
     virt_addr_t current = addr + offset;
 
+    if(proc->pid == 3 && current >= 0x2700000ull) {
+      serial_printf("touch_range: pid=%u checking addr=%lx len=%zu write=%d\n",
+                    proc->pid,
+                    (unsigned long)current,
+                    (unsigned long)length,
+                    write ? 1 : 0);
+    }
+
     pml4_walk_result_t walk = pmm_walk_address(root, current);
     if(walk.pt_entry == NULL || !walk.pt_entry->present) {
       serial_printf("touch_range: fault pid=%u addr=%lx present=%s\n",
@@ -1954,6 +2144,13 @@ bool proc_user_copy_out(proc_info_p proc, virt_addr_t dest, const void* src, siz
     return true;
   }
 
+  if(proc != NULL && proc->pid == 3 && dest >= 0x2700000ull) {
+    serial_printf("copy_out: pid=%u dest=%lx len=%zu\n",
+                  proc->pid,
+                  (unsigned long)dest,
+                  (unsigned long)length);
+  }
+
   if(!proc_user_touch_range(proc, dest, length, true)) {
     return false;
   }
@@ -1995,12 +2192,15 @@ void proc_create_user(proc_info_p proc, const char* name, const void* code_blob,
     halt();
   }
 
-  virt_addr_t stack_top = user_stack_top(proc->pid);
-  virt_addr_t stack_base_vaddr = stack_top - PROC_USER_STACK_SIZE;
+  virt_addr_t stack_base_vaddr = user_stack_base(proc->pid);
+  virt_addr_t stack_top = stack_base_vaddr + PROC_USER_STACK_SIZE;
 
   proc->user_stack_base_vaddr = stack_base_vaddr;
   proc->user_stack_size = PROC_USER_STACK_SIZE;
   proc->address_space_root = new_root;
+  serial_printf("proc_create_user: pid=%u address_space_root=%lx\n",
+                proc->pid,
+                (unsigned long)new_root);
   proc->mmap_base = user_mmap_base(proc->pid);
   proc->mmap_next = proc->mmap_base;
   proc->mmap_limit = user_mmap_limit(proc->pid);
@@ -2015,26 +2215,27 @@ void proc_create_user(proc_info_p proc, const char* name, const void* code_blob,
   }
 
   for(size_t page = 0; page < PROC_INITIAL_STACK_PAGES; page++) {
-    phys_addr_t phys = pmm_alloc_pages(1);
-    if(phys == 0) {
+    phys_frame_t frame = pmm_alloc_pages(1);
+    if(!phys_frame_is_valid(frame)) {
       serial_printf("proc_create_user: failed to allocate stack page %zu\n", page);
       halt();
     }
 
+    phys_addr_t phys = phys_frame_to_addr(frame);
     void* page_ptr = (void*)physical_to_virtual(phys);
     memset(page_ptr, 0, PAGE_SIZE);
 
     virt_addr_t page_addr = stack_top - (virt_addr_t)((page + 1u) * PAGE_SIZE);
-    if(!pmm_map_page_in_root(new_root, page_addr, phys, true, true)) {
+    if(!pmm_map_page_in_root(new_root, page_addr, frame, true, true)) {
       serial_printf("proc_create_user: failed to map stack page %zu\n", page);
-      pmm_free_pages(phys, 1);
+      pmm_free_pages(frame, 1);
       halt();
     }
 
     if(!proc_register_user_segment(proc, phys, 1)) {
       serial_printf("proc_create_user: failed to register stack segment phys=%lx\n", phys);
       pmm_unmap_page_in_root(new_root, page_addr);
-      pmm_free_pages(phys, 1);
+      pmm_free_pages(frame, 1);
       halt();
     }
 
@@ -2068,6 +2269,7 @@ void proc_execute(proc_info_p proc) {
   proc->time_slice_remaining_us = proc->quantum_us;
   proc->last_dispatch_us = 0;
   ready_queue_push(proc);
+  scheduler_actions |= SCHED_ACTION_FORCE;
   SCHED_TRACE("proc_execute: queued process %s (priority %u)\n", proc->name, proc->priority);
 }
 

@@ -93,7 +93,16 @@ static bool syscall_copy_to_user(void* user_dest, const void* src, size_t size) 
   if(user_dest == NULL || src == NULL || current == NULL) {
     return false;
   }
-  return proc_user_copy_out(current, (virt_addr_t)(uintptr_t)user_dest, src, size);
+  bool ok = proc_user_copy_out(current, (virt_addr_t)(uintptr_t)user_dest, src, size);
+  if(!ok) {
+    void* ra = __builtin_return_address(0);
+    serial_printf("syscall_copy_to_user: pid=%u dest=%lx size=%zu caller=%p\n",
+                  current ? current->pid : 0,
+                  (unsigned long)(uintptr_t)user_dest,
+                  (unsigned long)size,
+                  ra);
+  }
+  return ok;
 }
 
 static uint64_t syscall_stub_unimplemented(syscall_frame_t* frame);
@@ -555,14 +564,30 @@ static bool listdir_iter_callback(const fs_dir_entry_t* entry, void* context) {
     return false;
   }
 
-  char* dest = ctx->user_buffer + ctx->length;
-  memcpy(dest, entry->name, name_len);
-  size_t offset = name_len;
-  if(entry->is_directory) {
-    dest[offset++] = '/';
+  uintptr_t cursor = (uintptr_t)(ctx->user_buffer + ctx->length);
+  if(!syscall_copy_to_user((void*)cursor, entry->name, name_len)) {
+    ctx->error = -EFAULT;
+    return false;
   }
-  dest[offset++] = '\n';
-  ctx->length += offset;
+  ctx->length += name_len;
+  cursor += name_len;
+
+  if(entry->is_directory) {
+    const char slash = '/';
+    if(!syscall_copy_to_user((void*)cursor, &slash, sizeof(slash))) {
+      ctx->error = -EFAULT;
+      return false;
+    }
+    ctx->length += sizeof(slash);
+    cursor += sizeof(slash);
+  }
+
+  const char newline = '\n';
+  if(!syscall_copy_to_user((void*)cursor, &newline, sizeof(newline))) {
+    ctx->error = -EFAULT;
+    return false;
+  }
+  ctx->length += sizeof(newline);
   return true;
 }
 
@@ -618,6 +643,12 @@ static uint64_t syscall_finalize(syscall_frame_t* frame) {
                 (unsigned long)syscall_last_return_value,
                 (unsigned long)syscall_last_return_slot_value);
 #endif
+  if(current != NULL && current->syscall_trap_frame_valid) {
+    uint64_t result = frame->rax;
+    memcpy(frame, &current->syscall_saved_frame, sizeof(*frame));
+    frame->rax = result;
+    current->syscall_trap_frame_valid = false;
+  }
   if(current != NULL) {
     current->syscall_gs_active = false;
     current->syscall_gs_needs_restore = false;
@@ -799,6 +830,13 @@ uint64_t syscall_dispatch(syscall_frame_t* frame) {
   uint64_t number = frame->rax;
 
   if(current != NULL) {
+    current->syscall_user_rip = frame->rip;
+    current->syscall_user_rsp = frame->rsp;
+    current->syscall_user_cs = frame->cs;
+    current->syscall_user_ss = frame->ss;
+    current->syscall_user_rflags = frame->rflags;
+    current->syscall_trap_frame_valid = true;
+    memcpy(&current->syscall_saved_frame, frame, sizeof(*frame));
     current->syscall_gs_active = true;
     current->syscall_gs_needs_restore = false;
   }
@@ -1400,6 +1438,7 @@ static uint64_t syscall_execve_handler(syscall_frame_t* frame) {
 
   SYSCALL_TRACE("execve: pid=%u path=%s\n", current ? current->pid : 0, absolute);
   SYSCALL_TRACE("execve: frame->rsi=%p frame->rdx=%p\n", (void*)frame->rsi, (void*)frame->rdx);
+  serial_printf("[execve] pid=%u path=%s\n", current ? current->pid : 0, absolute);
 
   char** argv = NULL;
   size_t argc = 0;
@@ -1476,6 +1515,9 @@ static uint64_t syscall_execve_handler(syscall_frame_t* frame) {
   kfree(image);
   free_string_vector(argv, argc);
   free_string_vector(envp, envc);
+  if(err == 0 && current != NULL) {
+    current->syscall_trap_frame_valid = false;
+  }
   frame->rax = (uint64_t)err;
   return frame->rax;
 }
@@ -1494,6 +1536,8 @@ static uint64_t syscall_waitpid_handler(syscall_frame_t* frame) {
   int options = (int)frame->rdx;
   bool nonblock = (options & WNOHANG) != 0;
 
+  syscall_frame_t* const wait_frame = frame;
+
   for(;;) {
     int status = 0;
     int result = proc_waitpid(caller, pid, options, &status);
@@ -1504,21 +1548,22 @@ static uint64_t syscall_waitpid_handler(syscall_frame_t* frame) {
         if(!syscall_copy_to_user(status_ptr, &status, sizeof(status))) {
           caller->waitpid_waiting = false;
           caller->waitpid_target = -1;
-          frame->rax = (uint64_t)(-EFAULT);
-          return frame->rax;
+          wait_frame->rax = (uint64_t)(-EFAULT);
+          return wait_frame->rax;
         }
       }
       caller->waitpid_waiting = false;
       caller->waitpid_target = -1;
-      frame->rax = (uint64_t)result;
-      return frame->rax;
+      wait_frame->rax = (uint64_t)result;
+      wait_frame->rsp = caller->syscall_user_rsp;
+      return wait_frame->rax;
     }
 
     if(result < 0) {
       caller->waitpid_waiting = false;
       caller->waitpid_target = -1;
-      frame->rax = (uint64_t)result;
-      return frame->rax;
+      wait_frame->rax = (uint64_t)result;
+      return wait_frame->rax;
     }
 
     caller->waitpid_waiting = true;
@@ -1526,16 +1571,24 @@ static uint64_t syscall_waitpid_handler(syscall_frame_t* frame) {
 
     if(nonblock) {
       caller->state = PROC_STATE_WAITING;
-      frame->rax = 0;
-      return frame->rax;
+      wait_frame->rax = 0;
+      return wait_frame->rax;
     }
 
+    serial_printf("waitpid: pid=%u wait_frame=%p saved_frame=%p\n",
+                  caller->pid,
+                  (void*)wait_frame,
+                  (void*)&caller->syscall_saved_frame);
     caller->state = PROC_STATE_WAITING;
     proc_request_block();
+    cpu_state_p switch_frame = (cpu_state_p)&caller->syscall_saved_frame;
+    memcpy(switch_frame, wait_frame, sizeof(*wait_frame));
     do {
-      frame = (syscall_frame_t*)proc_switch((cpu_state_p)frame);
+      (void)proc_switch(switch_frame);
     } while(current != caller);
     caller->state = PROC_STATE_RUNNING;
+    memcpy(wait_frame, &caller->syscall_saved_frame, sizeof(*wait_frame));
+    frame = wait_frame;
     continue;
   }
 }
@@ -1585,8 +1638,9 @@ static uint64_t syscall_listdir_handler(syscall_frame_t* frame) {
     return frame->rax;
   }
 
-  if(!list_only && ctx.length < ctx.capacity && proc_user_buffer_accessible(current, user_buffer + ctx.length, 1)) {
-    user_buffer[ctx.length] = '\0';
+  if(!list_only && ctx.length < ctx.capacity) {
+    const char terminator = '\0';
+    syscall_copy_to_user(user_buffer + ctx.length, &terminator, sizeof(terminator));
   }
 
   frame->rax = ctx.length;
@@ -2528,6 +2582,9 @@ static uint64_t syscall_sigreturn_handler(syscall_frame_t* frame) {
 #endif
 
   memcpy(frame, &user_frame.context, sizeof(user_frame.context));
+  if(current != NULL) {
+    current->syscall_trap_frame_valid = false;
+  }
 
   return frame->rax;
 }
