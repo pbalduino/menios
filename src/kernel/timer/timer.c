@@ -28,13 +28,17 @@ void (*callback[16])(void*);
 int last_callback = 0;
 
 void timer_handler(void* arg) {
+  timer_eoi();
+
   tick++;
+  if(tick <= 16 || (tick % 1000ull) == 0) {
+    serial_printf("[timer] tick=%llu\n", (unsigned long long)tick);
+  }
   for(int i = 0; i < last_callback; i++) {
     if(callback[i] != NULL) {
       callback[i](arg);
     }
   }
-  timer_eoi();
 }
 
 void register_timer_callback(void (*cb)(void*)) {

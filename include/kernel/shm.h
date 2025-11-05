@@ -9,6 +9,8 @@ extern "C" {
 #include <stdint.h>
 #include <types.h>
 
+#include <kernel/pmm.h>
+
 typedef int32_t shm_key_t;
 
 typedef struct shm_region shm_region_t;
@@ -51,8 +53,8 @@ typedef enum {
 #define IPC_STAT   2
 #endif
 
-typedef phys_addr_t (*shm_page_alloc_fn)(size_t page_count);
-typedef void (*shm_page_free_fn)(phys_addr_t base, size_t page_count);
+typedef phys_frame_t (*shm_page_alloc_fn)(size_t page_count);
+typedef void (*shm_page_free_fn)(phys_frame_t base, size_t page_count);
 
 void shm_manager_initialize(void);
 

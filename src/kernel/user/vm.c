@@ -22,15 +22,16 @@ static virt_addr_t align_down(virt_addr_t addr) {
 
 static bool map_pages(proc_info_p proc,
                       virt_addr_t base,
-                      phys_addr_t phys,
+                      phys_frame_t base_frame,
                       size_t page_count,
                       bool writable,
                       bool user,
                       vm_region_t* region) {
   for(size_t page = 0; page < page_count; page++) {
     virt_addr_t vaddr = base + (page * PAGE_SIZE);
-    phys_addr_t paddr = phys + (page * PAGE_SIZE);
-    if(!pmm_map_page_in_root(proc->address_space_root, vaddr, paddr, writable, user)) {
+    phys_frame_t frame = phys_frame_add(base_frame, page);
+    phys_addr_t paddr = phys_frame_to_addr(frame);
+    if(!pmm_map_page_in_root(proc->address_space_root, vaddr, frame, writable, user)) {
       for(size_t rollback = 0; rollback < page; rollback++) {
         virt_addr_t r_vaddr = base + (rollback * PAGE_SIZE);
         pmm_unmap_page_in_root(proc->address_space_root, r_vaddr);
@@ -45,7 +46,8 @@ static bool map_pages(proc_info_p proc,
       for(size_t rollback = 0; rollback < page; rollback++) {
         size_t idx = page - rollback - 1;
         virt_addr_t r_vaddr = base + (idx * PAGE_SIZE);
-        phys_addr_t r_paddr = phys + (idx * PAGE_SIZE);
+        phys_frame_t r_frame = phys_frame_add(base_frame, idx);
+        phys_addr_t r_paddr = phys_frame_to_addr(r_frame);
         pmm_unmap_page_in_root(proc->address_space_root, r_vaddr);
         proc_unregister_user_segment(proc, r_paddr, 1);
       }
@@ -95,16 +97,17 @@ bool vm_map(proc_info_p proc, const vm_map_params_t* params) {
   bool writable = (params->flags & VM_REGION_FLAG_WRITE) != 0;
   bool user = (params->flags & VM_REGION_FLAG_USER) != 0;
 
-  phys_addr_t phys = pmm_alloc_pages(pages);
-  if(phys == 0) {
+  phys_frame_t frame = pmm_alloc_pages(pages);
+  if(!phys_frame_is_valid(frame)) {
     serial_printf("vm_map: failed to allocate %zu pages\n", pages);
     return false;
   }
 
+  phys_addr_t phys = phys_frame_to_addr(frame);
   memset((void*)physical_to_virtual(phys), 0, pages * PAGE_SIZE);
 
-  if(!map_pages(proc, base, phys, pages, writable, user, region)) {
-    pmm_free_pages(phys, pages);
+  if(!map_pages(proc, base, frame, pages, writable, user, region)) {
+    pmm_free_pages(frame, pages);
     return false;
   }
 
@@ -148,8 +151,9 @@ bool vm_map_physical(proc_info_p proc,
 
   for(size_t page = 0; page < pages; page++) {
     virt_addr_t vaddr = aligned_base + (page * PAGE_SIZE);
-    phys_addr_t paddr = aligned_phys + (page * PAGE_SIZE);
-    if(!pmm_map_page_in_root(proc->address_space_root, vaddr, paddr, writable, user)) {
+    phys_frame_t frame = phys_frame_from_addr(aligned_phys + (page * PAGE_SIZE));
+    phys_addr_t paddr = phys_frame_to_addr(frame);
+    if(!pmm_map_page_in_root(proc->address_space_root, vaddr, frame, writable, user)) {
       for(size_t rollback = 0; rollback < page; rollback++) {
         virt_addr_t r_vaddr = aligned_base + (rollback * PAGE_SIZE);
         phys_addr_t r_paddr = aligned_phys + (rollback * PAGE_SIZE);
@@ -266,8 +270,9 @@ bool vm_map_shared(proc_info_p proc,
   for(; mapped < page_count; ++mapped) {
     virt_addr_t vaddr = base + (mapped * PAGE_SIZE);
     phys_addr_t phys = shm_region_page(region, mapped);
-    if(phys == 0 ||
-       !pmm_map_page_in_root(proc->address_space_root, vaddr, phys, writable, user)) {
+    phys_frame_t frame = phys ? phys_frame_from_addr(phys) : phys_frame_invalid();
+    if(!phys_frame_is_valid(frame) ||
+       !pmm_map_page_in_root(proc->address_space_root, vaddr, frame, writable, user)) {
       break;
     }
     vm_region_note_mapping(vm_reg, vaddr, PAGE_SIZE);
@@ -332,15 +337,16 @@ static bool clone_region(proc_info_p dst,
       continue;
     }
 
-    phys_addr_t dst_phys = pmm_alloc_pages(1);
-    if(dst_phys == 0) {
+    phys_frame_t dst_frame = pmm_alloc_pages(1);
+    if(!phys_frame_is_valid(dst_frame)) {
       return false;
     }
 
+    phys_addr_t dst_phys = phys_frame_to_addr(dst_frame);
     memcpy((void*)physical_to_virtual(dst_phys), (void*)physical_to_virtual(src_phys), PAGE_SIZE);
 
-    if(!pmm_map_page_in_root(dst->address_space_root, vaddr, dst_phys, writable, user)) {
-      pmm_free_pages(dst_phys, 1);
+    if(!pmm_map_page_in_root(dst->address_space_root, vaddr, dst_frame, writable, user)) {
+      pmm_free_pages(dst_frame, 1);
       return false;
     }
 

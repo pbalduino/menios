@@ -422,6 +422,7 @@ proc_signal_delivery_t proc_signal_handle_pending(proc_info_p proc,
     frame->r9 = 0;
     frame->rax = (uint64_t)(-EINTR);
     current->err_no = EINTR;
+    proc->syscall_trap_frame_valid = false;
 
     return PROC_SIGNAL_DELIVERY_HANDLED;
   }

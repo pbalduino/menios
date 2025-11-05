@@ -55,8 +55,8 @@ struct syscall_frame_t;
 #define RLIMIT_DATA (4 * 1024 * 1024)
 
 #define PROC_STACK_SIZE (64 * 1024)
-#define PROC_USER_STACK_SIZE (1 * 1024 * 1024)
-#define PROC_INITIAL_STACK_PAGES 4
+#define PROC_USER_STACK_SIZE (16 * 1024 * 1024)
+#define PROC_INITIAL_STACK_PAGES 16
 #define PROC_MAX_USER_SEGMENTS 4096
 #define PROC_MAX_VM_REGIONS 32
 #define PROC_CWD_MAX 256
@@ -174,6 +174,13 @@ typedef struct proc_info_t {
   bool         continued_pending;
   bool         syscall_gs_active;
   bool         syscall_gs_needs_restore;
+  bool         syscall_trap_frame_valid;
+  uint64_t     syscall_user_rip;
+  uint64_t     syscall_user_rsp;
+  uint64_t     syscall_user_cs;
+  uint64_t     syscall_user_ss;
+  uint64_t     syscall_user_rflags;
+  cpu_state_t  syscall_saved_frame;
   proc_itimer_t timers[PROC_ITIMER_MAX];
   bool         signal_wait_active;
   bool         signal_wait_consume;

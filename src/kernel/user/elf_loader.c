@@ -112,15 +112,16 @@ static bool map_segment(proc_info_p proc,
   size_t total_size = offset_into_page + phdr->p_memsz;
   size_t total_pages = (total_size + PAGE_SIZE - 1) / PAGE_SIZE;
 
-  phys_addr_t phys = pmm_alloc_pages(total_pages);
-  if(phys == 0) {
+  phys_frame_t frame = pmm_alloc_pages(total_pages);
+  if(!phys_frame_is_valid(frame)) {
     serial_printf("ELF: unable to allocate physical pages for segment\n");
     return false;
   }
 
+  phys_addr_t phys = phys_frame_to_addr(frame);
   if(!proc_register_user_segment(proc, phys, total_pages)) {
     serial_printf("ELF: too many user segments\n");
-    pmm_free_pages(phys, total_pages);
+    pmm_free_pages(frame, total_pages);
     return false;
   }
 
@@ -131,8 +132,9 @@ static bool map_segment(proc_info_p proc,
   bool writable = (phdr->p_flags & PF_W) != 0;
   for(size_t page = 0; page < total_pages; page++) {
     virt_addr_t page_vaddr = aligned_vaddr + (page * PAGE_SIZE);
-    phys_addr_t page_phys = phys + (page * PAGE_SIZE);
-    if(!pmm_map_page_in_root(root_phys, page_vaddr, page_phys, writable, true)) {
+    phys_frame_t page_frame = phys_frame_from_addr(phys + (page * PAGE_SIZE));
+    phys_addr_t page_phys = phys_frame_to_addr(page_frame);
+    if(!pmm_map_page_in_root(root_phys, page_vaddr, page_frame, writable, true)) {
       serial_printf("ELF: failed to map page at %lx\n", page_vaddr);
       return false;
     }

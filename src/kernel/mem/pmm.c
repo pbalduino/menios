@@ -90,10 +90,14 @@ static inline phys_addr_t canonical_to_physical_addr(uintptr_t address,
     return (phys_addr_t)address;
   }
 
+  void* ret0 = __builtin_return_address(0);
+  void* ret1 = __builtin_return_address(1);
+
   if(!pmm_phys_limits_ready || pmm_highest_allowed_phys == 0) {
     serial_printf("pmm: HHDM offset=%lx but physical limits unavailable for address %lx\n",
                   (unsigned long)offset,
                   (unsigned long)address);
+    serial_printf("pmm: caller ret0=%p ret1=%p\n", ret0, ret1);
     pmm_abort("direct map limits unavailable");
   }
 
@@ -106,11 +110,17 @@ static inline phys_addr_t canonical_to_physical_addr(uintptr_t address,
                   (unsigned long)phys,
                   (unsigned long)highest_byte,
                   (unsigned long)offset);
+    serial_printf("pmm: rejection caller ret0=%p ret1=%p\n", ret0, ret1);
     pmm_abort("virtual address outside direct map");
   }
 
   if(converted) {
     *converted = true;
+    serial_printf("pmm: canonicalized address %lx -> phys %lx (ret0=%p ret1=%p)\n",
+                  (unsigned long)address,
+                  (unsigned long)phys,
+                  ret0,
+                  ret1);
   }
   return phys;
 }
@@ -132,11 +142,11 @@ static inline void locate_page_bitmap_slot(const char* caller,
   size_t bit_position = page_number % (sizeof(uint64_t) * 8);
 
   if(index >= PAGE_BITMAP_SIZE) {
-    serial_printf("%s: physical address %lx out of range (index=%zu page=%zu)\n",
+    serial_printf("%s: physical address %lx out of range (index=%lu page=%lu)\n",
                   caller,
                   (unsigned long)addr,
-                  index,
-                  page_number);
+                  (unsigned long)index,
+                  (unsigned long)page_number);
     pmm_abort("physical address outside bitmap coverage");
   }
 
@@ -448,6 +458,17 @@ bool pmm_map_page_in_root(phys_addr_t root_phys, virt_addr_t vaddr, phys_frame_t
     return false;
   }
 
+  void* ret0 = __builtin_return_address(0);
+  void* ret1 = __builtin_return_address(1);
+  serial_printf("pmm_map_page_in_root: root=%lx vaddr=%lx paddr=%lx writable=%d user=%d ret0=%p ret1=%p\n",
+                (unsigned long)root_phys,
+                (unsigned long)vaddr,
+                (unsigned long)paddr,
+                writable ? 1 : 0,
+                user ? 1 : 0,
+                ret0,
+                ret1);
+
   pml4_t* pml4 = (pml4_t*)physical_to_virtual(root_phys);
 
   uint16_t pml4_index = (vaddr >> 39) & 0x1ff;
@@ -629,6 +650,15 @@ static bool pmm_unmap_page_internal(phys_addr_t root_phys,
     return false;
   }
 
+  void* ret0 = __builtin_return_address(0);
+  void* ret1 = __builtin_return_address(1);
+  serial_printf("pmm_unmap_page_internal: root=%lx vaddr=%lx free=%d ret0=%p ret1=%p\n",
+                (unsigned long)root_phys,
+                (unsigned long)vaddr,
+                free_frame ? 1 : 0,
+                ret0,
+                ret1);
+
   pml4_walk_result_t walk = pmm_walk_address(root_phys, vaddr);
   if(walk.pt_entry == NULL || !walk.pt_entry->present) {
     return false;
@@ -761,9 +791,9 @@ void set_page_row_free(phys_frame_t frame) {
   size_t bit_position;
   locate_page_bitmap_slot("set_page_row_free", addr, &page_number, &index, &bit_position);
   if(bit_position != 0) {
-    serial_printf("set_page_row_free: base %lx not row-aligned (page=%zu)\n",
+    serial_printf("set_page_row_free: base %lx not row-aligned (page=%lu)\n",
                   (unsigned long)addr,
-                  page_number);
+                  (unsigned long)page_number);
     pmm_abort("row free base not aligned");
   }
   uint64_t previous = page_bitmap[index];
@@ -833,11 +863,11 @@ static phys_frame_t pmm_alloc_internal(size_t page_count,
           }
           uintptr_t offset = effective_kernel_offset();
           if(offset != 0 && base >= offset) {
-            serial_printf("pmm_alloc_internal: candidate produced virtual base=%lx (candidate=%zu index=%zu bit=%zu)\n",
+            serial_printf("pmm_alloc_internal: candidate produced virtual base=%lx (candidate=%lu index=%lu bit=%lu)\n",
                           (unsigned long)base,
-                          candidate,
-                          index,
-                          bit);
+                          (unsigned long)candidate,
+                          (unsigned long)index,
+                          (unsigned long)bit);
             return phys_frame_invalid();
           }
           if(base > max_phys_addr || (span - 1) > (max_phys_addr - base)) {
@@ -865,8 +895,8 @@ phys_frame_t pmm_alloc_pages(size_t page_count) {
     limit = UINT64_MAX;
   }
   phys_frame_t base = pmm_alloc_internal(page_count, PAGE_SIZE, limit);
-  serial_printf("pmm_alloc_pages: count=%zu -> base=%lx\n",
-                page_count,
+  serial_printf("pmm_alloc_pages: count=%lu -> base=%lx\n",
+                (unsigned long)page_count,
                 (unsigned long)(phys_frame_is_valid(base) ? phys_frame_to_addr(base) : 0UL));
   return base;
 }
@@ -885,9 +915,9 @@ phys_frame_t pmm_alloc_aligned_pages(size_t page_count,
 }
 
 void pmm_free_pages(phys_frame_t base_frame, size_t page_count) {
-  serial_printf("pmm_free_pages: base=%lx count=%zu\n",
+  serial_printf("pmm_free_pages: base=%lx count=%lu\n",
                 (unsigned long)(phys_frame_is_valid(base_frame) ? phys_frame_to_addr(base_frame) : 0UL),
-                page_count);
+                (unsigned long)page_count);
   if(page_count == 0) {
     return;
   }

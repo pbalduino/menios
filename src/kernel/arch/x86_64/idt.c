@@ -2,6 +2,7 @@
 #include <kernel/arch/x86_64/gdt.h>
 #include <kernel/arch/x86_64/idt.h>
 #include <kernel/kernel.h>
+#include <kernel/pmm.h>
 #include <kernel/proc.h>
 #include <kernel/serial.h>
 #include <kernel/vm_region.h>
@@ -148,19 +149,17 @@ void idt_gpf_isr_handler(idt_exception_p cpu_state) {
   halt();
 }
 
-void idt_pf_isr_handler(idt_exception_p cpu_state) {
-  uint64_t *frame = &cpu_state->error_code;
-  const uint64_t error_code = frame[0];
-  const uint64_t fault_rip = frame[1];
-  const uint64_t fault_cs  = frame[2];
-  const uint64_t fault_rflags = frame[3];
+void idt_pf_isr_handler(cpu_state_p cpu_state, uint64_t error_code) {
+  uint64_t* regs = (uint64_t*)cpu_state;
+  const uint64_t fault_rip = regs[15];
+  const uint64_t fault_cs  = regs[16];
+  const uint64_t fault_rflags = regs[17];
   const bool privilege_transition = (fault_cs & 0x3u) != 0;
 
-  uint64_t fault_rsp = (uint64_t)(frame + 4);
-  uint64_t fault_ss = 0;
-  if (privilege_transition) {
-    fault_rsp = frame[4];
-    fault_ss = frame[5];
+  uint64_t fault_rsp = privilege_transition ? regs[18] : 0;
+  uint64_t fault_ss = privilege_transition ? regs[19] : 0;
+  if(!privilege_transition) {
+    asm volatile ("mov %%rsp, %0" : "=r"(fault_rsp));
   }
 
   uint16_t ds, es, fs, gs, ss;
@@ -176,8 +175,40 @@ void idt_pf_isr_handler(idt_exception_p cpu_state) {
   idt_pf_error_info_t info;
   idt_decode_page_fault(error_code, &info);
 
+  phys_addr_t active_cr3 = read_cr3();
+  serial_printf("page_fault: cr2=%lx err=%lx user=%d write=%d present=%d current_pid=%u cr3=%lx\n",
+                (unsigned long)cr2,
+                (unsigned long)error_code,
+                info.user ? 1 : 0,
+                info.write ? 1 : 0,
+                info.present ? 1 : 0,
+                current ? current->pid : 0,
+                (unsigned long)active_cr3);
+
   bool handled = false;
   if(info.user) {
+    if(current != NULL && current->address_space_root != 0) {
+      pml4_walk_result_t walk = pmm_walk_address(current->address_space_root, cr2);
+      page_table_entry_t* pt_entry = walk.pt_entry;
+      page_directory_entry_t* pd_entry = walk.pd_entry;
+      page_directory_pointer_entry_t* pdpt_entry = walk.pdpt_entry;
+      page_map_l4_entry_t* pml4_entry = walk.pml4_entry;
+      serial_printf("page_fault_walk: pid=%u cr2=%lx root=%lx pml4=%p pdpt=%p pd=%p pt=%p pml4.p=%d pdpt.p=%d pd.p=%d pt.p=%d pt.u=%d pt.w=%d frame=%lx\n",
+                    current->pid,
+                    (unsigned long)cr2,
+                    (unsigned long)current->address_space_root,
+                    (void*)pml4_entry,
+                    (void*)pdpt_entry,
+                    (void*)pd_entry,
+                    (void*)pt_entry,
+                    pml4_entry ? (int)pml4_entry->present : -1,
+                    pdpt_entry ? (int)pdpt_entry->present : -1,
+                    pd_entry ? (int)pd_entry->present : -1,
+                    pt_entry ? (int)pt_entry->present : -1,
+                    pt_entry ? (int)pt_entry->user : -1,
+                    pt_entry ? (int)pt_entry->writable : -1,
+                    pt_entry && pt_entry->present ? (unsigned long)(pt_entry->frame << 12) : 0UL);
+    }
     handled = vm_region_handle_page_fault(current, cr2, info.present, info.write, info.user);
   }
 
@@ -186,6 +217,14 @@ void idt_pf_isr_handler(idt_exception_p cpu_state) {
   }
 
   if(info.user && current != NULL && current != &kernel_process_info) {
+    phys_addr_t mapped_phys = 0;
+    bool mapping_ok = false;
+    phys_addr_t root = current->address_space_root;
+    virt_addr_t fault_page = cr2 & ~((virt_addr_t)PAGE_SIZE - 1);
+    if(root != 0) {
+      mapping_ok = pmm_get_mapping(root, fault_page, &mapped_phys, NULL, NULL);
+    }
+
     exception_log("  User page fault at 0x%016lx (present=%s write=%s), terminating pid=%u\n",
                   cr2,
                   info.present ? "yes" : "no",
@@ -197,15 +236,45 @@ void idt_pf_isr_handler(idt_exception_p cpu_state) {
                   fault_rflags,
                   fault_rsp,
                   privilege_transition ? (uint64_t)fault_ss : (uint64_t)ss);
+    exception_log("    mapping root=%016lx page=%016lx present=%s phys=%016lx stack_base=%016lx stack_size=%016lx\n",
+                  (unsigned long)root,
+                  (unsigned long)fault_page,
+                  mapping_ok ? "yes" : "no",
+                  mapping_ok ? (unsigned long)mapped_phys : 0UL,
+                  (unsigned long)current->user_stack_base_vaddr,
+                  (unsigned long)current->user_stack_size);
+    virt_addr_t saved_rsp = 0;
+    uint64_t kernel_rsp = 0;
+    uint64_t syscall_saved_rsp = 0;
+    if(current->cpu_state != NULL) {
+      saved_rsp = current->cpu_state->rsp;
+    }
+    kernel_rsp = current->kernel_rsp;
+    syscall_saved_rsp = current->syscall_user_rsp;
+    exception_log("    frame rsp=%016lx kernel_rsp=%016lx syscall_user_rsp=%016lx\n",
+                  (unsigned long)saved_rsp,
+                  (unsigned long)kernel_rsp,
+                  (unsigned long)syscall_saved_rsp);
     exception_log("    rax=%016lx rbx=%016lx rcx=%016lx rdx=%016lx\n",
                   cpu_state->rax, cpu_state->rbx, cpu_state->rcx, cpu_state->rdx);
     exception_log("    rsi=%016lx rdi=%016lx rbp=%016lx rsp=%016lx\n",
                   cpu_state->rsi, cpu_state->rdi, cpu_state->rbp, fault_rsp);
     proc_exit_signal(SIGSEGV);
+    proc_switch(cpu_state);
     return;
   }
 
+  phys_addr_t kernel_root = read_cr3();
+  phys_addr_t kernel_phys = 0;
+  bool kernel_mapping = pmm_get_mapping(kernel_root, cr2 & ~((virt_addr_t)PAGE_SIZE - 1), &kernel_phys, NULL, NULL);
+
   exception_log("= Page fault caught =\n");
+  exception_log("  mapping root=%016lx page=%016lx present=%s phys=%016lx current_pid=%u\n",
+                (unsigned long)kernel_root,
+                (unsigned long)(cr2 & ~((virt_addr_t)PAGE_SIZE - 1)),
+                kernel_mapping ? "yes" : "no",
+                kernel_mapping ? (unsigned long)kernel_phys : 0UL,
+                current ? current->pid : 0u);
   exception_log("  cpu_state @ %p\n", cpu_state);
   exception_log("  Faulting address: 0x%016lx\n", cr2);
   exception_log("  Error code: 0x%016lx (present=%s, write=%s, user=%s, reserved=%s, instruction=%s, protection=%s, shadow=%s, sgx=%s)\n",
@@ -233,6 +302,21 @@ void idt_pf_isr_handler(idt_exception_p cpu_state) {
                 cpu_state->rax, cpu_state->rbx, cpu_state->rcx, cpu_state->rdx);
   exception_log("    RSI=%016lx RDI=%016lx RBP=%016lx RSP=%016lx\n",
                 cpu_state->rsi, cpu_state->rdi, cpu_state->rbp, fault_rsp);
+  if(current != NULL && current->address_space_root != 0) {
+    phys_addr_t probe_phys = 0;
+    virt_addr_t probe_addr = (virt_addr_t)(current->user_stack_base_vaddr + current->user_stack_size - (4 * PAGE_SIZE));
+    bool probe_ok = pmm_get_mapping(current->address_space_root, probe_addr, &probe_phys, NULL, NULL);
+    exception_log("  stack probe: pid=%u addr=%016lx ok=%s phys=%016lx base=%016lx size=%016lx\n",
+                  current->pid,
+                  (unsigned long)probe_addr,
+                  probe_ok ? "yes" : "no",
+                  probe_ok ? (unsigned long)probe_phys : 0UL,
+                  (unsigned long)current->user_stack_base_vaddr,
+                  (unsigned long)current->user_stack_size);
+  }
+  void* ra0 = __builtin_return_address(0);
+  void* ra1 = __builtin_return_address(1);
+  exception_log("  return addresses: ra0=%p ra1=%p\n", ra0, ra1);
   exception_log("    R8 =%016lx R9 =%016lx R10=%016lx R11=%016lx\n",
                 cpu_state->r8, cpu_state->r9, cpu_state->r10, cpu_state->r11);
   exception_log("    R12=%016lx R13=%016lx R14=%016lx R15=%016lx\n",

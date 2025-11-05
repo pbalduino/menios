@@ -14,19 +14,22 @@
 static proc_info_t proc;
 static proc_info_p old_current;
 
-static phys_addr_t host_alloc_pages(size_t page_count) {
+static phys_frame_t host_alloc_pages(size_t page_count) {
   size_t bytes = page_count * PAGE_SIZE;
   void* block = aligned_alloc(PAGE_SIZE, bytes);
   if(block == NULL) {
-    return 0;
+    return phys_frame_invalid();
   }
   memset(block, 0, bytes);
-  return (phys_addr_t)(uintptr_t)block;
+  return phys_frame_from_addr((phys_addr_t)(uintptr_t)block);
 }
 
-static void host_free_pages(phys_addr_t base, size_t page_count) {
+static void host_free_pages(phys_frame_t base_frame, size_t page_count) {
   (void)page_count;
-  void* block = (void*)(uintptr_t)base;
+  if(!phys_frame_is_valid(base_frame)) {
+    return;
+  }
+  void* block = (void*)(uintptr_t)phys_frame_to_addr(base_frame);
   free(block);
 }
 

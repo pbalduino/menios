@@ -7,6 +7,17 @@
 
 #ifdef MENIOS_KERNEL
 #include <kernel/kernel.h>
+#include <kernel/serial.h>
+#else
+#include <stdarg.h>
+#include <stdio.h>
+
+static inline void serial_printf(const char* fmt, ...) {
+    va_list args;
+    va_start(args, fmt);
+    vfprintf(stderr, fmt, args);
+    va_end(args);
+}
 #endif
 
 #ifdef __cplusplus
@@ -34,6 +45,10 @@ static inline void spinlock_cpu_relax(void) {
 }
 
 static inline void spinlock_lock(spinlock_t* lock) {
+    const uintptr_t kernel_pointer_floor = 0xffff800000000000ull;
+    if(lock == NULL || (uintptr_t)lock < kernel_pointer_floor) {
+        serial_printf("spinlock_lock: suspicious lock pointer=%p\n", (void*)lock);
+    }
     for(;;) {
         if(atomic_exchange32(&lock->state, 1, memory_order_acquire) == 0) {
             return;

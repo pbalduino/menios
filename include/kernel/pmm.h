@@ -1,6 +1,7 @@
 #ifndef MENIOS_INCLUDE_KERNEL_PMM_H
 #define MENIOS_INCLUDE_KERNEL_PMM_H
 
+#include <assert.h>
 #include <types.h>
 
 // good enough for 16GB - it can be increased later
@@ -141,16 +142,42 @@ virt_addr_t physical_to_virtual(phys_addr_t physical_address);
 #define PHYS_ADDR_INVALID ((phys_addr_t)(-1))
 
 phys_addr_t virtual_to_physical(virt_addr_t virtual_address);
+phys_addr_t phys_from_hhdm(uintptr_t address);
+
+typedef struct {
+  phys_addr_t addr;
+} phys_frame_t;
+
+static inline phys_frame_t phys_frame_invalid(void) {
+  return (phys_frame_t){ .addr = PHYS_ADDR_INVALID };
+}
+
+static inline bool phys_frame_is_valid(phys_frame_t frame) {
+  return frame.addr != PHYS_ADDR_INVALID;
+}
+
+static inline phys_frame_t phys_frame_from_addr(phys_addr_t addr) {
+  assert((addr % PAGE_SIZE) == 0);
+  return (phys_frame_t){ .addr = addr };
+}
+
+static inline phys_addr_t phys_frame_to_addr(phys_frame_t frame) {
+  return frame.addr;
+}
+
+static inline phys_frame_t phys_frame_add(phys_frame_t frame, size_t pages) {
+  return phys_frame_from_addr(frame.addr + (phys_addr_t)pages * PAGE_SIZE);
+}
 
 void pmm_set_kernel_offset(virt_addr_t offset);
 void pmm_set_pagetable_root(virt_addr_t root_vaddr);
 
-void set_page_used(phys_addr_t physical_address);
-phys_addr_t pmm_alloc_pages(size_t page_count);
-phys_addr_t pmm_alloc_aligned_pages(size_t page_count,
-                                    size_t alignment,
-                                    phys_addr_t max_phys_addr);
-void pmm_free_pages(phys_addr_t base_address, size_t page_count);
+void set_page_used(phys_frame_t frame);
+phys_frame_t pmm_alloc_pages(size_t page_count);
+phys_frame_t pmm_alloc_aligned_pages(size_t page_count,
+                                     size_t alignment,
+                                     phys_addr_t max_phys_addr);
+void pmm_free_pages(phys_frame_t base_frame, size_t page_count);
 
 typedef struct {
   size_t usable_pages;
@@ -161,8 +188,12 @@ void pmm_get_stats(pmm_stats_t* stats);
 
 bool pmm_mark_page_user(virt_addr_t vaddr);
 bool pmm_mark_range_user(virt_addr_t start, size_t size);
-bool pmm_map_page_in_root(phys_addr_t root_phys, virt_addr_t vaddr, phys_addr_t paddr, bool writable, bool user);
-bool pmm_map_page(virt_addr_t vaddr, phys_addr_t paddr, bool writable, bool user);
+bool pmm_map_page_in_root(phys_addr_t root_phys,
+                          virt_addr_t vaddr,
+                          phys_frame_t frame,
+                          bool writable,
+                          bool user);
+bool pmm_map_page(virt_addr_t vaddr, phys_frame_t frame, bool writable, bool user);
 pml4_walk_result_t pmm_walk_address(phys_addr_t root_phys, virt_addr_t vaddr);
 bool pmm_unmap_page_in_root(phys_addr_t root_phys, virt_addr_t vaddr);
 bool pmm_remove_mapping_in_root(phys_addr_t root_phys, virt_addr_t vaddr);

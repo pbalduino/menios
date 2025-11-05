@@ -107,7 +107,7 @@ static void clear_line_segment(uint64_t row, uint32_t start_col, uint32_t end_co
 static void render_viewport(void);
 static void fb_release_backbuffer(void) {
   if(framebuffer_backbuffer_phys != PHYS_ADDR_INVALID && framebuffer_backbuffer_pages > 0) {
-    pmm_free_pages(framebuffer_backbuffer_phys, framebuffer_backbuffer_pages);
+    pmm_free_pages(phys_frame_from_addr(framebuffer_backbuffer_phys), framebuffer_backbuffer_pages);
   }
   framebuffer_backbuffer_phys = PHYS_ADDR_INVALID;
   framebuffer_backbuffer_virt = NULL;
@@ -362,7 +362,7 @@ void framebuffer_initialize(void) {
   framebuffer = framebuffer_request.response->framebuffers[0];
   active = true;
 
-  framebuffer_phys = virtual_to_physical((virt_addr_t)framebuffer->address);
+  framebuffer_phys = phys_from_hhdm((uintptr_t)framebuffer->address);
   framebuffer_bytes_per_pixel = framebuffer->bpp / 8;
   if(framebuffer_bytes_per_pixel == 0) {
     framebuffer_bytes_per_pixel = 4;
@@ -990,15 +990,16 @@ bool fb_set_mode(uint64_t width, uint64_t height, uint16_t bpp) {
       new_pages++;
     }
     if(new_pages > 0) {
-      phys_addr_t candidate = pmm_alloc_pages(new_pages);
-      if(candidate != 0) {
+      phys_frame_t candidate_frame = pmm_alloc_pages(new_pages);
+      if(phys_frame_is_valid(candidate_frame)) {
+        phys_addr_t candidate = phys_frame_to_addr(candidate_frame);
         void* virt = (void*)physical_to_virtual(candidate);
         if(virt != NULL) {
           memset(virt, 0, new_size_aligned);
           new_phys = candidate;
           new_virt = virt;
         } else {
-          pmm_free_pages(candidate, new_pages);
+          pmm_free_pages(candidate_frame, new_pages);
         }
       }
     }

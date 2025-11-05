@@ -250,6 +250,7 @@ USERLIBC_SOURCES = \
 	user/libc/environ.c \
 	user/libc/dirent.c \
 	user/libc/realpath.c \
+	user/libc/termios.c \
 	src/libc/ctype.c \
 	src/libc/assert.c \
 	src/libc/errno.c \
@@ -804,7 +805,7 @@ ifeq ($(OS_NAME),linux)
 	mmd -i $(IMAGE_NAME).hdd@@2M ::/doom > /dev/null 2>&1 || true
 	mmd -i $(IMAGE_NAME).hdd@@2M ::/home > /dev/null 2>&1 || true
 	mkdir -p $(OUTPUT_DIR)/home
-	printf 'echo Welcome to meniOS 0.1.666\n' > $(OUTPUT_DIR)/home/.moshrc
+	printf 'echo Welcome to meniOS 0.1.666\nls /\necho It worked!\nshutdown\n' > $(OUTPUT_DIR)/home/.moshrc
 	cp samples/hello.s $(OUTPUT_DIR)/home/hello.s
 	mcopy -i $(IMAGE_NAME).hdd@@2M $(KERNEL) limine.conf $(OUTPUT_DIR)/limine-bios.sys ::/
 	mcopy -i $(IMAGE_NAME).hdd@@2M $(OUTPUT_DIR)/limine-bios.sys ::/limine/

@@ -26,8 +26,8 @@ bool dma_buffer_alloc(dma_buffer_t* buffer,
   }
 
   phys_addr_t max_phys = max_phys_addr == 0 ? DMA_DEFAULT_MAX_PHYS : max_phys_addr;
-  phys_addr_t base_phys = pmm_alloc_aligned_pages(page_count, align_bytes, max_phys);
-  if(base_phys == 0) {
+  phys_frame_t base_frame = pmm_alloc_aligned_pages(page_count, align_bytes, max_phys);
+  if(!phys_frame_is_valid(base_frame)) {
     serial_printf("dma_buffer_alloc: failed (size=%zu alignment=%zu max=%llx)\n",
                   size,
                   align_bytes,
@@ -35,6 +35,7 @@ bool dma_buffer_alloc(dma_buffer_t* buffer,
     return false;
   }
 
+  phys_addr_t base_phys = phys_frame_to_addr(base_frame);
   void* virt = (void*)physical_to_virtual(base_phys);
   size_t total_size = page_count * PAGE_SIZE;
 
@@ -54,7 +55,7 @@ void dma_buffer_free(dma_buffer_t* buffer) {
     return;
   }
 
-  pmm_free_pages(buffer->phys, buffer->page_count);
+  pmm_free_pages(phys_frame_from_addr(buffer->phys), buffer->page_count);
   buffer->virt = NULL;
   buffer->phys = 0;
   buffer->size = 0;

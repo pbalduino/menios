@@ -147,7 +147,7 @@ uacpi_status uacpi_kernel_get_rsdp(uacpi_phys_addr *out_rdsp_address) {
     halt();
   }
 
-  uintptr_t addr = virtual_to_physical((uintptr_t)rsdp_request.response->address);
+  phys_addr_t addr = phys_from_hhdm((uintptr_t)rsdp_request.response->address);
 
   serial_printf("acpi_initialize: RSDP address: %p\n", addr);
 

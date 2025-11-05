@@ -7,24 +7,29 @@
 #include <kernel/heap.h>
 
 #include <stdint.h>
+#include <stdlib.h>
 #include <string.h>
 
 static proc_info_t parent_proc;
 static proc_info_t child_proc;
 
-static phys_addr_t fake_alloc(size_t page_count) {
+static phys_frame_t fake_alloc(size_t page_count) {
   size_t bytes = page_count * PAGE_SIZE;
-  void* block = kmalloc(bytes);
-  if(block != NULL) {
-    memset(block, 0, bytes);
+  void* block = NULL;
+  if(posix_memalign(&block, PAGE_SIZE, bytes) != 0 || block == NULL) {
+    return phys_frame_invalid();
   }
-  return (phys_addr_t)(uintptr_t)block;
+  memset(block, 0, bytes);
+  return phys_frame_from_addr((phys_addr_t)(uintptr_t)block);
 }
 
-static void fake_free(phys_addr_t base, size_t page_count) {
+static void fake_free(phys_frame_t base_frame, size_t page_count) {
   (void)page_count;
-  void* block = (void*)(uintptr_t)base;
-  kfree(block);
+  if(!phys_frame_is_valid(base_frame)) {
+    return;
+  }
+  void* block = (void*)(uintptr_t)phys_frame_to_addr(base_frame);
+  free(block);
 }
 
 static void destroy_region(int shmid) {

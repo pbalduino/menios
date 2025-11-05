@@ -63,7 +63,7 @@ static void shm_region_destroy(shm_region_t* region) {
     for(size_t i = 0; i < region->page_count; ++i) {
       if(region->pages[i] != 0) {
         if(free_pages_fn) {
-          free_pages_fn(region->pages[i], 1);
+          free_pages_fn(phys_frame_from_addr(region->pages[i]), 1);
         }
       }
     }
@@ -160,17 +160,18 @@ static bool shm_region_allocate_pages(shm_region_t* region) {
   }
 
   for(size_t i = 0; i < region->page_count; ++i) {
-    phys_addr_t phys = alloc_pages_fn ? alloc_pages_fn(1) : 0;
-    if(phys == 0) {
+    phys_frame_t frame = alloc_pages_fn ? alloc_pages_fn(1) : phys_frame_invalid();
+    if(!phys_frame_is_valid(frame)) {
       for(size_t j = 0; j < i; ++j) {
         if(free_pages_fn) {
-          free_pages_fn(region->pages[j], 1);
+          free_pages_fn(phys_frame_from_addr(region->pages[j]), 1);
         }
       }
       kfree(region->pages);
       region->pages = NULL;
       return false;
     }
+    phys_addr_t phys = phys_frame_to_addr(frame);
     zero_physical_page(phys);
     region->pages[i] = phys;
   }
@@ -232,7 +233,7 @@ shm_region_t* shm_region_create(shm_key_t key,
     }
     for(size_t i = 0; i < region->page_count; ++i) {
       if(free_pages_fn) {
-        free_pages_fn(region->pages[i], 1);
+        free_pages_fn(phys_frame_from_addr(region->pages[i]), 1);
       }
     }
     kfree(region->pages);

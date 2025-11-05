@@ -57,6 +57,7 @@ void user_init_launch(void) {
   proc_set_priority(proc, PROC_PRIO_NORMAL);
   serial_printf("user_init_launch: queued init process pid %u\n", proc->pid);
   proc_execute(proc);
+  proc_request_yield();
 
   logk("[init] queued PID %u\n", proc->pid);
 }

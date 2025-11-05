@@ -128,44 +128,11 @@ idt_gpf_isr_asm_handler:
   iretq                      ; Return from the interrupt
 
 idt_pf_isr_asm_handler:
-  pushfq
-  push rax
-  push rcx
-  push rbx
-  push rdx
-  push rsi
-  push rdi
-  push rbp
-  push r8
-  push r9
-  push r10
-  push r11
-  push r12
-  push r13
-  push r14
-  push r15
-
-  lea rdi, [rsp]
+  mov rsi, [rsp]          ; preserve the hardware-pushed error code
+  IRQ_PUSH_REGS
+  mov rdi, rsp            ; first argument: pointer to saved cpu_state
   call idt_pf_isr_handler
-
-  pop r15
-  pop r14
-  pop r13
-  pop r12
-  pop r11
-  pop r10
-  pop r9
-  pop r8
-  pop rbp
-  pop rdi
-  pop rsi
-  pop rdx
-  pop rbx
-  pop rcx
-  pop rax
-  popfq
-  add rsp, 8
-
+  IRQ_POP_REGS
   iretq
 
 idt_period_timer_isr_asm_handler:

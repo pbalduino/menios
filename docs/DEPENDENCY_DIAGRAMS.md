@@ -40,16 +40,19 @@ The meniOS project has grown to over 100+ tracked issues with complex interdepen
 - Foundation: Minimal libc #193 (complete ✅)
 - Doom libc gaps: #304-#310 (all complete ✅)
 - **TCC blockers:** #337 (Signal API ✅ CLOSED), #338 (Float parsing ✅ CLOSED)
-- **Stubbed functions:** #364 (parent), #367, #21, #327
+- **Stubbed functions:** #364 (parent - 86% complete!)
   - ✅ stat/fstat/lstat (complete for FAT32, skeletal)
   - ✅ access(), realpath() (complete)
-  - ✅ pathconf() (#368) (complete)
-  - ✅ chmod/fchmod (#365); ✅ utime (#317)
-  - ✅ pseudo-fs metadata (#366); ✅ rich FAT32 metadata (#367)
-  - ❌ brk/sbrk (#21)
-  - ❌ timing APIs (#327)
+  - ✅ pathconf() (#368 - CLOSED)
+  - ✅ chmod/fchmod (#365 - CLOSED); ✅ utime (#317 - CLOSED)
+  - ✅ pseudo-fs metadata (#366 - CLOSED); ✅ rich FAT32 metadata (#367 - CLOSED)
+  - ✅ system() (#369 - CLOSED)
+  - ✅ isatty/ttyname/ctermid (#347 - CLOSED) 🆕
+  - ✅ termios support (#336 - CLOSED) 🆕
+  - ❌ brk/sbrk (#423 - low priority compatibility shim)
+  - ❌ gets() (deprecated, won't implement)
 - Thread safety: #339 (depends on pthread #109)
-- Extended features: stdio, math, regex, multiplexing (TTY helpers ✅)
+- Extended features: stdio, math, regex, multiplexing
 - Future work: sockets, locale, wide-char, dynamic loader
 
 **Use this for:**
@@ -58,8 +61,8 @@ The meniOS project has grown to over 100+ tracked issues with complex interdepen
 - Identifying gaps for specific programs
 
 **Key Categories:**
-- ✅ **Complete:** Basic libc, Doom gaps, Signal API, Float parsing
-- 🟡 **Stubbed Functions:** #364 tracking (partially complete - stat family done)
+- ✅ **Complete:** Basic libc, Doom gaps, Signal API, Float parsing, Stubbed functions (86%)
+- 🟡 **Stubbed Functions:** #364 tracking (86% complete - only deprecated functions remain)
 - 🔵 **Threading:** Thread-safe libc (after pthread)
 - 🟡 **Extended:** Additional POSIX features
 - 🟣 **Future:** Nice-to-have features
@@ -67,16 +70,17 @@ The meniOS project has grown to over 100+ tracked issues with complex interdepen
 **Recent Progress:**
 - ✅ #337 (Signal API) - CLOSED
 - ✅ #338 (Float parsing) - CLOSED - TCC blockers resolved! 🎉
-- ✅ #371 (ld freeze bug) - **CLOSED** - as and ld working! 🎉
-- ✅ #373 (realpath command) - **CLOSED** - Quick win complete! 🎉
-- ⚠️ #364 (Stubbed functions) - Partially complete (stat family working)
-- ✅ #370 (stat command) - **CLOSED** - File metadata tool now ships in `/bin/stat`
-- 🆕 #372 (shutdown command) - NEW - Clean ACPI power-off from userland (quick win)
-- ✅ #191 (binutils) - Build complete, **READY FOR TESTING** (unblocked)
-- ✅ #347 (TTY helpers) - **CLOSED** - isatty(), ttyname(), ctermid() wired through termios
+- ✅ #371 (ld freeze bug) - CLOSED - as and ld working! 🎉
+- ✅ #373 (realpath command) - CLOSED - Quick win complete! 🎉
+- ✅ #364 (Stubbed functions) - 86% complete (12/14 functions) 🎉 🆕
+- ✅ #370 (stat command) - CLOSED - File metadata tool now ships in `/bin/stat`
+- ✅ #336 (termios support) - CLOSED - Complete TTY line discipline! 🎉 🆕
+- ✅ #347 (TTY helpers) - CLOSED - isatty/ttyname/ctermid complete! 🎉 🆕
+- ✅ #191 (binutils) - Build complete, READY FOR TESTING (unblocked)
+- 🆕 #423 (brk/sbrk shim) - NEW - Low priority mmap-based compatibility layer
 
-**Recently Closed (19 issues):**
-- #58, #137, #138, #145, #149, #151, #152, #153, #155, #167, #168, #226, #284, #285, #316, #337, #338, #371, #373
+**Recently Closed (21 issues):**
+- #58, #137, #138, #145, #149, #151, #152, #153, #155, #167, #168, #226, #284, #285, #316, #337, #338, #371, #373, #336, #347
 
 ---
 

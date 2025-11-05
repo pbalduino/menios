@@ -387,7 +387,17 @@ static int64_t stdin_read_impl(file_t* file, void* buffer, size_t length) {
   tty_state_initialize();
   tty_state_t* state = tty_state();
 
-  kmutex_lock(&state->wait_lock);
+  bool wait_lock_acquired = false;
+
+  int lock_rc = kmutex_lock(&state->wait_lock);
+  if(lock_rc == 0) {
+    wait_lock_acquired = true;
+  } else if(lock_rc == -EINVAL && current == NULL) {
+    // Scheduler not online yet; fall back to polling.
+  } else {
+    set_errno(-lock_rc);
+    return lock_rc;
+  }
 
   uint8_t* out = (uint8_t*)buffer;
   int64_t result = 0;
@@ -447,10 +457,15 @@ static int64_t stdin_read_impl(file_t* file, void* buffer, size_t length) {
     }
 
     spinlock_unlock(&state->cooked_lock);
+    if(!wait_lock_acquired) {
+      break;
+    }
     kcondvar_wait(&state->waiters, &state->wait_lock);
   }
 
-  kmutex_unlock(&state->wait_lock);
+  if(wait_lock_acquired) {
+    kmutex_unlock(&state->wait_lock);
+  }
   return result;
 }
 

@@ -76,7 +76,7 @@ static void* heap_map_region(phys_addr_t phys_base, size_t page_count) {
   for(size_t page = 0; page < page_count; page++) {
     phys_addr_t phys = phys_base + (page * PAGE_SIZE);
     virt_addr_t vaddr = virt + (page * PAGE_SIZE);
-    if(!pmm_map_page(vaddr, phys, true, false)) {
+    if(!pmm_map_page(vaddr, phys_frame_from_addr(phys), true, false)) {
       serial_printf("heap_map_region: map failed at %lx\n", (unsigned long)vaddr);
       for(size_t rollback = 0; rollback < page; ++rollback) {
         virt_addr_t rollback_vaddr = virt + (rollback * PAGE_SIZE);
@@ -490,15 +490,16 @@ static bool heap_grow(size_t minimum_size) {
     requested = page_count * PAGE_SIZE;
   }
 
-  phys_addr_t phys_base = pmm_alloc_pages(page_count);
-  if(phys_base == 0) {
+  phys_frame_t phys_frame = pmm_alloc_pages(page_count);
+  if(!phys_frame_is_valid(phys_frame)) {
     serial_printf("heap_grow: unable to allocate %zu pages\n", page_count);
     return false;
   }
 
+  phys_addr_t phys_base = phys_frame_to_addr(phys_frame);
   void* base_address = heap_map_region(phys_base, page_count);
   if(base_address == NULL) {
-    pmm_free_pages(phys_base, page_count);
+    pmm_free_pages(phys_frame, page_count);
     return false;
   }
 
@@ -543,7 +544,7 @@ static bool heap_grow(size_t minimum_size) {
     heap_unmap_pages((virt_addr_t)node, page_count);
     heap_virtual_release((virt_addr_t)node, requested);
 
-    pmm_free_pages(phys_base, page_count);
+    pmm_free_pages(phys_frame, page_count);
     return false;
   }
 

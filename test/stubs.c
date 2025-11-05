@@ -35,6 +35,14 @@
 #undef serial_line
 #endif
 
+void __menios_assert_fail(const char* expr,
+                          const char* file,
+                          int line,
+                          const char* func) {
+  fprintf(stderr, "assertion failed: %s (%s:%d %s)\n", expr, file, line, func);
+  abort();
+}
+
 proc_info_p current;
 proc_info_t kernel_process_info;
 proc_info_p procs[PROC_MAX] = { &kernel_process_info };
@@ -159,13 +167,6 @@ void* memsetl(void* v, int64_t c, size_t n) {
 static void vdiscard(const char* fmt, va_list args) {
   (void)fmt;
   (void)args;
-}
-
-void serial_printf(const char* fmt, ...) {
-  va_list args;
-  va_start(args, fmt);
-  vdiscard(fmt, args);
-  va_end(args);
 }
 
 void serial_puts(const char* str) {

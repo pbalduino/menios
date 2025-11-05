@@ -1,4 +1,6 @@
+#include <kernel/proc.h>
 #include <kernel/semaphore.h>
+#include <kernel/serial.h>
 
 void ksem_initialize(ksem_t* sem, int64_t value) {
   if(sem == NULL) {
@@ -35,9 +37,16 @@ void ksem_wait(ksem_t* sem) {
 
   kmutex_lock(&sem->lock);
   while(sem->count == 0) {
+    serial_printf("[ksem_wait] pid=%u waiting on sem=%p\n",
+                  current ? current->pid : 0xffffffffu,
+                  (void*)sem);
     kcondvar_wait(&sem->cond, &sem->lock);
   }
   sem->count--;
+  serial_printf("[ksem_wait] pid=%u acquired sem=%p count=%lld\n",
+                current ? current->pid : 0xffffffffu,
+                (void*)sem,
+                (long long)sem->count);
   kmutex_unlock(&sem->lock);
 }
 

@@ -52,6 +52,14 @@ int kmutex_lock(kmutex_t* mutex) {
     return -EINVAL;
   }
 
+  const uintptr_t kernel_pointer_floor = 0xffff800000000000ull;
+  if((uintptr_t)mutex < kernel_pointer_floor) {
+    serial_printf("kmutex_lock: suspicious mutex pointer=%p current=%p pid=%u\n",
+                  (void*)mutex,
+                  (void*)current,
+                  current ? current->pid : 0u);
+  }
+
   kmutex_wait_node_t* pending_node = NULL;
 
   for(;;) {
