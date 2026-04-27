@@ -34,9 +34,11 @@ An `x86_64-elf` cross-compiler is preferred; the build falls back to the host co
 ### Build & Run
 
 ```bash
+make binutils    # build the native binutils toolchain into build/bin/
 make userland    # build libc and user programs only
 make build       # build kernel + disk image (runs userland build when needed)
 make run         # launch meniOS in QEMU
+make check       # run cppcheck against kernel sources
 ```
 
 To point at a custom toolchain:
@@ -124,6 +126,7 @@ See [issue #191 (CLOSED)](https://github.com/pbalduino/menios/issues/191) for th
 - `make test` — build and run the host Unity suite (uses Docker automatically on macOS).
 - `make coverage` — rerun the suite with `gcov` instrumentation and write a summary to `build/gcov/summary.txt`.
 - `make coverage-report` — regenerate the coverage summary from existing `.gcda/.gcno` data.
+- Boot with `make run` after kernel, IPC, filesystem, or other low-level changes to catch runtime regressions that host tests will miss.
 
 ## Repository Layout
 
@@ -141,7 +144,7 @@ tools/      build helpers and automation scripts
 
 ## Contributing
 
-Bug reports, documentation updates, and code patches are welcome. Start with the issues tagged `good first issue` or `nice to have`, read the contributing guide, and follow the coding standards. Please also review the [Code of Conduct](CODE_OF_CONDUCT.md) and [Security Policy](SECURITY.md) before submitting changes.
+Bug reports, documentation updates, and code patches are welcome. Start with the issues tagged `good first issue` or `nice to have`, and check [`tasks.json`](tasks.json) because it is the source of truth for tracked work. Keep C and assembly changes on the existing two-space, brace-on-same-line style, and update tests or docs when behavior changes. The full workflow lives in [CONTRIBUTING.md](CONTRIBUTING.md) and [CODING.md](CODING.md). Please also review the [Code of Conduct](CODE_OF_CONDUCT.md) and [Security Policy](SECURITY.md) before submitting changes.
 
 ## License
 
