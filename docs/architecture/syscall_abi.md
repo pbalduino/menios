@@ -104,6 +104,11 @@ promise.  Below is a summary of the calls that ship in meniOS v0.1.0.
   **`SYS_SHMCTL` (77)** — System V shared memory primitives.  `SHM_REMAP` is
   rejected, and only `IPC_RMID`/`IPC_STAT` are implemented in `shmctl`.
 
+**Note on heap allocation**: POSIX `brk()`/`sbrk()` are provided by libc
+(`src/libc/brk.c`) as a compatibility shim backed by `mmap(MAP_ANONYMOUS)`.
+There are no `SYS_BRK` or `SYS_SBRK` syscalls; the shim maintains a locked
+arena entirely in userspace.
+
 ### Process management
 
 - **`SYS_FORK` (57)** — `pid_t fork(void);`

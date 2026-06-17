@@ -51,13 +51,14 @@ digraph LibcEcosystem {
         issue338 [label="#338: Float parsing\nstrtod/ldexp\n\n✅ COMPLETE", fillcolor="#90EE90", style="filled,dashed"];
     }
 
-    // Stubbed functions (partially complete)
+    // Stubbed functions (mostly complete)
     subgraph cluster_stubbed {
-        label="Stubbed Functions ⚠️ PARTIALLY COMPLETE";
+        label="Stubbed Functions ✅ MOSTLY COMPLETE";
         style=filled;
-        fillcolor="#FFF8E1";
+        fillcolor="#E8FFE8";
 
-        issue364 [label="#364: Stubbed functions\n(parent tracker)", fillcolor="#FFE4B5", style="bold"];
+        issue364 [label="#364: Stubbed functions\n(parent tracker)\n✅ CLOSED", fillcolor="#90EE90", style="filled,dashed"];
+        issue423 [label="#423: brk/sbrk shim\nmmap-backed\n✅ COMPLETE", fillcolor="#90EE90", style="filled,dashed"];
 
         // File metadata (complete for FAT32)
         subgraph cluster_metadata {
@@ -150,6 +151,7 @@ digraph LibcEcosystem {
     issue364 -> issue368 [color=orange, style=dotted, label="LOW"];
     issue364 -> issue369 [color=orange];
     issue364 -> issue363 [color=orange, style=dotted];
+    issue364 -> issue423 [color=green, style=dashed, label="brk/sbrk ✅"];
     stat_done -> issue365 [color=brown, style=dashed, label="uses stat"];
     stat_done -> issue317 [color=brown, style=dashed, label="uses stat"];
 
@@ -208,7 +210,7 @@ digraph LibcEcosystem {
         style=filled;
         fillcolor="#FFFACD";
 
-        priority [label="✅ COMPLETE: Signal API (#337), Float parsing (#338), FAT32 metadata (#367), pathconf (#368), system() (#369)\n\nCURRENT PRIORITIES:\n1. TTY helpers (#347) - isatty implementation (2-3 weeks)\n2. Thread-safe libc (#339) - After pthread\n3. Extended stdio (#340) - Medium priority\n4. Extended math (#344) - Medium priority\n5. Regex (#345) - Needed for text tools\n6. Multiplexing (#348) - High for servers\n\nCOMPLETED:\n✅ stat family, chmod, utime - All filesystems\n✅ pathconf - Full POSIX support\n✅ system() - Shell command execution\n✅ stat/shutdown/realpath commands",
+        priority [label="✅ COMPLETE: Signal API (#337), Float parsing (#338), FAT32 metadata (#367), pathconf (#368), system() (#369), brk/sbrk (#423)\n\nCURRENT PRIORITIES:\n1. TTY helpers (#347) - isatty implementation (2-3 weeks)\n2. Thread-safe libc (#339) - After pthread\n3. Extended stdio (#340) - Medium priority\n4. Extended math (#344) - Medium priority\n5. Regex (#345) - Needed for text tools\n6. Multiplexing (#348) - High for servers\n\nCOMPLETED:\n✅ stat family, chmod, utime - All filesystems\n✅ pathconf - Full POSIX support\n✅ system() - Shell command execution\n✅ brk/sbrk - Userland shim via mmap\n✅ stat/shutdown/realpath commands\n✅ Stubbed functions tracker (#364) - CLOSED",
                  shape=note, fillcolor="#FFFACD", style=filled];
     }
 }

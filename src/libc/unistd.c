@@ -424,16 +424,4 @@ long pathconf(const char* path, int name) {
   }
 }
 
-int brk(void* addr) {
-  (void)addr;
-  errno = ENOSYS;
-  return -1;
-}
-
-void* sbrk(intptr_t increment) {
-  (void)increment;
-  errno = ENOSYS;
-  return (void*)-1;
-}
-
 #endif

@@ -257,6 +257,7 @@ USERLIBC_SOURCES = \
 	src/libc/itoa.c \
 	src/libc/locale.c \
 	src/libc/mman.c \
+	src/libc/brk.c \
 	src/libc/math.c \
 	src/libc/sysv_ipc.c \
 	src/libc/string.c \
@@ -1063,6 +1064,44 @@ src/libc/errno.c \
 	test/test_system.c.bin ; \
 	rc=$$?; \
 	rm test/test_system.c.bin ; \
+	if [ $$rc -ne 0 ]; then exit $$rc; fi;
+
+	# brk/sbrk compatibility shim should behave like a contiguous mmap-backed heap.
+	gcc $(GCOV_FLAGS) -std=gnu11 -DMENIOS_NO_DEBUG -DMENIOS_HOST_TEST -DUNITY_EXCLUDE_SETJMP_H -I./include \
+		test/test_brk_sbrk.c \
+		test/unity.c \
+		test/stubs.c \
+		src/kernel/fs/core/file.c \
+		src/kernel/fs/vfs/vfs.c \
+		src/kernel/fs/core/pipe.c \
+		src/kernel/fs/tmpfs/tmpfs.c \
+		src/kernel/fs/devfs/devfs.c \
+		src/kernel/syscall/syscall.c \
+			src/kernel/syscall/entry.c \
+		src/kernel/mem/pmm.c \
+		src/kernel/console/vprintk.c \
+		src/kernel/console/ansi.c \
+		src/kernel/proc/kcondvar.c \
+		src/kernel/proc/kmutex.c \
+		src/kernel/proc/signal.c \
+		src/kernel/ipc/shm.c \
+		src/kernel/user/vm_region.c \
+		src/kernel/timer/tsc.c \
+		src/kernel/block/block_cache.c \
+		test/stubs_framebuffer.c \
+		test/stubs_fat32.c \
+		src/libc/itoa.c \
+		src/libc/mman.c \
+		src/libc/brk.c \
+		src/libc/string.c \
+		src/libc/time.c \
+		src/libc/errno.c \
+		user/libc/stdlib.c \
+	-o test/test_brk_sbrk.c.bin ; \
+	echo "Testing test/test_brk_sbrk.c" ; \
+	test/test_brk_sbrk.c.bin ; \
+	rc=$$?; \
+	rm test/test_brk_sbrk.c.bin ; \
 	if [ $$rc -ne 0 ]; then exit $$rc; fi;
 
 	# Kernel heap virtual range accounting tests need kmalloc.

@@ -17,7 +17,8 @@ This document captures the current state of meniOS user address spaces and the p
    * Reserve guard pages between regions once the new layout is in place.
 
 2. **Heap Support**
-   * Carve out a grow-up region for the process heap (`brk`/`sbrk`) and hook it into the lazy page allocator.
+   * ✅ A userland `brk`/`sbrk` shim has been implemented in `src/libc/brk.c` (issue #423), providing POSIX-compatible heap allocation backed by `mmap(MAP_ANONYMOUS)`.
+   * Future: Carve out a native kernel-managed grow-up heap region and hook it into the lazy page allocator.
    * Replace the flat `user_segments` bookkeeping with region-aware structures so teardown can free lazily allocated heap pages.
 
 3. **Address Space Isolation**

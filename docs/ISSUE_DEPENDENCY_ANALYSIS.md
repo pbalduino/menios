@@ -234,7 +234,7 @@ These issues form the backbone of the system and should be prioritized:
                     │
                     ├──→ #347 (isatty, ttyname) ──→ TTY helper functions
                     │
-                    ├──→ #21 (userspace heap) ──→ brk/sbrk implementation
+                    ├──→ ~~brk/sbrk~~ ✅ ──→ libc shim (#423)
                     │
                     ├──→ #369 (system()) ──→ shell command execution
                     │
@@ -254,9 +254,10 @@ These issues form the backbone of the system and should be prioritized:
 
 **Remaining Stubs**:
 - ❌ **isatty** (#347) - Check if fd is terminal
-- ❌ **brk/sbrk** (#21) - Dynamic memory allocation
+- ✅ **brk/sbrk** (#423) - Userland shim via mmap(MAP_ANONYMOUS)
 - ❌ **system()** (#369) - Execute shell commands
 - ❌ **Timing APIs** (#327) - nanosleep, alarm, clock_*, setitimer, getitimer
+- ❌ **gets()** - Deliberately not implemented (security vulnerability)
 
 **Sub-tasks**:
 - ~~**#366** - Add `.stat` to pseudo-filesystems (tmpfs, procfs, devfs, pipes)~~ ✅ COMPLETE
@@ -283,7 +284,7 @@ These issues form the backbone of the system and should be prioritized:
 - stat infrastructure: ✅ Complete
 - #189 (FAT32 write): ✅ Complete (needed for chmod/utime)
 - #18 (syscalls): Ongoing (needed for most stubs)
-- #21 (heap): Needed for brk/sbrk
+- ~~brk/sbrk~~: ✅ Complete - via libc shim (#423)
 - mosh with `-c` flag: Needed for system()
 
 **Priority**: **HIGH** - Many tools rely on stat() working on all filesystems, chmod/utime needed for build systems

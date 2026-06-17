@@ -151,7 +151,8 @@ digraph IssueDependencies {
         issue338 [label="#338: Float parsing\nstrtod/ldexp\n✅ COMPLETE", fillcolor="#90EE90", style="filled,dashed"];  // UNBLOCKED TCC
 
         // Stubbed functions tracker and sub-issues
-        issue364 [label="#364: Stubbed functions\n(parent tracker)", fillcolor="#FFE4B5"];
+        issue364 [label="#364: Stubbed functions\n(parent tracker)\n✅ CLOSED", fillcolor="#90EE90", style="filled,dashed"];
+        issue423 [label="#423: brk/sbrk shim\nmmap-backed\n✅ COMPLETE", fillcolor="#90EE90", style="filled,dashed"];
         stat_done [label="✅ stat/fstat/lstat\naccess/realpath", fillcolor="#90EE90", style="filled,dashed"];
         issue365 [label="#365: chmod/fchmod\n✅ COMPLETE", fillcolor="#90EE90", style="filled,dashed"];
         issue366 [label="#366: Pseudo-fs metadata\n✅ COMPLETE", fillcolor="#90EE90", style="filled,dashed"];
@@ -654,6 +655,8 @@ digraph IssueDependencies {
     issue364 -> issue367 [color=orange];  // tracker -> rich FAT32 metadata
     issue364 -> issue368 [color=orange, style=dotted];  // tracker -> pathconf (low priority)
     issue364 -> issue369 [color=orange];  // tracker -> system()
+    issue364 -> issue423 [color=green, style=dashed, label="brk/sbrk ✅"];  // tracker -> brk/sbrk shim (complete)
+    issue89 -> issue423 [color=green, style=dashed, label="uses mmap"];  // mmap syscalls -> brk/sbrk shim
     stat_done -> issue365 [color=brown, style=dashed, label="uses stat"];  // stat -> chmod
     stat_done -> issue317 [color=brown, style=dashed, label="uses stat"];  // stat -> utime
     issue54 -> issue369 [label="mosh -c", color=brown];  // mosh shell -> system()
