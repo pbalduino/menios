@@ -40,11 +40,10 @@ static size_t align_page_count(size_t size) {
   if(size == 0) {
     return 0;
   }
-  size_t pages = size / PAGE_SIZE;
-  if((size % PAGE_SIZE) != 0) {
-    pages++;
+  if(size > SIZE_MAX - (PAGE_SIZE - 1u)) {
+    return 0;
   }
-  return pages;
+  return (size + PAGE_SIZE - 1u) / PAGE_SIZE;
 }
 
 static void zero_physical_page(phys_addr_t phys) {

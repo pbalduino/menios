@@ -117,6 +117,7 @@ static bool vm_region_grow_down(proc_info_p proc,
     if(!proc_register_user_segment(proc, phys, 1)) {
         serial_printf("vm_region_grow_down: segment registration failed\n");
         // Unmap and free page
+        pmm_unmap_page_in_root(proc->address_space_root, aligned);
         pmm_free_pages(phys, 1);
         return false;
     }
@@ -157,6 +158,7 @@ static bool vm_region_grow_up(proc_info_p proc,
 
     if(!proc_register_user_segment(proc, phys, 1)) {
         serial_printf("vm_region_grow_up: segment registration failed\n");
+        pmm_unmap_page_in_root(proc->address_space_root, aligned);
         pmm_free_pages(phys, 1);
         return false;
     }

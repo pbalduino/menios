@@ -10,7 +10,7 @@
 hpet_status_t hpet_timer_initialize(void) {
   uacpi_table tbl;
 
-  uacpi_status ret = uacpi_table_find_by_signature("APIC", &tbl);
+  uacpi_status ret = uacpi_table_find_by_signature("HPET", &tbl);
   if(uacpi_unlikely_error(ret)) {
     serial_printf("unable to find HPET table: %s\n", uacpi_status_to_string(ret));
     return HPET_ERROR;

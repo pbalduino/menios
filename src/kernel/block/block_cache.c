@@ -134,6 +134,10 @@ static buffer_head_t* bcache_alloc_locked(void) {
 }
 
 static buffer_head_t* bcache_get_locked(block_device_t* device, uint64_t lba, bool* fresh_block) {
+  if(device == NULL || device->block_size == 0 || device->block_size > BCACHE_MAX_BLOCK_BYTES) {
+    return NULL;
+  }
+
   while(true) {
     buffer_head_t* bh = bcache_hash_lookup(device, lba);
     if(bh != NULL) {

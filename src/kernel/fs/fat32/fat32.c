@@ -2105,7 +2105,7 @@ static bool fat32_write_chain(fat32_fs_t* fs,
     return true;
   }
 
-  if(info->first_cluster == 0 || offset + length > info->size) {
+  if(info->first_cluster == 0 || offset > info->size || length > info->size - offset) {
     return false;
   }
 
@@ -2367,10 +2367,6 @@ static bool fat32_create_entry(fat32_fs_t* fs,
       return false;
     }
     serial_printf("fat32_create_entry: reusing existing entry path=%s\n", printable_path);
-    if(out_info) {
-      *out_info = existing;
-    }
-    return true;
     if(out_info) {
       *out_info = existing;
     }

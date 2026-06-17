@@ -8,6 +8,7 @@
 #include <kernel/kernel.h>
 #include <kernel/input.h>
 #include <kernel/serial.h>
+#include <kernel/tsc.h>
 #include <kernel/arch/x86_64/idt.h>
 #include <menios/input.h>
 #include <sys/stat.h>
@@ -44,6 +45,8 @@ static bool caps_lock;
 static bool extended_code;
 static bool pic_remapped;
 static bool ps2kb_device_registered;
+
+#define PS2_WAIT_TIMEOUT_NS (100ull * 1000ull * 1000ull)
 
 static const char scancode_unshift[128] = {
   0,  27, '1', '2', '3', '4', '5', '6', '7', '8',     /* 9 */
@@ -248,8 +251,17 @@ void ps2_write_command(uint8_t command) {
   outb(PS2_COMMAND_PORT, command);
 }
 
-void ps2_wait_write() {
-  while (inb(PS2_COMMAND_PORT) & 0x02);
+static bool ps2_wait_write(void) {
+  uint64_t start = ns_from_boot();
+
+  while(inb(PS2_COMMAND_PORT) & 0x02) {
+    if((uint64_t)(ns_from_boot() - start) > PS2_WAIT_TIMEOUT_NS) {
+      return false;
+    }
+    asm volatile("pause");
+  }
+
+  return true;
 }
 
 static void irq_eoi(void) {
@@ -473,10 +485,10 @@ void ps2kb_start(void) {
     (void)inb(PS2_DATA_PORT);
   }
 
-  ps2_wait_write();
+  if(!ps2_wait_write()) { serial_printf("ps2kb_start: controller busy timeout\n"); return; }
   ps2_write_command(PS2_DISABLE_FIRST_PORT);
 
-  ps2_wait_write();
+  if(!ps2_wait_write()) { serial_printf("ps2kb_start: controller busy timeout\n"); return; }
   ps2_write_command(0x20); // Read controller configuration byte
   uint8_t config = 0;
   if(!ps2_read_byte(&config)) {
@@ -487,15 +499,15 @@ void ps2kb_start(void) {
   config |= 0x01;   // Enable first port interrupt
   config &= ~(1 << 4); // Ensure first port clock enabled
 
-  ps2_wait_write();
+  if(!ps2_wait_write()) { serial_printf("ps2kb_start: controller busy timeout\n"); return; }
   ps2_write_command(PS2_WRITE_MODE);
-  ps2_wait_write();
+  if(!ps2_wait_write()) { serial_printf("ps2kb_start: controller busy timeout\n"); return; }
   ps2_write_data(config);
 
-  ps2_wait_write();
+  if(!ps2_wait_write()) { serial_printf("ps2kb_start: controller busy timeout\n"); return; }
   ps2_write_command(PS2_ENABLE_FIRST_PORT);
 
-  ps2_wait_write();
+  if(!ps2_wait_write()) { serial_printf("ps2kb_start: controller busy timeout\n"); return; }
   ps2_write_data(PS2_ENABLE_SCANNING);
   uint8_t response;
   if(ps2_read_byte(&response) && response != 0xFA) {
@@ -525,7 +537,7 @@ void ps2kb_start(void) {
 }
 
 void ps2kb_shutdown(void) {
-  ps2_wait_write();
+  if(!ps2_wait_write()) { serial_printf("ps2kb_shutdown: controller busy timeout\n"); return; }
   ps2_write_command(PS2_DISABLE_FIRST_PORT);
   if(ps2kb_device_registered) {
     char_device_unregister(&ps2kb_char_device);

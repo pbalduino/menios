@@ -482,6 +482,8 @@ static void ahci_port_clear_interrupts(ahci_port_t* port) {
   hba->is = (1u << port->index);
 }
 
+static bool ahci_wait_cmd_clear(ahci_port_t* port, uint32_t mask, uint64_t timeout_ns, const char* what);
+
 static bool ahci_port_wait_link_active(ahci_port_t* port, uint64_t timeout_ns) {
   useconds_t start = ns_from_boot();
 
@@ -509,16 +511,16 @@ static void ahci_port_stop(ahci_port_t* port) {
   cmd &= ~HBA_PxCMD_ST;
   regs->cmd = cmd;
 
-  while(regs->cmd & HBA_PxCMD_CR) {
-    asm volatile("pause");
+  if(!ahci_wait_cmd_clear(port, HBA_PxCMD_CR, AHCI_READY_TIMEOUT_NS, "CR")) {
+    return;
   }
 
   cmd = regs->cmd;
   cmd &= ~HBA_PxCMD_FRE;
   regs->cmd = cmd;
 
-  while(regs->cmd & HBA_PxCMD_FR) {
-    asm volatile("pause");
+  if(!ahci_wait_cmd_clear(port, HBA_PxCMD_FR, AHCI_READY_TIMEOUT_NS, "FR")) {
+    return;
   }
 }
 
@@ -627,6 +629,27 @@ static bool ahci_port_wait_ready(ahci_port_t* port, uint64_t timeout_ns) {
   return true;
 }
 
+static bool ahci_wait_cmd_clear(ahci_port_t* port, uint32_t mask, uint64_t timeout_ns, const char* what) {
+  volatile ahci_hba_port_t* regs = port->regs;
+  uint64_t start = ns_from_boot();
+
+  while((regs->cmd & mask) != 0) {
+    if(((uint64_t)ns_from_boot() - start) > timeout_ns) {
+      serial_printf("ahci: ctrl %02x:%02x.%u port %u timeout waiting for %s clear (cmd=0x%08x)\n",
+                    port->controller->bus,
+                    port->controller->device,
+                    port->controller->function,
+                    port->index,
+                    what,
+                    regs->cmd);
+      return false;
+    }
+    asm volatile("pause");
+  }
+
+  return true;
+}
+
 static ahci_command_header_t* ahci_port_command_header(ahci_port_t* port, uint32_t slot) {
   return &((ahci_command_header_t*)port->cmd_list.virt)[slot];
 }
@@ -694,6 +717,15 @@ static bool ahci_port_issue_command(ahci_port_t* port,
   ahci_prdt_entry_t* prdt = &table->prdt[0];
   prdt->dba = (uint32_t)(ctx->dma_phys & 0xFFFFFFFFull);
   prdt->dbau = (uint32_t)(ctx->dma_phys >> 32);
+  if(ctx->byte_count == 0 || ctx->byte_count > AHCI_PRDT_MAX_BYTES) {
+    serial_printf("ahci: ctrl %02x:%02x.%u port %u invalid transfer length %zu\n",
+                  port->controller->bus,
+                  port->controller->device,
+                  port->controller->function,
+                  port->index,
+                  ctx->byte_count);
+    return false;
+  }
   prdt->dbc = (uint32_t)(ctx->byte_count - 1) | (1u << 31);
   prdt->reserved = 0;
 

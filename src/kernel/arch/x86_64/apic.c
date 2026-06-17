@@ -153,16 +153,24 @@ void apic_initialize(void) {
   lapicaddr = (void*)physical_to_virtual((uintptr_t)paddr);
 
   ioapics = (ioapicdesc_t*)kmalloc(sizeof(ioapicdesc_t) * iocount);
+  if(ioapics == NULL && iocount > 0) {
+    serial_printf("acpi_initialize: failed to allocate %zu IOAPIC descriptors\n", iocount);
+    return;
+  }
 
-  serial_printf("acpi_initialize: iocount: %d\n", iocount);
+  serial_printf("acpi_initialize: iocount: %zu\n", iocount);
 
   for(size_t i = 0; i < iocount; ++i) {
 		struct acpi_madt_ioapic *entry = getentry(ACPI_MADT_ENTRY_TYPE_IOAPIC, i);
+    if(entry == NULL) {
+      serial_printf("acpi_initialize: missing IOAPIC entry %zu\n", i);
+      return;
+    }
 
     ioapics[i].addr = (void*)physical_to_virtual((uintptr_t)entry->address);
     ioapics[i].base = entry->gsi_base;
     ioapics[i].top = ioapics[i].base + ((readioapic(ioapics[i].addr, IOAPIC_REG_ENTRYCOUNT) >> 16) & 0xff) + 1;
-		serial_printf("ioapic%lu: addr %p base %lu top %lu\n", i, entry->address, ioapics[i].base, ioapics[i].top);
+		serial_printf("ioapic%zu: addr 0x%x base %d top %d\n", i, entry->address, ioapics[i].base, ioapics[i].top);
     for(int j = ioapics[i].base; j < ioapics[i].top; ++j) {
 			writeiored(ioapics[i].addr, j - ioapics[i].base, 0xfe, 0, 0, 0, 0, 1, 0);
       puts(".");
