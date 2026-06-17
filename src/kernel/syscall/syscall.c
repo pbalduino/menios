@@ -550,18 +550,20 @@ static bool listdir_iter_callback(const fs_dir_entry_t* entry, void* context) {
     return false;
   }
 
-  if(!proc_user_buffer_accessible(current, ctx->user_buffer + ctx->length, required)) {
+  char line[sizeof(entry->name) + 3u];
+  size_t offset = name_len;
+  memcpy(line, entry->name, name_len);
+  if(entry->is_directory) {
+    line[offset++] = '/';
+  }
+  line[offset++] = '\n';
+  line[offset] = '\0';
+
+  if(!syscall_copy_to_user(ctx->user_buffer + ctx->length, line, offset)) {
     ctx->error = -EFAULT;
     return false;
   }
 
-  char* dest = ctx->user_buffer + ctx->length;
-  memcpy(dest, entry->name, name_len);
-  size_t offset = name_len;
-  if(entry->is_directory) {
-    dest[offset++] = '/';
-  }
-  dest[offset++] = '\n';
   ctx->length += offset;
   return true;
 }
@@ -1585,8 +1587,12 @@ static uint64_t syscall_listdir_handler(syscall_frame_t* frame) {
     return frame->rax;
   }
 
-  if(!list_only && ctx.length < ctx.capacity && proc_user_buffer_accessible(current, user_buffer + ctx.length, 1)) {
-    user_buffer[ctx.length] = '\0';
+  if(!list_only && ctx.length < ctx.capacity) {
+    char nul = '\0';
+    if(!syscall_copy_to_user(user_buffer + ctx.length, &nul, 1)) {
+      frame->rax = (uint64_t)(-EFAULT);
+      return frame->rax;
+    }
   }
 
   frame->rax = ctx.length;

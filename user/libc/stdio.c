@@ -1369,17 +1369,17 @@ void perror(const char* s) {
   char fallback[64];
 
   if(message == NULL) {
-    sprintf(fallback, "Unknown error %d", errno);
+    snprintf(fallback, sizeof(fallback), "Unknown error %d", errno);
     message = fallback;
   }
 
   if(s != NULL && *s != '\0') {
     char buffer[256];
-    sprintf(buffer, "%s: %s\n", s, message);
+    snprintf(buffer, sizeof(buffer), "%s: %s\n", s, message);
     write(STDERR_FILENO, buffer, strlen(buffer));
   } else {
     char buffer[256];
-    sprintf(buffer, "%s\n", message);
+    snprintf(buffer, sizeof(buffer), "%s\n", message);
     write(STDERR_FILENO, buffer, strlen(buffer));
   }
 }
